@@ -1,6 +1,5 @@
 import { lazyLoadAndPoll } from '@holochain-open-dev/stores';
-import { LazyHoloHashMap } from '@holochain-open-dev/utils';
-import { ActionHash } from '@holochain/client';
+import { ActionHash, LazyHoloHashMap } from '@holochain/client';
 
 import { PostsClient } from './posts-client.js';
 

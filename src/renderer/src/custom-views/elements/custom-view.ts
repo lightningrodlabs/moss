@@ -41,7 +41,7 @@ export class CustomViewEl extends LitElement {
    */
   _customView = new StoreSubscriber(
     this,
-    () => this.customViewsStore.customViews.get(this.customViewHash),
+    () => this.customViewsStore.customViews.get(this.customViewHash)!,
     () => [this.customViewHash],
   );
 

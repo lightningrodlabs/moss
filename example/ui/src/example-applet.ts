@@ -16,7 +16,7 @@ import '@theweave/elements/dist/elements/weave-client-context.js';
 
 import './applet-main.js';
 import './cross-group-main.js';
-import { ActionHash, CellType, DnaHash, ProvisionedCell } from '@holochain/client';
+import {ActionHash, CellType, DnaHash, ProvisionedCell, TransportStats} from '@holochain/client';
 import { consume } from '@lit/context';
 import { PostsStore } from './posts-store.js';
 import { PostsClient } from './posts-client.js';
@@ -35,7 +35,7 @@ export class ExampleApplet extends LitElement {
   @property()
   interval: any;
 
-  peerStatusUnsubscribe: UnsubscribeFunction | undefined;
+  networkStatsUpdateUnsubscribe: UnsubscribeFunction | undefined;
 
   onBeforeUnloadUnsubscribe: UnsubscribeFunction | undefined;
 
@@ -55,9 +55,9 @@ export class ExampleApplet extends LitElement {
     //   const appletHash = this.weaveClient.renderInfo.appletHash;
     //   console.log('we link for applet: ', weaveUrlFromAppletHash(appletHash));
     // }
-    // this.peerStatusUnsubscribe = this.weaveClient.onPeerStatusUpdate((payload) => {
-    //   console.log('Got peer status update: ', payload);
-    // });
+    this.networkStatsUpdateUnsubscribe = this.weaveClient.onNetworkStatsUpdate((payload: TransportStats) => {
+      console.log('Got network stats update: ', payload);
+    });
   }
 
   async notifyWe(notifications: FrameNotification[]) {
@@ -75,9 +75,11 @@ export class ExampleApplet extends LitElement {
             return html`
               <posts-context .store=${this.postsStore}>
                 <profiles-context .store=${profilesStore}>
-                  <applet-main
+                  <example-applet-main
                     .client=${this.weaveClient.renderInfo.appletClient}
                     .weaveClient=${this.weaveClient}
+                    .wal=${this.weaveClient.renderInfo.view.wal}
+                    .groupHash=${this.weaveClient.renderInfo.groupHash}
                     .peerStatusStore=${this.weaveClient.renderInfo.peerStatusStore}
                     @notification=${(e: CustomEvent) => this.notifyWe(e.detail)}
                     @post-selected=${async (e: CustomEvent) => {
@@ -97,7 +99,7 @@ export class ExampleApplet extends LitElement {
                         hrl: [dnaHash, e.detail],
                       });
                     }}
-                  ></applet-main>
+                  ></example-applet-main>
                 </profiles-context>
               </posts-context>
             `;

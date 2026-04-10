@@ -7,6 +7,8 @@ import { sharedStyles } from '@holochain-open-dev/elements';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@theweave/elements/dist/elements/weave-client-context.js';
 
+import { DnaHash } from '@holochain/client';
+
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import '../pocket/wal-element.js';
@@ -14,10 +16,7 @@ import '../pocket/pocket-search.js';
 import { CreatableInfo } from './creatable-panel.js';
 import { Unsubscriber } from '@holochain-open-dev/stores';
 
-/**
- * @element search-entry
- * @fires entry-selected - Fired when the user selects some entry. Detail will have this shape: { hrl, context }
- */
+/** */
 @localized()
 @customElement('creatable-view')
 export class CreatableView extends LitElement {
@@ -30,6 +29,9 @@ export class CreatableView extends LitElement {
 
   @property()
   creatableInfo!: CreatableInfo;
+
+  @property()
+  groupHash: DnaHash | undefined;
 
   @state()
   _unsubscribe: Unsubscriber | undefined;
@@ -58,6 +60,7 @@ export class CreatableView extends LitElement {
       <applet-view
         style="flex: 1"
         .appletHash=${this.creatableInfo.appletHash}
+        .groupHash=${this.groupHash}
         .view=${{
           type: 'creatable',
           creatableName: this.creatableInfo.creatableName,

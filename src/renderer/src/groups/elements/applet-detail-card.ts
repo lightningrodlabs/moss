@@ -1,4 +1,4 @@
-import { AgentPubKey, AppInfo, EntryHash, encodeHashToBase64 } from '@holochain/client';
+import { AgentPubKey, AppInfo, EntryHash, encodeHashToBase64, ActionHash } from '@holochain/client';
 import { hashProperty, notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
@@ -23,12 +23,17 @@ import {
   dnaHashForCell,
   getCellNetworkSeed,
   getProvisionedCells,
-  isAppRunning,
 } from '../../utils.js';
 import { StoreSubscriber, lazyLoadAndPoll } from '@holochain-open-dev/stores';
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
-import { appIdFromAppletHash } from '@theweave/utils';
+import { appIdFromAppletHash, isAppRunning } from '@theweave/utils';
+import {
+  selectDevUiWebhapp,
+  setDevUiOverride,
+  clearDevUiOverride,
+  getDevUiOverride,
+} from '../../electron-api.js';
 
 @localized()
 @customElement('applet-detail-card')
@@ -41,13 +46,8 @@ export class AppletDetailCard extends LitElement {
 
   _joinedMembers = new StoreSubscriber(
     this,
-    () =>
-      lazyLoadAndPoll(
-        () => this.groupStore.groupClient.getJoinedAppletAgents(this.appletHash),
-        20000,
-        () => this.groupStore.groupClient.getJoinedAppletAgents(this.appletHash, true),
-      ),
-    () => [this.groupStore],
+    () => this.groupStore.joinedAppletAgents.get(this.appletHash)!,
+    () => [this.groupStore, this.appletHash],
   );
 
   _abandonedMembers = new StoreSubscriber(
@@ -67,9 +67,9 @@ export class AppletDetailCard extends LitElement {
     () => [this.groupStore],
   );
 
-  permissionType = new StoreSubscriber(
+  myAccountabilities = new StoreSubscriber(
     this,
-    () => this.groupStore.permissionType,
+    () => this.groupStore.myAccountabilities,
     () => [this.groupStore],
   );
 
@@ -81,7 +81,7 @@ export class AppletDetailCard extends LitElement {
 
   _toolVersion = new StoreSubscriber(
     this,
-    () => this.mossStore.appletToolVersion.get(this.appletHash),
+    () => this.mossStore.appletToolVersion.get(this.appletHash)!,
     () => [this.mossStore, this.appletHash],
   );
 
@@ -100,23 +100,41 @@ export class AppletDetailCard extends LitElement {
   @state()
   showAdvanced = false;
 
-  amISteward() {
-    if (
-      this.permissionType.value.status === 'complete' &&
-      ['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)
-    )
-      return true;
+  @state()
+  _hasDevOverride = false;
+
+  @state()
+  _devOverrideLoading = false;
+
+  // TODO: Use MossPrivilege instead
+  amIPrivileged() {
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return false;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type === 'Steward' || acc.type == 'Progenitor') {
+        return true;
+      }
+    }
     return false;
   }
 
+  // TODO: Use MossPrivilege instead
   canIArchive() {
-    const addedByMe =
-      !!this.addedBy &&
-      encodeHashToBase64(this.addedBy) === encodeHashToBase64(this.groupStore.groupClient.myPubKey);
-    const iAmProgenitor =
-      this.permissionType.value.status === 'complete' &&
-      this.permissionType.value.value.type === 'Progenitor';
-    if (iAmProgenitor || addedByMe) return true;
+    // added by me
+    if (!!this.addedBy
+      && encodeHashToBase64(this.addedBy) === encodeHashToBase64(this.groupStore.groupClient.myPubKey)) {
+        return true;
+    }
+    // progenitor
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return false;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type == 'Progenitor') {
+        return true;
+      }
+    }
     return false;
   }
 
@@ -144,14 +162,58 @@ export class AppletDetailCard extends LitElement {
   }
 
   async firstUpdated() {
-    const [appletClient, _] = await this.mossStore.getAppClient(
-      appIdFromAppletHash(this.appletHash),
-    );
+    const appId = appIdFromAppletHash(this.appletHash);
+    const [appletClient, _] = await this.mossStore.getAppClient(appId);
     this.appInfo = await appletClient.appInfo();
     const appletRecord = await this.groupStore.groupClient.getPublicApplet(this.appletHash);
     if (appletRecord) {
       this.addedBy = appletRecord.action.author;
     }
+    try {
+      const result = await getDevUiOverride(appId);
+      this._hasDevOverride = result.active;
+    } catch (e) {
+      console.warn('Failed to check dev UI override:', e);
+    }
+  }
+
+  async applyDevUiOverride() {
+    this._devOverrideLoading = true;
+    try {
+      const webhappPath = await selectDevUiWebhapp();
+      if (!webhappPath) {
+        this._devOverrideLoading = false;
+        return;
+      }
+
+      const appId = appIdFromAppletHash(this.appletHash);
+      const result = await setDevUiOverride(appId, webhappPath);
+
+      if (!result.happHashMatch) {
+        notify(msg('Warning: The DNA in this .webhapp differs from the installed version. The UI may not work correctly.'));
+      }
+
+      this._hasDevOverride = true;
+      notify(msg('Dev UI override applied. Reload the tool to see the new UI.'));
+    } catch (e) {
+      notifyError(msg('Failed to apply dev UI override (see console for details)'));
+      console.error(e);
+    }
+    this._devOverrideLoading = false;
+  }
+
+  async removeDevUiOverride() {
+    this._devOverrideLoading = true;
+    try {
+      const appId = appIdFromAppletHash(this.appletHash);
+      await clearDevUiOverride(appId);
+      this._hasDevOverride = false;
+      notify(msg('Dev UI override removed. Reload the tool to see the production UI.'));
+    } catch (e) {
+      notifyError(msg('Failed to clear dev UI override (see console for details)'));
+      console.error(e);
+    }
+    this._devOverrideLoading = false;
   }
 
   async uninstallApplet() {
@@ -186,14 +248,13 @@ export class AppletDetailCard extends LitElement {
     }
   }
 
+  // TODO: use MossPrivilege instead
   async toggleAlwaysOnlineNodesSetting() {
     console.log('this.groupAppletsMetaData.value', this.groupAppletsMetaData.value);
-    console.log('amISteward: ', this.amISteward());
+    console.log('amIPrivileged: ', this.amIPrivileged());
     if (
-      this.groupAppletsMetaData.value.status !== 'complete' ||
-      !this.amISteward() ||
-      this.permissionType.value.status !== 'complete' ||
-      !['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)
+      this.groupAppletsMetaData.value.status !== 'complete'
+      || !this.amIPrivileged()
     )
       return;
     console.log('Changing setting.');
@@ -213,13 +274,23 @@ export class AppletDetailCard extends LitElement {
     }
 
     groupAppletsMetaData[appletId] = appletMetaData;
-    const permissionHash =
-      this.permissionType.value.value.type === 'Steward'
-        ? this.permissionType.value.value.content.permission_hash
-        : undefined;
-    await this.groupStore.groupClient.setGroupAppletsMetaData(permissionHash, groupAppletsMetaData);
+    const myPermissionHash = this.getMyPermissionHash();
+    await this.groupStore.groupClient.setGroupAppletsMetaData(myPermissionHash, groupAppletsMetaData);
     notify(message);
     await this.groupStore.groupAppletsMetaData.reload();
+  }
+
+  // TODO: use MossPrivilege instead
+  getMyPermissionHash(): ActionHash | undefined {
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return undefined;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type === 'Steward') {
+        return acc.content.permission_hash;
+      }
+    }
+    return undefined;
   }
 
   toolVersion() {
@@ -250,13 +321,13 @@ export class AppletDetailCard extends LitElement {
       case 'complete':
         return html`
           ${this._joinedMembers.value.value.map(
-            (appletAgent) => html`
+          (appletAgent) => html`
               <agent-avatar
                 style="margin-left: 5px;"
                 .agentPubKey=${appletAgent.group_pubkey}
               ></agent-avatar>
             `,
-          )}
+        )}
         `;
     }
   }
@@ -275,25 +346,61 @@ export class AppletDetailCard extends LitElement {
         if (this._abandonedMembers.value.value.length === 0) return html``;
         return html`
           <div class="row" style="align-items: center; margin-top: 4px;">
-            <span><b>abandoned by:&nbsp;</b></span>
+            <span><b>${msg('abandoned by:')}&nbsp;</b></span>
             ${this._abandonedMembers.value.value.map(
-              (appletAgent) => html`
+          (appletAgent) => html`
                 <agent-avatar
                   style="margin-left: 5px;"
                   .agentPubKey=${appletAgent.group_pubkey}
                 ></agent-avatar>
               `,
-            )}
+        )}
           </div>
         `;
     }
+  }
+
+  renderDevUiOverride() {
+    if (!this.amIPrivileged()) return html``;
+    return html`
+      <div class="row items-center" style="margin-top: 8px;">
+        <span>${msg('Dev UI Override')}</span>
+        <span class="flex flex-1"></span>
+        ${this._devOverrideLoading
+          ? html`<sl-spinner style="margin-right: 8px;"></sl-spinner>`
+          : this._hasDevOverride
+            ? html`
+                <span class="dev-override-badge">${msg('DEV')}</span>
+                <sl-button
+                  variant="warning"
+                  size="small"
+                  style="margin-left: 8px;"
+                  @click=${() => this.applyDevUiOverride()}
+                >${msg('Replace')}</sl-button>
+                <sl-button
+                  variant="neutral"
+                  size="small"
+                  style="margin-left: 8px;"
+                  @click=${() => this.removeDevUiOverride()}
+                >${msg('Clear Override')}</sl-button>
+              `
+            : html`
+                <sl-button
+                  variant="neutral"
+                  size="small"
+                  @click=${() => this.applyDevUiOverride()}
+                >${msg('Override from .webhapp')}</sl-button>
+              `
+        }
+      </div>
+    `;
   }
 
   renderMetaSettings() {
     if (this.groupAppletsMetaData.value.status === 'error') {
       console.log('Failed to get group applets metadata: ', this.groupAppletsMetaData.value.error);
     }
-    if (this.groupAppletsMetaData.value.status !== 'complete' || !this.amISteward()) return html``;
+    if (this.groupAppletsMetaData.value.status !== 'complete' || !this.amIPrivileged()) return html``;
     return html`
       <div class="column meta-settings">
         <div class="font-bold">${msg('Advanced Settings')}</div>
@@ -308,6 +415,7 @@ export class AppletDetailCard extends LitElement {
           >
           </sl-switch>
         </div>
+        ${this.renderDevUiOverride()}
       </div>
     `;
   }
@@ -319,18 +427,18 @@ export class AppletDetailCard extends LitElement {
         return html`
           <sl-tooltip
             content=${msg(
-              'Archiving will make it not show up anymore for new members in the "Unjoined Tools" section',
-            )}
+          'Deprecating will hide tool for activation by new members',
+        )}
           >
             <sl-button
               variant="warning"
               style="margin-right: 5px;"
               @click=${() => this.archiveApplet()}
               @keypress=${async (e: KeyboardEvent) => {
-                if (e.key === 'Enter') {
-                  this.archiveApplet();
-                }
-              }}
+            if (e.key === 'Enter') {
+              this.archiveApplet();
+            }
+          }}
             >
               <div class="row center-content">
                 <sl-icon
@@ -346,18 +454,18 @@ export class AppletDetailCard extends LitElement {
         return html`
           <sl-tooltip
             content=${msg(
-              'Unarchive this Tool for it to show up again for new membersin the "Unjoined Tools" section',
-            )}
+          'Undeprecate this Tool for it to show up again for new members',
+        )}
           >
             <sl-button
               variant="neutral"
               style="margin-right: 5px;"
               @click=${() => this.unArchiveApplet()}
               @keypress=${async (e: KeyboardEvent) => {
-                if (e.key === 'Enter') {
-                  this.unArchiveApplet();
-                }
-              }}
+            if (e.key === 'Enter') {
+              this.unArchiveApplet();
+            }
+          }}
             >
               <div class="row center-content">
                 <sl-icon
@@ -382,10 +490,10 @@ export class AppletDetailCard extends LitElement {
         style="position: relative; ${this.archiveState() === 'archived' ? 'opacity: 0.6' : ''}"
       >
         ${this.archiveState() === 'archived'
-          ? html`<span class="font-bold" style="position: absolute; top: 11px; right: 16px;"
+        ? html`<span class="font-bold" style="position: absolute; top: 11px; right: 16px;"
               >${msg('ARCHIVED')}</span
             > `
-          : html``}
+        : html``}
 
         <div class="column" style="flex: 1;">
           <div class="row" style="flex: 1; align-items: center">
@@ -400,8 +508,8 @@ export class AppletDetailCard extends LitElement {
             </span>
             <sl-tooltip
               .content=${this.appInfo && isAppRunning(this.appInfo)
-                ? msg('Disable the app for yourself')
-                : msg('Enable')}
+        ? msg('Disable the app for yourself')
+        : msg('Enable')}
             >
               <sl-switch
                 style="--sl-color-primary-600: #35bf20; margin-bottom: 5px;"
@@ -409,21 +517,21 @@ export class AppletDetailCard extends LitElement {
                 ?checked=${this.appInfo && isAppRunning(this.appInfo)}
                 ?disabled=${!this.appInfo}
                 @sl-change=${async () => {
-                  if (this.appInfo && isAppRunning(this.appInfo)) {
-                    await this.mossStore.disableApplet(this.appletHash);
-                    this.dispatchEvent(
-                      new CustomEvent('applets-disabled', {
-                        detail: [this.appletHash],
-                        bubbles: true,
-                        composed: true,
-                      }),
-                    );
-                    notify(msg('Applet disabled.'));
-                  } else if (this.appInfo && !isAppRunning(this.appInfo)) {
-                    await this.mossStore.enableApplet(this.appletHash);
-                    notify(msg('Applet enabled.'));
-                  }
-                }}
+        if (this.appInfo && isAppRunning(this.appInfo)) {
+          await this.mossStore.disableApplet(this.appletHash);
+          this.dispatchEvent(
+            new CustomEvent('applets-disabled', {
+              detail: [this.appletHash],
+              bubbles: true,
+              composed: true,
+            }),
+          );
+          notify(msg('Tool disabled.'));
+        } else if (this.appInfo && !isAppRunning(this.appInfo)) {
+          await this.mossStore.enableApplet(this.appletHash);
+          notify(msg('Tool enabled.'));
+        }
+      }}
               >
               </sl-switch>
             </sl-tooltip>
@@ -436,11 +544,11 @@ export class AppletDetailCard extends LitElement {
             <div class="row" style="align-items: center;">
               <span><b>added by&nbsp;</b></span>
               ${this.addedBy
-                ? html`<agent-avatar
+        ? html`<agent-avatar
                     style="margin-left: 5px;"
                     .agentPubKey=${this.addedBy}
                   ></agent-avatar>`
-                : html`unknown`}
+        : html`unknown`}
             </div>
           </div>
           <div class="row" style="align-items: center; margin-top: 4px;">
@@ -454,8 +562,8 @@ export class AppletDetailCard extends LitElement {
             <div class="row">
               <button
                 @click=${() => {
-                  this.showAdvanced = !this.showAdvanced;
-                }}
+        this.showAdvanced = !this.showAdvanced;
+      }}
                 style="all: unset; cursor: pointer;"
               >
                 ${this.showAdvanced ? msg('Hide Advanced Settings') : msg('Show Advanced Settings')}
@@ -469,10 +577,10 @@ export class AppletDetailCard extends LitElement {
                 variant="danger"
                 @click=${() => this.uninstallApplet()}
                 @keypress=${(e: KeyboardEvent) => {
-                  if (e.key === 'Enter') {
-                    this.uninstallApplet();
-                  }
-                }}
+        if (e.key === 'Enter') {
+          this.uninstallApplet();
+        }
+      }}
               >
                 <div class="row center-content">
                   <sl-icon
@@ -486,7 +594,7 @@ export class AppletDetailCard extends LitElement {
           </div>
 
           ${this.showAdvanced
-            ? html`
+        ? html`
                 ${this.renderMetaSettings()}
                 <!-- Cells -->
                 <div style="margin-top: 5px; margin-bottom: 3px;font-size: 20px;">
@@ -494,8 +602,8 @@ export class AppletDetailCard extends LitElement {
                 </div>
                 <div>
                   ${this.appInfo
-                    ? getProvisionedCells(this.appInfo).map(
-                        ([roleName, cellInfo]) => html`
+            ? getProvisionedCells(this.appInfo).map(
+              ([roleName, cellInfo]) => html`
                           <div class="column cell-card">
                             <div class="row" style="justify-content: flex-end;">
                               <span><b>${roleName} </b></span><br />
@@ -508,11 +616,11 @@ export class AppletDetailCard extends LitElement {
                             </div>
                           </div>
                         `,
-                      )
-                    : html``}
+            )
+            : html``}
                 </div>
               `
-            : html``}
+        : html``}
         </div>
       </sl-card>
     `;
@@ -538,6 +646,14 @@ export class AppletDetailCard extends LitElement {
         border-radius: 10px;
         padding: 5px 10px;
         margin: 15px 0 10px 0;
+      }
+      .dev-override-badge {
+        background: #e65100;
+        color: white;
+        font-size: 11px;
+        font-weight: bold;
+        padding: 2px 8px;
+        border-radius: 4px;
       }
     `,
   ];

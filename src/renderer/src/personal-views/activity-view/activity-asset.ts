@@ -48,10 +48,10 @@ export class ActivityAsset extends LitElement {
   _groupProfiles = new StoreSubscriber(
     this,
     () =>
-      pipe(this._mossStore.groupsForApplet.get(this.appletHash), async (groupStoreMap) => {
+      pipe(this._mossStore.groupsForApplet.get(this.appletHash)!, async (groupStoreMap) => {
         const groupProfiles = await Promise.all(
           Array.from(groupStoreMap.values()).map(async (groupStore) =>
-            toPromise(groupStore.groupProfile),
+            toPromise(groupStore!.groupProfile),
           ),
         );
         return groupProfiles;
@@ -61,14 +61,14 @@ export class ActivityAsset extends LitElement {
 
   appletLogo = new StoreSubscriber(
     this,
-    () => this._mossStore.appletLogo.get(this.appletHash),
+    () => this._mossStore.appletLogo.get(this.appletHash)!,
     () => [this.appletHash],
   );
 
   appletName = new StoreSubscriber(
     this,
     () =>
-      pipe(this._mossStore.appletStores.get(this.appletHash), (appletStore) => {
+      pipe(this._mossStore.appletStores.get(this.appletHash)!, (appletStore) => {
         if (appletStore) {
           return appletStore.applet.custom_name;
         }
@@ -97,10 +97,10 @@ export class ActivityAsset extends LitElement {
       case 'complete':
         return this.renderLogo(this.appletLogo.value.value);
       case 'error':
-        console.error('Failed to fetch applet icon: ', this.appletLogo.value.error);
+        console.error('Failed to fetch tool icon: ', this.appletLogo.value.error);
         return html`<display-error
           tooltip
-          .headline=${msg('Error fetching the applet logo')}
+          .headline=${msg('Error fetching the tool logo')}
           .error=${this.appletLogo.value.error}
         ></display-error>`;
     }
@@ -150,29 +150,28 @@ export class ActivityAsset extends LitElement {
               <div class="activity-asset-outer">
                 <div
                   @click=${() => {
-                    console.log('Clicked on asset', this.wal);
-                    this.dispatchEvent(
-                      new CustomEvent('open-wal', {
-                        detail: deStringifyWal(this.wal),
-                        bubbles: true,
-                        composed: true,
-                      }),
-                    );
-                  }}
+            console.log('Clicked on asset', this.wal);
+            this.dispatchEvent(
+              new CustomEvent('open-wal', {
+                detail: deStringifyWal(this.wal),
+                bubbles: true,
+                composed: true,
+              }),
+            );
+          }}
                   class="activity-asset">
                   <div
                     style="display: flex; align-items: center; margin-right: 10px;"
                   >
-                  ${
-                    this.assetInfo.value.value
-                      ? html`
+                  ${this.assetInfo.value.value
+            ? html`
                           <sl-icon
                             .src=${this.assetInfo.value.value.icon_src}
                             style="display: flex; margin-top: 2px; margin-right: 4px; font-size: 50px;"
                           ></sl-icon>
                         `
-                      : html` <div style="width: 50px; height: 50px;"></div> `
-                  }
+            : html` <div style="width: 50px; height: 50px;"></div> `
+          }
 
                   </div>
                   <div style="display: flex; flex-direction: column; margin-right: 10px;">
@@ -190,72 +189,69 @@ export class ActivityAsset extends LitElement {
                       <div
                         style="margin-left: 10px; flex: 0 0 auto;"
                       >
-                        ${
-                          new Set(
-                            this.notifications
-                              .filter((notification) => notification.notification.fromAgent)
-                              .map((notification) =>
-                                encodeAndStringify(notification.notification.fromAgent),
-                              ),
-                          ).size
-                        } people
+                        ${new Set(
+            this.notifications
+              .filter((notification) => notification.notification.fromAgent)
+              .map((notification) =>
+                encodeAndStringify(notification.notification.fromAgent),
+              ),
+          ).size
+          } people
                       </div>
                       <div
                         style="margin-left: 10px; flex: 0 0 auto;"
                       >
                         ${formatDistanceToNow(
-                          new Date(
-                            this.notifications.reduce((latest, current) => {
-                              return current.notification.timestamp > latest.notification.timestamp
-                                ? current
-                                : latest;
-                            }).notification.timestamp,
-                          ),
-                          { addSuffix: true },
-                        )}
+            new Date(
+              this.notifications.reduce((latest, current) => {
+                return current.notification.timestamp > latest.notification.timestamp
+                  ? current
+                  : latest;
+              }).notification.timestamp,
+            ),
+            { addSuffix: true },
+          )}
                       </div>
                     </div>
                   </div>
                 </div>
-                ${
-                  this.showNotifications
-                    ? html`
+                ${this.showNotifications
+            ? html`
                         <button
                           @click=${() => {
-                            this.showNotifications = false;
-                          }}
+                this.showNotifications = false;
+              }}
                           class="hide-notifications-button"
                         >
                           ⌃
                         </button>
                       `
-                    : html`
+            : html`
                         <button
                           @click=${() => {
-                            this.showNotifications = true;
-                          }}
+                this.showNotifications = true;
+              }}
                           class="show-notifications-button"
                         >
                           ⌄
                         </button>
                       `
-                }
+          }
               </div>
               </div>
               <div class="displayed-notifications-list">
-                ${
-                  this.showNotifications
-                    ? html`
+                ${this.showNotifications
+            ? html`
                         ${this.notifications.map((notification: any) => {
-                          return html`
+              return html`
                             <div style="padding: 4px 4px 0 4px">
                               ${notification.notification.title}
                             </div>
                           `;
-                        })}
+            })}
                       `
-                    : ''
-                }
+            : ''
+          }
               </div>
             </div>
         `;
@@ -274,6 +270,16 @@ export class ActivityAsset extends LitElement {
         flex-direction: column;
       }
 
+      .activity-asset-outer:hover > button {
+        background: #193423de;
+        color: white;
+      }
+
+      .activity-asset-outer:hover > button:hover {
+        background: var(--moss-hint-green);
+        color: white;
+      }
+
       .show-notifications-button,
       .hide-notifications-button {
         background: transparent;
@@ -287,28 +293,23 @@ export class ActivityAsset extends LitElement {
         font-size: 14px;
       }
 
-      .show-notifications-button:hover,
-      .hide-notifications-button:hover {
-        background: #3f6733;
-      }
-
       .hide-notifications-button {
         border-radius: 0;
-        background: #204d31;
+        background: var(--moss-hint-green);
         color: white;
         padding: 3px 0 0 0;
       }
 
-      .activity-asset-outer:hover > button {
-        background: #193423;
-        color: white;
+      .show-notifications-button:hover,
+      .hide-notifications-button:hover {
+        background: var(--moss-hint-green);
       }
 
       .activity-asset {
         background: white;
         border-radius: 5px;
         padding: 10px;
-        background: #193423;
+        background: var(--moss-dark-green);
         color: #fff;
         min-width: 416px;
         max-width: calc(60vw - 110px);
@@ -317,7 +318,7 @@ export class ActivityAsset extends LitElement {
 
       .activity-asset:hover {
         cursor: pointer;
-        background: #3f6733;
+        background: var(--moss-hint-green);
       }
 
       .asset-title {
@@ -326,7 +327,7 @@ export class ActivityAsset extends LitElement {
       }
 
       .displayed-notifications-list {
-        background: #0080574a;
+        background: var(--moss-dark-green);
         color: #c2f2c1;
         padding-bottom: 4px;
         margin-top: -9px;

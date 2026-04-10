@@ -11,3 +11,4 @@ name = "peer_status_coordinator"
 [dependencies]
 hdk = { workspace = true }
 serde = { workspace = true }
+holochain_serialized_bytes = { workspace = true }

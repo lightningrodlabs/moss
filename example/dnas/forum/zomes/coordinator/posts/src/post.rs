@@ -3,7 +3,7 @@ use posts_integrity::*;
 #[hdk_extern]
 pub fn create_post(post: Post) -> ExternResult<Record> {
     let post_hash = create_entry(&EntryTypes::Post(post.clone()))?;
-    let record = get(post_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+    let record = get(post_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
         WasmErrorInner::Guest(String::from("Could not find the newly created Post"))
     ))?;
     let path = Path::from("all_posts");
@@ -18,7 +18,8 @@ pub fn create_post(post: Post) -> ExternResult<Record> {
 #[hdk_extern]
 pub fn get_post(original_post_hash: ActionHash) -> ExternResult<Option<Record>> {
     let links = get_links(
-        GetLinksInputBuilder::try_new(original_post_hash.clone(), LinkTypes::PostUpdates)?.build(),
+        LinkQuery::new(original_post_hash.clone(), LinkTypes::PostUpdates.try_into_filter().unwrap()),
+        GetStrategy::default(),
     )?;
     println!("get_post: {:?}", links);
     get_latest_record_from_links_with_original_hash(links, original_post_hash)
@@ -38,7 +39,7 @@ pub fn update_post(input: UpdatePostInput) -> ExternResult<Record> {
         LinkTypes::PostUpdates,
         (),
     )?;
-    let record = get(updated_post_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+    let record = get(updated_post_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
         WasmErrorInner::Guest(String::from("Could not find the newly updated Post"))
     ))?;
     Ok(record)
@@ -59,7 +60,7 @@ pub fn get_latest_record_from_links_with_original_hash(
     debug!("Getting latest record from links: {:?}", links);
     for link in links {
         if let Some(action_hash) = link.target.into_action_hash() {
-            let maybe_record = get(action_hash, GetOptions::default())?;
+            let maybe_record = get(action_hash, GetOptions::local())?;
             println!("Got record: {:?}", maybe_record);
             debug!("Got record: {:?}", maybe_record);
             if let Some(record) = maybe_record {
@@ -67,5 +68,5 @@ pub fn get_latest_record_from_links_with_original_hash(
             }
         }
     }
-    Ok(get(original_hash, GetOptions::default())?)
+    Ok(get(original_hash, GetOptions::local())?)
 }

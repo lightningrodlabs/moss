@@ -20,12 +20,34 @@ Then click **"Save Draft"** to save the release as a draft. The CI workflow will
 
 ## Update to a new version of Holochain
 
-1. Update the holochain version in `moss.config.json`
+1. Go to https://github.com/holochain/holochain/releases and select the holochain release you want to use.
+ 
+2. Update the holochain version in `moss.config.json`
 
-2. Go to https://github.com/matthme/holochain-binaries/releases and select the holochain release that you want to use.
-
-3. Copy the sha256 hashes of the holochain binaries for the respective platforms and paste them into the `moss.config.json` file.
+3. Run `yarn update-hc-checksums` locally to automatically update the checksums in `holochain-checksums.json`.
 
 4. Run `yarn fetch:binaries` locally to fetch the new binaries.
 
 5. Follow the release process from the [Release](#release) section above.
+
+
+## Update to a new version of group happ
+
+Trigger `publish-happ` workflow. It will create the release draft automatically and use the version number from `package.json`.
+Get the sha256 hash of the happ bundle and paste it into the `moss.config.json` file.
+
+
+## Releasing NPM packages
+
+For the CLI, make sure the updated holochain binaries have been fetched (`yarn build:cli ; cd cli & npm run postinstall`)
+
+When updating all packages, publish in this order:
+
+1. @theweave/api
+1. @theweave/tool-library-client
+1. @theweave/group-client 
+1. @theweave/elements
+1. @theweave/moss-types
+1. @theweave/utils
+2. @theweave/cli
+3. @theweave/wdocker

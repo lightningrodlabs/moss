@@ -19,18 +19,22 @@ import {
   toPromise,
   writable,
 } from '@holochain-open-dev/stores';
-import { EntryHashMap, EntryRecord, LazyHoloHashMap, mapValues } from '@holochain-open-dev/utils';
+import {EntryRecord, GetonlyMap, mapValues} from '@holochain-open-dev/utils';
 import {
-  ActionHash,
-  AgentPubKey,
-  AgentPubKeyB64,
-  AppAuthenticationToken,
-  AppWebsocket,
-  CellType,
-  DnaHash,
-  EntryHash,
-  decodeHashFromBase64,
-  encodeHashToBase64,
+    ActionHash,
+    AgentPubKey,
+    AgentPubKeyB64,
+    AppAuthenticationToken,
+    AppWebsocket,
+    CellType,
+    DnaHash,
+    EntryHash,
+    EntryHashMap,
+    decodeHashFromBase64,
+    encodeHashToBase64,
+    hashFrom32AndType,
+    HoloHashType,
+    LazyHoloHashMap, HoloHashMap,
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
 import { DnaModifiers } from '@holochain/client';
@@ -51,10 +55,11 @@ import { CustomViewsClient } from '../custom-views/custom-views-client.js';
 import { MossStore } from '../moss-store.js';
 import {
   dedupStringArray,
-  isAppDisabled,
-  isAppRunning,
   lazyReloadableStore,
   reloadableLazyLoadAndPollUntil,
+  safeSetInterval,
+  SafeIntervalHandle,
+  onlineDebugLog,
 } from '../utils.js';
 import { DistributionInfo, TDistributionInfo } from '@theweave/moss-types';
 import {
@@ -67,7 +72,13 @@ import {
   walDecodeContext,
 } from '@theweave/group-client';
 import { FoyerStore } from './foyer.js';
-import { appIdFromAppletHash, deriveToolCompatibilityId, toLowerCaseB64 } from '@theweave/utils';
+import {
+  appIdFromAppletHash,
+  deriveToolCompatibilityId,
+  isAppDisabled,
+  isAppRunning,
+  toLowerCaseB64
+} from '@theweave/utils';
 import { decode, encode } from '@msgpack/msgpack';
 import {
   AssetsClient,
@@ -78,22 +89,24 @@ import {
 } from '@theweave/group-client';
 import isEqual from 'lodash-es/isEqual.js';
 import { ToolAndCurationInfo } from '../types.js';
+import {AppletStore} from "../applets/applet-store";
+import { FoyerNotificationSettings, DEFAULT_FOYER_NOTIFICATION_SETTINGS } from '../applets/types.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
-const AGENTS_REFETCH_FREQUENCY = 10;
 const PING_AGENTS_FREQUENCY_MS = 8000;
+const GET_AGENT_INFO_FREQUENCY_MS = 10000; // Poll agentInfo to discover agents in network
 export const OFFLINE_THRESHOLD = 26000; // Peer is considered offline if they did not respond to 3 consecutive pings
 export const IDLE_THRESHOLD = 300000; // Peer is considered inactive after 5 minutes without interaction inside Moss
 const ASSET_RELATION_POLLING_PERIOD = 10000;
 
 export type MaybeProfile =
   | {
-      type: 'unknown';
-    }
+    type: 'unknown';
+  }
   | {
-      type: 'profile';
-      profile: EntryRecord<Profile>;
-    };
+    type: 'profile';
+    profile: EntryRecord<Profile>;
+  };
 
 // Given a group, all the functionality related to that group
 export class GroupStore {
@@ -109,6 +122,35 @@ export class GroupStore {
 
   _peerStatuses: Writable<Record<AgentPubKeyB64, PeerStatus> | undefined>;
 
+  /**
+   * Reactive store that calculates the number of online peers (excluding self).
+   * Counts agents with status 'online' or 'inactive'.
+   */
+  onlinePeersCount: Readable<number | undefined>;
+
+  private _knownAgents: Writable<Set<AgentPubKeyB64>> = writable(new Set());
+
+  private _ignoredApplets: Writable<AppletId[]> = writable([]);
+
+  private _hiddenAgents: Writable<AgentPubKeyB64[]> = writable([]);
+
+  /**
+   * Ephemeral (in-memory) tracking of unread group notifications.
+   * Used for foyer messages and other group-level notifications.
+   * Not persisted across app restarts.
+   */
+  private _unreadGroupNotifications: Writable<{ low: number; medium: number; high: number }> = writable({
+    low: 0,
+    medium: 0,
+    high: 0,
+  });
+
+  /**
+   * Foyer notification settings for this group.
+   * Allows separate urgency levels for mentions vs all other messages.
+   */
+  private _foyerNotificationSettings: Writable<FoyerNotificationSettings> = writable(DEFAULT_FOYER_NOTIFICATION_SETTINGS);
+
   foyerStore!: FoyerStore;
 
   /**
@@ -120,6 +162,9 @@ export class GroupStore {
 
   private constructed: boolean;
 
+  _groupIdShort: string = '';
+  _instanceId: string = '';
+
   _myPubkeySum: number;
 
   _assetStores: Record<
@@ -130,6 +175,16 @@ export class GroupStore {
       unsubscribe: Unsubscriber | undefined;
     }
   > = {};
+
+  // Interval handles for cleanup
+  private _pingIntervalHandle: SafeIntervalHandle | undefined;
+  private _agentInfoIntervalHandle: SafeIntervalHandle | undefined;
+  private _assetRelationsIntervalHandle: SafeIntervalHandle | undefined;
+
+  // Signal handler unsubscribers for cleanup
+  private _peerStatusSignalUnsub: (() => void) | undefined;
+  private _groupSignalUnsub: (() => void) | undefined;
+  private _assetsSignalUnsub: (() => void) | undefined;
 
   constructor(
     public appWebsocket: AppWebsocket,
@@ -151,15 +206,41 @@ export class GroupStore {
       },
     );
 
+    // Load persisted foyer notification settings
+    this.loadFoyerNotificationSettings();
+
     this._peerStatuses = writable(undefined);
 
     this._myPubkeySum = Array.from(this.groupClient.myPubKey).reduce((acc, curr) => acc + curr, 0);
 
-    this.peerStatusClient.onSignal(async (signal: SignalPayloadPeerStatus) => {
+    const groupIdShort = encodeHashToBase64(this.groupDnaHash).slice(0, 8);
+    this._groupIdShort = groupIdShort;
+    this._instanceId = Math.random().toString(36).slice(2, 6);
+
+    onlineDebugLog(`[OnlineDebug][${groupIdShort}] GroupStore created (instance=${this._instanceId})`);
+
+    // Track per-agent previous status to only log transitions
+    const _prevAgentStatus: Record<string, string> = {};
+
+    this._peerStatusSignalUnsub = this.peerStatusClient.onSignal(async (signal: SignalPayloadPeerStatus) => {
+      const agentB64 = encodeHashToBase64(signal.from_agent);
+
+      // Ignore signals from hidden agents entirely
+      if (this.isAgentHidden(agentB64)) {
+        onlineDebugLog(`[OnlineDebug][${groupIdShort}] Ignoring ${signal.type} from hidden agent ${agentB64.slice(0, 8)} (instance=${this._instanceId})`);
+        return;
+      }
+
       if (signal.type == 'Pong') {
+        const prev = _prevAgentStatus[agentB64];
+        onlineDebugLog(`[OnlineDebug][${groupIdShort}] Pong from ${agentB64.slice(0, 8)}: ${prev ?? 'unknown'} -> ${signal.status} (instance=${this._instanceId})`);
+        _prevAgentStatus[agentB64] = signal.status;
         this.updatePeerStatus(signal.from_agent, signal.status, signal.tz_utc_offset);
       }
       if (signal.type == 'Ping') {
+        const prev = _prevAgentStatus[agentB64];
+        onlineDebugLog(`[OnlineDebug][${groupIdShort}] Ping from ${agentB64.slice(0, 8)}: ${prev ?? 'unknown'} -> ${signal.status} (instance=${this._instanceId})`);
+        _prevAgentStatus[agentB64] = signal.status;
         const now = Date.now();
         const status =
           now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
@@ -172,80 +253,79 @@ export class GroupStore {
       return this.agentsProfiles(agents);
     });
 
-    setTimeout(async () => {
-      await this.pingAgentsAndCleanPeerStatuses();
+    // Centralized reactive store for online peer count
+    let _prevOnlineCount: number | undefined = undefined;
+    this.onlinePeersCount = derived(this._peerStatuses, (peerStatuses) => {
+      if (!peerStatuses) return undefined;
+
+      const myPubKeyB64 = encodeHashToBase64(this.groupClient.myPubKey);
+
+      // Count agents with status 'online' or 'inactive', excluding self
+      const count = Object.entries(peerStatuses).filter(
+        ([pubkeyB64, status]) =>
+          pubkeyB64 !== myPubKeyB64 && ['online', 'inactive'].includes(status.status),
+      ).length;
+
+      // Only log when the count actually changes
+      if (count !== _prevOnlineCount) {
+        const totalEntries = Object.keys(peerStatuses).length;
+        const statuses = Object.entries(peerStatuses)
+          .filter(([k]) => k !== myPubKeyB64)
+          .map(([k, v]) => `${k.slice(0, 8)}:${v.status}`)
+          .join(', ');
+        onlineDebugLog(`[OnlineDebug][${groupIdShort}] onlinePeersCount: ${_prevOnlineCount} -> ${count}, totalEntries=${totalEntries}, statuses=[${statuses}] (instance=${this._instanceId})`);
+        _prevOnlineCount = count;
+      }
+
+      return count;
     });
 
-    // refetch profiles frequently in the beginning. Afterwards, AGENTS_REFETCH_FREQUENCY
-    // in combination with PING_AGENTS_FREQUENCY_MS will determine the frequency of
-    // re-fetching profiles
-    setTimeout(async () => {
-      this.allAgents = await this.profilesStore.client.getAgentsWithProfile();
-    }, 5000);
+    this._ignoredApplets.set(
+      this.mossStore.persistedStore.ignoredApplets.value(encodeHashToBase64(groupDnaHash)),
+    );
 
-    setTimeout(async () => {
-      this.allAgents = await this.profilesStore.client.getAgentsWithProfile();
-    }, 10000);
+    this._hiddenAgents.set(
+      this.mossStore.persistedStore.hiddenAgents.value(encodeHashToBase64(groupDnaHash)),
+    );
 
-    setTimeout(async () => {
-      this.allAgents = await this.profilesStore.client.getAgentsWithProfile();
-    }, 20000);
+    // Note: Old agent fetching via getAgentsWithProfile removed
+    // Now using agentInfo polling instead for faster and more accurate agent discovery
 
-    setTimeout(async () => {
-      this.allAgents = await this.profilesStore.client.getAgentsWithProfile();
-    }, 40000);
+    // Ping agents periodically to determine online/offline status
+    // Uses safeSetInterval to prevent call stacking if pings are slow
+    this._pingIntervalHandle = safeSetInterval({
+      name: 'pingAgents',
+      fn: async () => {
+        await this.pingAgentsAndCleanPeerStatuses();
+      },
+      intervalMs: PING_AGENTS_FREQUENCY_MS,
+      runImmediately: true,
+    });
 
-    setInterval(async () => {
-      await this.pingAgentsAndCleanPeerStatuses();
-    }, PING_AGENTS_FREQUENCY_MS);
+    // Poll agentInfo to discover agents in network
+    // Uses safeSetInterval to prevent call stacking
+    this._agentInfoIntervalHandle = safeSetInterval({
+      name: 'pollAgentInfo',
+      fn: async () => {
+        await this.pollAgentInfo();
+      },
+      intervalMs: GET_AGENT_INFO_FREQUENCY_MS,
+      runImmediately: true,
+    });
 
-    window.setInterval(async () => {
-      const walsToPoll = Object.entries(this._assetStores)
-        .filter(([_, storeAndSubscribers]) => {
-          // We only poll for stores with active subscribers
-          return (
-            Object.values(storeAndSubscribers.subscriberCounts).reduce(
-              (acc, currentVal) => acc + currentVal,
-              0,
-            ) > 0
-          );
-        })
-        .map(([stringifiedWal, _]) => deStringifyWal(stringifiedWal));
-      const relations = await this.assetsClient.batchGetAllRelationsForWal(walsToPoll);
-      relations.forEach((relationsForWal) => {
-        const walStringified = stringifyWal(relationsForWal.wal);
-        const storeAndSubscribers = this._assetStores[walStringified];
-        if (!storeAndSubscribers) {
-          console.warn('storeAndSubscribers undefined for stringified WAL: ', walStringified);
-          return;
-        }
-        const linkedTo = relationsForWal.linked_to.map((v) => ({
-          wal: v.dst_wal,
-          tags: dedupStringArray(v.tags),
-          relationHash: v.relation_hash,
-          createdAt: v.created_at,
-        }));
-        const linkedFrom = relationsForWal.linked_from.map((v) => ({
-          wal: v.dst_wal,
-          tags: dedupStringArray(v.tags),
-          relationHash: v.relation_hash,
-          createdAt: v.created_at,
-        }));
-        const newValue = {
-          status: 'complete',
-          value: { tags: dedupStringArray(relationsForWal.tags), linkedFrom, linkedTo },
-        };
-        if (!isEqual(newValue, get(storeAndSubscribers.store))) {
-          storeAndSubscribers.store.set({
-            status: 'complete',
-            value: { tags: dedupStringArray(relationsForWal.tags), linkedFrom, linkedTo },
-          });
-        }
-      });
-    }, ASSET_RELATION_POLLING_PERIOD);
+    // Poll asset relations periodically
+    // Uses safeSetInterval to prevent call stacking
+    this._assetRelationsIntervalHandle = safeSetInterval({
+      name: 'pollAssetRelations',
+      fn: async () => {
+        await this.pollAssetRelations();
+      },
+      intervalMs: ASSET_RELATION_POLLING_PERIOD,
+      runImmediately: false,
+    });
 
     // Handle group dna remote signals
-    this.groupClient.onSignal((signal) => {
+    this._groupSignalUnsub = this.groupClient.onSignal((signal) => {
       if (signal.type === 'Arbitrary') {
         const signalContent = decode(signal.content) as GroupRemoteSignal;
         if (signalContent.type === 'assets-signal') {
@@ -262,9 +342,101 @@ export class GroupStore {
       }
     });
 
-    this.assetsClient.onSignal((signal) => this.assetSignalHandler(signal, true));
+    this._assetsSignalUnsub = this.assetsClient.onSignal((signal) => this.assetSignalHandler(signal, true));
 
     this.constructed = true;
+  }
+
+  /**
+   * Cleanup method to cancel all periodic polling intervals.
+   * Should be called when the GroupStore is no longer needed.
+   */
+  cleanup(): void {
+    onlineDebugLog(`[OnlineDebug][${this._groupIdShort}] GroupStore cleanup called (instance=${this._instanceId})`);
+    if (this._pingIntervalHandle) {
+      this._pingIntervalHandle.cancel();
+      this._pingIntervalHandle = undefined;
+    }
+    if (this._agentInfoIntervalHandle) {
+      this._agentInfoIntervalHandle.cancel();
+      this._agentInfoIntervalHandle = undefined;
+    }
+    if (this._assetRelationsIntervalHandle) {
+      this._assetRelationsIntervalHandle.cancel();
+      this._assetRelationsIntervalHandle = undefined;
+    }
+    if (this._peerStatusSignalUnsub) {
+      this._peerStatusSignalUnsub();
+      this._peerStatusSignalUnsub = undefined;
+    }
+    if (this._groupSignalUnsub) {
+      this._groupSignalUnsub();
+      this._groupSignalUnsub = undefined;
+    }
+    if (this._assetsSignalUnsub) {
+      this._assetsSignalUnsub();
+      this._assetsSignalUnsub = undefined;
+    }
+  }
+
+  ignoredApplets(): Readable<AppletId[]> {
+    return derived(this._ignoredApplets, (a) => a);
+  }
+
+  ignoreApplet(appletHash: AppletHash) {
+    const groupDnaHashB64 = encodeHashToBase64(this.groupDnaHash);
+    let ignoredApplets = this.mossStore.persistedStore.ignoredApplets.value(groupDnaHashB64);
+    ignoredApplets.push(encodeHashToBase64(appletHash));
+    // deduplicate ignored applets
+    ignoredApplets = Array.from(new Set(ignoredApplets));
+    this.mossStore.persistedStore.ignoredApplets.set(ignoredApplets, groupDnaHashB64);
+    this._ignoredApplets.set(ignoredApplets);
+  }
+
+  hiddenAgents(): Readable<AgentPubKeyB64[]> {
+    return derived(this._hiddenAgents, (a) => a);
+  }
+
+  hideAgent(agent: AgentPubKey) {
+    const agentB64 = encodeHashToBase64(agent);
+    if (this.isAgentHidden(agentB64)) return;
+
+    const groupDnaHashB64 = encodeHashToBase64(this.groupDnaHash);
+    const hiddenAgents = [
+      ...this.mossStore.persistedStore.hiddenAgents.value(groupDnaHashB64),
+      agentB64,
+    ];
+    this.mossStore.persistedStore.hiddenAgents.set(hiddenAgents, groupDnaHashB64);
+    this._hiddenAgents.set(hiddenAgents);
+
+    // Remove from peer statuses so online count updates immediately
+    this._peerStatuses.update((statuses) => {
+      if (!statuses || !(agentB64 in statuses)) return statuses;
+      const newStatuses = { ...statuses };
+      delete newStatuses[agentB64];
+      return newStatuses;
+    });
+
+    // Remove from known agents so we stop pinging immediately
+    this._knownAgents.update((known) => {
+      if (!known.has(agentB64)) return known;
+      const newKnown = new Set(known);
+      newKnown.delete(agentB64);
+      return newKnown;
+    });
+  }
+
+  unhideAgent(agent: AgentPubKey) {
+    const groupDnaHashB64 = encodeHashToBase64(this.groupDnaHash);
+    const agentB64 = encodeHashToBase64(agent);
+    let hiddenAgents = this.mossStore.persistedStore.hiddenAgents.value(groupDnaHashB64);
+    hiddenAgents = hiddenAgents.filter((a) => a !== agentB64);
+    this.mossStore.persistedStore.hiddenAgents.set(hiddenAgents, groupDnaHashB64);
+    this._hiddenAgents.set(hiddenAgents);
+  }
+
+  isAgentHidden(agentB64: AgentPubKeyB64): boolean {
+    return get(this._hiddenAgents).includes(agentB64);
   }
 
   async assetSignalHandler(signal: SignalPayloadAssets, sendRemote: boolean): Promise<void> {
@@ -690,20 +862,20 @@ export class GroupStore {
     return dnaModifiers;
   });
 
-  permissionType = lazyReloadableStore(async () => this.groupClient.getMyPermissionType());
+  myAccountabilities = lazyReloadableStore(async () => this.groupClient.getMyAccountabilities());
 
-  allAgentPermissionTypes = lazyReloadableStore(async () =>
-    this.groupClient.getAllAgentPermissionTypes(),
+  allAgentsAccountabilities = lazyReloadableStore(async () =>
+    this.groupClient.getAllAgentsAccountabilities(),
   );
 
-  agentPermission = new LazyHoloHashMap((agent) =>
-    lazyLoad(() => this.groupClient.getAgentPermissionType(agent)),
+  agentAccountabilities = new LazyHoloHashMap((agent) =>
+    lazyLoad(() => this.groupClient.getAgentAccountabilities(agent)),
   );
 
   groupProfile = reloadableLazyLoadAndPollUntil(
     async () => {
       // only poll in case groupProfile is not yet defined
-      const entryRecord = await this.groupClient.getGroupProfile(false);
+      const entryRecord = await this.groupClient.getGroupProfile(true);
       return entryRecord?.entry;
     },
     undefined,
@@ -718,7 +890,7 @@ export class GroupStore {
 
   groupDescription = reloadableLazyLoadAndPollUntil(
     async () => {
-      const entryRecord = await this.groupClient.getGroupDescription();
+      const entryRecord = await this.groupClient.getGroupDescription(true);
       return entryRecord?.entry;
     },
     undefined,
@@ -737,14 +909,14 @@ export class GroupStore {
   agentsProfiles(
     agents: Array<AgentPubKey>,
   ): AsyncReadable<ReadonlyMap<AgentPubKey, MaybeProfile>> {
-    return sliceAndJoin(this.membersProfiles, agents);
+    return sliceAndJoin(this.membersProfiles as GetonlyMap<any, any>, agents);
   }
 
   membersProfiles = new LazyHoloHashMap((agent: AgentPubKey) =>
     asyncReadable<MaybeProfile | undefined>(async (set) => {
       try {
         console.log('Getting agent profile.');
-        const profile = await this.profilesStore.client.getAgentProfile(agent);
+        const profile = await this.profilesStore.client.getAgentProfile(agent, true);
         profile ? set({ type: 'profile', profile }) : set({ type: 'unknown' });
       } catch (e) {
         console.error('Failed to fetch profile: ', e);
@@ -778,76 +950,316 @@ export class GroupStore {
 
   updatePeerStatus(agent: AgentPubKey, status: string, tzUtcOffset?: number) {
     this._peerStatuses.update((value) => {
-      if (!value) {
-        value = {};
-      }
-      value[encodeHashToBase64(agent)] = {
+      // Create a new object to ensure derived stores detect the change
+      const newValue = value ? { ...value } : {};
+      newValue[encodeHashToBase64(agent)] = {
         lastSeen: Date.now(),
         status,
         tzUtcOffset,
       };
-      return value;
+      return newValue;
+    });
+  }
+
+  /**
+   * Get the current unread group notification counts.
+   * Returns a readable store with counts by urgency level.
+   */
+  unreadGroupNotifications(): Readable<{ low: number; medium: number; high: number }> {
+    return derived(this._unreadGroupNotifications, (state) => state);
+  }
+
+  /**
+   * Get the notification state as [urgency, count] tuple for display.
+   * Returns the highest urgency level with its count.
+   */
+  getUnreadGroupNotificationState(): [string | undefined, number | undefined] {
+    const counts = get(this._unreadGroupNotifications);
+    if (counts.high > 0) {
+      return ['high', counts.high];
+    } else if (counts.medium > 0) {
+      return ['medium', counts.medium];
+    } else if (counts.low > 0) {
+      return ['low', counts.low];
+    }
+    return [undefined, undefined];
+  }
+
+  /**
+   * Increment the unread notification count for the given urgency level.
+   * Used for ephemeral notifications like foyer messages.
+   */
+  incrementUnreadGroupNotifications(urgency: 'low' | 'medium' | 'high') {
+    this._unreadGroupNotifications.update((counts) => ({
+      ...counts,
+      [urgency]: counts[urgency] + 1,
+    }));
+  }
+
+  /**
+   * Clear all unread group notifications.
+   * Called when the user views the group/foyer.
+   */
+  clearGroupNotificationStatus() {
+    this._unreadGroupNotifications.set({ low: 0, medium: 0, high: 0 });
+  }
+
+  /**
+   * Get the foyer notification settings for this group.
+   */
+  getFoyerNotificationSettings(): Readable<FoyerNotificationSettings> {
+    return derived(this._foyerNotificationSettings, (settings) => settings);
+  }
+
+  /**
+   * Get the current foyer notification settings value.
+   */
+  getFoyerNotificationSettingsValue(): FoyerNotificationSettings {
+    return get(this._foyerNotificationSettings);
+  }
+
+  /**
+   * Set the foyer notification settings for this group.
+   * Persists to localStorage.
+   */
+  setFoyerNotificationSettings(settings: FoyerNotificationSettings) {
+    this._foyerNotificationSettings.set(settings);
+    const key = `foyerNotificationSettings-${encodeHashToBase64(this.groupDnaHash)}`;
+    localStorage.setItem(key, JSON.stringify(settings));
+  }
+
+  /**
+   * Load the foyer notification settings from localStorage.
+   * Called during initialization. Handles migration from old format.
+   */
+  loadFoyerNotificationSettings() {
+    const newKey = `foyerNotificationSettings-${encodeHashToBase64(this.groupDnaHash)}`;
+    const oldKey = `foyerNotificationSetting-${encodeHashToBase64(this.groupDnaHash)}`;
+
+    // Try new format first
+    const storedNew = localStorage.getItem(newKey);
+    if (storedNew) {
+      try {
+        const parsed = JSON.parse(storedNew) as FoyerNotificationSettings;
+        if (parsed.mentions !== undefined && parsed.allMessages !== undefined) {
+          this._foyerNotificationSettings.set(parsed);
+          return;
+        }
+      } catch {
+        // Invalid JSON, fall through to migration
+      }
+    }
+
+    // Migrate from old format if present
+    const storedOld = localStorage.getItem(oldKey);
+    if (storedOld) {
+      let migratedSettings: FoyerNotificationSettings;
+      switch (storedOld) {
+        case 'all':
+          migratedSettings = { mentions: 'high', allMessages: 'high' };
+          break;
+        case 'mentions':
+          migratedSettings = { mentions: 'high', allMessages: 'none' };
+          break;
+        case 'none':
+          migratedSettings = { mentions: 'none', allMessages: 'none' };
+          break;
+        default:
+          migratedSettings = DEFAULT_FOYER_NOTIFICATION_SETTINGS;
+      }
+      this._foyerNotificationSettings.set(migratedSettings);
+      // Save in new format and remove old key
+      localStorage.setItem(newKey, JSON.stringify(migratedSettings));
+      localStorage.removeItem(oldKey);
+    }
+  }
+
+  /**
+   * Reconstruct full AgentPubKey from partial agent ID returned by agentInfo.
+   * AgentInfo returns only the middle 32 bytes (core hash) as URL-safe base64.
+   * Uses hashFrom32AndType to properly construct the full 39-byte hash.
+   */
+  private getFullAgentId(partialAgentIdB64: string): AgentPubKey {
+    // Decode URL-safe base64 to Uint8Array
+    // Convert URL-safe base64 to standard base64
+    let standardBase64 = partialAgentIdB64.replace(/-/g, '+').replace(/_/g, '/');
+    // Add padding if needed
+    while (standardBase64.length % 4 !== 0) {
+      standardBase64 += '=';
+    }
+
+    const binaryString = atob(standardBase64);
+    const coreHash = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      coreHash[i] = binaryString.charCodeAt(i);
+    }
+
+    // Use hashFrom32AndType to construct the full AgentPubKey
+    return hashFrom32AndType(coreHash, HoloHashType.Agent) as AgentPubKey;
+  }
+
+  /**
+   * Poll Holochain's agentInfo to discover which agents are in the network.
+   * This does NOT indicate online/offline status - only network membership.
+   * Ping/pong signals determine actual online status.
+   */
+  async pollAgentInfo(): Promise<void> {
+    try {
+      const appWebsocket = this.appWebsocket;
+      const response = await appWebsocket.agentInfo({
+        dna_hashes: [this.groupDnaHash],
+      });
+
+      // Extract partial agent IDs and reconstruct full agent keys
+      const knownAgents = new Set<AgentPubKeyB64>();
+      const myPubKeyB64 = encodeHashToBase64(this.groupClient.myPubKey);
+
+      for (const agentInfoItem of response) {
+        try {
+          // Response format: { agentInfo: "{...json...}", signature: "..." }
+          // Parse the outer structure
+          const parsed =
+            typeof agentInfoItem === 'string' ? JSON.parse(agentInfoItem) : agentInfoItem;
+
+          // Parse the inner agentInfo JSON string
+          const agentInfoData =
+            typeof parsed.agentInfo === 'string'
+              ? JSON.parse(parsed.agentInfo)
+              : parsed.agentInfo;
+
+          // Extract the partial agent ID from the 'agent' field
+          const partialAgentId = agentInfoData.agent;
+
+          if (!partialAgentId) {
+            console.warn('[AgentInfo] No agent field in agentInfo data:', agentInfoData);
+            continue;
+          }
+
+          // Reconstruct full agent key from partial ID
+          const fullAgentKey = this.getFullAgentId(partialAgentId);
+          const fullAgentKeyB64 = encodeHashToBase64(fullAgentKey);
+
+          // Exclude self and hidden agents
+          if (fullAgentKeyB64 !== myPubKeyB64 && !this.isAgentHidden(fullAgentKeyB64)) {
+            knownAgents.add(fullAgentKeyB64);
+          }
+        } catch (error) {
+          console.warn('[AgentInfo] Failed to parse agent info item:', agentInfoItem, error);
+        }
+      }
+
+      const prevSize = get(this._knownAgents).size;
+      this._knownAgents.set(knownAgents);
+      const currentOnlineCount = get(this.onlinePeersCount);
+      onlineDebugLog(`[OnlineDebug][${this._groupIdShort}] pollAgentInfo: knownAgents ${prevSize} -> ${knownAgents.size}, onlineCount=${currentOnlineCount} (instance=${this._instanceId})`);
+    } catch (error) {
+      onlineDebugLog(`[OnlineDebug][${this._groupIdShort}] Failed to poll agent info (instance=${this._instanceId}):`, error);
+      // Don't throw - if agentInfo fails, signaling will likely fail too
+      // Just keep using the last known agent list
+    }
+  }
+
+  /**
+   * Poll asset relations for all active asset stores.
+   * Only polls for stores that have active subscribers.
+   */
+  async pollAssetRelations(): Promise<void> {
+    const walsToPoll = Object.entries(this._assetStores)
+      .filter(([_, storeAndSubscribers]) => {
+        // We only poll for stores with active subscribers
+        return (
+          Object.values(storeAndSubscribers.subscriberCounts).reduce(
+            (acc, currentVal) => acc + currentVal,
+            0,
+          ) > 0
+        );
+      })
+      .map(([stringifiedWal, _]) => deStringifyWal(stringifiedWal));
+
+    if (walsToPoll.length === 0) return;
+
+    const relations = await this.assetsClient.batchGetAllRelationsForWal(walsToPoll);
+    relations.forEach((relationsForWal) => {
+      const walStringified = stringifyWal(relationsForWal.wal);
+      const storeAndSubscribers = this._assetStores[walStringified];
+      if (!storeAndSubscribers) {
+        console.warn('storeAndSubscribers undefined for stringified WAL: ', walStringified);
+        return;
+      }
+      const linkedTo = relationsForWal.linked_to.map((v) => ({
+        wal: v.dst_wal,
+        tags: dedupStringArray(v.tags),
+        relationHash: v.relation_hash,
+        createdAt: v.created_at,
+      }));
+      const linkedFrom = relationsForWal.linked_from.map((v) => ({
+        wal: v.dst_wal,
+        tags: dedupStringArray(v.tags),
+        relationHash: v.relation_hash,
+        createdAt: v.created_at,
+      }));
+      const newValue = {
+        status: 'complete',
+        value: { tags: dedupStringArray(relationsForWal.tags), linkedFrom, linkedTo },
+      };
+      if (!isEqual(newValue, get(storeAndSubscribers.store))) {
+        storeAndSubscribers.store.set({
+          status: 'complete',
+          value: { tags: dedupStringArray(relationsForWal.tags), linkedFrom, linkedTo },
+        });
+      }
     });
   }
 
   async pingAgentsAndCleanPeerStatuses() {
     const now = Date.now();
-    const myStatus = now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
+    let markedOfflineCount = 0;
     // Set unresponsive agents to offline
     this._peerStatuses.update((statuses) => {
-      if (!statuses) {
-        statuses = {};
-      }
-      if (statuses) {
-        Object.keys(statuses).forEach((agent) => {
-          if (now - statuses[agent].lastSeen > OFFLINE_THRESHOLD) {
-            statuses[agent] = {
-              lastSeen: statuses[agent].lastSeen,
-              status: 'offline',
-            };
+      // Create a new object to ensure derived stores detect the change
+      const newStatuses = statuses ? { ...statuses } : {};
+
+      Object.keys(newStatuses).forEach((agent) => {
+        if (now - newStatuses[agent].lastSeen > OFFLINE_THRESHOLD) {
+          if (newStatuses[agent].status !== 'offline') {
+            markedOfflineCount++;
           }
-        });
-        statuses[encodeHashToBase64(this.groupClient.myPubKey)] = {
-          lastSeen: now,
-          status: myStatus,
-        };
-      }
-      return statuses;
+          newStatuses[agent] = {
+            lastSeen: newStatuses[agent].lastSeen,
+            status: 'offline',
+          };
+        }
+      });
+      // Don't add self to peer statuses - peer statuses should only track other agents
+      return newStatuses;
     });
+    const knownAgentsCount = get(this._knownAgents).size;
+    onlineDebugLog(`[OnlineDebug][${this._groupIdShort}] pingClean: markedOffline=${markedOfflineCount}, pinging ${knownAgentsCount} known agents (instance=${this._instanceId})`);
     await this.pingAgents();
   }
 
   /**
-   * Pings all agents, provided that they need to be pinged based on the needsPinging function
+   * Pings all agents discovered via agentInfo.
+   * Self is already excluded from the knownAgents set by pollAgentInfo().
+   * Since agentInfo only returns agents in the network, we ping all of them
+   * to determine their actual online/offline status.
    */
   async pingAgents(): Promise<void> {
     const now = Date.now();
-    const myStatus = now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
+    const myStatus = now - this.mossStore.myLatestActivity > IDLE_THRESHOLD
+      ? 'inactive'
+      : 'online';
     const tzOffset = this.mossStore.tzUtcOffset();
-    if (this.allAgents && this._agentsRefetchCounter < AGENTS_REFETCH_FREQUENCY) {
-      const agentsThatNeedPinging = this.allAgents.filter(
-        (agent) =>
-          encodeHashToBase64(agent) !== encodeHashToBase64(this.groupClient.myPubKey) &&
-          this.needsPinging(agent),
-      );
-      this._agentsRefetchCounter += 1;
-      return agentsThatNeedPinging.length > 0
-        ? this.peerStatusClient.ping(agentsThatNeedPinging, myStatus, tzOffset)
-        : Promise.resolve();
-    } else {
-      const allAgents = await this.profilesStore.client.getAgentsWithProfile();
-      this.allAgents = allAgents;
-      const agentsThatNeedPinging = allAgents.filter(
-        (agent) =>
-          encodeHashToBase64(agent) !== encodeHashToBase64(this.groupClient.myPubKey) &&
-          this.needsPinging(agent),
-      );
-      this._agentsRefetchCounter = 0;
-      return agentsThatNeedPinging.length > 0
-        ? this.peerStatusClient.ping(agentsThatNeedPinging, myStatus, tzOffset)
-        : Promise.resolve();
-    }
+
+    // Get agents that Holochain knows about in the network (self already excluded)
+    const knownAgentsB64 = Array.from(get(this._knownAgents));
+    const knownAgents = knownAgentsB64.map((b64) => decodeHashFromBase64(b64));
+
+    return knownAgents.length > 0
+      ? this.peerStatusClient.ping(knownAgents, myStatus, tzOffset)
+      : Promise.resolve();
   }
+
 
   /**
    * Function that returns deterministically but with 50% probability for a given pair
@@ -896,11 +1308,10 @@ export class GroupStore {
         );
       }
     }
-    await this.mossStore.reloadManualStores();
   }
 
   /**
-   * Fetches the applet from the devhub, installs it in the current conductor
+   * Fetches the tool from the devhub, installs it in the current conductor
    * and advertises it in the group DNA. To be called by the first agent
    * installing this specific instance of the Applet.
    * This function can only successfully be called by the Progenitor or
@@ -944,6 +1355,7 @@ export class GroupStore {
       permission_hash: permissionHash,
       custom_name: customName,
       description: tool.toolInfoAndVersions.description,
+      subtitle: tool.toolInfoAndVersions.subtitle,
       sha256_happ: latestVersion.hashes.happSha256,
       sha256_ui: latestVersion.hashes.uiSha256,
       sha256_webhapp: latestVersion.hashes.webhappSha256,
@@ -1028,8 +1440,8 @@ export class GroupStore {
 
     const appletsToEnable = previouslyDisabled
       ? installedApplets.filter(
-          (appletHash) => !previouslyDisabled.includes(encodeHashToBase64(appletHash)),
-        )
+        (appletHash) => !previouslyDisabled.includes(encodeHashToBase64(appletHash)),
+      )
       : installedApplets;
 
     for (const appletHash of appletsToEnable) {
@@ -1044,9 +1456,20 @@ export class GroupStore {
     await this.mossStore.reloadManualStores();
   }
 
-  applets = new LazyHoloHashMap((appletHash: EntryHash) =>
+  applets: LazyHoloHashMap<AppletHash, AsyncReadable<Applet | undefined>> = new LazyHoloHashMap((appletHash: EntryHash) =>
     lazyLoad(async () => this.groupClient.getApplet(appletHash)),
   );
+
+  // Shared polling store for joined applet agents, keyed by applet hash.
+  // All UI components subscribe to this instead of creating their own polls.
+  joinedAppletAgents: LazyHoloHashMap<AppletHash, AsyncReadable<AppletAgent[]>> =
+    new LazyHoloHashMap((appletHash: EntryHash) =>
+      lazyLoadAndPoll(
+        () => this.groupClient.getJoinedAppletAgents(appletHash),
+        20000,
+        () => this.groupClient.getJoinedAppletAgents(appletHash, true),
+      ),
+    );
 
   // need to change this. allApplets needs to come from the conductor
   // Currently unused
@@ -1101,7 +1524,10 @@ export class GroupStore {
     const output = allMyApplets.filter((appletHash) =>
       runningAppIds.includes(`applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`),
     );
-    // console.log('Got allMyRunningApplets: ', output);
+    // console.log(
+    //   'Got allMyRunningApplets: ',
+    //   output.map((h) => encodeHashToBase64(h)),
+    // );
     return output;
   });
 
@@ -1133,27 +1559,12 @@ export class GroupStore {
   // in the local conductor yet (provided that storing the Applet entry to the local source chain has
   // succeeded for every Applet that has been installed into the conductor)
   unjoinedApplets = lazyLoadAndPoll(async () => {
-    const unjoinedApplets = await this.groupClient.getUnjoinedApplets();
-    const unjoinedAppletsWithGroupMembers: EntryHashMap<[AgentPubKey, number, AppletAgent[]]> =
-      new EntryHashMap();
-    try {
-      await Promise.all(
-        unjoinedApplets.map(async ([appletHash, addingAgent, timestamp]) => {
-          const joinedMembers = await this.groupClient.getJoinedAppletAgents(appletHash);
-          unjoinedAppletsWithGroupMembers.set(appletHash, [addingAgent, timestamp, joinedMembers]);
-        }),
-      );
-    } catch (e) {
-      console.warn('Failed to get joined members for unjoined applets: ', e);
-      const unjoinedAppletsWithGroupMembersFallback: EntryHashMap<
-        [AgentPubKey, number, AppletAgent[]]
-      > = new EntryHashMap();
-      unjoinedApplets.forEach(([appletHash, addingAgent, timestamp]) => {
-        unjoinedAppletsWithGroupMembersFallback.set(appletHash, [addingAgent, timestamp, []]);
-      });
-      return unjoinedAppletsWithGroupMembersFallback;
-    }
-    return unjoinedAppletsWithGroupMembers;
+    const unjoinedApplets = await this.groupClient.getUnjoinedApplets(true);
+    const result: EntryHashMap<[AgentPubKey, number]> = new EntryHashMap();
+    unjoinedApplets.forEach(([appletHash, addingAgent, timestamp]) => {
+      result.set(appletHash, [addingAgent, timestamp]);
+    });
+    return result;
   }, NEW_APPLETS_POLLING_FREQUENCY);
 
   // Currently unused
@@ -1174,8 +1585,9 @@ export class GroupStore {
   //     )
   // );
 
-  activeAppletStores = pipe(this.allMyRunningApplets, (allApplets) =>
-    sliceAndJoin(this.mossStore.appletStores, allApplets),
+  activeAppletStores: AsyncReadable<HoloHashMap<EntryHash, AppletStore>> = pipe(
+        this.allMyRunningApplets,
+        (allApplets) => sliceAndJoin(this.mossStore.appletStores as GetonlyMap<any, any>, allApplets),
   );
 
   allBlocks = pipe(this.activeAppletStores, (appletsStores) =>
@@ -1186,17 +1598,30 @@ export class GroupStore {
     this.activeAppletStores,
     (allAppletStores) =>
       derived(
-        joinMap(mapValues(allAppletStores, (store) => store.unreadNotifications())),
-        (map) =>
-          ({ status: 'complete', value: map }) as AsyncStatus<
-            ReadonlyMap<Uint8Array, [string | undefined, number | undefined]>
-          >,
+        [
+          joinMap(mapValues(allAppletStores, (store) => store.unreadNotifications())),
+          this._unreadGroupNotifications,
+        ] as const,
+        ([map, groupCounts]) =>
+          ({
+            status: 'complete',
+            value: { appletNotifications: map, groupCounts },
+          }) as AsyncStatus<{
+            appletNotifications: ReadonlyMap<Uint8Array, [string | undefined, number | undefined]>;
+            groupCounts: { low: number; medium: number; high: number };
+          }>,
       ),
-    (notificationsMap) => {
+    ({ appletNotifications, groupCounts }) => {
+      // Aggregate applet notification counts
       const notificationCounts = { low: 0, medium: 0, high: 0 };
-      Array.from(notificationsMap.values()).forEach(([urgency, count]) => {
+      Array.from(appletNotifications.values()).forEach(([urgency, count]) => {
         if (urgency) notificationCounts[urgency] += count;
       });
+
+      // Merge in foyer/group-level notification counts
+      notificationCounts.low += groupCounts.low;
+      notificationCounts.medium += groupCounts.medium;
+      notificationCounts.high += groupCounts.high;
 
       if (notificationCounts.high) {
         return completed(['high', notificationCounts.high] as [

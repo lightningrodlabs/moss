@@ -1,9 +1,10 @@
-import { DnaHash, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
+import { AgentPubKeyB64, DnaHash, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
 import { AppletId, FrameNotification } from '@theweave/api';
-import { AppletNotificationSettings } from './applets/types';
+import { AppletNotificationSettings, GlobalNotificationSoundSettings } from './applets/types';
 import { destringifyAndDecode, encodeAndStringify } from './utils';
 import { WalInPocket } from './moss-store';
 import { Profile } from '@holochain-open-dev/profiles';
+import { DEFAULT_NOTIFICATION_SOUND_SETTINGS } from './services/notification-audio';
 
 /**
  * A store that's persisted.
@@ -15,7 +16,44 @@ export class PersistedStore {
     this.store = store ? store : new LocalStorageStore();
   }
 
-  keys;
+  /**
+   * User's preferred locale for the UI (e.g. 'en', 'de', 'fr', 'es')
+   */
+  locale: SubStore<string, string, []> = {
+    value: () => {
+      const locale = this.store.getItem<string>('locale');
+      return locale ? locale : 'en';
+    },
+    set: (value) => {
+      this.store.setItem<string>('locale', value);
+    },
+  };
+
+  /**
+   * Whether design feedback mode is enabled (shows feedback icon overlay)
+   */
+  designFeedbackMode: SubStore<boolean, boolean, []> = {
+    value: () => {
+      const enabled = this.store.getItem<boolean>('designFeedbackMode');
+      return enabled ? enabled : false;
+    },
+    set: (value) => {
+      this.store.setItem<boolean>('designFeedbackMode', value);
+    },
+  };
+
+  /**
+   * Whether the applet sidebar is in collapsed mode or not
+   */
+  appletSidebarCollapsed: SubStore<boolean, boolean, []> = {
+    value: () => {
+      const appletSidebarCollapsed = this.store.getItem<boolean>('appletSidebarCollapsed');
+      return appletSidebarCollapsed ? appletSidebarCollapsed : false;
+    },
+    set: (value) => {
+      this.store.setItem<boolean>('appletSidebarCollapsed', value);
+    },
+  };
 
   /**
    * Array of Moss versions that have been declined
@@ -83,6 +121,15 @@ export class PersistedStore {
     },
     set: (value, groupDnaHashB64: DnaHashB64) =>
       this.store.setItem(`ignoredApplets#${groupDnaHashB64}`, value),
+  };
+
+  hiddenAgents: SubStore<AgentPubKeyB64[], AgentPubKeyB64[], [DnaHashB64]> = {
+    value: (groupDnaHashB64: DnaHashB64) => {
+      const hidden = this.store.getItem<AgentPubKeyB64[]>(`hiddenAgents#${groupDnaHashB64}`);
+      return hidden ? hidden : [];
+    },
+    set: (value: AgentPubKeyB64[], groupDnaHashB64: DnaHashB64) =>
+      this.store.setItem(`hiddenAgents#${groupDnaHashB64}`, value),
   };
 
   // We don't need this anymore currently
@@ -164,6 +211,52 @@ export class PersistedStore {
   };
 
   /**
+   * Global notification sound settings
+   */
+  notificationSoundSettings: SubStore<
+    GlobalNotificationSoundSettings,
+    GlobalNotificationSoundSettings,
+    []
+  > = {
+    value: () => {
+      const settings = this.store.getItem<GlobalNotificationSoundSettings>(
+        'notificationSoundSettings',
+      );
+      return settings ?? DEFAULT_NOTIFICATION_SOUND_SETTINGS;
+    },
+    set: (value: GlobalNotificationSoundSettings) => {
+      this.store.setItem('notificationSoundSettings', value);
+    },
+  };
+
+  /**
+   * Section read states for notification sections.
+   * Tracks when each section was last viewed and how many items it had at that time.
+   */
+  sectionReadStates: SubStore<SectionReadStates, SectionReadStates, []> = {
+    value: () => {
+      const states = this.store.getItem<SectionReadStates>('sectionReadStates');
+      return states ?? {};
+    },
+    set: (value: SectionReadStates) => {
+      this.store.setItem('sectionReadStates', value);
+    },
+  };
+
+  /**
+   * Foyer panel width per group (in pixels). Default is 320.
+   */
+  foyerWidth: SubStore<number, number, [DnaHashB64]> = {
+    value: (groupDnaHashB64: DnaHashB64) => {
+      const width = this.store.getItem<number>(`foyerWidth#${groupDnaHashB64}`);
+      return width ?? 320;
+    },
+    set: (value: number, groupDnaHashB64: DnaHashB64) => {
+      this.store.setItem(`foyerWidth#${groupDnaHashB64}`, value);
+    },
+  };
+
+  /**
    * When disabling all applets of a group the applets that were already disabled
    * get stored here in order to not re-enable them again if the groups gets
    * re-enabled
@@ -233,3 +326,17 @@ export function getLocalStorageItem<T>(key: string): T | undefined {
 export function setLocalStorageItem<T>(key: string, value: T): void {
   window.localStorage.setItem(key, encodeAndStringify(value));
 }
+
+/**
+ * Per-section state: when viewed and count at that time
+ */
+export type SectionReadState = {
+  section: string;
+  lastViewedCount: number;
+  lastViewedAt: number;
+};
+
+/**
+ * Section read states stored in localStorage
+ */
+export type SectionReadStates = Record<string, SectionReadState>;

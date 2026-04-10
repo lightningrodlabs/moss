@@ -1,7 +1,7 @@
 import { provide } from '@lit/context';
 import { state, customElement } from 'lit/decorators.js';
 import { AdminWebsocket, DnaHash, ProvisionedCell } from '@holochain/client';
-import { LitElement, html, css } from 'lit';
+import { LitElement, html, css, nothing } from 'lit';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -14,9 +14,10 @@ import './elements/main-dashboard.js';
 import { mossStyles } from './shared-styles.js';
 import { mossStoreContext } from './context.js';
 import { MossStore } from './moss-store.js';
-import { appletDevConfig, getConductorInfo } from './electron-api.js';
+import { appletDevConfig, getConductorInfo, ImportGroupsProgress } from './electron-api.js';
+import { LegacyProfileInfo } from './electron-api.js';
 import { localized, msg } from '@lit/localize';
-import { arrowLeftShortIcon, mossIcon, plusCircleIcon } from './elements/_new_design/icons.js';
+import { arrowLeftShortIcon, createGroupIcon, mossIcon } from './elements/_new_design/icons.js';
 import './elements/_new_design/moss-select-avatar.js';
 import './elements/_new_design/moss-select-avatar-fancy.js';
 import { defaultIcons } from './elements/_new_design/defaultIcons.js';
@@ -24,10 +25,13 @@ import { defaultIcons } from './elements/_new_design/defaultIcons.js';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 import { partialModifiersFromInviteLink } from '@theweave/utils';
 import { notifyError } from '@holochain-open-dev/elements';
+import { safeSetInterval, SafeIntervalHandle } from './utils.js';
 import SlRadioGroup from '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
+import {PartialModifiers} from "@theweave/moss-types";
 
 enum MossAppState {
   Loading,
+  LegacyKeystoreImport,
   InitialSetup,
   CreateGroupStep1,
   CreateGroupStep2,
@@ -43,7 +47,7 @@ export class MossApp extends LitElement {
   state: MossAppState = MossAppState.Loading;
 
   @state()
-  _appletUiUpdateCheckInterval: number | undefined;
+  _appletUiUpdateCheckInterval: SafeIntervalHandle | undefined;
 
   // @state()
   // previousState: State = { state: 'loading' };
@@ -96,11 +100,31 @@ export class MossApp extends LitElement {
   // private avatar = '';
 
   @state()
-  private loadingText = 'loading...';
+  private loadingText = msg('loading...');
+
+  private _happMessageListener: ((event: MessageEvent) => void) | undefined;
+
+  private _legacyKeystoreResolve: (() => void) | undefined;
+
+  @state()
+  private _legacyProfiles: LegacyProfileInfo[] = [];
+
+  private _currentLairVersion: string | undefined;
+
+  @state()
+  private _selectedLegacyProfile: LegacyProfileInfo | undefined;
+
+  @state()
+  private _importGroupsProgress: ImportGroupsProgress | undefined = undefined;
+
+  private _didImportLegacyProfile = false;
 
   async firstUpdated() {
-    this.loadingText = 'loading...';
-    window.window.__WEAVE_PROTOCOL_VERSION__ = '0.14';
+    // Note: Locale is initialized in index.html before the app loads
+    // to avoid flash of untranslated content
+
+    this.loadingText = msg('loading...');
+    window.window.__WEAVE_PROTOCOL_VERSION__ = '0.15';
     window.__ZOME_CALL_LOGGING_ENABLED__ = !!window.sessionStorage.getItem(
       '__ZOME_CALL_LOGGING_ENABLED__',
     );
@@ -110,21 +134,32 @@ export class MossApp extends LitElement {
       console.error(e);
     }
 
-    window.addEventListener('message', async (message) => handleHappMessage(message));
+    this._happMessageListener = async (message: MessageEvent) => handleHappMessage(message);
+    window.addEventListener('message', this._happMessageListener);
 
-    await this._mossStore.checkForUiUpdates();
-    // Check once every hour or on page refresh
-    this._appletUiUpdateCheckInterval = window.setInterval(
-      async () => await this._mossStore.checkForUiUpdates(),
-      3_600_000,
-    );
+    if (this._mossStore) {
+      await this._mossStore.checkForUiUpdates();
+      // Check once every hour or on page refresh
+      // Uses safeSetInterval to prevent call stacking
+      this._appletUiUpdateCheckInterval = safeSetInterval({
+        name: 'checkForUiUpdates',
+        fn: async () => {
+          await this._mossStore.checkForUiUpdates();
+        },
+        intervalMs: 3_600_000,
+        runImmediately: false,
+      });
+    }
   }
 
   disconnectedCallback(): void {
     if (this._appletUiUpdateCheckInterval) {
-      window.clearInterval(this._appletUiUpdateCheckInterval);
+      this._appletUiUpdateCheckInterval.cancel();
     }
-    window.removeEventListener('message', handleHappMessage);
+    if (this._happMessageListener) {
+      window.removeEventListener('message', this._happMessageListener);
+      this._happMessageListener = undefined;
+    }
   }
 
   async connect() {
@@ -137,16 +172,43 @@ export class MossApp extends LitElement {
       window.localStorage.setItem('isFirstLaunch', 'true');
     }
 
+    if (isFirstLaunch) {
+      const [legacyProfiles, currentLairVersion] = await Promise.all([
+        window.electronAPI.findLegacyProfiles(),
+        window.electronAPI.getLairBinaryVersion(),
+      ]);
+      this._currentLairVersion = currentLairVersion;
+      if (legacyProfiles.length > 0) {
+        this._legacyProfiles = legacyProfiles;
+        this._selectedLegacyProfile = legacyProfiles[0];
+        await new Promise<void>((resolve) => {
+          this._legacyKeystoreResolve = resolve;
+          this.state = MossAppState.LegacyKeystoreImport;
+        });
+        this.state = MossAppState.Loading;
+      }
+    }
+
     let info = await getConductorInfo();
     // If the conductor is not running yet, start it
-    // (it may for example already be running if the connect() function
-    // is being run as part of a page reload)
+    // (it may, for example, already be running if the connect() function is being run as part of a page reload)
     if (!info) {
       try {
-        this.loadingText = 'starting Holochain...';
+        this.loadingText = msg('starting Holochain...');
         await window.electronAPI.launch();
         info = await getConductorInfo();
         if (!info) throw new Error('Failed to get conductor info after launch.');
+        // Auto-import groups from a legacy profile if the user selected one to import
+        if (isFirstLaunch) {
+          this.loadingText = msg('Importing groups...');
+          window.electronAPI.onImportGroupsProgress((_e, payload) => {
+            this._importGroupsProgress = payload;
+          });
+          await window.electronAPI.consumePendingGroupsImport().catch((e) =>
+            console.warn('Auto-import of groups from legacy profile failed:', e),
+          );
+          this._importGroupsProgress = undefined;
+        }
       } catch (e) {
         this.state = MossAppState.Error;
         return;
@@ -176,9 +238,8 @@ export class MossApp extends LitElement {
     );
 
     isFirstLaunch = !!window.localStorage.getItem('isFirstLaunch');
-    if (isFirstLaunch) {
-      this.state = MossAppState.InitialSetup;
-    }
+    const isDev = await window.electronAPI.isDevModeEnabled();
+    console.debug("isDevModeEnabled", isDev);
 
     // Listen for general activity to set the latest activity timestamp
     document.addEventListener('mousemove', () => {
@@ -197,7 +258,10 @@ export class MossApp extends LitElement {
     const allApps = await adminWebsocket.listApps({});
     console.log('ALL INSTALLED APPS: ', allApps);
 
-    if (!isFirstLaunch) {
+    const hasGroups = allApps.some((app) => app.installed_app_id.startsWith('group#'));
+    if (isFirstLaunch && !isDev && !this._didImportLegacyProfile && !hasGroups) {
+      this.state = MossAppState.InitialSetup;
+    } else {
       this.state = MossAppState.Running;
     }
   }
@@ -220,7 +284,7 @@ export class MossApp extends LitElement {
 
   async joinGroupAndHeadToMain(): Promise<void> {
     this.creatingGroup = true;
-    let modifiers;
+    let modifiers: PartialModifiers;
     try {
       modifiers = partialModifiersFromInviteLink(this.inviteLink);
     } catch (e) {
@@ -262,8 +326,8 @@ export class MossApp extends LitElement {
             class="moss-hover-icon-button"
             style="margin-left: -8px; margin-top: -8px;"
             @click=${() => {
-              this.state = MossAppState.InitialSetup;
-            }}
+        this.state = MossAppState.InitialSetup;
+      }}
           >
             <div class="row items-center">
               <div class="moss-hover-icon-button-icon" style="margin-right: 10px;">
@@ -275,7 +339,7 @@ export class MossApp extends LitElement {
           <div class="column items-center">
             <span
               style="font-size: 28px; font-weight: 500; margin-bottom: 48px; margin-top: 30px; letter-spacing: -0.56px;"
-              >${'My group is called'}</span
+              >${msg('My group is called')}</span
             >
 
             <sl-input
@@ -289,11 +353,11 @@ export class MossApp extends LitElement {
               required
               autofocus
               @input=${() => {
-                const groupNameInput = this.shadowRoot?.getElementById(
-                  'group-name-input',
-                ) as unknown as SlInput;
-                this.groupName = groupNameInput.value;
-              }}
+        const groupNameInput = this.shadowRoot?.getElementById(
+          'group-name-input',
+        ) as unknown as SlInput;
+        this.groupName = groupNameInput.value;
+      }}
             >
             </sl-input>
 
@@ -303,8 +367,8 @@ export class MossApp extends LitElement {
               label=""
               .required=${true}
               @avatar-selected=${(e) => {
-                this.groupIcon = e.detail.avatar;
-              }}
+        this.groupIcon = e.detail.avatar;
+      }}
             ></moss-select-avatar-fancy>
 
             <button
@@ -312,14 +376,14 @@ export class MossApp extends LitElement {
               style="width: 310px; margin-bottom: 56px;"
               ?disabled=${!this.groupIcon || !this.groupName || this.creatingGroup}
               @click=${() => {
-                this.state = MossAppState.CreateGroupStep2;
-              }}
+        this.state = MossAppState.CreateGroupStep2;
+      }}
             >
               ${this.creatingGroup
-                ? html`<div class="column center-content">
+        ? html`<div class="column center-content">
                     <div class="dot-carousel" style="margin: 5px 0;"></div>
                   </div>`
-                : html`${msg('Create group space')}`}
+        : html`${msg('Create group space')}`}
             </button>
 
             <div class="row">
@@ -343,8 +407,8 @@ export class MossApp extends LitElement {
             class="moss-hover-icon-button"
             style="margin-left: -8px; margin-top: -8px;"
             @click=${() => {
-              this.state = MossAppState.CreateGroupStep1;
-            }}
+        this.state = MossAppState.CreateGroupStep1;
+      }}
           >
             <div class="row items-center">
               <div class="moss-hover-icon-button-icon" style="margin-right: 10px;">
@@ -356,7 +420,7 @@ export class MossApp extends LitElement {
           <div class="column items-center flex-1" style="height: calc(100% - 28px);">
             <span
               style="font-size: 28px; font-weight: 500; margin-bottom: 48px; margin-top: 30px; letter-spacing: -0.56px;"
-              >${'Choose Group Type'}</span
+              >${msg('Choose Group Type')}</span
             >
 
             <sl-radio-group
@@ -385,18 +449,18 @@ export class MossApp extends LitElement {
               style="width: 310px; margin-bottom: 56px;"
               ?disabled=${!this.groupIcon || !this.groupName || this.creatingGroup}
               @click=${() => {
-                const groupTypeRadio = this.shadowRoot?.getElementById(
-                  'group-type-radio',
-                ) as SlRadioGroup;
-                this.useProgenitor = groupTypeRadio.value === '1' ? true : false;
-                this.createGroupAndHeadToMain();
-              }}
+        const groupTypeRadio = this.shadowRoot?.getElementById(
+          'group-type-radio',
+        ) as SlRadioGroup;
+        this.useProgenitor = groupTypeRadio.value === '1' ? true : false;
+        this.createGroupAndHeadToMain();
+      }}
             >
               ${this.creatingGroup
-                ? html`<div class="column center-content">
+        ? html`<div class="column center-content">
                     <div class="dot-carousel" style="margin: 5px 0;"></div>
                   </div>`
-                : html`${msg('Create group space')}`}
+        : html`${msg('Create group space')}`}
             </button>
 
             <div class="row">
@@ -479,10 +543,10 @@ export class MossApp extends LitElement {
         <div class="moss-card" style="width: 630px; height: 466px;">
           <div class="column items-center">
             <div class="card-title" style="margin-top: 30px;">
-              ${joining ? 'Joining group' : 'Creating a new space'}
+              ${joining ? msg('Joining group') : msg('Creating a new space')}
             </div>
             <div class="card-title medium-green" style="margin-bottom: 38px;">
-              ${'in the beautiful p2p realm.'}
+              ${msg('in the beautiful p2p realm.')}
             </div>
 
             <img src="loading_animation.svg" />
@@ -494,6 +558,80 @@ export class MossApp extends LitElement {
             <div class="dialog-dot bg-black" style="margin-right: 20px;"></div>
             <div class="dialog-dot"></div>
           </div> -->
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderLegacyKeystoreImport() {
+    return html`
+      <div class="column center-content flex-1 launch-bg">
+        <div class="moss-card column items-center" style="width: 630px; padding: 48px;">
+          <div class="dialog-title" style="margin-bottom: 16px;">
+            ${msg('Import existing data?')}
+          </div>
+          <div style="text-align: center; color: var(--moss-hint-green); margin-bottom: 32px; max-width: 440px;">
+            ${msg(
+              'Moss data from previous version(s) found. You can import to keep your previous identity and groups, or start fresh.',
+            )}
+          </div>
+          <div class="column" style="width: 100%; margin-bottom: 24px; gap: 8px; max-height: calc(100vh - 400px); overflow-x: scroll;">
+            ${this._legacyProfiles.map((p) => {
+                const readableAppName = p.appName.replace("org.lightningrodlabs.moss-", "Moss ");
+                const versionMismatch =
+                  p.lairVersion !== undefined &&
+                  this._currentLairVersion !== undefined &&
+                  p.lairVersion !== this._currentLairVersion;
+                return html`
+                <button
+                  class="moss-button"
+                  style=${
+                    this._selectedLegacyProfile === p
+                      ? 'justify-content: flex-start; padding: 10px 16px; background: var(--moss-medium-green);'
+                      : 'justify-content: flex-start; padding: 10px 16px; background: transparent; border: 1px solid var(--moss-medium-green); color: var(--moss-medium-green);'
+                  }
+                  @click=${() => {
+                    this._selectedLegacyProfile = p;
+                  }}
+                >
+                  <span style="flex: 1; text-align: left;">
+                    ${readableAppName} ${p.versionString} &mdash; ${p.profileName}
+                    ${p.lairVersion ? html`<span style="opacity: 0.7; font-size: 0.85em;"> (lair: ${p.lairVersion})</span>` : nothing}
+                  </span>
+                  ${versionMismatch
+                    ? html`<span style="color: #f5a623; font-size: 0.8em; margin-left: 8px;">&#9888; version mismatch</span>`
+                    : nothing}
+                </button>
+              `;
+              })}
+          </div>
+          <div class="row" style="gap: 16px;">
+            <button
+              class="moss-button"
+              ?disabled=${!this._selectedLegacyProfile}
+              @click=${async () => {
+                this._didImportLegacyProfile = true;
+                await window.electronAPI.copyLegacyProfile(
+                  this._selectedLegacyProfile!.keystorePath,
+                );
+                // Clear isFirstLaunch so subsequent startups don't show the group setup screen
+                window.localStorage.removeItem('isFirstLaunch');
+                this._legacyKeystoreResolve?.();
+              }}
+            >
+              ${msg('Import data')}
+            </button>
+            <button
+              class="moss-button"
+              style="background: transparent; border: 1px solid var(--moss-medium-green); color: var(--moss-medium-green);"
+              @click=${() => {
+                this._selectedLegacyProfile = undefined;
+                this._legacyKeystoreResolve?.();
+              }}
+            >
+              ${msg('Start fresh')}
+            </button>
           </div>
         </div>
       </div>
@@ -517,7 +655,7 @@ export class MossApp extends LitElement {
 
             <div class="column center-content hint" style="margin-bottom: 12px;">
               <div style="margin-bottom: 3px;">${msg('An invite link looks like:')}</div>
-              <div class="">https://theweave.social/wal?weave-0.13://invite...</div>
+              <div class="">https://theweave.social/wal?weave-0.15://invite...</div>
             </div>
 
             <div class="row items-center justify-center" style="margin-bottom: 28px;">
@@ -528,11 +666,11 @@ export class MossApp extends LitElement {
                 label=${msg('invite link')}
                 style="margin-right: 12px; width: 258px;"
                 @input=${() => {
-                  const inviteLinkInput = this.shadowRoot?.getElementById(
-                    'invite-link-input',
-                  ) as HTMLInputElement;
-                  this.inviteLink = inviteLinkInput.value;
-                }}
+        const inviteLinkInput = this.shadowRoot?.getElementById(
+          'invite-link-input',
+        ) as HTMLInputElement;
+        this.inviteLink = inviteLinkInput.value;
+      }}
               ></sl-input>
               <button
                 id="join-group-btn"
@@ -542,10 +680,10 @@ export class MossApp extends LitElement {
                 style="width: 40px;"
               >
                 ${this.creatingGroup
-                  ? html`<div class="column center-content">
+        ? html`<div class="column center-content">
                       <div class="dot-carousel" style="margin: 5px 0;"></div>
                     </div>`
-                  : html`${msg('Join')}`}
+        : html`${msg('Join')}`}
               </button>
             </div>
           </div>
@@ -560,11 +698,11 @@ export class MossApp extends LitElement {
               style="width: 310px; margin-bottom: 28px;"
               ?disabled=${this.creatingGroup}
               @click=${() => {
-                this.state = MossAppState.CreateGroupStep1;
-              }}
+        this.state = MossAppState.CreateGroupStep1;
+      }}
             >
               <div class="row center-content">
-                ${plusCircleIcon(20)}
+                ${createGroupIcon(20)}
                 <div style="margin-left: 10px;">${msg('Create new group space')}</div>
               </div>
             </button>
@@ -573,13 +711,13 @@ export class MossApp extends LitElement {
 
         <button
           @click=${() => {
-            window.localStorage.removeItem('isFirstLaunch');
-            this.state = MossAppState.Running;
-          }}
+        window.localStorage.removeItem('isFirstLaunch');
+        this.state = MossAppState.Running;
+      }}
           class="skip-button"
           style="position: absolute; bottom: 10px;"
         >
-          ${'Skip Setup'}
+          ${msg('Skip Setup')}
         </button>
       </div>
     `;
@@ -594,10 +732,10 @@ export class MossApp extends LitElement {
         <div style="max-width: 600px; text-align: center; margin-bottom: 40px;">
           <span
             >${msg(
-              'If you want to support us in finding the problem, please export the logs and send them to ',
-            )}</span
+      'If you want to support us in finding the problem, please export the logs and send them to ',
+    )}</span
           >
-          <a href="mailto:moss.0.14.feedback@theweave.social">moss.0.14.feedback@theweave.social</a>
+          <a href="mailto:moss.0.15.feedback@theweave.social">moss.0.15.feedback@theweave.social</a>
         </div>
         <div class="row items-center">
           <button
@@ -632,7 +770,24 @@ export class MossApp extends LitElement {
         return html`<div class="column center-content launch-bg" style="flex: 1;">
           <img src="loading_animation.svg" />
           <div>${this.loadingText}</div>
+          ${this._importGroupsProgress ? html`
+            <div style="margin-top: 16px; font-size: 13px; color: var(--moss-hint-green); text-align: center; max-width: 400px;">
+              <div style="margin-bottom: 4px;">
+                ${msg('Group')} ${this._importGroupsProgress.current} / ${this._importGroupsProgress.total}:
+                <b>${this._importGroupsProgress.groupName ?? ''}</b>
+              </div>
+              <div>
+                ${this._importGroupsProgress.step === 'installing' ? msg('Installing group...') :
+                  this._importGroupsProgress.step === 'waiting-for-sync' ? html`${msg('Waiting for peers...')} (${this._importGroupsProgress.secondsLeft}s)` :
+                  this._importGroupsProgress.step === 'setting-profile' ? msg('Setting group profile...') :
+                  this._importGroupsProgress.step === 'installing-tool' ? html`${msg('Installing tool')} "${this._importGroupsProgress.toolName}" (${this._importGroupsProgress.toolIndex}/${this._importGroupsProgress.toolTotal})` :
+                  this._importGroupsProgress.step === 'done' ? msg('Done.') : ''}
+              </div>
+            </div>
+          ` : nothing}
         </div>`;
+      case MossAppState.LegacyKeystoreImport:
+        return this.renderLegacyKeystoreImport();
       case MossAppState.InitialSetup:
         return this.renderInitialSetup();
       case MossAppState.CreateGroupStep1:

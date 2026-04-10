@@ -1,6 +1,5 @@
 import fs from 'fs';
 import crypto from 'crypto';
-import path from 'path';
 import rustUtils from '@lightningrodlabs/we-rust-utils';
 import Table from 'cli-table';
 
@@ -10,9 +9,6 @@ import {
   AppWebsocket,
   CallZomeRequest,
   CallZomeTransform,
-  CellId,
-  CellInfo,
-  CellType,
   DnaHashB64,
   encodeHashToBase64,
   InstalledAppId,
@@ -21,7 +17,7 @@ import {
 import { password as passwordInput } from '@inquirer/prompts';
 
 import { WDockerFilesystem } from '../filesystem.js';
-import { GROUP_HAPP_URL, MOSS_CONFIG, TOOLS_LIBRARY_URL } from '../const.js';
+import { GROUP_HAPP_URL, MOSS_CONFIG } from '../const.js';
 import { downloadFile, signZomeCall } from '../utils.js';
 import { decode } from '@msgpack/msgpack';
 
@@ -152,36 +148,36 @@ export async function downloadGroupHappIfNecessary() {
   }
 }
 
-/**
- * Downloads the tool library happ from github if necessary
- */
-export async function downloadToolLibraryHappIfNecessary(): Promise<void> {
-  const wDockerFs = new WDockerFilesystem();
-  const happSha256 = MOSS_CONFIG.toolsLibrary.sha256;
-  if (!happSha256) throw new Error('Tool library happ sha256 undefined.');
-
-  // Check presence and integrity of group happ
-  let needsToBeFetched = false;
-  const toolLibraryHappPath = path.join(wDockerFs.happsDir, `${happSha256}.happ`);
-  if (fs.existsSync(toolLibraryHappPath)) {
-    const fileBytes = fs.readFileSync(toolLibraryHappPath);
-    const hasher = crypto.createHash('sha256');
-    hasher.update(fileBytes);
-    const sha256Hex = hasher.digest('hex');
-    if (sha256Hex !== happSha256) {
-      needsToBeFetched = true;
-      console.warn(
-        `sha256 of the tool library happ found does not match the expected sha256, indicating that the happ file got corrupted. Got ${sha256Hex} but expected ${happSha256}`,
-      );
-    }
-  } else {
-    needsToBeFetched = true;
-  }
-
-  if (needsToBeFetched) {
-    await downloadFile(TOOLS_LIBRARY_URL, toolLibraryHappPath, happSha256, false);
-  }
-}
+// /**
+//  * Downloads the tool library happ from github if necessary
+//  */
+// export async function downloadToolLibraryHappIfNecessary(): Promise<void> {
+//   const wDockerFs = new WDockerFilesystem();
+//   const happSha256 = MOSS_CONFIG.toolsLibrary.sha256;
+//   if (!happSha256) throw new Error('Tool library happ sha256 undefined.');
+//
+//   // Check presence and integrity of group happ
+//   let needsToBeFetched = false;
+//   const toolLibraryHappPath = path.join(wDockerFs.happsDir, `${happSha256}.happ`);
+//   if (fs.existsSync(toolLibraryHappPath)) {
+//     const fileBytes = fs.readFileSync(toolLibraryHappPath);
+//     const hasher = crypto.createHash('sha256');
+//     hasher.update(fileBytes);
+//     const sha256Hex = hasher.digest('hex');
+//     if (sha256Hex !== happSha256) {
+//       needsToBeFetched = true;
+//       console.warn(
+//         `sha256 of the tool library happ found does not match the expected sha256, indicating that the happ file got corrupted. Got ${sha256Hex} but expected ${happSha256}`,
+//       );
+//     }
+//   } else {
+//     needsToBeFetched = true;
+//   }
+//
+//   if (needsToBeFetched) {
+//     await downloadFile(TOOLS_LIBRARY_URL, toolLibraryHappPath, happSha256, false);
+//   }
+// }
 
 export function cleanTable() {
   return new Table({
@@ -206,34 +202,4 @@ export function cleanTable() {
   });
 }
 
-export function getCellId(cellInfo: CellInfo): CellId | undefined {
-  if (cellInfo.type === CellType.Provisioned) {
-    return cellInfo.value.cell_id;
-  }
-  if (cellInfo.type === CellType.Cloned) {
-    return cellInfo.value.cell_id;
-  }
-  return undefined;
-}
 
-export function getStatus(app: AppInfo): string {
-  if (isAppRunning(app)) {
-    return 'running';
-  } else if (isAppDisabled(app)) {
-    return 'disabled';
-  } else if (isAppPaused(app)) {
-    return 'paused';
-  } else {
-    return 'unknown status';
-  }
-}
-
-export function isAppRunning(app: AppInfo): boolean {
-  return app.status.type === 'running';
-}
-export function isAppDisabled(app: AppInfo): boolean {
-  return app.status.type === 'disabled';
-}
-export function isAppPaused(app: AppInfo): boolean {
-  return app.status.type === 'paused';
-}

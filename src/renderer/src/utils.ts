@@ -1,5 +1,4 @@
 import {
-  CellId,
   CellInfo,
   AppInfo,
   ListAppsResponse,
@@ -30,7 +29,7 @@ import { Base64, fromUint8Array, toUint8Array } from 'js-base64';
 import isEqual from 'lodash-es/isEqual.js';
 
 import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
-import { MessageContentPart, ToolAndCurationInfo } from './types.js';
+import { MessageContentPart, ToolAndCurationInfo, UnifiedToolEntry, VersionBranchInfo } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
 import {
@@ -47,11 +46,250 @@ import { getAppletDevPort } from './electron-api.js';
 import {
   appIdFromAppletId,
   appletIdFromAppId,
-  deriveToolCompatibilityId,
+  deriveToolCompatibilityId, getCellId,
   toLowerCaseB64,
-  toOriginalCaseB64,
+  toOriginalCaseB64
 } from '@theweave/utils';
-import { DeveloperCollective, ToolCompatibilityId, WeaveDevConfig } from '@theweave/moss-types';
+import { DeveloperCollective, ToolCompatibilityId, ToolVersionInfo, WeaveDevConfig } from '@theweave/moss-types';
+import { compareVersions, validate as validateSemver } from 'compare-versions';
+import { Md5 } from 'ts-md5';
+
+/**
+ * Custom comparison for pre-release identifiers
+ * "rc" is considered later than "dev"
+ */
+function comparePreReleaseIdentifiers(prereleaseA: string | null, prereleaseB: string | null): number {
+  if (!prereleaseA && !prereleaseB) return 0;
+  if (!prereleaseA) return 1; // No prerelease is later
+  if (!prereleaseB) return -1; // No prerelease is later
+
+  // Extract the identifier part (e.g., "rc.1" -> "rc", "dev.3" -> "dev")
+  const getIdentifier = (pr: string): string => {
+    const match = pr.match(/^([a-zA-Z]+)/);
+    return match ? match[1].toLowerCase() : '';
+  };
+
+  const idA = getIdentifier(prereleaseA);
+  const idB = getIdentifier(prereleaseB);
+
+  // "rc" is later than "dev"
+  if (idA === 'rc' && idB === 'dev') return 1;
+  if (idA === 'dev' && idB === 'rc') return -1;
+
+  // For same identifier type, compare properly handling numeric parts
+  // Split by dots and compare each part
+  const partsA = prereleaseA.split('.');
+  const partsB = prereleaseB.split('.');
+  const maxLen = Math.max(partsA.length, partsB.length);
+
+  for (let i = 0; i < maxLen; i++) {
+    const partA = partsA[i] || '';
+    const partB = partsB[i] || '';
+
+    // Try to parse as numbers
+    const numA = parseInt(partA, 10);
+    const numB = parseInt(partB, 10);
+
+    if (!isNaN(numA) && !isNaN(numB)) {
+      // Both are numbers, compare numerically
+      if (numB !== numA) return numB - numA; // Descending
+    } else {
+      // At least one is not a number, compare lexicographically
+      const cmp = partB.localeCompare(partA);
+      if (cmp !== 0) return cmp;
+    }
+  }
+
+  return 0;
+}
+
+/**
+ * Sorts versions array in descending order (highest version first) by semver.
+ * Handles pre-release identifiers with custom logic: "rc" is later than "dev".
+ * Filters out invalid semver versions before sorting.
+ * This is an internal utility function, not part of the published @theweave/utils package.
+ */
+export function sortVersionsDescending(versions: ToolVersionInfo[]): ToolVersionInfo[] {
+  const validVersions = versions.filter((version) => validateSemver(version.version));
+  const invalidVersions = versions.filter((version) => !validateSemver(version.version));
+
+  const sorted = validVersions.sort((version_a, version_b) => {
+    const vA = version_a.version;
+    const vB = version_b.version;
+
+    // First compare the main version parts (without prerelease)
+    const mainCompare = compareVersions(
+      vB.split('-')[0],
+      vA.split('-')[0]
+    );
+
+    if (mainCompare !== 0) {
+      return mainCompare;
+    }
+
+    // If main versions are equal, compare prerelease identifiers
+    const prereleaseA = vA.includes('-') ? vA.split('-').slice(1).join('-') : null;
+    const prereleaseB = vB.includes('-') ? vB.split('-').slice(1).join('-') : null;
+
+    if (!prereleaseA && !prereleaseB) return 0;
+    if (!prereleaseA) return 1; // No prerelease is later than prerelease
+    if (!prereleaseB) return -1; // Prerelease is earlier than no prerelease
+
+    return comparePreReleaseIdentifiers(prereleaseA, prereleaseB);
+  });
+
+  // Append invalid versions at the end
+  return [...sorted, ...invalidVersions];
+}
+
+/**
+ * Derives a tool's base ID (without version branch)
+ * Used for grouping tools with the same ID but different version branches
+ */
+export function deriveToolBaseId(toolListUrl: string, toolId: string): string {
+  return Md5.hashStr(`${toolListUrl}#${toolId}`);
+}
+
+/**
+ * Extracts major version number from version branch string
+ * "1.x.x" -> 1, "2.x.x" -> 2, "0.1.x" -> 0
+ */
+export function extractMajorVersion(versionBranch: string): number {
+  const match = versionBranch.match(/^(\d+)\./);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+/**
+ * Extracts all numeric version parts from a version branch string up to the .x suffix
+ * Examples:
+ *   "0.14.x" -> [0, 14]
+ *   "0.15.x" -> [0, 15]
+ *   "2.x" -> [2]
+ *   "1.5.2.x" -> [1, 5, 2]
+ */
+export function extractVersionParts(versionBranch: string): number[] {
+  const parts = versionBranch.split('.');
+  const versionParts: number[] = [];
+
+  for (const part of parts) {
+    // Stop when we hit 'x' or any non-numeric part
+    if (part === 'x' || !/^\d+$/.test(part)) {
+      break;
+    }
+    versionParts.push(parseInt(part, 10));
+  }
+
+  return versionParts;
+}
+
+/**
+ * Compares two version branch strings to determine which is higher
+ * Returns: positive if a > b, negative if a < b, 0 if equal
+ * Examples:
+ *   compareVersionBranches("0.15.x", "0.14.x") -> 1 (0.15.x is higher)
+ *   compareVersionBranches("2.x", "1.x") -> 1 (2.x is higher)
+ *   compareVersionBranches("1.5.x", "1.4.x") -> 1 (1.5.x is higher)
+ *   compareVersionBranches("1.x", "1.x") -> 0 (equal)
+ */
+export function compareVersionBranches(a: string, b: string): number {
+  const partsA = extractVersionParts(a);
+  const partsB = extractVersionParts(b);
+
+  // Compare each version part
+  const maxLength = Math.max(partsA.length, partsB.length);
+  for (let i = 0; i < maxLength; i++) {
+    const partA = partsA[i] || 0;
+    const partB = partsB[i] || 0;
+
+    if (partA !== partB) {
+      return partA - partB;
+    }
+  }
+
+  return 0; // All parts are equal
+}
+
+/**
+ * Groups ToolAndCurationInfo entries by toolId, creating UnifiedToolEntry objects
+ * This unifies tools with the same toolId but different versionBranch values
+ */
+export function groupToolsByBaseId(
+  tools: Record<ToolCompatibilityId, ToolAndCurationInfo>,
+): Map<string, UnifiedToolEntry> {
+  const grouped = new Map<string, UnifiedToolEntry>();
+
+  for (const tool of Object.values(tools)) {
+    const baseId = deriveToolBaseId(tool.toolListUrl, tool.toolInfoAndVersions.id);
+
+    let unifiedEntry = grouped.get(baseId);
+    if (!unifiedEntry) {
+      // Create new unified entry
+      unifiedEntry = {
+        toolId: tool.toolInfoAndVersions.id,
+        toolListUrl: tool.toolListUrl,
+        developerCollectiveId: tool.developerCollectiveId,
+        title: tool.toolInfoAndVersions.title,
+        subtitle: tool.toolInfoAndVersions.subtitle,
+        description: tool.toolInfoAndVersions.description,
+        icon: tool.toolInfoAndVersions.icon,
+        tags: tool.toolInfoAndVersions.tags,
+        curationInfos: [...tool.curationInfos],
+        versionBranches: new Map(),
+        deprecation: tool.toolInfoAndVersions.deprecation,
+      };
+      grouped.set(baseId, unifiedEntry);
+    } else {
+      // Merge curation info
+      unifiedEntry.curationInfos.push(...tool.curationInfos);
+
+      // Update metadata if this version branch is newer (use latest version branch's metadata)
+      // Prefer non-deprecated branches
+      if (!unifiedEntry.deprecation && tool.toolInfoAndVersions.deprecation) {
+        unifiedEntry.deprecation = tool.toolInfoAndVersions.deprecation;
+      }
+    }
+
+    // Add version branch info
+    unifiedEntry.versionBranches.set(tool.toolInfoAndVersions.versionBranch, {
+      versionBranch: tool.toolInfoAndVersions.versionBranch,
+      toolCompatibilityId: tool.toolCompatibilityId,
+      toolInfoAndVersions: tool.toolInfoAndVersions,
+      latestVersion: tool.latestVersion,
+      allVersions: tool.toolInfoAndVersions.versions,
+      curationInfos: tool.curationInfos,
+    });
+  }
+
+  return grouped;
+}
+
+/**
+ * Gets the primary version branch (for display purposes)
+ * Strategy: prefer non-deprecated, then highest version branch
+ * Compares all version parts up to .x (e.g., "0.15.x" > "0.14.x", "2.x" > "1.x")
+ */
+export function getPrimaryVersionBranch(
+  unifiedEntry: UnifiedToolEntry,
+): VersionBranchInfo | undefined {
+  const branches = Array.from(unifiedEntry.versionBranches.values());
+
+  // Filter out deprecated branches
+  const nonDeprecated = branches.filter(
+    (branch) => !branch.toolInfoAndVersions.deprecation,
+  );
+
+  const candidates = nonDeprecated.length > 0 ? nonDeprecated : branches;
+
+  if (candidates.length === 0) return undefined;
+
+  // Sort by version branch using full version comparison
+  // This compares all numeric parts before .x (e.g., "0.15.x" > "0.14.x")
+  candidates.sort((a, b) => {
+    return compareVersionBranches(b.versionBranch, a.versionBranch); // Descending
+  });
+
+  return candidates[0];
+}
 
 export function iframeOrigin(iframeKind: IframeKind): string {
   switch (iframeKind.type) {
@@ -103,38 +341,6 @@ export function findAppForDnaHash(
         }
       }
     }
-  }
-  return undefined;
-}
-
-export function getStatus(app: AppInfo): string {
-  if (isAppRunning(app)) {
-    return 'RUNNING';
-  } else if (isAppDisabled(app)) {
-    return 'DISABLED';
-  } else if (isAppPaused(app)) {
-    return 'PAUSED';
-  } else {
-    return 'UNKNOWN';
-  }
-}
-
-export function isAppRunning(app: AppInfo): boolean {
-  return app.status.type === 'running';
-}
-export function isAppDisabled(app: AppInfo): boolean {
-  return app.status.type === 'disabled';
-}
-export function isAppPaused(app: AppInfo): boolean {
-  return app.status.type === 'paused';
-}
-
-export function getCellId(cellInfo: CellInfo): CellId | undefined {
-  if (cellInfo.type === CellType.Provisioned) {
-    return cellInfo.value.cell_id;
-  }
-  if (cellInfo.type === CellType.Cloned) {
-    return cellInfo.value.cell_id;
   }
   return undefined;
 }
@@ -270,12 +476,15 @@ export function storeAppletNotifications(
   notifications.forEach((notification) => {
     const timestamp = notification.timestamp;
     const daysSinceEpoch = Math.floor(timestamp / 8.64e7);
-    let notificationsOfSameDate = persistedStore.appletNotifications.value(
+    const notificationsOfSameDate = persistedStore.appletNotifications.value(
       appletId,
       daysSinceEpoch,
     );
-    notificationsOfSameDate = [...new Set([...notificationsOfSameDate, notification])];
-    persistedStore.appletNotifications.set(notificationsOfSameDate, appletId, daysSinceEpoch);
+    const existingStrings = notificationsOfSameDate.map((n) => encodeAndStringify(n));
+    const newString = encodeAndStringify(notification);
+    const dedupedStrings = [...new Set([...existingStrings, newString])];
+    const dedupedNotifications = dedupedStrings.map((s) => destringifyAndDecode<FrameNotification>(s));
+    persistedStore.appletNotifications.set(dedupedNotifications, appletId, daysSinceEpoch);
   });
 
   return unreadNotifications;
@@ -410,7 +619,13 @@ export function renderViewToQueryString(
 
   if (renderView.view) {
     base = `view=${renderView.type}&view-type=${renderView.view.type}`;
-
+    if (renderView.type === 'applet-view' && renderView.view.type === 'main' && renderView.view.wal) {
+      base = `${base}&hrl=${stringifyHrl(renderView.view.wal.hrl)}`;
+      if (renderView.view.wal.context) {
+         const b64context = fromUint8Array(encode(renderView.view.wal.context), true);
+         base = `${base}&context=${b64context}`;
+      }
+    }
     if (renderView.view.type === 'block') {
       base = `${base}&block=${renderView.view.block}`;
     }
@@ -439,13 +654,6 @@ export function stringifyHrl(hrl: Hrl): string {
   return `hrl://${encodeHashToBase64(hrl[0])}/${encodeHashToBase64(hrl[1])}`;
 }
 
-export function encodeContext(context: any) {
-  return fromUint8Array(encode(context), true);
-}
-
-export function decodeContext(contextStringified: string): any {
-  return decode(toUint8Array(contextStringified));
-}
 
 /**
  * Fetches an image, crops it to 300x300px, compresses it to max 200KB and
@@ -611,24 +819,21 @@ function getAllIframesFromApplet(appletId: AppletId): HTMLIFrameElement[] {
  */
 export function getAllIframes() {
   const result: HTMLIFrameElement[] = [];
-
   // Recursive function to traverse the DOM tree
   function traverse(node) {
-    // console.log('tagName of node: ', node.nodeName);
     // Check if the current node is an iframe
     if (node.tagName === 'IFRAME') {
       result.push(node);
     }
 
     // Get the shadow root of the node if available
+    // and traverse
     const shadowRoot = node.shadowRoot;
-
-    // Traverse child nodes if any
     if (shadowRoot) {
       shadowRoot.childNodes.forEach(traverse);
-    } else {
-      node.childNodes.forEach(traverse);
     }
+    // also traverse child nodes
+    node.childNodes.forEach(traverse);
   }
 
   // Start traversing from the main document's body
@@ -649,7 +854,7 @@ export function progenitorFromProperties(properties: Uint8Array): AgentPubKeyB64
 
 export function modifiersToInviteUrl(modifiers: DnaModifiers) {
   const groupDnaProperties = decode(modifiers.properties) as GroupDnaProperties;
-  return `https://theweave.social/wal?weave-0.14://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
+  return `https://theweave.social/wal?weave-0.15://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
 }
 
 export async function groupModifiersToAppId(modifiers: DnaModifiers): Promise<InstalledAppId> {
@@ -826,8 +1031,8 @@ export function lazyLoadAndPollUntil<T>(
 }
 
 export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
-  // determine iframeSrc, then open wal in window
-  const location = await toPromise(mossStore.hrlLocations.get(wal.hrl[0]).get(wal.hrl[1]));
+  // determine iframeSrc, then open wal in a window
+  const location = await toPromise(mossStore.hrlLocations.get(wal.hrl[0])!.get(wal.hrl[1])!);
   if (!location) throw new Error('Asset not found.');
   const renderView: RenderView = {
     type: 'applet-view',
@@ -836,15 +1041,20 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
       wal,
       recordInfo: location.entryDefLocation
         ? {
-            roleName: location.dnaLocation.roleName,
-            integrityZomeName: location.entryDefLocation.integrity_zome,
-            entryType: location.entryDefLocation.entry_def,
-          }
+          roleName: location.dnaLocation.roleName,
+          integrityZomeName: location.entryDefLocation.integrity_zome,
+          entryType: location.entryDefLocation.entry_def,
+        }
         : undefined,
     },
   };
   const appletId = appletIdFromAppId(location.dnaLocation.appInfo.installed_app_id);
   const appletHash = decodeHashFromBase64(appletId);
+  const groups = await mossStore.getGroupsForApplet(appletHash);
+  if (groups.length == 0) {
+    throw new Error('No groups found for applet.');
+  }
+  const groupHash = groups[0];
   if (mossStore.isAppletDev) {
     const appId = appIdFromAppletId(appletId);
     const appletDevPort = await getAppletDevPort(appId);
@@ -852,16 +1062,17 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
       const iframeKind: IframeKind = {
         type: 'applet',
         appletHash,
+        groupHash,
         subType: 'asset',
       };
       const iframeSrc = `http://localhost:${appletDevPort}?${renderViewToQueryString(
         renderView,
       )}#${fromUint8Array(encode(iframeKind))}`;
-      return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
+      return window.electronAPI.openWalWindow(iframeSrc, appletId, encodeHashToBase64(groupHash), wal);
     }
   }
-  const iframeSrc = `${iframeOrigin({ type: 'applet', appletHash, subType: 'asset' })}?${renderViewToQueryString(renderView)}`;
-  return window.electronAPI.openWalWindow(iframeSrc, appletId, wal);
+  const iframeSrc = `${iframeOrigin({ type: 'applet', appletHash, groupHash, subType: 'asset' })}?${renderViewToQueryString(renderView)}`;
+  return window.electronAPI.openWalWindow(iframeSrc, appletId, encodeHashToBase64(groupHash), wal);
 }
 
 export function UTCOffsetStringFromOffsetMinutes(offsetMinutes: number): string {
@@ -887,15 +1098,20 @@ export function relativeTzOffsetString(offsetMinutes1: number, offsetMinutes2: n
   return 'same timezone';
 }
 
-export function localTimeFromUtcOffset(offsetMinues: number): string {
+export function localTimeFromUtcOffset(offsetMinutes: number, ampm: boolean = true): string {
   const utcNow = Date.now();
-  const localNow = utcNow - offsetMinues * 60 * 1000;
+  const localNow = utcNow - offsetMinutes * 60 * 1000;
   const localDate = new Date(localNow);
-  const hours = localDate.getUTCHours();
+  let hours = localDate.getUTCHours();
   const minutes = localDate.getUTCMinutes();
+  let pm = hours >= 12;
+
+  if (ampm && hours > 12) {
+    hours -= 12;
+  }
 
   // Format the time in HH:MM format
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}${ampm ? (pm ? ' p.m.' : ' a.m.') : ''}`;
 }
 
 export async function postMessageToIframe<T>(
@@ -932,7 +1148,7 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
     id: '###DEVCONFIG###',
     name: 'This Tool is listed in the dev config file.',
     description: 'Moss dev mode test dev collective',
-    contact: {},
+    contact: { website: 'https://lightningrodlabs.org/' },
     icon: 'garbl',
   };
 
@@ -984,17 +1200,29 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
         title: toolConfig.name,
         subtitle: toolConfig.subtitle,
         description: toolConfig.description,
-        tags: [],
+        tags: toolConfig.tags ? toolConfig.tags : [],
         versionBranch: '###DEVCONFIG###',
         icon:
           toolConfig.icon.type === 'filesystem'
             ? `file://${toolConfig.icon.path}`
             : toolConfig.icon.url,
         versions: [
+          // Intentionally put in wrong order (0.1.0 before 0.1.1) to test sorting
           {
             version: '0.1.0',
             url: toolUrl,
-            changelog: 'Same same. Just an example changelog.',
+            changelog: 'First release. Just an example changelog.',
+            releasedAt: Date.now() - 10000000,
+            hashes: {
+              webhappSha256: '###DEVCONFIG###',
+              happSha256: '###DEVCONFIG###',
+              uiSha256: '###DEVCONFIG###',
+            },
+          },
+          {
+            version: '0.1.1',
+            url: toolUrl,
+            changelog: 'New thing. Just an example changelog.',
             releasedAt: Date.now(),
             hashes: {
               webhappSha256: '###DEVCONFIG###',
@@ -1005,9 +1233,9 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
         ],
       },
       latestVersion: {
-        version: '0.1.0',
+        version: '0.1.1',
         url: toolUrl,
-        changelog: 'Same same. Just an example changelog.',
+        changelog: 'New thing. Just an example changelog.',
         releasedAt: Date.now(),
         hashes: {
           webhappSha256: '###DEVCONFIG###',
@@ -1016,6 +1244,10 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
         },
       },
     };
+    // Sort versions in descending order (highest first) - this will fix the intentionally wrong order
+    toolAndCurationInfo.toolInfoAndVersions.versions = sortVersionsDescending(
+      toolAndCurationInfo.toolInfoAndVersions.versions,
+    );
     // counter += 1;
     return toolAndCurationInfo;
   });
@@ -1024,4 +1256,106 @@ export function devModeToolLibraryFromDevConfig(config: WeaveDevConfig): {
     tools,
     devCollective: devModeDeveloperCollective,
   };
+}
+
+// ============================================================================
+// Safe Interval Utilities
+// ============================================================================
+
+export interface SafeIntervalOptions {
+  /** Human-readable name for logging purposes */
+  name: string;
+  /** The async function to call periodically */
+  fn: () => Promise<void>;
+  /** Interval in milliseconds between the END of one call and the START of the next */
+  intervalMs: number;
+  /** Optional: run immediately on start (default: false) */
+  runImmediately?: boolean;
+}
+
+export interface SafeIntervalHandle {
+  /** Cancel the interval - any in-progress call will complete but no more will be scheduled */
+  cancel: () => void;
+}
+
+/**
+ * Creates a safe interval that prevents stacking of async calls.
+ *
+ * Unlike setInterval, this uses a self-rescheduling pattern:
+ * - Waits for the current call to complete before scheduling the next
+ * - The interval is measured from the END of one call to the START of the next
+ * - This prevents call buildup when operations are slow
+ *
+ * Logs a warning if the operation takes longer than the interval.
+ *
+ * @example
+ * const handle = safeSetInterval({
+ *   name: 'pingAgents',
+ *   fn: async () => { await pingAgents(); },
+ *   intervalMs: 8000,
+ *   runImmediately: true,
+ * });
+ *
+ * // Later, to stop:
+ * handle.cancel();
+ */
+export function safeSetInterval(options: SafeIntervalOptions): SafeIntervalHandle {
+  const { name, fn, intervalMs, runImmediately = false } = options;
+
+  let isCancelled = false;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  const executeAndSchedule = async () => {
+    if (isCancelled) return;
+
+    const startTime = Date.now();
+
+    try {
+      await fn();
+    } catch (error) {
+      console.error(`[SafeInterval] "${name}" error:`, error);
+    } finally {
+      const duration = Date.now() - startTime;
+
+      if (duration > intervalMs) {
+        console.warn(
+          `[SafeInterval] "${name}" took ${duration / 1000}s, which is ${(duration - intervalMs) / 1000}s longer than the ${intervalMs / 1000}s interval`,
+        );
+      }
+
+      // Schedule next execution after the interval
+      if (!isCancelled) {
+        timeoutId = setTimeout(executeAndSchedule, intervalMs);
+      }
+    }
+  };
+
+  // Start the interval
+  if (runImmediately) {
+    // Use setTimeout with 0 to ensure we're not blocking the current execution
+    timeoutId = setTimeout(executeAndSchedule, 0);
+  } else {
+    timeoutId = setTimeout(executeAndSchedule, intervalMs);
+  }
+
+  return {
+    cancel: () => {
+      isCancelled = true;
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+    },
+  };
+}
+
+/**
+ * Log a message only when online-debug logging is enabled via sessionStorage.
+ * Toggle from the debugging panel or manually:
+ *   sessionStorage.setItem('__ONLINE_DEBUG_LOGGING__', 'true')
+ */
+export function onlineDebugLog(...args: unknown[]): void {
+  if (window.sessionStorage.getItem('__ONLINE_DEBUG_LOGGING__')) {
+    console.log(...args);
+  }
 }

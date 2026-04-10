@@ -8,7 +8,7 @@ pub struct HrlLocation {
 
 #[hdk_extern]
 pub fn locate_hrl(hash: AnyDhtHash) -> ExternResult<Option<HrlLocation>> {
-    let Some(record) = get(hash, GetOptions::default())? else {
+    let Some(record) = get(hash, GetOptions::local())? else {
         return Ok(None);
     };
 

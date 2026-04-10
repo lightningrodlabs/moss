@@ -17,10 +17,10 @@ import { mossStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
-import TimeAgo from 'javascript-time-ago';
 import { encodeAndStringify } from '../../utils.js';
-import { AppletHash, AppletId, stringifyWal } from '@theweave/api';
-import { AppletNotification } from '../../types.js';
+import { AppletHash, stringifyWal } from '@theweave/api';
+import { decodeHashFromBase64 } from '@holochain/client';
+import { MossNotification, NotificationSource } from '../../types.js';
 import { appIdFromAppletId, appletHashFromAppId } from '@theweave/utils';
 
 @localized()
@@ -38,8 +38,6 @@ export class ActivityView extends LitElement {
     () => this._mossStore.availableToolUpdates(),
     () => [this._mossStore],
   );
-
-  timeAgo = new TimeAgo('en-US');
 
   @state()
   sortMethod1 = 'popular';
@@ -63,21 +61,23 @@ export class ActivityView extends LitElement {
   );
 
   // function that combines notifications based on their aboutWal, if available
-  combineNotifications(notifications: Array<AppletNotification>) {
+  // Only applet notifications with aboutWal are combined (group notifications don't have WALs)
+  combineNotifications(notifications: Array<MossNotification>) {
     const combinedNotifications: Record<
       string,
-      { notifications: AppletNotification[]; appletId: AppletId }
+      { notifications: MossNotification[]; source: NotificationSource }
     > = {};
     for (let i = 0; i < notifications.length; i++) {
       const notification = notifications[i];
-      if (notification.notification.aboutWal) {
+      // Only applet notifications can have aboutWal
+      if (notification.notification.aboutWal && notification.source.type === 'applet') {
         const aboutWal = stringifyWal(notification.notification.aboutWal);
         if (combinedNotifications[aboutWal]) {
           combinedNotifications[aboutWal].notifications.push(notification);
         } else {
           combinedNotifications[aboutWal] = {
             notifications: [notification],
-            appletId: notification.appletId,
+            source: notification.source,
           };
         }
       }
@@ -85,7 +85,7 @@ export class ActivityView extends LitElement {
     return combinedNotifications;
   }
 
-  filterIndividualNotifications(notifications: Array<AppletNotification>) {
+  filterIndividualNotifications(notifications: Array<MossNotification>) {
     return notifications.filter((notification) => {
       const now = new Date();
       const notificationDate = new Date(notification.notification.timestamp);
@@ -122,12 +122,12 @@ export class ActivityView extends LitElement {
   sortNotifications(
     combinedNotifications: Record<
       string,
-      { notifications: AppletNotification[]; appletId: AppletId }
+      { notifications: MossNotification[]; source: NotificationSource }
     >,
   ) {
     let filteredByTime: Record<
       string,
-      { notifications: AppletNotification[]; appletId: AppletId }
+      { notifications: MossNotification[]; source: NotificationSource }
     > = {};
     let now = Date.now();
     let lookBackInt = 0;
@@ -251,188 +251,229 @@ export class ActivityView extends LitElement {
 
   getButtonStyle(method) {
     return this.sortMethod1 === method
-      ? 'background-color: #44b134; color: #000'
-      : 'background-color: #193423; color: #fff';
+      ? 'background-color: var(--moss-medium-green); color: #000'
+      : 'background-color: var(--moss-dark-green); color: #fff';
   }
 
   render() {
-    const combinedNotifications = this.combineNotifications(this._notificationFeed.value);
+    const notifications = this._notificationFeed.value ?? [];
+    const combinedNotifications = this.combineNotifications(notifications);
     const sortedNotifications = this.sortNotifications(combinedNotifications);
-    const filteredIndividualNotifications = this.filterIndividualNotifications(
-      this._notificationFeed.value,
-    );
+    const filteredIndividualNotifications = this.filterIndividualNotifications(notifications);
     const displayShowMoreButton =
       filteredIndividualNotifications.length > this.maxNumShownNotifications;
 
     return html`
-      <div class="column feed">
-        <div class="sort-buttons">
-          <div style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
-            Activity currents
+      <div class="row" style="z-index: 1; height: calc(100vh - 58px);">
+        <div class="column feed">
+          <div class="sort-buttons">
+            <div style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
+              Activity Currents
+            </div>
+            <button
+              @click=${() => (this.sortMethod1 = 'popular')}
+              style=${this.getButtonStyle('popular')}
+              title="View assets sorted by number of people involved"
+            >
+              Popular
+            </button>
+            <button
+              @click=${() => (this.sortMethod1 = 'active')}
+              style=${this.getButtonStyle('active')}
+              title="View assets sorted by most activity"
+            >
+              Active
+            </button>
+            <button
+              @click=${() => (this.sortMethod1 = 'latest')}
+              style=${this.getButtonStyle('latest')}
+              title="View assets sorted by most recent"
+            >
+              Latest
+            </button>
+            <select
+              class="time-select"
+              @change=${(e) => {
+        // By default, notifications 1 week back should already be loaded
+        if (this.lookBackString1 === 'month') {
+          this._mossStore.loadNotificationFeed(30);
+        }
+        this.lookBackString1 = e.target.value;
+      }}
+              .value=${this.lookBackString1 || 'day'}
+            >
+              <option value="minute">Last minute</option>
+              <option value="hour">Last hour</option>
+              <option value="day">Last 24 hours</option>
+              <option value="week">Last week</option>
+              <!-- <option value="month">Last month</option> -->
+              <!-- <option value="year">Last year</option>
+            <option value="all">All time</option> -->
+            </select>
           </div>
-          <button
-            @click=${() => (this.sortMethod1 = 'popular')}
-            style=${this.getButtonStyle('popular')}
-          >
-            Popular
-          </button>
-          <button
-            @click=${() => (this.sortMethod1 = 'active')}
-            style=${this.getButtonStyle('active')}
-          >
-            Active
-          </button>
-          <button
-            @click=${() => (this.sortMethod1 = 'latest')}
-            style=${this.getButtonStyle('latest')}
-          >
-            Latest
-          </button>
-          <select
-            class="time-select"
-            @change=${(e) => {
-              // By default, notifications 1 week back should already be loaded
-              if (this.lookBackString1 === 'month') {
-                this._mossStore.loadNotificationFeed(30);
-              }
-              this.lookBackString1 = e.target.value;
+          <div style="overflow-y: auto;">
+            ${sortedNotifications.length === 0
+        ? html`
+                  <div
+                    style="background: white; border-radius: 10px; background: transparent; color: var(--moss-light-green);"
+                  >
+                    Your activity will appear here
+                  </div>
+                `
+        : sortedNotifications.map((aboutWal) => {
+          const notifications = combinedNotifications[aboutWal].notifications;
+          const source = combinedNotifications[aboutWal].source;
+          // Combined notifications are only from applets (group notifications don't have WALs)
+          if (source.type !== 'applet') return html``;
+          const appletHash: AppletHash = appletHashFromAppId(
+            appIdFromAppletId(source.appletId),
+          );
+          return html`
+                    <activity-asset
+                      @open-wal=${async (e) => {
+              this.dispatchEvent(
+                new CustomEvent('open-wal', {
+                  detail: e.detail,
+                  bubbles: true,
+                  composed: true,
+                }),
+              );
             }}
-            .value=${this.lookBackString1 || 'day'}
-          >
-            <option value="minute">Last minute</option>
-            <option value="hour">Last hour</option>
-            <option value="day">Last 24 hours</option>
-            <option value="week">Last week</option>
-            <!-- <option value="month">Last month</option> -->
-            <!-- <option value="year">Last year</option>
+                      .notifications=${notifications}
+                      .wal=${aboutWal}
+                      .appletHash=${appletHash}
+                    ></activity-asset>
+                  `;
+        })}
+          </div>
+        </div>
+        <div class="column feed">
+          <div style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
+            Notifications Pool
+          </div>
+          <div class="sort-buttons">
+            <button
+              @click=${() => (this.sortMethod2 = 'high')}
+              class="sort-button"
+              style=${this.sortMethod2 === 'high'
+        ? 'background-color: var(--moss-medium-green); color: #000'
+        : 'background-color: var(--moss-dark-green); color: #fff'}
+              title="Show high urgency notifications only"
+            >
+              High
+            </button>
+            <button
+              @click=${() => (this.sortMethod2 = 'medium')}
+              class="sort-button"
+              style=${this.sortMethod2 === 'medium'
+        ? 'background-color: var(--moss-medium-green); color: #000'
+        : 'background-color: var(--moss-dark-green); color: #fff'}
+              title="Show medium urgency notifications only"
+            >
+              Medium
+            </button>
+            <button
+              @click=${() => (this.sortMethod2 = 'low')}
+              class="sort-button"
+              style=${this.sortMethod2 === 'low'
+        ? 'background-color: var(--moss-medium-green); color: #000'
+        : 'background-color: var(--moss-dark-green); color: #fff'}
+              title="Show low urgency notifications only"
+            >
+              Low
+            </button>
+            <select
+              class="time-select"
+              @change=${(e) => {
+        // By default, notifications 1 week back should already be loaded
+        if (this.lookBackString2 === 'month') {
+          this._mossStore.loadNotificationFeed(30);
+        }
+        this.lookBackString2 = e.target.value;
+      }}
+              .value=${this.lookBackString2 || 'day'}
+            >
+              <option value="minute">Last minute</option>
+              <option value="hour">Last hour</option>
+              <option value="day">Last 24 hours</option>
+              <option value="week">Last week</option>
+              <!-- <option value="month">Last month</option> -->
+              <!-- <option value="year">Last year</option>
             <option value="all">All time</option> -->
-          </select>
-        </div>
-        <div style="overflow-y: auto; padding-bottom: 15px;">
-          ${sortedNotifications.length === 0
-            ? html`
-                <div
-                  style="background: white; border-radius: 10px; background: transparent; color: #468c2f;"
-                >
-                  Your activity will appear here
-                </div>
-              `
-            : sortedNotifications.map((aboutWal) => {
-                const notifications = combinedNotifications[aboutWal].notifications;
-                const appletHash: AppletHash = appletHashFromAppId(
-                  appIdFromAppletId(combinedNotifications[aboutWal].appletId),
-                );
-                return html`
-                  <activity-asset
-                    @open-wal=${async (e) => {
-                      this.dispatchEvent(
-                        new CustomEvent('open-wal', {
-                          detail: e.detail,
-                          bubbles: true,
-                          composed: true,
-                        }),
-                      );
-                    }}
-                    .notifications=${notifications}
-                    .wal=${aboutWal}
-                    .appletHash=${appletHash}
-                  ></activity-asset>
-                `;
-              })}
-        </div>
-      </div>
-      <div class="column feed">
-        <div style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 6px;">
-          All notifications
-        </div>
-        <div class="sort-buttons">
-          <button
-            @click=${() => (this.sortMethod2 = 'high')}
-            class="sort-button"
-            style=${this.sortMethod2 === 'high'
-              ? 'background-color: #44b134; color: #000'
-              : 'background-color: #193423; color: #fff'}
-          >
-            High
-          </button>
-          <button
-            @click=${() => (this.sortMethod2 = 'medium')}
-            class="sort-button"
-            style=${this.sortMethod2 === 'medium'
-              ? 'background-color: #44b134; color: #000'
-              : 'background-color: #193423; color: #fff'}
-          >
-            Medium
-          </button>
-          <button
-            @click=${() => (this.sortMethod2 = 'low')}
-            class="sort-button"
-            style=${this.sortMethod2 === 'low'
-              ? 'background-color: #44b134; color: #000'
-              : 'background-color: #193423; color: #fff'}
-          >
-            Low
-          </button>
-          <select
-            class="time-select"
-            @change=${(e) => {
-              // By default, notifications 1 week back should already be loaded
-              if (this.lookBackString2 === 'month') {
-                this._mossStore.loadNotificationFeed(30);
-              }
-              this.lookBackString2 = e.target.value;
-            }}
-            .value=${this.lookBackString2 || 'day'}
-          >
-            <option value="minute">Last minute</option>
-            <option value="hour">Last hour</option>
-            <option value="day">Last 24 hours</option>
-            <option value="week">Last week</option>
-            <!-- <option value="month">Last month</option> -->
-            <!-- <option value="year">Last year</option>
-            <option value="all">All time</option> -->
-          </select>
-        </div>
-        <div class="column" style="overflow-y: auto; padding-bottom: 80px;">
-          ${filteredIndividualNotifications.length === 0
-            ? html`
-                <div
-                  style="background: white; border-radius: 10px; background: transparent; color: #468c2f;"
-                >
-                  Your notifications will appear here
-                </div>
-              `
-            : filteredIndividualNotifications.slice(0, this.maxNumShownNotifications).map(
-                (notification) => html`
-                  <notification-asset
-                    style="display: flex; flex: 1;"
-                    .notification=${notification.notification}
-                    .appletHash=${appletHashFromAppId(appIdFromAppletId(notification.appletId))}
-                    @open-applet-main=${(e) => {
-                      console.log('notification clicked', e.detail);
-                      this.dispatchEvent(
-                        new CustomEvent('open-applet-main', {
-                          detail: appletHashFromAppId(appIdFromAppletId(notification.appletId)),
-                          bubbles: true,
-                          composed: true,
-                        }),
-                      );
-                    }}
-                  ></notification-asset>
-                `,
-              )}
-          ${displayShowMoreButton
-            ? html`<div class="row" style="justify-content: center;">
-                <button
-                  @click=${() => {
-                    this.maxNumShownNotifications += 50;
-                  }}
-                  style="margin-top: 20px; with: 80px;"
-                >
-                  Show More
-                </button>
-              </div>`
-            : html``}
+            </select>
+          </div>
+          <div class="column" style="overflow-y: auto;">
+            ${filteredIndividualNotifications.length === 0
+        ? html`
+                  <div
+                    style="background: white; border-radius: 10px; background: transparent; color: var(--moss-light-green);"
+                  >
+                    Your notifications will appear here
+                  </div>
+                `
+        : filteredIndividualNotifications.slice(0, this.maxNumShownNotifications).map(
+          (notification) => {
+            if (notification.source.type === 'applet') {
+              const appletHash = appletHashFromAppId(appIdFromAppletId(notification.source.appletId));
+              return html`
+                <notification-asset
+                  style="display: flex; flex: 1;"
+                  .notification=${notification.notification}
+                  .appletHash=${appletHash}
+                  .sourceName=${notification.sourceName}
+                  @open-applet-main=${(e) => {
+                  console.log('notification clicked', e.detail);
+                  this.dispatchEvent(
+                    new CustomEvent('open-applet-main', {
+                      detail: {
+                        applet: appletHash,
+                        wal: e.detail.wal,
+                      },
+                      bubbles: true,
+                      composed: true,
+                    }),
+                  );
+                }}
+                ></notification-asset>
+              `;
+            } else {
+              // Group notification (e.g., foyer message)
+              return html`
+                <notification-asset
+                  style="display: flex; flex: 1;"
+                  .notification=${notification.notification}
+                  .groupDnaHash=${notification.source.groupDnaHash}
+                  .sourceName=${notification.sourceName}
+                  @open-applet-main=${() => {
+                  // Navigate to group foyer
+                  if (notification.source.type === 'group') {
+                    this.dispatchEvent(
+                      new CustomEvent('open-group', {
+                        detail: { groupDnaHash: decodeHashFromBase64(notification.source.groupDnaHash) },
+                        bubbles: true,
+                        composed: true,
+                      }),
+                    );
+                  }
+                }}
+                ></notification-asset>
+              `;
+            }
+          },
+        )}
+            ${displayShowMoreButton
+        ? html`<div class="row" style="justify-content: center;">
+                  <button
+                    @click=${() => {
+            this.maxNumShownNotifications += 50;
+          }}
+                    style="margin-top: 20px; with: 80px;"
+                  >
+                    Show More
+                  </button>
+                </div>`
+        : html``}
+          </div>
         </div>
       </div>
     `;
@@ -441,14 +482,11 @@ export class ActivityView extends LitElement {
   static styles = [
     css`
       :host {
-        display: flex;
-        flex: 1;
-        /* background-color: var(--moss-dark-green); */
-        border-radius: 8px;
+        border-radius: 10px;
+        background: rgb(0,0,0,.2);
       }
       .feed {
         padding: 30px;
-        height: calc(100vh - 70px);
       }
       .sort-buttons {
         margin-bottom: 10px;
@@ -462,10 +500,10 @@ export class ActivityView extends LitElement {
         cursor: pointer;
       }
       .sort-buttons button:hover {
-        background-color: #53d43f;
+        background-color: var(--moss-hint-green);
       }
       .time-select {
-        background-color: #193423;
+        background-color: var(--moss-dark-green);
         color: #fff;
         border: none;
         padding: 5px 10px;

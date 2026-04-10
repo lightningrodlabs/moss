@@ -28,7 +28,7 @@ export class CustomViewTitle extends LitElement {
 
   customView = new StoreSubscriber(
     this,
-    () => this.groupStore.customViewsStore.customViews.get(this.customViewHash),
+    () => this.groupStore.customViewsStore.customViews.get(this.customViewHash)!,
     () => [this.customViewHash],
   );
 

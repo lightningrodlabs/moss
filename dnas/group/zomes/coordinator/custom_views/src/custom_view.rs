@@ -4,7 +4,7 @@ use moss_helpers::ZomeFnInput;
 #[hdk_extern]
 pub fn create_custom_view(custom_view: CustomView) -> ExternResult<Record> {
     let custom_view_hash = create_entry(&EntryTypes::CustomView(custom_view.clone()))?;
-    let record = get(custom_view_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+    let record = get(custom_view_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
         WasmErrorInner::Guest(String::from("Could not find the newly created CustomView"))
     ))?;
     let path = Path::from("all_custom_views");
@@ -59,7 +59,7 @@ pub fn update_custom_view(input: UpdateCustomViewInput) -> ExternResult<Record> 
     let updated_custom_view_hash =
         update_entry(input.previous_custom_view_hash, &input.updated_custom_view)?;
     let record =
-        get(updated_custom_view_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+        get(updated_custom_view_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
             WasmErrorInner::Guest(String::from("Could not find the newly updated CustomView"))
         ))?;
     Ok(record)

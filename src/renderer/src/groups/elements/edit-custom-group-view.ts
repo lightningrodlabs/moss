@@ -4,7 +4,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { ActionHash, EntryHash } from '@holochain/client';
 import { hashProperty, sharedStyles } from '@holochain-open-dev/elements';
-import { BlockType } from '@theweave/api';
+import {BlockType} from '@theweave/api';
 import { BlockProperties } from 'grapesjs';
 import {
   asyncDeriveAndJoin,
@@ -45,9 +45,9 @@ export class EditCustomGroupView extends LitElement {
     this,
     () =>
       joinAsync([
-        this.groupStore.customViewsStore.customViews.get(this.customViewHash),
+        this.groupStore.customViewsStore.customViews.get(this.customViewHash)!,
         asyncDeriveAndJoin(this.groupStore.allBlocks, (allBlocks) =>
-          mapAndJoin(allBlocks, (_, appletHash) => this.groupStore.applets.get(appletHash)),
+          mapAndJoin(allBlocks, (_, appletHash) => this.groupStore.applets.get(appletHash)!),
         ),
       ]) as AsyncReadable<
         [
@@ -73,7 +73,7 @@ export class EditCustomGroupView extends LitElement {
           label: block.label,
           media: block.icon_src,
           category: applets.get(appletHash)?.custom_name,
-          content: `<iframe src="${iframeOrigin({ type: 'applet', appletHash, subType: 'block' })}?view=${
+          content: `<iframe src="${iframeOrigin({ type: 'applet', appletHash, groupHash: this.groupStore.groupDnaHash, subType: 'block' })}?view=${
             block.view
           }&view-type=block&block=${blockName}" style="width: 100%"></iframe>`,
         });

@@ -10,7 +10,6 @@ import '@theweave/elements/dist/elements/weave-client-context.js';
 import { EntryHash } from '@holochain/client';
 import { DnaHash } from '@holochain/client';
 import { AppletInfo, AssetLocationAndInfo, GroupProfile, WAL, deStringifyWal } from '@theweave/api';
-import { SlDialog } from '@shoelace-style/shoelace';
 import { mossStoreContext } from '../../context.js';
 import { MossStore, WalInPocket } from '../../moss-store.js';
 import { buildHeadlessWeaveClient } from '../../applets/applet-host.js';
@@ -20,12 +19,16 @@ import './pocket-search.js';
 import { PocketSearch } from './pocket-search.js';
 import { mdiDelete } from '@mdi/js';
 import { mossStyles } from '../../shared-styles.js';
+import { MossDialog } from '../_new_design/moss-dialog.js';
+import '../_new_design/moss-dialog.js';
 
 export interface SearchResult {
   hrlsWithInfo: Array<[WAL, AssetLocationAndInfo]>;
   groupsProfiles: ReadonlyMap<DnaHash, GroupProfile>;
   appletsInfos: ReadonlyMap<EntryHash, AppletInfo>;
 }
+
+export type PocketMode = 'open' | 'select' | 'select-no-create'
 
 /**
  * @element search-entry
@@ -39,13 +42,13 @@ export class MossPocket extends LitElement {
   _mossStore!: MossStore;
 
   @query('#pocket-dialog')
-  _dialog!: SlDialog;
+  _dialog!: MossDialog;
 
   @query('#pocket-search')
   _searchField!: PocketSearch;
 
   @state()
-  mode: 'open' | 'select' = 'open';
+  mode: PocketMode = 'open';
 
   @state()
   pocketContent: Array<WalInPocket> = [];
@@ -53,7 +56,7 @@ export class MossPocket extends LitElement {
   @state()
   recentlyCreatedContent: Array<string> = [];
 
-  show(mode: 'open' | 'select') {
+  show(mode: PocketMode) {
     this.loadPocketContent();
     this.mode = mode;
     this._dialog.show();
@@ -100,6 +103,7 @@ export class MossPocket extends LitElement {
           }),
         );
         break;
+      case 'select-no-create':
       case 'select':
         this.dispatchEvent(
           new CustomEvent('wal-selected', {
@@ -146,28 +150,27 @@ export class MossPocket extends LitElement {
 
   render() {
     return html`
-      <sl-dialog
-        class="moss-dialog"
+      <moss-dialog
         id="pocket-dialog"
-        style="--width: 800px;"
-        no-header
+        width="890px"
+        noHeader=true
+        style="${this.mode == 'select-no-create'? "z-index: 1000" : ""}"
         @sl-initial-focus=${(e: { preventDefault: () => void }) => {
-          e.preventDefault();
-          this._searchField.focus();
-        }}
+        e.preventDefault();
+        this._searchField.focus();
+      }}
         @sl-hide=${(e: CustomEvent) => {
-          // https://github.com/shoelace-style/shoelace/issues/1161
-          // prevent sl-hide events from contained elements from bubbling since sl-hide is used to
-          // cancel userSelectHrl
-          if (e.target !== e.currentTarget) {
-            e.stopPropagation();
-          }
-        }}
+        // https://github.com/shoelace-style/shoelace/issues/1161
+        // prevent sl-hide events from contained elements from bubbling since sl-hide is used to
+        // cancel userSelectHrl
+        if (e.target !== e.currentTarget) {
+          e.stopPropagation();
+        }
+      }}
       >
-        <div class="column" style="align-items: center; position: relative; padding-bottom: 30px;">
-          ${
-            this.pocketContent.length > 0
-              ? html`
+        <div slot="content" style="align-items: center; position: relative; padding-bottom: 30px;">
+          ${this.pocketContent.length > 0
+        ? html`
                   <div style="position: absolute; bottom: -10px; left: -10px; ">
                     <sl-button
                       class="clear-pocket"
@@ -179,29 +182,27 @@ export class MossPocket extends LitElement {
                     >
                   </div>
                 `
-              : ``
-          }
+        : ``
+      }
 
-          ${
-            this.mode === 'select'
-              ? html`<div style="font-size: 25px; margin-bottom: 30px;">
+          ${this.mode === 'select' || this.mode === 'select-no-create'
+        ? html`<div style="font-size: 25px; margin-bottom: 30px;">
                   ${msg('Select Attachment:')}
                 </div>`
-              : html``
-          }
-          ${
-            this.mode === 'open'
-              ? html`<div
+        : html``
+      }
+          ${this.mode === 'open'
+        ? html`<div
                   style="position: absolute; bottom: -10px; right: -10px; color: var(--sl-color-secondary-950);"
                 >
                   <span
                     style="background: #e0e0e0; padding: 2px 5px; border-radius: 4px; color: black;"
                     >Alt + S</span
                   >
-                  to open Clipboard
+                  ${msg('to open Clipboard')}
                 </div>`
-              : html``
-          }
+        : html``
+      }
 
           <weave-client-context
             .weaveClient=${buildHeadlessWeaveClient(this._mossStore)}
@@ -215,9 +216,8 @@ export class MossPocket extends LitElement {
               @open-wurl=${(e) => this.handleOpenWurl(e)}
             ></pocket-search>
           </weave-client-context>
-          ${
-            this.mode === 'select'
-              ? html`
+          ${this.mode === 'select'
+        ? html`
                   <sl-button
                     variant="primary"
                     style="margin-top: 10px;"
@@ -228,15 +228,14 @@ export class MossPocket extends LitElement {
                         src="magic-wand.svg"
                         style="color: white; height: 20px; margin-right: 4px;"
                       />
-                      <div>Create New</div>
+                      <div>${msg('Create New')}</div>
                     </div>
                   </sl-button>
                 `
-              : html``
-          }
-          ${
-            this.recentlyCreatedContent.length > 0
-              ? html`
+        : html``
+      }
+          ${this.recentlyCreatedContent.length > 0
+        ? html`
                   <div class="row" style="font-size: 25px; margin-top: 30px; align-items: center;">
                     <img
                       src="magic-wand.svg"
@@ -246,8 +245,8 @@ export class MossPocket extends LitElement {
                   </div>
                   <div class="row" style="margin-top: 30px; flex-wrap: wrap;">
                     ${this.recentlyCreatedContent.length > 0
-                      ? this.recentlyCreatedContent.map(
-                          (walStringified) => html`
+            ? this.recentlyCreatedContent.map(
+              (walStringified) => html`
                             <wal-created-element
                               .wal=${deStringifyWal(walStringified)}
                               .selectTitle=${this.mode === 'open' ? msg('Open') : undefined}
@@ -256,24 +255,22 @@ export class MossPocket extends LitElement {
                               style="margin: 0 7px 7px 0;"
                             ></wal-created-element>
                           `,
-                        )
-                      : html`Nothing in your pocket. Watch out for pocket icons to add things to
-                        your pocket.`}
+            )
+            : html`${msg('Nothing in your pocket. Watch out for pocket icons to add things to your pocket.')}`}
                   </div>
                 `
-              : html``
-          }
+        : html``
+      }
           <div class="row" style="font-size: 25px; margin-top: 30px; align-items: center;">
             <img src="pocket_black.png" style="height: 38px; margin-right: 10px;">
             ${msg('In Your Pocket:')}
           </div>
           <div class="row" style="margin-top: 30px; flex-wrap: wrap;">
-            ${
-              this.pocketContent.length > 0
-                ? this.pocketContent
-                    .sort((wal_a, wal_b) => wal_b.addedAt - wal_a.addedAt)
-                    .map(
-                      (walInPocket) => html`
+            ${this.pocketContent.length > 0
+        ? this.pocketContent
+          .sort((wal_a, wal_b) => wal_b.addedAt - wal_a.addedAt)
+          .map(
+            (walInPocket) => html`
                         <wal-element
                           .wal=${deStringifyWal(walInPocket.wal)}
                           .selectTitle=${this.mode === 'open' ? msg('Open') : undefined}
@@ -282,12 +279,11 @@ export class MossPocket extends LitElement {
                           style="margin: 0 7px 7px 0;"
                         ></wal-element>
                       `,
-                    )
-                : html`Nothing in your pocket. Watch out for pocket icons to add things to your
-                  pocket.`
-            }
+          )
+        : html`${msg('Nothing in your pocket. Watch out for pocket icons to add things to your pocket.')}`
+      }
           </div>
-      </sl-dialog>
+      </moss-dialog>
     `;
   }
 

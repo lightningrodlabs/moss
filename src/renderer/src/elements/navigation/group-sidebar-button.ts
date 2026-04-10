@@ -2,6 +2,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { StoreSubscriber, Unsubscriber } from '@holochain-open-dev/stores';
+import { encodeHashToBase64 } from '@holochain/client';
 
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import { groupStoreContext } from '../../groups/context.js';
@@ -9,10 +10,9 @@ import { GroupStore } from '../../groups/group-store.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import './sidebar-button.js';
-import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mdiAccountMultiple } from '@mdi/js';
+import { sharedStyles } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
-import { encodeHashToBase64 } from '@holochain/client';
+import { onlineDebugLog } from '../../utils.js';
 
 @customElement('group-sidebar-button')
 export class GroupSidebarButton extends LitElement {
@@ -34,31 +34,63 @@ export class GroupSidebarButton extends LitElement {
   @state()
   _loadingPeerCount = false;
 
-  _peerStatuses = new StoreSubscriber(
+  private _onlinePeersCount = new StoreSubscriber(
     this,
-    () => this._groupStore.peerStatuses(),
+    () => this._groupStore?.onlinePeersCount,
     () => [this._groupStore],
   );
 
+  private _groupMemberWithProfiles = new StoreSubscriber(
+    this,
+    () => this._groupStore?.allProfiles,
+    () => [this._groupStore],
+  );
+  totalMembers() {
+    switch (this._groupMemberWithProfiles.value?.status) {
+      case 'complete':
+        return this._groupMemberWithProfiles.value.value.size;
+      default:
+        return 1; // self
+    }
+  }
+
   _unsubscribe: Unsubscriber | undefined;
+
+  // Track which GroupStore the manual subscription was created for
+  private _manualSubGroupStoreId: string | undefined;
+  private _manualSubStoreRef: unknown | undefined;
 
   disconnectedCallback(): void {
     if (this._unsubscribe) this._unsubscribe();
+    const groupId = this._groupStore ? encodeHashToBase64(this._groupStore.groupDnaHash).slice(0, 8) : '??';
+    onlineDebugLog(`[OnlineDebug][${groupId}] group-sidebar-button disconnected`);
   }
 
-  firstUpdated() {
-    this._unsubscribe = this._peerStatuses.store.subscribe((value) => {
-      if (!value) {
-        value = {};
-      }
-      const numOnlineAgents = Object.entries(value).filter(
-        ([pubkey, status]) =>
-          status.status === 'online' &&
-          pubkey !== encodeHashToBase64(this._groupStore.groupClient.myPubKey),
-      ).length;
+  private _setupManualSubscription() {
+    if (this._unsubscribe) this._unsubscribe();
+
+    const groupId = this._groupStore ? encodeHashToBase64(this._groupStore.groupDnaHash).slice(0, 8) : '??';
+    this._manualSubGroupStoreId = groupId;
+    this._manualSubStoreRef = this._onlinePeersCount.store;
+
+    onlineDebugLog(`[OnlineDebug][${groupId}] Setting up manual subscription, store ref exists: ${!!this._onlinePeersCount.store}`);
+
+    if (!this._onlinePeersCount.store) return;
+
+    this._unsubscribe = this._onlinePeersCount.store.subscribe((count) => {
+      const currentGroupId = this._groupStore ? encodeHashToBase64(this._groupStore.groupDnaHash).slice(0, 8) : '??';
+      const storeRefMatch = this._onlinePeersCount.store === this._manualSubStoreRef;
+
+      const numOnlineAgents = count ?? 0;
       if (numOnlineAgents > 0) {
         if (this._previousOnlineAgents === 0) {
-          console.log('NEW AGENTS ONLINE.');
+          onlineDebugLog(
+            `[OnlineDebug][${currentGroupId}] NEW AGENTS ONLINE. ` +
+            `manualSub count=${numOnlineAgents}, ` +
+            `subscriberValue=${this._onlinePeersCount.value}, ` +
+            `manualSubCreatedFor=${this._manualSubGroupStoreId}, ` +
+            `storeRefStillMatches=${storeRefMatch}`
+          );
           this.dispatchEvent(
             new CustomEvent('agents-online', {
               detail: this._groupStore.groupDnaHash,
@@ -70,6 +102,10 @@ export class GroupSidebarButton extends LitElement {
       }
       this._previousOnlineAgents = numOnlineAgents;
     });
+  }
+
+  firstUpdated() {
+    this._setupManualSubscription();
   }
 
   @property()
@@ -100,17 +136,18 @@ export class GroupSidebarButton extends LitElement {
   indicated = false;
 
   renderOnlineCount() {
-    // console.log('this._peerStatuses.value: ', this._peerStatuses.value);
-    const onlineAgentCount =
-      this._peerStatuses.value || this._peerStatuses.value === 0
-        ? Object.entries(this._peerStatuses.value).filter(
-            ([pubkey, status]) =>
-              ['online', 'inactive'].includes(status.status) &&
-              pubkey !== encodeHashToBase64(this._groupStore.groupClient.myPubKey),
-          ).length
-        : undefined;
+    const totalPeers = this.totalMembers() - 1;
+    const onlineAgentCount = this._onlinePeersCount.value;
+    const groupId = this._groupStore ? encodeHashToBase64(this._groupStore.groupDnaHash).slice(0, 8) : '??';
 
-    // console.log('onlineAgentCount: ', onlineAgentCount);
+    // Log when count is 0 but we previously had agents (potential bug indicator)
+    if (onlineAgentCount === 0 && this._previousOnlineAgents > 0) {
+      onlineDebugLog(
+        `[OnlineDebug][${groupId}] Rendering count=0 but _previousOnlineAgents=${this._previousOnlineAgents}, ` +
+        `storeSubscriber has active sub: ${!!this._onlinePeersCount['_unsubscribe']}, ` +
+        `manualSubCreatedFor=${this._manualSubGroupStoreId}`
+      );
+    }
 
     return html`
       <div
@@ -119,19 +156,14 @@ export class GroupSidebarButton extends LitElement {
           : 'gray'}"
         title="${this._loadingPeerCount
           ? msg('Loading number of online members')
-          : `${onlineAgentCount} ${msg('member(s) online')}`}"
+          : `${onlineAgentCount}/${totalPeers} ${msg('peers online')}`}"
       >
         ${onlineAgentCount === undefined
           ? html`<sl-spinner
               style="font-size: 10px; --indicator-color: white; --track-color: var(--sl-color-primary-700)"
             ></sl-spinner>`
-          : html`
-              <sl-icon
-                .src=${wrapPathInSvg(mdiAccountMultiple)}
-                style="font-size: 20px; font-weight: bold;"
-              ></sl-icon>
-              <span>${onlineAgentCount}</span>
-            `}
+          : html` <span>${onlineAgentCount}</span
+              ><span class="gray" style="font-weight:400">/${totalPeers}</span>`}
       </div>
     `;
   }
@@ -181,15 +213,16 @@ export class GroupSidebarButton extends LitElement {
       css`
         .online-agents {
           position: absolute;
-          bottom: 6px;
-          right: 0px;
-          border-radius: 10px;
-          padding: 1px 2px;
+          bottom: 10px;
+          left: 50%;
+          transform: translateX(-50%);
+          border-radius: 4px;
+          padding: 2px 2px;
           align-items: center;
-          background: var(--sl-color-primary-900);
-          min-width: 34px;
-          height: 22px;
-          pointer-events: none;
+          background: var(--moss-dark-button);
+          height: 14px;
+          font-weight: 600;
+          font-size: 12px;
         }
 
         .green {

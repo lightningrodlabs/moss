@@ -25,12 +25,24 @@ export async function launch(
   runOptions: RunOptions,
 ): Promise<[childProcess.ChildProcessWithoutNullStreams, HolochainManager, WeRustHandler]> {
   console.log('LAIR BINARY PATH: ', LAIR_BINARY);
+  //console.log('runOptions: ', JSON.stringify(runOptions, null, 2));
+  if (!runOptions.relayUrl && (!runOptions.bootstrapUrl || !runOptions.signalingUrl)) {
+      throw new Error(`Failed to launch HolochainManager: bootstrapUrl, relayUrl or signalingUrl is not set in runOptions.`);
+  }
   // Initialize lair if necessary
   const lairHandleTemp = childProcess.spawnSync(LAIR_BINARY, ['--version']);
   if (!lairHandleTemp.stdout) {
     console.error(`Failed to run lair-keystore binary:\n${JSON.stringify(lairHandleTemp)}`);
   }
   console.log(`Got lair version ${lairHandleTemp.stdout.toString()}`);
+  const currentLairVersion = lairHandleTemp.stdout.toString().trim();
+
+  // Record the lair version that initializes/uses this keystore so that future
+  // versions of Moss can detect compatibility before attempting an import.
+  const lairVersionFile = path.join(mossFileSystem.keystoreDir, 'moss-lair-version.txt');
+  if (!fs.existsSync(lairVersionFile)) {
+    fs.writeFileSync(lairVersionFile, currentLairVersion, 'utf-8');
+  }
   if (!mossFileSystem.keystoreInitialized()) {
     if (splashscreenWindow)
       splashscreenWindow.webContents.send(
@@ -63,7 +75,7 @@ export async function launch(
     throw new Error(`Failed to launch lair keystore: ${e}`);
   }
 
-  const holochainVersion = MOSS_CONFIG.holochain.version;
+  const holochainVersion = MOSS_CONFIG.holochain;
 
   if (splashscreenWindow)
     splashscreenWindow.webContents.send(
@@ -85,6 +97,7 @@ export async function launch(
       lairUrl,
       runOptions.bootstrapUrl!,
       runOptions.signalingUrl!,
+      runOptions.relayUrl!,
       runOptions.iceUrls,
       runOptions.holochainRustLog,
       runOptions.holochainWasmLog,
@@ -218,7 +231,7 @@ export async function launch(
       }),
     );
   } else {
-    await devSetup(runOptions.devInfo, holochainManager, mossFileSystem, false);
+    await devSetup(runOptions.devInfo, holochainManager, mossFileSystem, false, weRustHandler);
   }
   return [lairHandle, holochainManager, weRustHandler];
 }

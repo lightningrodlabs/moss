@@ -12,9 +12,10 @@ import {
 } from '@holochain/client';
 import { encode } from '@msgpack/msgpack';
 import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
-import { ResourceLocation, WeaveDevConfig } from '@theweave/moss-types';
+import { ResourceLocation, ToolVersionInfo, WeaveDevConfig } from '@theweave/moss-types';
 import { sha512 } from 'js-sha512';
 import { WeEmitter } from './weEmitter';
+import { compareVersions, validate as validateSemver } from 'compare-versions';
 
 export const isMac = process.platform === 'darwin';
 export const isWindows = process.platform === 'win32';
@@ -28,7 +29,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       // ignore vite routing in dev mode
       return;
     }
-    if (e.url.startsWith('weave-0.14://')) {
+    if (e.url.startsWith('weave-0.15://')) {
       e.preventDefault();
       // This event is emitted to allow the window to prevent the
       // beforeunload event to execute
@@ -57,7 +58,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       // ignore vite routing in dev mode
       return;
     }
-    if (e.url.startsWith('weave-0.14://')) {
+    if (e.url.startsWith('weave-0.15://')) {
       emitToWindow(browserWindow, 'deep-link-received', e.url);
       e.preventDefault();
       return;
@@ -79,7 +80,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // happ windows are not allowed to spawn new electron windows
   browserWindow.webContents.setWindowOpenHandler((details) => {
     // console.log('GOT NEW WINDOW EVENT: ', details);
-    if (details.url.startsWith('weave-0.14://')) {
+    if (details.url.startsWith('weave-0.15://')) {
       emitToWindow(browserWindow, 'deep-link-received', details.url);
     }
     if (details.url.startsWith('http://') || details.url.startsWith('https://')) {
@@ -123,7 +124,7 @@ export function defaultAppNetworkSeed(devConfig?: WeaveDevConfig): string {
 export async function signZomeCall(
   request: CallZomeRequest,
   handler: WeRustHandler,
-  weEmitter: WeEmitter,
+  weEmitter?: WeEmitter,
 ): Promise<CallZomeRequestSigned> {
   if (!request.provenance)
     return Promise.reject(
@@ -147,7 +148,7 @@ export async function signZomeCall(
   try {
     signature = await handler.signZomeCall(bytesHash, Array.from(request.provenance));
   } catch (e) {
-    weEmitter.emitMossError(`Failed to sign zome call: ${e}`);
+    weEmitter?.emitMossError(`Failed to sign zome call: ${e}`);
     throw new Error(`Failed to sign zome call: ${e}`);
   }
 
@@ -224,4 +225,19 @@ export async function retryNTimes<T>(
   }
 
   throw new Error(`Callback failed after ${n} attempts: ${lastError}`);
+}
+
+/**
+ * Sorts versions array in descending order (highest version first) by semver.
+ * Filters out invalid semver versions before sorting.
+ * This is an internal utility function, not part of the published @theweave/utils package.
+ */
+export function sortVersionsDescending(versions: ToolVersionInfo[]): ToolVersionInfo[] {
+  const validVersions = versions.filter((version) => validateSemver(version.version));
+  const invalidVersions = versions.filter((version) => !validateSemver(version.version));
+  const sorted = validVersions.sort((version_a, version_b) =>
+    compareVersions(version_b.version, version_a.version),
+  );
+  // Append invalid versions at the end
+  return [...sorted, ...invalidVersions];
 }

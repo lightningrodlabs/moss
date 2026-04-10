@@ -17,7 +17,7 @@ import { decodeHashFromBase64 } from '@holochain/client';
 import { AppletNotification, GroupDnaHash } from '../../../types.js';
 import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
-import TimeAgo from 'javascript-time-ago';
+import { getLocalizedTimeAgo } from '../../../locales/localization.js';
 import { mossStyles } from '../../../shared-styles.js';
 import { stringToMessageParts } from '../../../utils.js';
 import { toPromise } from '@holochain-open-dev/stores';
@@ -32,9 +32,7 @@ export class FeedElement extends LitElement {
   @property()
   notification!: AppletNotification;
 
-  /**
-   * Just pick one of the group's this applet is part of in order to be able to display a profile
-   */
+  /** Pick one of the group this applet is part of to be able to display a profile */
   @state()
   groupDnaHash: GroupDnaHash | undefined;
 
@@ -44,7 +42,7 @@ export class FeedElement extends LitElement {
   async firstUpdated() {
     try {
       const groupsForApplet = await toPromise(
-        this._mossStore.groupsForApplet.get(decodeHashFromBase64(this.notification.appletId)),
+        this._mossStore.groupsForApplet.get(decodeHashFromBase64(this.notification.appletId))!
       );
       const groupHashes = Array.from(groupsForApplet.keys());
       if (groupHashes.length > 0) {
@@ -57,7 +55,7 @@ export class FeedElement extends LitElement {
   }
 
   render() {
-    const timeAgo = new TimeAgo('en-US');
+    const timeAgo = getLocalizedTimeAgo();
     const messageParts = stringToMessageParts(this.notification.notification.body);
     return html`
       <div

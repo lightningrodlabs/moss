@@ -1,56 +1,61 @@
 import {
   asyncDerived,
   asyncDeriveStore,
+  asyncReadable,
   completed,
+  derived,
+  get,
   lazyLoad,
+  manualReloadStore,
   mapAndJoin,
   pipe,
-  toPromise,
   Readable,
+  readable,
+  toPromise,
+  Unsubscriber,
   Writable,
   writable,
-  derived,
-  manualReloadStore,
-  asyncReadable,
-  Unsubscriber,
 } from '@holochain-open-dev/stores';
+import { GetonlyMap, pickBy, slice, } from '@holochain-open-dev/utils';
 import {
-  DnaHashMap,
-  HoloHashMap,
-  LazyHoloHashMap,
-  LazyMap,
-  pickBy,
-  slice,
-} from '@holochain-open-dev/utils';
-import {
+  ActionHash,
+  AdminWebsocket,
   AgentPubKeyB64,
   AppAuthenticationToken,
   AppInfo,
+  AppStatusFilter,
   AppWebsocket,
   CallZomeRequest,
+  decodeHashFromBase64,
+  DnaHash,
   DnaHashB64,
+  DnaHashMap,
+  encodeHashToBase64,
+  EntryHash,
+  EntryHashB64,
+  HoloHashMap,
   InstalledAppId,
+  LazyHoloHashMap,
   ProvisionedCell,
   RoleNameCallZomeRequest,
 } from '@holochain/client';
-import { encodeHashToBase64 } from '@holochain/client';
-import { EntryHashB64 } from '@holochain/client';
-import { ActionHash, AdminWebsocket, DnaHash, EntryHash } from '@holochain/client';
 import {
-  CreatableResult,
-  CreatableName,
-  WAL,
-  ProfilesLocation,
-  CreatableType,
-  NULL_HASH,
   AppletHash,
   AppletId,
-  stringifyWal,
+  CreatableName,
+  CreatableResult,
+  CreatableType,
   deStringifyWal,
   GroupProfile as GroupProfilePartial,
   IframeKind,
-  ZomeCallLogInfo,
+  NULL_HASH,
+  FrameNotification,
   ParentToAppletMessage,
+  ProfilesLocation,
+  stringifyWal,
+  WAL,
+  WeaveLocation,
+  ZomeCallLogInfo,
 } from '@theweave/api';
 import { GroupStore } from './groups/group-store.js';
 import { DnaLocation, HrlLocation, locateHrl } from './processes/hrl/locate-hrl.js';
@@ -62,16 +67,17 @@ import {
   getToolIcon,
   installGroupHapp,
   joinGroup,
+  silentExportGroupsData,
   storeGroupProfile,
 } from './electron-api.js';
 import {
-  destringifyAndDecode,
   devModeToolLibraryFromDevConfig,
-  encodeAndStringify,
   findAppForDnaHash,
-  isAppDisabled,
-  isAppRunning,
+  getNotificationState,
+  sortVersionsDescending,
+  storeAppletNotifications,
   validateWal,
+  onlineDebugLog,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
 import {
@@ -92,26 +98,44 @@ import {
   appletIdFromAppId,
   deriveToolCompatibilityId,
   getLatestVersionFromToolInfo,
+  isAppDisabled,
+  isAppRunning,
   toolCompatibilityIdFromDistInfo,
-  toolCompatibilityIdFromDistInfoString,
+  toolCompatibilityIdFromDistInfoString
 } from '@theweave/utils';
 import { Value } from '@sinclair/typebox/value';
 import {
-  AppletNotification,
   CallbackWithId,
   MossEvent,
   MossEventMap,
+  MossNotification,
+  NotificationOptions,
+  NotificationSource,
   ToolAndCurationInfo,
   ToolInfoAndLatestVersion,
 } from './types.js';
-import { GroupClient, GroupProfile, Applet, AssetsClient } from '@theweave/group-client';
+import { Applet, AssetsClient, GroupClient, GroupProfile } from '@theweave/group-client';
 import { fromUint8Array } from 'js-base64';
 import { encode } from '@msgpack/msgpack';
 import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';
-import { PersistedStore } from './persisted-store.js';
+import { PersistedStore, SectionReadStates } from './persisted-store.js';
 import { MossCache } from './cache.js';
 import { compareVersions } from 'compare-versions';
 import { IframeStore } from './iframe-store.js';
+import { notificationAudio } from './services/notification-audio.js';
+
+export class LazyMap<K, V> implements GetonlyMap<K, V> {
+  map = new Map<K, V>();
+
+  constructor(protected newValue: (hash: K) => V) { }
+
+  get(hash: K): V {
+    if (!this.map.has(hash)) {
+      this.map.set(hash, this.newValue(hash));
+    }
+    return this.map.get(hash)!;
+  }
+}
 
 export type SearchStatus = 'complete' | 'loading';
 
@@ -154,6 +178,11 @@ export class MossStore {
     this.version = conductorInfo.moss_version;
     this.isAppletDev = !!appletDevConfig;
     if (appletDevConfig) this.devModeToolLibrary = devModeToolLibraryFromDevConfig(appletDevConfig);
+
+    // Preload notification sounds
+    notificationAudio.preloadBuiltinSounds();
+    const soundSettings = this.persistedStore.notificationSoundSettings.value();
+    notificationAudio.preloadCustomSounds(soundSettings.customSounds);
   }
 
   /**
@@ -185,7 +214,7 @@ export class MossStore {
     if (iframeKind.type === 'applet') {
       appletId = encodeHashToBase64(iframeKind.appletHash);
     } else {
-      const applets = await toPromise(this.appletsForToolId.get(iframeKind.toolCompatibilityId));
+      const applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]> = await toPromise(this.appletsForToolId.get(iframeKind.toolCompatibilityId));
       const appletIds = Object.keys(applets);
       if (appletIds.length === 0)
         throw new Error(
@@ -312,6 +341,69 @@ export class MossStore {
 
   setAssetViewerState(state: AssetViewerState) {
     this._assetViewerState.set(state);
+  }
+
+  private _appletSidebarCollapsed: Writable<boolean | null> = writable(null);
+
+  appletSidebarCollapsed: Readable<boolean | null> = readable<boolean | null>(false, (set) => {
+    if (get(this._appletSidebarCollapsed) === null) {
+      this._appletSidebarCollapsed.set(this.persistedStore.appletSidebarCollapsed.value());
+    }
+    const unsubscribe = this._appletSidebarCollapsed.subscribe(set);
+    return unsubscribe;
+  });
+
+  setAppletSidebarCollapsed(value: boolean): void {
+    this.persistedStore.appletSidebarCollapsed.set(value);
+    this._appletSidebarCollapsed.set(value);
+  }
+
+  /**
+   * --------------------------------------------------------------------------
+   * Notification Section Read States
+   * --------------------------------------------------------------------------
+   */
+
+  private _sectionReadStates: Writable<SectionReadStates | null> = writable(null);
+
+  sectionReadStates(): Readable<SectionReadStates> {
+    return readable<SectionReadStates>({}, (set) => {
+      if (get(this._sectionReadStates) === null) {
+        this._sectionReadStates.set(this.persistedStore.sectionReadStates.value());
+      }
+      const unsubscribe = this._sectionReadStates.subscribe((states) => {
+        set(states ?? {});
+      });
+      return unsubscribe;
+    });
+  }
+
+  /**
+   * Records that a section was viewed with the given count
+   */
+  recordSectionViewed(section: string, count: number): void {
+    const states = get(this._sectionReadStates) ?? {};
+    const newStates: SectionReadStates = {
+      ...states,
+      [section]: {
+        section,
+        lastViewedCount: count,
+        lastViewedAt: Date.now(),
+      },
+    };
+    this.persistedStore.sectionReadStates.set(newStates);
+    this._sectionReadStates.set(newStates);
+  }
+
+  /**
+   * Clears the read state for a section (marks as unread)
+   */
+  markSectionAsUnread(section: string): void {
+    const states = get(this._sectionReadStates) ?? {};
+    const newStates = { ...states };
+    delete newStates[section];
+    this.persistedStore.sectionReadStates.set(newStates);
+    this._sectionReadStates.set(newStates);
   }
 
   /**
@@ -543,21 +635,23 @@ export class MossStore {
    * --------------------------------------------------------------------------
    */
 
-  _notificationFeed: Writable<AppletNotification[]> = writable([]);
+  _notificationFeed: Writable<MossNotification[]> = writable([]);
 
-  notificationFeed(): Readable<AppletNotification[]> {
+  notificationFeed(): Readable<MossNotification[]> {
     return derived(this._notificationFeed, (store) => store);
   }
 
   /**
    * Loads the notification feed n days back for all installed applets.
+   * Note: Only loads persisted applet notifications. Ephemeral group notifications
+   * are added to the feed in real-time via handleNotification().
    *
    * @param nDaysBack
    */
-  async loadNotificationFeed(nDaysBack: number) {
+  async loadNotificationFeed(nDaysBack: number, maxNotifications = 1000) {
     const allApplets = await toPromise(this.runningApplets);
     const allAppletIds = allApplets.map((appletHash) => encodeHashToBase64(appletHash));
-    let allNotifications: AppletNotification[][] = [];
+    let allNotifications: MossNotification[][] = [];
     const daysSinceEpochToday = Math.floor(Date.now() / 8.64e7);
     for (let i = 0; i < nDaysBack + 1; i++) {
       const daysSinceEpoch = daysSinceEpochToday - i;
@@ -568,7 +662,11 @@ export class MossStore {
         );
         allNotifications.push(
           notifications.map((notification) => ({
-            appletId,
+            source: {
+              type: 'applet' as const,
+              appletId,
+              appletHash: decodeHashFromBase64(appletId),
+            },
             notification,
           })),
         );
@@ -576,40 +674,96 @@ export class MossStore {
     }
     const allNotificationsFlattened = allNotifications.flat(1);
     this._notificationFeed.set(
-      allNotificationsFlattened.sort(
-        (appletNotification_a, appletNotification_b) =>
-          appletNotification_b.notification.timestamp - appletNotification_a.notification.timestamp,
-      ),
+      allNotificationsFlattened
+        .sort(
+          (appletNotification_a, appletNotification_b) =>
+            appletNotification_b.notification.timestamp - appletNotification_a.notification.timestamp,
+        )
+        .slice(0, maxNotifications),
     );
   }
 
   /**
-   * Updates the notification feed for the given applet Id
+   * Unified notification handler for both applet and group notifications.
+   * This is the single entry point for all notifications in the system.
    *
-   * @param appletId
-   * @param daysSinceEpoch
+   * @param source The source of the notification (applet or group)
+   * @param notifications Array of notifications to process
+   * @param options Configuration for how to handle the notifications
    */
-  updateNotificationFeed(appletId: AppletId, daysSinceEpoch: number) {
-    this._notificationFeed.update((store) => {
-      // console.log('store: ', store);
-      const allNotificationStrings = store.map((nots) => encodeAndStringify(nots));
-      const updatedAppletNotifications: string[] = this.persistedStore.appletNotifications
-        .value(appletId, daysSinceEpoch)
-        .map((notification) => encodeAndStringify({ appletId, notification }));
-      // console.log('updatedAppletNotifications: ', updatedAppletNotifications);
-      // console.log('SET: ', new Set([...store, ...updatedAppletNotifications]));
-      const updatedNotifications: string[] = [
-        ...new Set([...allNotificationStrings, ...updatedAppletNotifications]),
-      ];
-      // console.log('updatedNotifications: ', updatedNotifications);
-      return updatedNotifications
-        .map((notificationsString) => destringifyAndDecode<AppletNotification>(notificationsString))
-        .sort(
-          (appletNotification_a, appletNotification_b) =>
-            appletNotification_b.notification.timestamp -
-            appletNotification_a.notification.timestamp,
+  async handleNotification(
+    source: NotificationSource,
+    notifications: FrameNotification[],
+    options: NotificationOptions,
+  ): Promise<void> {
+    const mainWindowFocused = await window.electronAPI.isMainWindowFocused();
+
+    for (const notification of notifications) {
+      // 1. Persist if requested (tools do this, foyer doesn't)
+      if (options.persist && source.type === 'applet') {
+        storeAppletNotifications([notification], source.appletId, true, this.persistedStore);
+      }
+
+      // 2. Update unread count for sidebar dot
+      if (options.updateUnreadCount) {
+        if (source.type === 'applet') {
+          const appletStoreReadable = this.appletStores.get(source.appletHash);
+          if (appletStoreReadable) {
+            try {
+              const appletStore = await toPromise(appletStoreReadable);
+              const unreadNotifications = this.persistedStore.appletNotificationsUnread.value(source.appletId);
+              appletStore.setUnreadNotifications(getNotificationState(unreadNotifications));
+            } catch (e) {
+              console.warn('Failed to update applet notification count:', e);
+            }
+          }
+        } else {
+          // Group notifications - update the group store's unread count
+          const allGroupStores = await toPromise(this.groupStores);
+          const groupStore = allGroupStores.get(decodeHashFromBase64(source.groupDnaHash));
+          if (groupStore) {
+            groupStore.incrementUnreadGroupNotifications(notification.urgency);
+          }
+        }
+      }
+
+      // 3. Add to activity feed
+      if (options.showInFeed) {
+        this._notificationFeed.update((feed) => {
+          const newNotification: MossNotification = { source, notification, sourceName: options.sourceName };
+          return [newNotification, ...feed].sort(
+            (a, b) => b.notification.timestamp - a.notification.timestamp,
+          );
+        });
+      }
+
+      // 4. Send OS notification if conditions are met
+      if (
+        options.sendOSNotification &&
+        !mainWindowFocused &&
+        Date.now() - notification.timestamp < 300000
+      ) {
+        const weaveLocation: WeaveLocation =
+          source.type === 'applet'
+            ? { type: 'applet', appletHash: source.appletHash }
+            : { type: 'group', dnaHash: decodeHashFromBase64(source.groupDnaHash) };
+
+        await window.electronAPI.notification(
+          notification,
+          true, // showInSystray
+          notification.urgency === 'high',
+          weaveLocation,
+          options.sourceName,
         );
-    });
+      }
+
+      // 5. Play notification sound (based on urgency, independent of OS notification)
+      if (options.playSound && Date.now() - notification.timestamp < 300000) {
+        const soundSettings = this.persistedStore.notificationSoundSettings.value();
+        notificationAudio.playForUrgency(notification.urgency, soundSettings);
+      }
+    }
+
   }
 
   /**
@@ -769,7 +923,11 @@ export class MossStore {
       const toolInfo = toolList.tools.find(
         (tool) => tool.id === toolId && tool.versionBranch === versionBranch,
       );
-      if (toolInfo) this._toolInfoRemoteCache[toolCompatibilityId] = toolInfo;
+      if (toolInfo) {
+        // Sort versions in descending order (highest first)
+        toolInfo.versions = sortVersionsDescending(toolInfo.versions);
+        this._toolInfoRemoteCache[toolCompatibilityId] = toolInfo;
+      }
       return toolInfo;
     } catch (e) {
       throw new Error(`Failed to fetch or parse Tool info: ${e}`);
@@ -845,6 +1003,7 @@ export class MossStore {
     }
 
     await this.reloadManualStores();
+    silentExportGroupsData().catch((e) => console.warn('Auto-export after createGroup failed:', e));
     return appInfo;
   }
 
@@ -852,6 +1011,7 @@ export class MossStore {
     try {
       const appInfo = await joinGroup(networkSeed, progenitor);
       await this.reloadManualStores();
+      silentExportGroupsData().catch((e) => console.warn('Auto-export after joinGroup failed:', e));
       return appInfo;
     } catch (e) {
       console.error('Error installing group app: ', e);
@@ -898,20 +1058,23 @@ export class MossStore {
     await this.adminWebsocket.uninstallApp({
       installed_app_id: appToLeave.installed_app_id,
     });
+    await this.closeAppClient(appToLeave.installed_app_id);
 
     await Promise.all(
       applets.map(async (appletHash) => {
-        // TODO: Is this save? groupsForApplet depends on the network so it may not always
+        // TODO: Is this safe? groupsForApplet depends on the network so it may not always
         // actually return all groups that depend on this applet
         const groupsForApplet = await this.getGroupsForApplet(appletHash);
 
         // console.warn(`@leaveGroup: found groups for applet ${encodeHashToBase64(appletHash)}: ${groupsForApplet.map(hash => encodeHashToBase64(hash))}`);
 
         if (groupsForApplet.length === 0) {
+          const appletAppId = appIdFromAppletHash(appletHash);
           // console.warn("@leaveGroup: Uninstalling applet with app id: ", encodeHashToBase64(appletHash));
           await this.adminWebsocket.uninstallApp({
-            installed_app_id: appIdFromAppletHash(appletHash),
+            installed_app_id: appletAppId,
           });
+          await this.closeAppClient(appletAppId);
           const backgroundIframe = document.getElementById(encodeHashToBase64(appletHash)) as
             | HTMLIFrameElement
             | undefined;
@@ -939,9 +1102,9 @@ export class MossStore {
       const groupProfile = await toPromise(groupStore.groupProfile);
       const groupProfilePartial: GroupProfilePartial | undefined = groupProfile
         ? {
-            name: groupProfile?.name,
-            icon_src: groupProfile?.icon_src,
-          }
+          name: groupProfile?.name,
+          icon_src: groupProfile?.icon_src,
+        }
         : undefined;
       if (groupProfilePartial)
         storeGroupProfile(encodeHashToBase64(groupDnaHash), groupProfilePartial);
@@ -1023,31 +1186,43 @@ export class MossStore {
     }
   }
 
-  /**
-   * Stores
-   */
+
+  /** -- Stores -- */
+
+  private _previousGroupStores: DnaHashMap<GroupStore> | undefined;
 
   groupStores = manualReloadStore(async () => {
+    // Clean up old GroupStore instances (intervals + signal handlers) before creating new ones
+    if (this._previousGroupStores) {
+      const oldCount = Array.from(this._previousGroupStores.entries()).length;
+      console.log(`[OnlineDebug] groupStores.reload(): cleaning up ${oldCount} old GroupStore instances`);
+      for (const [hash, store] of this._previousGroupStores.entries()) {
+        console.log(`[OnlineDebug]   - cleanup group ${encodeHashToBase64(hash).slice(0, 8)} (instance=${store._instanceId})`);
+        store.cleanup();
+      }
+    } else {
+      onlineDebugLog('[OnlineDebug] groupStores.reload(): initial load (no previous stores)');
+    }
+
     const groupStores = new DnaHashMap<GroupStore>();
     const apps = await this.adminWebsocket.listApps({});
     const runningGroupsApps = apps
       .filter((app) => app.installed_app_id.startsWith('group#'))
       .filter((app) => isAppRunning(app));
-
     console.log('RUNNING GROUP APPS: ', runningGroupsApps);
     await Promise.all(
       runningGroupsApps.map(async (app) => {
         const groupDnaHash = (app.cell_info['group'][0].value as ProvisionedCell).cell_id[0];
         const [groupAppWebsocket, token] = await this.getAppClient(app.installed_app_id);
         const assetsClient = new AssetsClient(groupAppWebsocket);
-
         groupStores.set(
           groupDnaHash,
           new GroupStore(groupAppWebsocket, token, groupDnaHash, this, assetsClient),
         );
       }),
     );
-
+    console.log(`[OnlineDebug] groupStores.reload(): created ${Array.from(groupStores.entries()).length} new GroupStore instances`);
+    this._previousGroupStores = groupStores;
     return groupStores;
   });
 
@@ -1077,6 +1252,23 @@ export class MossStore {
       .filter((app) => isAppDisabled(app))
       .map((app) => (app.cell_info['group'][0].value as ProvisionedCell).cell_id[0] as DnaHash);
   });
+
+  allGroupsDnaHashes = pipe(this.groupsDnaHashes, (runningGroupHashes) =>
+    asyncDerived(this.disabledGroups, (disabledGroupHashes) => {
+      // Combine running and disabled groups
+      const allHashes = [...runningGroupHashes];
+
+      // Add disabled groups that aren't already in the list
+      for (const disabledHash of disabledGroupHashes) {
+        const disabledHashB64 = encodeHashToBase64(disabledHash);
+        if (!allHashes.some((h) => encodeHashToBase64(h) === disabledHashB64)) {
+          allHashes.push(disabledHash);
+        }
+      }
+
+      return allHashes;
+    }),
+  );
 
   groupProfilePersisted = new LazyMap((groupDnaHashB64: DnaHashB64) => {
     return asyncReadable<GroupProfilePartial | undefined>(async (set) => {
@@ -1139,19 +1331,19 @@ export class MossStore {
         appHashes =
           toolConfig.source.type === 'localhost'
             ? {
-                type: 'happ',
-                sha256: '###DEVCONFIG###',
-              }
+              type: 'happ',
+              sha256: '###DEVCONFIG###',
+            }
             : {
-                type: 'webhapp',
+              type: 'webhapp',
+              sha256: '###DEVCONFIG###',
+              happ: {
                 sha256: '###DEVCONFIG###',
-                happ: {
-                  sha256: '###DEVCONFIG###',
-                },
-                ui: {
-                  sha256: '###DEVCONFIG###',
-                },
-              };
+              },
+              ui: {
+                sha256: '###DEVCONFIG###',
+              },
+            };
 
         const uiPortString = distributionInfo.info.toolListUrl.replace('###DEVCONFIG###', '');
         if (uiPortString) {
@@ -1163,7 +1355,7 @@ export class MossStore {
         const toolList: DeveloperCollectiveToolList = await resp.json();
 
         // take all apps and add them to the list of all apps
-        const toolInfo = toolList.tools.find((tool) => tool.id === distributionInfo.info.toolId);
+        const toolInfo = toolList.tools.find((tool) => tool.id === distributionInfo.info.toolId && tool.versionBranch == distributionInfo.info.versionBranch);
         if (!toolInfo) throw new Error('No tool info found in developer collective.');
         // Filter by versions that have a valid semver version and the same sha256 as stored in the Applet entry
         const latestVersion = getLatestVersionFromToolInfo(toolInfo, applet.sha256_happ);
@@ -1211,6 +1403,7 @@ export class MossStore {
     // console.warn("@we-store: Uninstalling applet.");
     const appId = appIdFromAppletHash(appletHash);
     await window.electronAPI.uninstallAppletBundle(appId);
+    await this.closeAppClient(appId);
     const iframe = document.getElementById(encodeHashToBase64(appletHash)) as
       | HTMLIFrameElement
       | undefined;
@@ -1222,7 +1415,7 @@ export class MossStore {
   }
 
   async disableApplet(appletHash: EntryHash) {
-    const installed = await toPromise(this.isInstalled.get(appletHash));
+    const installed = await toPromise(this.isInstalled.get(appletHash)!);
     if (!installed) return;
 
     await this.adminWebsocket.disableApp({
@@ -1232,7 +1425,7 @@ export class MossStore {
   }
 
   async enableApplet(appletHash: EntryHash) {
-    const installed = await toPromise(this.isInstalled.get(appletHash));
+    const installed = await toPromise(this.isInstalled.get(appletHash)!);
     if (!installed) return;
 
     await this.adminWebsocket.enableApp({
@@ -1277,7 +1470,7 @@ export class MossStore {
   appletStores = new LazyHoloHashMap((appletHash: EntryHash) =>
     asyncReadable<AppletStore>(async (set) => {
       // console.log("@appletStores: attempting to get AppletStore for applet with hash: ", encodeHashToBase64(appletHash));
-      const groups = await toPromise(this.groupsForApplet.get(appletHash));
+      const groups = await toPromise(this.groupsForApplet.get(appletHash)!);
       // console.log(
       //   '@appletStores: groups: ',
       //   Array.from(groups.keys()).map((hash) => encodeHashToBase64(hash)),
@@ -1287,7 +1480,7 @@ export class MossStore {
 
       const applet = await Promise.race(
         Array.from(groups.values()).map((groupStore) =>
-          toPromise(groupStore.applets.get(appletHash)),
+          toPromise(groupStore!.applets.get(appletHash)!),
         ),
       );
 
@@ -1305,7 +1498,7 @@ export class MossStore {
     const runningAppletStores = new HoloHashMap<AppletHash, AppletStore>();
     for (const hash of appletsHashes) {
       try {
-        const appletStore = await toPromise(this.appletStores.get(hash));
+        const appletStore = await toPromise(this.appletStores.get(hash)!);
         runningAppletStores.set(hash, appletStore);
       } catch (e) {
         console.warn(
@@ -1359,14 +1552,14 @@ export class MossStore {
           ),
         ),
       (appletsForThisToolId) =>
-        mapAndJoin(appletsForThisToolId, (_, appletHash) => this.groupsForApplet.get(appletHash)),
+        mapAndJoin(appletsForThisToolId, (_, appletHash) => this.groupsForApplet.get(appletHash)!),
       async (groupsByApplets) => {
         const appletsB64: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]> = {};
 
         for (const [appletHash, groups] of Array.from(groupsByApplets.entries())) {
           const appletToken = await this.getAuthenticationToken(appIdFromAppletHash(appletHash));
           if (groups.size > 0) {
-            const firstGroupToken = Array.from(groups.values())[0].groupClient.authenticationToken;
+            const firstGroupToken = Array.from(groups.values())[0]!.groupClient.authenticationToken;
             appletsB64[encodeHashToBase64(appletHash)] = [
               appletToken,
               {
@@ -1381,42 +1574,18 @@ export class MossStore {
     ),
   );
 
-  groupsForApplet = new LazyHoloHashMap((appletHash: EntryHash) =>
+  groupsForApplet = new LazyHoloHashMap((appletHash: AppletHash) =>
     pipe(
       this.groupStores,
       (allGroups) => mapAndJoin(allGroups, (store) => store.allMyApplets),
       async (appletsByGroup) => {
-        // console.log(
-        //   'appletsByGroup: ',
-        //   Array.from(appletsByGroup.values()).map((hashes) =>
-        //     hashes.map((hash) => encodeHashToBase64(hash)),
-        //   ),
-        // );
+        const appletId = encodeHashToBase64(appletHash);
         const groupDnaHashes = Array.from(appletsByGroup.entries())
           .filter(([_groupDnaHash, appletsHashes]) =>
-            appletsHashes.find(
-              (hash) => encodeHashToBase64(hash) === encodeHashToBase64(appletHash),
-            ),
+            appletsHashes.find((hash) => encodeHashToBase64(hash) === appletId)
           )
           .map(([groupDnaHash, _]) => groupDnaHash);
-
-        // console.log('Requested applet hash: ', encodeHashToBase64(appletHash));
-        // console.log('groupDnaHashes: ', groupDnaHashes);
-
         const groupStores = await toPromise(this.groupStores);
-
-        // console.log(
-        //   'GROUPSTORES HASHES: ',
-        //   Array.from(groupStores.keys()).map((hash) => encodeHashToBase64(hash)),
-        // );
-
-        // console.log(
-        //   'Sliced group stores: ',
-        //   Array.from(slice(groupStores, groupDnaHashes).keys()).map((hash) =>
-        //     encodeHashToBase64(hash),
-        //   ),
-        // );
-
         return slice(groupStores, groupDnaHashes);
       },
     ),
@@ -1426,18 +1595,18 @@ export class MossStore {
    * A reliable function to get the groups for an applet and is guaranteed
    * to reflect the current state.
    */
-  getGroupsForApplet = async (appletHash: AppletHash) => {
-    const allApps = await this.adminWebsocket.listApps({});
+  async getGroupsForApplet(appletHash: AppletHash): Promise<Array<DnaHash>> {
+    const allApps = await this.adminWebsocket.listApps({ status_filter: AppStatusFilter.Enabled });
     const groupApps = allApps.filter((app) => app.installed_app_id.startsWith('group#'));
     const groupsWithApplet: Array<DnaHash> = [];
     await Promise.all(
       groupApps.map(async (app) => {
         const [groupAppWebsocket, token] = await this.getAppClient(app.installed_app_id);
-        const groupDnaHash: DnaHash = (app.cell_info['group'][0].value as ProvisionedCell)
-          .cell_id[0];
         const groupClient = new GroupClient(groupAppWebsocket, token, 'group');
-        const allMyAppletDatas = await groupClient.getMyJoinedAppletsHashes();
-        if (allMyAppletDatas.map((hash) => hash.toString()).includes(appletHash.toString())) {
+        const allMyAppletHashes = await groupClient.getMyJoinedAppletsHashes();
+        if (allMyAppletHashes.map((hash) => hash.toString()).includes(appletHash.toString())) {
+          const groupDnaHash: DnaHash = (app.cell_info['group'][0].value as ProvisionedCell)
+            .cell_id[0];
           groupsWithApplet.push(groupDnaHash);
         }
       }),
@@ -1525,9 +1694,9 @@ export class MossStore {
         app = findAppForDnaHash(installedAppsRecent, dnaHash);
         if (!app) throw new Error('The given dna is not installed');
       }
-      if (!app.appInfo.installed_app_id.startsWith('applet#'))
+      if (!app.appInfo.installed_app_id.startsWith('applet#')) {
         throw new Error("The given dna is part of an app that's not an applet.");
-
+      }
       return {
         appletHash: appletHashFromAppId(app.appInfo.installed_app_id),
         appInfo: app.appInfo,
@@ -1539,7 +1708,7 @@ export class MossStore {
   hrlLocations = new LazyHoloHashMap(
     (dnaHash: DnaHash) =>
       new LazyHoloHashMap((hash: EntryHash | ActionHash) => {
-        return asyncDerived(this.dnaLocations.get(dnaHash), async (dnaLocation: DnaLocation) => {
+        return asyncDerived(this.dnaLocations.get(dnaHash)!, async (dnaLocation: DnaLocation) => {
           if (encodeHashToBase64(hash) === encodeHashToBase64(NULL_HASH)) {
             return {
               dnaLocation,
@@ -1563,27 +1732,27 @@ export class MossStore {
 
   assetInfo = new LazyMap((walStringified: string) => {
     const wal = deStringifyWal(walStringified);
-    return pipe(this.hrlLocations.get(wal.hrl[0]).get(wal.hrl[1]), (location) =>
+    return pipe(this.hrlLocations.get(wal.hrl[0])!.get(wal.hrl[1])!, (location) =>
       location
         ? pipe(
-            this.appletStores.get(location.dnaLocation.appletHash),
-            (appletStore) => appletStore!.host,
-            (host) =>
-              lazyLoad(() =>
-                host
-                  ? host.getAppletAssetInfo(
-                      wal,
-                      location.entryDefLocation
-                        ? {
-                            roleName: location.dnaLocation.roleName,
-                            integrityZomeName: location.entryDefLocation.integrity_zome,
-                            entryType: location.entryDefLocation.entry_def,
-                          }
-                        : undefined,
-                    )
-                  : Promise.resolve(undefined),
-              ),
-          )
+          this.appletStores.get(location.dnaLocation.appletHash)!,
+          (appletStore) => appletStore!.host,
+          (host) =>
+            lazyLoad(() =>
+              host
+                ? host.getAppletAssetInfo(
+                  wal,
+                  location.entryDefLocation
+                    ? {
+                      roleName: location.dnaLocation.roleName,
+                      integrityZomeName: location.entryDefLocation.integrity_zome,
+                      entryType: location.entryDefLocation.entry_def,
+                    }
+                    : undefined,
+                )
+                : Promise.resolve(undefined),
+            ),
+        )
         : completed(undefined),
     );
   });
@@ -1651,6 +1820,19 @@ export class MossStore {
     return [appWs, token];
   }
 
+  async closeAppClient(appId: InstalledAppId): Promise<void> {
+    const client = this._appClients[appId];
+    if (client) {
+      try {
+        await client[0].client.close();
+      } catch (e) {
+        console.warn(`Failed to close WebSocket for ${appId}:`, e);
+      }
+      delete this._appClients[appId];
+      delete this._authenticationTokens[appId];
+    }
+  }
+
   zomeCallLogs: Record<InstalledAppId, ZomeCallCounts> = {};
 
   logZomeCall(info: ZomeCallLogInfoExtended) {
@@ -1683,6 +1865,7 @@ export class MossStore {
    */
 
   async reloadManualStores() {
+    onlineDebugLog('[OnlineDebug] reloadManualStores() called', new Error().stack?.split('\n').slice(1, 4).join(' <- '));
     await this.disabledGroups.reload();
     await this.groupStores.reload();
     // const groupStores = await toPromise(this.groupStores);
@@ -1701,5 +1884,15 @@ export class MossStore {
     this.iframeStore.postMessageToAppletIframes({ type: 'some', ids: forApplets }, message);
     // Send to iframes of WAL windows
     return window.electronAPI.parentToAppletMessage(message, forApplets);
+  }
+
+  /**
+   * Broadcast locale change to all applet iframes
+   */
+  broadcastLocaleChange(locale: string) {
+    // Send to all applet iframes in main window
+    this.iframeStore.postMessageToAppletIframes({ type: 'all' }, { type: 'locale-change', locale });
+    // Also broadcast to WAL windows
+    window.electronAPI.parentToAppletMessage({ type: 'locale-change', locale }, []);
   }
 }

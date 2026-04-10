@@ -7,6 +7,7 @@ import fs from 'fs';
 import split from 'split';
 import yaml from 'js-yaml';
 import * as childProcess from 'child_process';
+import { fileURLToPath } from 'url';
 import winston, { createLogger, transports, format } from 'winston';
 import { password as passwordInput } from '@inquirer/prompts';
 
@@ -17,9 +18,10 @@ import {
   DEFAULT_ICE_URLS,
   PRODUCTION_BOOTSTRAP_URLS,
   PRODUCTION_SIGNALING_URLS,
+  PRODUCTION_RELAY_URLS,
 } from '../const.js';
 import { nanoid } from 'nanoid';
-import { MOSS_CONFIG } from '../const.js';
+import { MOSS_CONFIG, HOLOCHAIN_CHECKSUMS } from '../const.js';
 import { downloadFile } from '../utils.js';
 import psList from 'ps-list';
 import path from 'path';
@@ -64,8 +66,8 @@ export async function isDaemonRunning(id: string): Promise<boolean> {
     const daemonProcess = procs.find((proc) => proc.pid === runningInfo.daemonPid);
     if (daemonProcess) {
       console.log('daemonProcess: ', daemonProcess);
-      const cmdParts = daemonProcess.cmd?.split(' ');
-      if (cmdParts && cmdParts[1] && cmdParts[1].endsWith('wdaemon')) {
+      const cmd = daemonProcess.cmd || '';
+      if (cmd.includes('wdaemon') || cmd.includes('daemon.js')) {
         return true;
       }
     }
@@ -93,7 +95,11 @@ export async function startDaemon(id: string, init: boolean, detached: boolean):
   }
 
   // https://stackoverflow.com/questions/35357853/how-to-close-the-stdio-pipes-of-child-processes-in-node-js
-  const daemonHandle = childProcess.spawn('wdaemon', [id], {
+  // Use the local daemon script instead of relying on a globally installed wdaemon binary
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const daemonScript = path.join(__dirname, 'daemon.js');
+  const daemonHandle = childProcess.spawn('node', [daemonScript, id], {
     detached,
   });
   daemonHandle.stdin.write(pw);
@@ -143,6 +149,7 @@ export async function startConductor(
 
   const bootstrapUrl = PRODUCTION_BOOTSTRAP_URLS[0];
   const signalUrl = PRODUCTION_SIGNALING_URLS[0];
+  const relayUrl = PRODUCTION_RELAY_URLS[0];
   const iceUrls = DEFAULT_ICE_URLS;
   const rustLog = wDockerFs.wdockerConductorConfig.rustLog;
   const wasmLog = wDockerFs.wdockerConductorConfig.wasmLog;
@@ -154,6 +161,10 @@ export async function startConductor(
   // Read
   try {
     conductorConfig = yaml.load(fs.readFileSync(configPath, 'utf-8'));
+    // Remove fields from older holochain versions that are no longer recognized
+    delete conductorConfig.device_seed_lair_tag;
+    delete conductorConfig.danger_generate_throwaway_device_seed;
+    delete conductorConfig.dpki;
   } catch (e) {
     console.warn(
       'Failed to read existing conductor-config.yaml file. Overwriting it with a default one.',
@@ -176,7 +187,16 @@ export async function startConductor(
   // network parameters
   conductorConfig.network.bootstrap_url = bootstrapUrl;
   conductorConfig.network.signal_url = signalUrl;
+  conductorConfig.network.relay_url = relayUrl;
   conductorConfig.network.webrtc_config = { iceServers: iceUrls.map((url) => ({ urls: [url] })) };
+
+  // advanced network settings (sync with main app)
+  const advancedSettings = conductorConfig.network.advanced
+    ? conductorConfig.network.advanced
+    : {};
+  advancedSettings.coreBootstrap = { backoffMaxMs: 30000 };
+  advancedSettings.coreSpace = { reSignExpireTimeMs: 30000, reSignFreqMs: 30000 };
+  conductorConfig.network.advanced = advancedSettings;
 
   console.log('Writing conductor-config.yaml...');
   fs.writeFileSync(configPath, yaml.dump(conductorConfig));
@@ -290,12 +310,12 @@ export async function fetchHolochainBinary(dstPath: string): Promise<void> {
       throw new Error(`Got unexpected OS platform: ${process.platform}`);
   }
 
-  const holochainBinaryRemoteFilename = `holochain-v${MOSS_CONFIG.holochain.version}-${targetEnding}`;
-  const holochainBinaryUrl = `https://github.com/matthme/holochain-binaries/releases/download/holochain-binaries-${MOSS_CONFIG.holochain.version}/${holochainBinaryRemoteFilename}`;
+  const holochainBinaryRemoteFilename = `holochain-${targetEnding}`;
+  const holochainBinaryUrl = `https://github.com/holochain/holochain/releases/download/holochain-${MOSS_CONFIG.holochain}/${holochainBinaryRemoteFilename}`;
   return downloadFile(
     holochainBinaryUrl,
     dstPath,
-    MOSS_CONFIG.holochain.sha256[targetEnding],
+    HOLOCHAIN_CHECKSUMS.holochain[targetEnding],
     true,
   );
 }
@@ -318,7 +338,7 @@ function setupHolochainLogger(wDockerFs: WDockerFilesystem, prefix?: string): wi
       format.printf(({ level, message, timestamp }) => {
         return JSON.stringify({
           timestamp,
-          label: `${prefix ? `${prefix} ` : ''}HOLOCHAIN ${MOSS_CONFIG.holochain.version}`,
+          label: `${prefix ? `${prefix} ` : ''}HOLOCHAIN ${MOSS_CONFIG.holochain}`,
           level,
           message,
         });

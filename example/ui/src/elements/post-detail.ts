@@ -73,7 +73,7 @@ export class PostDetail extends LitElement {
    */
   _post = new StoreSubscriber(
     this,
-    () => this.postsStore.posts.get(this.postHash),
+    () => this.postsStore.posts.get(this.postHash)!,
     () => [this.postHash]
   );
 
@@ -165,7 +165,9 @@ export class PostDetail extends LitElement {
         <sl-card style="flex: 1;">
           <div slot="header" style="display: flex; flex-direction: row;">
             <span style="font-size: 18px; flex: 1;">${msg('Post')}</span>
-
+            <wal-to-pocket .wal=${this.WAL}></wal-to-pocket>
+              ${this.WAL? html`
+            <button @click=${() => this.weaveClient.assets.assetToPocket(this.WAL!)}>To Pocket</button>` : `html`}
             <sl-icon-button
               style="margin-left: 8px"
               .src=${wrapPathInSvg(mdiPencil)}

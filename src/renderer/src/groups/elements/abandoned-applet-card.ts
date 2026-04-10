@@ -32,13 +32,8 @@ export class AbandonedAppletCard extends LitElement {
 
   _joinedMembers = new StoreSubscriber(
     this,
-    () =>
-      lazyLoadAndPoll(
-        () => this.groupStore.groupClient.getJoinedAppletAgents(this.appletHash),
-        20000,
-        () => this.groupStore.groupClient.getJoinedAppletAgents(this.appletHash, true),
-      ),
-    () => [this.groupStore],
+    () => this.groupStore.joinedAppletAgents.get(this.appletHash)!,
+    () => [this.groupStore, this.appletHash],
   );
 
   _abandonedMembers = new StoreSubscriber(
@@ -58,9 +53,9 @@ export class AbandonedAppletCard extends LitElement {
     () => [this.groupStore],
   );
 
-  permissionType = new StoreSubscriber(
+  myAccountabilities = new StoreSubscriber(
     this,
-    () => this.groupStore.permissionType,
+    () => this.groupStore.myAccountabilities,
     () => [this.groupStore],
   );
 
@@ -79,23 +74,35 @@ export class AbandonedAppletCard extends LitElement {
   @state()
   addedBy: AgentPubKey | undefined;
 
-  amISteward() {
-    if (
-      this.permissionType.value.status === 'complete' &&
-      ['Progenitor', 'Steward'].includes(this.permissionType.value.value.type)
-    )
-      return true;
+  // TODO: Use MossPrivilege instead
+  amIPrivileged() {
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return false;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type === 'Steward' || acc.type == 'Progenitor') {
+        return true;
+      }
+    }
     return false;
   }
 
+  // TODO: Use MossPrivilege instead
   canIArchive() {
-    const addedByMe =
-      !!this.addedBy &&
-      encodeHashToBase64(this.addedBy) === encodeHashToBase64(this.groupStore.groupClient.myPubKey);
-    const iAmProgenitor =
-      this.permissionType.value.status === 'complete' &&
-      this.permissionType.value.value.type === 'Progenitor';
-    if (iAmProgenitor || addedByMe) return true;
+    // added by me
+    if (!!this.addedBy
+      && encodeHashToBase64(this.addedBy) === encodeHashToBase64(this.groupStore.groupClient.myPubKey)) {
+      return true;
+    }
+    // progenitor
+    if (this.myAccountabilities.value.status !== 'complete') {
+      return false;
+    }
+    for (const acc of this.myAccountabilities.value.value) {
+      if (acc.type == 'Progenitor') {
+        return true;
+      }
+    }
     return false;
   }
 
@@ -144,9 +151,9 @@ export class AbandonedAppletCard extends LitElement {
     try {
       await this.groupStore.groupClient.unarchiveApplet(this.appletHash);
       await this.groupStore.allAdvertisedApplets.reload();
-      notify(msg('Tool unarchived.'));
+      notify(msg('Tool undeprecated.'));
     } catch (e) {
-      notifyError(msg('Failed to unarchive Tool (see console for details)'));
+      notifyError(msg('Failed to undeprecate Tool (see console for details)'));
       console.error(e);
     }
   }
@@ -166,15 +173,15 @@ export class AbandonedAppletCard extends LitElement {
           <div class="row" style="align-items: center; margin-top: 4px;">
             <span><b>joined by:&nbsp;</b></span>
             ${this._joinedMembers.value.value.length === 0
-              ? html`<span>Nobody joined this Tool or everyone abandoned it.</span>`
-              : this._joinedMembers.value.value.map(
-                  (appletAgent) => html`
+            ? html`<span>Nobody joined this Tool or everyone abandoned it.</span>`
+            : this._joinedMembers.value.value.map(
+              (appletAgent) => html`
                     <agent-avatar
                       style="margin-left: 5px;"
                       .agentPubKey=${appletAgent.group_pubkey}
                     ></agent-avatar>
                   `,
-                )}
+            )}
           </div>
         `;
     }
@@ -196,13 +203,13 @@ export class AbandonedAppletCard extends LitElement {
           <div class="row" style="align-items: center; margin-top: 4px;">
             <span><b>abandoned by:&nbsp;</b></span>
             ${this._abandonedMembers.value.value.map(
-              (appletAgent) => html`
+          (appletAgent) => html`
                 <agent-avatar
                   style="margin-left: 5px;"
                   .agentPubKey=${appletAgent.group_pubkey}
                 ></agent-avatar>
               `,
-            )}
+        )}
           </div>
         `;
     }
@@ -215,18 +222,18 @@ export class AbandonedAppletCard extends LitElement {
         return html`
           <sl-tooltip
             content=${msg(
-              'Archiving will make it not show up anymore for new members in the "Unjoined Tools" section',
-            )}
+          'Deprecating will hide tool for activation by new members',
+        )}
           >
             <sl-button
               variant="warning"
               style="margin-right: 5px;"
               @click=${() => this.archiveApplet()}
               @keypress=${async (e: KeyboardEvent) => {
-                if (e.key === 'Enter') {
-                  this.archiveApplet();
-                }
-              }}
+            if (e.key === 'Enter') {
+              this.archiveApplet();
+            }
+          }}
             >
               <div class="row center-content">
                 <sl-icon
@@ -242,18 +249,18 @@ export class AbandonedAppletCard extends LitElement {
         return html`
           <sl-tooltip
             content=${msg(
-              'Unarchive this Tool for it to show up again for new membersin the "Unjoined Tools" section',
-            )}
+          'Undeprecate this Tool for it to show up again for new members',
+        )}
           >
             <sl-button
               variant="neutral"
               style="margin-right: 5px;"
               @click=${() => this.unArchiveApplet()}
               @keypress=${async (e: KeyboardEvent) => {
-                if (e.key === 'Enter') {
-                  this.unArchiveApplet();
-                }
-              }}
+            if (e.key === 'Enter') {
+              this.unArchiveApplet();
+            }
+          }}
             >
               <div class="row center-content">
                 <sl-icon
@@ -277,10 +284,10 @@ export class AbandonedAppletCard extends LitElement {
         style="position: relative; ${this.archiveState() === 'archived' ? 'opacity: 0.6' : ''}"
       >
         ${this.archiveState() === 'archived'
-          ? html`<span class="font-bold" style="position: absolute; top: 11px; right: 16px;"
+        ? html`<span class="font-bold" style="position: absolute; top: 11px; right: 16px;"
               >${msg('ARCHIVED')}</span
             > `
-          : html``}
+        : html``}
 
         <div class="column" style="flex: 1;">
           <div class="row" style="flex: 1; align-items: center">
@@ -297,11 +304,11 @@ export class AbandonedAppletCard extends LitElement {
             <div class="row" style="align-items: center;">
               <span><b>added by&nbsp;</b></span>
               ${this.addedBy
-                ? html`<agent-avatar
+        ? html`<agent-avatar
                     style="margin-left: 5px;"
                     .agentPubKey=${this.addedBy}
                   ></agent-avatar>`
-                : html`unknown`}
+        : html`unknown`}
             </div>
           </div>
 

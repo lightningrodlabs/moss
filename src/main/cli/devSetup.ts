@@ -18,14 +18,18 @@ import {
   AgentPubKey,
   AppWebsocket,
   AppInfo,
+  CallZomeRequest,
+  CallZomeTransform,
   DnaHashB64,
   EntryHash,
   Link,
   encodeHashToBase64,
   Record as HolochainRecord,
-  CellType,
   ProvisionedCell,
 } from '@holochain/client';
+import { decode } from '@msgpack/msgpack';
+import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
+import { signZomeCall } from '../utils';
 import { MossFileSystem } from '../filesystem';
 import { net } from 'electron';
 import { nanoid } from 'nanoid';
@@ -44,7 +48,7 @@ import { readIcon } from '../utils';
 import { AppletHash } from '@theweave/api';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
-export async function readLocalServices(): Promise<[string, string]> {
+export function readLocalServices(): [string, string, string] {
   if (!fs.existsSync('.kitsune2_bootstrap_srv')) {
     throw new Error(
       'No .kitsune2_bootstrap_srv file found. Make sure agent with agentIdx 1 is running before you start additional agents.',
@@ -52,16 +56,15 @@ export async function readLocalServices(): Promise<[string, string]> {
   }
   const localServicesString = fs.readFileSync('.kitsune2_bootstrap_srv', 'utf-8');
   try {
-    const { bootstrapUrl, signalingUrl } = JSON.parse(localServicesString);
-    return [bootstrapUrl, signalingUrl];
+    const { bootstrapUrl, signalingUrl, relayUrl } = JSON.parse(localServicesString);
+    return [bootstrapUrl, signalingUrl, relayUrl];
   } catch (e) {
     throw new Error('Failed to parse content of .kitsune2_bootstrap_srv');
   }
 }
 
-export async function startLocalServices(): Promise<
-  [string, string, childProcess.ChildProcessWithoutNullStreams]
-> {
+export async function startLocalServices()
+  : Promise<[string, string, string, childProcess.ChildProcessWithoutNullStreams]> {
   if (fs.existsSync('.hc_local_services')) {
     fs.rmSync('.hc_local_services');
   }
@@ -79,22 +82,27 @@ export async function startLocalServices(): Promise<
   return new Promise((resolve) => {
     let bootstrapUrl;
     let signalingUrl;
+    let relayUrl;
     let bootstrapRunning = false;
-    let signalRunnig = false;
+    let signalRunning = false;
     localServicesHandle.stdout.pipe(split()).on('data', async (line: string) => {
       console.log(`[weave-cli] | [kitsune2-bootstrap-srv]: ${line}`);
       if (line.includes('#kitsune2_bootstrap_srv#listening#')) {
         const hostAndPort = line.split('#kitsune2_bootstrap_srv#listening#')[1].split('#')[0];
         bootstrapUrl = `http://${hostAndPort}`;
         signalingUrl = `ws://${hostAndPort}`;
+        // As of kitsune2_bootstrap_srv 0.4.0-dev.7, the relay is served
+        // at the /relay route of the bootstrap server itself.
+        relayUrl = `http://${hostAndPort}/relay`;
       }
       if (line.includes('#kitsune2_bootstrap_srv#running#')) {
         bootstrapRunning = true;
-        signalRunnig = true;
+        signalRunning = true;
       }
-      fs.writeFileSync('.kitsune2_bootstrap_srv', JSON.stringify({ bootstrapUrl, signalingUrl }));
-      if (bootstrapRunning && signalRunnig)
-        resolve([bootstrapUrl, signalingUrl, localServicesHandle]);
+      fs.writeFileSync('.kitsune2_bootstrap_srv', JSON.stringify({ bootstrapUrl, signalingUrl, relayUrl }));
+      if (bootstrapRunning && signalRunning && bootstrapUrl) {
+        resolve([bootstrapUrl, signalingUrl, relayUrl, localServicesHandle]);
+      }
     });
     localServicesHandle.stderr.pipe(split()).on('data', async (line: string) => {
       console.log(`[weave-cli] | [kitsune2-bootstrap-srv] ERROR: ${line}`);
@@ -107,7 +115,15 @@ export async function devSetup(
   holochainManager: HolochainManager,
   mossFileSystem: MossFileSystem,
   useToolLibrary: boolean,
+  weRustHandler: WeRustHandler,
 ): Promise<void> {
+  // Transform that signs zome calls with the agent's own keypair via lair,
+  // avoiding the cap-grant flow (authorizeSigningCredentials) that would
+  // otherwise write a CapGrant entry to the source chain on every new cell.
+  const callZomeTransform: CallZomeTransform = {
+    input: (req) => signZomeCall(req as CallZomeRequest, weRustHandler),
+    output: (o) => decode(o as any),
+  };
   const logDevSetup = (msg) => console.log(`[weave-cli] | [Agent ${config.agentIdx}]: ${msg}`);
   logDevSetup(`Setting up agent ${config.agentIdx}.`);
   const publishedApplets: Record<string, EntryRecord<Tool>> = {};
@@ -151,13 +167,10 @@ export async function devSetup(
       },
       token: toolsLibraryAuthenticationResponse.token,
       defaultTimeout: 4000,
+      callZomeTransform,
     });
     const toolsLibraryCells = await toolsLibraryClient.appInfo();
     for (const [_role_name, [cell]] of Object.entries(toolsLibraryCells.cell_info)) {
-      if (cell.type === CellType.Provisioned)
-        await holochainManager.adminWebsocket.authorizeSigningCredentials(cell.value.cell_id, {
-          type: 'all',
-        });
       toolsLibraryDnaHash = encodeHashToBase64((cell.value as ProvisionedCell).cell_id[0]);
     }
 
@@ -179,7 +192,7 @@ export async function devSetup(
 
     if (agentProfile) {
       logDevSetup(`Installing group '${group.name}'...`);
-      const groupWebsocket = await joinGroup(holochainManager, group, agentProfile);
+      const groupWebsocket = await joinGroup(holochainManager, group, agentProfile, callZomeTransform);
       if (isCreatingAgent) {
         logDevSetup(`Creating group profile for group '${group.name}'...`);
         const icon_src = await readIcon(group.icon);
@@ -268,19 +281,19 @@ export async function devSetup(
           const appHashes: AppHashes =
             maybeUiHash && maybeWebHappHash
               ? {
-                  type: 'webhapp',
-                  sha256: maybeWebHappHash,
-                  happ: {
-                    sha256: happHash,
-                  },
-                  ui: {
-                    sha256: maybeUiHash,
-                  },
-                }
-              : {
-                  type: 'happ',
+                type: 'webhapp',
+                sha256: maybeWebHappHash,
+                happ: {
                   sha256: happHash,
-                };
+                },
+                ui: {
+                  sha256: maybeUiHash,
+                },
+              }
+              : {
+                type: 'happ',
+                sha256: happHash,
+              };
 
           let distributionInfo: DistributionInfo;
 
@@ -334,6 +347,7 @@ export async function devSetup(
           const applet: Applet = {
             custom_name: appletInstallConfig.instanceName,
             description: appletConfig.description,
+            subtitle: appletConfig.subtitle,
             sha256_happ: happHash,
             sha256_ui: maybeUiHash,
             sha256_webhapp: maybeWebHappHash,
@@ -445,6 +459,7 @@ async function joinGroup(
   holochainManager: HolochainManager,
   group: GroupConfig,
   agentProfile: AgentProfile,
+  callZomeTransform: CallZomeTransform,
   progenitor?: AgentPubKey,
 ): Promise<AppWebsocket> {
   // Create the group
@@ -464,14 +479,8 @@ async function joinGroup(
       origin: 'moss-admin',
     },
     token: groupAuthenticationTokenResponse.token,
+    callZomeTransform,
   });
-  const groupCells = await groupWebsocket.appInfo();
-  for (const [_role_name, [cell]] of Object.entries(groupCells.cell_info)) {
-    if (cell.type === CellType.Provisioned)
-      await holochainManager.adminWebsocket.authorizeSigningCredentials(cell.value.cell_id, {
-        type: 'all',
-      });
-  }
   const avatarSrc = agentProfile.avatar ? await readIcon(agentProfile.avatar) : undefined;
   console.log('Creating profile....');
 
@@ -481,7 +490,7 @@ async function joinGroup(
     fn_name: 'create_profile',
     payload: {
       nickname: agentProfile.nickname,
-      fields: avatarSrc ? { avatar: avatarSrc } : undefined,
+      fields: avatarSrc ? { avatar: avatarSrc } : {},
     },
   });
   console.log('profile created.');
@@ -706,10 +715,29 @@ function storeAppAssetsInfo(
   const appAssetsInfo: AppAssetsInfo =
     appletConfig.source.type === 'localhost'
       ? {
+        type: 'webhapp',
+        assetSource: {
+          type: 'https',
+          url: `file://${happPath}`,
+        },
+        distributionInfo,
+        happ: {
+          sha256: happHash,
+        },
+        ui: {
+          location: {
+            type: 'localhost',
+            port: appletConfig.source.uiPort,
+          },
+        },
+      }
+      : maybeWebHappHash
+        ? {
           type: 'webhapp',
+          sha256: maybeWebHappHash,
           assetSource: {
             type: 'https',
-            url: `file://${happPath}`,
+            url: `file://${maybeWebHappPath}`,
           },
           distributionInfo,
           happ: {
@@ -717,39 +745,20 @@ function storeAppAssetsInfo(
           },
           ui: {
             location: {
-              type: 'localhost',
-              port: appletConfig.source.uiPort,
+              type: 'filesystem',
+              sha256: maybeUiHash!,
             },
           },
         }
-      : maybeWebHappHash
-        ? {
-            type: 'webhapp',
-            sha256: maybeWebHappHash,
-            assetSource: {
-              type: 'https',
-              url: `file://${maybeWebHappPath}`,
-            },
-            distributionInfo,
-            happ: {
-              sha256: happHash,
-            },
-            ui: {
-              location: {
-                type: 'filesystem',
-                sha256: maybeUiHash!,
-              },
-            },
-          }
         : {
-            type: 'happ',
-            sha256: happHash,
-            assetSource: {
-              type: 'https',
-              url: `file://${happPath}`,
-            },
-            distributionInfo,
-          };
+          type: 'happ',
+          sha256: happHash,
+          assetSource: {
+            type: 'https',
+            url: `file://${happPath}`,
+          },
+          distributionInfo,
+        };
 
   mossFileSystem.storeAppAssetsInfo(appId, appAssetsInfo);
 }
@@ -818,6 +827,7 @@ export type Applet = {
    */
   custom_name: string;
   description: string;
+  subtitle: string;
   sha256_happ: string;
   sha256_ui: string | undefined;
   sha256_webhapp: string | undefined;

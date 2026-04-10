@@ -1,14 +1,14 @@
 import {
-  AgentPubKey,
-  AppClient,
-  CreateCloneCellRequest,
-  CreateCloneCellResponse,
-  DisableCloneCellRequest,
-  DnaHash,
-  EnableCloneCellRequest,
-  EntryHash,
-  decodeHashFromBase64,
-  encodeHashToBase64,
+    AgentPubKey,
+    AppClient,
+    CreateCloneCellRequest,
+    CreateCloneCellResponse,
+    DisableCloneCellRequest,
+    DnaHash,
+    EnableCloneCellRequest,
+    EntryHash,
+    decodeHashFromBase64,
+    encodeHashToBase64, TransportStats,
 } from '@holochain/client';
 import {
   BlockType,
@@ -28,8 +28,8 @@ import {
   RecordInfo,
   PeerStatusUpdate,
   UnsubscribeFunction,
-  GroupPermissionType,
   AssetStore,
+  MossAccountability,
 } from './types';
 import { postMessage } from './utils.js';
 import { decode, encode } from '@msgpack/msgpack';
@@ -42,6 +42,7 @@ declare global {
     __WEAVE_RENDER_INFO__: RenderInfo;
     __WEAVE_PROTOCOL_VERSION__: string;
     __MOSS_VERSION__: string;
+    __WEAVE_LOCALE__: string;
   }
 }
 
@@ -235,7 +236,7 @@ export interface AssetServices {
    * @param from (optional) source of the WAL
    * @returns
    */
-  userSelectAsset: (from?: 'search' | 'pocket' | 'create') => Promise<WAL | undefined>;
+  userSelectAsset: (from?: 'search' | 'pocket' | 'create' | 'pocket-no-create') => Promise<WAL | undefined>;
   /**
    * Prompts the user with a dialog to select an asset relation tag.
    * Returns the associated tag as a string as soon as the user has
@@ -323,12 +324,30 @@ export interface WeaveServices {
    */
   mossVersion: () => string;
   /**
+   * Get the current UI locale (e.g. 'en', 'de', 'fr', 'es')
+   * @returns The current locale string
+   */
+  getLocale: () => string;
+  /**
+   * Register a callback to be called when the UI locale changes
+   * @param callback Callback that receives the new locale string
+   * @returns Unsubscribe function
+   */
+  onLocaleChange: (callback: (locale: string) => any) => UnsubscribeFunction;
+  /**
    * Event handler for peer status updates.
    *
    * @param callback Callback that gets called if a peer status update event is emitted
    * @returns
    */
   onPeerStatusUpdate: (callback: (payload: PeerStatusUpdate) => any) => UnsubscribeFunction;
+  /**
+   * Event handler for network stats updates.
+   *
+   * @param callback Callback that gets called when a new network stats update is available.
+   * @returns
+   */
+  onNetworkStatsUpdate: (callback: (payload: TransportStats) => any) => UnsubscribeFunction;
   /**
    * Event listener allowing to register a callback that will get executed before the
    * applet gets reloaded, for example to save intermediate user input (e.g. commit
@@ -346,7 +365,7 @@ export interface WeaveServices {
    * @param appletHash
    * @returns
    */
-  openAppletMain: (appletHash: EntryHash) => Promise<void>;
+  openAppletMain: (appletHash: EntryHash, wal?: WAL) => Promise<void>;
   /**
    * Open the specified block view of the specified Applet
    * @param appletHash
@@ -377,11 +396,23 @@ export interface WeaveServices {
    */
   openAsset: (wal: WAL, mode?: OpenAssetMode) => Promise<void>;
   /**
+   * Get the AgentPubKey of the installer of a tool for the specified group
+   * @param appletHash - The hash of the applet/tool
+   * @param groupHash - The group hash. If not provided, uses the groupHash from the current applet instance's renderInfo
+   * @returns
+   */
+  toolInstaller: (appletHash: AppletHash, groupHash?: DnaHash) => Promise<AgentPubKey | undefined>;
+  /**
    * Get the group profile of the specified group
    * @param groupHash
    * @returns
    */
   groupProfile: (groupHash: DnaHash) => Promise<any>;
+  /**
+   * @param groupHash - The group hash. If not provided, uses the groupHash from the current applet instance's renderInfo
+   * @returns the bootstrap urls in use for a group
+   */
+  bootstrapUrls: (groupHash?: DnaHash) => string[];
   /**
    * Returns Applet info of the specified Applet
    * @param appletHash
@@ -406,10 +437,11 @@ export interface WeaveServices {
    */
   requestClose: () => Promise<void>;
   /**
-   * Gets the group permission type. May be used to restrict certain actions in the UI.
+   * Gets the agent's accountabilities for this applet.
+   * May be used to restrict certain actions in the UI.
    * @returns
    */
-  myGroupPermissionType: () => Promise<GroupPermissionType>;
+  myAccountabilitiesPerGroup: () => Promise<[DnaHash, MossAccountability[]][]>;
   /**
    * Gets all the agents that joined the Tool instance of the Tool calling this function
    * @returns
@@ -485,14 +517,25 @@ export class WeaveClient implements WeaveServices {
 
   mossVersion = () => window.__MOSS_VERSION__;
 
+  getLocale = () => window.__WEAVE_LOCALE__ || 'en';
+
+  onLocaleChange = (callback: (locale: string) => any): UnsubscribeFunction => {
+    const listener = (e: CustomEvent<string>) => callback(e.detail);
+    window.addEventListener('locale-change', listener as EventListener);
+    return () => window.removeEventListener('locale-change', listener as EventListener);
+  };
+
   onPeerStatusUpdate = (callback: (payload: PeerStatusUpdate) => any): UnsubscribeFunction =>
     window.__WEAVE_API__.onPeerStatusUpdate(callback);
+
+  onNetworkStatsUpdate = (callback: (payload: TransportStats) => any): UnsubscribeFunction =>
+        window.__WEAVE_API__.onNetworkStatsUpdate(callback);
 
   onBeforeUnload = (callback: () => any): UnsubscribeFunction =>
     window.__WEAVE_API__.onBeforeUnload(callback);
 
-  openAppletMain = async (appletHash: EntryHash): Promise<void> =>
-    window.__WEAVE_API__.openAppletMain(appletHash);
+  openAppletMain = async (appletHash: EntryHash, wal?: WAL): Promise<void> =>
+    window.__WEAVE_API__.openAppletMain(appletHash, wal);
 
   openAppletBlock = async (appletHash, block: string, context: any): Promise<void> =>
     window.__WEAVE_API__.openAppletBlock(appletHash, block, context);
@@ -510,7 +553,7 @@ export class WeaveClient implements WeaveServices {
     dragAsset: (wal: WAL): Promise<void> => window.__WEAVE_API__.assets.dragAsset(wal),
     assetInfo: (wal: WAL) => window.__WEAVE_API__.assets.assetInfo(wal),
     assetToPocket: (wal: WAL) => window.__WEAVE_API__.assets.assetToPocket(wal),
-    userSelectAsset: (from?: 'search' | 'pocket' | 'create') =>
+    userSelectAsset: (from?: 'search' | 'pocket' | 'create' | 'pocket-no-create') =>
       window.__WEAVE_API__.assets.userSelectAsset(from),
     userSelectAssetRelationTag: () => window.__WEAVE_API__.assets.userSelectAssetRelationTag(),
     addTagsToAsset: (wal: WAL, tags: string[]) =>
@@ -530,6 +573,22 @@ export class WeaveClient implements WeaveServices {
     assetStore: (wal: WAL) => window.__WEAVE_API__.assets.assetStore(wal),
   };
 
+  toolInstaller = (appletHash: AppletHash, groupHash?: DnaHash) => {
+    // If groupHash not provided, use the groupHash from the current applet instance
+    const effectiveGroupHash = groupHash ?? (
+      this.renderInfo.type === 'applet-view'
+        ? this.renderInfo.groupHash
+        : undefined
+    );
+    if (!effectiveGroupHash) {
+      throw new Error('groupHash is required but was not provided and could not be determined from renderInfo. Please pass groupHash explicitly to toolInstaller() or ensure the applet iframe has a valid groupHash.');
+    }
+    return window.__WEAVE_API__.toolInstaller(appletHash, effectiveGroupHash);
+  };
+
+
+  bootstrapUrls = (groupHash?: DnaHash) => window.__WEAVE_API__.bootstrapUrls(groupHash);
+
   groupProfile = (groupHash: DnaHash) => window.__WEAVE_API__.groupProfile(groupHash);
 
   appletInfo = (appletHash: AppletHash) => window.__WEAVE_API__.appletInfo(appletHash);
@@ -541,7 +600,7 @@ export class WeaveClient implements WeaveServices {
 
   requestClose = () => window.__WEAVE_API__.requestClose();
 
-  myGroupPermissionType = () => window.__WEAVE_API__.myGroupPermissionType();
+  myAccountabilitiesPerGroup = () => window.__WEAVE_API__.myAccountabilitiesPerGroup();
 
   appletParticipants = () => window.__WEAVE_API__.appletParticipants();
 

@@ -12,23 +12,20 @@ const SUPPORTED_APPLET_SOURCE_TYPES = ['localhost', 'filesystem', 'https'];
 // here since there is a check to prevent accidental use of a production bootstrap server in development
 // mode
 export const PRODUCTION_BOOTSTRAP_URLS = [
+  'https://bootstrap.moss.social',
   'https://dev-test-bootstrap2.holochain.org',
-  'https://bootstrap.holo.host',
-  'https://bootstrap-2.infra.holochain.org',
-  'https://bootstrap-1.infra.holochain.org',
-  'https://bootstrap-0.infra.holochain.org',
 ];
 // The first one will be picked by default. But all production signaling servers should be listed
 // here since there is a check to prevent accidental use of a production signaling server in development
 // mode
 export const PRODUCTION_SIGNALING_URLS = [
+  'wss://bootstrap.moss.social',
   'wss://dev-test-bootstrap2.holochain.org',
-  'wss://sbd.holo.host',
-  'wss://sbd-0.main.infra.holo.host',
-  'wss://signal-2.infra.holochain.org',
-  'wss://signal-1.infra.holochain.org',
-  'wss://signal-0.infra.holochain.org',
-  'wss://signal.holo.host',
+];
+// The first one will be picked by default.
+export const PRODUCTION_RELAY_URLS = [
+  "https://iroh-relay.moss.social./",
+  "https://use1-1.relay.n0.iroh-canary.iroh.link./",
 ];
 export const DEFAULT_ICE_URLS = ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'];
 
@@ -40,6 +37,7 @@ export interface CliOpts {
   devDataDir?: string | undefined;
   agentIdx?: number | undefined;
   disableOsNotifications?: boolean;
+  dev?: boolean;
   syncTime?: number;
   networkSeed?: string | undefined;
   holochainPath?: string | undefined;
@@ -48,6 +46,7 @@ export interface CliOpts {
   lairRustLog?: string | undefined;
   bootstrapUrl?: string;
   signalingUrl?: string;
+  relayUrl?: string;
   iceUrls?: string;
   forceProductionUrls?: boolean;
   printHolochainLogs?: boolean;
@@ -59,6 +58,7 @@ export interface RunOptions {
   devInfo: WeAppletDevInfo | undefined;
   bootstrapUrl: string | undefined;
   signalingUrl: string | undefined;
+  relayUrl: string | undefined;
   iceUrls: string[];
   customBinary: string | undefined;
   holochainRustLog: string | undefined;
@@ -66,6 +66,7 @@ export interface RunOptions {
   lairRustLog: string | undefined;
   printHolochainLogs: boolean;
   disableOsNotifications: boolean;
+  dev: boolean;
 }
 
 export function validateArgs(args: CliOpts): RunOptions {
@@ -157,9 +158,9 @@ export function validateArgs(args: CliOpts): RunOptions {
       config: devConfig,
       tempDir: args.devDataDir
         ? path.join(
-            args.devDataDir,
-            `${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${agentIdx}-${nanoid(8)}`,
-          )
+          args.devDataDir,
+          `${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${agentIdx}-${nanoid(8)}`,
+        )
         : path.join(os.tmpdir(), `${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${agentIdx}-${nanoid(8)}`),
       tempDirRoot: args.devDataDir ? args.devDataDir : os.tmpdir(),
       agentIdx,
@@ -179,6 +180,7 @@ export function validateArgs(args: CliOpts): RunOptions {
     devInfo,
     bootstrapUrl: args.bootstrapUrl,
     signalingUrl: args.signalingUrl,
+    relayUrl: args.relayUrl,
     iceUrls: args.iceUrls ? args.iceUrls.split(',') : DEFAULT_ICE_URLS,
     customBinary: args.holochainPath ? args.holochainPath : undefined,
     holochainRustLog: args.holochainRustLog ? args.holochainRustLog : undefined,
@@ -186,6 +188,7 @@ export function validateArgs(args: CliOpts): RunOptions {
     lairRustLog: args.lairRustLog ? args.lairRustLog : undefined,
     printHolochainLogs: args.printHolochainLogs ? true : false,
     disableOsNotifications: args.disableOsNotifications ? true : false,
+    dev: args.dev ? true : false,
   };
 }
 
@@ -315,9 +318,9 @@ function readAndValidateDevConfig(
 
   const allGroupNetworkSeeds = groups.map((group) => group.networkSeed);
   const uniqueGroupNetworkSeeds = new Set(allGroupNetworkSeeds);
-  if (uniqueGroupNetworkSeeds.size !== allGroupNetworkSeeds.length)
-    throw new Error(`Invalid We dev config: Group network seeds must all be unique.`);
-
+  if (uniqueGroupNetworkSeeds.size !== allGroupNetworkSeeds.length) {
+      throw new Error(`Invalid We dev config: Group network seeds must all be unique.`);
+  }
   // validate applets
   applets.forEach((applet) => {
     if (!applet.name || typeof applet.name !== 'string')
@@ -384,6 +387,10 @@ function readAndValidateDevConfig(
           );
     }
   });
+
+  if (configObject && !configObject.toolCurations) {
+      configObject.toolCurations = [];
+  }
 
   const allAppletNames = applets.map((applet) => applet.name);
   const uniqueAppletNames = new Set(allAppletNames);

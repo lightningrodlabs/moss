@@ -1,16 +1,16 @@
 pub mod all_group_profiles;
-pub mod all_steward_permissions;
 pub mod applet;
 pub mod cloned_cell;
 pub mod group_meta_data;
 pub mod group_profile;
 pub mod steward_permission;
+
 use group_integrity::*;
 use hdk::prelude::*;
 
 #[hdk_extern]
 pub fn init() -> ExternResult<InitCallbackResult> {
-    let mut functions = BTreeSet::new();
+    let mut functions = HashSet::new();
     functions.insert((zome_info()?.name, FunctionName("recv_remote_signal".into())));
     let cap_grant_entry: CapGrantEntry = CapGrantEntry::new(
         String::from("arbitrary remote signals"), // A string by which to later query for saved grants.

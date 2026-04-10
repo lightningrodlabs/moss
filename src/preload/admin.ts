@@ -18,7 +18,7 @@ import {
   ResourceLocation,
   ToolCompatibilityId,
 } from '@theweave/moss-types';
-import { ProgressInfo } from '@matthme/electron-updater';
+import { ProgressInfo } from 'electron-updater';
 
 contextBridge.exposeInMainWorld('__HC_ZOME_CALL_SIGNER__', {
   signZomeCall: (request: CallZomeRequest) => ipcRenderer.invoke('sign-zome-call', request),
@@ -36,10 +36,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installApp: (filePath: string, appId: string, networkSeed?: string) =>
     ipcRenderer.invoke('install-app', filePath, appId, networkSeed),
   lairSetupRequired: () => ipcRenderer.invoke('lair-setup-required'),
+  findLegacyProfiles: () => ipcRenderer.invoke('find-legacy-profiles'),
+  getLairBinaryVersion: () => ipcRenderer.invoke('get-lair-binary-version'),
+  copyLegacyProfile: (keystorePath: string) => ipcRenderer.invoke('import-legacy-profile', keystorePath),
   launch: () => ipcRenderer.invoke('launch'),
   isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
   appletDevConfig: () => ipcRenderer.invoke('applet-dev-config'),
   factoryReset: () => ipcRenderer.invoke('factory-reset'),
+  getNetworkOverrides: () => ipcRenderer.invoke('get-network-overrides'),
+  setNetworkOverrides: (overrides: { bootstrapUrl?: string; relayUrl?: string }) =>
+    ipcRenderer.invoke('set-network-overrides', overrides),
+  clearNetworkOverrides: () => ipcRenderer.invoke('clear-network-overrides'),
   openLogs: () => ipcRenderer.invoke('open-logs'),
   exportLogs: () => ipcRenderer.invoke('export-logs'),
   onMossUpdateProgress: (callback: (e: Electron.IpcRendererEvent, payload: ProgressInfo) => any) =>
@@ -68,8 +75,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   closeMainWindow: () => ipcRenderer.invoke('close-main-window'),
   openApp: (appId: string) => ipcRenderer.invoke('open-app', appId),
   openAppStore: () => ipcRenderer.invoke('open-appstore'),
-  openWalWindow: (iframeSrc: string, appletId: AppletId, wal: WAL) =>
-    ipcRenderer.invoke('open-wal-window', iframeSrc, appletId, wal),
+  openWalWindow: (iframeSrc: string, appletId: AppletId, groupId: DnaHashB64, wal: WAL) => {
+    ipcRenderer.invoke('open-wal-window', iframeSrc, appletId, groupId, wal)
+  },
   getAllAppAssetsInfos: () => ipcRenderer.invoke('get-all-app-assets-infos'),
   getAppletDevPort: (lowerCaseAppletIdB64: string) =>
     ipcRenderer.invoke('get-applet-dev-port', lowerCaseAppletIdB64),
@@ -109,8 +117,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   isMainWindowFocused: () => ipcRenderer.invoke('is-main-window-focused'),
   joinGroup: (networkSeed: string, progenitor: AgentPubKeyB64 | undefined) =>
     ipcRenderer.invoke('join-group', networkSeed, progenitor),
-  installGroupHapp: (useProgenitor: boolean) =>
-    ipcRenderer.invoke('install-group-happ', useProgenitor),
+  installGroupHapp: (useProgenitor: boolean, customGroupSeed: string | undefined = undefined) =>
+    ipcRenderer.invoke('install-group-happ', useProgenitor, customGroupSeed),
+  silentExportGroupsData: () => ipcRenderer.invoke('silent-export-groups-data'),
+  exportGroupsData: () => ipcRenderer.invoke('export-groups-data'),
+  importGroupsData: () => ipcRenderer.invoke('import-groups-data'),
+  consumePendingGroupsImport: () => ipcRenderer.invoke('consume-pending-groups-import'),
+  onImportGroupsProgress: (callback: (e: Electron.IpcRendererEvent, payload: unknown) => void) =>
+    ipcRenderer.on('import-groups-progress', callback),
   notification: (
     notification: FrameNotification,
     showInSystray: boolean,
@@ -131,6 +145,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
   fetchIcon: (appActionHashB64: ActionHashB64) =>
     ipcRenderer.invoke('fetch-icon', appActionHashB64),
   selectScreenOrWindow: () => ipcRenderer.invoke('select-screen-or-window'),
+  captureScreen: () => ipcRenderer.invoke('capture-screen'),
+  getFeedbackWorkerUrl: () => ipcRenderer.invoke('get-feedback-worker-url'),
+  saveFeedback: (feedback: {
+    text: string;
+    screenshot: string;
+    mossVersion: string;
+    os: string;
+    timestamp: number;
+    issueUrl?: string;
+  }) => ipcRenderer.invoke('save-feedback', feedback),
+  listFeedback: () => ipcRenderer.invoke('list-feedback'),
+  getFeedback: (id: string) => ipcRenderer.invoke('get-feedback', id),
+  updateFeedbackIssueUrl: (id: string, issueUrl: string) =>
+    ipcRenderer.invoke('update-feedback-issue-url', id, issueUrl),
   batchUpdateAppletUis: (
     toolCompatibilityId: ToolCompatibilityId,
     happOrWebHappUrl: string,
@@ -167,9 +195,25 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ),
   uninstallApplet: (appId: string) => ipcRenderer.invoke('uninstall-applet', appId),
   dumpNetworkStats: () => ipcRenderer.invoke('dump-network-stats'),
+  getRendererProcessMemory: async () => {
+    const memInfo = await process.getProcessMemoryInfo();
+    return {
+      residentSetKB: memInfo.residentSet,
+      privateKB: memInfo.private,
+      sharedKB: memInfo.shared,
+    };
+  },
+  getMainProcessMemory: () => ipcRenderer.invoke('get-main-process-memory'),
+  getConductorProcessMemory: () => ipcRenderer.invoke('get-conductor-process-memory'),
   fetchAndValidateHappOrWebhapp: (url: string) =>
     ipcRenderer.invoke('fetch-and-validate-happ-or-webhapp', url),
   validateHappOrWebhapp: (bytes: number[]) => ipcRenderer.invoke('validate-happ-or-webhapp', bytes),
+  // Dev UI Override
+  selectDevUiWebhapp: () => ipcRenderer.invoke('select-dev-ui-webhapp'),
+  setDevUiOverride: (appId: string, webhappPath: string) =>
+    ipcRenderer.invoke('set-dev-ui-override', appId, webhappPath),
+  clearDevUiOverride: (appId: string) => ipcRenderer.invoke('clear-dev-ui-override', appId),
+  getDevUiOverride: (appId: string) => ipcRenderer.invoke('get-dev-ui-override', appId),
 });
 
 declare global {

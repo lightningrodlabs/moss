@@ -1,38 +1,39 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
 import { Readable } from '@holochain-open-dev/stores';
 import {
-  AppClient,
-  ActionHash,
-  EntryHash,
-  DnaHash,
-  EntryHashB64,
-  ActionHashB64,
-  DnaHashB64,
-  CallZomeRequest,
-  AppAuthenticationToken,
-  AgentPubKeyB64,
-  AgentPubKey,
-  CreateCloneCellRequest,
-  DisableCloneCellRequest,
-  EnableCloneCellRequest,
-  InstalledAppId,
+    AppClient,
+    ActionHash,
+    EntryHash,
+    DnaHash,
+    EntryHashB64,
+    ActionHashB64,
+    DnaHashB64,
+    CallZomeRequest,
+    AppAuthenticationToken,
+    AgentPubKeyB64,
+    AgentPubKey,
+    CreateCloneCellRequest,
+    DisableCloneCellRequest,
+    EnableCloneCellRequest,
+    InstalledAppId, TransportStats,
 } from '@holochain/client';
+import {Type} from "@sinclair/typebox";
 
 export type AppletHash = EntryHash;
 export type AppletId = EntryHashB64;
 
 /**
- * Hash of Holohash lenght but all zeroes
+ * Hash of HoloHash length but all zeroes
  */
 export type NullHash = Uint8Array;
 
 export type Hrl = [DnaHash, ActionHash | EntryHash];
 export type HrlB64 = [DnaHashB64, ActionHashB64 | EntryHashB64];
 
-export type OpenAssetMode = 'front' | 'side' | 'window';
+export type OpenAssetMode = 'side' | 'window';
 
 /**
- * String of the format weave-0.14://
+ * String of the format weave-0.15://
  */
 export type WeaveUrl = string;
 
@@ -136,7 +137,7 @@ export type NotificationCount = {
 };
 
 export interface OpenViews {
-  openAppletMain(appletHash: EntryHash): void;
+  openAppletMain(appletHash: EntryHash, wal?: WAL): void;
   openAppletBlock(appletHash: EntryHash, block: string, context: any): void;
   openWal(wal: WAL): void;
   openCrossGroupMain(appletBundleId: string): void;
@@ -165,7 +166,7 @@ export type AppletClients = {
 };
 
 export type AppletView =
-  | { type: 'main' }
+  | { type: 'main' ; wal?: WAL; }
   | { type: 'block'; block: string; context: any }
   | {
       type: 'asset';
@@ -258,6 +259,7 @@ export type RenderInfo =
        * of the given Moss instance is not part of.
        */
       groupProfiles: GroupProfile[];
+      groupHash: DnaHash | null;
     }
   | {
       type: 'cross-group-view';
@@ -293,6 +295,10 @@ export type ParentToAppletMessage =
       payload: PeerStatusUpdate;
     }
   | {
+    type: 'network-stats-update';
+    payload: TransportStats;
+  }
+  | {
       type: 'on-before-unload';
     }
   | {
@@ -307,12 +313,17 @@ export type ParentToAppletMessage =
   | {
       type: 'remote-signal-received';
       payload: Uint8Array;
+    }
+  | {
+      type: 'locale-change';
+      locale: string;
     };
 
 export type IframeKind =
   | {
       type: 'applet';
       appletHash: AppletHash; // Only required in dev mode when iframe origin is localhost
+      groupHash: DnaHash | null; // The group DNA hash that this iframe belongs to if specified
       subType: string;
     }
   | {
@@ -378,12 +389,21 @@ export type AppletToParentRequest =
       type: 'get-applet-info';
       appletHash: AppletHash;
     }
+    | {
+    type: 'get-tool-installer';
+    appletHash: AppletHash;
+    groupHash: DnaHash | undefined;
+  }
+    | {
+    type: 'get-bootstrap-urls';
+    groupHash: DnaHash | undefined;
+  }
   | {
       type: 'get-group-profile';
       groupHash: DnaHash;
     }
   | {
-      type: 'my-group-permission-type';
+      type: 'my-accountabilities-per-group';
     }
   | {
       type: 'applet-participants';
@@ -439,7 +459,7 @@ export type AppletToParentRequest =
     }
   | {
       type: 'user-select-asset';
-      from?: 'search' | 'pocket' | 'create';
+      from?: 'search' | 'pocket' | 'create' | 'pocket-no-create';
     }
   | {
       type: 'user-select-asset-relation-tag';
@@ -499,6 +519,7 @@ export type OpenViewRequest =
   | {
       type: 'applet-main';
       appletHash: EntryHash;
+      wal?: WAL;
     }
   | {
       type: 'cross-group-main';
@@ -534,8 +555,13 @@ export type IframeConfig =
       authenticationToken: AppAuthenticationToken;
       weaveProtocolVersion: string;
       mossVersion: string;
+      /**
+       * The current UI locale (e.g. 'en', 'de', 'fr', 'es')
+       */
+      locale: string;
       profilesLocation: ProfilesLocation;
       groupProfiles: GroupProfile[];
+      groupHash: DnaHash | null;
       zomeCallLogging: boolean;
     }
   | {
@@ -547,6 +573,10 @@ export type IframeConfig =
       mainUiOrigin: string;
       weaveProtocolVersion: string;
       mossVersion: string;
+      /**
+       * The current UI locale (e.g. 'en', 'de', 'fr', 'es')
+       */
+      locale: string;
       applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>;
       zomeCallLogging: boolean;
     }
@@ -587,23 +617,40 @@ export type PeerStatusUpdate = Record<AgentPubKeyB64, PeerStatus>;
 
 export type ReadonlyPeerStatusStore = Readable<Record<AgentPubKeyB64, PeerStatus>>;
 
-export type GroupPermissionType =
-  | {
-      type: 'Steward';
-      /**
-       * Expiry date in ms since Unix epoch time
-       */
-      expiry?: number;
-    }
-  | {
-      type: 'Member';
-    }
-  | {
-      /**
-       * Can only occur if the applet belongs to more than one group
-       */
-      type: 'Ambiguous';
-    };
+/**
+ * An accountability is when an agent holds a role in a specific time period.
+ * A role is a set of privileges and has a fixed term/mandate duration.
+ * A privilege lets an agent perform a certain action.
+ */
+
+/** */
+export enum MossPrivilege {
+  ArchiveTool,
+  AddTool,
+  MakeSteward,
+  ChangeGroupProperties,
+}
+
+export type GroupRole = {
+  name: string,
+  defaultMandateDuration: number; // in ms since Unix epoch time ; 0 == forever
+  privileges: MossPrivilege[];
+}
+
+/** MossRole is a typed Enum of GroupRoles */
+export const MossRole = {
+  Member: { name: 'Member', mandateDuration: 0, privileges: [] },
+  Steward: { name: 'Steward', mandateDuration: 0, privileges: [MossPrivilege.AddTool, MossPrivilege.ChangeGroupProperties, MossPrivilege.MakeSteward] },
+  Progenitor: { name: 'Progenitor', mandateDuration: 0, privileges: [MossPrivilege.AddTool, MossPrivilege.ChangeGroupProperties, MossPrivilege.ArchiveTool, MossPrivilege.MakeSteward]},
+} as const;
+export type MossRole = typeof MossRole[keyof typeof MossRole];
+
+export type MossAccountability = {
+  role: MossRole,
+  startDate: number, // in ms since Unix epoch time
+  duration?: number, // use role's defaultMandateDuration if not specified
+  // expiry() // = startDate + mandateDuration
+}
 
 export type WalRelationAndTags = {
   relationHash: EntryHash;

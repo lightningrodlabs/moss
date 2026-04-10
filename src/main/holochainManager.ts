@@ -58,6 +58,7 @@ export class HolochainManager {
     lairUrl: string,
     bootstrapUrl: string,
     signalUrl: string,
+    relayUrl: string,
     iceUrls: Array<string>,
     rustLog?: string,
     wasmLog?: string,
@@ -75,6 +76,15 @@ export class HolochainManager {
     // Read
     try {
       conductorConfig = yaml.load(fs.readFileSync(configPath, 'utf-8'));
+      // Remove fields from older holochain versions that are no longer recognized
+      delete conductorConfig.device_seed_lair_tag;
+      delete conductorConfig.danger_generate_throwaway_device_seed;
+      delete conductorConfig.dpki;
+      delete conductorConfig.request_timeout_s;
+      if (conductorConfig.network) {
+        delete conductorConfig.network.type;
+        delete conductorConfig.network.base64_auth_material;
+      }
     } catch (e) {
       console.warn(
         'Failed to read existing conductor-config.yaml file. Overwriting it with a default one.',
@@ -93,6 +103,7 @@ export class HolochainManager {
     // network parameters
     conductorConfig.network.bootstrap_url = bootstrapUrl;
     conductorConfig.network.signal_url = signalUrl;
+    conductorConfig.network.relay_url = relayUrl;
     conductorConfig.network.webrtc_config = { iceServers: iceUrls.map((url) => ({ urls: [url] })) };
 
     // In dev mode, we have to allow ws:// signal type urls
@@ -103,89 +114,112 @@ export class HolochainManager {
       advancedSettings['tx5Transport'] = {
         signalAllowPlainText: true,
       };
-      conductorConfig.network.advanced = advancedSettings;
+      advancedSettings['irohTransport'] = {
+        relayAllowPlainText: true,
+      };
     }
+    const advancedSettings = conductorConfig.network.advanced
+      ? conductorConfig.network.advanced
+      : {};
+    advancedSettings.coreBootstrap = { backoffMaxMs: 30000 }
+    advancedSettings.coreSpace = { reSignExpireTimeMs: 30000, reSignFreqMs: 30000 }
+    conductorConfig.network.advanced = advancedSettings;
 
-    console.log('Writing conductor-config.yaml...');
+    console.log('Writing conductor-config.yaml...', configPath, conductorConfig);
 
     fs.writeFileSync(configPath, yaml.dump(conductorConfig));
 
+    const conductorEnv: Record<string, string> = {
+      RUST_LOG: rustLog
+        ? rustLog
+        : 'warn,' +
+        // this thrashes on startup
+        'wasmer_compiler_cranelift=error,' +
+        // this gives a bunch of warnings about how long db accesses are taking, tmi
+        'holochain_sqlite::db::access=error,' +
+        // this gives a lot of "search_and_discover_peer_connect: no peers found, retrying after delay" messages on INFO
+        'kitsune_p2p::spawn::actor::discover=error',
+      WASM_LOG: wasmLog ? wasmLog : 'warn',
+      NO_COLOR: '1',
+    };
+    // Forward essential env vars for subprocess functionality
+    if (process.env.HOME) {
+      conductorEnv.HOME = process.env.HOME;
+    }
+    if (process.env.PATH) {
+      conductorEnv.PATH = process.env.PATH;
+    }
+    // Forward jemalloc profiling config from parent environment.
+    // tikv-jemallocator uses _RJEM_ prefix for jemalloc symbols,
+    // so the env var is _RJEM_MALLOC_CONF (not MALLOC_CONF).
+    if (process.env._RJEM_MALLOC_CONF) {
+      conductorEnv._RJEM_MALLOC_CONF = process.env._RJEM_MALLOC_CONF;
+    }
     const conductorHandle = childProcess.spawn(binary, ['-c', configPath, '-p'], {
-      env: {
-        RUST_LOG: rustLog
-          ? rustLog
-          : 'warn,' +
-            // this thrashes on startup
-            'wasmer_compiler_cranelift=error,' +
-            // this gives a bunch of warnings about how long db accesses are taking, tmi
-            'holochain_sqlite::db::access=error,' +
-            // this gives a lot of "search_and_discover_peer_connect: no peers found, retrying after delay" messages on INFO
-            'kitsune_p2p::spawn::actor::discover=error',
-        WASM_LOG: wasmLog ? wasmLog : 'warn',
-        NO_COLOR: '1',
-      },
+      env: conductorEnv,
     });
     conductorHandle.stdin.write(password);
     conductorHandle.stdin.end();
-    conductorHandle.stdout.pipe(split()).on('data', async (line: string) => {
-      weEmitter.emitHolochainLog({
-        version,
-        data: line,
-      });
-    });
-    conductorHandle.stderr.pipe(split()).on('data', (line: string) => {
-      weEmitter.emitHolochainError({
-        version,
-        data: line,
-      });
-    });
 
     return new Promise((resolve, reject) => {
-      conductorHandle.stderr.pipe(split()).on('data', async (line: string) => {
-        if (line.includes('holochain had a problem and crashed')) {
-          reject(
-            `Holochain failed to start up and crashed. Check the logs for details (Help > Open Logs).`,
-          );
-        }
-      });
       conductorHandle.stdout.pipe(split()).on('data', async (line: string) => {
+        weEmitter.emitHolochainLog({
+          version,
+          data: line,
+        });
         if (line.includes('could not be parsed, because it is not valid YAML')) {
           reject(
             `Holochain failed to start up and crashed. Check the logs for details (Help > Open Logs).`,
           );
         }
         if (line.includes('Conductor ready.')) {
-          const adminWebsocket = await AdminWebsocket.connect({
-            url: new URL(`ws://127.0.0.1:${adminPort}`),
-            wsClientOptions: {
-              origin: 'moss://admin.main',
-            },
-          });
-          console.log('Connected to admin websocket.');
-          const installedApps = await adminWebsocket.listApps({});
-          const appInterfaces = await adminWebsocket.listAppInterfaces();
-          console.log('Got appInterfaces: ', appInterfaces);
-          let appPort;
-          if (appInterfaces.length > 0) {
-            appPort = appInterfaces[0].port;
-          } else {
-            const attachAppInterfaceResponse = await adminWebsocket.attachAppInterface({
-              allowed_origins: '*',
+          console.log(`[MOSS] Detected 'Conductor ready.' on stdout. Connecting to admin port ${adminPort}...`);
+          try {
+            const adminWebsocket = await AdminWebsocket.connect({
+              url: new URL(`ws://127.0.0.1:${adminPort}`),
+              wsClientOptions: {
+                origin: 'moss://admin.main',
+              },
             });
-            console.log('Attached app interface port: ', attachAppInterfaceResponse);
-            appPort = attachAppInterfaceResponse.port;
+            console.log('Connected to admin websocket.');
+            const installedApps = await adminWebsocket.listApps({});
+            const appInterfaces = await adminWebsocket.listAppInterfaces();
+            console.log('Got appInterfaces: ', appInterfaces);
+            let appPort;
+            if (appInterfaces.length > 0) {
+              appPort = appInterfaces[0].port;
+            } else {
+              const attachAppInterfaceResponse = await adminWebsocket.attachAppInterface({
+                allowed_origins: '*',
+              });
+              console.log('Attached app interface port: ', attachAppInterfaceResponse);
+              appPort = attachAppInterfaceResponse.port;
+            }
+            resolve(
+              new HolochainManager(
+                conductorHandle,
+                weEmitter,
+                mossFileSystem,
+                adminPort,
+                appPort,
+                adminWebsocket,
+                installedApps,
+                version,
+              ),
+            );
+          } catch (e) {
+            reject(`Holochain conductor ready but failed to connect: ${e}`);
           }
-          resolve(
-            new HolochainManager(
-              conductorHandle,
-              weEmitter,
-              mossFileSystem,
-              adminPort,
-              appPort,
-              adminWebsocket,
-              installedApps,
-              version,
-            ),
+        }
+      });
+      conductorHandle.stderr.pipe(split()).on('data', (line: string) => {
+        weEmitter.emitHolochainError({
+          version,
+          data: line,
+        });
+        if (line.includes('holochain had a problem and crashed')) {
+          reject(
+            `Holochain failed to start up and crashed. Check the logs for details (Help > Open Logs).`,
           );
         }
       });

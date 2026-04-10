@@ -10,23 +10,21 @@ const __dirname = path.dirname(__filename);
 // here since there is a check to prevent accidental use of a production bootstrap server in development
 // mode
 export const PRODUCTION_BOOTSTRAP_URLS = [
+  'https://bootstrap.moss.social',
   'https://dev-test-bootstrap2.holochain.org',
-  'https://bootstrap.holo.host',
-  'https://bootstrap-2.infra.holochain.org',
-  'https://bootstrap-1.infra.holochain.org',
-  'https://bootstrap-0.infra.holochain.org',
 ];
 // The first one will be picked by default. But all production signaling servers should be listed
 // here since there is a check to prevent accidental use of a production signaling server in development
 // mode
 export const PRODUCTION_SIGNALING_URLS = [
+  'wss://bootstrap.moss.social',
   'wss://dev-test-bootstrap2.holochain.org',
-  'wss://sbd.holo.host',
-  'wss://sbd-0.main.infra.holo.host',
-  'wss://signal-2.infra.holochain.org',
-  'wss://signal-1.infra.holochain.org',
-  'wss://signal-0.infra.holochain.org',
-  'wss://signal.holo.host',
+];
+
+// The first one will be picked by default.
+export const PRODUCTION_RELAY_URLS = [
+  "https://iroh-relay.moss.social./",
+  "https://use1-1.relay.n0.iroh-canary.iroh.link./",
 ];
 
 export const DEFAULT_ICE_URLS = ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'];
@@ -45,7 +43,11 @@ const conductorConfigTemplateString = fs.readFileSync(
 );
 export const CONDUCTOR_CONFIG_TEMPLATE = yaml.load(conductorConfigTemplateString);
 
-export const HOLOCHAIN_BINARY_NAME = `holochain-v${MOSS_CONFIG.holochain.version}-${MOSS_CONFIG.binariesAppendix}-wdocker${process.platform === 'win32' ? '.exe' : ''}`;
+export const HOLOCHAIN_BINARY_NAME = `holochain-v${MOSS_CONFIG.holochain}-${MOSS_CONFIG.binariesAppendix}-wdocker${process.platform === 'win32' ? '.exe' : ''}`;
+
+const holochainChecksumsPath = path.join(__dirname, 'holochain-checksums.json');
+const holochainChecksumsJSON = fs.readFileSync(holochainChecksumsPath, 'utf-8');
+export const HOLOCHAIN_CHECKSUMS: any = JSON.parse(holochainChecksumsJSON);
 
 export const GROUP_HAPP_URL = `https://github.com/lightningrodlabs/moss/releases/download/group-happ-v${MOSS_CONFIG.groupHapp.version}/group.happ`;
 // export const TOOLS_LIBRARY_URL = `https://github.com/lightningrodlabs/tools-library/releases/download/v${MOSS_CONFIG.toolsLibrary.version}/tools-library.happ`;

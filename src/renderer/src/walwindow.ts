@@ -13,10 +13,10 @@ import {
   WAL,
 } from '@theweave/api';
 import {
-  CallZomeRequest,
-  CallZomeRequestSigned,
-  decodeHashFromBase64,
-  encodeHashToBase64,
+    CallZomeRequest,
+    CallZomeRequestSigned,
+    decodeHashFromBase64, DnaHash, DnaHashB64,
+    encodeHashToBase64,
 } from '@holochain/client';
 import { localized, msg } from '@lit/localize';
 
@@ -46,6 +46,7 @@ declare global {
         | {
             iframeSrc: string;
             appletId: AppletId;
+            groupId: DnaHashB64,
             wal: WAL;
           }
         | undefined
@@ -81,6 +82,9 @@ export class WalWindow extends LitElement {
 
   @state()
   appletHash: AppletHash | undefined;
+
+  @state()
+  groupHash: DnaHash | undefined;
 
   @state()
   loading: string | undefined = msg('loading...');
@@ -165,6 +169,7 @@ export class WalWindow extends LitElement {
             source: {
               type: 'applet',
               appletHash: this.appletHash!,
+              groupHash: this.groupHash!,
               subType: request.source.subType,
             },
           };
@@ -188,6 +193,7 @@ export class WalWindow extends LitElement {
                 source: {
                   type: 'applet',
                   appletHash: this.appletHash!,
+                  groupHash: this.groupHash!,
                   subType: request.source.subType,
                 },
               };
@@ -209,6 +215,7 @@ export class WalWindow extends LitElement {
                 source: {
                   type: 'applet',
                   appletHash: this.appletHash!,
+                  groupHash: this.groupHash!,
                   subType: request.source.subType,
                 },
               };
@@ -228,20 +235,39 @@ export class WalWindow extends LitElement {
               if (iframeKind.type === 'cross-group') {
                 this.iframeStore.registerCrossGroupIframe(
                   iframeKind.toolCompatibilityId,
-                  request.request.id,
-                  request.request.subType,
-                  message.source,
+                  {
+                    id: request.request.id,
+                    subType: request.request.subType,
+                    source: message.source,
+                  }
                 );
+                return walWindow.electronAPI.appletMessageToParent({
+                  request: request.request,
+                  source: {
+                    type: 'cross-group',
+                    toolCompatibilityId: iframeKind.toolCompatibilityId,
+                    subType: request.source.subType,
+                  },
+                });
               } else {
                 const appletId = encodeHashToBase64(iframeKind.appletHash);
                 this.iframeStore.registerAppletIframe(
                   appletId,
-                  request.request.id,
-                  request.request.subType,
-                  message.source,
+                  {id: request.request.id,
+                  subType: request.request.subType,
+                  source: message.source,}
                 );
+                // Use the child iframe's applet identity, not the parent window's
+                return walWindow.electronAPI.appletMessageToParent({
+                  request: request.request,
+                  source: {
+                    type: 'applet',
+                    appletHash: iframeKind.appletHash,
+                    groupHash: iframeKind.groupHash ?? this.groupHash!,
+                    subType: request.source.subType,
+                  },
+                });
               }
-              return handleDefault();
             }
             case 'unregister-iframe': {
               if (this.isAppletDev === undefined) return;
@@ -252,11 +278,27 @@ export class WalWindow extends LitElement {
                   iframeKind.toolCompatibilityId,
                   request.request.id,
                 );
+                return walWindow.electronAPI.appletMessageToParent({
+                  request: request.request,
+                  source: {
+                    type: 'cross-group',
+                    toolCompatibilityId: iframeKind.toolCompatibilityId,
+                    subType: request.source.subType,
+                  },
+                });
               } else {
                 const appletId = encodeHashToBase64(iframeKind.appletHash);
                 this.iframeStore.unregisterAppletIframe(appletId, request.request.id);
+                return walWindow.electronAPI.appletMessageToParent({
+                  request: request.request,
+                  source: {
+                    type: 'applet',
+                    appletHash: iframeKind.appletHash,
+                    groupHash: iframeKind.groupHash ?? this.groupHash!,
+                    subType: request.source.subType,
+                  },
+                });
               }
-              return handleDefault();
             }
 
             default:
@@ -283,6 +325,7 @@ export class WalWindow extends LitElement {
     if (!appletSrcInfo) throw new Error('No associated applet info found.');
     this.iframeSrc = appletSrcInfo.iframeSrc;
     this.appletHash = decodeHashFromBase64(appletSrcInfo.appletId);
+    this.groupHash = decodeHashFromBase64(appletSrcInfo.groupId);
     try {
       const appletInfo: AppletInfo = await walWindow.electronAPI.appletMessageToParent({
         request: {
@@ -292,6 +335,7 @@ export class WalWindow extends LitElement {
         source: {
           type: 'applet',
           appletHash: this.appletHash!,
+          groupHash: this.groupHash!,
           subType: 'wal-window',
         },
       });
@@ -306,6 +350,7 @@ export class WalWindow extends LitElement {
           source: {
             type: 'applet',
             appletHash: this.appletHash!,
+            groupHash: this.groupHash!,
             subType: 'wal-window',
           },
         });
@@ -325,6 +370,7 @@ export class WalWindow extends LitElement {
             source: {
               type: 'applet',
               appletHash: this.appletHash!,
+              groupHash: this.groupHash!,
               subType: 'wal-window',
             },
           });

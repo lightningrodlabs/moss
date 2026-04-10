@@ -4,7 +4,7 @@
 
 ## WeaveUrl type
 
-String of the format weave-0.14://
+String of the format weave-0.15://
 
 **Signature:**
 

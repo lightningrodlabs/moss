@@ -7,8 +7,9 @@ import {
   InstalledAppId,
   RoleNameCallZomeRequest,
   AppAuthenticationToken,
+  HoloHashMap,
 } from '@holochain/client';
-import TimeAgo from 'javascript-time-ago';
+import { msg } from '@lit/localize';
 import type { ProfilesStore } from '@holochain-open-dev/profiles';
 import {
   type Writable,
@@ -18,10 +19,9 @@ import {
   readable,
   toPromise,
 } from '@holochain-open-dev/stores';
-import { HoloHashMap } from '@holochain-open-dev/utils/dist/holo-hash-map';
 import { type Message, Stream, type Payload } from './stream';
 import { derived } from 'svelte/store';
-import { FrameNotification, GroupProfile, WeaveLocation } from '@theweave/api';
+import { FrameNotification, GroupProfile } from '@theweave/api';
 import { GroupStore } from './group-store';
 
 export const time = readable(Date.now(), function start(set) {
@@ -71,7 +71,6 @@ export class FoyerClient {
 
 export class FoyerStore {
   myPubKeyB64: AgentPubKeyB64;
-  timeAgo = new TimeAgo('en-US');
   updating = false;
   client: FoyerClient;
   streams: Writable<{ [key: string]: Stream }> = writable({});
@@ -97,7 +96,7 @@ export class FoyerStore {
       received: Date.now(),
     });
     for (const agent of agents) {
-      let messageList: Array<number> = this.expectations.get(agent);
+      let messageList: Array<number> = this.expectations.get(agent)!;
       if (!messageList) {
         messageList = [];
       }
@@ -140,37 +139,61 @@ export class FoyerStore {
 
     stream.addMessage(message);
     if (message.payload.type == 'Msg') {
-      const mainWindowFocused = await window.electronAPI.isMainWindowFocused();
-      let b64From = encodeHashToBase64(message.from);
+      const b64From = encodeHashToBase64(message.from);
 
       if (b64From != this.myPubKeyB64) {
-        if (!mainWindowFocused) {
-          const senderProfile = await toPromise(this.profilesStore.profiles.get(message.from));
-          const senderNickname = senderProfile ? senderProfile.entry.nickname : b64From;
-          const myProfile = await toPromise(this.profilesStore.myProfile);
-          const myNickName = myProfile ? myProfile.entry.nickname.toLowerCase() : undefined;
+        const senderProfile = await toPromise(this.profilesStore.profiles.get(message.from)!);
+        const senderNickname = senderProfile ? senderProfile.entry.nickname : b64From;
+        const myProfile = await toPromise(this.profilesStore.myProfile);
+        const myNickName = myProfile ? myProfile.entry.nickname.toLowerCase() : undefined;
 
-          const amIMentioned = message.payload.text.toLowerCase().includes(`@${myNickName}`);
-          const urgency = amIMentioned ? 'high' : 'medium';
+        const amIMentioned = message.payload.text.toLowerCase().includes(`@${myNickName}`);
+
+        // Get the user's notification settings for this group's foyer
+        const settings = this.groupStore.getFoyerNotificationSettingsValue();
+
+        // Determine urgency based on whether user is mentioned
+        const messageUrgency = amIMentioned ? settings.mentions : settings.allMessages;
+
+        // Skip notification entirely if urgency is 'none'
+        if (messageUrgency !== 'none') {
+          const urgency = messageUrgency;
+          // Send OS notification for high urgency only
+          const sendOSNotification = urgency === 'high';
+
+          // Only suppress unread count if the foyer is currently visible:
+          // window is focused AND user is on this group's home page (no applet open)
+          const mainWindowFocused = await window.electronAPI.isMainWindowFocused();
+          const dashboardState = get(this.groupStore.mossStore.dashboardState());
+          const foyerVisible =
+            mainWindowFocused &&
+            dashboardState.viewType === 'group' &&
+            encodeHashToBase64(dashboardState.groupHash) ===
+              encodeHashToBase64(this.groupStore.groupDnaHash) &&
+            !dashboardState.appletHash;
+
           const notification: FrameNotification = {
-            title: `from ${senderNickname}`,
+            title: `${msg('from')} ${senderNickname}`,
             body: message.payload.text,
-            notification_type: 'message',
+            notification_type: amIMentioned ? 'mention' : 'message',
             icon_src: undefined,
             urgency,
             fromAgent: message.from,
             timestamp: message.payload.created,
           };
-          const weaveLocation: WeaveLocation = {
-            type: 'group',
-            dnaHash: this.groupStore.groupDnaHash,
-          };
-          await window.electronAPI.notification(
-            notification,
-            true,
-            amIMentioned,
-            weaveLocation,
-            `${this.groupProfile ? this.groupProfile.name : ''} foyer `,
+
+          // Use the unified notification handler (ephemeral - not persisted)
+          await this.groupStore.mossStore.handleNotification(
+            { type: 'group', groupDnaHash: encodeHashToBase64(this.groupStore.groupDnaHash) },
+            [notification],
+            {
+              persist: false, // foyer messages are ephemeral
+              showInFeed: true,
+              updateUnreadCount: !foyerVisible,
+              sendOSNotification: sendOSNotification && !mainWindowFocused,
+              playSound: !foyerVisible,
+              sourceName: `${this.groupProfile?.name || ''} ${msg('Foyer')}`,
+            },
           );
         }
 

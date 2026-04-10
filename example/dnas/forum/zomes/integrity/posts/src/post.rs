@@ -112,8 +112,8 @@ pub fn validate_delete_link_all_posts(
     )))
 }
 pub fn validate_create_link_peer_subscription(
-    action: CreateLink,
-    base_address: AnyLinkableHash,
+    _action: CreateLink,
+    _base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
@@ -134,7 +134,7 @@ pub fn validate_create_link_peer_subscription(
     // }
 
     // Check whether the target is the agent pubkey of the link creator
-    let target = AgentPubKey::try_from(target_address);
+    let _target = AgentPubKey::try_from(target_address);
     // match target {
     //     Ok(address) => {
     //         if action.author != address {

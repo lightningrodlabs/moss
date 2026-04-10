@@ -5,7 +5,7 @@ use moss_helpers::ZomeFnInput;
 #[hdk_extern]
 pub fn create_thing(thing: Thing) -> ExternResult<Record> {
     let thing_hash = create_entry(&EntryTypes::Thing(thing.clone()))?;
-    let record = get(thing_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+    let record = get(thing_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
         WasmErrorInner::Guest(String::from("Could not find the newly created Thing"))
     ))?;
     let path = Path::from("all_things");
@@ -19,11 +19,8 @@ pub fn create_thing(thing: Thing) -> ExternResult<Record> {
 }
 #[hdk_extern]
 pub fn get_thing(original_thing_hash: ZomeFnInput<ActionHash>) -> ExternResult<Option<Record>> {
-    let input =
-        GetLinksInputBuilder::try_new(original_thing_hash.input.clone(), LinkTypes::ThingUpdates)?
-            .get_options(original_thing_hash.get_strategy())
-            .build();
-    let links = get_links(input)?;
+    let input = LinkQuery::try_new(original_thing_hash.input.clone(), LinkTypes::ThingUpdates)?;
+    let links = get_links(input, original_thing_hash.get_strategy())?;
     get_latest_record_from_links_with_original_hash(
         links,
         original_thing_hash.input.clone(),
@@ -45,7 +42,7 @@ pub fn update_thing(input: UpdateThingInput) -> ExternResult<Record> {
         LinkTypes::ThingUpdates,
         (),
     )?;
-    let record = get(updated_thing_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+    let record = get(updated_thing_hash.clone(), GetOptions::local())?.ok_or(wasm_error!(
         WasmErrorInner::Guest(String::from("Could not find the newly updated Thing"))
     ))?;
     Ok(record)
@@ -59,10 +56,8 @@ pub fn delete_thing(original_thing_hash: ActionHash) -> ExternResult<ActionHash>
 #[hdk_extern]
 pub fn get_things(input: ZomeFnInput<()>) -> ExternResult<Vec<Link>> {
     let path = Path::from("all_things");
-    let input = GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllThings)?
-        .get_options(input.get_strategy())
-        .build();
-    let links = get_links(input)?;
+    let query = LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::AllThings)?;
+    let links = get_links(query, input.get_strategy())?;
 
     Ok(links)
 }

@@ -1,6 +1,6 @@
 {
   "name": "moss-alpha",
-  "version": "0.14.1",
+  "version": "0.15.6",
   "scripts": {
     "start": "vite --force --clearScreen false --port 1420",
     "build": "vite build",
@@ -9,15 +9,15 @@
   "dependencies": {
     "@fontsource/aileron": "^5.0.5",
     "@fontsource-variable/inter": "^5.2.5",
-    "@holochain/client": "^0.19.1",
-    "@holochain-open-dev/elements": "^0.500.1",
-    "@holochain-open-dev/profiles": "^0.501.2",
-    "@holochain-open-dev/stores": "^0.500.2",
-    "@holochain-open-dev/utils": "^0.500.2",
-    "@theweave/api": "^0.5.0",
-    "@theweave/elements": "^0.5.0",
-    "@theweave/utils": "^0.4.0",
-    "@theweave/group-client": "^0.4.0",
+    "@holochain/client": "=0.20.4-rc.0",
+    "@holochain-open-dev/elements": "^0.601.0",
+    "@holochain-open-dev/profiles": "^0.601.2",
+    "@holochain-open-dev/stores": "^0.601.0",
+    "@holochain-open-dev/utils": "^0.601.0",
+    "@theweave/api": "^0.6.6",
+    "@theweave/elements": "^0.6.3",
+    "@theweave/utils": "^0.5.3",
+    "@theweave/group-client": "^0.5.3",
     "@lit/context": "^1.0.1",
     "@lit-labs/task": "^1.1.2",
     "@lit/localize": "^0.12.0",
@@ -34,9 +34,11 @@
     "lodash-es": "^4.17.21",
     "marked": "12.0.2",
     "uuid": "^8.3.2",
-    "vis-network": "9.1.9"
+    "vis-network": "9.1.9",
+    "pluralize": "8.0.0"
   },
   "devDependencies": {
+    "@lit/localize-tools": "^0.7.0",
     "@types/dompurify": "3.0.5",
     "@types/lodash-es": "^4.17.6"
   }

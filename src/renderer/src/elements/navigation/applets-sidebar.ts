@@ -89,7 +89,7 @@ export class AppletsSidebar extends LitElement {
           ></sl-skeleton> `;
       case 'error':
         return html`<display-error
-          .headline=${msg('Error displaying the applets')}
+          .headline=${msg('Error displaying the Tools')}
           tooltip
           .error=${this._applets.value.error}
         ></display-error>`;

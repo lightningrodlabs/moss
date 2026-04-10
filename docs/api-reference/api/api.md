@@ -623,7 +623,7 @@ Events
 
 </td><td>
 
-String of the format weave-0.14://
+String of the format weave-0.15://
 
 
 </td></tr>

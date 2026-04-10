@@ -8,6 +8,6 @@ crate-type = ["cdylib", "rlib"]
 name = "posts_integrity"
 
 [dependencies]
-hdi = { workspace = true }
-
 serde = { workspace = true }
+hdi = { workspace = true }
+holochain_serialized_bytes = { workspace = true }

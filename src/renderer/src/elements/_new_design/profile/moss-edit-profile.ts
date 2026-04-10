@@ -1,5 +1,5 @@
 import { html, LitElement, PropertyValueMap } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, property, query, state } from 'lit/decorators.js';
 import { localized, msg, str } from '@lit/localize';
 import { consume } from '@lit/context';
 import { sharedStyles } from '@holochain-open-dev/elements';
@@ -13,6 +13,8 @@ import { Profile, ProfilesStore, profilesStoreContext } from '@holochain-open-de
 import { mossStyles } from '../../../shared-styles';
 
 import '../moss-select-avatar';
+import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
+import { MossSelectAvatar } from '../moss-select-avatar';
 
 /**
  * @element edit-profile
@@ -43,6 +45,12 @@ export class MossEditProfile extends LitElement {
   @property({ type: Boolean, attribute: 'allow-cancel' })
   allowCancel = false;
 
+  @query('#nickname-input')
+  private _nicknameInput!: SlInput;
+
+  @query('#moss-select-avatar')
+  private _selectAvatar!: MossSelectAvatar;
+
   @state()
   nickname: string | undefined;
 
@@ -66,6 +74,17 @@ export class MossEditProfile extends LitElement {
     if (this.profile) {
       this.nickname = this.profile.nickname;
       this.avatar = this.profile.fields.avatar;
+    }
+    this.checkDisabled();
+  }
+
+  public resetProfile() {
+    console.log('Resetting profile 2. Profile: ', this.profile);
+    if (this.profile) {
+      this.nickname = this.profile.nickname;
+      this._nicknameInput.value = this.nickname;
+      this.avatar = this.profile.fields.avatar;
+      this._selectAvatar.value = this.avatar;
     }
     this.checkDisabled();
   }
@@ -144,9 +163,9 @@ export class MossEditProfile extends LitElement {
           class="moss-input"
           label=${msg('name*')}
           placeholder=${'name or nickname'}
-          minLength="${this.store.config.minNicknameLength}"
+          minLength="${this.store?.config?.minNicknameLength ?? 3}"
           .value=${this.profile?.nickname || ''}
-          .helpText=${msg(str`Min. ${this.store.config.minNicknameLength} characters`)}
+          .helpText=${msg(str`Min. ${this.store?.config?.minNicknameLength ?? 3} characters`)}
           style="width: 350px; margin-bottom: 10px;"
           @input=${(e) => {
             this.nickname = e.target.value;
@@ -155,6 +174,7 @@ export class MossEditProfile extends LitElement {
         ></sl-input>
 
         <moss-select-avatar
+          id="moss-select-avatar"
           name="avatar"
           style="margin-bottom: 46px;"
           .value=${this.profile?.fields['avatar'] || undefined}

@@ -1,5 +1,5 @@
 ---
-manifest_version: '1'
+manifest_version: '0'
 name: forum
 integrity:
   network_seed: ~
@@ -7,12 +7,12 @@ integrity:
   zomes:
     - name: posts_integrity
       hash: ~
-      bundled: '../../../target/wasm32-unknown-unknown/release/posts_integrity.wasm'
+      path: '../../../target/wasm32-unknown-unknown/release/posts_integrity.wasm'
       dependencies: ~
 coordinator:
   zomes:
     - name: posts
       hash: ~
-      bundled: '../../../target/wasm32-unknown-unknown/release/posts.wasm'
+      path: '../../../target/wasm32-unknown-unknown/release/posts.wasm'
       dependencies:
         - name: posts_integrity

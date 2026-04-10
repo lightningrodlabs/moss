@@ -1,5 +1,5 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
-import { EntryHashMap, HoloHashMap, parseHrl } from '@holochain-open-dev/utils';
+import { parseHrl } from '@holochain-open-dev/utils';
 import {
   AgentPubKey,
   AgentPubKeyB64,
@@ -12,9 +12,11 @@ import {
   DisableCloneCellRequest,
   EnableCloneCellRequest,
   EntryHash,
+  EntryHashMap,
+  HoloHashMap,
   RoleNameCallZomeRequest,
   decodeHashFromBase64,
-  encodeHashToBase64,
+  encodeHashToBase64, TransportStats, DnaHash,
 } from '@holochain/client';
 import { decode } from '@msgpack/msgpack';
 import { toUint8Array } from 'js-base64';
@@ -60,22 +62,30 @@ declare global {
     __WEAVE_IFRAME_KIND__: IframeKind;
     __WEAVE_PROTOCOL_VERSION__: string;
     __MOSS_VERSION__: string;
+    __WEAVE_LOCALE__: string;
     __WEAVE_ON_BEFORE_UNLOAD_CALLBACKS__: Array<CallbackWithId> | undefined;
     __ZOME_CALL_LOGGING_ENABLED__: boolean;
   }
 
   interface WindowEventMap {
     'peer-status-update': CustomEvent<PeerStatusUpdate>;
+    'network-stats-update': CustomEvent<TransportStats>;
     'asset-store-update': CustomEvent<{
       type: 'asset-store-update';
       walStringified: string;
       value: AsyncStatus<AssetStoreContent>;
     }>;
     'remote-signal-received': CustomEvent<Uint8Array>;
+    'locale-change': CustomEvent<string>;
   }
 }
 
+/** All weaveApi functions shoot an event to parent */
 const weaveApi: WeaveServices = {
+  bootstrapUrls: (groupHash?: DnaHash) => postMessage({
+    type: 'get-bootstrap-urls',
+    groupHash,
+  }),
   assets: {
     assetInfo: (wal: WAL) =>
       postMessage({
@@ -92,7 +102,7 @@ const weaveApi: WeaveServices = {
         type: 'drag-asset',
         wal,
       }),
-    userSelectAsset: (from?: 'search' | 'pocket' | 'create') =>
+    userSelectAsset: (from?: 'search' | 'pocket' | 'create' | 'pocket-no-create') =>
       postMessage({
         type: 'user-select-asset',
         from,
@@ -190,10 +200,26 @@ const weaveApi: WeaveServices = {
     return window.__MOSS_VERSION__;
   },
 
+  getLocale: () => {
+    return window.__WEAVE_LOCALE__ || 'en';
+  },
+
+  onLocaleChange: (callback: (locale: string) => any) => {
+    const listener = (e: CustomEvent<string>) => callback(e.detail);
+    window.addEventListener('locale-change', listener);
+    return () => window.removeEventListener('locale-change', listener);
+  },
+
   onPeerStatusUpdate: (callback: (payload: PeerStatusUpdate) => any) => {
     const listener = (e: CustomEvent<PeerStatusUpdate>) => callback(e.detail);
     window.addEventListener('peer-status-update', listener);
     return () => window.removeEventListener('peer-status-update', listener);
+  },
+
+  onNetworkStatsUpdate: (callback: (payload: TransportStats) => any) => {
+      const listener = (e: CustomEvent<TransportStats>) => callback(e.detail);
+      window.addEventListener('network-stats-update', listener);
+      return () => window.removeEventListener('network-stats-update', listener);
   },
 
   onBeforeUnload: (callback: () => void) => {
@@ -223,12 +249,13 @@ const weaveApi: WeaveServices = {
     return unlisten;
   },
 
-  openAppletMain: async (appletHash: EntryHash): Promise<void> =>
+  openAppletMain: async (appletHash: EntryHash, wal?: WAL): Promise<void> =>
     postMessage({
       type: 'open-view',
       request: {
         type: 'applet-main',
         appletHash,
+        wal,
       },
     }),
 
@@ -273,6 +300,13 @@ const weaveApi: WeaveServices = {
       },
     }),
 
+  toolInstaller: (appletHash, groupHash) =>
+    postMessage({
+      type: 'get-tool-installer',
+      appletHash,
+      groupHash,
+    }),
+
   groupProfile: (groupHash) =>
     postMessage({
       type: 'get-group-profile',
@@ -301,9 +335,9 @@ const weaveApi: WeaveServices = {
       type: 'request-close',
     }),
 
-  myGroupPermissionType: () =>
+  myAccountabilitiesPerGroup: () =>
     postMessage({
-      type: 'my-group-permission-type',
+      type: 'my-accountabilities-per-group',
     }),
 
   appletParticipants: () =>
@@ -374,10 +408,10 @@ const weaveApi: WeaveServices = {
 
   window.__ZOME_CALL_LOGGING_ENABLED__ = iframeConfig.zomeCallLogging;
 
-  // message handler for ParentToApplet messages
+  // Message handler for ParentToApplet messages.
   // This one is registered early here for any type of iframe
-  // to be able to respond also in case of page refreshes in short time
-  // intervals. Otherwise the message handler may not be registered in time
+  // to be able to respond in case of page refreshes in short time intervals.
+  // Otherwise, the message handler may not be registered in time
   // when the on-before-unload message is sent to the iframe and Moss
   // is waiting for a response and will never get one.
   window.addEventListener('message', async (m: MessageEvent<ParentToAppletMessage>) => {
@@ -387,21 +421,23 @@ const weaveApi: WeaveServices = {
       return;
     }
     try {
-      const result = await handleEventMessage(m.data);
-      // Only send result success if truthy, indicating that the message was
-      // actually handled, otherwise the `handleMessage` message handler further
-      // below will be ignored
-      if (result) m.ports[0].postMessage({ type: 'success', result });
+      const result = await handleParentMessageAppletView(m.data);
+      // Send the result if truthy, indicating that the message was actually handled.
+      // Otherwise, the `handleParentMessageGeneral` message handler will be ignored.
+      if (result && m.ports.length > 0) {
+          m.ports[0].postMessage({ type: 'success', result });
+      }
     } catch (e) {
-      console.error('Failed to handle postMessage\nError:', e, '\nMessage: ', m);
+      console.error('postMessage Failed\nError:', e, '\nMessage: ', m);
       m.ports[0]?.postMessage({ type: 'error', error: (e as any).message });
     }
   });
 
   window.__WEAVE_PROTOCOL_VERSION__ = iframeConfig.weaveProtocolVersion;
   window.__MOSS_VERSION__ = iframeConfig.mossVersion;
+  window.__WEAVE_LOCALE__ = iframeConfig.type !== 'not-installed' ? iframeConfig.locale : 'en';
 
-  // add eventlistener for clipboard
+  // Event listener for clipboard.
   window.addEventListener('keydown', async (zEvent) => {
     if (zEvent.altKey && zEvent.key === 's') {
       // case sensitive
@@ -409,6 +445,7 @@ const weaveApi: WeaveServices = {
     }
   });
 
+  /** Applet-view specific setup */
   if (view.type === 'applet-view') {
     if (iframeConfig.type !== 'applet') throw new Error('Bad iframe config');
 
@@ -428,7 +465,7 @@ const weaveApi: WeaveServices = {
 
     const appletHash = window.__WEAVE_IFRAME_KIND__.appletHash;
 
-    // message handler for ParentToApplet messages
+    // Message handler for ParentToApplet messages
     window.addEventListener('message', async (m: MessageEvent<ParentToAppletMessage>) => {
       // Validate the origin of the message to make sure it comes from the Moss main UI
       if (m.origin !== iframeConfig.mainUiOrigin) {
@@ -436,7 +473,7 @@ const weaveApi: WeaveServices = {
         return;
       }
       try {
-        const result = await handleMessage(appletClient, appletHash, m.data);
+        const result = await handleParentMessageGeneral(appletClient, appletHash, m.data);
         // Messages sent from MossStore.postMessageToAppletIframes() won't have
         // a port attached here, only the ones sent from AppletHost
         m.ports[0]?.postMessage({ type: 'success', result });
@@ -470,6 +507,7 @@ const weaveApi: WeaveServices = {
       peerStatusStore,
       appletHash,
       groupProfiles: iframeConfig.groupProfiles,
+      groupHash: iframeConfig.groupHash,
     };
 
     window.addEventListener('weave-client-connected', async () => {
@@ -534,22 +572,33 @@ const weaveApi: WeaveServices = {
 //   );
 // }
 
-const handleEventMessage = async (message: ParentToAppletMessage) => {
+/* Handle ParentToAppletMessage for applet-view */
+const handleParentMessageAppletView = async (message: ParentToAppletMessage) => {
   switch (message.type) {
     case 'on-before-unload':
       const allCallbacks = window.__WEAVE_ON_BEFORE_UNLOAD_CALLBACKS__ || [];
       await Promise.all(
         allCallbacks.map(async (callbackWithId) => await callbackWithId.callback()),
       );
-      // return 1 to indicate that message was handled
+      // return 1 to indicate that the message has been handled.
       return 1;
-    default:
-      // return 0 to indicate that message was not handled
+      case 'locale-change':
+      window.__WEAVE_LOCALE__ = message.locale;
+      window.dispatchEvent(
+        new CustomEvent('locale-change', {
+          detail: message.locale,
+        }),
+      );
+      // return 1 to indicate that the message has been handled.
+      return 1;
+      default:
+      // return 0 to indicate that the message has not been handled.
       return 0;
   }
 };
 
-const handleMessage = async (
+/* Handle ParentToAppletMessage */
+const handleParentMessageGeneral = async (
   appletClient: AppClient,
   appletHash: AppletHash,
   message: ParentToAppletMessage,
@@ -577,6 +626,13 @@ const handleMessage = async (
         }),
       );
       break;
+      case 'network-stats-update':
+          window.dispatchEvent(
+              new CustomEvent('network-stats-update', {
+                  detail: message.payload,
+              }),
+          );
+          break;
     case 'asset-store-update':
       window.dispatchEvent(
         new CustomEvent('asset-store-update', {
@@ -592,7 +648,11 @@ const handleMessage = async (
       );
     }
     case 'on-before-unload': {
-      // This case is handled in handleEventMessage
+      // This case is handled in handleParentMessageAppletView
+      return;
+    }
+    case 'locale-change': {
+      // This case is handled in handleParentMessageAppletView
       return;
     }
     default:
@@ -602,6 +662,8 @@ const handleMessage = async (
   }
 };
 
+
+/** Send a message to Parent */
 async function postMessage(request: AppletToParentRequest): Promise<any> {
   return new Promise((resolve, reject) => {
     const channel = new MessageChannel();
@@ -711,14 +773,21 @@ async function signZomeCall(request: CallZomeRequest): Promise<CallZomeRequestSi
 
 function readIframeKind(): IframeKind {
   const viewTypeRegex = /view-type=(.*?)(?:[&#]|$)/;
+  const groupHashRegex = /group-hash=(.*?)(?:[&#]|$)/;
   const href = window.location.href;
   if (window.origin.startsWith('applet://')) {
     const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
     const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
     const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+
+    // Extract groupHash from query string if present
+    const groupHashMatch = href.match(groupHashRegex);
+    const groupHash = groupHashMatch ? decodeHashFromBase64(groupHashMatch[1]) : null;
+
     return {
       type: 'applet',
       appletHash: decodeHashFromBase64(toOriginalCaseB64(lowercaseB64Id)),
+      groupHash,
       subType: href.match(viewTypeRegex)![1],
     };
   } else if (window.origin.startsWith('cross-group://')) {
@@ -734,23 +803,24 @@ function readIframeKind(): IframeKind {
     // In dev mode, the iframe kind will be appended at the end
     const encodedIframeKind = window.location.href.split('#')[1];
     const iframeKind = decode(toUint8Array(encodedIframeKind)) as IframeKind;
+    // TODO: assert iframeKind is of correct type.
     return iframeKind;
   }
   throw new Error(`Failed to read iframe kind. Invalid origin: ${window.origin}`);
 }
 
-function readAppletId(): AppletId {
-  if (window.origin.startsWith('applet://')) {
-    const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
-    const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
-    const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
-    return toOriginalCaseB64(lowercaseB64Id);
-  }
-  // In dev mode, the applet hash will be appended at the end
-  const lowercaseB64IdWithPercent = window.location.href.split('#')[1];
-  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
-  return toOriginalCaseB64(lowercaseB64Id);
-}
+// function readAppletId(): AppletId {
+//   if (window.origin.startsWith('applet://')) {
+//     const urlWithoutProtocol = window.origin.split('://')[1].split('/')[0];
+//     const lowercaseB64IdWithPercent = urlWithoutProtocol.split('?')[0].split('.')[0];
+//     const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+//     return toOriginalCaseB64(lowercaseB64Id);
+//   }
+//   // In dev mode, the applet hash will be appended at the end
+//   const lowercaseB64IdWithPercent = window.location.href.split('#')[1];
+//   const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
+//   return toOriginalCaseB64(lowercaseB64Id);
+// }
 
 async function getRenderView(): Promise<RenderView | undefined> {
   if (window.location.search.length === 0) return undefined;
@@ -796,10 +866,12 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
       if (view !== 'applet-view' && view !== 'cross-group-view') {
         throw new Error(`invalid query string: ${s}.`);
       }
+      const wal = hrl? { hrl, context } : undefined;
       return {
         type: view,
         view: {
           type: 'main',
+          wal,
         },
       };
     case 'block':

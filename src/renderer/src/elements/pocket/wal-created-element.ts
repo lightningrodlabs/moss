@@ -11,12 +11,11 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
 import { encodeHashToBase64 } from '@holochain/client';
 
-import { WAL, weaveUrlFromWal } from '@theweave/api';
+import { encodeContext, WAL, weaveUrlFromWal } from '@theweave/api';
 
 import { mossStyles } from '../../shared-styles.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { encodeContext } from '../../utils.js';
 import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiShareVariantOutline } from '@mdi/js';
 import { stringifyWal } from '@theweave/api';
@@ -61,7 +60,7 @@ export class WalCreatedElement extends LitElement {
           return html`
             <div
               class="row element"
-              title=${`weave-0.14://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
+              title=${`weave-0.15://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
                 this.wal.hrl[1],
               )}${this.wal.context ? `?context=${encodeContext(this.wal.context)}` : ''}`}
             >

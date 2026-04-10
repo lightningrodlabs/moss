@@ -1,7 +1,7 @@
 import { customElement, state, query } from 'lit/decorators.js';
 import { css, html, LitElement } from 'lit';
 import { consume } from '@lit/context';
-import { localized, msg } from '@lit/localize';
+import {localized, msg, str} from '@lit/localize';
 import { notify, notifyError, sharedStyles } from '@holochain-open-dev/elements';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -30,17 +30,17 @@ import '../reusable/group-selector.js';
 
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { mossStyles } from '../../shared-styles.js';
+import { MossDialog } from '../_new_design/moss-dialog.js';
+import '../_new_design/moss-dialog.js';
 
 export type CreatableInfo = {
   appletHash: AppletHash;
   creatableName: CreatableName;
   creatable: CreatableType;
+  groupHash: DnaHash | undefined;
 };
 
-/**
- * @element search-entry
- * @fires entry-selected - Fired when the user selects some entry. Detail will have this shape: { hrl, context }
- */
+/** */
 @localized()
 @customElement('creatable-palette')
 export class CreatablePalette extends LitElement {
@@ -49,7 +49,7 @@ export class CreatablePalette extends LitElement {
   _mossStore!: MossStore;
 
   @query('#creatable-dialog')
-  _dialog!: SlDialog;
+  _dialog!: MossDialog;
 
   @query('#creatable-view-dialog')
   _creatableViewDialog!: SlDialog | null;
@@ -129,10 +129,10 @@ export class CreatablePalette extends LitElement {
         return;
       case 'success':
         this._mossStore.walToRecentlyCreated(creatableResult.wal);
-        notify(`New ${this._showCreatableView?.creatable.label} created.`);
+        notify(msg(str`New ${this._showCreatableView?.creatable.label} created.`));
         this._mossStore.clearCreatableDialogResult(this._activeDialogId);
         this.dispatchEvent(
-          new CustomEvent('wal-selected', {
+          new CustomEvent('open-wal', {
             detail: { wal: creatableResult.wal },
             bubbles: true,
             composed: true,
@@ -145,14 +145,18 @@ export class CreatablePalette extends LitElement {
   }
 
   async handleCreatableSelected(creatableInfo: CreatableInfo) {
-    this._showCreatableView = creatableInfo;
+    // Add groupHash to creatableInfo
+    this._showCreatableView = {
+      ...creatableInfo,
+      groupHash: this.groupDnaHash,
+    };
     this._activeDialogId = uuidv4();
     if (this._creatableSelectionDialog) this._creatableSelectionDialog.hide();
     setTimeout(() => this._creatableViewDialog!.show());
   }
 
   walToPocket(wal: WAL) {
-    console.log('Adding hrl to clipboard: ', wal);
+    console.log('Adding wal to clipboard: ', wal);
     this._mossStore.walToPocket(wal);
   }
 
@@ -166,8 +170,8 @@ export class CreatablePalette extends LitElement {
       >
         <group-applets-creatables
           @creatable-selected=${(e: { detail: CreatableInfo }) => {
-            this.handleCreatableSelected(e.detail);
-          }}
+        this.handleCreatableSelected(e.detail);
+      }}
         ></group-applets-creatables>
       </group-context>
     `;
@@ -175,13 +179,12 @@ export class CreatablePalette extends LitElement {
 
   render() {
     return html`
-      <sl-dialog
+      <moss-dialog
         id="creatable-dialog"
-        class="moss-dialog"
-        style="--width: 800px;"
-        no-header
+        width="890px"
+        headerAlign="center"
       >
-          <div class="row center-content" style="font-size: 25px; margin-top: 30px;">
+          <div slot="header">
             <img
               class="magic-wand"
               src="magic-wand.svg"
@@ -189,46 +192,45 @@ export class CreatablePalette extends LitElement {
               />
             <span>${msg('Create New Asset')}</span>
           </div>
-        <div class="column" style="align-items: center; position: relative; padding-bottom: 30px;">
+        <div slot="content" class="column" style="align-items: center; position: relative;">
           <div class="row flex-1 items-center" style="width: 650px;">
             <span style="display: flex; flex: 1;"></span>
             <group-selector .groupDnaHashB64=${this.groupDnaHash ? encodeHashToBase64(this.groupDnaHash) : undefined}
               @group-selected=${(e) => {
-                this.groupDnaHash = decodeHashFromBase64(e.detail);
-              }}
+        this.groupDnaHash = decodeHashFromBase64(e.detail);
+      }}
             ></group-selector>
           </div>
           ${this.renderCreatables()}
-          ${
-            this._showCreatableView
-              ? html`
+          ${this._showCreatableView
+        ? html`
                   <sl-dialog
                     id="creatable-view-dialog"
                     style="${this.creatableWidth(this._showCreatableView.creatable.width)}"
                     label="${msg('Create New')} ${this._showCreatableView.creatable.label}"
                     @sl-hide=${() => {
-                      this._showCreatableView = undefined;
-                    }}
+            this._showCreatableView = undefined;
+          }}
                   >
                     <creatable-view
                       style="${this.creatableHeight(this._showCreatableView.creatable.height)}"
                       .creatableInfo=${this._showCreatableView}
+                      .groupHash=${this._showCreatableView.groupHash}
                       .dialogId=${this._activeDialogId}
                       @creatable-response-received=${(e) => this.handleCreatableResponse(e)}
                     ></creatable-view>
                   </sl-dialog>
                 `
-              : html``
-          }
-          ${
-            this._showCreatablesSelection
-              ? html`
+        : html``
+      }
+          ${this._showCreatablesSelection
+        ? html`
                   <sl-dialog
                     id="creatable-selection-dialog"
                     label="${msg('What do you want to create?')}"
                     @sl-hide=${() => {
-                      this._showCreatablesSelection = undefined;
-                    }}
+            this._showCreatablesSelection = undefined;
+          }}
                   >
                     <div class="row" style="justify-content: flex-end; margin-top: -20px;">
                       <applet-title
@@ -237,9 +239,9 @@ export class CreatablePalette extends LitElement {
                     </div>
                   </sl-dialog>
                 `
-              : html``
-          }
-      </sl-dialog>
+        : html``
+      }
+      </moss-dialog>
     `;
   }
 

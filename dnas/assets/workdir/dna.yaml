@@ -1,14 +1,14 @@
-manifest_version: '1'
+manifest_version: '0'
 name: assets
 integrity:
   network_seed: null
   properties: null
   zomes:
     - name: assets_integrity
-      bundled: '../../../target/wasm32-unknown-unknown/release/assets_integrity.wasm'
+      path: '../../../target/wasm32-unknown-unknown/release/assets_integrity.wasm'
 coordinator:
   zomes:
     - name: assets
-      bundled: '../../../target/wasm32-unknown-unknown/release/assets.wasm'
+      path: '../../../target/wasm32-unknown-unknown/release/assets.wasm'
       dependencies:
         - name: assets_integrity

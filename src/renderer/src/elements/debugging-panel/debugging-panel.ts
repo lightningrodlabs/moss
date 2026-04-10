@@ -2,15 +2,20 @@ import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { localized, msg } from '@lit/localize';
+import {localized, msg} from '@lit/localize';
 import {
   AppClient,
   CellId,
+  decodeHashFromBase64,
   DnaHash,
   DnaHashB64,
+  DnaStorageInfo,
   DumpNetworkMetricsResponse,
+  DumpNetworkStatsResponse,
   encodeHashToBase64,
   EntryHash,
+  hashFrom32AndType,
+  HoloHashType,
   InstalledAppId,
   TransportStats,
 } from '@holochain/client';
@@ -28,16 +33,221 @@ import '../reusable/groups-for-applet.js';
 import './state-dump.js';
 import './cell-details.js';
 import './app-debugging-details.js';
+import './memory-chart.js';
 
 import { mossStoreContext } from '../../context.js';
 import { MossStore, ZomeCallCounts } from '../../moss-store.js';
 import { mossStyles } from '../../shared-styles.js';
 import { AppletStore } from '../../applets/applet-store.js';
 import { AppletId } from '@theweave/api';
-import { getCellId, getCellName, groupModifiersToAppId } from '../../utils.js';
+import { getCellName, groupModifiersToAppId, safeSetInterval, SafeIntervalHandle } from '../../utils.js';
 import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug } from '@mdi/js';
-import { appIdFromAppletHash } from '@theweave/utils';
+import { appIdFromAppletHash, getCellId } from '@theweave/utils';
+import {fromUint8Array, toUint8Array} from "js-base64";
+
+
+/** Call bootstrap server and get the list of known peers */
+export async function getBootstrapPeers(bootstrapUrl: string, dnaB64: DnaHashB64): Promise<any> {
+  const bootstrap = bootstrapUrl.replace(/\/$/, '');
+  /* Convert dnaHash to K2 space hash */
+  console.log(`getBootstrapPeers() calling ${bootstrap} for dna`, dnaB64);
+  const trimmed = dnaB64.substring(1);
+  const rawBytes = toUint8Array(trimmed);
+  const slicedBytes = rawBytes.slice(3, 35);
+  const k2 = fromUint8Array(slicedBytes, true); // 'true' enables URL-safe mode
+  //console.log(`getBootstrapPeers() k2`, k2);
+  /* Query the boostrap server */
+  const response = await fetch(bootstrap + "/bootstrap/" + k2);
+  console.log(`getBootstrapPeers() response`, response);
+  if (!response.ok) {
+    return Promise.reject(`HTTP error during getBootstrapPeers(): ${response.status}`);
+  }
+  return response.json();
+}
+
+
+async function pingServer(url: string, timeoutMs = 5000): Promise<{
+  online: boolean;
+  latencyMs?: number;
+  status?: number;
+}> {
+  console.log('pinging server', url);
+  const start = Date.now();
+  try {
+    const response = await fetch(url, {
+      method: 'HEAD',
+      mode: 'no-cors', // Won't throw on CORS, but response is opaque
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    console.log('pinging server response', response);
+
+    return {
+      online: true,
+      latencyMs: Date.now() - start,
+      status: response.status,
+    };
+  } catch (error) {
+    console.log('pinging server error', error);
+    return { online: false };
+  }
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+}
+
+// Lookback window options for memory charts
+type LookbackWindow = 2 | 10 | 30 | 60 | 'all';
+
+// Rolling points per tier
+const HIGH_RES_POINTS = 300;  // 300 × 2s  = 10 min
+const MED_RES_POINTS  =  60;  //  60 × 60s  =  1 h
+const LOW_RES_POINTS  = 144;  // 144 × 600s = 24 h
+
+interface ChartWindow {
+  data: number[];
+  intervalSecs: number;
+  maxPoints: number;
+  /** When true the chart fills the full width using data.length as maxPoints. */
+  fillWidth?: boolean;
+}
+
+/**
+ * Three-tier rolling history for memory metrics.
+ * High-res (2 s), medium-res (60 s), low-res (600 s).
+ * Call push() every 2 s; downsampling happens automatically.
+ */
+class TieredHistory {
+  readonly high: number[] = [];
+  readonly med: number[]  = [];
+  readonly low: number[]  = [];
+
+  private _highAccum: number[] = [];
+  private _medAccum: number[]  = [];
+
+  push(value: number): void {
+    this.high.push(value);
+    if (this.high.length > HIGH_RES_POINTS) this.high.shift();
+
+    this._highAccum.push(value);
+    if (this._highAccum.length >= 30) {
+      const avg = this._highAccum.reduce((a, b) => a + b, 0) / this._highAccum.length;
+      this._highAccum = [];
+      this.med.push(avg);
+      if (this.med.length > MED_RES_POINTS) this.med.shift();
+
+      this._medAccum.push(avg);
+      if (this._medAccum.length >= 10) {
+        const avg2 = this._medAccum.reduce((a, b) => a + b, 0) / this._medAccum.length;
+        this._medAccum = [];
+        this.low.push(avg2);
+        if (this.low.length > LOW_RES_POINTS) this.low.shift();
+      }
+    }
+  }
+
+  forWindow(w: LookbackWindow): ChartWindow {
+    switch (w) {
+      case 2:     return { data: this.high.slice(-60),  intervalSecs: 2,   maxPoints: 60  };
+      case 10:    return { data: [...this.high],         intervalSecs: 2,   maxPoints: 300 };
+      case 30:    return { data: this.med.slice(-30),    intervalSecs: 60,  maxPoints: 30  };
+      case 60:    return { data: [...this.med],          intervalSecs: 60,  maxPoints: 60  };
+      case 'all': {
+        // Stitch tiers together: low (oldest) → med → high (newest).
+        // Each tier covers a time range not yet downsampled into the next,
+        // so concatenation gives a continuous timeline at mixed resolution.
+        const data = [...this.low, ...this.med, ...this.high];
+        // Weighted average interval: approximate since tiers have different rates,
+        // but for the X-axis label we just need total elapsed seconds.
+        const totalSecs =
+          this.low.length * 600 + this.med.length * 60 + this.high.length * 2;
+        const avgInterval = data.length > 0 ? totalSecs / data.length : 2;
+        return { data, intervalSecs: avgInterval, maxPoints: Math.max(data.length, 2), fillWidth: true };
+      }
+    }
+  }
+
+  get hasData(): boolean {
+    return this.high.length > 1;
+  }
+
+  clear(): void {
+    this.high.length = 0;
+    this.med.length  = 0;
+    this.low.length  = 0;
+    this._highAccum  = [];
+    this._medAccum   = [];
+  }
+}
+
+const transformMetrics = (metrics: DumpNetworkMetricsResponse) => {
+  if (!metrics) {
+    return {};
+  }
+
+  let out = {} as Record<DnaHashB64, object>;
+  for (const [key, value] of Object.entries(metrics)) {
+    const peerMetaList: any = [];
+    for (const [peerUrl, peerMeta] of Object.entries(value.gossip_state_summary.peer_meta)) {
+      const pm: any = peerMeta;
+      pm.last_gossip_timestamp = peerMeta.last_gossip_timestamp
+        ? new Date(peerMeta.last_gossip_timestamp / 1000)
+        : undefined;
+      pm.storage_arc = pm.storage ? `${pm.storage_arc[0]}..${pm.storage_arc[1]}` : null;
+      peerMetaList.push({
+        peer_url: peerUrl,
+        meta: pm,
+      });
+    }
+    peerMetaList.sort((a, b) => a.peer_url.localeCompare(b.peer_url));
+    const dht_summary: any = value.gossip_state_summary.dht_summary;
+    // Convert hash arrays to base64 strings for all DHT segments
+    for (const segmentKey of Object.keys(dht_summary)) {
+      const segment = dht_summary[segmentKey];
+      if (segment) {
+        // Convert disc_top_hash to base64
+        if (segment.disc_top_hash) {
+          segment.disc_top_hash =
+            typeof segment.disc_top_hash === 'string'
+              ? segment.disc_top_hash
+              : segment.disc_top_hash.length > 0
+                ? encodeHashToBase64(segment.disc_top_hash)
+                : '';
+        }
+        // Convert ring_top_hashes array to base64
+        if (segment.ring_top_hashes) {
+          segment.ring_top_hashes = segment.ring_top_hashes.map(
+            (h: Uint8Array | string) =>
+              typeof h === 'string' ? h : h.length > 0 ? encodeHashToBase64(h) : '',
+          );
+        }
+      }
+    }
+
+    out[key] = {
+      fetch_state_summary: value.fetch_state_summary,
+      gossip_state_summary: {
+        initiated_round: value.gossip_state_summary.initiated_round,
+        accepted_rounds: value.gossip_state_summary.accepted_rounds,
+        dht_summary,
+        peer_meta: peerMetaList,
+      },
+      local_agents: value.local_agents.map((a) => {
+        return {
+          agent: encodeHashToBase64(a.agent),
+          storage_arc: a.storage_arc ? `${a.storage_arc[0]}..${a.storage_arc[1]}` : null,
+          target_arc: a.target_arc ? `${a.target_arc[0]}..${a.target_arc[1]}` : null,
+        };
+      }),
+    };
+  }
+
+  return out;
+};
 
 @localized()
 @customElement('debugging-panel')
@@ -58,7 +268,7 @@ export class DebuggingPanel extends LitElement {
   );
 
   @state()
-  _refreshInterval: number | undefined;
+  _refreshInterval: SafeIntervalHandle | undefined;
 
   @state()
   _appletsWithDetails: AppletId[] = [];
@@ -78,12 +288,97 @@ export class DebuggingPanel extends LitElement {
   @state()
   _networkStats: Record<InstalledAppId, [TransportStats, DumpNetworkMetricsResponse]> = {};
 
+  @state()
+  _adminNetworkStats: DumpNetworkStatsResponse | null = null;
+
+  @state()
+  _appsWithMetricsExpanded: InstalledAppId[] = [];
+
+  /**
+   * Map of transport pub_key to AgentPubKey (base64) for each app.
+   * Built from agentInfo which provides both the kitsune agent ID and peer URL.
+   */
+  @state()
+  _transportToAgentMap: Record<InstalledAppId, Map<string, string>> = {};
+
+  // Memory monitoring state
+  @state()
+  _memoryPolling = false;
+
+  @state()
+  _memoryPollInterval: SafeIntervalHandle | undefined;
+
+  @state()
+  _rendererMemory: { residentSetKB: number; privateKB: number; sharedKB: number } | null = null;
+
+  @state()
+  _mainProcessMemory: { rss: number; heapTotal: number; heapUsed: number; external: number; arrayBuffers: number } | null = null;
+
+  @state()
+  _storagePolling = false;
+
+  @state()
+  _storagePollInterval: SafeIntervalHandle | undefined;
+
+  @state()
+  _storageByAppId: Record<InstalledAppId, (DnaStorageInfo & { dnaName?: string })[]> = {};
+
+  // Lookback window for all memory charts.
+  @state()
+  _lookback: LookbackWindow = 10;
+
+  // Tiered history for memory metrics (non-reactive; re-render triggered by ticks below).
+  private _rendererRss     = new TieredHistory();
+  private _rendererPrivate = new TieredHistory();
+  private _rendererShared  = new TieredHistory();
+  private _mainRss         = new TieredHistory();
+  private _mainHeap        = new TieredHistory();
+  private _mainExternal    = new TieredHistory();
+  private _mainArrayBufs   = new TieredHistory();
+  private _conductorRss    = new TieredHistory();
+  private _conductorVmSize = new TieredHistory();
+
+  // Bumped after each memory poll to trigger Lit re-render.
+  @state()
+  private _memoryTick = 0;
+
+  @state()
+  private _conductorMemoryTick = 0;
+
+  @state()
+  _storageHistory: Record<InstalledAppId, number[]> = {};
+
+  // Conductor (Holochain subprocess) memory monitoring - independent toggle
+  @state()
+  _conductorMemoryPolling = false;
+
+  @state()
+  _conductorMemoryPollInterval: SafeIntervalHandle | undefined;
+
+  @state()
+  _conductorMemory: { rssBytes: number; vmSizeBytes: number; pid: number } | null = null;
+
+  @state()
+  _conductorRssHistory: number[] = [];
+
+  @state()
+  _conductorVmSizeHistory: number[] = [];
+
+  // Cache: DnaHashB64 -> cell/role name (resolved from appInfo)
+  private _dnaNameCache: Record<DnaHashB64, string> = {};
+
   async firstUpdated() {
-    // TODO add interval here to reload stuff
-    this._refreshInterval = window.setInterval(() => {
-      this.requestUpdate();
-      setTimeout(() => this.pollNetworkStats());
-    }, 2000);
+    // Poll network stats periodically
+    // Uses safeSetInterval to prevent call stacking if polling is slow
+    this._refreshInterval = safeSetInterval({
+      name: 'pollNetworkStats',
+      fn: async () => {
+        await this.pollNetworkStats();
+        this.requestUpdate();
+      },
+      intervalMs: 2000,
+      runImmediately: false,
+    });
     // populate group app ids
     const groupDnaHashes = await toPromise(this._mossStore.groupsDnaHashes);
     await Promise.all(
@@ -99,9 +394,417 @@ export class DebuggingPanel extends LitElement {
 
   disconnectedCallback(): void {
     if (this._refreshInterval) {
-      window.clearInterval(this._refreshInterval);
+      this._refreshInterval.cancel();
       this._refreshInterval = undefined;
     }
+    if (this._memoryPollInterval) {
+      this._memoryPollInterval.cancel();
+      this._memoryPollInterval = undefined;
+    }
+    if (this._storagePollInterval) {
+      this._storagePollInterval.cancel();
+      this._storagePollInterval = undefined;
+    }
+    if (this._conductorMemoryPollInterval) {
+      this._conductorMemoryPollInterval.cancel();
+      this._conductorMemoryPollInterval = undefined;
+    }
+  }
+
+  async pollMemory() {
+    try {
+      this._rendererMemory = await window.electronAPI.getRendererProcessMemory();
+      this._rendererRss.push(this._rendererMemory.residentSetKB * 1024);
+      this._rendererPrivate.push(this._rendererMemory.privateKB * 1024);
+      this._rendererShared.push(this._rendererMemory.sharedKB * 1024);
+    } catch (e) {
+      console.error('Failed to get renderer process memory:', e);
+    }
+    try {
+      this._mainProcessMemory = await window.electronAPI.getMainProcessMemory();
+      this._mainRss.push(this._mainProcessMemory.rss);
+      this._mainHeap.push(this._mainProcessMemory.heapUsed);
+      this._mainExternal.push(this._mainProcessMemory.external);
+      this._mainArrayBufs.push(this._mainProcessMemory.arrayBuffers);
+    } catch (e) {
+      console.error('Failed to get main process memory:', e);
+    }
+    this._memoryTick++;
+  }
+
+  async pollConductorMemory() {
+    try {
+      const mem = await window.electronAPI.getConductorProcessMemory();
+      if (mem) {
+        this._conductorMemory = mem;
+        this._conductorRss.push(mem.rssBytes);
+        this._conductorVmSize.push(mem.vmSizeBytes);
+      }
+    } catch (e) {
+      console.error('Failed to get conductor process memory:', e);
+    }
+    this._conductorMemoryTick++;
+  }
+
+  toggleConductorMemoryPolling() {
+    if (this._conductorMemoryPolling) {
+      this._conductorMemoryPollInterval?.cancel();
+      this._conductorMemoryPollInterval = undefined;
+      this._conductorMemoryPolling = false;
+      this._conductorRss.clear();
+      this._conductorVmSize.clear();
+      this._conductorMemory = null;
+    } else {
+      this._conductorMemoryPolling = true;
+      this._conductorMemoryPollInterval = safeSetInterval({
+        name: 'pollConductorMemory',
+        fn: async () => {
+          await this.pollConductorMemory();
+        },
+        intervalMs: 2000,
+        runImmediately: true,
+      });
+    }
+  }
+
+  toggleMemoryPolling() {
+    if (this._memoryPolling) {
+      this._memoryPollInterval?.cancel();
+      this._memoryPollInterval = undefined;
+      this._memoryPolling = false;
+      this._rendererRss.clear();
+      this._rendererPrivate.clear();
+      this._rendererShared.clear();
+      this._mainRss.clear();
+      this._mainHeap.clear();
+      this._mainExternal.clear();
+      this._mainArrayBufs.clear();
+    } else {
+      this._memoryPolling = true;
+      this._memoryPollInterval = safeSetInterval({
+        name: 'pollMemory',
+        fn: async () => {
+          await this.pollMemory();
+        },
+        intervalMs: 2000,
+        runImmediately: true,
+      });
+    }
+  }
+
+  private async resolveDnaNames(appIds: InstalledAppId[]) {
+    for (const appId of appIds) {
+      try {
+        const [appClient] = await this._mossStore.getAppClient(appId);
+        const appInfo = await appClient.appInfo();
+        if (!appInfo) continue;
+        const cellInfos = Object.values(appInfo.cell_info).flat();
+        for (const cellInfo of cellInfos) {
+          const cellName = getCellName(cellInfo);
+          const cellId = getCellId(cellInfo);
+          if (cellName && cellId) {
+            this._dnaNameCache[encodeHashToBase64(cellId[0])] = cellName;
+          }
+        }
+      } catch (_e) {
+        // App may not be running
+      }
+    }
+  }
+
+  async pollStorageInfo() {
+    try {
+      const storageInfo = await this._mossStore.adminWebsocket.storageInfo();
+      const byAppId: Record<InstalledAppId, (DnaStorageInfo & { dnaName?: string })[]> = {};
+      // Collect appIds that need name resolution
+      const unresolvedAppIds: InstalledAppId[] = [];
+      for (const blob of storageInfo.blobs) {
+        for (const appId of blob.value.used_by) {
+          if (!byAppId[appId]) byAppId[appId] = [];
+          // dna_hash exists in the Holochain response but is missing from the TS type
+          const dnaHash = (blob.value as DnaStorageInfo & { dna_hash?: Uint8Array }).dna_hash;
+          const dnaHashB64 = dnaHash ? encodeHashToBase64(dnaHash) : undefined;
+          const dnaName = dnaHashB64 ? this._dnaNameCache[dnaHashB64] : undefined;
+          if (dnaHashB64 && !dnaName && !unresolvedAppIds.includes(appId)) {
+            unresolvedAppIds.push(appId);
+          }
+          byAppId[appId].push({ ...blob.value, dnaName });
+        }
+      }
+      // Resolve any missing DNA names, then re-apply
+      if (unresolvedAppIds.length > 0) {
+        await this.resolveDnaNames(unresolvedAppIds);
+        for (const dnas of Object.values(byAppId)) {
+          for (const dna of dnas) {
+            if (!dna.dnaName) {
+              const hash = (dna as DnaStorageInfo & { dna_hash?: Uint8Array }).dna_hash;
+              if (hash) {
+                dna.dnaName = this._dnaNameCache[encodeHashToBase64(hash)];
+              }
+            }
+          }
+        }
+      }
+      this._storageByAppId = byAppId;
+
+      // Accumulate per-app total storage history
+      const newHistory = { ...this._storageHistory };
+      for (const [appId, dnas] of Object.entries(byAppId)) {
+        const total = dnas.reduce(
+          (sum, d) => sum + d.authored_data_size + d.dht_data_size + d.cache_data_size,
+          0,
+        );
+        if (!newHistory[appId]) newHistory[appId] = [];
+        newHistory[appId] = [...newHistory[appId].slice(-59), total];
+      }
+      this._storageHistory = newHistory;
+    } catch (e) {
+      console.error('Failed to fetch storage info:', e);
+    }
+  }
+
+  toggleStoragePolling() {
+    if (this._storagePolling && this._storagePollInterval) {
+      this._storagePollInterval.cancel();
+      this._storagePollInterval = undefined;
+      this._storagePolling = false;
+      this._storageByAppId = {};
+      this._storageHistory = {};
+      this._dnaNameCache = {};
+    } else {
+      this._storagePolling = true;
+      this.pollStorageInfo();
+      this._storagePollInterval = safeSetInterval({
+        name: 'pollStorageInfo',
+        fn: () => this.pollStorageInfo(),
+        intervalMs: 5000,
+      });
+    }
+  }
+
+  renderStorageForApp(appId: InstalledAppId) {
+    const dnas = this._storageByAppId[appId];
+    if (!dnas || dnas.length === 0) return html``;
+    const historyData = this._storageHistory[appId] || [];
+    return html`
+      <div style="margin-left: 60px; margin-bottom: 4px; font-size: 12px; color: #555;">
+        ${dnas.map((dna) => html`
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            ${dna.dnaName ? html`<span style="font-weight: bold; min-width: 80px;">${dna.dnaName}</span>` : html``}
+            <span>Authored: ${formatBytes(dna.authored_data_size)} (disk: ${formatBytes(dna.authored_data_size_on_disk)})</span>
+            <span>DHT: ${formatBytes(dna.dht_data_size)} (disk: ${formatBytes(dna.dht_data_size_on_disk)})</span>
+            <span>Cache: ${formatBytes(dna.cache_data_size)} (disk: ${formatBytes(dna.cache_data_size_on_disk)})</span>
+          </div>
+        `)}
+        ${historyData.length > 1 ? html`
+          <memory-chart
+            title="Total Storage"
+            .series=${[{ label: 'Total', color: '#9C27B0', data: historyData }]}
+            .height=${100}
+            .width=${300}
+            style="margin-top: 4px;"
+          ></memory-chart>
+        ` : html``}
+      </div>
+    `;
+  }
+
+  renderLookbackSelector() {
+    const options: [LookbackWindow, string][] = [[2, '2m'], [10, '10m'], [30, '30m'], [60, '1h'], ['all', 'all']];
+    return html`
+      <div class="row" style="gap: 4px; margin-left: 12px;">
+        ${options.map(([w, label]) => html`
+          <sl-button
+            size="small"
+            variant=${this._lookback === w ? 'primary' : 'default'}
+            @click=${() => { this._lookback = w; }}
+          >${label}</sl-button>
+        `)}
+      </div>
+    `;
+  }
+
+  renderMemorySection() {
+    return html`
+      <div class="column" style="margin-top: 10px; margin-bottom: 20px;">
+        <div class="row items-center" style="margin-bottom: 10px; gap: 8px;">
+          <h3 style="margin: 0;">Memory: Moss UI</h3>
+          <sl-button
+            size="small"
+            style="margin-left: 12px;"
+            @click=${() => this.toggleMemoryPolling()}
+          >${this._memoryPolling ? 'Stop Polling' : 'Start Polling'}</sl-button>
+        </div>
+
+        ${this._rendererMemory ? html`
+          <div style="margin-bottom: 8px;">
+            <b>Renderer Process</b>
+            <div>RSS: ${formatBytes(this._rendererMemory.residentSetKB * 1024)}</div>
+            <div>Private: ${formatBytes(this._rendererMemory.privateKB * 1024)}</div>
+            <div>Shared: ${formatBytes(this._rendererMemory.sharedKB * 1024)}</div>
+          </div>
+        ` : html``}
+
+        ${this._mainProcessMemory ? html`
+          <div style="margin-bottom: 8px;">
+            <b>Main Process</b>
+            <div>RSS: ${formatBytes(this._mainProcessMemory.rss)}</div>
+            <div>Heap: ${formatBytes(this._mainProcessMemory.heapUsed)} / ${formatBytes(this._mainProcessMemory.heapTotal)}</div>
+            <div>External: ${formatBytes(this._mainProcessMemory.external)}</div>
+            <div>ArrayBuffers: ${formatBytes(this._mainProcessMemory.arrayBuffers)}</div>
+          </div>
+        ` : html``}
+
+        ${this._memoryPolling ? this.renderLookbackSelector() : html``}
+
+        ${this._rendererRss.hasData || this._mainRss.hasData ? html`${(() => {
+          const rssWin      = this._rendererRss.forWindow(this._lookback);
+          const mainRssWin  = this._mainRss.forWindow(this._lookback);
+          const heapWin     = this._mainHeap.forWindow(this._lookback);
+          const extWin      = this._mainExternal.forWindow(this._lookback);
+          const abWin       = this._mainArrayBufs.forWindow(this._lookback);
+          const privWin     = this._rendererPrivate.forWindow(this._lookback);
+          const sharedWin   = this._rendererShared.forWindow(this._lookback);
+          const fw = !!rssWin.fillWidth;
+          return html`
+            <memory-chart
+              title="RSS Comparison"
+              .series=${[
+                { label: 'Renderer', color: '#2196F3', data: rssWin.data },
+                { label: 'Main', color: '#FF9800', data: mainRssWin.data },
+              ]}
+              .maxPoints=${rssWin.maxPoints}
+              .intervalSecs=${rssWin.intervalSecs}
+              .fillWidth=${fw}
+            ></memory-chart>
+            <memory-chart
+              title="Main Process Breakdown"
+              .series=${[
+                { label: 'Heap', color: '#4CAF50', data: heapWin.data },
+                { label: 'External', color: '#FF5722', data: extWin.data },
+                { label: 'ArrayBuf', color: '#9C27B0', data: abWin.data },
+              ]}
+              .maxPoints=${heapWin.maxPoints}
+              .intervalSecs=${heapWin.intervalSecs}
+              .fillWidth=${fw}
+              style="margin-top: 8px;"
+            ></memory-chart>
+            <memory-chart
+              title="Renderer Breakdown"
+              .series=${[
+                { label: 'Private', color: '#E91E63', data: privWin.data },
+                { label: 'Shared', color: '#00BCD4', data: sharedWin.data },
+              ]}
+              .maxPoints=${privWin.maxPoints}
+              .intervalSecs=${privWin.intervalSecs}
+              .fillWidth=${fw}
+              style="margin-top: 8px;"
+            ></memory-chart>
+          `;
+        })()} ` : html``}
+
+        ${!this._memoryPolling && !this._rendererMemory ? html`
+          <div style="color: #666;">Click "Start Polling" to begin memory monitoring.</div>
+        ` : html``}
+      </div>
+    `;
+  }
+
+  renderConductorMemorySection() {
+    return html`
+      <div class="column" style="margin-top: 10px; margin-bottom: 20px;">
+        <div class="row items-center" style="margin-bottom: 10px; gap: 8px;">
+          <h3 style="margin: 0;">Memory: Holochain Conductor</h3>
+          <sl-button
+            size="small"
+            style="margin-left: 12px;"
+            @click=${() => this.toggleConductorMemoryPolling()}
+          >${this._conductorMemoryPolling ? 'Stop Polling' : 'Start Polling'}</sl-button>
+        </div>
+
+        ${this._conductorMemory ? html`
+          <div style="margin-bottom: 8px;">
+            <div>PID: ${this._conductorMemory.pid}</div>
+            <div>RSS: ${formatBytes(this._conductorMemory.rssBytes)}</div>
+            <div>Virtual: ${formatBytes(this._conductorMemory.vmSizeBytes)}</div>
+          </div>
+        ` : html``}
+
+        ${this._conductorMemoryPolling ? this.renderLookbackSelector() : html``}
+
+        ${this._conductorRss.hasData ? html`${(() => {
+          const rssWin = this._conductorRss.forWindow(this._lookback);
+          const vmWin  = this._conductorVmSize.forWindow(this._lookback);
+          const fw = !!rssWin.fillWidth;
+          return html`
+            <memory-chart
+              title="Conductor RSS"
+              .series=${[{ label: 'RSS', color: '#F44336', data: rssWin.data }]}
+              .maxPoints=${rssWin.maxPoints}
+              .intervalSecs=${rssWin.intervalSecs}
+              .fillWidth=${fw}
+            ></memory-chart>
+            <memory-chart
+              title="Conductor Virtual"
+              .series=${[{ label: 'Virtual', color: '#FF9800', data: vmWin.data }]}
+              .maxPoints=${vmWin.maxPoints}
+              .intervalSecs=${vmWin.intervalSecs}
+              .fillWidth=${fw}
+              style="margin-top: 8px;"
+            ></memory-chart>
+          `;
+        })()} ` : html``}
+
+        ${!this._conductorMemoryPolling && !this._conductorMemory ? html`
+          <div style="color: #666;">Click "Start Polling" to monitor the Holochain conductor subprocess memory (Linux only).</div>
+        ` : html``}
+      </div>
+    `;
+  }
+
+  getZomeCallSummary(): { totalCalls: number; avgCallsPerMin: number; firstCall: number } | null {
+    const logs = this._mossStore.zomeCallLogs;
+    const appIds = Object.keys(logs);
+    if (appIds.length === 0) return null;
+
+    let totalCalls = 0;
+    let earliestFirstCall = Infinity;
+
+    for (const appId of appIds) {
+      const entry = logs[appId];
+      totalCalls += entry.totalCounts;
+      if (entry.firstCall < earliestFirstCall) {
+        earliestFirstCall = entry.firstCall;
+      }
+    }
+
+    const elapsedMin = (Date.now() - earliestFirstCall) / (1000 * 60);
+    const avgCallsPerMin = elapsedMin > 0 ? Math.round(totalCalls / elapsedMin) : 0;
+
+    return { totalCalls, avgCallsPerMin, firstCall: earliestFirstCall };
+  }
+
+  renderZomeCallSummary() {
+    const summary = this.getZomeCallSummary();
+    if (!summary) return html``;
+
+    const elapsedMin = (Date.now() - summary.firstCall) / (1000 * 60);
+    const elapsedStr = elapsedMin < 1
+      ? `${Math.round(elapsedMin * 60)}s`
+      : elapsedMin < 60
+        ? `${Math.round(elapsedMin)}m`
+        : `${Math.floor(elapsedMin / 60)}h ${Math.round(elapsedMin % 60)}m`;
+
+    return html`
+      <div style="margin-bottom: 12px; padding: 8px; background: #9fb0ff; border: 2px solid #03004c; border-radius: 4px;">
+        <b>Zome Call Summary</b> (tracking for ${elapsedStr})
+        <div style="margin-top: 4px;">
+          Total calls: <b>${summary.totalCalls}</b>
+          &nbsp;&bull;&nbsp;
+          Avg: <b>${summary.avgCallsPerMin}</b> calls/min
+        </div>
+      </div>
+    `;
   }
 
   async getCellIds(appClient: AppClient): Promise<CellId[]> {
@@ -169,7 +872,165 @@ export class DebuggingPanel extends LitElement {
     }
   }
 
+  toggleMetricsExpanded(appId: InstalledAppId) {
+    if (this._appsWithMetricsExpanded.includes(appId)) {
+      this._appsWithMetricsExpanded = this._appsWithMetricsExpanded.filter((id) => id !== appId);
+    } else {
+      this._appsWithMetricsExpanded = [...this._appsWithMetricsExpanded, appId];
+    }
+  }
+
+  /**
+   * Decode URL-safe base64 string to Uint8Array.
+   * URL-safe base64 uses - and _ instead of + and /.
+   */
+  decodeUrlSafeBase64(urlSafeBase64: string): Uint8Array {
+    // Convert URL-safe base64 to standard base64
+    let standardBase64 = urlSafeBase64.replace(/-/g, '+').replace(/_/g, '/');
+    // Add padding if necessary
+    while (standardBase64.length % 4 !== 0) {
+      standardBase64 += '=';
+    }
+    // Decode base64 to bytes
+    const binaryString = atob(standardBase64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
+  }
+
+  /**
+   * Convert a Kitsune SpaceId (base64-encoded 32-byte hash) to a DNA hash.
+   * The SpaceId is the core 32 bytes of the DNA hash without the type prefix and DHT location.
+   * SpaceId uses URL-safe base64 encoding (with - and _ instead of + and /).
+   */
+  spaceIdToDnaHash(spaceId: string): DnaHash {
+    const bytes = this.decodeUrlSafeBase64(spaceId);
+    // Convert the 32-byte core to a full DNA hash (adds type prefix and DHT location)
+    return hashFrom32AndType(bytes, HoloHashType.Dna);
+  }
+
+  /**
+   * Convert a Kitsune pub_key (URL-safe base64-encoded 32-byte core) to a full AgentPubKey.
+   * Uses hashFrom32AndType to properly construct the full 39-byte hash.
+   */
+  kitsuneAgentIdToAgentPubKey(kitsuneAgentId: string): Uint8Array {
+    const bytes = this.decodeUrlSafeBase64(kitsuneAgentId);
+    // Convert the 32-byte core to a full agent pub key (adds type prefix and DHT location)
+    return hashFrom32AndType(bytes, HoloHashType.Agent);
+  }
+
+  /**
+   * Extract the transport pub_key from a peer URL.
+   * Peer URLs typically have format: wss://host/tx5-ws/sig/<transport_pub_key>
+   * The transport pub_key is the last path segment.
+   */
+  extractTransportKeyFromUrl(peerUrl: string): string | null {
+    try {
+      const urlObj = new URL(peerUrl);
+      const pathParts = urlObj.pathname.split('/').filter((p) => p.length > 0);
+      // The transport key is the last segment after /tx5-ws/sig/ or similar
+      if (pathParts.length > 0) {
+        const lastPart = pathParts[pathParts.length - 1];
+        // Transport keys are typically 40+ characters in URL-safe base64
+        if (lastPart.length >= 40) {
+          return lastPart;
+        }
+      }
+    } catch {
+      // If URL parsing fails, try direct string splitting
+      const parts = peerUrl.split('/');
+      const lastPart = parts[parts.length - 1];
+      if (lastPart && lastPart.length >= 40) {
+        return lastPart;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Build a mapping from transport pub_key to AgentPubKey by fetching agentInfo.
+   * AgentInfo returns both the kitsune agent ID and the peer URL, allowing us to
+   * map the transport key (from URL) to the actual AgentPubKey.
+   */
+  async buildTransportToAgentMap(appId: InstalledAppId, networkMetrics: DumpNetworkMetricsResponse): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    try {
+      const client = await this._mossStore.getAppClient(appId);
+      const appClient = client[0];
+
+      const dnaHashes = Object.keys(networkMetrics).map((b64) => decodeHashFromBase64(b64));
+
+      if (dnaHashes.length === 0) return map;
+
+      // Fetch agentInfo for these DNAs
+      const agentInfoResponse = await appClient.agentInfo({ dna_hashes: dnaHashes });
+
+      for (const agentInfoItem of agentInfoResponse) {
+        try {
+          // Parse the structure: { agentInfo: "{...json...}", signature: "..." }
+          const parsed =
+            typeof agentInfoItem === 'string' ? JSON.parse(agentInfoItem) : agentInfoItem;
+          const agentInfoData =
+            typeof parsed.agentInfo === 'string' ? JSON.parse(parsed.agentInfo) : parsed.agentInfo;
+
+          const partialAgentId = agentInfoData.agent;
+          const peerUrl = agentInfoData.url;
+
+          if (!partialAgentId || !peerUrl) continue;
+
+          // Extract transport key from the peer URL
+          const transportKey = this.extractTransportKeyFromUrl(peerUrl);
+          if (!transportKey) continue;
+
+          // Convert partial agent ID to full AgentPubKey
+          const fullAgentKey = this.kitsuneAgentIdToAgentPubKey(partialAgentId);
+          const fullAgentKeyB64 = encodeHashToBase64(fullAgentKey);
+
+          map.set(transportKey, fullAgentKeyB64);
+        } catch (e) {
+          // Skip invalid entries
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to build transport to agent map:', e);
+    }
+    return map;
+  }
+
+  /**
+   * Format a DNA hash to show beginning and end (e.g., "uhC0k...xyz")
+   */
+  formatDnaHash(dnaHash: DnaHash): string {
+    const b64 = encodeHashToBase64(dnaHash);
+    if (b64.length <= 16) return b64;
+    return `${b64.slice(0, 8)}...${b64.slice(-6)}`;
+  }
+
   async pollNetworkStats() {
+    // Fetch admin stats (includes blocked message counts)
+    try {
+      this._adminNetworkStats = await this._mossStore.adminWebsocket.dumpNetworkStats();
+      // Send network stats to applets
+      if (this._adminNetworkStats) {
+          //console.debug('Fetched admin network stats:', this._adminNetworkStats);
+          const groupDnaHashes = await toPromise(this._mossStore.groupsDnaHashes);
+          await Promise.all(
+              groupDnaHashes.map(async (groupDnaHash) => {
+                  const groupStore = await this._mossStore.groupStore(groupDnaHash);
+                  if (!groupStore) return;
+                  //console.debug('Emitting network stats update for group:', groupDnaHash);
+                  await groupStore.emitToGroupApplets({
+                      type: 'network-stats-update',
+                      payload: this._adminNetworkStats!.transport_stats,
+                  });
+              })
+          );
+      }
+    } catch (e) {
+      console.error('Failed to fetch admin network stats:', e);
+    }
     await Promise.all(
       this._appsToPollNetworkStats.map(async (appId) => {
         const client = await this._mossStore.getAppClient(appId);
@@ -178,9 +1039,175 @@ export class DebuggingPanel extends LitElement {
           include_dht_summary: true,
         });
         this._networkStats[appId] = [networkStats, networkMetrics];
+
+        // Build transport to agent map from agentInfo
+        const transportMap = await this.buildTransportToAgentMap(appId, networkMetrics);
+        this._transportToAgentMap[appId] = transportMap;
       }),
     );
     this.requestUpdate();
+  }
+
+  renderBlockedStats(appId: InstalledAppId) {
+    if (!this._adminNetworkStats) return html``;
+    const blockedCounts = this._adminNetworkStats.blocked_message_counts;
+
+    // Get the app's network stats to filter by its DNA hashes and connections
+    const appStats = this._networkStats[appId];
+    if (!appStats) return html`<div class="stats-item"><em>No network stats available</em></div>`;
+
+    const [transportStats, networkMetrics] = appStats;
+
+    // Get the set of DNA hashes (as B64) for this app from network metrics keys
+    const appDnaHashesB64 = new Set(Object.keys(networkMetrics));
+
+    // Get the set of connected peer public keys
+    const connectedPubKeys = new Set(transportStats.connections.map((c) => c.pub_key));
+
+    // Build a map of SpaceId -> DnaHashB64 for quick lookup and filter to only app's DNAs
+    const spaceIdToDnaHashB64 = new Map<string, string>();
+    for (const peerUrl of Object.keys(blockedCounts)) {
+      for (const spaceId of Object.keys(blockedCounts[peerUrl])) {
+        if (!spaceIdToDnaHashB64.has(spaceId)) {
+          try {
+            const dnaHash = this.spaceIdToDnaHash(spaceId);
+            const dnaHashB64 = encodeHashToBase64(dnaHash);
+            // Only include if this DNA belongs to the current app
+            if (appDnaHashesB64.has(dnaHashB64)) {
+              spaceIdToDnaHashB64.set(spaceId, dnaHashB64);
+            }
+          } catch (e) {
+            console.warn('Failed to convert SpaceId to DnaHash:', spaceId, e);
+          }
+        }
+      }
+    }
+
+    // Extract pub_key from peer URL - typically the last path segment after /tx5-ws/ or similar
+    const extractPubKeyFromUrl = (url: string): string | null => {
+      try {
+        // Try to parse as URL and get the last path segment
+        const urlObj = new URL(url);
+        const pathParts = urlObj.pathname.split('/').filter((p) => p.length > 0);
+        // The pub_key is typically the last segment and is a base64-encoded key
+        if (pathParts.length > 0) {
+          const lastPart = pathParts[pathParts.length - 1];
+          // Pub keys are typically 52+ characters in base64
+          if (lastPart.length >= 40) {
+            return lastPart;
+          }
+        }
+      } catch {
+        // If URL parsing fails, try to extract from the string directly
+        const parts = url.split('/');
+        const lastPart = parts[parts.length - 1];
+        if (lastPart && lastPart.length >= 40) {
+          return lastPart;
+        }
+      }
+      return null;
+    };
+
+    // Filter blocked counts to only include relevant spaces and connected peers
+    const filteredPeerUrls: string[] = [];
+    let totalIncoming = 0;
+    let totalOutgoing = 0;
+
+    for (const peerUrl of Object.keys(blockedCounts)) {
+      const spaces = blockedCounts[peerUrl];
+      // Filter to only spaces that belong to this app
+      const relevantSpaces = Object.entries(spaces).filter(([spaceId]) =>
+        spaceIdToDnaHashB64.has(spaceId),
+      );
+
+      if (relevantSpaces.length > 0) {
+        // Extract pub_key from peer URL and check if it matches any connection
+        const peerPubKey = extractPubKeyFromUrl(peerUrl);
+        const isConnectedPeer = peerPubKey ? connectedPubKeys.has(peerPubKey) : false;
+
+        // Include peer if it's connected OR if we have no connections yet (still discovering)
+        if (isConnectedPeer || connectedPubKeys.size === 0) {
+          filteredPeerUrls.push(peerUrl);
+          for (const [, counts] of relevantSpaces) {
+            totalIncoming += counts.incoming;
+            totalOutgoing += counts.outgoing;
+          }
+        }
+      }
+    }
+
+    // Count total blocked peers and spaces for diagnostics
+    const totalBlockedPeers = Object.keys(blockedCounts).length;
+    const allSpaceIds = new Set<string>();
+    for (const peerUrl of Object.keys(blockedCounts)) {
+      for (const spaceId of Object.keys(blockedCounts[peerUrl])) {
+        allSpaceIds.add(spaceId);
+      }
+    }
+
+    if (filteredPeerUrls.length === 0) {
+      return html`<div class="stats-item">
+        <em>No blocked messages for this app</em>
+        <div style="font-size: 10px; color: #666; margin-top: 4px;">
+          (Global: ${totalBlockedPeers} peers, ${allSpaceIds.size} spaces |
+          App DNAs: ${appDnaHashesB64.size} |
+          Matched spaces: ${spaceIdToDnaHashB64.size} |
+          Connected peers: ${connectedPubKeys.size})
+        </div>
+      </div>`;
+    }
+
+    return html`
+      <div class="stats-item">
+        <div><b>Total blocked:</b> incoming: ${totalIncoming}, outgoing: ${totalOutgoing}</div>
+        <div><b>Blocked peers:</b> ${filteredPeerUrls.length}
+          <span style="font-size: 10px; color: #666;">
+            (of ${totalBlockedPeers} global, ${connectedPubKeys.size} connected)
+          </span>
+        </div>
+        ${filteredPeerUrls.map((peerUrl) => {
+          const spaces = blockedCounts[peerUrl];
+          // Filter to only relevant spaces for this app
+          const relevantSpaces = Object.entries(spaces).filter(([spaceId]) =>
+            spaceIdToDnaHashB64.has(spaceId),
+          );
+          // Look up agent key from transport pub_key in peer URL
+          const transportKey = extractPubKeyFromUrl(peerUrl);
+          const transportMap = this._transportToAgentMap[appId];
+          const agentKeyB64 = transportKey ? transportMap?.get(transportKey) : null;
+          const formattedAgentKey = agentKeyB64
+            ? agentKeyB64.length > 16
+              ? `${agentKeyB64.slice(0, 8)}...${agentKeyB64.slice(-6)}`
+              : agentKeyB64
+            : null;
+
+          return html`
+            <div style="margin-top: 8px; padding-left: 10px; border-left: 2px solid #666;">
+              <div style="font-size: 12px;">
+                <b>agent:</b>
+                ${formattedAgentKey
+                  ? html`<span title="${agentKeyB64}">${formattedAgentKey}</span>`
+                  : html`<span style="color: #999;">(no mapping)</span>`}
+              </div>
+              <div style="font-size: 11px; color: #666; word-break: break-all;">${peerUrl}</div>
+              ${relevantSpaces.map(([spaceId, counts]) => {
+                const dnaHashB64 = spaceIdToDnaHashB64.get(spaceId)!;
+                const formattedHash =
+                  dnaHashB64.length > 16
+                    ? `${dnaHashB64.slice(0, 8)}...${dnaHashB64.slice(-6)}`
+                    : dnaHashB64;
+                return html`
+                  <div style="padding-left: 10px; font-size: 11px;">
+                    <span style="color: #666;">DNA ${formattedHash}:</span>
+                    incoming: ${counts.incoming}, outgoing: ${counts.outgoing}
+                  </div>
+                `;
+              })}
+            </div>
+          `;
+        })}
+      </div>
+    `;
   }
 
   renderAppNetworkStats(appId: InstalledAppId) {
@@ -188,19 +1215,57 @@ export class DebuggingPanel extends LitElement {
     if (!stats) return html`No network stats polled (yet)`;
     const [networkStats, networkMetrics] = stats;
 
+    // Get local agent (deduplicated since it's the same across DNAs in Moss)
+    const localAgentSet = new Set<string>();
+    for (const metrics of Object.values(networkMetrics)) {
+      for (const a of metrics.local_agents) {
+        localAgentSet.add(encodeHashToBase64(a.agent));
+      }
+    }
+    const localAgent = Array.from(localAgentSet)[0]; // Should be just one in Moss
+    const formattedLocalAgent = localAgent
+      ? localAgent.length > 16
+        ? `${localAgent.slice(0, 8)}...${localAgent.slice(-6)}`
+        : localAgent
+      : 'unknown';
+
     return html`
       <div
         class="column"
         style="border: 1px solid black; border-radius: 10px; padding: 20px; background: #9cb0e1;"
       >
-        <h4>Peer Urls: ${networkStats.peer_urls.length}</h4>
-        ${networkStats.peer_urls.map((url) => html` <li>${url}</li> `)}
+        <div style="margin-bottom: 12px;">
+          <b>Local Agent:</b> <span title="${localAgent}">${formattedLocalAgent}</span>
+        </div>
+        <div style="margin-bottom: 12px;">
+          <b>Our Peer URL:</b>
+          <div style="font-size: 11px; margin-top: 4px;">${networkStats.peer_urls[0] || 'none'}</div>
+        </div>
+
         <h4>Connections: ${networkStats.connections.length}</h4>
-        ${networkStats.connections.map(
-          (connection) => html`
+        <div style="font-size: 10px; color: #666; margin-bottom: 8px;">
+          (Agent mappings from agentInfo: ${this._transportToAgentMap[appId]?.size || 0})
+        </div>
+        ${networkStats.connections.map((connection) => {
+      // Look up agent key from transport pub_key
+      const transportMap = this._transportToAgentMap[appId];
+      const agentKeyB64 = transportMap?.get(connection.pub_key);
+      const formattedAgentKey = agentKeyB64
+        ? agentKeyB64.length > 16
+          ? `${agentKeyB64.slice(0, 8)}...${agentKeyB64.slice(-6)}`
+          : agentKeyB64
+        : null;
+
+      return html`
             <div class="stats-item">
-              <div>webrtc: ${connection.is_webrtc}</div>
-              <div>pub_key: ${connection.pub_key}</div>
+              <div>Direct: ${connection.is_direct}</div>
+              <div>
+                <b>agent:</b>
+                ${formattedAgentKey
+          ? html`<span title="${agentKeyB64}">${formattedAgentKey}</span>`
+          : html`<span style="color: #999;">(no mapping)</span>`}
+              </div>
+              <div style="font-size: 11px; color: #666;">pub_key: ${connection.pub_key}</div>
               <div>
                 opened_at: ${connection.opened_at_s} (${new Date(connection.opened_at_s * 1000)})
               </div>
@@ -208,100 +1273,31 @@ export class DebuggingPanel extends LitElement {
                 send: message_count: ${connection.send_message_count}; bytes:
                 ${connection.send_bytes}
               </div>
-              <div></div>
               <div>
                 recv: message_count: ${connection.recv_message_count}; bytes:
                 ${connection.recv_bytes}
               </div>
             </div>
-          `,
-        )}
+          `;
+    })}
 
-        <h4>Metrics:</h4>
-        ${Object.keys(networkMetrics)
-          .sort()
-          .map((key) => {
-            const metrics = networkMetrics[key];
-            return html`
-              <h4>${key}</h4>
+        <h4>Blocked Messages:</h4>
+        ${this.renderBlockedStats(appId)}
+
+        <h4
+          style="cursor: pointer; user-select: none;"
+          @click=${() => this.toggleMetricsExpanded(appId)}
+        >
+          <span style="display: inline-block; transition: transform 0.2s; transform: rotate(${this._appsWithMetricsExpanded.includes(appId) ? '90deg' : '0deg'});">&#9654;</span>
+          Metrics
+        </h4>
+        ${this._appsWithMetricsExpanded.includes(appId)
+        ? html`
               <div class="stats-item">
-                <h5>fetch_state_summary</h5>
-                <div class="indent">
-                  <div>
-                    pending requests:
-                    ${JSON.stringify(metrics.fetch_state_summary.pending_requests)}
-                  </div>
-                  <div>
-                    backoff peers: ${JSON.stringify(metrics.fetch_state_summary.peers_on_backoff)}
-                  </div>
-                </div>
-
-                <h5>gossip_state_summary</h5>
-                <div class="indent">
-                  <div>
-                    initiated round: ${JSON.stringify(metrics.gossip_state_summary.initiated_round)}
-                  </div>
-
-                  <h6>dht</h6>
-                  ${Object.keys(metrics.gossip_state_summary.dht_summary)
-                    .sort()
-                    .map((arcKey) => {
-                      const arc = metrics.gossip_state_summary.dht_summary[arcKey];
-                      return html`
-                        <div class="indent">
-                          <h7>${arcKey}</h7>
-                          <div>disc_top_hash: ${encodeHashToBase64(arc.disc_top_hash)}</div>
-                          <div>disc_boundary: ${JSON.stringify(arc.disc_boundary)}</div>
-                          <div>
-                            top_hashes:
-                            ${arc.ring_top_hashes.map((hash) => encodeHashToBase64(hash))}
-                          </div>
-                        </div>
-                      `;
-                    })}
-
-                  <h6>peer meta</h6>
-                  ${Object.keys(metrics.gossip_state_summary.peer_meta)
-                    .sort()
-                    .map((peerKey) => {
-                      const peer = metrics.gossip_state_summary.peer_meta[peerKey];
-                      return html`
-                        <h7>${peerKey}</h7>
-                        <div class="indent">
-                          <div>
-                            last_gossip_timestamp:
-                            ${peer.last_gossip_timestamp
-                              ? new Date(peer.last_gossip_timestamp / 1000)
-                              : undefined}
-                          </div>
-                          <div>new_ops_bookmark: ${JSON.stringify(peer.new_ops_bookmark)}</div>
-                          <div>
-                            behavior_errors: ${JSON.stringify(peer.peer_behavior_errors)}; busy:
-                            ${JSON.stringify(peer.peer_busy)}; terminated:
-                            ${JSON.stringify(peer.peer_terminated)}; completed_rounds:
-                            ${JSON.stringify(peer.completed_rounds)}; timeouts:
-                            ${JSON.stringify(peer.peer_timeouts)}
-                          </div>
-                        </div>
-                      `;
-                    })}
-                </div>
-                <h5>local agents</h5>
-                ${metrics.local_agents.map(
-                  (agent) => html`
-                    <div class="indent">
-                      <b
-                        >${agent.agent
-                          ? encodeHashToBase64(agent.agent)
-                          : 'undefined agent hash'}</b
-                      >
-                      storage_arc: ${agent.storage_arc}; target_arc: ${agent.target_arc}
-                    </div>
-                  `,
-                )}
+                <pre>${JSON.stringify(transformMetrics(networkMetrics), null, 4)}</pre>
               </div>
-            `;
-          })}
+            `
+        : html``}
       </div>
     `;
   }
@@ -310,147 +1306,166 @@ export class DebuggingPanel extends LitElement {
     return Object.keys(zomeCallCount.functionCalls).map(
       (fn_name) => html`
         <div class="row" style="align-items: center; margin-top: 5px; margin-bottom: 10px;">
-          <div style="font-weight: bold; width: 280px; padding-left: 20px;">
+          <div class="item-title item-title-sub">
             <div>${fn_name}</div>
           </div>
-          <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+          <div class="item-count item-count-detail">
             ${zomeCallCount ? zomeCallCount.functionCalls[fn_name].length : ''}
           </div>
-          <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+          <div class="item-count item-count-detail">
             ${zomeCallCount
-              ? Math.round(
-                  zomeCallCount.functionCalls[fn_name].length /
-                    ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
-                )
-              : ''}
+          ? Math.round(
+            zomeCallCount.functionCalls[fn_name].length /
+            ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
+          )
+          : ''}
           </div>
-          <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+          <div class="item-count item-count-detail">
             ${zomeCallCount.functionCalls[fn_name][zomeCallCount.functionCalls[fn_name].length - 1]
-              .durationMs}ms
+          .durationMs}ms
           </div>
-          <div style="font-weight: bold; text-align: right; width: 80px; color: blue;">
+          <div class="item-count item-count-detail">
             ${zomeCallCount.functionCalls[fn_name].length
-              ? Math.round(
-                  zomeCallCount.functionCalls[fn_name].reduce(
-                    (sum, item) => sum + item.durationMs,
-                    0,
-                  ) / zomeCallCount.functionCalls[fn_name].length,
-                )
-              : 'NaN'}ms
+          ? Math.round(
+            zomeCallCount.functionCalls[fn_name].reduce(
+              (sum, item) => sum + item.durationMs,
+              0,
+            ) / zomeCallCount.functionCalls[fn_name].length,
+          )
+          : 'NaN'}ms
           </div>
         </div>
       `,
     );
   }
 
+  renderCountsHeader() {
+    return html`
+    <div class="row item-row" style="">
+          <div class="item-title">&nbsp;</div>
+          <div class="item-count-title">total zome calls</div>
+          <div class="item-count-title">
+            avg. zome calls per minute
+          </div>
+          <div class="item-count-title">
+            duration of last zome call (ms)
+          </div>
+          <div class="item-count-title">
+            avg. zome call duration
+          </div>
+          <div class="item-extra"></div>
+        </div>
+    `
+  }
+
   renderGroups(groups: DnaHash[]) {
     return html`
       <div class="column" style="align-items: flex-start;">
-        <div class="row" style="align-items: center;">
-          <div style="align-items: center; width: 300px;"></div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">total zome calls</div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">
-            avg. zome calls per minute
-          </div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">
-            duration of last zome call (ms)
-          </div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">
-            avg. zome call duration
-          </div>
-          <div style="font-weight: bold; text-align: right; width: 90px;"></div>
-        </div>
+        ${this.renderCountsHeader()}
         ${groups
-          .sort((hash_a, hash_b) => {
-            const id_a = this._groupAppIds[encodeHashToBase64(hash_a)];
-            const id_b = this._groupAppIds[encodeHashToBase64(hash_b)];
-            const zomeCallCount_a = this._mossStore.zomeCallLogs[id_a]?.totalCounts;
-            const zomeCallCount_b = this._mossStore.zomeCallLogs[id_b]?.totalCounts;
-            if (zomeCallCount_a && !zomeCallCount_b) return -1;
-            if (!zomeCallCount_a && zomeCallCount_b) return 1;
-            if (zomeCallCount_a && zomeCallCount_b) return zomeCallCount_b - zomeCallCount_a;
-            return 0;
-          })
-          .map((groupDnaHash) => {
-            const groupId = encodeHashToBase64(groupDnaHash);
-            const appId = this._groupAppIds[groupId];
-            const zomeCallCount = this._mossStore.zomeCallLogs[appId];
-            const showDetails = this._groupsWithDetails.includes(groupId);
-            const groupAppId = this._groupAppIds[groupId];
-            const showDebug = this._appsWithDebug.includes(groupAppId);
-            const hasStats = this._appsToPollNetworkStats.includes(groupAppId);
-            return html`
+        .sort((hash_a, hash_b) => {
+          const id_a = this._groupAppIds[encodeHashToBase64(hash_a)];
+          const id_b = this._groupAppIds[encodeHashToBase64(hash_b)];
+          const zomeCallCount_a = this._mossStore.zomeCallLogs[id_a]?.totalCounts;
+          const zomeCallCount_b = this._mossStore.zomeCallLogs[id_b]?.totalCounts;
+          if (zomeCallCount_a && !zomeCallCount_b) return -1;
+          if (!zomeCallCount_a && zomeCallCount_b) return 1;
+          if (zomeCallCount_a && zomeCallCount_b) return zomeCallCount_b - zomeCallCount_a;
+          return 0;
+        })
+        .map((groupDnaHash) => {
+          const groupId = encodeHashToBase64(groupDnaHash);
+          const appId = this._groupAppIds[groupId];
+          const zomeCallCount = this._mossStore.zomeCallLogs[appId];
+          const showDetails = this._groupsWithDetails.includes(groupId);
+          const groupAppId = this._groupAppIds[groupId];
+          const showDebug = this._appsWithDebug.includes(groupAppId);
+          const hasStats = this._appsToPollNetworkStats.includes(groupAppId);
+          return html`
               <div class="column">
                 <div class="row" style="align-items: center; flex: 1;">
-                  <div class="row" style="align-items: center; width: 300px;">
+                  <div class="row item-title" >
+                    <sl-icon-button
+                      @click=${async () => this.toggleDebug(groupAppId)}
+                      .src=${wrapPathInSvg(mdiBug)}
+                    >
+                    </sl-icon-button>
                     <group-context .groupDnaHash=${groupDnaHash}>
                       <group-logo
                         .groupDnaHash=${groupDnaHash}
                         style="margin-right: 8px; --size: 40px"
-                      ></group-logo
-                    ></group-context>
+                      ></group-logo>
+                    </group-context>
+                    <div style="display:flex; flex-direction:row; gap:3px; align-items:center;">
+                      peers:
+                      <span id="peer-count-${groupId}">unknown</span>
+                      <sl-button size="small"  @click=${async () => {
+                          const elem = this.shadowRoot?.getElementById(`peer-count-${groupId}`) as HTMLElement;
+                          if (!elem) return;
+                        try {
+                            const peers = await getBootstrapPeers(this._mossStore.conductorInfo.network_info.bootstrap_urls[0], encodeHashToBase64(groupDnaHash));
+                            elem.innerText = `${peers.length}`;
+                        } catch(e) {
+                            elem.innerText = "error";
+                        }
+                        }}>Query</sl-button>
                   </div>
                   <div style="display: flex; flex: 1;"></div>
-                  <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
+                  <div class="item-count">
                     ${zomeCallCount ? zomeCallCount.totalCounts : ''}
                   </div>
-                  <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
+                  <div class="item-count">
                     ${zomeCallCount
-                      ? Math.round(
-                          zomeCallCount.totalCounts /
-                            ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
-                        )
-                      : ''}
+              ? Math.round(
+                zomeCallCount.totalCounts /
+                ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
+              )
+              : ''}
                   </div>
                   <div
-                    style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;"
+                    class="item-count"
                   ></div>
                   <div
-                    style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;"
+                    class="item-count"
                   ></div>
-                  ${window.__ZOME_CALL_LOGGING_ENABLED__
-                    ? html`<span
-                        style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
-                        @click=${() => this.toggleGroupDetails(groupId)}
-                        >${showDetails ? 'Hide' : 'Details'}</span
-                      >`
-                    : html`<span style="min-width: 60px;"></span>`}
-
-                  <sl-icon-button
-                    @click=${async () => {
-                      this.toggleDebug(groupAppId);
-                    }}
-                    .src=${wrapPathInSvg(mdiBug)}
-                  >
-                  </sl-icon-button>
+                  <div class="item-extra">
+                    ${window.__ZOME_CALL_LOGGING_ENABLED__
+              ? html`<span
+                          style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
+                          @click=${() => this.toggleGroupDetails(groupId)}
+                          >${showDetails ? 'Hide' : 'Details'}</span
+                        >`
+              : html`<span style="min-width: 60px;"></span>`}
+                  </div>
                 </div>
                 ${showDetails ? this.renderZomeCallDetails(zomeCallCount) : html``}
+                ${this._storagePolling ? this.renderStorageForApp(groupAppId) : html``}
               </div>
               ${showDebug
-                ? html`
+              ? html`
                     <div class="column">
-                      <app-debugging-details .appId=${groupAppId}></app-debugging-details>
+                      <app-debugging-details .appId=${groupAppId} .networkMetrics=${this._networkStats[groupAppId]?.[1] ?? null}></app-debugging-details>
                       <sl-button
                         @click=${() => {
-                          if (this._appsToPollNetworkStats.includes(groupAppId)) {
-                            this._appsToPollNetworkStats = this._appsToPollNetworkStats.filter(
-                              (appId) => appId !== groupAppId,
-                            );
-                          } else {
-                            this._appsToPollNetworkStats = [
-                              ...this._appsToPollNetworkStats,
-                              groupAppId,
-                            ];
-                          }
-                        }}
+                  if (this._appsToPollNetworkStats.includes(groupAppId)) {
+                    this._appsToPollNetworkStats = this._appsToPollNetworkStats.filter(
+                      (appId) => appId !== groupAppId,
+                    );
+                  } else {
+                    this._appsToPollNetworkStats = [
+                      ...this._appsToPollNetworkStats,
+                      groupAppId,
+                    ];
+                  }
+                }}
                         >${hasStats ? 'Stop' : 'Start'} Polling Network Stats</sl-button
                       >
                       ${hasStats ? this.renderAppNetworkStats(groupAppId) : html``}
                     </div>
                   `
-                : html``}
+              : html``}
             `;
-          })}
+        })}
       </div>
     `;
   }
@@ -458,44 +1473,38 @@ export class DebuggingPanel extends LitElement {
   renderApplets(applets: ReadonlyMap<EntryHash, AppletStore>) {
     return html`
       <div class="column" style="align-items: flex-start;">
-        <div class="row" style="align-items: center;">
-          <div style="align-items: center; width: 300px;"></div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">total zome calls</div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">
-            avg. zome calls per minute
-          </div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">
-            duration of last zome call (ms)
-          </div>
-          <div style="font-weight: bold; text-align: right; width: 80px;">
-            avg. zome call duration
-          </div>
-          <div style="font-weight: bold; text-align: right; width: 90px;"></div>
-          <div style="font-weight: bold; text-align: left; width: 80px;">Groups</div>
-        </div>
+        ${this.renderCountsHeader()}
+
         ${Array.from(applets.entries())
-          .sort(([hash_a, _a], [hash_b, _b]) => {
-            const id_a = appIdFromAppletHash(hash_a);
-            const id_b = appIdFromAppletHash(hash_b);
-            const zomeCallCount_a = this._mossStore.zomeCallLogs[id_a]?.totalCounts;
-            const zomeCallCount_b = this._mossStore.zomeCallLogs[id_b]?.totalCounts;
-            if (zomeCallCount_a && !zomeCallCount_b) return -1;
-            if (!zomeCallCount_a && zomeCallCount_b) return 1;
-            if (zomeCallCount_a && zomeCallCount_b) return zomeCallCount_b - zomeCallCount_a;
-            return 0;
-          })
-          .map(([appletHash, appletStore]) => {
-            const appletId = encodeHashToBase64(appletHash);
-            const appId = appIdFromAppletHash(appletHash);
-            const zomeCallCount = this._mossStore.zomeCallLogs[appId];
-            const showDetails = this._appletsWithDetails.includes(appletId);
-            const showDebug = this._appsWithDebug.includes(appId);
-            const iframeCounts = this._mossStore.iframeStore.appletIframesCounts(appletId);
-            const hasStats = this._appsToPollNetworkStats.includes(appId);
-            return html`
+        .sort(([hash_a, _a], [hash_b, _b]) => {
+          const id_a = appIdFromAppletHash(hash_a);
+          const id_b = appIdFromAppletHash(hash_b);
+          const zomeCallCount_a = this._mossStore.zomeCallLogs[id_a]?.totalCounts;
+          const zomeCallCount_b = this._mossStore.zomeCallLogs[id_b]?.totalCounts;
+          if (zomeCallCount_a && !zomeCallCount_b) return -1;
+          if (!zomeCallCount_a && zomeCallCount_b) return 1;
+          if (zomeCallCount_a && zomeCallCount_b) return zomeCallCount_b - zomeCallCount_a;
+          return 0;
+        })
+        .map(([appletHash, appletStore]) => {
+          const appletId = encodeHashToBase64(appletHash);
+          const appId = appIdFromAppletHash(appletHash);
+          const zomeCallCount = this._mossStore.zomeCallLogs[appId];
+          const showDetails = this._appletsWithDetails.includes(appletId);
+          const showDebug = this._appsWithDebug.includes(appId);
+          const iframeCounts = this._mossStore.iframeStore.appletIframesCounts(appletId);
+          const hasStats = this._appsToPollNetworkStats.includes(appId);
+          return html`
               <div class="column">
                 <div class="row" style="align-items: center; flex: 1;">
-                  <div class="row" style="align-items: center; width: 300px;">
+                  <div class="row item-title">
+                    <sl-icon-button
+                      @click=${async () => {
+              this.toggleDebug(appId);
+            }}
+                      .src=${wrapPathInSvg(mdiBug)}
+                    >
+                    </sl-icon-button>
                     <applet-logo
                       .appletHash=${appletHash}
                       style="margin-top: 2px; margin-bottom: 2px; margin-right: 12px; --size: 48px"
@@ -507,74 +1516,70 @@ export class DebuggingPanel extends LitElement {
                       <div>
                         <b>iframes:</b>
                         ${iframeCounts
-                          ? Object.entries(iframeCounts).map(
-                              ([viewType, count]) => html`${viewType} (${count}) `,
-                            )
-                          : html``}
+              ? Object.entries(iframeCounts).map(
+                ([viewType, count]) => html`${viewType} (${count}) `,
+              )
+              : html``}
                       </div>
                     </div>
                   </div>
                   <div style="display: flex; flex: 1;"></div>
-                  <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
+                  <div class="item-count">
                     ${zomeCallCount ? zomeCallCount.totalCounts : ''}
                   </div>
-                  <div style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;">
+                  <div class="item-count">
                     ${zomeCallCount
-                      ? Math.round(
-                          zomeCallCount.totalCounts /
-                            ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
-                        )
-                      : ''}
+              ? Math.round(
+                zomeCallCount.totalCounts /
+                ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
+              )
+              : ''}
                   </div>
                   <div
-                    style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;"
+                    class="item-count"
                   ></div>
                   <div
-                    style="font-weight: bold; text-align: right; width: 80px; font-size: 18px;"
+                    class="item-count"
                   ></div>
-                  ${window.__ZOME_CALL_LOGGING_ENABLED__
-                    ? html` <span
-                        style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
-                        @click=${() => this.toggleAppletDetails(appletId)}
-                        >${showDetails ? 'Hide' : 'Details'}</span
-                      >`
-                    : html`<span style="min-width: 60px;"></span>`}
-                  <sl-icon-button
-                    @click=${async () => {
-                      this.toggleDebug(appId);
-                    }}
-                    .src=${wrapPathInSvg(mdiBug)}
-                  >
-                  </sl-icon-button>
-                  <groups-for-applet
-                    style="margin-left: 10px;"
-                    .appletHash=${appletHash}
-                  ></groups-for-applet>
+                  <div class="item-extra">
+                    ${window.__ZOME_CALL_LOGGING_ENABLED__
+              ? html` <span
+                          style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
+                          @click=${() => this.toggleAppletDetails(appletId)}
+                          >${showDetails ? 'Hide' : 'Details'}</span
+                        >`
+              : html`<span style="min-width: 60px;"></span>`}
+                    <groups-for-applet
+                      style="margin-left: 10px;"
+                      .appletHash=${appletHash}
+                    ></groups-for-applet>
+                  </div>
                 </div>
                 ${showDetails ? this.renderZomeCallDetails(zomeCallCount) : html``}
+                ${this._storagePolling ? this.renderStorageForApp(appId) : html``}
               </div>
               ${showDebug
-                ? html`
+              ? html`
                     <div class="column">
-                      <app-debugging-details .appId=${appId}></app-debugging-details>
+                      <app-debugging-details .appId=${appId} .networkMetrics=${this._networkStats[appId]?.[1] ?? null}></app-debugging-details>
                       <sl-button
                         @click=${() => {
-                          if (this._appsToPollNetworkStats.includes(appId)) {
-                            this._appsToPollNetworkStats = this._appsToPollNetworkStats.filter(
-                              (appId) => appId !== appId,
-                            );
-                          } else {
-                            this._appsToPollNetworkStats = [...this._appsToPollNetworkStats, appId];
-                          }
-                        }}
+                  if (this._appsToPollNetworkStats.includes(appId)) {
+                    this._appsToPollNetworkStats = this._appsToPollNetworkStats.filter(
+                      (appId) => appId !== appId,
+                    );
+                  } else {
+                    this._appsToPollNetworkStats = [...this._appsToPollNetworkStats, appId];
+                  }
+                }}
                         >${hasStats ? 'Stop' : 'Start'} Polling Network Stats</sl-button
                       >
                       ${hasStats ? this.renderAppNetworkStats(appId) : html``}
                     </div>
                   `
-                : html``}
+              : html``}
             `;
-          })}
+        })}
       </div>
     `;
   }
@@ -602,7 +1607,7 @@ export class DebuggingPanel extends LitElement {
         return html`Loading...`;
       case 'error':
         return html`<display-error
-          .headline=${msg('Failed to get running applets.')}
+          .headline=${msg('Failed to get running Tools.')}
           tooltip
           .error=${this._applets.value.error}
         ></display-error>`;
@@ -620,20 +1625,34 @@ export class DebuggingPanel extends LitElement {
           <div class="row items-center">
             <div>
               ${window.__ZOME_CALL_LOGGING_ENABLED__
-                ? 'Disable zome call logging (will reload Moss)'
-                : 'Enable zome call logging (will reload Moss)'}
+        ? 'Disable zome call logging (will reload Moss)'
+        : 'Enable zome call logging (will reload Moss)'}
             </div>
             <sl-switch
               style="margin-bottom: 5px; margin-left: 12px;"
               .checked=${window.__ZOME_CALL_LOGGING_ENABLED__}
               @sl-change=${() => {
-                if (window.__ZOME_CALL_LOGGING_ENABLED__) {
-                  window.sessionStorage.removeItem('__ZOME_CALL_LOGGING_ENABLED__');
-                } else {
-                  window.sessionStorage.setItem('__ZOME_CALL_LOGGING_ENABLED__', 'true');
-                }
-                window.location.reload();
-              }}
+        if (window.__ZOME_CALL_LOGGING_ENABLED__) {
+          window.sessionStorage.removeItem('__ZOME_CALL_LOGGING_ENABLED__');
+        } else {
+          window.sessionStorage.setItem('__ZOME_CALL_LOGGING_ENABLED__', 'true');
+        }
+        window.location.reload();
+      }}
+            ></sl-switch>
+          </div>
+          <div class="row items-center" style="margin-top: 8px;">
+            <div>Online status debug logging</div>
+            <sl-switch
+              style="margin-bottom: 5px; margin-left: 12px;"
+              .checked=${!!window.sessionStorage.getItem('__ONLINE_DEBUG_LOGGING__')}
+              @sl-change=${() => {
+        if (window.sessionStorage.getItem('__ONLINE_DEBUG_LOGGING__')) {
+          window.sessionStorage.removeItem('__ONLINE_DEBUG_LOGGING__');
+        } else {
+          window.sessionStorage.setItem('__ONLINE_DEBUG_LOGGING__', 'true');
+        }
+      }}
             ></sl-switch>
           </div>
         </div>
@@ -647,17 +1666,82 @@ export class DebuggingPanel extends LitElement {
             <b>${this._mossStore.iframeStore.crossGroupIframesTotalCount()}</b>
           </div>
         </div>
+        <div class="row" style="margin-bottom: 10px; display: flex; flex-direction: column; gap:2px;">
+          <h3 style="margin-bottom: 5px;">Network</h3>
+            <dl class="kv-list">
+                <dt>Bootstrap</dt>
+                <dd>
+                    ${this._mossStore.conductorInfo.network_info.bootstrap_urls.length
+                    ? this._mossStore.conductorInfo.network_info.bootstrap_urls[0]
+                    : "None"}
+                    <sl-button size="small" 
+                               @click=${async (_e) => {
+                      const res = await pingServer(  this._mossStore.conductorInfo.network_info.bootstrap_urls[0]);
+                      const elem = this.shadowRoot?.getElementById("bootstrap-result") as HTMLElement;
+                      if (!elem) return;
+                      elem.style.display = "inline";
+                      elem.style.color = res.online ? "green" : "red";
+                      elem.innerHTML = res.online ? `online - ${res.latencyMs} ms` : "offline";
+                      this.requestUpdate();
+                    }}>Ping</sl-button>
+                    <div id="bootstrap-result" style="display:none; margin-left:5px;"></div>
+                </dd>
+                <dt>Signal</dt>
+                <dd>
+                    ${this._mossStore.conductorInfo.network_info.signal_urls.length
+                    ? this._mossStore.conductorInfo.network_info.signal_urls[0]
+                    : "None"}
+                  <sl-button size="small" @click=${async (_e) => {
+                      const res = await pingServer(this._mossStore.conductorInfo.network_info.signal_urls[0]);
+                      const elem = this.shadowRoot?.getElementById("signal-result") as HTMLElement;
+                      if (!elem) return;
+                      elem.style.display = "inline";
+                      elem.style.color = res.online ? "green" : "red";
+                      elem.innerHTML = res.online ? `online - ${res.latencyMs} ms` : "offline";
+                      this.requestUpdate();
+                  }}>Ping</sl-button>
+                  <div id="signal-result" style="display:none; margin-left:5px;"></div>               
+                </dd>
+                <dt>Relay</dt>
+                <dd>
+                    ${this._mossStore.conductorInfo.network_info.relay_urls.length
+                    ? this._mossStore.conductorInfo.network_info.relay_urls[0]
+                    : "None"}
+                    <sl-button size="small" @click=${async (_e) => {
+                        const res = await pingServer(this._mossStore.conductorInfo.network_info.relay_urls[0]);
+                        const elem = this.shadowRoot?.getElementById("relay-result") as HTMLElement;
+                        if (!elem) return;
+                        elem.style.display = "inline";
+                        elem.style.color = res.online ? "green" : "red";
+                        elem.innerHTML = res.online ? `online - ${res.latencyMs} ms` : "offline";
+                        this.requestUpdate();
+                      }}>Ping</sl-button>
+                    <div id="relay-result" style="display:none; margin-left:5px;"></div>
+                </dd>
+            </dl>
+        </div>
+        ${this.renderMemorySection()}
+        ${this.renderConductorMemorySection()}
+        <div class="row items-center" style="margin-bottom: 10px;">
+          <h3 style="margin: 0;">DNA Storage Polling</h3>
+          <sl-button
+            size="small"
+            style="margin-left: 12px;"
+            @click=${() => this.toggleStoragePolling()}
+          >${this._storagePolling ? 'Stop Polling' : 'Start Polling'}</sl-button>
+        </div>
         <h2 style="text-align: center;">Global Apps</h2>
         <div class="center-content" style="text-align: center;">No global apps installed.</div>
         <sl-button
           @click=${async () => {
-            await window.electronAPI.dumpNetworkStats();
-            notify('Stats saved to logs folder (Help > Open Logs)', undefined, undefined, 7000);
-          }}
+        await window.electronAPI.dumpNetworkStats();
+        notify(msg('Stats saved to logs folder (Help > Open Logs)'), undefined, undefined, 7000);
+      }}
           style="margin-top: 20px;"
         >
           Dump Network Stats
         </sl-button>
+        ${this.renderZomeCallSummary()}
         <h2 style="text-align: center;">Groups DNAs</h2>
         <div class="row" style="padding: 4px; align-items: center; margin-bottom: 40px;">
           ${this.renderGroupsLoading()}
@@ -693,6 +1777,52 @@ export class DebuggingPanel extends LitElement {
         background-color: white;
         width: fit-content;
       }
+
+      .item-row {
+        align-items: center;
+      }
+      .item-title {
+        width:300px;
+        align-items: center;
+      }
+      .item-title-sub {
+        font-weight: bold; width: 260px; padding-left: 40px;
+      }
+      .item-count-title {
+        font-weight: bold; text-align: right; width: 80px;
+      }
+      .item-count {
+        font-weight: bold; text-align: right; width: 80px; font-size: 18px;
+      }
+      .item-count-detail {
+        color: blue;
+      }
+      .item-extra {
+        width: 90px;
+      }
+
+        .kv-list {
+            margin-top: 5px;
+            display: grid;
+            grid-template-columns: max-content auto;
+            gap: 4px 0;
+        }
+        .kv-list dt {
+            text-align: right;
+            height: 30px;
+            align-content: center;
+        }
+        .kv-list dd {
+            margin-left: 10px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap:5px;
+        }
+        .kv-list dt::after {
+            content: ":";
+            margin-right: 1px;
+        }
     `,
   ];
 }

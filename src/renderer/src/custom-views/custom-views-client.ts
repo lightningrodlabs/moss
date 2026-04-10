@@ -26,7 +26,7 @@ export class CustomViewsClient extends ZomeClient<CustomViewsSignal> {
    */
   async getCustomView(
     customViewHash: ActionHash,
-    local?: boolean,
+    local: boolean = true,
   ): Promise<EntryRecord<CustomView> | undefined> {
     const record: Record = await this.callZome('get_custom_view', { input: customViewHash, local });
     return record ? new EntryRecord(record) : undefined;
@@ -49,7 +49,7 @@ export class CustomViewsClient extends ZomeClient<CustomViewsSignal> {
 
   /** All Custom Views */
 
-  async getAllCustomViews(local?: boolean): Promise<Array<EntryRecord<CustomView>>> {
+  async getAllCustomViews(local: boolean = true): Promise<Array<EntryRecord<CustomView>>> {
     const records: Record[] = await this.callZome('get_all_custom_views', { input: null, local });
     return records.map((r) => new EntryRecord(r));
   }

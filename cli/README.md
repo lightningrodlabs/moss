@@ -2,7 +2,7 @@
 
 CLI to run Moss Tools in development mode.
 
-This version is compatible with `@theweave/api@0.4.0-alpha.3`.
+This version is compatible with `@theweave/api@0.6.6`.
 
 ```
 Usage: @theweave/cli [options]
@@ -24,6 +24,7 @@ Options:
   --lair-rust-log <string>       RUST_LOG value to pass to the lair keystore binary
   -b, --bootstrap-url <url>      URL of the bootstrap server to use (not persisted across restarts).
   -s, --signaling-url <url>      URL of the signaling server to use (not persisted across restarts).
+  -r, --relay-url <url>          URL of the relay server to use (not persisted across restarts).
   --ice-urls <string>            Comma separated string of ICE server URLs to use. Is ignored if an external holochain binary is
                                  being used (not persisted across restarts).
   --force-production-urls        Explicitly allow using the production URLs of bootstrap and/or singaling server during applet
@@ -34,7 +35,7 @@ Options:
   --agent-idx <number>           To be provided when running with the --dev-config option. Specifies which agent (as defined in the
                                  config file) to run We for. The agent with agentIdx 1 always needs to be run first.
   --sync-time <number>           May be provided when running with the --dev-config option. Specifies the amount of time to wait for
-                                 new tools to gossip after having installed a new group before checking for unjoined tools.
+                                 new tools to gossip after having installed a new group before checking for activating tools.
   -h, --help                     display help for command
 ```
 

@@ -62,8 +62,8 @@ export class SidebarButton extends LitElement {
         <div class="column center-content">
           <div
             class="row center-content notification-dot
-            ${this.notificationUrgency === 'high' ? 'urgent' : ''}
-            ${this.notificationUrgency === 'high' &&
+            ${this.notificationUrgency === 'high' || (this.notificationUrgency === 'medium' && this.notificationCount) ? 'urgent' : ''}
+            ${(this.notificationUrgency === 'high' || this.notificationUrgency === 'medium') &&
             this.notificationCount &&
             this.notificationCount > 9
               ? 'padded'
@@ -73,7 +73,7 @@ export class SidebarButton extends LitElement {
               ? 'display: none'
               : ''}"
           >
-            ${this.notificationCount && this.notificationUrgency === 'high'
+            ${this.notificationCount && (this.notificationUrgency === 'high' || this.notificationUrgency === 'medium')
               ? this.notificationCount
               : undefined}
           </div>
@@ -114,11 +114,11 @@ export class SidebarButton extends LitElement {
       } */
         .indicator {
           position: absolute;
-          right: -12px;
-          height: 36px;
+          right: -16px;
+          height: 20px;
           border-radius: 2px;
-          width: 4px;
-          background: var(--moss-main-green);
+          width: 12px;
+          background-image: url(indicator.svg);
         }
 
         .icon-container {
@@ -139,17 +139,22 @@ export class SidebarButton extends LitElement {
 
         .notification-dot {
           position: absolute;
-          top: -5px;
-          right: -5px;
+          top: -4px;
+          right: -8px;
           font-weight: bold;
-          background: #355dfa;
+          background: var(--moss-purple);
           border-radius: 10px;
-          height: 20px;
-          min-width: 20px;
+          height: 10px;
+          min-width: 10px;
+          z-index: 1;
         }
 
         .urgent {
-          background: #fcee2d;
+          height: 16px;
+          min-width: 18px;
+          border-radius: 4px;
+          color: white;
+          font-size: 12px;
         }
 
         .padded {

@@ -25,10 +25,10 @@ export class GroupsForApplet extends LitElement {
   _groupProfiles = new StoreSubscriber(
     this,
     () =>
-      pipe(this._mossStore.groupsForApplet.get(this.appletHash), async (groupStoreMap) => {
+      pipe(this._mossStore.groupsForApplet.get(this.appletHash)!, async (groupStoreMap) => {
         const groupProfiles = await Promise.all(
           Array.from(groupStoreMap.values()).map(async (groupStore) =>
-            toPromise(groupStore.groupProfile),
+            toPromise(groupStore!.groupProfile),
           ),
         );
         return groupProfiles;

@@ -23,6 +23,7 @@ import { AppletStore } from '../../applets/applet-store.js';
 import { GroupStore } from '../../groups/group-store.js';
 import { groupStoreContext } from '../../groups/context.js';
 import { AppletId, CreatableType } from '@theweave/api';
+import {GetonlyMap} from "@holochain-open-dev/utils";
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -42,7 +43,7 @@ export class GroupAppletsCreatables extends LitElement {
     this,
     () =>
       pipe(this._groupStore.allMyRunningApplets, (myRunningApplets) =>
-        sliceAndJoin(this.mossStore.appletStores, myRunningApplets),
+        sliceAndJoin(this.mossStore.appletStores as GetonlyMap<any, any>, myRunningApplets),
       ) as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>,
     () => [this._groupStore],
   );
@@ -149,7 +150,7 @@ export class GroupAppletsCreatables extends LitElement {
       case 'error':
         console.error('ERROR: ', this._groupApplets.value.error);
         return html`<display-error
-          .headline=${msg('Error displaying the applets')}
+          .headline=${msg('Error displaying the Tools')}
           tooltip
           .error=${this._groupApplets.value.error}
         ></display-error>`;

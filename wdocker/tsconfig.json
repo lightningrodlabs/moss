@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "include": ["src/*", "src/daemon/*"],
+  "include": ["src/**/*"],
   "compilerOptions": {
     "outDir": "dist",
     "target": "esnext",

@@ -1,5 +1,5 @@
 ---
-manifest_version: '1'
+manifest_version: '0'
 name: foyer
 integrity:
   network_seed: ~
@@ -7,9 +7,9 @@ integrity:
     type: 'foyer'
   zomes:
     - name: foyer_integrity
-      bundled: ../../../target/wasm32-unknown-unknown/release/foyer_integrity.wasm
+      path: ../../../target/wasm32-unknown-unknown/release/foyer_integrity.wasm
 
 coordinator:
   zomes:
     - name: foyer
-      bundled: ../../../target/wasm32-unknown-unknown/release/foyer.wasm
+      path: ../../../target/wasm32-unknown-unknown/release/foyer.wasm

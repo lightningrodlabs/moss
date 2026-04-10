@@ -131,6 +131,7 @@ const OpenViewRequest = Type.Union([
     {
       type: Type.Literal('applet-main'),
       appletHash: EntryHash,
+      wal: Type.Optional(WAL),
     },
     { additionalProperties: false },
   ),
@@ -298,6 +299,21 @@ export const AppletToParentRequest = Type.Union([
   ),
   Type.Object(
     {
+      type: Type.Literal('get-tool-installer'),
+      appletHash: AppletHash,
+      groupHash: Type.Optional(DnaHash),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('get-bootstrap-urls'),
+      groupHash: Type.Optional(DnaHash),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
       type: Type.Literal('get-group-profile'),
       groupHash: DnaHash,
     },
@@ -305,7 +321,7 @@ export const AppletToParentRequest = Type.Union([
   ),
   Type.Object(
     {
-      type: Type.Literal('my-group-permission-type'),
+      type: Type.Literal('my-accountabilities-per-group'),
     },
     { additionalProperties: false },
   ),
@@ -405,7 +421,7 @@ export const AppletToParentRequest = Type.Union([
     {
       type: Type.Literal('user-select-asset'),
       from: Type.Optional(
-        Type.Union([Type.Literal('search'), Type.Literal('pocket'), Type.Literal('create')]),
+        Type.Union([Type.Literal('search'), Type.Literal('pocket'), Type.Literal('create'), Type.Literal('pocket-no-create')]),
       ),
     },
     { additionalProperties: false },

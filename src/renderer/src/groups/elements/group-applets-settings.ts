@@ -3,7 +3,7 @@ import { customElement, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { localized, msg } from '@lit/localize';
-import { encodeHashToBase64, EntryHash } from '@holochain/client';
+import {encodeHashToBase64, EntryHash} from '@holochain/client';
 import { hashState } from '@holochain-open-dev/elements';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -21,6 +21,9 @@ import { mossStyles } from '../../shared-styles.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { repeat } from 'lit/directives/repeat.js';
+import {GetonlyMap} from "@holochain-open-dev/utils";
+import {AppletHash} from "@theweave/api";
+import {Applet} from "@theweave/group-client";
 
 @localized()
 @customElement('group-applets-settings')
@@ -35,7 +38,7 @@ export class GroupAppletsSettings extends LitElement {
     this,
     () =>
       pipe(this._groupStore.allMyInstalledApplets, (myInstalledApplets) =>
-        sliceAndJoin(this._groupStore.applets, myInstalledApplets),
+        sliceAndJoin(this._groupStore.applets as GetonlyMap<any, any>, myInstalledApplets),
       ),
     () => [this._groupStore, this._mossStore],
   );
@@ -44,7 +47,7 @@ export class GroupAppletsSettings extends LitElement {
     this,
     () =>
       pipe(this._groupStore.allMyApplets, (allMyEverJoinedApplets) =>
-        sliceAndJoin(this._groupStore.applets, allMyEverJoinedApplets),
+        sliceAndJoin(this._groupStore.applets as GetonlyMap<any, any>, allMyEverJoinedApplets),
       ),
     () => [this._groupStore],
   );
@@ -71,11 +74,11 @@ export class GroupAppletsSettings extends LitElement {
         </div>`;
       case 'error':
         return html`<display-error
-          .headline=${msg('Error fetching the applets installed in this group')}
+          .headline=${msg('Error fetching the Tools installed in this group')}
           .error=${this._groupApplets.value.error}
         ></display-error>`;
       case 'complete':
-        const applets = this._groupApplets.value.value;
+        const applets = this._groupApplets.value.value as ReadonlyMap<AppletHash, Applet>;
         const groupDisabled = !!this._mossStore.persistedStore.disabledGroupApplets.value(
           this._groupStore.groupDnaHash,
         );
@@ -86,35 +89,35 @@ export class GroupAppletsSettings extends LitElement {
                 class="placeholder"
                 style="margin: 24px; text-align: center; max-width: 600px; font-size: 20px;"
                 >${msg(
-                  "You don't have any Tools installed in this group. Go to the Tool Library to install Tools to this group.",
-                )}
+            "You don't have any Tools installed in this group. Go to the Tool Library to install Tools to this group.",
+          )}
               </span>
             </div>
           `;
         return html`
           <div class="column" style="flex: 1;">
             ${repeat(
-              Array.from(applets.entries()).sort(([_, a], [__, b]) =>
-                a.custom_name.localeCompare(b.custom_name),
-              ),
-              ([appletHash, _applet]) => encodeHashToBase64(appletHash),
-              ([appletHash, applet]) => html`
+          Array.from(applets.entries()).sort(([_, a], [__, b]) =>
+            a.custom_name.localeCompare(b.custom_name),
+          ),
+          ([appletHash, _applet]) => encodeHashToBase64(appletHash),
+          ([appletHash, applet]) => html`
                 <applet-detail-card
                   style="${groupDisabled ? 'opacity: 0.4; pointer-events: none;' : ''}"
                   @applets-disabled=${(e) => {
-                    this.dispatchEvent(
-                      new CustomEvent('applets-disabled', {
-                        detail: e.detail,
-                        bubbles: true,
-                        composed: true,
-                      }),
-                    );
-                  }}
+              this.dispatchEvent(
+                new CustomEvent('applets-disabled', {
+                  detail: e.detail,
+                  bubbles: true,
+                  composed: true,
+                }),
+              );
+            }}
                   .appletHash=${appletHash}
                   .applet=${applet}
                 ></applet-detail-card>
               `,
-            )}
+        )}
           </div>
         `;
     }
@@ -160,16 +163,16 @@ export class GroupAppletsSettings extends LitElement {
       return html`
         <div class="column" style="flex: 1;">
           ${repeat(
-            abandonedApplets.sort(([_, a], [__, b]) => a.custom_name.localeCompare(b.custom_name)),
-            ([appletHash, _applet]) => encodeHashToBase64(appletHash),
-            ([appletHash, applet]) => html`
+        abandonedApplets.sort(([_, a], [__, b]) => (a as Applet).custom_name.localeCompare((b  as Applet).custom_name)),
+        ([appletHash, _applet]) => encodeHashToBase64(appletHash),
+        ([appletHash, applet]) => html`
               <abandoned-applet-card
                 style="${groupDisabled ? 'opacity: 0.4; pointer-events: none;' : ''}"
                 .appletHash=${appletHash}
                 .applet=${applet}
               ></abandoned-applet-card>
             `,
-          )}
+      )}
         </div>
       `;
     }
@@ -184,7 +187,7 @@ export class GroupAppletsSettings extends LitElement {
       >
         <div class="row" style="position: relative">
           <div class="title" style="margin-bottom: 30px; font-size: 28px;">
-            ${msg('Joined Tools')}
+            ${msg('Activated Tools')}
           </div>
         </div>
         ${this.renderInstalledApplets()}

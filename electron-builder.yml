@@ -1,18 +1,19 @@
-appId: org.lightningrodlabs.moss-0.14
-productName: Moss (0.14)
+appId: org.lightningrodlabs.moss-0.15
+productName: Moss
 directories:
   buildResources: build
 files:
   - resources
   - out
   - moss.config.json
+  - holochain-checksums.json
 asarUnpack:
   - resources/**
 afterSign: scripts/notarize.js
 protocols:
   - name: Weave URL
     schemes:
-      - weave-0.14
+      - weave-0.15
 win:
   executableName: moss
 nsis:

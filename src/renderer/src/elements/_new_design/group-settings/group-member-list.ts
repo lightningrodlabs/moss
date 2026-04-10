@@ -116,10 +116,10 @@ export class GroupMemberList extends LitElement {
     }
     // In case the reloading of the group store below fails we still want to show the notifications
     setTimeout(() => {
-      notify('Steward role assigned.');
+      notify(msg('Steward role assigned.'));
     });
     this.assignSteward = undefined;
-    await this._groupStore.allAgentPermissionTypes.reload();
+    await this._groupStore.allAgentsAccountabilities.reload();
     this.requestUpdate();
     this.assigning = false;
   }

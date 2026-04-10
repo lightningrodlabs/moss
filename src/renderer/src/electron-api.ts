@@ -31,6 +31,15 @@ import { ToolWeaveConfig } from './types';
 
 // IPC_CHANGE_HERE
 
+export interface LegacyProfileInfo {
+  appName: string;
+  versionString: string;
+  profileName: string;
+  keystorePath: string;
+  /** Lair binary version (e.g. 'lair_keystore 0.6.3') that created this keystore, if recorded */
+  lairVersion: string | undefined;
+}
+
 declare global {
   interface Window {
     __HC_ZOME_CALL_SIGNER__: {
@@ -47,11 +56,17 @@ declare global {
         options: Electron.MessageBoxOptions,
       ) => Promise<Electron.MessageBoxReturnValue>;
       lairSetupRequired: () => Promise<boolean>;
+      findLegacyProfiles: () => Promise<LegacyProfileInfo[]>;
+      getLairBinaryVersion: () => Promise<string>;
+      copyLegacyProfile: (keystorePath: string) => Promise<void>;
       launch: () => Promise<boolean>;
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       isAppletDev: () => Promise<boolean>;
       appletDevConfig: () => Promise<WeaveDevConfig | undefined>;
       factoryReset: () => Promise<void>;
+      getNetworkOverrides: () => Promise<NetworkOverridesInfo>;
+      setNetworkOverrides: (overrides: NetworkOverrides) => Promise<void>;
+      clearNetworkOverrides: () => Promise<void>;
       openLogs: () => Promise<void>;
       exportLogs: () => Promise<void>;
       onAppletToParentMessage: (
@@ -99,7 +114,7 @@ declare global {
       ) => void;
       closeMainWindow: () => Promise<void>;
       openApp: (appId: string) => Promise<void>;
-      openWalWindow: (iframeSrc: string, appletId: AppletId, wal: WAL) => Promise<void>;
+      openWalWindow: (iframeSrc: string, appletId: AppletId, groupId: DnaHashB64, wal: WAL) => Promise<void>;
       getAllAppAssetsInfos: () => Promise<
         Record<InstalledAppId, [AppAssetsInfo, ToolWeaveConfig | undefined]>
       >;
@@ -132,6 +147,11 @@ declare global {
       isDevModeEnabled: () => Promise<boolean>;
       joinGroup: (networkSeed: string, progenitor: AgentPubKeyB64 | null) => Promise<AppInfo>;
       installGroupHapp: (useProgenitor: boolean) => Promise<AppInfo>;
+      silentExportGroupsData: () => Promise<void>;
+      exportGroupsData: () => Promise<void>;
+      importGroupsData: () => Promise<GroupImportResult>;
+      consumePendingGroupsImport: () => Promise<GroupImportResult | null>;
+      onImportGroupsProgress: (callback: (e: Electron.IpcRendererEvent, payload: ImportGroupsProgress) => void) => void;
       notification: (
         notification: FrameNotification,
         showInSystray: boolean,
@@ -143,6 +163,36 @@ declare global {
       disableDevMode: () => Promise<void>;
       fetchIcon: (appActionHashB64: ActionHashB64) => Promise<string>;
       selectScreenOrWindow: () => Promise<string>;
+      captureScreen: () => Promise<string>;
+      getFeedbackWorkerUrl: () => Promise<string>;
+      saveFeedback: (feedback: {
+        text: string;
+        screenshot: string;
+        mossVersion: string;
+        os: string;
+        timestamp: number;
+        issueUrl?: string;
+      }) => Promise<string>;
+      listFeedback: () => Promise<
+        Array<{
+          id: string;
+          text: string;
+          mossVersion: string;
+          os: string;
+          timestamp: number;
+          issueUrl?: string;
+        }>
+      >;
+      getFeedback: (id: string) => Promise<{
+        id: string;
+        text: string;
+        screenshot: string;
+        mossVersion: string;
+        os: string;
+        timestamp: number;
+        issueUrl?: string;
+      } | null>;
+      updateFeedbackIssueUrl: (id: string, issueUrl: string) => Promise<void>;
       batchUpdateAppletUis: (
         toolCompatibilityId: ToolCompatibilityId,
         happOrWebHappUrl: string,
@@ -161,8 +211,35 @@ declare global {
       ) => Promise<void>;
       uninstallApplet: (appId: string) => Promise<void>;
       dumpNetworkStats: () => Promise<void>;
+      getRendererProcessMemory: () => Promise<{
+        residentSetKB: number;
+        privateKB: number;
+        sharedKB: number;
+      }>;
+      getMainProcessMemory: () => Promise<{
+        rss: number;
+        heapTotal: number;
+        heapUsed: number;
+        external: number;
+        arrayBuffers: number;
+      }>;
+      getConductorProcessMemory: () => Promise<{
+        rssBytes: number;
+        vmSizeBytes: number;
+        pid: number;
+      } | null>;
       fetchAndValidateHappOrWebhapp: (url: string) => Promise<AppHashes>;
       validateHappOrWebhapp: (bytes: number[]) => Promise<AppHashes>;
+      // Dev UI Override
+      selectDevUiWebhapp: () => Promise<string | undefined>;
+      setDevUiOverride: (
+        appId: string,
+        webhappPath: string,
+      ) => Promise<{ uiSha256: string; happSha256: string; happHashMatch: boolean }>;
+      clearDevUiOverride: (appId: string) => Promise<void>;
+      getDevUiOverride: (
+        appId: string,
+      ) => Promise<{ active: boolean; uiSha256?: string }>;
     };
     __ZOME_CALL_LOGGING_ENABLED__: boolean;
   }
@@ -181,11 +258,29 @@ export interface ProgressInfo {
   bytesPerSecond: number;
 }
 
+export interface NetworkInfo {
+  bootstrap_urls: string[];
+  signal_urls: string[];
+  relay_urls: string[];
+}
+
+export interface NetworkOverrides {
+  bootstrapUrl?: string;
+  relayUrl?: string;
+}
+
+export interface NetworkOverridesInfo {
+  overrides: NetworkOverrides;
+  defaults: { bootstrapUrl: string; relayUrl: string };
+  current: { bootstrapUrl: string; relayUrl: string };
+}
+
 export interface ConductorInfo {
   app_port: number;
   admin_port: number;
   moss_version: string;
   weave_protocol_version: string;
+  network_info: NetworkInfo;
 }
 
 export async function joinGroup(
@@ -197,6 +292,41 @@ export async function joinGroup(
 
 export async function installGroupHapp(useProgenitor: boolean): Promise<AppInfo> {
   return window.electronAPI.installGroupHapp(useProgenitor);
+}
+
+export async function silentExportGroupsData(): Promise<void> {
+  return window.electronAPI.silentExportGroupsData();
+}
+
+export async function exportGroupsData(): Promise<void> {
+  return window.electronAPI.exportGroupsData();
+}
+
+export type ImportGroupsProgress = {
+  current: number;
+  total: number;
+  groupName: string | undefined;
+  step: 'installing' | 'waiting-for-sync' | 'setting-profile' | 'installing-tool' | 'done';
+  secondsLeft?: number;
+  status?: 'created' | 'joined' | 'joined-no-profile' | 'already-installed' | 'error';
+  error?: string;
+  toolName?: string;
+  toolIndex?: number;
+  toolTotal?: number;
+};
+
+export type GroupImportResult = Array<{
+  groupName: string | undefined;
+  status: 'created' | 'joined' | 'joined-no-profile' | 'already-installed' | 'error';
+  error?: string;
+}>;
+
+export async function importGroupsData(): Promise<GroupImportResult> {
+  return window.electronAPI.importGroupsData();
+}
+
+export async function consumePendingGroupsImport(): Promise<GroupImportResult | null> {
+  return window.electronAPI.consumePendingGroupsImport();
 }
 
 export async function dialogMessagebox(
@@ -286,3 +416,26 @@ export async function validateHappOrWebhapp(bytes: number[]) {
 export const signZomeCallApplet = async (request: CallZomeRequest) => {
   return window.electronAPI.signZomeCallApplet(request);
 };
+
+// Dev UI Override
+
+export async function selectDevUiWebhapp(): Promise<string | undefined> {
+  return window.electronAPI.selectDevUiWebhapp();
+}
+
+export async function setDevUiOverride(
+  appId: string,
+  webhappPath: string,
+): Promise<{ uiSha256: string; happSha256: string; happHashMatch: boolean }> {
+  return window.electronAPI.setDevUiOverride(appId, webhappPath);
+}
+
+export async function clearDevUiOverride(appId: string): Promise<void> {
+  return window.electronAPI.clearDevUiOverride(appId);
+}
+
+export async function getDevUiOverride(
+  appId: string,
+): Promise<{ active: boolean; uiSha256?: string }> {
+  return window.electronAPI.getDevUiOverride(appId);
+}

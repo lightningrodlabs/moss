@@ -3,7 +3,7 @@ import { defineConfig } from './cli/defineConfig';
 export default defineConfig({
   toolCurations: [
     {
-      url: 'https://raw.githubusercontent.com/lightningrodlabs/weave-tool-curation/refs/heads/test-0.14/0.14/lists/curations-0.14.json',
+      url: 'https://raw.githubusercontent.com/lightningrodlabs/weave-tool-curation/refs/heads/test-0.15/0.15/lists/curations-0.15.json',
       useLists: ['default'],
     },
   ],
@@ -18,11 +18,7 @@ export default defineConfig({
       creatingAgent: {
         agentIdx: 1,
         agentProfile: {
-          nickname: 'Gaston',
-          avatar: {
-            type: 'filesystem',
-            path: './example/ui/gaston.jpeg',
-          },
+          nickname: 'Gaston'
         },
       },
       joiningAgents: [
@@ -50,12 +46,6 @@ export default defineConfig({
           registeringAgent: 1,
           joiningAgents: [2],
         },
-        {
-          name: 'notebooks',
-          instanceName: 'notebooks',
-          registeringAgent: 1,
-          joiningAgents: [2],
-        },
       ],
     },
   ],
@@ -63,7 +53,7 @@ export default defineConfig({
     {
       name: 'Example Applet',
       subtitle: 'Just an Example',
-      description: 'Just an example applet to show the various affordances of We',
+      description: 'Just an example applet to show the various affordances of Moss',
       icon: {
         type: 'filesystem',
         path: './example/ui/icon.png',
@@ -76,7 +66,7 @@ export default defineConfig({
     {
       name: 'Example Applet Hot Reload',
       subtitle: 'Just an Example',
-      description: 'Just an example applet to show the various affordances of We',
+      description: 'Just an example applet to show the various affordances of Moss',
       icon: {
         type: 'filesystem',
         path: './example/ui/icon.png',
@@ -85,19 +75,6 @@ export default defineConfig({
         type: 'localhost',
         happPath: './example/workdir/example-applet.happ',
         uiPort: 8888,
-      },
-    },
-    {
-      name: 'notebooks',
-      subtitle: 'Collaborative note taking',
-      description: 'Real-time notetaking based on syn',
-      icon: {
-        type: 'https',
-        url: 'https://lightningrodlabs.org/projects/notebooks.png',
-      },
-      source: {
-        type: 'https',
-        url: 'https://github.com/lightningrodlabs/notebooks/releases/download/v0.5.0-rc.0/notebooks.webhapp',
       },
     },
   ],

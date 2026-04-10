@@ -60,7 +60,7 @@ export class AssetElement extends LitElement {
     console.log('this.assetInfo: ', this.assetInfo.assetInfo);
     return html`<div
         class="column element"
-        title=${`weave-0.14://hrl/${encodeHashToBase64(
+        title=${`weave-0.15://hrl/${encodeHashToBase64(
           this.walRelationAndTags.wal.hrl[0]
         )}/${encodeHashToBase64(this.walRelationAndTags.wal.hrl[1])}${
           this.walRelationAndTags.wal.context

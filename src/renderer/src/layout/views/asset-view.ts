@@ -20,7 +20,7 @@ import { MossStore } from '../../moss-store.js';
 import './applet-view.js';
 import '../../elements/pocket/wal-pocket.js';
 import { buildHeadlessWeaveClient } from '../../applets/applet-host.js';
-import { encodeHashToBase64 } from '@holochain/client';
+import { CellType, encodeHashToBase64 } from '@holochain/client';
 import { openWalInWindow } from '../../utils.js';
 
 @customElement('asset-view')
@@ -36,7 +36,7 @@ export class AssetView extends LitElement {
 
   location = new StoreSubscriber(
     this,
-    () => this._mossStore.hrlLocations.get(this.wal.hrl[0]).get(this.wal.hrl[1]),
+    () => this._mossStore.hrlLocations.get(this.wal.hrl[0])!.get(this.wal.hrl[1])!,
     () => [this.wal],
   );
 
@@ -47,7 +47,10 @@ export class AssetView extends LitElement {
     } else {
       this.dispatchEvent(
         new CustomEvent('jump-to-applet', {
-          detail: this.location.value.value.dnaLocation.appletHash,
+          detail: {
+              applet: this.location.value.value.dnaLocation.appletHash,
+              wal: this.wal,
+          },
           bubbles: true,
           composed: true,
         }),
@@ -60,7 +63,7 @@ export class AssetView extends LitElement {
   }
 
   async copyWal() {
-    let url = `weave-0.14://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
+    let url = `weave-0.15://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
       this.wal.hrl[1],
     )}`;
     if (this.wal.context) {
@@ -72,9 +75,17 @@ export class AssetView extends LitElement {
   }
 
   renderGroupView(dnaLocation: DnaLocation, entryTypeLocation?: EntryDefLocation) {
+    // Extract the group DNA hash from the appInfo
+    const groupCell = dnaLocation.appInfo.cell_info['group']?.find(
+      (cellInfo) => cellInfo.type === CellType.Provisioned,
+    );
+    const groupHash = groupCell?.value.cell_id[0];
+
+
     return html`<applet-view
         style="flex: 1"
         .appletHash=${dnaLocation.appletHash}
+        .groupHash=${groupHash}
         .hostColor=${'#dde7ff'}
         .view=${{
           type: 'asset',

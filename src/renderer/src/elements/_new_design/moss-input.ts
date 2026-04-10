@@ -15,9 +15,6 @@ import { mossStyles } from '../../shared-styles.js';
 @localized()
 @customElement('moss-input')
 export class MossInput extends LitElement {
-  firstUpated() {
-    // this._dialog.show();
-  }
 
   render() {
     return html`

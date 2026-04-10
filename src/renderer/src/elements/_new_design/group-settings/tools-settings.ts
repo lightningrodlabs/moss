@@ -1,15 +1,16 @@
-import { pipe, sliceAndJoin, StoreSubscriber } from '@holochain-open-dev/stores';
 import { customElement, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { localized, msg } from '@lit/localize';
-import { encodeHashToBase64, EntryHash } from '@holochain/client';
+import {encodeHashToBase64, EntryHash, HoloHashMap} from '@holochain/client';
 import { hashState } from '@holochain-open-dev/elements';
+import {AsyncStatus, pipe, sliceAndJoin, StoreSubscriber} from '@holochain-open-dev/stores';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
 import './applet-settings-card.js';
 import './abandoned-applet-settings-card.js';
+import './inactive-tools.js';
 
 import { repeat } from 'lit/directives/repeat.js';
 import { mossStoreContext } from '../../../context.js';
@@ -17,6 +18,14 @@ import { MossStore } from '../../../moss-store.js';
 import { groupStoreContext } from '../../../groups/context.js';
 import { GroupStore } from '../../../groups/group-store.js';
 import { mossStyles } from '../../../shared-styles.js';
+import {GetonlyMap} from "@holochain-open-dev/utils";
+
+enum TabsState {
+  Inactive,
+  Active,
+  Abandoned,
+  Ignored,
+}
 
 @localized()
 @customElement('tools-settings')
@@ -27,23 +36,30 @@ export class ToolsSettings extends LitElement {
   @consume({ context: groupStoreContext, subscribe: true })
   _groupStore!: GroupStore;
 
-  _groupApplets = new StoreSubscriber(
-    this,
-    () =>
-      pipe(this._groupStore.allMyInstalledApplets, (myInstalledApplets) =>
-        sliceAndJoin(this._groupStore.applets, myInstalledApplets),
-      ),
-    () => [this._groupStore, this._mossStore],
-  );
+    _groupApplets: StoreSubscriber<AsyncStatus<HoloHashMap<EntryHash, any>>> = new StoreSubscriber(
+        this,
+        () =>
+            pipe(this._groupStore.allMyInstalledApplets, (myInstalledApplets) =>
+                sliceAndJoin(this._groupStore.applets as GetonlyMap<any, any>, myInstalledApplets),
+            ),
+        () => [this._groupStore, this._mossStore],
+    );
 
-  _allMyEverJoinedApplets = new StoreSubscriber(
+  _allMyEverJoinedApplets: StoreSubscriber<AsyncStatus<HoloHashMap<EntryHash, any>>> = new StoreSubscriber(
     this,
     () =>
       pipe(this._groupStore.allMyApplets, (allMyEverJoinedApplets) =>
-        sliceAndJoin(this._groupStore.applets, allMyEverJoinedApplets),
+        sliceAndJoin(this._groupStore.applets as GetonlyMap<any, any>, allMyEverJoinedApplets),
       ),
     () => [this._groupStore],
   );
+
+  public showInactiveTools() {
+    this.tabsState = TabsState.Inactive;
+  }
+
+  @state()
+  tabsState: TabsState = TabsState.Active;
 
   @state(hashState())
   appletToUnarchive: EntryHash | undefined;
@@ -67,7 +83,7 @@ export class ToolsSettings extends LitElement {
         </div>`;
       case 'error':
         return html`<display-error
-          .headline=${msg('Error fetching the applets installed in this group')}
+          .headline=${msg('Error fetching the Tools installed in this group')}
           .error=${this._groupApplets.value.error}
         ></display-error>`;
       case 'complete':
@@ -82,38 +98,64 @@ export class ToolsSettings extends LitElement {
                 class="placeholder"
                 style="margin: 24px; text-align: center; max-width: 600px; font-size: 16px;"
                 >${msg(
-                  "You don't have any Tools installed in this group. Go to the Tool Library to install Tools to this group.",
-                )}
+            "You don't have any Tools installed in this group. Go to the Tool Library to install Tools to this group.",
+          )}
               </span>
             </div>
           `;
         return html`
           <div class="column" style="flex: 1;">
             ${repeat(
-              Array.from(applets.entries()).sort(([_, a], [__, b]) =>
-                a.custom_name.localeCompare(b.custom_name),
-              ),
-              ([appletHash, _applet]) => encodeHashToBase64(appletHash),
-              ([appletHash, applet]) => html`
+          Array.from(applets.entries()).sort(([_, a], [__, b]) =>
+            a.custom_name.localeCompare(b.custom_name),
+          ),
+          ([appletHash, _applet]) => encodeHashToBase64(appletHash),
+          ([appletHash, applet]) => html`
                 <applet-settings-card
                   class="flex flex-1"
                   style="${groupDisabled ? 'opacity: 0.4; pointer-events: none;' : ''}"
                   @applets-disabled=${(e) => {
-                    this.dispatchEvent(
-                      new CustomEvent('applets-disabled', {
-                        detail: e.detail,
-                        bubbles: true,
-                        composed: true,
-                      }),
-                    );
-                  }}
+              this.dispatchEvent(
+                new CustomEvent('applets-disabled', {
+                  detail: e.detail,
+                  bubbles: true,
+                  composed: true,
+                }),
+              );
+            }}
                   .appletHash=${appletHash}
                   .applet=${applet}
                 ></applet-settings-card>
               `,
-            )}
+        )}
           </div>
         `;
+    }
+  }
+
+  renderToolsInactivate() {
+    return html`<inactive-tools></inactive-tools>`;
+  }
+  renderToolsActive() {
+    return html`${this.renderInstalledApplets()}`;
+  }
+  renderToolsAbandoned() {
+    return html`${this.renderAbandonedApplets()}`;
+  }
+  renderToolsIgnored() {
+    return html`<inactive-tools .showIgnoredOnly=${true}></inactive-tools>`;
+  }
+
+  renderContent() {
+    switch (this.tabsState) {
+      case TabsState.Inactive:
+        return this.renderToolsInactivate();
+      case TabsState.Active:
+        return this.renderToolsActive();
+      case TabsState.Abandoned:
+        return this.renderToolsAbandoned();
+      case TabsState.Ignored:
+        return this.renderToolsIgnored();
     }
   }
 
@@ -147,7 +189,7 @@ export class ToolsSettings extends LitElement {
             <span
               class="placeholder"
               style="margin: 24px; text-align: center; max-width: 600px; font-size: 16px;"
-              >${msg('No abandoned Tools.')}
+              >${msg('No uninstalled tools.')}
             </span>
           </div>
         `;
@@ -157,16 +199,16 @@ export class ToolsSettings extends LitElement {
       return html`
         <div class="column" style="flex: 1;">
           ${repeat(
-            abandonedApplets.sort(([_, a], [__, b]) => a.custom_name.localeCompare(b.custom_name)),
-            ([appletHash, _applet]) => encodeHashToBase64(appletHash),
-            ([appletHash, applet]) => html`
+        abandonedApplets.sort(([_, a], [__, b]) => a.custom_name.localeCompare(b.custom_name)),
+        ([appletHash, _applet]) => encodeHashToBase64(appletHash),
+        ([appletHash, applet]) => html`
               <abandoned-applet-settings-card
                 style="${groupDisabled ? 'opacity: 0.4; pointer-events: none;' : ''}"
                 .appletHash=${appletHash}
                 .applet=${applet}
               ></abandoned-applet-settings-card>
             `,
-          )}
+      )}
         </div>
       `;
     }
@@ -179,19 +221,46 @@ export class ToolsSettings extends LitElement {
         class="column flex-1"
         style="overflow: auto; --sl-border-radius-medium: 20px; max-height: 500px; padding: 2px;"
       >
-        <div class="row" style="position: relative">
-          <div style="margin-top: 30px; margin-bottom: 10px; font-size: 20px;">
-            ${msg('Joined Tools')}
-          </div>
+        <div class="row items-center tab-bar flex-1">
+          <button
+            class="tab ${this.tabsState === TabsState.Inactive ? 'tab-selected' : ''}"
+            @click=${() => {
+        this.tabsState = TabsState.Inactive;
+      }}
+          >
+            ${msg('To Activate')}
+          </button>
+          <button
+            class="tab ${this.tabsState === TabsState.Active ? 'tab-selected' : ''}"
+            @click=${() => {
+        this.tabsState = TabsState.Active;
+      }}
+          >
+            ${msg('Active')}
+          </button>
+          <button
+            class="tab ${this.tabsState === TabsState.Abandoned ? 'tab-selected' : ''}"
+            @click=${() => {
+        this.tabsState = TabsState.Abandoned;
+      }}
+          >
+            ${msg('Uninstalled')}
+          </button>
+          <button
+            class="tab ${this.tabsState === TabsState.Ignored ? 'tab-selected' : ''}"
+            @click=${() => {
+        this.tabsState = TabsState.Ignored;
+      }}
+          >
+            ${msg('Ignored')}
+          </button>
         </div>
-        ${this.renderInstalledApplets()}
-
-        <div class="row" style="position: relative">
-          <div style="margin-top: 30px; margin-bottom: 10px; font-size: 20px;">
-            ${msg('Abandoned Tools')}
-          </div>
+        <div
+          class="column"
+          style="margin-top: 10px; overflow-y: auto; scrollbar-gutter: stable; scrollbar-width: thin;margin-right:-2px;"
+        >
+          ${this.renderContent()}
         </div>
-        ${this.renderAbandonedApplets()}
       </div>
     `;
   }

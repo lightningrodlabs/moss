@@ -18,7 +18,7 @@ If you want to install an unstable dev release, you can pick one on [the release
 
 The details on how to create a _Tool_ can be found [here](https://dev.theweave.social/build/overview.html).
 
-### Developering on Moss itself
+### Developing on Moss itself
 
 #### Environment Setup
 
@@ -66,7 +66,8 @@ The Rust add-ons used in the main process are maintained in a [separate reposito
 yarn build:win
 
 # For macOS
-yarn build:mac
+yarn build:mac-x64
+yarn build:mac-arm64
 
 # For Linux
 yarn build:linux

@@ -1,13 +1,14 @@
 import { hashProperty } from '@holochain-open-dev/elements';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
-import { AgentPubKey, DnaHash, encodeHashToBase64 } from '@holochain/client';
+import { AgentPubKey, AgentPubKeyB64, DnaHash, encodeHashToBase64 } from '@holochain/client';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import { css, html, LitElement } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
+import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 
 import { groupStoreContext } from '../context.js';
 import { mossStyles } from '../../shared-styles.js';
@@ -16,6 +17,7 @@ import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 
 import '../../elements/reusable/profile-detail.js';
+import { localTimeFromUtcOffset } from '../../utils.js';
 
 export type AgentAndTzOffset = {
   agent: AgentPubKey;
@@ -46,26 +48,108 @@ export class GroupPeersStatus extends LitElement {
     () => [this._groupStore],
   );
 
+  _hiddenAgents = new StoreSubscriber(
+    this,
+    () => this._groupStore.hiddenAgents(),
+    () => [this._groupStore],
+  );
+
+  @state()
+  _showHiddenAgents = false;
+
+  @state()
+  _contextMenuAgent: AgentPubKey | undefined;
+
+  @state()
+  _contextMenuPosition: { x: number; y: number } = { x: 0, y: 0 };
+
+  handleContextMenu(e: MouseEvent, agent: AgentPubKey) {
+    e.preventDefault();
+    this._contextMenuAgent = agent;
+    this._contextMenuPosition = { x: e.clientX, y: e.clientY };
+
+    const closeHandler = () => {
+      this._contextMenuAgent = undefined;
+      window.removeEventListener('click', closeHandler);
+    };
+    // Close on next click anywhere
+    setTimeout(() => window.addEventListener('click', closeHandler), 0);
+  }
+
+  renderContextMenu() {
+    if (!this._contextMenuAgent) return html``;
+    const agentB64 = encodeHashToBase64(this._contextMenuAgent);
+    const isHidden = this._groupStore.isAgentHidden(agentB64);
+    const agent = this._contextMenuAgent;
+    return html`
+      <div
+        class="context-menu"
+        style="position: fixed; left: ${this._contextMenuPosition.x}px; top: ${this
+          ._contextMenuPosition.y}px; z-index: 10000;"
+      >
+        <button
+          class="context-menu-item"
+          @click=${() => {
+            if (isHidden) {
+              this._groupStore.unhideAgent(agent);
+            } else {
+              this._groupStore.hideAgent(agent);
+            }
+            this._contextMenuAgent = undefined;
+          }}
+        >
+          ${isHidden ? msg('Unhide agent') : msg('Hide agent')}
+        </button>
+      </div>
+    `;
+  }
+
+  renderAgentInfo(agentPubKey, isOnline, tzUtcOffset?, isMe?) {
+    return html` <profile-detail-moss
+      style="color: black; ${isOnline ? '' : 'opacity: 0.5'}"
+      no-additional-fields
+      .agentPubKey=${agentPubKey}
+      >${tzUtcOffset
+        ? html`<sl-tooltip slot="extra" .content=${msg('Local Time')}
+            ><div style="opacity: 0.5;">${localTimeFromUtcOffset(tzUtcOffset)}</div></sl-tooltip
+          >`
+        : ''}
+      ${isMe ? html`<div slot="action">&nbsp;(${msg('me')})</div>` : ''}
+    </profile-detail-moss>`;
+  }
+
   renderPeersStatus(members: ReadonlyMap<Uint8Array, MaybeProfile>) {
-    const headlessNodes = Array.from(members.entries()).filter(
-      ([_pubKey, maybeProfile]) =>
+    const hiddenAgentsList: AgentPubKeyB64[] = this._hiddenAgents.value ?? [];
+    const hiddenSet = new Set(hiddenAgentsList);
+
+    // Convert all members to B64 once upfront to avoid repeated encoding
+    type MemberEntry = [Uint8Array, AgentPubKeyB64, MaybeProfile];
+    const allMembers: MemberEntry[] = Array.from(members.entries()).map(
+      ([pubKey, profile]) => [pubKey, encodeHashToBase64(pubKey), profile],
+    );
+
+    const headlessNodes = allMembers.filter(
+      ([, , maybeProfile]) =>
         maybeProfile.type === 'profile' && !!maybeProfile.profile.entry.fields.wdockerNode,
     );
-    let normalMembers = Array.from(members.entries()).filter(
-      ([_pubKey, maybeProfile]) =>
+    let normalMembers = allMembers.filter(
+      ([, , maybeProfile]) =>
         maybeProfile.type === 'unknown' || !maybeProfile.profile.entry.fields.wdockerNode,
     );
     if (!this._peerStatuses.value) return html``;
     const now = Date.now();
     const myPubKey = this._groupStore.groupClient.myPubKey;
+    const myPubKeyB64 = encodeHashToBase64(myPubKey);
     const myStatus =
       now - this._mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
-    normalMembers = normalMembers.filter(
-      ([agent, _]) => encodeHashToBase64(agent) !== encodeHashToBase64(myPubKey),
-    );
+    normalMembers = normalMembers.filter(([, agentB64]) => agentB64 !== myPubKeyB64);
 
-    const headlessAgents = headlessNodes.map(([agent, _]) => {
-      const statusInfo = this._peerStatuses.value![encodeHashToBase64(agent)];
+    // Separate hidden agents from visible ones
+    const hiddenMembers = normalMembers.filter(([, agentB64]) => hiddenSet.has(agentB64));
+    normalMembers = normalMembers.filter(([, agentB64]) => !hiddenSet.has(agentB64));
+
+    const headlessAgents = headlessNodes.map(([agent, agentB64]) => {
+      const statusInfo = this._peerStatuses.value![agentB64];
       const online = !!statusInfo && now - statusInfo.lastSeen < OFFLINE_THRESHOLD;
       return {
         agent,
@@ -75,12 +159,12 @@ export class GroupPeersStatus extends LitElement {
     });
 
     const onlineAgents = normalMembers
-      .filter(([agent, _]) => {
-        const statusInfo = this._peerStatuses.value![encodeHashToBase64(agent)];
+      .filter(([, agentB64]) => {
+        const statusInfo = this._peerStatuses.value![agentB64];
         return !!statusInfo && now - statusInfo.lastSeen < OFFLINE_THRESHOLD;
       })
-      .map(([agent, _]) => {
-        const statusInfo = this._peerStatuses.value![encodeHashToBase64(agent)];
+      .map(([agent, agentB64]) => {
+        const statusInfo = this._peerStatuses.value![agentB64];
         return {
           agent,
           tzUtcOffset: statusInfo.tzUtcOffset,
@@ -89,11 +173,11 @@ export class GroupPeersStatus extends LitElement {
       });
 
     const offlineAgents: AgentAndTzOffset[] = normalMembers
-      .filter(([agent, _]) => {
-        const statusInfo = this._peerStatuses.value![encodeHashToBase64(agent)];
+      .filter(([, agentB64]) => {
+        const statusInfo = this._peerStatuses.value![agentB64];
         return !statusInfo || now - statusInfo.lastSeen > OFFLINE_THRESHOLD;
       })
-      .map(([agent, _]) => {
+      .map(([agent]) => {
         return {
           agent,
           tzUtcOffset: undefined,
@@ -102,7 +186,7 @@ export class GroupPeersStatus extends LitElement {
 
     return html`
       <div class="column agents-list">
-        <div style="margin-bottom: 5px;">${msg('Online')}</div>
+        <div class="status-text">${msg('Online')}</div>
         <div class="column">
           <div
             class="row profile"
@@ -135,11 +219,7 @@ export class GroupPeersStatus extends LitElement {
               }
             }}
           >
-            <profile-detail-moss
-              style="color: black"
-              no-additional-fields
-              .agentPubKey=${myPubKey}
-            ></profile-detail-moss>
+            ${this.renderAgentInfo(myPubKey, true, undefined, true)}
             <div class="status-indicator ${myStatus === 'inactive' ? 'inactive' : ''}"></div>
             <div
               class="inactive-indicator"
@@ -153,6 +233,7 @@ export class GroupPeersStatus extends LitElement {
                 class="row profile"
                 style="position: relative;"
                 tabindex="0"
+                @contextmenu=${(e: MouseEvent) => this.handleContextMenu(e, agentInfo.agent)}
                 @click=${() => {
                   this.dispatchEvent(
                     new CustomEvent('profile-selected', {
@@ -174,11 +255,7 @@ export class GroupPeersStatus extends LitElement {
                   }
                 }}
               >
-                <profile-detail-moss
-                  style="color: black"
-                  no-additional-fields
-                  .agentPubKey=${agentInfo.agent}
-                ></profile-detail-moss>
+                ${this.renderAgentInfo(agentInfo.agent, true, agentInfo.tzUtcOffset)}
                 <div
                   class="status-indicator ${agentInfo.status === 'inactive' ? 'inactive' : ''}"
                 ></div>
@@ -191,13 +268,14 @@ export class GroupPeersStatus extends LitElement {
           })}
         </div>
         ${offlineAgents.length > 0
-          ? html` <div style="margin-bottom: 5px; margin-top: 20px;">${msg('Offline')}</div>
+          ? html` <div style="margin-top:24px;" class="status-text">${msg('Offline')}</div>
               <div class="column">
                 ${offlineAgents.map(
                   (agentInfo) => html`
                     <div
                       class="row profile"
                       style="position: relative;"
+                      @contextmenu=${(e: MouseEvent) => this.handleContextMenu(e, agentInfo.agent)}
                       @click=${() => {
                         this.dispatchEvent(
                           new CustomEvent('profile-selected', {
@@ -219,11 +297,7 @@ export class GroupPeersStatus extends LitElement {
                         }
                       }}
                     >
-                      <profile-detail-moss
-                        style="opacity: 0.5; color: black;"
-                        no-additional-fields
-                        .agentPubKey=${agentInfo.agent}
-                      ></profile-detail-moss>
+                      ${this.renderAgentInfo(agentInfo.agent, false, agentInfo.tzUtcOffset)}
                     </div>
                   `,
                 )}
@@ -258,16 +332,71 @@ export class GroupPeersStatus extends LitElement {
                         }
                       }}
                     >
-                      <profile-detail-moss
-                        style="color: black; ${agentInfo.status ? '' : 'opacity: 0.5'}"
-                        no-additional-fields
-                        .agentPubKey=${agentInfo.agent}
-                      ></profile-detail-moss>
+                      ${this.renderAgentInfo(
+                        agentInfo.agent,
+                        agentInfo.status,
+                        agentInfo.tzUtcOffset,
+                      )}
                       ${agentInfo.status ? html`<div class="status-indicator"></div>` : html``}
                     </div>
                   `,
                 )}
               </div>`
+          : html``}
+        ${hiddenMembers.length > 0
+          ? html`
+              <div
+                style="margin-top: 24px; cursor: pointer; user-select: none;"
+                class="status-text row"
+                tabindex="0"
+                @click=${() => (this._showHiddenAgents = !this._showHiddenAgents)}
+                @keypress=${(e: KeyboardEvent) => {
+                  if (e.key === 'Enter' || e.key === ' ')
+                    this._showHiddenAgents = !this._showHiddenAgents;
+                }}
+              >
+                <span>${msg('Hidden')} (${hiddenMembers.length})</span>
+                <span style="margin-left: 4px;">${this._showHiddenAgents ? '▼' : '▶'}</span>
+              </div>
+              ${this._showHiddenAgents
+                ? html`
+                    <div class="column">
+                      ${hiddenMembers.map(
+                        ([agent, _]) => html`
+                          <div
+                            class="row profile"
+                            style="position: relative; align-items: center;"
+                            tabindex="0"
+                            @contextmenu=${(e: MouseEvent) => this.handleContextMenu(e, agent)}
+                            @click=${() => {
+                              this.dispatchEvent(
+                                new CustomEvent('profile-selected', {
+                                  detail: { agent, tzUtcOffset: undefined },
+                                  bubbles: true,
+                                  composed: true,
+                                }),
+                              );
+                            }}
+                            @keypress=${(e: KeyboardEvent) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                this.dispatchEvent(
+                                  new CustomEvent('profile-selected', {
+                                    detail: { agent, tzUtcOffset: undefined },
+                                    bubbles: true,
+                                    composed: true,
+                                  }),
+                                );
+                              }
+                            }}
+                          >
+                            ${this.renderAgentInfo(agent, false)}
+                          </div>
+                        `,
+                      )}
+                    </div>
+                  `
+                : html``}
+            `
           : html``}
       </div>
     `;
@@ -280,7 +409,9 @@ export class GroupPeersStatus extends LitElement {
           <sl-spinner style="font-size: 2rem"></sl-spinner>
         </div>`;
       case 'complete':
-        return this.renderPeersStatus(this._groupMemberWithProfiles.value.value);
+        return html`${this.renderPeersStatus(
+          this._groupMemberWithProfiles.value.value,
+        )}${this.renderContextMenu()}`;
       case 'error':
         return html`<display-error
           .headline=${msg('Error displaying the peers of the group')}
@@ -307,11 +438,11 @@ export class GroupPeersStatus extends LitElement {
       }
 
       .profile {
-        border-radius: 5px;
+        border-radius: 8px;
       }
 
       .profile:hover {
-        background: #ffffff1f;
+        background: #eff7ea;
         cursor: pointer;
       }
 
@@ -338,6 +469,40 @@ export class GroupPeersStatus extends LitElement {
         width: 9px;
         border-radius: 50%;
         background: var(--moss-fishy-green);
+      }
+
+      .status-text {
+        margin-right: auto;
+        margin-left: auto;
+        margin-top: 8px;
+        opacity: 0.6;
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 500;
+      }
+
+      .context-menu {
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        padding: 4px 0;
+      }
+
+      .context-menu-item {
+        display: block;
+        width: 100%;
+        padding: 6px 16px;
+        border: none;
+        background: none;
+        text-align: left;
+        cursor: pointer;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .context-menu-item:hover {
+        background: #eff7ea;
       }
     `,
   ];

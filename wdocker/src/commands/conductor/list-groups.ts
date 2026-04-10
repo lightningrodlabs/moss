@@ -1,12 +1,11 @@
 import {
   cleanTable,
   getAdminWs,
-  getCellId,
   getPassword,
-  getStatus,
 } from '../../helpers/helpers.js';
 import { WDockerFilesystem } from '../../filesystem.js';
 import { encodeHashToBase64 } from '@holochain/client';
+import { getAppStatus, getCellId } from '@theweave/utils';
 
 export async function listGroups(conductorId: string): Promise<void> {
   const wDockerFs = new WDockerFilesystem();
@@ -24,7 +23,7 @@ export async function listGroups(conductorId: string): Promise<void> {
   groups.forEach((appInfo) => {
     const groupCellInfo = appInfo.cell_info['group'][0];
     const cellId = getCellId(groupCellInfo);
-    const status = getStatus(appInfo);
+    const status = getAppStatus(appInfo);
     table.push([encodeHashToBase64(cellId![0]), status]);
   });
   console.log(table.toString());

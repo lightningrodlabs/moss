@@ -16,7 +16,7 @@ const client = new Octokit({
 });
 
 const OWNER = 'lightningrodlabs';
-const REPO = 'we';
+const REPO = 'moss';
 const URL = `/repos/${OWNER}/${REPO}/releases`;
 const VERSION = pkg.version;
 const APP_ID = pkg.name;
@@ -120,9 +120,9 @@ const getPlatformFromLatestMacYml = (content) => {
       name: `latest-mac-${localPlatform}.yml`,
       data: localAssetStream,
     });
-    console.log(`[remote] latest-mac-${localPlatform}.yml uploaded`);
+    console.log(`[remote] latest-mac-${localPlatform}.yml uploaded.`);
   } catch (e) {
-    console.log(`[remote] error uploading latest-mac-${localPlatform}.yml. Skipping merge`);
+    console.log(`[remote] error uploading latest-mac-${localPlatform}.yml. Skipping merge.`);
     console.log(e);
     return;
   }
@@ -168,7 +168,7 @@ const getPlatformFromLatestMacYml = (content) => {
     } else {
       console.log(`[remote] ${FILE_NAME} found`);
     }
-
+    console.log(`[remote] deleting ${FILE_NAME}:\n`, remoteLatestMacYmlContent);
     await client.request(`DELETE ${URL}/assets/${originalAsset.id}`);
     console.log(`[remote] deleted ${FILE_NAME}`);
   } catch (e) {
@@ -177,10 +177,21 @@ const getPlatformFromLatestMacYml = (content) => {
     return;
   }
 
-  const mergedContent =
+  let mergedContent =
     remotePlatform === 'intel'
       ? mergeFiles(remoteLatestMacYmlContent, localLatestMacYmlContent)
       : mergeFiles(localLatestMacYmlContent, remoteLatestMacYmlContent);
+
+  // Inject release notes from the GitHub release body
+  if (!currentRelease.body || !currentRelease.body.trim()) {
+    console.error('ERROR: Release notes are empty for this release.');
+    console.error('Add release notes to the GitHub release before running the build.');
+    process.exit(1);
+  }
+  const mergedObject = yaml.load(mergedContent);
+  mergedObject.releaseNotes = currentRelease.body;
+  mergedContent = yaml.dump(mergedObject, { lineWidth: -1 });
+  console.log('Injected release notes into merged latest-mac.yml');
 
   const assetStream = new Readable();
   assetStream.push(mergedContent);
@@ -198,7 +209,7 @@ const getPlatformFromLatestMacYml = (content) => {
     });
     console.log(`[remote] uploaded merged ${FILE_NAME}`);
   } catch (e) {
-    console.log(`[remote] error uploading merged ${FILE_NAME}. Skipping merge`);
+    console.log(`[remote] error uploading merged ${FILE_NAME}. Skipping merge.`);
     console.log(e);
     return;
   }

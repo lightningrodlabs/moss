@@ -1,5 +1,4 @@
-import { HoloHashMap } from '@holochain-open-dev/utils';
-import type { AgentPubKey } from '@holochain/client';
+import { AgentPubKey, HoloHashMap } from '@holochain/client';
 import { writable, type Readable, type Writable, derived } from 'svelte/store';
 
 export type Msg = {

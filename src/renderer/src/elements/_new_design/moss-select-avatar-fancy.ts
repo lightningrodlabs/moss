@@ -143,12 +143,12 @@ export class MossSelectAvatarFancy extends LitElement implements FormField {
           style="position: absolute; z-index: -1; left: 50%; top: 30px; height: 0; width: 0"
         />
         ${this.showLabel
-          ? html`
+        ? html`
               <span style="font-size: var(--sl-input-label-font-size-medium); margin-bottom: 4px"
                 >${this.label}${this.required !== false ? ' *' : ''}</span
               >
             `
-          : html``}
+        : html``}
         <div style="position: relative; margin: 0; padding: 0; height: 82px;">
           <sl-tooltip placement="bottom" content=${this.tooltipText}>
             ${this.renderAvatar()}

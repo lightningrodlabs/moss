@@ -1,4 +1,4 @@
-import { AsyncReadable, pipe, sliceAndJoin, StoreSubscriber } from '@holochain-open-dev/stores';
+import { AsyncReadable, pipe, Readable, sliceAndJoin, StoreSubscriber, writable } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
@@ -25,6 +25,7 @@ import { mdiHome } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { repeat } from 'lit/directives/repeat.js';
 import { PersistedStore } from '../../persisted-store.js';
+import {GetonlyMap} from "@holochain-open-dev/utils";
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -45,13 +46,23 @@ export class GroupAppletsSidebar extends LitElement {
   @state()
   dragged: AppletId | null = null;
 
+  // Foyer/group-level unread notification counts
+  private static _emptyGroupNotifications: Readable<{ low: number; medium: number; high: number }> =
+    writable({ low: 0, medium: 0, high: 0 });
+
+  _groupNotifications = new StoreSubscriber(
+    this,
+    () => this._groupStore?.unreadGroupNotifications() ?? GroupAppletsSidebar._emptyGroupNotifications,
+    () => [this._groupStore],
+  );
+
   // All the Applets that are running and part of this Group
   _groupApplets = new StoreSubscriber(
     this,
     () =>
       this._groupStore
         ? (pipe(this._groupStore.allMyRunningApplets, (myRunningApplets) =>
-            sliceAndJoin(this.mossStore.appletStores, myRunningApplets),
+            sliceAndJoin(this.mossStore.appletStores as GetonlyMap<any, any>, myRunningApplets),
           ) as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>)
         : (undefined as unknown as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>),
     () => [this._groupStore],
@@ -210,7 +221,7 @@ export class GroupAppletsSidebar extends LitElement {
       case 'error':
         console.error('ERROR: ', this._groupApplets.value.error);
         return html`<display-error
-          .headline=${msg('Error displaying the applets')}
+          .headline=${msg('Error displaying the Tools')}
           tooltip
           .error=${this._groupApplets.value.error}
         ></display-error>`;
@@ -220,6 +231,22 @@ export class GroupAppletsSidebar extends LitElement {
   }
 
   renderMossButtons() {
+    const counts = this._groupNotifications.value;
+    let badgeUrgency: string | undefined;
+    let badgeCount: number | undefined;
+    if (counts) {
+      if (counts.high > 0) {
+        badgeUrgency = 'high';
+        badgeCount = counts.high;
+      } else if (counts.medium > 0) {
+        badgeUrgency = 'medium';
+        badgeCount = counts.medium;
+      } else if (counts.low > 0) {
+        badgeUrgency = 'low';
+        badgeCount = counts.low;
+      }
+    }
+
     return html`
       <topbar-button
         style="position: relative;"
@@ -227,6 +254,7 @@ export class GroupAppletsSidebar extends LitElement {
         .tooltipText=${'Home'}
         placement="bottom"
         @click=${() => {
+          this._groupStore?.clearGroupNotificationStatus();
           this.dispatchEvent(
             new CustomEvent('group-home-selected', {
               bubbles: false,
@@ -235,7 +263,10 @@ export class GroupAppletsSidebar extends LitElement {
           );
         }}
       >
-        <div class="moss-item-button">
+        <div class="moss-item-button" style="position: relative;">
+          ${badgeUrgency && badgeUrgency !== 'low' && badgeCount
+            ? html`<div class="home-notification-badge ${badgeCount > 9 ? 'padded' : ''}">${badgeCount}</div>`
+            : html``}
           <sl-icon .src=${wrapPathInSvg(mdiHome)} style="font-size: 40px;"></sl-icon>
         </div>
       </topbar-button>
@@ -300,6 +331,27 @@ export class GroupAppletsSidebar extends LitElement {
       .right {
         position: absolute;
         right: 0;
+      }
+
+      .home-notification-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        font-weight: bold;
+        background: var(--moss-purple, #355dfa);
+        border-radius: 10px;
+        height: 20px;
+        min-width: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 12px;
+        z-index: 1;
+      }
+
+      .home-notification-badge.padded {
+        padding: 0 4px;
       }
     `,
   ];
