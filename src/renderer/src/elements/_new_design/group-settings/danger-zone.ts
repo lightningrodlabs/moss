@@ -1,7 +1,7 @@
 import { customElement, query, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
-import { localized, msg } from '@lit/localize';
+import { localized, msg, str } from '@lit/localize';
 import { notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { CellType, encodeHashToBase64, ProvisionedCell } from '@holochain/client';
 import { Applet, JoinAppletInput } from '@theweave/group-client';
@@ -161,7 +161,7 @@ export class DangerTone extends LitElement {
       }
 
       // 4. Create new group with the same name and icon
-      this.cloneStep = msg(`Creating new group "${newName}"...`);
+      this.cloneStep = msg(str`Creating new group "${newName}"...`);
       const newGroupAppInfo = await this._mossStore.createGroup(
         newName,
         groupProfile.icon_src,
@@ -183,7 +183,7 @@ export class DangerTone extends LitElement {
       for (let i = 0; i < applets.length; i++) {
         const originalApplet = applets[i];
         this.cloneStep = msg(
-          `Installing tool "${originalApplet.custom_name}" (${i + 1}/${applets.length})...`,
+          str`Installing tool "${originalApplet.custom_name}" (${i + 1}/${applets.length})...`,
         );
 
         const newApplet: Applet = {

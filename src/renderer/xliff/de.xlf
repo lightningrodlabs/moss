@@ -342,14 +342,6 @@
   <source>No tools yet.</source>
   <target>Noch keine Tools.</target>
 </trans-unit>
-<trans-unit id="scaf5d44824fbdded">
-  <source>Let's change that:</source>
-  <target>Das ändern wir:</target>
-</trans-unit>
-<trans-unit id="sfda931c0d8d794fb">
-  <source>activate tools</source>
-  <target>Tools aktivieren</target>
-</trans-unit>
 <trans-unit id="s477a2fd64cff5b47">
   <source>add a tool</source>
   <target>ein Tool hinzufügen</target>
@@ -2022,6 +2014,194 @@ beginnt jetzt</target>
 <trans-unit id="s43bda70697c53bfb">
   <source>Warning: DNA hash mismatch. The UI may not work correctly with the current data.</source>
   <target>Warnung: DNA-Hash stimmt nicht überein. Die Benutzeroberfläche funktioniert möglicherweise nicht korrekt mit den aktuellen Daten.</target>
+</trans-unit>
+<trans-unit id="s32b06eec79ceb042">
+  <source>tool available.</source>
+  <target>Tool verfügbar.</target>
+</trans-unit>
+<trans-unit id="s4aa1ce16ceb3e5fb">
+  <source>tools available.</source>
+  <target>Tools verfügbar.</target>
+</trans-unit>
+<trans-unit id="sf6175edd3d1e971d">
+  <source>activate it</source>
+  <target>aktivieren</target>
+</trans-unit>
+<trans-unit id="s59a61f2b6af28c72">
+  <source>activate them</source>
+  <target>alle aktivieren</target>
+</trans-unit>
+<trans-unit id="s2a4c6fb23c866eb1">
+  <source>Contact a steward to add tools to this group.</source>
+  <target>Wende dich an einen Verwalter, um Tools zu dieser Gruppe hinzuzufügen.</target>
+</trans-unit>
+<trans-unit id="sfbc572878dce8881">
+  <source>Reading group profile...</source>
+  <target>Gruppenprofil wird gelesen…</target>
+</trans-unit>
+<trans-unit id="sd220e2806cdd933c">
+  <source>Reading installed tools...</source>
+  <target>Installierte Tools werden gelesen…</target>
+</trans-unit>
+<trans-unit id="s0fcbfe294394850d">
+  <source>Creating new group "<x id="0" equiv-text="${newName}"/>"...</source>
+  <target>Neue Gruppe "<x id="0" equiv-text="${newName}"/>" wird erstellt…</target>
+</trans-unit>
+<trans-unit id="s955468253ede6438">
+  <source>Installing tool "<x id="0" equiv-text="${originalApplet.custom_name}"/>" (<x id="1" equiv-text="${i + 1}"/>/<x id="2" equiv-text="${applets.length}"/>)...</source>
+  <target>Tool "<x id="0" equiv-text="${originalApplet.custom_name}"/>" wird installiert (<x id="1" equiv-text="${i + 1}"/>/<x id="2" equiv-text="${applets.length}"/>)…</target>
+</trans-unit>
+<trans-unit id="s75b94a11ab02da10">
+  <source>Done. Reloading...</source>
+  <target>Fertig. Wird neu geladen…</target>
+</trans-unit>
+<trans-unit id="s921bfd89363d2ac0">
+  <source>Error cloning group</source>
+  <target>Fehler beim Klonen der Gruppe</target>
+</trans-unit>
+<trans-unit id="s22407abcf27fd239">
+  <source>Clone Group</source>
+  <target>Gruppe klonen</target>
+</trans-unit>
+<trans-unit id="sa15f8a12d82a7390">
+  <source>Enter a name for the new group. It will be created with the same tools but the data will not be copied over.</source>
+  <target>Gib einen Namen für die neue Gruppe ein. Sie wird mit denselben Tools erstellt, die Daten werden jedoch nicht übernommen.</target>
+</trans-unit>
+<trans-unit id="s7284fad07ef169ae">
+  <source>Group stewardship</source>
+  <target>Gruppenverwaltung</target>
+</trans-unit>
+<trans-unit id="s84bc8531f5463cf8">
+  <source>The group you are cloning is stewarded. Would you like the new group to be stewarded as well? You will be set as the initial steward. More stewards can be added later.</source>
+  <target>Die zu klonende Gruppe hat einen Verwalter. Soll die neue Gruppe ebenfalls verwaltet werden? Du wirst als erster Verwalter eingetragen. Weitere Verwalter können später hinzugefügt werden.</target>
+</trans-unit>
+<trans-unit id="s5e2654fb8587f442">
+  <source>Clone</source>
+  <target>Klonen</target>
+</trans-unit>
+<trans-unit id="se4afe84806b79299">
+  <source>Cloning...</source>
+  <target>Wird geklont…</target>
+</trans-unit>
+<trans-unit id="s7f6513b2d6dbf665">
+  <source>Clone the group. This will create a separate group with the same Tools as this one. You can then choose to leave the original group and keep using the cloned one.</source>
+  <target>Klone die Gruppe. Dadurch wird eine separate Gruppe mit denselben Tools wie diese erstellt. Du kannst dann die ursprüngliche Gruppe verlassen und die geklonte weiter nutzen.</target>
+</trans-unit>
+<trans-unit id="sff498a3bad06a8e4">
+  <source>Cloning group...</source>
+  <target>Gruppe wird geklont…</target>
+</trans-unit>
+<trans-unit id="sc5fcf503a8d931c7">
+  <source>Clone failed:</source>
+  <target>Klonen fehlgeschlagen:</target>
+</trans-unit>
+<trans-unit id="se6c45d1b37e3b6fa">
+  <source>Migrate Groups</source>
+  <target>Gruppen migrieren</target>
+</trans-unit>
+<trans-unit id="scee604f4ce2a29a9">
+  <source>An error occurred during export. Please check the console for details.</source>
+  <target>Beim Export ist ein Fehler aufgetreten. Details findest du in der Konsole.</target>
+</trans-unit>
+<trans-unit id="scad0fc1e8c71ea53">
+  <source>Export Groups Data</source>
+  <target>Gruppendaten exportieren</target>
+</trans-unit>
+<trans-unit id="s35468d29258f1a40">
+  <source>An error occurred during import. Please check the console for details.</source>
+  <target>Beim Import ist ein Fehler aufgetreten. Details findest du in der Konsole.</target>
+</trans-unit>
+<trans-unit id="s2a8177afa9255144">
+  <source>Import Groups Data</source>
+  <target>Gruppendaten importieren</target>
+</trans-unit>
+<trans-unit id="s98b1cb8fb62909ec">
+  <source>Group</source>
+  <target>Gruppe</target>
+</trans-unit>
+<trans-unit id="s3d5cc717b8113c12">
+  <source>Unknown group</source>
+  <target>Unbekannte Gruppe</target>
+</trans-unit>
+<trans-unit id="s02f2ca95b16d99f1">
+  <source>Setting group profile...</source>
+  <target>Gruppenprofil wird festgelegt…</target>
+</trans-unit>
+<trans-unit id="se8e9bbde339d6501">
+  <source>Waiting for data to sync...</source>
+  <target>Warten auf die Datensynchronisierung…</target>
+</trans-unit>
+<trans-unit id="sf5961ca34e0cdd82">
+  <source>Installing tool</source>
+  <target>Tool wird installiert</target>
+</trans-unit>
+<trans-unit id="sb41b2cfbbc52565b">
+  <source>Created</source>
+  <target>Erstellt</target>
+</trans-unit>
+<trans-unit id="sdbb88e225488d970">
+  <source>Joined</source>
+  <target>Beigetreten</target>
+</trans-unit>
+<trans-unit id="sff553f4a093c366f">
+  <source>Joined (profile not yet synced)</source>
+  <target>Beigetreten (Profil noch nicht synchronisiert)</target>
+</trans-unit>
+<trans-unit id="s91fcb98e2aede8d1">
+  <source>Already installed</source>
+  <target>Bereits installiert</target>
+</trans-unit>
+<trans-unit id="s19e08e5eacff6b7f">
+  <source>Network Configuration</source>
+  <target>Netzwerkkonfiguration</target>
+</trans-unit>
+<trans-unit id="s7d50b27bfe7c82ac">
+  <source>Bootstrap URL</source>
+  <target>Bootstrap-URL</target>
+</trans-unit>
+<trans-unit id="s96c48ef73935c537">
+  <source>Relay URL</source>
+  <target>Relay-URL</target>
+</trans-unit>
+<trans-unit id="sad66f11e998ae637">
+  <source>Changing these settings will relaunch Moss. All peers must use the same bootstrap server to connect.</source>
+  <target>Das Ändern dieser Einstellungen startet Moss neu. Alle Peers müssen denselben Bootstrap-Server verwenden, um sich zu verbinden.</target>
+</trans-unit>
+<trans-unit id="s76c11f3845111b1d">
+  <source>Reset to Defaults</source>
+  <target>Auf Standardwerte zurücksetzen</target>
+</trans-unit>
+<trans-unit id="scde621ffddd995ac">
+  <source>Save &amp; Relaunch</source>
+  <target>Speichern & neu starten</target>
+</trans-unit>
+<trans-unit id="se32638c57d4ec6ba">
+  <source>Importing groups...</source>
+  <target>Gruppen werden importiert…</target>
+</trans-unit>
+<trans-unit id="s1db8ae432fd2d80c">
+  <source>Import existing data?</source>
+  <target>Vorhandene Daten importieren?</target>
+</trans-unit>
+<trans-unit id="sb9bf0a402ae8b0b8">
+  <source>Moss data from previous version(s) found. You can import to keep your previous identity and groups, or start fresh.</source>
+  <target>Moss-Daten aus früheren Versionen gefunden. Du kannst sie importieren, um deine bisherige Identität und Gruppen zu behalten, oder neu starten.</target>
+</trans-unit>
+<trans-unit id="sb4319ece7027f084">
+  <source>Import data</source>
+  <target>Daten importieren</target>
+</trans-unit>
+<trans-unit id="sfd5be1a75a199417">
+  <source>Start fresh</source>
+  <target>Neu beginnen</target>
+</trans-unit>
+<trans-unit id="sf1c556a03fc6b047">
+  <source>Installing group...</source>
+  <target>Gruppe wird installiert…</target>
+</trans-unit>
+<trans-unit id="s7301570d0bb8fc6d">
+  <source>Done.</source>
+  <target>Fertig.</target>
 </trans-unit>
 </body>
 </file>

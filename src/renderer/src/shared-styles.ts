@@ -374,6 +374,7 @@ export const mossStyles = [
       font-size: 14px;
       line-height: 16px;
       padding: 8px 10px;
+      cursor: pointer;
     }
 
     .moss-mini-button-secondary {
@@ -383,13 +384,11 @@ export const mossStyles = [
     }
 
     .moss-mini-button-secondary:hover {
-      color: white;
-      background-color: black;
+      background-color: #a5a5a5;
     }
 
     .moss-mini-button-primary:hover {
-      color: black;
-      background-color: white;
+      background-color: #7a7a7a;
     }
 
     .moss-mini-button-primary {
@@ -401,6 +400,7 @@ export const mossStyles = [
     .moss-mini-button-disabled {
       opacity: 0.4;
       pointer-events: none;
+      cursor: 'not-allowed';
     }
 
     .tab-bar {

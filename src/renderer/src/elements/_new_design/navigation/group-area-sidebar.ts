@@ -43,7 +43,7 @@ import {
   questionMarkInfoIcon,
 } from '../icons.js';
 import { Profile } from '@holochain-open-dev/profiles';
-import {EntryRecord, GetonlyMap} from '@holochain-open-dev/utils';
+import { EntryRecord, GetonlyMap } from '@holochain-open-dev/utils';
 import { AgentAndTzOffset } from '../../../groups/elements/group-peers-status.js';
 import {
   localTimeFromUtcOffset,
@@ -401,18 +401,10 @@ export class GroupAppletsSidebar extends LitElement {
           .error=${this._groupApplets.value.error}
         ></display-error>`;
       case 'complete':
-        return this._groupApplets.value.value.size === 0 && !this.collapsed && this.amIPrivileged() && this.groupProfileIsKnown()
-          ? html`<div
-              class="column items-center"
-              style="background: var(--moss-light-green); border-radius: 12px; padding: 6px;"
-            >
-              <div style="text-align: center; margin-bottom: 10px;">
-                ${msg('No tools yet.')}<br />${msg("Let's change that:")}
-              </div>
-              <button
-                class="moss-button flex flex-1"
-                style="padding-top: 10px; padding-bottom: 10px; border-radius: 10px; width: 120px; font-size: 16px;"
-                @click=${() => {
+        return this._groupApplets.value.value.size === 0 && this.groupProfileIsKnown()
+          ? html`
+          <div 
+            @click=${() => {
               // If there are unactivated tools, open inactive tools dialog
               // Otherwise, open tool library
               if (this.numUnjoinedTools() && this.numUnjoinedTools()! > 0) {
@@ -427,7 +419,7 @@ export class GroupAppletsSidebar extends LitElement {
                     composed: true,
                   }),
                 );
-              } else {
+              } else if (this.amIPrivileged()) {
                 this.dispatchEvent(
                   new CustomEvent('add-tool-requested', {
                     detail: { groupHash: this._groupStore.groupDnaHash },
@@ -436,14 +428,59 @@ export class GroupAppletsSidebar extends LitElement {
                   }),
                 );
               }
-            }}
-              >
-                <div class="flex- flex-1">
-                  + ${this.numUnjoinedTools() && this.numUnjoinedTools()! > 0 ? msg('activate tools') : msg('add a tool')}
+            }}>
+              ${this.collapsed
+              ? !this.numUnjoinedTools() || this.numUnjoinedTools() === 0 ? "" : html`
+                <sl-tooltip
+                  content="${msg('Activate tools peers already use')}"
+                  placement="right"
+                  hoist
+                >
+                <button
+                  class="btn activate-tools-button"
+                >
+                  <div
+                    class="column center-content "
+                    style="height: 35px; width: 35px; position: relative;"
+                  >
+                    <div class="column center-content unjoined-tools-indicator">
+                      ${this.numUnjoinedTools()}
+                    </div>
+                    ${downloadIcon()}
+                  </div>
+                </button>
+                </sl-tooltip>
+              `: html`
+                <div
+                  class="column items-center"
+                  style="background: var(--moss-light-green); border-radius: 12px; padding: 6px;"
+                >
+                  <div style="text-align: center; margin-bottom: 10px;">
+                    ${this.numUnjoinedTools() && this.numUnjoinedTools()! > 0 ? html`
+                      ${this.numUnjoinedTools()} ${this.numUnjoinedTools() === 1 ? msg('tool available.') : msg('tools available.')}
+                    ` : html`
+                        ${msg('No tools yet.')}
+                    `}
+                  </div>
+                  ${(this.numUnjoinedTools() && this.numUnjoinedTools()! > 0) || this.amIPrivileged() ? html`
+                  <button
+                    class="moss-button flex flex-1"
+                    style="padding-top: 10px; padding-bottom: 10px; border-radius: 10px; width: 120px; font-size: 16px;"
+                  >
+                  <div class="flex- flex-1">
+                    + ${this.numUnjoinedTools() && this.numUnjoinedTools()! > 0 ?
+                    this.numUnjoinedTools() == 1 ? msg('activate it') : msg('activate them') :
+                    msg('add a tool')}
+                    </div>
+                  </button>` : html`
+                    <div style="text-align: center; font-size: 14px; opacity: 0.8;">
+                      ${msg('Contact a steward to add tools to this group.')}
+                    </div>
+                  `}
                 </div>
-              </button>
-            </div>`
-          : this.renderAppletButtons(this._groupApplets.value.value);
+                  `}
+            </div>
+          `: this.renderAppletButtons(this._groupApplets.value.value);
     }
   }
 
@@ -642,7 +679,7 @@ export class GroupAppletsSidebar extends LitElement {
     // Don't show this button if there are no activated tools yet
     // (in that case, the "No tools yet" pane handles it)
     if (this._groupApplets.value.status === 'complete' &&
-        this._groupApplets.value.value.size === 0) {
+      this._groupApplets.value.value.size === 0) {
       return html``;
     }
 
@@ -692,23 +729,23 @@ export class GroupAppletsSidebar extends LitElement {
       <div class="column" style="margin-bottom: 40px; position: relative;">
         <div style="position: absolute; top: 10px; right: 10px;">
           ${this._groupStore.isAgentHidden(encodeHashToBase64(this._selectedAgent!.agent))
-            ? html`<button
+        ? html`<button
                 class="moss-button-secondary"
                 style="padding: 4px 10px; font-size: 12px; border-radius: 8px;"
                 @click=${() => {
-                  this._groupStore.unhideAgent(this._selectedAgent!.agent);
-                  this._memberProfileDialog.hide();
-                }}
+            this._groupStore.unhideAgent(this._selectedAgent!.agent);
+            this._memberProfileDialog.hide();
+          }}
               >
                 ${msg('Unhide')}
               </button>`
-            : html`<button
+        : html`<button
                 class="moss-button-secondary"
                 style="padding: 4px 10px; font-size: 12px; border-radius: 8px;"
                 @click=${() => {
-                  this._groupStore.hideAgent(this._selectedAgent!.agent);
-                  this._memberProfileDialog.hide();
-                }}
+            this._groupStore.hideAgent(this._selectedAgent!.agent);
+            this._memberProfileDialog.hide();
+          }}
               >
                 ${msg('Hide')}
               </button>`}
@@ -726,8 +763,8 @@ export class GroupAppletsSidebar extends LitElement {
           ></copy-hash>
           <sl-tooltip
             .content=${msg(
-      "This is peer's public key. Use it to confirm the identity of the profile.",
-    )}
+            "This is peer's public key. Use it to confirm the identity of the profile.",
+          )}
           >
             <span style="margin-left:5px; opacity: 0.5;"
               >${questionMarkInfoIcon(20)}</span
