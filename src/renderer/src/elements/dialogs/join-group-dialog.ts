@@ -34,6 +34,7 @@ export class JoinGroupDialog extends LitElement {
   async open(modifiers?: PartialModifiers) {
     if (modifiers) {
       this.modifiers = modifiers;
+      this._joinByPaste = false;
     } else {
       this._joinByPaste = true;
     }

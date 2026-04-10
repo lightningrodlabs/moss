@@ -996,7 +996,7 @@ Changes:
 
   renderToolUpdate(toolInfo: ToolInfoAndLatestVersion) {
     return html`
-      <div class="tool-update-outer">
+      <div class="tool-update-outer ${this.updatingTool ? 'updating' : ''}">
         <div class="install-tool-overlay">
           <sl-button
             ?disabled=${this.updatingTool}
@@ -1396,12 +1396,12 @@ Changes:
               <div
                 class="all-streams-button fixed ${this.notificationSection !== null ? 'left' : ''}"
                 @click=${() => {
-                  this.dispatchEvent(new CustomEvent('personal-view-selected', {
-                    detail: { type: 'moss', name: 'activity-view' },
-                    bubbles: true,
-                    composed: true,
-                  }));
-                }}
+              this.dispatchEvent(new CustomEvent('personal-view-selected', {
+                detail: { type: 'moss', name: 'activity-view' },
+                bubbles: true,
+                composed: true,
+              }));
+            }}
               >
                 ${msg('All streams')} ${this._notificationFeed.value?.length ?? 0}
               </div>
@@ -1932,12 +1932,14 @@ Changes:
         color: #FFF;
       }
 
-      .tool-update-outer:hover .install-tool-overlay {
+      .tool-update-outer:hover .install-tool-overlay,
+      .tool-update-outer.updating .install-tool-overlay {
         background: color-mix(in srgb, var(--moss-purple, #7461EB) 40%, transparent);
         z-index: 1;
       }
 
-      .tool-update-outer:hover .install-tool-overlay > sl-button {
+      .tool-update-outer:hover .install-tool-overlay > sl-button,
+      .tool-update-outer.updating .install-tool-overlay > sl-button {
         opacity: 1;
       }
 
