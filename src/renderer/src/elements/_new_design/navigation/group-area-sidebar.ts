@@ -431,7 +431,7 @@ export class GroupAppletsSidebar extends LitElement {
               }
             }}>
               ${this.collapsed
-              ? html`
+              ? !this.numUnjoinedTools || this.numUnjoinedTools() == 0 ? "" : html`
                 <sl-tooltip
                   content="${msg('Activate tools peers already use')}"
                   placement="right"
@@ -463,18 +463,23 @@ export class GroupAppletsSidebar extends LitElement {
                         ${msg('No tools yet.')}
                     `}
                   </div>
+                  ${(this.numUnjoinedTools() && this.numUnjoinedTools()! > 0) || this.amIPrivileged() ? html`
                   <button
                     class="moss-button flex flex-1"
                     style="padding-top: 10px; padding-bottom: 10px; border-radius: 10px; width: 120px; font-size: 16px;"
                   >
                   <div class="flex- flex-1">
                     + ${this.numUnjoinedTools() && this.numUnjoinedTools()! > 0 ?
-                  this.numUnjoinedTools() == 1 ? msg('activate it') : msg('activate them') :
-                  msg('add a tool')}
+                    this.numUnjoinedTools() == 1 ? msg('activate it') : msg('activate them') :
+                    msg('add a tool')}
                     </div>
-                  </button>
+                  </button>` : html`
+                    <div style="text-align: center; font-size: 14px; opacity: 0.8;">
+                      ${msg('Contact a steward to add tools to this group.')}
+                    </div>
+                  `}
                 </div>
-              `}
+                  `}
             </div>
           `: this.renderAppletButtons(this._groupApplets.value.value);
     }
