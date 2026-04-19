@@ -257,9 +257,9 @@ See [RUNTIME_CHOICE.md](spikes/asr-m0/RUNTIME_CHOICE.md) for the
 revised rationale. Mac/Win validation deferred to M1's portability
 pass.
 
-### M1 — Moss-internal ASR service (in progress 2026-04-18)
+### M1 — Moss-internal ASR service (in progress 2026-04-19)
 
-**Done so far** (all in [src/main/asr/](src/main/asr/), 31 unit tests):
+**Done so far** (all in [src/main/asr/](src/main/asr/), 78 unit tests):
 
 - `WhisperServer` — sidecar-process wrapper (spawn, port pick, TCP
   readiness probe, multipart inference, SIGTERM/SIGKILL stop). Real
@@ -267,28 +267,32 @@ pass.
 - `AsrSession` — per-utterance buffer, push/flush with
   `endOfUtterance` flag + `maxBufferMs` safety cap, serialized
   pushes so `final` events stay in order, listener fan-out for
-  final/partial/error, close-flush + idempotent close.
+  final/partial/error, close-flush + idempotent close, **energy-VAD
+  silence detection** (commits an utterance after `vadSilenceMs` of
+  silence following speech; default 500 ms / RMS 0.01).
 - `AsrBroker` — lazy model load, concurrent-session sharing,
   ref-counted idle unload with cancel-on-reacquire, race-safe
   unload, `serverFactory` test seam.
 - `resolveWhisperServerCommand` — env var → bundled binary →
   nix-shell dev fallback. Pure-function with Electron-derived
   inputs injected by caller.
+- **IPC + WeaveClient surface (M2).** Cross-process plumbing wired:
+  preload, applet-host bridge, applet-iframe handler, validation
+  schemas, and the public `WeaveClient.localModels.asr.openSession`
+  API in `@theweave/api`. Exercised end-to-end from the example
+  applet's `<asr-test>` panel.
 
 **Still to do in M1:**
 
-- Wrap the broker in a Moss-process service with a stable IPC
-  boundary. Applets in iframes can't hold the model themselves
-  anyway; there needs to be a broker.
-- Lifecycle: lazy load on first session request, reference-count
-  open sessions, unload after idle timeout.
-- **Chunking strategy must not be naïve fixed-window.** M0 confirmed
-  that fixed 3 s windows with overlap give visibly worse text than
-  batch (boundary words get mangled) AND each window pays full
-  encoder cost (per-3-s-window inference was 4.6–6.7 s vs. 4.2 s for
-  the whole 11 s clip in batch). Try `whisper-vad-speech-segments`
-  (ships in the same package as whisper-cli) before writing custom
-  VAD. Cut on actual silences, with a fallback max-window length.
+- **Chunking strategy must not be naïve fixed-window.** ✅ Implemented
+  as energy-VAD inside `AsrSession` (2026-04-19). Per-chunk RMS gates
+  silence detection; `vadSilenceMs` of post-speech silence triggers a
+  commit. Falls back to the existing `maxBufferMs` cap if no silence
+  is ever observed. Skipped the `whisper-vad-speech-segments` binary
+  approach for now — would have required spawning the binary per
+  buffer, more moving parts, no clear quality win at this stage.
+  Revisit (or swap in Silero VAD) if real-world environments show the
+  energy-RMS approach misfiring.
 - **Build whisper-cli + whisper-server per platform via Moss CI**
   and ship into `resources/bins` the same way holochain / lair /
   kitsune2-bootstrap-srv binaries are shipped. Upstream whisper.cpp
