@@ -70,6 +70,7 @@ import '../assets/creatables/creatable-palette.js';
 import { MossPocket } from '../assets/pocket/pocket.js';
 import { CreatablePalette } from '../assets/creatables/creatable-palette.js';
 import { appletMessageHandler, handleAppletIframeMessage } from '../applets/applet-host.js';
+import { initAsrRendererBridge } from '../applets/asr-bridge.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
 import { progenitorFromProperties } from '../utils.js';
@@ -613,6 +614,10 @@ export class MainDashboard extends LitElement {
 
     this._appletMessageListener = appletMessageHandler(this._mossStore, this.openViews);
     window.addEventListener('message', this._appletMessageListener);
+
+    // Wire window.electronAPI.onAsrEvent → AsrRendererBridge so that
+    // 'asr-event' IPC pushes from main reach the right applet iframe.
+    initAsrRendererBridge();
     window.electronAPI.onAppletToParentMessage(async (_e, payload) => {
       if (!payload.message.source) throw new Error('source not defined in AppletToParentMessage');
       const response = await handleAppletIframeMessage(
