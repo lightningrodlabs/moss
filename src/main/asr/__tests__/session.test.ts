@@ -13,6 +13,14 @@ function silentPcm(samples: number): Int16Array {
   return new Int16Array(samples);
 }
 
+/** PCM at constant amplitude — RMS = `amplitude` (normalized). */
+function speechPcm(samples: number, amplitude = 0.3): Int16Array {
+  const out = new Int16Array(samples);
+  const v = Math.round(amplitude * 32767);
+  for (let i = 0; i < samples; i++) out[i] = v;
+  return out;
+}
+
 describe('AsrSession', () => {
   it('emits a final event when pushAudio is called with endOfUtterance', async () => {
     const fake = makeReadyServer({
@@ -159,5 +167,135 @@ describe('AsrSession', () => {
     off();
     await session.pushAudio(silentPcm(16_000), true);
     expect(finals).toHaveLength(1); // no new event
+  });
+});
+
+describe('AsrSession VAD', () => {
+  // 16 kHz mono. 1600 samples = 100 ms. Tests run with vadSilenceMs:
+  // 200 (= 3200 samples = 2 chunks of 100 ms), vadSilenceRms: 0.05
+  // (well below the 0.3 amplitude of speechPcm and well above
+  // silentPcm's 0).
+
+  function vadSession(server = makeReadyServer(), opts = {}) {
+    return new AsrSession(asWhisperServer(server), () => {}, {
+      vadSilenceMs: 200,
+      vadSilenceRms: 0.05,
+      ...opts,
+    });
+  }
+
+  it('does not flush on silence alone (no preceding speech)', async () => {
+    const fake = makeReadyServer();
+    const session = vadSession(fake);
+    // 5 chunks of 100 ms silence — 500 ms total, well past vadSilenceMs.
+    for (let i = 0; i < 5; i++) {
+      await session.pushAudio(silentPcm(1600), false);
+    }
+    expect(fake.transcribeCalls).toHaveLength(0);
+  });
+
+  it('flushes after vadSilenceMs of silence following speech', async () => {
+    const fake = makeReadyServer();
+    const session = vadSession(fake);
+    await session.pushAudio(speechPcm(1600), false); // 100 ms speech
+    expect(fake.transcribeCalls).toHaveLength(0);
+    await session.pushAudio(silentPcm(1600), false); // 100 ms silence — not yet
+    expect(fake.transcribeCalls).toHaveLength(0);
+    await session.pushAudio(silentPcm(1600), false); // another 100 ms — total 200 ms → flush
+    expect(fake.transcribeCalls).toHaveLength(1);
+  });
+
+  it('does NOT flush when silence is shorter than vadSilenceMs', async () => {
+    const fake = makeReadyServer();
+    const session = vadSession(fake);
+    await session.pushAudio(speechPcm(1600), false);
+    await session.pushAudio(silentPcm(1600), false); // 100 ms silence — under 200 ms
+    await session.pushAudio(speechPcm(1600), false); // resumes speech, resets silence accum
+    await session.pushAudio(silentPcm(1600), false); // 100 ms silence again — still under
+    expect(fake.transcribeCalls).toHaveLength(0);
+  });
+
+  it('starts a fresh utterance after a VAD-triggered flush', async () => {
+    const fake = makeReadyServer();
+    const session = vadSession(fake);
+    // First utterance: speech + 200 ms silence → flush 1
+    await session.pushAudio(speechPcm(1600), false);
+    await session.pushAudio(silentPcm(1600), false);
+    await session.pushAudio(silentPcm(1600), false);
+    expect(fake.transcribeCalls).toHaveLength(1);
+    // Pure silence after the flush should NOT immediately re-trigger.
+    await session.pushAudio(silentPcm(1600), false);
+    await session.pushAudio(silentPcm(1600), false);
+    expect(fake.transcribeCalls).toHaveLength(1);
+    // Second utterance: speech + silence → flush 2
+    await session.pushAudio(speechPcm(1600), false);
+    await session.pushAudio(silentPcm(1600), false);
+    await session.pushAudio(silentPcm(1600), false);
+    expect(fake.transcribeCalls).toHaveLength(2);
+  });
+
+  it('emits ordered finals with cursor advancing across VAD-driven flushes', async () => {
+    let n = 0;
+    const fake = makeReadyServer({
+      transcribe: () => {
+        n += 1;
+        return {
+          segments: [{ text: `utt${n}`, tStart: 0, tEnd: 100 }],
+          inferMs: 1,
+        };
+      },
+    });
+    const session = vadSession(fake);
+    const finals: AsrFinalEvent[] = [];
+    session.onFinal((ev) => finals.push(ev));
+
+    // Utterance 1: 100 ms speech + 200 ms silence (3 chunks total = 300 ms)
+    await session.pushAudio(speechPcm(1600), false);
+    await session.pushAudio(silentPcm(1600), false);
+    await session.pushAudio(silentPcm(1600), false);
+
+    // Utterance 2: 100 ms speech + 200 ms silence (another 300 ms)
+    await session.pushAudio(speechPcm(1600), false);
+    await session.pushAudio(silentPcm(1600), false);
+    await session.pushAudio(silentPcm(1600), false);
+
+    expect(finals.map((f) => f.text)).toEqual(['utt1', 'utt2']);
+    expect(finals[0].tStart).toBe(0);
+    // Second utterance starts at the cursor advanced by the first
+    // flush (3 × 100 ms = 300 ms).
+    expect(finals[1].tStart).toBe(300);
+  });
+
+  it('vad: false disables silence-triggered flushes', async () => {
+    const fake = makeReadyServer();
+    const session = new AsrSession(asWhisperServer(fake), () => {}, {
+      vad: false,
+      vadSilenceMs: 100, // small, would otherwise easily fire
+      vadSilenceRms: 0.05,
+    });
+    await session.pushAudio(speechPcm(1600), false);
+    for (let i = 0; i < 10; i++) {
+      await session.pushAudio(silentPcm(1600), false); // 1 second of silence
+    }
+    expect(fake.transcribeCalls).toHaveLength(0);
+  });
+
+  it('endOfUtterance still wins regardless of VAD state', async () => {
+    const fake = makeReadyServer();
+    const session = vadSession(fake);
+    await session.pushAudio(speechPcm(1600), false); // speech, no silence yet
+    await session.pushAudio(speechPcm(1600), true); // explicit commit mid-speech
+    expect(fake.transcribeCalls).toHaveLength(1);
+  });
+
+  it('ignores chunks below vadSilenceRms in pre-speech state', async () => {
+    const fake = makeReadyServer();
+    const session = vadSession(fake);
+    // Tiny non-zero noise: amplitude 0.01 → RMS 0.01, below the 0.05 threshold.
+    const quietNoise = speechPcm(1600, 0.01);
+    for (let i = 0; i < 10; i++) {
+      await session.pushAudio(quietNoise, false);
+    }
+    expect(fake.transcribeCalls).toHaveLength(0);
   });
 });
