@@ -4,6 +4,7 @@ import {
   AsrIncomingEvent,
   AsrSessionRequest,
   AsrTransport,
+  fetchAsrCapabilities,
   openAsrSession,
 } from '../asr';
 
@@ -186,6 +187,53 @@ describe('AsrSession.close', () => {
     await session.close();
     t.emit({ sessionId: 'sid-1', eventType: 'final', text: 'after close', tStart: 0, tEnd: 1 });
     expect(finals).toHaveLength(0);
+  });
+});
+
+describe('fetchAsrCapabilities', () => {
+  it('sends asr-capabilities and returns the parent-supplied shape', async () => {
+    const t = makeTransport({
+      sendImpl: async (req) => {
+        if (req.type === 'asr-capabilities') {
+          return {
+            asr: {
+              available: true,
+              languages: ['en'],
+              streaming: false,
+              model: 'base.en',
+              latencyTier: 'ok',
+            },
+          };
+        }
+        return undefined;
+      },
+    });
+    const caps = await fetchAsrCapabilities(t);
+    expect(t.sent).toEqual([{ type: 'asr-capabilities' }]);
+    expect(caps.asr.available).toBe(true);
+    expect(caps.asr.model).toBe('base.en');
+  });
+
+  it('throws on a malformed reply', async () => {
+    const t = makeTransport({
+      sendImpl: async () => ({ asr: { available: 'yes' } }),
+    });
+    await expect(fetchAsrCapabilities(t)).rejects.toThrow(/Bad asr-capabilities reply/);
+  });
+
+  it('rejects an unknown latencyTier value', async () => {
+    const t = makeTransport({
+      sendImpl: async () => ({
+        asr: {
+          available: true,
+          languages: [],
+          streaming: false,
+          model: 'x',
+          latencyTier: 'blazing',
+        },
+      }),
+    });
+    await expect(fetchAsrCapabilities(t)).rejects.toThrow(/Bad asr-capabilities reply/);
   });
 });
 

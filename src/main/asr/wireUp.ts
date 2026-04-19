@@ -15,6 +15,7 @@ import { app, BrowserWindow, ipcMain, webContents } from 'electron';
 
 import {
   defaultModelPath,
+  getAsrCapabilities,
   initAsrService,
   shutdownAsrService,
 } from './asrService';
@@ -25,6 +26,7 @@ import {
   AsrPushAudioRequest,
   asrCloseAllForOwner,
   asrCloseSession,
+  asrGetCapabilities,
   asrOpenSession,
   asrPushAudio,
 } from './ipcHandlers';
@@ -52,6 +54,11 @@ export interface AsrWireUpConfig {
   repoRoot?: string;
   /** Override the broker's idle unload timeout. */
   idleTimeoutMs?: number;
+  /**
+   * Override the capabilities `latencyTier` reported to applets.
+   * Defaults to $MOSS_ASR_LATENCY_TIER if set to fast/ok/slow, else 'ok'.
+   */
+  latencyTier?: 'fast' | 'ok' | 'slow';
 }
 
 let registered = false;
@@ -67,6 +74,7 @@ export function registerAsrIpc(config: AsrWireUpConfig): void {
   const modelPath =
     config.modelPath ?? defaultModelPath(config.repoRoot ?? process.cwd());
 
+  const latencyTier = config.latencyTier ?? readLatencyTierEnv();
   const broker = initAsrService({
     binariesDir: config.binariesDir,
     whisperServerVersion: WHISPER_SERVER_VERSION,
@@ -78,6 +86,7 @@ export function registerAsrIpc(config: AsrWireUpConfig): void {
       // visible — that's where actual problems show up.
       if (stream === 'stderr') process.stderr.write(`[whisper-server] ${chunk}`);
     },
+    latencyTier,
   });
 
   const registry = new SessionRegistry();
@@ -88,8 +97,10 @@ export function registerAsrIpc(config: AsrWireUpConfig): void {
       const wc = webContents.fromId(ownerId);
       if (wc && !wc.isDestroyed()) wc.send('asr-event', event);
     },
+    getCapabilities: () => getAsrCapabilities(),
   };
 
+  ipcMain.handle('asr-capabilities', () => asrGetCapabilities(ctx));
   ipcMain.handle('asr-open-session', (e, req: AsrOpenSessionRequest) =>
     asrOpenSession(ctx, e.sender.id, req),
   );
@@ -135,4 +146,9 @@ export function isAsrIpcRegistered(): boolean {
  */
 export function findWindowForOwner(ownerId: number): BrowserWindow | undefined {
   return BrowserWindow.getAllWindows().find((w) => w.webContents.id === ownerId);
+}
+
+function readLatencyTierEnv(): 'fast' | 'ok' | 'slow' | undefined {
+  const raw = process.env.MOSS_ASR_LATENCY_TIER?.trim().toLowerCase();
+  return raw === 'fast' || raw === 'ok' || raw === 'slow' ? raw : undefined;
 }

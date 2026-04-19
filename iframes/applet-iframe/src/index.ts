@@ -50,7 +50,9 @@ import {
   AsrSession,
   AsrSessionOptions,
   AsrTransport,
+  LocalModelCapabilities,
   LocalModelsApi,
+  fetchAsrCapabilities,
   openAsrSession,
 } from '@theweave/api';
 import { AsyncStatus, readable } from '@holochain-open-dev/stores';
@@ -412,6 +414,7 @@ const weaveApi: WeaveServices = {
       },
     };
     return {
+      capabilities: (): Promise<LocalModelCapabilities> => fetchAsrCapabilities(transport),
       asr: {
         openSession: (opts?: AsrSessionOptions): Promise<AsrSession> =>
           openAsrSession(transport, opts),

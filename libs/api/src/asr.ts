@@ -19,11 +19,21 @@
 // interface that abstracts away postMessage so the AsrSession class
 // stays unit-testable without a real iframe environment.
 
-import type { AsrFinalEvent, AsrSessionOptions } from './types.js';
+import type {
+  AsrFinalEvent,
+  AsrSessionOptions,
+  LocalAsrCapabilities,
+  LocalModelCapabilities,
+} from './types.js';
 
 // Re-export the wire-protocol types so consumers can import everything
 // from a single namespace.
-export type { AsrFinalEvent, AsrSessionOptions } from './types.js';
+export type {
+  AsrFinalEvent,
+  AsrSessionOptions,
+  LocalAsrCapabilities,
+  LocalModelCapabilities,
+} from './types.js';
 
 export interface AsrPartialEvent {
   text: string;
@@ -78,6 +88,12 @@ export interface AsrApi {
 }
 
 export interface LocalModelsApi {
+  /**
+   * Introspect what's wired up on the host. Tools should call this
+   * before offering model-dependent UI; `capabilities().asr.available`
+   * will be false if the host is present but has no model configured.
+   */
+  capabilities(): Promise<LocalModelCapabilities>;
   /** Speech-to-text. May throw if the host has no model configured. */
   asr: AsrApi;
 }
@@ -99,6 +115,7 @@ export interface AsrTransport {
 }
 
 export type AsrSessionRequest =
+  | { type: 'asr-capabilities' }
   | { type: 'asr-open-session'; opts?: AsrSessionOptions }
   | {
       type: 'asr-push-audio';
@@ -124,6 +141,47 @@ export async function openAsrSession(
   const reply = await transport.send({ type: 'asr-open-session', opts });
   const sessionId = extractSessionId(reply);
   return new AppletAsrSession(transport, sessionId);
+}
+
+/**
+ * Introspection fetch: asks the host what ASR capabilities are wired
+ * up. Used by applet-iframe to back
+ * `weaveClient.localModels.capabilities()`.
+ */
+export async function fetchAsrCapabilities(
+  transport: AsrTransport,
+): Promise<LocalModelCapabilities> {
+  const reply = await transport.send({ type: 'asr-capabilities' });
+  return extractCapabilities(reply);
+}
+
+function extractCapabilities(reply: unknown): LocalModelCapabilities {
+  if (!isObject(reply) || !isObject(reply.asr)) {
+    throw new Error(`Bad asr-capabilities reply: ${JSON.stringify(reply)}`);
+  }
+  const asr = reply.asr as Record<string, unknown>;
+  if (
+    typeof asr.available !== 'boolean' ||
+    !Array.isArray(asr.languages) ||
+    !asr.languages.every((l): l is string => typeof l === 'string') ||
+    typeof asr.streaming !== 'boolean' ||
+    typeof asr.model !== 'string' ||
+    (asr.latencyTier !== 'fast' && asr.latencyTier !== 'ok' && asr.latencyTier !== 'slow')
+  ) {
+    throw new Error(`Bad asr-capabilities reply: ${JSON.stringify(reply)}`);
+  }
+  const capabilities: LocalAsrCapabilities = {
+    available: asr.available,
+    languages: asr.languages,
+    streaming: asr.streaming,
+    model: asr.model,
+    latencyTier: asr.latencyTier,
+  };
+  return { asr: capabilities };
+}
+
+function isObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null;
 }
 
 function extractSessionId(reply: unknown): string {
