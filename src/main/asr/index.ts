@@ -44,11 +44,15 @@ export type {
 export {
   defaultModelPath,
   getAsrBroker,
+  getAsrCapabilities,
   initAsrService,
   isAsrServiceInitialized,
   shutdownAsrService,
 } from './asrService';
 export type { AsrServiceConfig } from './asrService';
+
+export { computeAsrCapabilities, WHISPER_MULTILINGUAL_CODES } from './capabilities';
+export type { ComputeAsrCapabilitiesInput } from './capabilities';
 
 export { SessionRegistry } from './sessionRegistry';
 export type { SessionEntry } from './sessionRegistry';
@@ -57,6 +61,7 @@ export {
   AsrIpcError,
   asrCloseAllForOwner,
   asrCloseSession,
+  asrGetCapabilities,
   asrOpenSession,
   asrPushAudio,
 } from './ipcHandlers';
