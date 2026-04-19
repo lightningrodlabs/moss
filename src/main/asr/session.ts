@@ -1,12 +1,27 @@
 // AsrSession — caller pushes PCM16 chunks, listens for final-segment
 // events. Sits on top of a WhisperServer obtained from the broker.
 //
-// V1 chunking strategy is deliberately simple: the caller signals
-// utterance boundaries via `endOfUtterance: true` (their VAD), and we
-// also force-flush when the buffer exceeds a safety cap. No partial
-// events in v1 — the M0 spike showed they cost a full encoder pass per
-// chunk and quality is poor. M2/M3 can add a partials path with proper
-// VAD chunking when there's a consumer that needs them.
+// Chunking strategy:
+//   1. Caller-driven: pass `endOfUtterance: true` when their own VAD
+//      (or end-of-file) signals an utterance boundary.
+//   2. Moss-driven energy VAD (default on): per-chunk RMS detects
+//      silence-after-speech and triggers a flush after `vadSilenceMs`
+//      of continuous silence. Tunable thresholds — see VAD_DEFAULTS.
+//   3. Safety cap: if neither of the above ever fires, force-flush
+//      after `maxBufferMs` of accumulated audio.
+//
+// Energy VAD vs ML VAD: this is fixed-threshold RMS, not Silero / not
+// whisper-vad-speech-segments. Pragmatic for v1 — no extra binary, no
+// per-buffer process spawn, runs in microseconds. If real-world
+// environments show this misfires (noisy rooms tripping the threshold,
+// quiet voices getting cut off), the upgrade path is to swap the
+// `updateVad` body for an ML model without changing the public
+// pushAudio contract.
+//
+// No partial events in v1 — the M0 spike showed they cost a full
+// encoder pass per chunk and quality is poor. M2/M3 can add a partials
+// path with proper ML VAD chunking when there's a consumer that needs
+// them.
 
 import { AsrSegment, AsrTranscribeResult, WhisperServerState } from './types';
 import { WhisperServer } from './whisperServer';
@@ -36,15 +51,42 @@ export interface AsrSessionOptions {
   channels?: 1 | 2;
   /**
    * Maximum buffered audio (ms) before we force a flush, even without
-   * `endOfUtterance`. Prevents a malformed caller (one that never sets
-   * the flag) from buffering forever. Default 30_000.
+   * `endOfUtterance` and even if VAD never fires (e.g. continuous
+   * speech with no pauses). Belt-and-suspenders against runaway
+   * buffers. Default 30_000.
    */
   maxBufferMs?: number;
+  /**
+   * Enable Moss-side VAD. When true (default) the session commits an
+   * utterance whenever it sees `vadSilenceMs` of continuous silence
+   * after at least one speech chunk. When false, only `endOfUtterance`
+   * and `maxBufferMs` trigger commits — caller is fully in control.
+   */
+  vad?: boolean;
+  /**
+   * Silence threshold as RMS in normalized [-1, 1]. Audio chunks with
+   * RMS below this are treated as silence. Default 0.01 — typical room
+   * noise sits 0.001–0.005, normal speech sits 0.05–0.3 (post-AGC).
+   * Bump higher in noisy environments; lower for quiet voices.
+   */
+  vadSilenceRms?: number;
+  /**
+   * How much continuous post-speech silence (ms) triggers a commit.
+   * Default 500 — roughly the inter-sentence pause in conversational
+   * English. Shorter feels jumpy; longer feels laggy.
+   */
+  vadSilenceMs?: number;
 }
 
 const DEFAULT_SAMPLE_RATE = 16_000;
 const DEFAULT_CHANNELS: 1 | 2 = 1;
 const DEFAULT_MAX_BUFFER_MS = 30_000;
+
+const VAD_DEFAULTS = {
+  enabled: true,
+  silenceRms: 0.01,
+  silenceMs: 500,
+} as const;
 
 type Listener<T> = (ev: T) => void;
 
@@ -83,6 +125,15 @@ export class AsrSession {
 
   private readonly shape: PcmShape;
   private readonly maxBufferSamples: number;
+
+  // VAD state. `hasSpoken` flips true on the first chunk above the
+  // RMS threshold and resets when a flush commits. `silentSamples`
+  // counts continuous silent samples since the last speech chunk.
+  private readonly vadEnabled: boolean;
+  private readonly vadSilenceRms: number;
+  private readonly vadSilenceSamples: number;
+  private vadHasSpoken = false;
+  private vadSilentSamples = 0;
   // opts.language is accepted in the public surface but not yet
   // forwarded to whisper-server (the multipart body in WhisperServer.
   // transcribe() doesn't include it). Wire it through when M2 needs
@@ -101,6 +152,13 @@ export class AsrSession {
       ((opts.maxBufferMs ?? DEFAULT_MAX_BUFFER_MS) / 1000) *
       this.shape.sampleRate *
       this.shape.channels;
+
+    this.vadEnabled = opts.vad ?? VAD_DEFAULTS.enabled;
+    this.vadSilenceRms = opts.vadSilenceRms ?? VAD_DEFAULTS.silenceRms;
+    const vadSilenceMs = opts.vadSilenceMs ?? VAD_DEFAULTS.silenceMs;
+    this.vadSilenceSamples = Math.round(
+      (vadSilenceMs / 1000) * this.shape.sampleRate * this.shape.channels,
+    );
   }
 
   /** Diagnostic only. Reflects whether close() has been called. */
@@ -109,10 +167,11 @@ export class AsrSession {
   }
 
   /**
-   * Push a PCM16 chunk. If `endOfUtterance` is true, or the buffer
-   * exceeds the configured cap, transcribe what's accumulated and
-   * emit final events. Returns when the push (and any triggered
-   * flush) is done.
+   * Push a PCM16 chunk. Triggers a flush (transcribe → emit finals)
+   * when any of:
+   *   - `endOfUtterance` is true
+   *   - VAD detects silence-after-speech ≥ `vadSilenceMs`
+   *   - the accumulated buffer reaches `maxBufferMs`
    *
    * Pushes are serialized: a flush in progress will block subsequent
    * pushes until done. This keeps `final` events ordered by audio
@@ -125,12 +184,16 @@ export class AsrSession {
     if (pcm.length === 0 && !endOfUtterance) return;
 
     const next = this.inflight.then(async () => {
+      let vadFired = false;
       if (pcm.length > 0) {
         this.chunks.push(pcm);
         this.bufferedSamples += pcm.length;
+        if (this.vadEnabled) {
+          vadFired = this.updateVad(pcm);
+        }
       }
       const overCap = this.bufferedSamples >= this.maxBufferSamples;
-      if (endOfUtterance || overCap) {
+      if (endOfUtterance || vadFired || overCap) {
         await this.flush();
       }
     });
@@ -170,8 +233,43 @@ export class AsrSession {
     }
   }
 
+  /**
+   * Energy-VAD update for the just-buffered chunk. Returns true if
+   * this chunk completed a speech-then-silence pattern long enough to
+   * commit. Resets internal state on commit so the next utterance
+   * starts fresh.
+   */
+  private updateVad(pcm: Int16Array): boolean {
+    const rms = computeRms(pcm);
+    const isSilent = rms < this.vadSilenceRms;
+
+    if (!isSilent) {
+      this.vadHasSpoken = true;
+      this.vadSilentSamples = 0;
+      return false;
+    }
+    if (!this.vadHasSpoken) {
+      // Pre-speech silence — keep waiting.
+      return false;
+    }
+    this.vadSilentSamples += pcm.length;
+    if (this.vadSilentSamples >= this.vadSilenceSamples) {
+      this.resetVad();
+      return true;
+    }
+    return false;
+  }
+
+  private resetVad(): void {
+    this.vadHasSpoken = false;
+    this.vadSilentSamples = 0;
+  }
+
   private async flush(): Promise<void> {
-    if (this.bufferedSamples === 0) return;
+    if (this.bufferedSamples === 0) {
+      this.resetVad();
+      return;
+    }
     if (this.server.state !== ('ready' satisfies WhisperServerState)) {
       throw new AsrSessionStateError(
         `cannot flush: underlying server is ${this.server.state}`,
@@ -182,6 +280,7 @@ export class AsrSession {
     const flushedSamples = this.bufferedSamples;
     this.chunks = [];
     this.bufferedSamples = 0;
+    this.resetVad();
 
     const wav = pcm16ToWav(merged, this.shape);
     let result: AsrTranscribeResult;
@@ -244,4 +343,15 @@ function toFinal(seg: AsrSegment, baseMs: number, lang: string | undefined): Asr
     confidence: seg.confidence,
     lang,
   };
+}
+
+/** RMS in normalized [-1, 1] of an Int16Array audio buffer. */
+function computeRms(pcm: Int16Array): number {
+  if (pcm.length === 0) return 0;
+  let sumSquares = 0;
+  for (let i = 0; i < pcm.length; i++) {
+    const v = pcm[i] / 32768;
+    sumSquares += v * v;
+  }
+  return Math.sqrt(sumSquares / pcm.length);
 }
