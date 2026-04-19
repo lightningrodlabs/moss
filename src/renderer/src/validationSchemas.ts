@@ -522,4 +522,40 @@ export const AppletToParentRequest = Type.Union([
     },
     { additionalProperties: false },
   ),
+  // ── Local ASR (whisper.cpp via Moss main) ──
+  Type.Object(
+    {
+      type: Type.Literal('asr-open-session'),
+      opts: Type.Optional(
+        Type.Object(
+          {
+            language: Type.Optional(Type.String()),
+            sampleRate: Type.Optional(Type.Number()),
+            channels: Type.Optional(
+              Type.Union([Type.Literal(1), Type.Literal(2)]),
+            ),
+            maxBufferMs: Type.Optional(Type.Number()),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('asr-push-audio'),
+      sessionId: Type.String(),
+      pcm: Type.Uint8Array(),
+      endOfUtterance: Type.Optional(Type.Boolean()),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      type: Type.Literal('asr-close-session'),
+      sessionId: Type.String(),
+    },
+    { additionalProperties: false },
+  ),
 ]);

@@ -214,6 +214,37 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('set-dev-ui-override', appId, webhappPath),
   clearDevUiOverride: (appId: string) => ipcRenderer.invoke('clear-dev-ui-override', appId),
   getDevUiOverride: (appId: string) => ipcRenderer.invoke('get-dev-ui-override', appId),
+
+  // ── Local ASR (whisper.cpp sidecar) ──────────────────────────
+  // The renderer-side bridge in applet-host.ts is the only intended
+  // caller; applets reach this via WeaveClient.localModels.asr.
+  // Channel contract is defined in src/main/asr/ipcHandlers.ts.
+  asrOpenSession: (opts: {
+    language?: string;
+    sampleRate?: number;
+    channels?: 1 | 2;
+    maxBufferMs?: number;
+  }) => ipcRenderer.invoke('asr-open-session', opts) as Promise<{ sessionId: string }>,
+  asrPushAudio: (req: { sessionId: string; pcm: Uint8Array; endOfUtterance?: boolean }) =>
+    ipcRenderer.invoke('asr-push-audio', req) as Promise<void>,
+  asrCloseSession: (req: { sessionId: string }) =>
+    ipcRenderer.invoke('asr-close-session', req) as Promise<void>,
+  onAsrEvent: (
+    callback: (
+      e: Electron.IpcRendererEvent,
+      event:
+        | {
+            sessionId: string;
+            eventType: 'final';
+            text: string;
+            tStart: number;
+            tEnd: number;
+            confidence?: number;
+            lang?: string;
+          }
+        | { sessionId: string; eventType: 'error'; error: string },
+    ) => void,
+  ) => ipcRenderer.on('asr-event', callback),
 });
 
 declare global {

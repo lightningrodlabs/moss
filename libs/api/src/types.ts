@@ -317,6 +317,13 @@ export type ParentToAppletMessage =
   | {
       type: 'locale-change';
       locale: string;
+    }
+  // ── Local ASR (sessionId-routed events from main → applet iframe) ──
+  | {
+      type: 'asr-event';
+      event:
+        | (AsrFinalEvent & { sessionId: string; eventType: 'final' })
+        | { sessionId: string; eventType: 'error'; error: string };
     };
 
 export type IframeKind =
@@ -513,7 +520,42 @@ export type AppletToParentRequest =
   | {
       type: 'unsubscribe-from-asset-store';
       wal: WAL;
+    }
+  // ── Local ASR (whisper.cpp sidecar via WeaveClient.localModels.asr) ──
+  | {
+      type: 'asr-open-session';
+      opts?: AsrSessionOptions;
+    }
+  | {
+      type: 'asr-push-audio';
+      sessionId: string;
+      /** PCM16 mono bytes (Int16Array.buffer view), little-endian. */
+      pcm: Uint8Array;
+      endOfUtterance?: boolean;
+    }
+  | {
+      type: 'asr-close-session';
+      sessionId: string;
     };
+
+export interface AsrSessionOptions {
+  /** ISO 639-1 code, or omit for auto-detect. */
+  language?: string;
+  /** Sample rate of pushed PCM. Defaults to 16000. */
+  sampleRate?: number;
+  channels?: 1 | 2;
+  /** Force-flush threshold for unbounded pushes. Default 30_000 ms. */
+  maxBufferMs?: number;
+}
+
+export interface AsrFinalEvent {
+  text: string;
+  /** ms from session start */
+  tStart: number;
+  tEnd: number;
+  confidence?: number;
+  lang?: string;
+}
 
 export type OpenViewRequest =
   | {

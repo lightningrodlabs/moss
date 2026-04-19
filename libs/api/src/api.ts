@@ -32,6 +32,7 @@ import {
   MossAccountability,
 } from './types';
 import { postMessage } from './utils.js';
+import type { LocalModelsApi } from './asr.js';
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
 
@@ -319,6 +320,14 @@ export interface AssetServices {
 export interface WeaveServices {
   assets: AssetServices;
   /**
+   * On-device model access. Optional — undefined when the host has
+   * no local models configured or when the applet doesn't have the
+   * (future) `localModels` permission. Currently only ASR is exposed;
+   * additional sub-namespaces (translation, embeddings) may be added
+   * later without breaking changes.
+   */
+  localModels?: LocalModelsApi;
+  /**
    *
    * @returns Version of Moss within which this method is being called in
    */
@@ -586,6 +595,16 @@ export class WeaveClient implements WeaveServices {
     return window.__WEAVE_API__.toolInstaller(appletHash, effectiveGroupHash);
   };
 
+
+  /**
+   * Local on-device models. Reads through to the host implementation
+   * set up in the applet iframe, which proxies over postMessage to
+   * Moss main. Undefined when the host has no localModels surface
+   * configured.
+   */
+  get localModels(): LocalModelsApi | undefined {
+    return window.__WEAVE_API__.localModels;
+  }
 
   bootstrapUrls = (groupHash?: DnaHash) => window.__WEAVE_API__.bootstrapUrls(groupHash);
 

@@ -240,6 +240,35 @@ declare global {
       getDevUiOverride: (
         appId: string,
       ) => Promise<{ active: boolean; uiSha256?: string }>;
+      // ── Local ASR (whisper.cpp via Moss main) ──
+      asrOpenSession: (opts: {
+        language?: string;
+        sampleRate?: number;
+        channels?: 1 | 2;
+        maxBufferMs?: number;
+      }) => Promise<{ sessionId: string }>;
+      asrPushAudio: (req: {
+        sessionId: string;
+        pcm: Uint8Array;
+        endOfUtterance?: boolean;
+      }) => Promise<void>;
+      asrCloseSession: (req: { sessionId: string }) => Promise<void>;
+      onAsrEvent: (
+        callback: (
+          e: Electron.IpcRendererEvent,
+          event:
+            | {
+                sessionId: string;
+                eventType: 'final';
+                text: string;
+                tStart: number;
+                tEnd: number;
+                confidence?: number;
+                lang?: string;
+              }
+            | { sessionId: string; eventType: 'error'; error: string },
+        ) => void,
+      ) => void;
     };
     __ZOME_CALL_LOGGING_ENABLED__: boolean;
   }

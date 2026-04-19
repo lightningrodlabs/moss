@@ -36,6 +36,7 @@ import {
 } from '../utils.js';
 import { AppletToParentRequest as AppletToParentRequestSchema } from '../validationSchemas.js';
 import { AppletStore } from './applet-store.js';
+import { getAsrRendererBridge } from './asr-bridge.js';
 import { Value } from '@sinclair/typebox/value';
 import { GroupRemoteSignal, Accountability } from '@theweave/group-client';
 import { appIdFromAppletHash, toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
@@ -411,6 +412,30 @@ export async function handleAppletIframeMessage(
         );
         break;
       }
+    // ── Local ASR (whisper.cpp via Moss main) ────────────────────
+    // Open / push / close are forwarded directly to the main IPC
+    // handlers in src/main/asr/ipcHandlers.ts. The renderer-side
+    // bridge tracks sessionId → MessageEventSource so that the
+    // 'asr-event' IPC pushed back from main can be routed to the
+    // applet iframe that opened the session.
+    case 'asr-open-session': {
+      const result = await window.electronAPI.asrOpenSession(message.opts ?? {});
+      getAsrRendererBridge().registerSession(result.sessionId, eventSource);
+      return result;
+    }
+    case 'asr-push-audio': {
+      await window.electronAPI.asrPushAudio({
+        sessionId: message.sessionId,
+        pcm: message.pcm,
+        endOfUtterance: message.endOfUtterance,
+      });
+      return undefined;
+    }
+    case 'asr-close-session': {
+      await window.electronAPI.asrCloseSession({ sessionId: message.sessionId });
+      getAsrRendererBridge().unregisterSession(message.sessionId);
+      return undefined;
+    }
     case 'get-record-info': {
       const location = await toPromise(
         mossStore.hrlLocations.get(message.hrl[0])!.get(message.hrl[1])!,

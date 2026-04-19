@@ -45,6 +45,12 @@ import {
   AssetStoreContent,
   stringifyWal,
   IframeKind,
+  AsrIncomingEvent,
+  AsrSession,
+  AsrSessionOptions,
+  AsrTransport,
+  LocalModelsApi,
+  openAsrSession,
 } from '@theweave/api';
 import { AsyncStatus, readable } from '@holochain-open-dev/stores';
 import { toOriginalCaseB64 } from '@theweave/utils';
@@ -77,6 +83,7 @@ declare global {
     }>;
     'remote-signal-received': CustomEvent<Uint8Array>;
     'locale-change': CustomEvent<string>;
+    'asr-event': CustomEvent<AsrIncomingEvent>;
   }
 }
 
@@ -376,6 +383,27 @@ const weaveApi: WeaveServices = {
       type: 'disable-clone-cell',
       req,
     }),
+
+  // Local on-device models. Backed by Moss main process's ASR broker
+  // via postMessage → renderer → IPC. See libs/api/src/asr.ts for the
+  // session shape; the transport here is just a thin adapter from
+  // AsrTransport to applet-iframe's postMessage + window CustomEvents.
+  localModels: ((): LocalModelsApi => {
+    const transport: AsrTransport = {
+      send: (request) => postMessage(request),
+      subscribe: (callback) => {
+        const listener = (e: CustomEvent<AsrIncomingEvent>) => callback(e.detail);
+        window.addEventListener('asr-event', listener as EventListener);
+        return () => window.removeEventListener('asr-event', listener as EventListener);
+      },
+    };
+    return {
+      asr: {
+        openSession: (opts?: AsrSessionOptions): Promise<AsrSession> =>
+          openAsrSession(transport, opts),
+      },
+    };
+  })(),
 };
 
 (async () => {
@@ -637,6 +665,15 @@ const handleParentMessageGeneral = async (
       window.dispatchEvent(
         new CustomEvent('asset-store-update', {
           detail: message,
+        }),
+      );
+      break;
+    case 'asr-event':
+      // Re-emit as a window CustomEvent. The AsrSession instance(s)
+      // listen for this and filter by sessionId.
+      window.dispatchEvent(
+        new CustomEvent('asr-event', {
+          detail: message.event,
         }),
       );
       break;
