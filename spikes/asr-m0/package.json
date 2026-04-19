@@ -1,0 +1,16 @@
+{
+  "name": "moss-asr-m0-spike",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "M0 runtime spike for Moss localModels.asr — see RUNTIME_CHOICE.md and README.md.",
+  "scripts": {
+    "fetch-model": "node fetch-model.mjs",
+    "harness:batch": "node harness-batch.mjs",
+    "harness:stream": "node harness-stream.mjs",
+    "demo": "node demo.mjs"
+  },
+  "dependencies": {
+    "smart-whisper": "^0.8.1"
+  }
+}
