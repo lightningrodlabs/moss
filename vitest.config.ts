@@ -11,7 +11,9 @@ export default defineConfig({
       'libs/api/src/**/*.test.ts',
       'scripts/**/*.test.ts',
       'wdocker/src/**/*.test.ts',
+      'libs/api/**/*.test.ts',
     ],
     environment: 'node',
+    testTimeout: 60 * 1_000,
   },
 });
