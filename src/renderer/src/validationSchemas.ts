@@ -525,6 +525,12 @@ export const AppletToParentRequest = Type.Union([
   // ── Local ASR (whisper.cpp via Moss main) ──
   Type.Object(
     {
+      type: Type.Literal('asr-capabilities'),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
       type: Type.Literal('asr-open-session'),
       opts: Type.Optional(
         Type.Object(

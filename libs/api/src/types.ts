@@ -523,6 +523,9 @@ export type AppletToParentRequest =
     }
   // ── Local ASR (whisper.cpp sidecar via WeaveClient.localModels.asr) ──
   | {
+      type: 'asr-capabilities';
+    }
+  | {
       type: 'asr-open-session';
       opts?: AsrSessionOptions;
     }
@@ -546,6 +549,45 @@ export interface AsrSessionOptions {
   channels?: 1 | 2;
   /** Force-flush threshold for unbounded pushes. Default 30_000 ms. */
   maxBufferMs?: number;
+}
+
+/**
+ * Introspection result for `WeaveClient.localModels.capabilities()`.
+ * Tools call this once before deciding whether to offer transcription-
+ * dependent UI. The shape is intentionally small; richer telemetry
+ * (benchmark numbers, memory footprint) can slot in later without
+ * breaking changes.
+ */
+export interface LocalModelCapabilities {
+  asr: LocalAsrCapabilities;
+}
+
+export interface LocalAsrCapabilities {
+  /**
+   * True when the host has a model configured. False means the applet
+   * should not attempt `openSession()` — it will reject. Note that
+   * `weaveClient.localModels` may itself be undefined when the applet
+   * lacks the permission; this field only flips false when the host is
+   * present but unconfigured.
+   */
+  available: boolean;
+  /** ISO 639-1 codes the loaded model can transcribe. */
+  languages: string[];
+  /**
+   * True if the runtime emits partials mid-utterance. v1 is false —
+   * whisper.cpp is batch; Moss presents a streaming-shaped session by
+   * emitting one final per VAD-committed utterance.
+   */
+  streaming: boolean;
+  /** Tool-facing model identifier, for telemetry / UI only. Moss is authoritative. */
+  model: string;
+  /**
+   * Rough perf tier on this user's hardware + model combo. Tools use
+   * this to decide whether to offer latency-sensitive features (live
+   * captions) or only offline use (post-hoc transcript). Not a
+   * benchmark — configured per Moss install, defaults to 'ok'.
+   */
+  latencyTier: 'fast' | 'ok' | 'slow';
 }
 
 export interface AsrFinalEvent {

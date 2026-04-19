@@ -15,8 +15,11 @@
 
 import path from 'node:path';
 
+import type { LocalModelCapabilities } from '@theweave/api';
+
 import { AsrBroker } from './broker';
 import { resolveWhisperServerCommand } from './binaryResolver';
+import { computeAsrCapabilities } from './capabilities';
 
 export interface AsrServiceConfig {
   /** Absolute path to the directory holding bundled binaries (resources/bins). */
@@ -38,10 +41,13 @@ export interface AsrServiceConfig {
   idleTimeoutMs?: number;
   /** Optional log sink for sidecar stdout/stderr. */
   onLog?: (stream: 'stdout' | 'stderr', chunk: string) => void;
+  /** Override the capabilities `latencyTier` reported to applets. */
+  latencyTier?: 'fast' | 'ok' | 'slow';
 }
 
 let broker: AsrBroker | null = null;
 let initialized = false;
+let capabilities: LocalModelCapabilities = computeAsrCapabilities({ modelPath: null });
 
 /**
  * Wire up the broker with everything it needs. Idempotent — second
@@ -62,8 +68,21 @@ export function initAsrService(config: AsrServiceConfig): AsrBroker {
     },
     idleTimeoutMs: config.idleTimeoutMs,
   });
+  capabilities = computeAsrCapabilities({
+    modelPath: config.modelPath,
+    latencyTier: config.latencyTier,
+  });
   initialized = true;
   return broker;
+}
+
+/**
+ * Static capabilities for the currently-configured model. Safe to call
+ * before / after initAsrService(); returns an unavailable shape when
+ * the service hasn't been wired up yet.
+ */
+export function getAsrCapabilities(): LocalModelCapabilities {
+  return capabilities;
 }
 
 /**
@@ -106,6 +125,7 @@ export async function shutdownAsrService(): Promise<void> {
 export function _resetAsrServiceForTests(): void {
   broker = null;
   initialized = false;
+  capabilities = computeAsrCapabilities({ modelPath: null });
 }
 
 /**

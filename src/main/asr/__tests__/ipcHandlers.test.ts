@@ -1,12 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import type { LocalModelCapabilities } from '@theweave/api';
+
 import { AsrBroker } from '../broker';
+import { computeAsrCapabilities } from '../capabilities';
 import {
   AsrIpcError,
   AsrIpcEvent,
   AsrIpcHandlerContext,
   asrCloseAllForOwner,
   asrCloseSession,
+  asrGetCapabilities,
   asrOpenSession,
   asrPushAudio,
 } from '../ipcHandlers';
@@ -20,7 +24,11 @@ interface Harness {
   registry: SessionRegistry;
 }
 
-function makeHarness(opts: { transcribeText?: string; idGen?: () => string } = {}): Harness {
+function makeHarness(opts: {
+  transcribeText?: string;
+  idGen?: () => string;
+  capabilities?: LocalModelCapabilities;
+} = {}): Harness {
   const fakes: FakeWhisperServer[] = [];
   const broker = new AsrBroker({
     server: { command: ['noop'], modelPath: '/dev/null' },
@@ -39,11 +47,14 @@ function makeHarness(opts: { transcribeText?: string; idGen?: () => string } = {
   });
   const registry = new SessionRegistry(opts.idGen);
   const events: Harness['events'] = [];
+  const capabilities =
+    opts.capabilities ?? computeAsrCapabilities({ modelPath: '/tmp/ggml-base.en.bin' });
   return {
     ctx: {
       getBroker: () => broker,
       registry,
       emitEvent: (ownerId, event) => events.push({ ownerId, event }),
+      getCapabilities: () => capabilities,
     },
     events,
     fakes,
@@ -139,6 +150,7 @@ describe('asrPushAudio', () => {
       getBroker: () => broker,
       registry,
       emitEvent: (ownerId, event) => events.push({ ownerId, event }),
+      getCapabilities: () => computeAsrCapabilities({ modelPath: '/tmp/ggml-base.en.bin' }),
     };
     const { sessionId } = await asrOpenSession(ctx, 1, {});
     await expect(
@@ -205,5 +217,25 @@ describe('AsrIpcError', () => {
     const err = new AsrIpcError('x', 'forbidden');
     expect(err.kind).toBe('forbidden');
     expect(err.name).toBe('AsrIpcError');
+  });
+});
+
+describe('asrGetCapabilities', () => {
+  it('returns whatever the context reports without touching the broker', async () => {
+    const h = makeHarness();
+    const caps = await asrGetCapabilities(h.ctx);
+    expect(caps.asr.available).toBe(true);
+    expect(caps.asr.model).toBe('base.en');
+    expect(caps.asr.languages).toEqual(['en']);
+    // Broker was never asked for a session, so no fake should exist.
+    expect(h.fakes).toHaveLength(0);
+  });
+
+  it('honors an unavailable capabilities value', async () => {
+    const unavailable = computeAsrCapabilities({ modelPath: null });
+    const h = makeHarness({ capabilities: unavailable });
+    const caps = await asrGetCapabilities(h.ctx);
+    expect(caps.asr.available).toBe(false);
+    expect(caps.asr.languages).toEqual([]);
   });
 });

@@ -219,6 +219,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // The renderer-side bridge in applet-host.ts is the only intended
   // caller; applets reach this via WeaveClient.localModels.asr.
   // Channel contract is defined in src/main/asr/ipcHandlers.ts.
+  asrCapabilities: () =>
+    ipcRenderer.invoke('asr-capabilities') as Promise<{
+      asr: {
+        available: boolean;
+        languages: string[];
+        streaming: boolean;
+        model: string;
+        latencyTier: 'fast' | 'ok' | 'slow';
+      };
+    }>,
   asrOpenSession: (opts: {
     language?: string;
     sampleRate?: number;

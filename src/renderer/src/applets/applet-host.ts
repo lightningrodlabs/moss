@@ -418,6 +418,9 @@ export async function handleAppletIframeMessage(
     // bridge tracks sessionId → MessageEventSource so that the
     // 'asr-event' IPC pushed back from main can be routed to the
     // applet iframe that opened the session.
+    case 'asr-capabilities': {
+      return window.electronAPI.asrCapabilities();
+    }
     case 'asr-open-session': {
       const result = await window.electronAPI.asrOpenSession(message.opts ?? {});
       getAsrRendererBridge().registerSession(result.sessionId, eventSource);

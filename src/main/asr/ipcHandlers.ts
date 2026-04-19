@@ -16,6 +16,8 @@
 // us). When a renderer goes away (window close, navigation), the
 // wire-up calls asrCloseAllForOwner() to free its sessions.
 
+import type { LocalModelCapabilities } from '@theweave/api';
+
 import type { AsrBroker } from './broker';
 import type { AsrFinalEvent, AsrSessionOptions } from './session';
 import type { SessionRegistry } from './sessionRegistry';
@@ -34,6 +36,12 @@ export interface AsrIpcHandlerContext {
   getBroker: () => AsrBroker;
   registry: SessionRegistry;
   emitEvent: AsrEventEmitter;
+  /**
+   * Introspection for the applet-facing `capabilities()` call. Resolved
+   * once at wire-up time and passed through as a closure so this module
+   * stays free of path / env concerns.
+   */
+  getCapabilities: () => LocalModelCapabilities;
 }
 
 export interface AsrOpenSessionRequest extends AsrSessionOptions {
@@ -60,6 +68,12 @@ export class AsrIpcError extends Error {
     super(message);
     this.name = 'AsrIpcError';
   }
+}
+
+export async function asrGetCapabilities(
+  ctx: AsrIpcHandlerContext,
+): Promise<LocalModelCapabilities> {
+  return ctx.getCapabilities();
 }
 
 export async function asrOpenSession(

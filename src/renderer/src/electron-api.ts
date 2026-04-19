@@ -241,6 +241,15 @@ declare global {
         appId: string,
       ) => Promise<{ active: boolean; uiSha256?: string }>;
       // ── Local ASR (whisper.cpp via Moss main) ──
+      asrCapabilities: () => Promise<{
+        asr: {
+          available: boolean;
+          languages: string[];
+          streaming: boolean;
+          model: string;
+          latencyTier: 'fast' | 'ok' | 'slow';
+        };
+      }>;
       asrOpenSession: (opts: {
         language?: string;
         sampleRate?: number;
