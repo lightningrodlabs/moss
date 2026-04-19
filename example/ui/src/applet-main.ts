@@ -5,6 +5,7 @@ import { localized } from '@lit/localize';
 import { notifyError, sharedStyles } from '@holochain-open-dev/elements';
 
 import './elements/all-posts.js';
+import './elements/asr-test.js';
 import './elements/create-post.js';
 import {
   type WAL,
@@ -376,6 +377,9 @@ export class AppletMain extends LitElement {
                 },
               });
             }}>Request Audio Access</button>
+
+            <h2>Local ASR (whisper.cpp via Moss)</h2>
+            <asr-test .weaveClient=${this.weaveClient}></asr-test>
 
             <h2>on-before-unload behavior</h2>
 
