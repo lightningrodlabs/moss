@@ -306,6 +306,17 @@ pass.
   in our bench). If that overhead becomes a problem under live
   captioning load, swap for a thin custom wrapper around the
   whisper.cpp library. Don't over-engineer until profiling demands it.
+  - **Why HTTP loopback rather than a Unix domain socket:**
+    whisper-server only exposes `--host` / `--port` — TCP only,
+    no UDS flag. We bind to `127.0.0.1` on an OS-allocated
+    ephemeral port, so any local code that could connect to our
+    port could equally `read()` a UDS we own (same trust boundary).
+    Loopback TCP is in-kernel buffer copies; UDS would shave
+    microseconds off ~600 ms of multipart-parse + WAV-decode work
+    that whisper-server does inside the request. The clean upgrade
+    path — if profiling ever calls for it — is the custom libwhisper
+    wrapper above, which can pick any transport (UDS, or in-process
+    direct calls if we co-locate the broker and wrapper).
 - Process model: run the broker AND the whisper-server sidecar
   outside Moss main. Broker = Electron `utilityProcess`. Sidecar
   = `child_process.spawn` from the broker. Two-process isolation
