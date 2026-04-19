@@ -22,6 +22,7 @@ import { sharedStyles } from '@holochain-open-dev/elements';
 import {
   AsrFinalEvent,
   AsrSession,
+  LocalModelCapabilities,
   WeaveClient,
 } from '@theweave/api';
 
@@ -44,6 +45,9 @@ export class AsrTest extends LitElement {
   @state() private status: string = 'idle';
   @state() private capturing: boolean = false;
   @state() private lastError: string | null = null;
+  @state() private capabilities: LocalModelCapabilities | null = null;
+  @state() private capabilitiesError: string | null = null;
+  @state() private capabilitiesLoading: boolean = false;
 
   private mediaStream: MediaStream | null = null;
   private trackReader: ReadableStreamDefaultReader<AudioData> | null = null;
@@ -51,6 +55,25 @@ export class AsrTest extends LitElement {
 
   get available(): boolean {
     return !!this.weaveClient?.localModels?.asr;
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    if (this.available) void this.refreshCapabilities();
+  }
+
+  // ── Capabilities introspection ────────────────────────────────
+  async refreshCapabilities() {
+    this.capabilitiesError = null;
+    this.capabilitiesLoading = true;
+    try {
+      this.capabilities = await this.weaveClient.localModels!.capabilities();
+    } catch (e) {
+      this.capabilitiesError = (e as Error).message;
+      this.capabilities = null;
+    } finally {
+      this.capabilitiesLoading = false;
+    }
   }
 
   // ── Smoke test: open + close ───────────────────────────────────
@@ -217,6 +240,49 @@ export class AsrTest extends LitElement {
 
     return html`
       <div class="column">
+        <div><b>Capabilities:</b></div>
+        <div class="row">
+          <button
+            @click=${() => this.refreshCapabilities()}
+            ?disabled=${this.capabilitiesLoading}
+          >
+            ${this.capabilitiesLoading ? 'Loading…' : 'Refresh capabilities'}
+          </button>
+        </div>
+        ${this.capabilitiesError
+          ? html`<div class="error">capabilities error: ${this.capabilitiesError}</div>`
+          : ''}
+        ${this.capabilities
+          ? html`
+              <div class="caps">
+                <div>
+                  <span class="k">available:</span>
+                  <b>${String(this.capabilities.asr.available)}</b>
+                </div>
+                <div>
+                  <span class="k">model:</span> ${this.capabilities.asr.model || '(none)'}
+                </div>
+                <div>
+                  <span class="k">streaming:</span>
+                  ${String(this.capabilities.asr.streaming)}
+                </div>
+                <div>
+                  <span class="k">latencyTier:</span>
+                  ${this.capabilities.asr.latencyTier}
+                </div>
+                <div>
+                  <span class="k">languages (${this.capabilities.asr.languages.length}):</span>
+                  ${this.capabilities.asr.languages.slice(0, 20).join(', ')}${this
+                    .capabilities.asr.languages.length > 20
+                    ? ` …+${this.capabilities.asr.languages.length - 20} more`
+                    : ''}
+                </div>
+              </div>
+            `
+          : html`<div class="status">not loaded</div>`}
+
+        <hr />
+
         <div><b>Smoke test (no audio):</b></div>
         <button @click=${() => this.runSmokeTest()}>
           Open + close session
@@ -316,6 +382,17 @@ export class AsrTest extends LitElement {
       .transcript .t {
         color: #888;
         margin-right: 6px;
+      }
+      .caps {
+        padding: 8px;
+        background: #f5f5f5;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 0.9em;
+      }
+      .caps .k {
+        color: #555;
+        margin-right: 4px;
       }
       hr {
         width: 100%;
