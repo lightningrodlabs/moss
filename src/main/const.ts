@@ -37,6 +37,7 @@ const conductorConfigTemplateString = fs.readFileSync(
 const CONDUCTOR_CONFIG_TEMPLATE = yaml.load(conductorConfigTemplateString);
 
 export {
+    BINARIES_DIRECTORY,
     HOLOCHAIN_BINARIES,
     LAIR_BINARY,
     KITSUNE2_BOOTSTRAP_SRV_BINARY,
