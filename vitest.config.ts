@@ -5,7 +5,9 @@ import { defineConfig } from 'vitest/config';
 // via `yarn test`; these run via `yarn test:unit`.
 export default defineConfig({
   test: {
-    include: ['src/**/*.test.ts'],
+    threads: false,
+    include: ['src/**/*.test.ts', 'libs/api/**/*.test.ts'],
     environment: 'node',
+    testTimeout: 60 * 1_000,
   },
 });

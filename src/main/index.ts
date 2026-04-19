@@ -36,7 +36,8 @@ import {
   importLegacyProfileData,
   LegacyProfileInfo,
 } from './filesystem';
-import { LAIR_BINARY } from './const';
+import { BINARIES_DIRECTORY, LAIR_BINARY } from './const';
+import { registerAsrIpc } from './asr/wireUp';
 import { MOSS_CONFIG } from './mossConfig';
 // import { AdminWebsocket } from '@holochain/client';
 import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
@@ -1033,6 +1034,14 @@ if (!RUNNING_WITH_COMMAND) {
     }
 
     registerIPCHandlers(notificationIcon);
+
+    // Local ASR (whisper.cpp sidecar). Lazy — sidecar doesn't actually
+    // launch until an applet opens its first AsrSession. See
+    // MOSS_LOCAL_MODELS_PLAN.md for context.
+    registerAsrIpc({
+      binariesDir: BINARIES_DIRECTORY,
+      repoRoot: app.getAppPath(),
+    });
 
     WE_EMITTER.emitMossLog(`RUN_OPTIONS on startup: ${formatUpdaterArg(RUN_OPTIONS)}`);
 
