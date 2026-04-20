@@ -66,7 +66,9 @@ const caps = await weaveClient.localModels!.capabilities();
 Use the fields like so:
 
 - **`available`** — if false, do not call `openSession()`; it will reject.
-  Surface a message pointing the user at Moss settings → Local AI.
+  `false` means the host has no model configured OR the user has disabled
+  Local AI in Moss settings. Either way, surface a message pointing the
+  user at Settings → Local AI.
 - **`languages`** — gate your language picker to this list. A single-language
   model (e.g. `base.en`) returns `['en']`; a multilingual model returns the
   full whisper set (~99 codes).
@@ -78,8 +80,10 @@ Use the fields like so:
   prefer post-hoc transcripts; `'slow'` means avoid interactive use. This is
   a per-install setting today, not a benchmark. Treat it as advisory.
 
-Cache the result for the life of the Tool session; capabilities do not change
-at runtime.
+Capabilities reflect the global Local AI switch, which the user can toggle
+at runtime from Settings → Local AI. If you cache the result, re-fetch
+it when the user retries a transcription-dependent action so "enable me"
+prompts stay accurate.
 
 ## Opening a session
 
