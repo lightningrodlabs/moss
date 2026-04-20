@@ -60,18 +60,25 @@ run(
 // than peak perf:
 //   - GGML_NATIVE=OFF: no -march=native; avoid binaries that SIGILL on
 //     older CPUs than the CI runner.
-//   - GGML_METAL=OFF on macOS: no ggml-metal.metal shader bundling; CPU
-//     base.en is fast enough for v1 (see spikes/asr-m0/RESULTS.md).
 //   - BUILD_SHARED_LIBS=OFF: one self-contained binary, no .so/.dylib
 //     sitting next to it needing resolver fiddling.
+//   - GGML_METAL=ON on macOS: Metal ships with every supported macOS
+//     version, so enabling it is a free 3–8× speedup on Apple Silicon
+//     with zero user-side dependency. GGML_METAL_EMBED_LIBRARY=ON
+//     bakes the shader source into the binary so there's no separate
+//     .metallib to ship alongside it.
+//   - No CUDA/Vulkan on Linux/Windows: discrete-GPU gains are real but
+//     require a runtime dep (CUDA toolkit) or SDK (Vulkan) that we
+//     don't want to impose on users. Revisit when a concrete ask lands.
+const IS_DARWIN = process.platform === 'darwin';
 const CONFIGURE_FLAGS = [
   '-DCMAKE_BUILD_TYPE=Release',
   '-DWHISPER_BUILD_EXAMPLES=ON',
   '-DWHISPER_BUILD_TESTS=OFF',
   '-DBUILD_SHARED_LIBS=OFF',
   '-DGGML_NATIVE=OFF',
-  '-DGGML_METAL=OFF',
-  '-DGGML_METAL_EMBED_LIBRARY=OFF',
+  `-DGGML_METAL=${IS_DARWIN ? 'ON' : 'OFF'}`,
+  `-DGGML_METAL_EMBED_LIBRARY=${IS_DARWIN ? 'ON' : 'OFF'}`,
 ];
 
 console.log(`⚙ configuring`);
