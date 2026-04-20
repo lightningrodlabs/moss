@@ -305,7 +305,7 @@ export class UrlListManager extends LitElement {
           padding: 0;
           display: flex;
           flex-direction: column;
-          gap: 2px;
+          gap: 10px;
       }
 
       li {
