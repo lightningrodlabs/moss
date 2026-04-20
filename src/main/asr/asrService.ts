@@ -13,6 +13,7 @@
 //     doesn't fit the reactive-store shape
 //   - the sidecar process is owned by main, not the renderer
 
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 
 import type { LocalModelCapabilities } from '@theweave/api';
@@ -20,6 +21,8 @@ import type { LocalModelCapabilities } from '@theweave/api';
 import { AsrBroker } from './broker';
 import { resolveWhisperServerCommand } from './binaryResolver';
 import { computeAsrCapabilities } from './capabilities';
+
+export const BUNDLED_ASR_MODEL_FILENAME = 'ggml-base.en.bin';
 
 export interface AsrServiceConfig {
   /** Absolute path to the directory holding bundled binaries (resources/bins). */
@@ -129,12 +132,22 @@ export function _resetAsrServiceForTests(): void {
 }
 
 /**
- * Default model path for dev. Looks at $MOSS_ASR_MODEL first; falls
- * back to the M0 spike artifact. Returned as a function so test code
- * can override the env without the singleton caching the answer.
+ * Resolve the default ggml model file for this install. Lookup order:
+ *   1. $MOSS_ASR_MODEL — absolute override for CI / tool authors.
+ *   2. <resourcesPath>/models/ggml-base.en.bin — bundled in release
+ *      installers by scripts/fetch-asr-model.mjs.
+ *   3. <repoRoot>/spikes/asr-m0/models/ggml-base.en.bin — dev fallback
+ *      populated manually via spikes/asr-m0/fetch-model.mjs.
+ *
+ * Returned as a function so test code can override the env without the
+ * singleton caching the answer.
  */
-export function defaultModelPath(repoRoot: string): string {
+export function defaultModelPath(repoRoot: string, resourcesPath?: string): string {
   const fromEnv = process.env.MOSS_ASR_MODEL;
   if (fromEnv && fromEnv.trim().length > 0) return fromEnv.trim();
-  return path.join(repoRoot, 'spikes/asr-m0/models/ggml-base.en.bin');
+  if (resourcesPath) {
+    const bundled = path.join(resourcesPath, 'models', BUNDLED_ASR_MODEL_FILENAME);
+    if (existsSync(bundled)) return bundled;
+  }
+  return path.join(repoRoot, 'spikes/asr-m0/models', BUNDLED_ASR_MODEL_FILENAME);
 }

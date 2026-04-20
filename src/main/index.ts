@@ -47,7 +47,7 @@ import {
   storeToolAssetsFromPeer,
   ToolAssetDirs,
 } from './peerToolAssets';
-import { BINARIES_DIRECTORY, LAIR_BINARY } from './const';
+import { BINARIES_DIRECTORY, LAIR_BINARY, RESOURCES_DIRECTORY } from './const';
 import { registerAsrIpc } from './asr/wireUp';
 import { MOSS_CONFIG } from './mossConfig';
 import { createLanBeaconService, type BeaconDiagnostics } from './lanBeacon';
@@ -1091,6 +1091,7 @@ if (!RUNNING_WITH_COMMAND) {
     // MOSS_LOCAL_MODELS_PLAN.md for context.
     registerAsrIpc({
       binariesDir: BINARIES_DIRECTORY,
+      resourcesPath: RESOURCES_DIRECTORY,
       whisperServerVersion: MOSS_CONFIG.whisperServer,
       repoRoot: app.getAppPath(),
     });
