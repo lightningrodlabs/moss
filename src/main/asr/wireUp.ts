@@ -45,6 +45,14 @@ export interface AsrWireUpConfig {
   /** Absolute path to the resources/bins directory. */
   binariesDir: string;
   /**
+   * Absolute path to the resources directory (the parent of
+   * binariesDir). Used to locate the bundled model at
+   * <resourcesPath>/models/ggml-base.en.bin. Optional: when omitted,
+   * the bundled-model lookup step is skipped and the resolver falls
+   * through to the dev spike path.
+   */
+  resourcesPath?: string;
+  /**
    * whisper-server version. Used to construct the bundled binary
    * filename (resources/bins/whisper-server-v<version><exe>). When
    * omitted, falls back to WHISPER_SERVER_VERSION.
@@ -52,7 +60,7 @@ export interface AsrWireUpConfig {
   whisperServerVersion?: string;
   /**
    * Optional model override. If omitted, defaults to $MOSS_ASR_MODEL,
-   * then to a bundled model under `resourcesDir`, then to the M0
+   * then to a bundled model under `resourcesPath`, then to the M0
    * spike artifact under `repoRoot` (dev only).
    */
   modelPath?: string;
@@ -78,7 +86,8 @@ export function registerAsrIpc(config: AsrWireUpConfig): void {
   registered = true;
 
   const modelPath =
-    config.modelPath ?? defaultModelPath(config.repoRoot ?? process.cwd());
+    config.modelPath ??
+    defaultModelPath(config.repoRoot ?? process.cwd(), config.resourcesPath);
 
   const latencyTier = config.latencyTier ?? readLatencyTierEnv();
   const broker = initAsrService({

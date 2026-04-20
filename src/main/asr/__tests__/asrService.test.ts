@@ -86,11 +86,24 @@ describe('defaultModelPath', () => {
     }
   });
 
-  it('falls back to the spike model when env is unset', () => {
+  it('falls back to the spike model when env is unset and no resourcesPath', () => {
     const orig = process.env.MOSS_ASR_MODEL;
     delete process.env.MOSS_ASR_MODEL;
     try {
       expect(defaultModelPath('/repo')).toBe('/repo/spikes/asr-m0/models/ggml-base.en.bin');
+    } finally {
+      if (orig !== undefined) process.env.MOSS_ASR_MODEL = orig;
+    }
+  });
+
+  it('falls back to the spike model when resourcesPath has no bundled model', () => {
+    const orig = process.env.MOSS_ASR_MODEL;
+    delete process.env.MOSS_ASR_MODEL;
+    try {
+      // /tmp/nonexistent-resources doesn't contain models/, so resolver falls through
+      expect(defaultModelPath('/repo', '/tmp/nonexistent-resources')).toBe(
+        '/repo/spikes/asr-m0/models/ggml-base.en.bin',
+      );
     } finally {
       if (orig !== undefined) process.env.MOSS_ASR_MODEL = orig;
     }
