@@ -1,9 +1,9 @@
-import { LitElement, html, css } from "lit";
+import {LitElement, html, css, PropertyValues} from "lit";
 import {customElement, property, state} from "lit/decorators.js";
 import {msg} from "@lit/localize";
-import {ToolCurationList, ToolCurations, ToolCurator} from "@theweave/moss-types";
+import {ToolCurationConfig, ToolCurations} from "@theweave/moss-types";
 
-interface NamedUrl {
+export interface NamedUrl {
   id: string;
   name: string;
   url: string;
@@ -12,15 +12,42 @@ interface NamedUrl {
 @customElement("curation-list-manager")
 export class UrlListManager extends LitElement {
 
-  @property({ type: Array }) list: { curator: ToolCurator; list: ToolCurationList }[] = [];
+  @property({type: Array})
+  initialConfig: ToolCurationConfig[] = [];
 
-
-  @state() private urls: NamedUrl[] = [];
+  @state() private _urls: NamedUrl[] = [];
 
   @state() private _newUrl = "";
   @state() private _error = "";
   @state() private _removing: string | null = null;
 
+
+  /** */
+  protected firstUpdated(_changedProperties: PropertyValues) {
+    super.firstUpdated(_changedProperties);
+    /*await*/ this.initializeList(this.initialConfig.map((i) => i.url));
+  }
+
+
+  /** */
+  async initializeList(urls: string[]) {
+    this._urls = [];
+    for (const cur of urls) {
+      try {
+        const url = cur.startsWith("http")
+            ? cur
+            : `https://${cur}`;
+        const resp = await fetch(new URL(url), { cache: 'no-cache' });
+        const toolCurations: ToolCurations = await resp.json();
+        // TODO validate format strictly here
+        //console.debug("<curation-list-manager> adding url", url);
+        this._urls.push({url: this._normalizeUrl(url), id: this._generateId(), name: toolCurations.curator.name});
+      } catch {
+        console.error("Failed to fetch curation list from url", cur);
+      }
+    }
+    this.requestUpdate();
+  }
 
   /** */
   private _generateId(): string {
@@ -64,11 +91,11 @@ export class UrlListManager extends LitElement {
       url: this._normalizeUrl(this._newUrl.trim()),
     };
 
-    this.urls = [...this.urls, entry];
+    this._urls = [...this._urls, entry];
     this._newUrl = "";
 
     this.dispatchEvent(
-      new CustomEvent("urls-changed", { detail: this.urls, bubbles: true })
+      new CustomEvent("urls-changed", { detail: this._urls, bubbles: true })
     );
   }
 
@@ -77,10 +104,10 @@ export class UrlListManager extends LitElement {
   private async _removeUrl(id: string) {
     this._removing = id;
     await new Promise((r) => setTimeout(r, 280)); // waits 280ms for the animation to finish
-    this.urls = this.urls.filter((u) => u.id !== id);
+    this._urls = this._urls.filter((u) => u.id !== id);
     this._removing = null;
     this.dispatchEvent(
-      new CustomEvent("urls-changed", { detail: this.urls, bubbles: true })
+      new CustomEvent("urls-changed", { detail: this._urls, bubbles: true })
     );
   }
 
@@ -92,6 +119,7 @@ export class UrlListManager extends LitElement {
 
   /** */
   render() {
+    //console.debug("<curation-list-manager> render", this._urls);
     return html`
         <div class="container">
         <div class="add-form">
@@ -113,11 +141,11 @@ export class UrlListManager extends LitElement {
                 ? html`<span class="error-msg">${msg('Enter a valid URL')}</span>`
                 : ""}
         <!-- List -->
-        ${this.urls.length === 0
+        ${this._urls.length === 0
           ? html`<div class="empty-state">${msg('No lists found')}</div>`
           : html`
               <ul>
-                ${this.urls.map(
+                ${this._urls.map(
                   (u) => html`
                     <li class="${this._removing === u.id ? "removing" : ""}">
                       <div class="url-info">

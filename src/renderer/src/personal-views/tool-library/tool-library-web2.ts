@@ -2,7 +2,7 @@ import { html, LitElement, css } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { validate as validateSemver } from 'compare-versions';
-import { sortVersionsDescending, groupToolsByBaseId, getPrimaryVersionBranch } from '../../utils.js';
+import {sortVersionsDescending, groupToolsByBaseId, getPrimaryVersionBranch} from '../../utils.js';
 import {
   DeveloperCollective,
   DeveloperCollectiveToolList,
@@ -44,6 +44,7 @@ import {
 } from '../../elements/_new_design/icons.js';
 import '../../elements/_new_design/moss-dialog.js';
 import {MossDialog} from "../../elements/_new_design/moss-dialog";
+import {NamedUrl} from "./elements/curation-list-manager";
 
 const DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   {
@@ -54,14 +55,14 @@ const DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
 
 enum ToolLibraryView {
   Main,
-  ToolDetail,
+  //ToolDetail,
   CurationLists,
 }
 
 enum ToolDetailView {
   Description,
-  VersionHistory,
-  PublisherInfo,
+  //VersionHistory,
+  //PublisherInfo,
 }
 
 @localized()
@@ -104,6 +105,9 @@ export class ToolLibraryWeb2 extends LitElement {
   curationLists: { curator: ToolCurator; list: ToolCurationList }[] = [];
 
   @state()
+  _toolCurationConfigs: ToolCurationConfig[] = [];
+
+  @state()
   unifiedTools: Map<string, UnifiedToolEntry> = new Map();
 
   @state()
@@ -112,6 +116,26 @@ export class ToolLibraryWeb2 extends LitElement {
 
   /** */
   async firstUpdated() {
+    /** Set initial config */
+    // In applet dev mode, we use a fake list generated from the weave.dev.config
+    if (!!this.mossStore.appletDevConfig) {
+      this._toolCurationConfigs = this.mossStore.appletDevConfig.toolCurations;
+    } else {
+      // Get list of lists from localStorage
+      const json: string | null = window.localStorage.getItem("mossCurationConfig");
+      if (json) {
+        try {
+          const urls = JSON.parse(json) as string[];
+          this._toolCurationConfigs = urls.map((url) => ({ url, useLists: ['default'] })) // TODO: handle multiple useLists
+        } catch {
+          this._toolCurationConfigs = DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS;
+        }
+      } else {
+        // If none, use default
+        this._toolCurationConfigs = DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS;
+      }
+    }
+    /** Load tools from config */
     await this.fetchToolLists();
   }
 
@@ -120,34 +144,20 @@ export class ToolLibraryWeb2 extends LitElement {
   async fetchToolLists() {
     const allTools: Record<ToolCompatibilityId, ToolAndCurationInfo> = {};
     const developerCollectives: Record<ToolListUrl, DeveloperCollective> = {};
-    let toolCurationConfigs: ToolCurationConfig[];
 
-    // In applet dev mode, we use a fake list generated from the weave.dev.config
+    // 0. In devmode, load tools and collectives from mossStore
     if (!!this.mossStore.appletDevConfig) {
-      toolCurationConfigs = this.mossStore.appletDevConfig.toolCurations;
-      const { tools, devCollective } = this.mossStore.devModeToolLibrary as DevModeToolLibrary; // should always be defined in dev mode
+      const {tools, devCollective} = this.mossStore.devModeToolLibrary as DevModeToolLibrary; // should always be defined in dev mode
       tools.forEach((tool) => {
         allTools[tool.toolCompatibilityId] = tool;
         developerCollectives[tool.toolListUrl] = devCollective;
       });
-    } else {
-      const json: string | null = window.localStorage.getItem("mossCurationConfig");
-      if (json) {
-        try {
-          const urls = JSON.parse(json) as string[];
-          toolCurationConfigs = urls.map((url) => ({ url, useLists: ['default'] })) // TODO: handle multiple useLists
-        } catch {
-          toolCurationConfigs = DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS;
-        }
-      } else {
-        toolCurationConfigs = DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS;
-      }
     }
 
     // 1. Fetch all the curation lists from all the curators
     const curationLists: { curator: ToolCurator; list: ToolCurationList }[] = [];
     await Promise.allSettled(
-      toolCurationConfigs.map(async (config) => {
+      this._toolCurationConfigs.map(async (config) => {
         try {
           const resp = await fetch(config.url, { cache: 'no-cache' });
           const toolCurations: ToolCurations = await resp.json();
@@ -413,7 +423,13 @@ export class ToolLibraryWeb2 extends LitElement {
   renderCurationLists() {
     return html`
       <div class="column" style="flex: 1;">
-        <curation-list-manager .list=${this.curationLists}></curation-list-manager>
+        <curation-list-manager .initialConfig=${this._toolCurationConfigs} 
+                               @urls-changed=${async (e) => {
+                                 const urls = e.detail.map((url: NamedUrl) => url.url);
+                                 this._toolCurationConfigs = urls.map((url: string) => {return {url, useLists: ['default']}});
+                                 await this.fetchToolLists();
+                                 window.localStorage.setItem("mossCurationConfig", JSON.stringify(urls));
+                               }}></curation-list-manager>
       </div>
     `;
   }
@@ -481,8 +497,8 @@ export class ToolLibraryWeb2 extends LitElement {
     switch (this.view) {
       case ToolLibraryView.Main:
         return this.renderMainView();
-      case ToolLibraryView.ToolDetail:
-        return this.renderToolDetail();
+      //case ToolLibraryView.ToolDetail:
+      //  return this.renderToolDetail();
       case ToolLibraryView.CurationLists:
         return this.renderCurationLists();
     }
