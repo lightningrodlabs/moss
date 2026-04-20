@@ -21,8 +21,9 @@ import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
 import { mossStyles } from '../../shared-styles.js';
 import '../../elements/_new_design/select-group.js';
-import { mdiEmailOutline, mdiWeb } from '@mdi/js';
+import {mdiEmailOutline, mdiHelpCircle, mdiWeb} from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
+import './elements/curation-list-manager.js';
 import './elements/installable-tools-web2.js';
 import './elements/tool-publisher-detail.js';
 import { mossStoreContext } from '../../context.js';
@@ -38,14 +39,13 @@ import { ToolAndCurationInfo, ToolListUrl } from '../../types';
 import { deriveToolCompatibilityId } from '@theweave/utils';
 import {
   appStoreIcon,
-  devIcon,
   experimentalToolIcon,
   stableToolIcon,
 } from '../../elements/_new_design/icons.js';
-import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
 import '../../elements/_new_design/moss-dialog.js';
+import {MossDialog} from "../../elements/_new_design/moss-dialog";
 
-const PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
+const DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   {
     url: 'https://lightningrodlabs.org/weave-tool-curation/0.15/curations-0.15.json',
     useLists: ['default'],
@@ -55,6 +55,7 @@ const PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
 enum ToolLibraryView {
   Main,
   ToolDetail,
+  CurationLists,
 }
 
 enum ToolDetailView {
@@ -100,6 +101,9 @@ export class ToolLibraryWeb2 extends LitElement {
   availableTools: Record<ToolCompatibilityId, ToolAndCurationInfo> = {};
 
   @state()
+  curationLists: { curator: ToolCurator; list: ToolCurationList }[] = [];
+
+  @state()
   unifiedTools: Map<string, UnifiedToolEntry> = new Map();
 
   @state()
@@ -108,8 +112,12 @@ export class ToolLibraryWeb2 extends LitElement {
 
   /** */
   async firstUpdated() {
-    // TODO Option to add additional curator URLs and store them to localstorage
+    await this.fetchToolLists();
+  }
 
+
+  /** */
+  async fetchToolLists() {
     const allTools: Record<ToolCompatibilityId, ToolAndCurationInfo> = {};
     const developerCollectives: Record<ToolListUrl, DeveloperCollective> = {};
     let toolCurationConfigs: ToolCurationConfig[];
@@ -123,8 +131,17 @@ export class ToolLibraryWeb2 extends LitElement {
         developerCollectives[tool.toolListUrl] = devCollective;
       });
     } else {
-      toolCurationConfigs = PRODUCTION_TOOL_CURATION_CONFIGS;
-      // TODO read curation URLs from localStorage here
+      const json: string | null = window.localStorage.getItem("mossCurationConfig");
+      if (json) {
+        try {
+          const urls = JSON.parse(json) as string[];
+          toolCurationConfigs = urls.map((url) => ({ url, useLists: ['default'] })) // TODO: handle multiple useLists
+        } catch {
+          toolCurationConfigs = DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS;
+        }
+      } else {
+        toolCurationConfigs = DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS;
+      }
     }
 
     // 1. Fetch all the curation lists from all the curators
@@ -228,6 +245,7 @@ export class ToolLibraryWeb2 extends LitElement {
     this.unifiedTools = groupToolsByBaseId(allTools);
     this.allDeveloperCollectives = developerCollectives;
     this.availableTools = allTools;
+    this.curationLists = curationLists;
   }
 
 
@@ -372,6 +390,35 @@ export class ToolLibraryWeb2 extends LitElement {
 
 
   /** */
+  renderPublishDialog() {
+    return html` <moss-dialog
+      id="publish-dialog"
+      width="670px"
+      headerAlign="center">
+        <span slot="header">${msg('Publish A Tool')}</span>
+        <div slot="content">
+          ${msg(html`To publish a Tool in Moss it needs to be added to a Tool list and a Curation list hosted each at a web2 URL and added to the Curation lists in Moss' Tool Library. 
+            For an example of how this works, see the code repository for Lightningrod Labs lists 
+            <a href="https://github.com/lightningrodlabs/weave-tool-curation">here</a>.`)}
+            <br /><br />
+            ${msg(html`If you need any help 
+            <a href="https://github.com/lightningrodlabs/moss/issues/new">create an issue on Github</a>
+          `)}
+        </div>
+    </moss-dialog>`;
+  }
+
+
+  /** */
+  renderCurationLists() {
+    return html`
+      <div class="column" style="flex: 1;">
+        <curation-list-manager .list=${this.curationLists}></curation-list-manager>
+      </div>
+    `;
+  }
+
+  /** */
   renderPublisher(publisher: DeveloperCollective | undefined) {
     if (!publisher) return html``;
 
@@ -430,35 +477,14 @@ export class ToolLibraryWeb2 extends LitElement {
 
 
   /** */
-  renderPublishDialog() {
-    return html` <moss-dialog
-      id="publish-dialog"
-      width="670px"
-      headerAlign="center">
-        <span slot="header">${msg('Publish A Tool')}</span>
-        <div slot="content">
-          ${msg(html`To publish a Moss Tool it needs to be added to a Tool &amp; Curation list hosted at a web2 URL. For an example of how
-          this works, look at the initial curation repository of Lightningrod Labs
-          <a href="https://github.com/lightningrodlabs/weave-tool-curation">here</a>.`)}
-          <br /><br />
-          ${msg(html`If you would like to publish a Tool, please contact us at
-          <a href="mailto:moss.0.15.feedback@theweave.social">moss.0.15.feedback@theweave.social</a>
-          or
-          <a href="https://github.com/lightningrodlabs/moss/issues/new">create an issue on Github</a>
-          so that we can assist add your tool to our curation list. Future versions of Moss will include adding custom
-          curation lists.`)}
-        </div>
-    </moss-dialog>`;
-  }
-
-
-  /** */
   renderContent() {
     switch (this.view) {
       case ToolLibraryView.Main:
         return this.renderMainView();
       case ToolLibraryView.ToolDetail:
         return this.renderToolDetail();
+      case ToolLibraryView.CurationLists:
+        return this.renderCurationLists();
     }
   }
 
@@ -466,6 +492,7 @@ export class ToolLibraryWeb2 extends LitElement {
   /** */
   render() {
     return html`
+        ${this.renderPublishDialog()}
       <group-context .groupDnaHash=${this._selectedGroupDnaHash? decodeHashFromBase64(this._selectedGroupDnaHash): undefined}>
         <install-tool-dialog-web2 id="install-tool-dialog"
           @install-tool-dialog-closed=${() => {
@@ -483,22 +510,40 @@ export class ToolLibraryWeb2 extends LitElement {
       <div class="column container" style="flex: 1;">
         <div class="header column center-content">
           <div class="row" style="align-items: center; font-size: 34px;">
-            <span style="flex: 1; margin-left: 10px; font-weight: bold;">${msg('Tool Library')}</span>
+            <span style="flex: 1; margin-left: 10px; font-weight: bold;">
+                ${this.view !== ToolLibraryView.CurationLists? msg('Tool Library') : msg('Curation Lists')}
+            </span>
+              <sl-tooltip .content=${msg('Help')}>
+                  <sl-icon-button
+                          .src=${wrapPathInSvg(mdiHelpCircle)}
+                          style="font-size: 1.5rem"
+                          @click=${(_e) => {this._publishDialog.show()}}
+                  ></sl-icon-button>
+              </sl-tooltip>
           </div>
-          <button
-            class="moss-button"
-            style="border-radius:8px; padding: 8px 10px;position: absolute; right: 20px;border: 1px solid #89D6AA; color: #89D6AA"
-            @click=${() => this._publishDialog.show()}
-          >
-            <div class="row items-center">
-              ${devIcon(16)}
-              <span style="margin-left: 5px;font-size: 12px; ">${msg('Publish a tool')}</span>
-            </div>
-          </button>
+            ${this.view !== ToolLibraryView.CurationLists? html`
+            <button class="moss-button"
+                    style="border-radius:8px; padding: 8px 10px;position: absolute; right: 20px;border: 1px solid #89D6AA; color: #89D6AA"
+                    @click=${() => this.view = ToolLibraryView.CurationLists}>
+                <div class="row items-center">
+                    <span style="margin-left: 5px;font-size: 12px; ">${msg('Manage Curation Lists')}</span>
+                </div>
+            </button>
+            ` : html`
+                <button class="moss-button"
+                        style="border-radius:8px; padding: 8px 10px;position: absolute; right: 20px;border: 1px solid #89D6AA; color: #89D6AA"
+                        @click=${() => this.view = ToolLibraryView.Main}>
+                    <div class="row items-center">
+                        <span style="margin-left: 5px;font-size: 12px; ">${msg('Tool Library')}</span>
+                    </div>
+                </button>
+            `}
         </div>
         <div class="column flex-scrollable-parent" style="position:relative">
           <div class="flex-scrollable-container">
-            <div class="column flex-scrollable-y">${this.renderPublishDialog()}${this.renderContent()}</div>
+            <div class="column flex-scrollable-y">
+                ${this.renderContent()}
+            </div>
           </div>
         </div>
       </div>
