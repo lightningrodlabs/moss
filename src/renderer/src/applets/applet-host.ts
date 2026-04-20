@@ -321,6 +321,13 @@ export async function handleAppletIframeMessage(
   source: IframeKind,
   message: AppletToParentRequest,
   eventSource: MessageEventSource | null | 'wal-window',
+  /**
+   * webContents id of the BrowserWindow that originated the request
+   * when it arrived via the WAL-window relay. Undefined for messages
+   * coming directly from a main-window iframe. Used to attach native
+   * dialogs to the correct window.
+   */
+  senderWebContentsId?: number,
 ) {
   if (!validateRequest(message)) return;
 
@@ -419,11 +426,50 @@ export async function handleAppletIframeMessage(
     // 'asr-event' IPC pushed back from main can be routed to the
     // applet iframe that opened the session.
     case 'asr-capabilities': {
-      return window.electronAPI.asrCapabilities();
+      const caps = await window.electronAPI.asrCapabilities();
+      // Fold the renderer-side global enable switch into `available`,
+      // so a tool that calls `capabilities()` gets one authoritative
+      // answer for "can I call openSession right now?". Other fields
+      // (model, languages, latencyTier) still reflect what IS configured,
+      // useful for UX that wants to tell the user "enable Local AI in
+      // Moss settings to use transcription."
+      if (!mossStore.persistedStore.localAiEnabled.value()) {
+        return { asr: { ...caps.asr, available: false } };
+      }
+      return caps;
     }
     case 'asr-open-session': {
+      // Gate order: global Local AI switch first, then per-tool consent.
+      // Capability checks (`capabilities()`) are intentionally not gated —
+      // advertising what Moss can do is not the same as giving a tool
+      // permission to actually use it.
+      if (!mossStore.persistedStore.localAiEnabled.value()) {
+        throw new Error('Local AI is disabled in Moss settings');
+      }
+      if (source.type !== 'applet') {
+        throw new Error('Local ASR is only available from applet iframes');
+      }
+      const appletId = encodeHashToBase64(source.appletHash);
+      let decision = mossStore.persistedStore.appletAsrConsent.value(appletId);
+      if (decision === undefined) {
+        const appletName = await resolveAppletName(mossStore, source.appletHash);
+        // Native dialog — the main process attaches it to the
+        // BrowserWindow that initiated the request (a WAL window if
+        // the call came from one). That way it isn't hidden behind
+        // whatever the user is actually looking at.
+        decision = await window.electronAPI.asrRequestConsent({
+          appletName,
+          senderWebContentsId,
+        });
+        mossStore.persistedStore.appletAsrConsent.set(decision, appletId);
+      }
+      if (decision === 'denied') {
+        throw new Error('Local ASR access denied by user');
+      }
       const result = await window.electronAPI.asrOpenSession(message.opts ?? {});
-      getAsrRendererBridge().registerSession(result.sessionId, eventSource);
+      // Register sessionId→appletId so final/error events can be routed
+      // to every iframe (main-window AND WAL windows) hosting the applet.
+      getAsrRendererBridge().registerSession(result.sessionId, appletId);
       return result;
     }
     case 'asr-push-audio': {
@@ -1082,4 +1128,17 @@ async function getFirstGroupStoreForHrl(
     return undefined;
   }
   return Array.from(groupsForApplet.values())[0];
+}
+
+async function resolveAppletName(
+  mossStore: MossStore,
+  appletHash: AppletHash,
+): Promise<string> {
+  try {
+    const appletStore = await toPromise(mossStore.appletStores.get(appletHash)!);
+    if (appletStore?.applet?.custom_name) return appletStore.applet.custom_name;
+  } catch {
+    // fall through — unknown applet, use a hash prefix
+  }
+  return encodeHashToBase64(appletHash).slice(0, 12);
 }

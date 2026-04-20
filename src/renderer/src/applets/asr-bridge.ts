@@ -1,76 +1,81 @@
 // Renderer-side ASR bridge.
 //
-// The IPC layer in src/main pushes 'asr-event' messages to whichever
-// renderer (BrowserWindow webContents) opened the session. Within
-// THIS renderer we then have to route that event to the right applet
-// iframe — multiple applets and multiple sessions can be alive at
-// once, and only one of them should hear about each event.
+// The IPC layer in src/main pushes 'asr-event' messages to the main
+// renderer (whichever webContents opened the session — always the main
+// renderer, since WAL-window applet messages are relayed through main).
+// We then need to route each event to every iframe that might be
+// hosting the session's applet — which includes the main-window iframes
+// AND any open WAL windows for that applet.
 //
-// The bridge maintains `sessionId → MessageEventSource` so that when
-// we hear an 'asr-event' from main we can postMessage it to the iframe
-// that opened the session. Registration happens in applet-host.ts when
-// it handles 'asr-open-session'; unregistration happens on
-// 'asr-close-session' or implicitly on iframe destruction.
+// `mossStore.emitParentToAppletMessage` already does the main-iframe +
+// WAL-window fan-out for us, so we just track sessionId → appletId and
+// delegate. The applet iframe filters events by sessionId so only the
+// window that actually opened the session reacts.
 //
-// Subscribed to window.electronAPI.onAsrEvent once at app start via
-// initAsrRendererBridge().
+// Cross-group views aren't supported here — applet-host only registers
+// sessions whose source is an applet (see the asr-open-session case).
 
-import type { ParentToAppletMessage } from '@theweave/api';
+import type { AppletId, ParentToAppletMessage } from '@theweave/api';
+
+import type { MossStore } from '../moss-store.js';
 
 type AsrIpcEvent = Extract<ParentToAppletMessage, { type: 'asr-event' }>['event'];
 
 export class AsrRendererBridge {
-  private sources = new Map<string, MessageEventSource>();
+  private sessionApplets = new Map<string, AppletId>();
 
-  registerSession(sessionId: string, source: MessageEventSource | null | 'wal-window'): void {
-    if (!source || source === 'wal-window') {
-      // The applet iframe wasn't reachable as a MessageEventSource —
-      // most commonly the case for iframes hosted in WAL windows or
-      // for sources we cannot route back to. Skip registration; the
-      // applet won't receive events but the session itself still works
-      // for synchronous calls.
-      return;
-    }
-    this.sources.set(sessionId, source);
+  constructor(private readonly mossStore: MossStore) {}
+
+  registerSession(sessionId: string, appletId: AppletId): void {
+    this.sessionApplets.set(sessionId, appletId);
   }
 
   unregisterSession(sessionId: string): void {
-    this.sources.delete(sessionId);
+    this.sessionApplets.delete(sessionId);
   }
 
-  /** Broadcast an event from main to the iframe that owns the session. */
+  /** Forward an event from main to every iframe/window hosting the session's applet. */
   forwardEvent(event: AsrIpcEvent): void {
-    const source = this.sources.get(event.sessionId);
-    if (!source) return; // session closed already, or never had a routeable source
-    const message: ParentToAppletMessage = { type: 'asr-event', event };
-    source.postMessage(message, { targetOrigin: '*' });
+    const appletId = this.sessionApplets.get(event.sessionId);
+    if (!appletId) return; // unknown or already-closed session
+    void this.mossStore.emitParentToAppletMessage(
+      { type: 'asr-event', event },
+      [appletId],
+    );
   }
 
   /** Diagnostic. */
   get size(): number {
-    return this.sources.size;
+    return this.sessionApplets.size;
   }
 }
 
 let bridge: AsrRendererBridge | null = null;
 
+/**
+ * Access the singleton. Call `initAsrRendererBridge(mossStore)` once at
+ * app start before anything else uses the bridge.
+ */
 export function getAsrRendererBridge(): AsrRendererBridge {
-  if (!bridge) bridge = new AsrRendererBridge();
+  if (!bridge) {
+    throw new Error('AsrRendererBridge not initialized; call initAsrRendererBridge() first');
+  }
   return bridge;
 }
 
 let listenerInstalled = false;
 
 /**
- * Wire window.electronAPI.onAsrEvent into the bridge. Call once
- * at renderer startup. Idempotent.
+ * Wire window.electronAPI.onAsrEvent into the bridge. Call once at
+ * renderer startup. Idempotent — second call is a no-op (but also
+ * preserves the mossStore reference from the first call).
  */
-export function initAsrRendererBridge(): AsrRendererBridge {
-  const b = getAsrRendererBridge();
-  if (listenerInstalled) return b;
+export function initAsrRendererBridge(mossStore: MossStore): AsrRendererBridge {
+  if (!bridge) bridge = new AsrRendererBridge(mossStore);
+  if (listenerInstalled) return bridge;
   listenerInstalled = true;
   window.electronAPI.onAsrEvent((_e, ev) => {
-    b.forwardEvent(ev);
+    bridge!.forwardEvent(ev);
   });
-  return b;
+  return bridge;
 }

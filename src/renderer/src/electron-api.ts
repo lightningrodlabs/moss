@@ -70,7 +70,14 @@ declare global {
       openLogs: () => Promise<void>;
       exportLogs: () => Promise<void>;
       onAppletToParentMessage: (
-        callback: (e: any, payload: { message: AppletToParentMessage; id: string }) => void,
+        callback: (
+          e: any,
+          payload: {
+            message: AppletToParentMessage;
+            id: string;
+            senderWebContentsId?: number;
+          },
+        ) => void,
       ) => void;
       onDeepLinkReceived: (callback: (e: any, payload: string) => any) => void;
       onSwitchToWeaveLocation: (callback: (e: any, payload: WeaveLocation) => any) => void;
@@ -241,6 +248,10 @@ declare global {
         appId: string,
       ) => Promise<{ active: boolean; uiSha256?: string }>;
       // ── Local ASR (whisper.cpp via Moss main) ──
+      asrRequestConsent: (req: {
+        appletName: string;
+        senderWebContentsId?: number;
+      }) => Promise<'granted' | 'denied'>;
       asrCapabilities: () => Promise<{
         asr: {
           available: boolean;

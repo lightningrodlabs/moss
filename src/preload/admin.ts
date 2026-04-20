@@ -219,6 +219,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // The renderer-side bridge in applet-host.ts is the only intended
   // caller; applets reach this via WeaveClient.localModels.asr.
   // Channel contract is defined in src/main/asr/ipcHandlers.ts.
+  asrRequestConsent: (req: { appletName: string; senderWebContentsId?: number }) =>
+    ipcRenderer.invoke('asr-request-consent', req) as Promise<'granted' | 'denied'>,
   asrCapabilities: () =>
     ipcRenderer.invoke('asr-capabilities') as Promise<{
       asr: {

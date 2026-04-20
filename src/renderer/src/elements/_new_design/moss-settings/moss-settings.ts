@@ -11,6 +11,7 @@ import { PersistedStore } from '../../../persisted-store.js';
 import './profile-settings.js';
 import './language-settings.js';
 import './notification-settings.js';
+import './local-ai-settings.js';
 import './danger-zone-settings.js';
 
 type FeedbackRecord = {
@@ -26,6 +27,7 @@ enum TabsState {
   Profile,
   Language,
   Notifications,
+  LocalAi,
   Feedback,
   DangerZone,
 }
@@ -110,6 +112,10 @@ export class MossSettings extends LitElement {
     return html`<moss-notification-sound-settings></moss-notification-sound-settings>`;
   }
 
+  renderLocalAi() {
+    return html`<moss-local-ai-settings></moss-local-ai-settings>`;
+  }
+
   renderFeedback() {
     return html`
       <div class="column" style="padding: 0 20px; gap: 16px;">
@@ -188,6 +194,8 @@ export class MossSettings extends LitElement {
         return this.renderLanguage();
       case TabsState.Notifications:
         return this.renderNotifications();
+      case TabsState.LocalAi:
+        return this.renderLocalAi();
       case TabsState.Feedback:
         return this.renderFeedback();
       case TabsState.DangerZone:
@@ -223,6 +231,14 @@ export class MossSettings extends LitElement {
           ${msg('Notifications')}
         </button>
         <button
+          class="tab ${this.tabsState === TabsState.LocalAi ? 'tab-selected' : ''}"
+          @click=${() => {
+            this.tabsState = TabsState.LocalAi;
+          }}
+        >
+          ${msg('Local AI')}
+        </button>
+        <button
           class="tab ${this.tabsState === TabsState.Feedback ? 'tab-selected' : ''}"
           @click=${() => {
             this.tabsState = TabsState.Feedback;
@@ -250,6 +266,12 @@ export class MossSettings extends LitElement {
   static styles = [
     mossStyles,
     css`
+      /* Tighter than the shared default (0 20px) so 6 tabs fit without
+         overflowing the dialog. */
+      .tab {
+        padding: 0 12px;
+      }
+
       .feedback-item {
         padding: 8px 12px;
         border-radius: 6px;

@@ -597,18 +597,36 @@ export class MainDashboard extends LitElement {
     window.addEventListener('message', this._appletMessageListener);
 
     // Wire window.electronAPI.onAsrEvent → AsrRendererBridge so that
-    // 'asr-event' IPC pushes from main reach the right applet iframe.
-    initAsrRendererBridge();
+    // 'asr-event' IPC pushes from main reach every iframe hosting the
+    // session's applet (main-window iframes and WAL windows).
+    initAsrRendererBridge(this._mossStore);
     window.electronAPI.onAppletToParentMessage(async (_e, payload) => {
-      if (!payload.message.source) throw new Error('source not defined in AppletToParentMessage');
-      const response = await handleAppletIframeMessage(
-        this._mossStore,
-        this.openViews,
-        payload.message.source,
-        payload.message.request,
-        'wal-window',
-      );
-      await window.electronAPI.appletMessageToParentResponse(response, payload.id);
+      // Always send SOMETHING back — the main process waits up to 60s
+      // on this response, so any uncaught throw here would surface in
+      // the WAL window as a 60s timeout instead of the real error.
+      try {
+        if (!payload.message.source) {
+          throw new Error('source not defined in AppletToParentMessage');
+        }
+        const result = await handleAppletIframeMessage(
+          this._mossStore,
+          this.openViews,
+          payload.message.source,
+          payload.message.request,
+          'wal-window',
+          payload.senderWebContentsId,
+        );
+        await window.electronAPI.appletMessageToParentResponse(
+          { type: 'success', result },
+          payload.id,
+        );
+      } catch (e) {
+        const error = e instanceof Error ? e.message : String(e);
+        await window.electronAPI.appletMessageToParentResponse(
+          { type: 'error', error },
+          payload.id,
+        );
+      }
     });
 
     // Received from WAL windows on request when the main window is reloaded
@@ -1375,7 +1393,7 @@ export class MainDashboard extends LitElement {
         src="turing-pattern-bottom-left.svg"
         style="position: fixed; bottom: 0; left: 0; height: 250px;"
       />
-      <moss-dialog id="settings-dialog" width="800px">
+      <moss-dialog id="settings-dialog" width="900px">
         <span slot="header">${msg('Settings')}</span>
         <div slot="content">
           <moss-settings></moss-settings>

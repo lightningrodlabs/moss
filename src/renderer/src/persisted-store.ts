@@ -7,6 +7,20 @@ import { Profile } from '@holochain-open-dev/profiles';
 import { DEFAULT_NOTIFICATION_SOUND_SETTINGS } from './services/notification-audio';
 
 /**
+ * Event name dispatched on `window` whenever the appletAsrConsent
+ * store mutates. UI that reads the consent list should listen for it
+ * instead of polling.
+ */
+export const APPLET_ASR_CONSENT_CHANGED_EVENT = 'applet-asr-consent-changed';
+
+function emitAsrConsentChanged(): void {
+  // Guarded for non-DOM test environments.
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(APPLET_ASR_CONSENT_CHANGED_EVENT));
+  }
+}
+
+/**
  * A store that's persisted.
  */
 export class PersistedStore {
@@ -255,6 +269,60 @@ export class PersistedStore {
       this.store.setItem(`foyerWidth#${groupDnaHashB64}`, value);
     },
   };
+
+  /**
+   * Global on/off for the Moss-hosted local AI (ASR today, more later).
+   * Defaults off so nothing model-related runs until the user opts in
+   * from Settings → Local AI. While this is false, ASR openSession
+   * rejects immediately and tools never see a consent prompt.
+   */
+  localAiEnabled: SubStore<boolean, boolean, []> = {
+    value: () => this.store.getItem<boolean>('localAiEnabled') ?? false,
+    set: (value: boolean) => this.store.setItem('localAiEnabled', value),
+  };
+
+  /**
+   * Per-applet consent for Moss-hosted local ASR. Value is 'granted' or
+   * 'denied' for a decided applet; undefined means no decision has been
+   * recorded — the next `openSession()` call from that applet triggers
+   * the first-use consent prompt.
+   *
+   * Mutations fire a window 'applet-asr-consent-changed' CustomEvent so
+   * any open UI (the Local AI settings pane) can refresh without
+   * polling. Tabs / windows on the same origin all see it.
+   */
+  appletAsrConsent: SubStore<
+    'granted' | 'denied' | undefined,
+    'granted' | 'denied',
+    [AppletId]
+  > = {
+    value: (appletId: AppletId) =>
+      this.store.getItem<'granted' | 'denied'>(`appletAsrConsent#${appletId}`),
+    set: (value: 'granted' | 'denied', appletId: AppletId) => {
+      this.store.setItem(`appletAsrConsent#${appletId}`, value);
+      emitAsrConsentChanged();
+    },
+  };
+
+  /** Forget a prior consent decision so the next openSession prompts again. */
+  revokeAppletAsrConsent(appletId: AppletId): void {
+    this.store.removeItem(`appletAsrConsent#${appletId}`);
+    emitAsrConsentChanged();
+  }
+
+  /** Every decided applet and the recorded decision. Used by the settings pane. */
+  listAppletAsrConsents(): Array<{ appletId: AppletId; value: 'granted' | 'denied' }> {
+    const prefix = 'appletAsrConsent#';
+    const out: Array<{ appletId: AppletId; value: 'granted' | 'denied' }> = [];
+    for (const key of this.store.keys()) {
+      if (!key.startsWith(prefix)) continue;
+      const value = this.store.getItem<'granted' | 'denied'>(key);
+      if (value === 'granted' || value === 'denied') {
+        out.push({ appletId: key.slice(prefix.length) as AppletId, value });
+      }
+    }
+    return out;
+  }
 
   /**
    * When disabling all applets of a group the applets that were already disabled

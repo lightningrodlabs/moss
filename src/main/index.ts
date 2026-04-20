@@ -15,6 +15,7 @@ import {
   Notification,
   systemPreferences,
   MediaAccessPermissionRequest,
+  webContents,
 } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -1125,20 +1126,36 @@ if (!RUNNING_WITH_COMMAND) {
     );
     // Forward the message to the main window with a unique nano id and waits for the response
     // that should get sent via IPC ('applet-message-to-parent-response')
-    ipcMain.handle('applet-message-to-parent', (_e, message: AppletToParentMessage) => {
+    ipcMain.handle('applet-message-to-parent', (e, message: AppletToParentMessage) => {
       if (!MAIN_WINDOW) throw new Error('Main window does not exists.');
       const messageId = nanoid(5);
       if (message.request.type === 'open-view') {
         MAIN_WINDOW.show();
       }
+      // Include the sender's webContents id so the main renderer can
+      // route UI that needs to attach to the originating window (e.g.
+      // the native ASR consent dialog) back to that WAL window.
       emitToWindow(MAIN_WINDOW!, 'applet-to-parent-message', {
         message,
         id: messageId,
+        senderWebContentsId: e.sender.id,
       });
       return new Promise((resolve, reject) => {
         const timeoutMs = 60000;
         const onResponse = (response: any) => {
           clearTimeout(timeout);
+          // Optional envelope from the main renderer so it can signal
+          // handler errors instead of letting this promise hang until
+          // the 60s timeout. Older call sites send raw results —
+          // unwrap those unchanged for backward compat.
+          if (response && typeof response === 'object') {
+            if (response.type === 'error') {
+              return reject(new Error(response.error ?? 'Unknown applet-host error'));
+            }
+            if (response.type === 'success') {
+              return resolve(response.result);
+            }
+          }
           return resolve(response);
         };
         const timeout = setTimeout(() => {
@@ -1151,6 +1168,40 @@ if (!RUNNING_WITH_COMMAND) {
     ipcMain.handle('applet-message-to-parent-response', (_e, response: any, id: string) => {
       WE_EMITTER.emit(id, response);
     });
+    // Native first-use consent dialog for the local ASR feature. Shown
+    // attached to the BrowserWindow that actually initiated the request
+    // (WAL windows have their own window; applet iframes live inside
+    // the main window) so it can't hide behind another surface.
+    ipcMain.handle(
+      'asr-request-consent',
+      async (
+        _e,
+        { appletName, senderWebContentsId }: { appletName: string; senderWebContentsId?: number },
+      ): Promise<'granted' | 'denied'> => {
+        let targetWindow: BrowserWindow | null = null;
+        if (typeof senderWebContentsId === 'number') {
+          const wc = webContents.fromId(senderWebContentsId);
+          if (wc && !wc.isDestroyed()) {
+            targetWindow = BrowserWindow.fromWebContents(wc);
+          }
+        }
+        if (!targetWindow) targetWindow = MAIN_WINDOW!;
+        const { response } = await dialog.showMessageBox(targetWindow, {
+          type: 'question',
+          title: 'Allow local transcription?',
+          message: `${appletName} wants to transcribe audio locally`,
+          detail:
+            'Moss will run the on-device speech-to-text model for this tool. ' +
+            'Audio stays on this device and is never sent to an external service. ' +
+            'You can revoke this permission later from Settings → Local AI.',
+          buttons: ['Deny', 'Allow'],
+          defaultId: 1,
+          cancelId: 0,
+          noLink: true,
+        });
+        return response === 1 ? 'granted' : 'denied';
+      },
+    );
     ipcMain.handle(
       'parent-to-applet-message',
       (_e, message: ParentToAppletMessage, forApplets: AppletId[]) => {
