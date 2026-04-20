@@ -26,3 +26,17 @@ if (!fs.existsSync(path.join(binariesDirectory, expectedLairBinary))) {
     `Expected lair binary '${expectedLairBinary}' not found. Available binaries in ./resources/bins:\n[${foundBinaries}]`,
   );
 }
+
+// Check whether whisper-server binary is in the resources/bins folder.
+// Built by scripts/build-whisper-server.mjs from upstream source.
+if (mossConfig.whisperServer) {
+  const expectedWhisperBinary = `whisper-server-v${mossConfig.whisperServer}${
+    process.platform === 'win32' ? '.exe' : ''
+  }`;
+  if (!fs.existsSync(path.join(binariesDirectory, expectedWhisperBinary))) {
+    const foundBinaries = fs.readdirSync(binariesDirectory);
+    throw new Error(
+      `Expected whisper-server binary '${expectedWhisperBinary}' not found. Available binaries in ./resources/bins:\n[${foundBinaries}]`,
+    );
+  }
+}
