@@ -549,6 +549,29 @@ export interface AsrSessionOptions {
   channels?: 1 | 2;
   /** Force-flush threshold for unbounded pushes. Default 30_000 ms. */
   maxBufferMs?: number;
+  /**
+   * Enable Moss-side silence-based VAD. When true (default), the
+   * session commits an utterance whenever it sees `vadSilenceMs` of
+   * continuous silence after at least one speech chunk. When false,
+   * only `endOfUtterance` on `pushAudio` and `maxBufferMs` trigger
+   * commits — caller is fully in control.
+   */
+  vad?: boolean;
+  /**
+   * Silence threshold as RMS in normalized [-1, 1]. Audio chunks with
+   * RMS below this are treated as silence. Default 0.01 — typical
+   * room noise sits 0.001–0.005, normal speech sits 0.05–0.3. Bump
+   * higher in noisy environments; lower for quiet voices.
+   */
+  vadSilenceRms?: number;
+  /**
+   * How much continuous post-speech silence (ms) triggers a commit.
+   * Default 500 — roughly the inter-sentence pause in conversational
+   * English. Lower for more, smaller finals (better for long
+   * continuous speech where whisper drops content in long decode
+   * windows); raise to coalesce into larger utterances.
+   */
+  vadSilenceMs?: number;
 }
 
 /**
