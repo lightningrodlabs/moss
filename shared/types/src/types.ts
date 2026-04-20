@@ -14,7 +14,7 @@ export type WebHappSource = {
 /**
  * An ID to determine which Tool instances belong to the same compatible Tool class.
  * It is derived from the URL of the developer collective Tool list where it had been
- * pubished, as well as its tool Id and versionBranch in that list.
+ * published, as well as its tool ID and versionBranch in that list.
  */
 export type ToolCompatibilityId = string;
 

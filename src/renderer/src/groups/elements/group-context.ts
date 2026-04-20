@@ -20,7 +20,7 @@ export class GroupContext extends LitElement {
   mossStore!: MossStore;
 
   @property()
-  groupDnaHash!: DnaHash;
+  groupDnaHash: DnaHash | undefined = undefined;
 
   @provide({ context: groupStoreContext })
   groupStore!: GroupStore;
@@ -33,40 +33,46 @@ export class GroupContext extends LitElement {
 
   unsubscribe: Unsubscriber | undefined;
 
+
+  /** On groupDnaHash change, update the groupStore and profilesStore. */
   updated(changedValues: PropertyValues) {
     super.updated(changedValues);
-
-    if (changedValues.has('groupDnaHash')) {
-      if (this.unsubscribe) this.unsubscribe();
-
-      const groupHashShort = this.groupDnaHash ? encodeHashToBase64(this.groupDnaHash).slice(0, 8) : '??';
-
-      this.unsubscribe = this.mossStore.groupStores.subscribe((stores) => {
-        if (stores.status === 'complete') {
-          const groupStore = stores.value.get(this.groupDnaHash);
-          if (groupStore) {
-            const oldInstance = this.groupStore?._instanceId;
-            const newInstance = groupStore._instanceId;
-            if (oldInstance !== newInstance) {
-              onlineDebugLog(`[OnlineDebug][${groupHashShort}] group-context: GroupStore changed from instance=${oldInstance ?? 'none'} to instance=${newInstance}`);
-            }
-            this.groupStore = groupStore;
-            this.profilesStore = groupStore.profilesStore;
-            this.customViewsStore = groupStore.customViewsStore;
-          }
-        }
-      });
+    if (!changedValues.has('groupDnaHash')) {
+      return;
     }
+    if (this.unsubscribe) this.unsubscribe();
+    if (!this.groupDnaHash) {
+      return;
+    }
+    this.unsubscribe = this.mossStore.groupStores.subscribe((stores) => {
+      if (stores.status === 'complete') {
+        const groupStore = stores.value.get(this.groupDnaHash!);
+        if (groupStore) {
+          const oldInstance = this.groupStore?._instanceId;
+          const newInstance = groupStore._instanceId;
+          if (oldInstance !== newInstance) {
+            const groupHashShort = encodeHashToBase64(this.groupDnaHash!).slice(0, 8);
+            onlineDebugLog(`[OnlineDebug][${groupHashShort}] group-context: GroupStore changed from instance=${oldInstance ?? 'none'} to instance=${newInstance}`);
+          }
+          this.groupStore = groupStore;
+          this.profilesStore = groupStore.profilesStore;
+          this.customViewsStore = groupStore.customViewsStore;
+        }
+      }
+    });
   }
+
 
   disconnectedCallback() {
     super.disconnectedCallback();
     if (this.unsubscribe) this.unsubscribe();
   }
 
+
   render() {
     return html`<slot></slot>`;
   }
+
 
   static styles = css`
     :host {

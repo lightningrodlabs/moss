@@ -34,7 +34,7 @@ export class InstallableToolsWeb2 extends LitElement {
   mossStore!: MossStore;
 
   @property()
-  installableTools: ToolAndCurationInfo[] = []; // Keep for backward compatibility, but prefer unifiedTools
+  installableTools: ToolAndCurationInfo[] = []; // Keep for backward compatibility but prefer unifiedTools
 
   @property()
   unifiedTools: UnifiedToolEntry[] = [];
