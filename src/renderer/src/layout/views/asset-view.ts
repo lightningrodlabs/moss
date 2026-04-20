@@ -101,7 +101,7 @@ export class AssetView extends LitElement {
       ></applet-view>
       <div id="we-toolbar" class="column toolbar">
         <weave-client-context .weaveClient=${buildHeadlessWeaveClient(this._mossStore)}>
-          <sl-tooltip content="Open in Window">
+          <sl-tooltip content=${msg("Open in Window")}>
             <div
               class="row btn toolbar-btn"
               style="font-size: 28px"
@@ -116,7 +116,7 @@ export class AssetView extends LitElement {
               <sl-icon .src=${wrapPathInSvg(mdiOpenInNew)}></sl-icon>
             </div>
           </sl-tooltip>
-          <sl-tooltip content="Jump to parent Tool">
+          <sl-tooltip content=${msg("Jump to parent Tool")}>
             <div
               class="row btn toolbar-btn"
               tabindex="0"
@@ -131,7 +131,7 @@ export class AssetView extends LitElement {
             </div>
           </sl-tooltip>
 
-          <sl-tooltip content="Add to Pocket">
+          <sl-tooltip content=${msg("Add to Pocket")}>
             <div
               class="row btn toolbar-btn"
               tabindex="0"

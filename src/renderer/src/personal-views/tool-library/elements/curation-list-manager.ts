@@ -7,6 +7,7 @@ export interface NamedUrl {
   id: string;
   name: string;
   url: string;
+  curUrl?: string;
 }
 
 @customElement("curation-list-manager")
@@ -41,7 +42,7 @@ export class UrlListManager extends LitElement {
         const toolCurations: ToolCurations = await resp.json();
         // TODO validate format strictly here
         //console.debug("<curation-list-manager> adding url", url);
-        this._urls.push({url: this._normalizeUrl(url), id: this._generateId(), name: toolCurations.curator.name});
+        this._urls.push({url: this._normalizeUrl(url), id: this._generateId(), name: toolCurations.curator.name, curUrl: toolCurations.curator.contact.website});
       } catch {
         console.error("Failed to fetch curation list from url", cur);
       }
@@ -89,6 +90,7 @@ export class UrlListManager extends LitElement {
       id: this._generateId(),
       name: toolCurations.curator.name,
       url: this._normalizeUrl(this._newUrl.trim()),
+      curUrl: toolCurations.curator.contact.website,
     };
 
     this._urls = [...this._urls, entry];
@@ -149,7 +151,13 @@ export class UrlListManager extends LitElement {
                   (u) => html`
                     <li class="${this._removing === u.id ? "removing" : ""}">
                       <div class="url-info">
-                        <div class="url-name">${u.name}</div>
+                        <div class="url-name">
+                            <a class="url-name"
+                               href=${u.curUrl}
+                               target="_blank"
+                               rel="noopener noreferrer"
+                            >${u.name}</a>
+                        </div>
                         <a
                           class="url-href"
                           href=${u.url}
@@ -331,6 +339,10 @@ export class UrlListManager extends LitElement {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          text-decoration: none;
+      }
+      .url-name:hover {
+          color: #c8a96e;
       }
 
       .url-href {

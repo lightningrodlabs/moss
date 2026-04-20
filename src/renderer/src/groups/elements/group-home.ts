@@ -769,7 +769,7 @@ export class GroupHome extends LitElement {
         if (this._editGroupDescription) {
           return html`
             <div class="row" style="justify-content: flex-end; align-items: center;">
-              <sl-tooltip content="Cancel">
+              <sl-tooltip content=${msg("Cancel")}>
                 <button
                   class="moss-button"
                   style="margin-right: 8px; padding: 8px; border-radius: 6px;"
@@ -780,7 +780,7 @@ export class GroupHome extends LitElement {
                   <div class="column center-content" style="padding-top: 2px;">${closeIcon(18)}</div>
                 </button>
               </sl-tooltip>
-              <sl-tooltip content="Save">
+              <sl-tooltip content=${msg("Save")}>
                 <button
                   class="moss-button"
                   style="padding: 8px; border-radius: 6px;"

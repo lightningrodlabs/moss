@@ -119,7 +119,7 @@ export class InstallableToolsWeb2 extends LitElement {
                   </div>
                 `
         : ''}
-            <sl-tooltip content="visit developer's website">
+            <sl-tooltip content=${msg("Visit developer's website")}>
               <div class="tool-developer">
                 <span  style="opacity:.4">${msg('by')}</span>
                 <a href="${this.devCollectives[tool.toolListUrl].contact.website}"
@@ -208,7 +208,7 @@ export class InstallableToolsWeb2 extends LitElement {
         ${this.selectedTool ? html`
         ${this.selectedTool.title}
 
-          <sl-tooltip content="visit developer's website">
+          <sl-tooltip content=${msg("Visit developer's website")}>
         <div class="tool-developer">
           <span style="opacity:.4">${msg('by')}</span>
             <a href="${this.devCollectives[this.selectedTool.toolListUrl].contact.website}"

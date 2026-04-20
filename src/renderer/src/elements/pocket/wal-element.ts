@@ -164,7 +164,7 @@ export class WalElement extends LitElement {
                 this.wal.hrl[1],
               )}${this.wal.context ? `?context=${encodeContext(this.wal.context)}` : ''}`}
             >
-              <sl-tooltip .content=${this.selectTitle ? this.selectTitle : msg('Select')}>
+              <sl-tooltip .content=${this.selectTitle ?? msg('Select')}>
                 <div
                   class="row open"
                   style="align-items: center; padding: 0; margin: 0;"
