@@ -27,24 +27,25 @@ if (!fs.existsSync(path.join(binariesDirectory, expectedLairBinary))) {
   );
 }
 
-// Check whether whisper-server binary is in the resources/bins folder.
-// Built by scripts/build-whisper-server.mjs from upstream source.
-if (mossConfig.whisperServer) {
-  const expectedWhisperBinary = `whisper-server-v${mossConfig.whisperServer}${
-    process.platform === 'win32' ? '.exe' : ''
-  }`;
-  if (!fs.existsSync(path.join(binariesDirectory, expectedWhisperBinary))) {
-    const foundBinaries = fs.readdirSync(binariesDirectory);
-    throw new Error(
-      `Expected whisper-server binary '${expectedWhisperBinary}' not found. Available binaries in ./resources/bins:\n[${foundBinaries}]`,
-    );
+// ASR checks (whisper-server binary + bundled model) are opt-in via
+// MOSS_REQUIRE_ASR=1. Dev mode uses a nix-shell fallback for the
+// binary (see src/main/asr/binaryResolver.ts) and the spike model, so
+// enforcing their presence would break `yarn applet-dev-*` for any
+// developer who skipped the ASR build on setup. Release CI flips the
+// flag on in yarn setup:release.
+if (process.env.MOSS_REQUIRE_ASR === '1') {
+  if (mossConfig.whisperServer) {
+    const expectedWhisperBinary = `whisper-server-v${mossConfig.whisperServer}${
+      process.platform === 'win32' ? '.exe' : ''
+    }`;
+    if (!fs.existsSync(path.join(binariesDirectory, expectedWhisperBinary))) {
+      const foundBinaries = fs.readdirSync(binariesDirectory);
+      throw new Error(
+        `Expected whisper-server binary '${expectedWhisperBinary}' not found. Available binaries in ./resources/bins:\n[${foundBinaries}]`,
+      );
+    }
   }
-}
 
-// Check whether the default ASR model is bundled. Only enforced when
-// MOSS_REQUIRE_ASR_MODEL is set (release builds) so local dev setup
-// doesn't pay the 141 MB download cost unless the developer opts in.
-if (process.env.MOSS_REQUIRE_ASR_MODEL === '1') {
   const modelPath = path.join('resources', 'models', 'ggml-base.en.bin');
   if (!fs.existsSync(modelPath)) {
     throw new Error(
