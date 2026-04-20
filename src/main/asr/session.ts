@@ -291,10 +291,27 @@ export class AsrSession {
       this.emitError(e);
       throw e;
     }
+    // Unconditional diagnostic: if this prints empty text/segments on a
+    // flush where the caller pushed actual speech, the ASR layer is
+    // healthy and the problem is upstream (wrong sample rate in the WAV
+    // header, mic muted, etc.).
+    console.log('[asr-session] transcribe →', {
+      segments: result.segments.length,
+      text: result.segments.map((s) => s.text).join(' | '),
+      lang: result.lang,
+      inferMs: result.inferMs,
+    });
 
     const flushedFrames = flushedSamples / this.shape.channels;
     const flushedMs = Math.round((flushedFrames / this.shape.sampleRate) * 1000);
     const baseMs = this.cursorMs;
+
+    if (process.env.MOSS_ASR_DEBUG) {
+      const texts = result.segments.map((s) => s.text).join(' | ');
+      process.stderr.write(
+        `[asr-debug] flush: ${flushedSamples} samples @ ${this.shape.sampleRate}Hz×${this.shape.channels}ch (${flushedMs}ms) → segments=${result.segments.length} lang=${result.lang ?? '?'} inferMs=${result.inferMs}${texts ? ` text=${JSON.stringify(texts)}` : ''}\n`,
+      );
+    }
 
     for (const seg of result.segments) {
       this.emitFinal(toFinal(seg, baseMs, result.lang));
