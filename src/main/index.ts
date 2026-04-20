@@ -926,6 +926,7 @@ if (!RUNNING_WITH_COMMAND) {
     // MOSS_LOCAL_MODELS_PLAN.md for context.
     registerAsrIpc({
       binariesDir: BINARIES_DIRECTORY,
+      whisperServerVersion: MOSS_CONFIG.whisperServer,
       repoRoot: app.getAppPath(),
     });
 
