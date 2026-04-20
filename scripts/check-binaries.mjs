@@ -40,3 +40,15 @@ if (mossConfig.whisperServer) {
     );
   }
 }
+
+// Check whether the default ASR model is bundled. Only enforced when
+// MOSS_REQUIRE_ASR_MODEL is set (release builds) so local dev setup
+// doesn't pay the 141 MB download cost unless the developer opts in.
+if (process.env.MOSS_REQUIRE_ASR_MODEL === '1') {
+  const modelPath = path.join('resources', 'models', 'ggml-base.en.bin');
+  if (!fs.existsSync(modelPath)) {
+    throw new Error(
+      `Expected ASR model at '${modelPath}' (run \`yarn fetch:asr-model\`).`,
+    );
+  }
+}
