@@ -33,12 +33,11 @@ import {
 import { SessionRegistry } from './sessionRegistry';
 
 /**
- * Pinned to the nixpkgs whisper-cpp version used in the M0 spike. The
- * resolver looks for `whisper-server-v<this>` in resources/bins; in
- * dev that file doesn't exist and the resolver falls back to the
- * `nix shell nixpkgs#whisper-cpp -c whisper-server` invocation. When
- * the per-platform binary fetch pipeline lands, this constant moves
- * to moss.config.json alongside `holochain` and `kitsune2BootstrapSrv`.
+ * Fallback whisper.cpp version used when the caller does not pass one.
+ * Kept in sync with `moss.config.json#whisperServer` — production
+ * callers (src/main/index.ts) read that file and pass the value in;
+ * this default only covers legacy test paths that construct a wire-up
+ * without going through the config loader.
  */
 export const WHISPER_SERVER_VERSION = '1.8.4';
 
@@ -46,8 +45,15 @@ export interface AsrWireUpConfig {
   /** Absolute path to the resources/bins directory. */
   binariesDir: string;
   /**
+   * whisper-server version. Used to construct the bundled binary
+   * filename (resources/bins/whisper-server-v<version><exe>). When
+   * omitted, falls back to WHISPER_SERVER_VERSION.
+   */
+  whisperServerVersion?: string;
+  /**
    * Optional model override. If omitted, defaults to $MOSS_ASR_MODEL,
-   * then to the M0 spike artifact under `repoRoot`.
+   * then to a bundled model under `resourcesDir`, then to the M0
+   * spike artifact under `repoRoot` (dev only).
    */
   modelPath?: string;
   /** Used to compute the default model path. Required when modelPath is omitted. */
@@ -77,7 +83,7 @@ export function registerAsrIpc(config: AsrWireUpConfig): void {
   const latencyTier = config.latencyTier ?? readLatencyTierEnv();
   const broker = initAsrService({
     binariesDir: config.binariesDir,
-    whisperServerVersion: WHISPER_SERVER_VERSION,
+    whisperServerVersion: config.whisperServerVersion ?? WHISPER_SERVER_VERSION,
     isPackaged: app.isPackaged,
     modelPath,
     idleTimeoutMs: config.idleTimeoutMs,
