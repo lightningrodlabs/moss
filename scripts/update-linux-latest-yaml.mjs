@@ -5,6 +5,10 @@
  * This script extends the deb postinst script with the creation of an apparmor profile
  * on Ubuntu 24.04 (https://github.com/electron/electron/issues/41066), repackages
  * the deb file and then overwrites the latest-linux.yaml file with the new sha512 hash
+ *
+ * Set SKIP_LATEST_YAML=1 to run the AppImage + deb modifications without
+ * touching latest-linux.yml — used by the dev-release workflow, which
+ * intentionally does not publish auto-updater metadata.
  */
 import yaml from 'js-yaml';
 import fs from 'fs';
@@ -142,6 +146,11 @@ const debFileBytes = fs.readFileSync(debFilePath);
 const debSha512 = crypto.createHash('sha512').update(debFileBytes).digest('base64');
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+if (process.env.SKIP_LATEST_YAML) {
+    console.log('SKIP_LATEST_YAML set — AppImage + deb patched, skipping latest-linux.yml update.');
+    process.exit(0);
+}
 
 // Modify sha512 hashes of latest-linux.yaml
 const latestYaml = yaml.load(

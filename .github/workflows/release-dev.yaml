@@ -140,18 +140,28 @@ jobs:
 
       - name: build (Ubuntu 22.04)
         if: matrix.platform == 'ubuntu-22.04'
+        env:
+          SKIP_LATEST_YAML: '1'
         run: |
           yarn build
           npx electron-builder --linux --config --publish never
+          # Patch AppRun (AppImage) + postinst (deb) so the sandbox
+          # works on modern desktops. Production uses this same script;
+          # SKIP_LATEST_YAML suppresses the auto-updater yml write that
+          # dev-release intentionally doesn't publish.
+          node ./scripts/update-linux-latest-yaml.mjs
 
       - name: build (Ubuntu 22.04 aarch64)
         if: matrix.platform == 'ubuntu-22.04-arm'
+        env:
+          SKIP_LATEST_YAML: '1'
         run: |
           sudo apt-get install ruby-dev build-essential
           sudo gem install fpm
           export USE_SYSTEM_FPM=true
           yarn build
           npx electron-builder --linux --config --publish never
+          node ./scripts/update-linux-latest-yaml.mjs
 
       - name: build (Windows)
         shell: bash
