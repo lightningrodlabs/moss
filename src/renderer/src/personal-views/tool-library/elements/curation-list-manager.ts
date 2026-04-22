@@ -4,6 +4,7 @@ import {msg} from "@lit/localize";
 import {ToolCurationConfig, ToolCurations} from "@theweave/moss-types";
 import {mossStyles} from "../../../shared-styles";
 import {trashIcon} from "../../../elements/_new_design/icons";
+import {DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS} from "../tool-library-web2";
 
 export interface NamedUrl {
   id: string;
@@ -71,6 +72,12 @@ export class UrlListManager extends LitElement {
       this._error = "url";
       return;
     }
+
+    if (this._urls.some((u) => u.url === this._normalizeUrl(this._newUrl.trim()))) {
+      this._newUrl = "";
+      return;
+    }
+
     let toolCurations: ToolCurations;
     try {
       const url = new URL(
@@ -172,6 +179,26 @@ export class UrlListManager extends LitElement {
                       `
                   })}
             `}
+            <div style="margin-top:50px;">
+                <div><b>${msg('Factory Reset')}</b></div>
+                <div class="row items-center"
+                     style="background: #ffaaaa; padding: 10px 15px; border-radius: 8px; margin-top: 12px;">
+                    <span style="margin-right: 20px; flex: 1;">
+                        ${msg('Fully reset list to initial setting')}
+                    </span>
+                    <sl-button
+                            variant="danger"
+                            @click=${async () => {
+                                await this.initializeList(DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS.map((i) => i.url));
+                                this.dispatchEvent(
+                                        new CustomEvent("urls-changed", { detail: this._urls, bubbles: true })
+                                );
+                            }}
+                    >
+                        ${msg('Factory Reset')}
+                    </sl-button>                    
+                </div>
+            </div>
       </div>
     `;
   }
@@ -204,6 +231,7 @@ export class UrlListManager extends LitElement {
           display: flex;
           flex-direction: row;
           gap: 10px;
+          margin-bottom: 30px;
       }
 
       .field {

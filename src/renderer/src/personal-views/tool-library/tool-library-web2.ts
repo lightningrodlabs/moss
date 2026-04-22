@@ -46,7 +46,7 @@ import '../../elements/_new_design/moss-dialog.js';
 import {MossDialog} from "../../elements/_new_design/moss-dialog";
 import {NamedUrl} from "./elements/curation-list-manager";
 
-const DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
+export const DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   {
     url: 'https://lightningrodlabs.org/weave-tool-curation/0.15/curations-0.15.json',
     useLists: ['default'],
