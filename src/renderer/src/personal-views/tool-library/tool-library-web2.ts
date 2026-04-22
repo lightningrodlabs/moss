@@ -56,7 +56,6 @@ const DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
 enum ToolLibraryView {
   Main,
   //ToolDetail,
-  CurationLists,
 }
 
 enum ToolDetailView {
@@ -88,6 +87,9 @@ export class ToolLibraryWeb2 extends LitElement {
 
   @query('#publish-dialog')
   _publishDialog!: MossDialog;
+
+  @query('#curation-dialog')
+  _curationListDialog!: MossDialog;
 
   @state()
   _selectedTool: ToolAndCurationInfo | undefined;
@@ -401,10 +403,11 @@ export class ToolLibraryWeb2 extends LitElement {
 
   /** */
   renderPublishDialog() {
-    return html` <moss-dialog
-      id="publish-dialog"
-      width="670px"
-      headerAlign="center">
+    return html`
+      <moss-dialog
+        id="publish-dialog"
+        width="670px"
+        headerAlign="center">
         <span slot="header">${msg('Publish A Tool')}</span>
         <div slot="content">
           ${msg(html`To publish a Tool in Moss it needs to be added to a Tool list and a Curation list hosted each at a web2 URL and added to the Curation lists in Moss' Tool Library. 
@@ -415,24 +418,32 @@ export class ToolLibraryWeb2 extends LitElement {
             <a href="https://github.com/lightningrodlabs/moss/issues/new">create an issue on Github</a>
           `)}
         </div>
-    </moss-dialog>`;
+      </moss-dialog>
+    `;
   }
 
 
   /** */
   renderCurationLists() {
     return html`
-      <div class="column" style="flex: 1;">
-        <curation-list-manager .initialConfig=${this._toolCurationConfigs} 
+        <moss-dialog
+                id="curation-dialog"
+                width="870px"
+                headerAlign="center">
+            <span slot="header">${msg('Curation Lists')}</span>
+            <div slot="content">
+                <curation-list-manager .initialConfig=${this._toolCurationConfigs} 
                                @urls-changed=${async (e) => {
                                  const urls = e.detail.map((url: NamedUrl) => url.url);
                                  this._toolCurationConfigs = urls.map((url: string) => {return {url, useLists: ['default']}});
                                  await this.fetchToolLists();
                                  window.localStorage.setItem("mossCurationConfig", JSON.stringify(urls));
                                }}></curation-list-manager>
-      </div>
+            </div>
+        </moss-dialog>
     `;
   }
+
 
   /** */
   renderPublisher(publisher: DeveloperCollective | undefined) {
@@ -442,7 +453,7 @@ export class ToolLibraryWeb2 extends LitElement {
       <div class="column">
         <div class="row" style="align-items: center; font-size: 1.1rem;">
           <img
-            alt="${publisher.name}"
+            alt=${publisher.name}
             .src=${publisher.icon}
             style="width: 40px; height: 40px; border-radius: 50%;"
           />
@@ -499,8 +510,6 @@ export class ToolLibraryWeb2 extends LitElement {
         return this.renderMainView();
       //case ToolLibraryView.ToolDetail:
       //  return this.renderToolDetail();
-      case ToolLibraryView.CurationLists:
-        return this.renderCurationLists();
     }
   }
 
@@ -509,7 +518,8 @@ export class ToolLibraryWeb2 extends LitElement {
   render() {
     return html`
         ${this.renderPublishDialog()}
-      <group-context .groupDnaHash=${this._selectedGroupDnaHash? decodeHashFromBase64(this._selectedGroupDnaHash): undefined}>
+        ${this.renderCurationLists()}
+        <group-context .groupDnaHash=${this._selectedGroupDnaHash? decodeHashFromBase64(this._selectedGroupDnaHash): undefined}>
         <install-tool-dialog-web2 id="install-tool-dialog"
           @install-tool-dialog-closed=${() => {
             this._selectedGroupDnaHash = undefined;
@@ -527,7 +537,7 @@ export class ToolLibraryWeb2 extends LitElement {
         <div class="header column center-content">
           <div class="row" style="align-items: center; font-size: 34px;">
             <span style="flex: 1; margin-left: 10px; font-weight: bold;">
-                ${this.view !== ToolLibraryView.CurationLists? msg('Tool Library') : msg('Curation Lists')}
+                ${msg('Tool Library')}
             </span>
               <sl-tooltip .content=${msg('Help')}>
                   <sl-icon-button
@@ -537,23 +547,13 @@ export class ToolLibraryWeb2 extends LitElement {
                   ></sl-icon-button>
               </sl-tooltip>
           </div>
-            ${this.view !== ToolLibraryView.CurationLists? html`
             <button class="moss-button"
                     style="border-radius:8px; padding: 8px 10px;position: absolute; right: 20px;border: 1px solid #89D6AA; color: #89D6AA"
-                    @click=${() => this.view = ToolLibraryView.CurationLists}>
+                    @click=${() => {this._curationListDialog.show()}}>
                 <div class="row items-center">
                     <span style="margin-left: 5px;font-size: 12px; ">${msg('Manage Curation Lists')}</span>
                 </div>
             </button>
-            ` : html`
-                <button class="moss-button"
-                        style="border-radius:8px; padding: 8px 10px;position: absolute; right: 20px;border: 1px solid #89D6AA; color: #89D6AA"
-                        @click=${() => this.view = ToolLibraryView.Main}>
-                    <div class="row items-center">
-                        <span style="margin-left: 5px;font-size: 12px; ">${msg('Tool Library')}</span>
-                    </div>
-                </button>
-            `}
         </div>
         <div class="column flex-scrollable-parent" style="position:relative">
           <div class="flex-scrollable-container">

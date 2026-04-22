@@ -2,6 +2,8 @@ import {LitElement, html, css, PropertyValues} from "lit";
 import {customElement, property, state} from "lit/decorators.js";
 import {msg} from "@lit/localize";
 import {ToolCurationConfig, ToolCurations} from "@theweave/moss-types";
+import {mossStyles} from "../../../shared-styles";
+import {trashIcon} from "../../../elements/_new_design/icons";
 
 export interface NamedUrl {
   id: string;
@@ -20,7 +22,6 @@ export class UrlListManager extends LitElement {
 
   @state() private _newUrl = "";
   @state() private _error = "";
-  @state() private _removing: string | null = null;
 
 
   /** */
@@ -104,10 +105,7 @@ export class UrlListManager extends LitElement {
 
   /** */
   private async _removeUrl(id: string) {
-    this._removing = id;
-    await new Promise((r) => setTimeout(r, 280)); // waits 280ms for the animation to finish
     this._urls = this._urls.filter((u) => u.id !== id);
-    this._removing = null;
     this.dispatchEvent(
       new CustomEvent("urls-changed", { detail: this._urls, bubbles: true })
     );
@@ -126,9 +124,9 @@ export class UrlListManager extends LitElement {
         <div class="container">
         <div class="add-form">
           <div class="field ${this._error === "url" ? "error" : ""}">
-            <label for="inp-url">URL</label>
-            <input
+            <sl-input
               id="inp-url"
+              class="moss-input"
               type="url"
               placeholder="e.g. https://domain.com/mylist.json"
               .value=${this._newUrl}
@@ -137,7 +135,7 @@ export class UrlListManager extends LitElement {
             />
           </div>
 
-          <button class="btn-add" @click=${this._addUrl}>${msg('Add List')}</button>
+          <button class="moss-button" @click=${this._addUrl}>${msg('Add List')}</button>
         </div>
         ${this._error === "url"
                 ? html`<span class="error-msg">${msg('Enter a valid URL')}</span>`
@@ -146,43 +144,42 @@ export class UrlListManager extends LitElement {
         ${this._urls.length === 0
           ? html`<div class="empty-state">${msg('No lists found')}</div>`
           : html`
-              <ul>
                 ${this._urls.map(
-                  (u) => html`
-                    <li class="${this._removing === u.id ? "removing" : ""}">
-                      <div class="url-info">
-                        <div class="url-name">
-                            <a class="url-name"
-                               href=${u.curUrl}
-                               target="_blank"
-                               rel="noopener noreferrer"
-                            >${u.name}</a>
-                        </div>
-                        <a
-                          class="url-href"
-                          href=${u.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          >${u.url}</a>
-                      </div>
-                      <button
-                        class="btn-remove"
-                        title="${msg("Remove curation list from")} ${u.name}"
-                        @click=${() => this._removeUrl(u.id)}
-                      >
-                        ✕
-                      </button>
-                    </li>
-                  `
-                )}
-              </ul>
+                  (u) => {
+                      const urlObj = new URL(u.url);
+                      const domain = urlObj.hostname;
+                      const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+                      return html`
+                          <div style="display:flex; flex-direction:row; align-items:center; gap:8px;">
+                            <a href="${u.url}" target="_blank" rel="noopener noreferrer" class="link-preview-card" style="flex-grow:1;">
+                                <div class="link-preview-favicon">
+                                    <img src="${favicon}" alt=""
+                                         @error=${(e: Event) => (e.target as HTMLImageElement).style.display = 'none'}/>
+                                </div>
+                                <div class="link-preview-content">
+                                    <div class="link-preview-domain">${u.name}</div>
+                                    <div class="link-preview-url">${u.url}</div>
+                                </div>
+                            </a>
+                            <sl-tooltip content=${msg("Remove curation list")} placement="left">
+                                <button
+                                        class="open-wal-button"
+                                        @click=${() => this._removeUrl(u.id)}>
+                                    ${trashIcon()}
+                                </button>
+                            </sl-tooltip>
+                          </div>
+                      `
+                  })}
             `}
       </div>
     `;
   }
 
 
-  static styles = css`
+  static styles = [
+    mossStyles,
+    css`
       :host {
           display: block;
           padding: 3rem 2rem;
@@ -223,18 +220,6 @@ export class UrlListManager extends LitElement {
           color: #5a5550;
       }
 
-      input {
-          background: #f3f1f1;
-          border: 1px solid #2a2a2a;
-          color: #1e1e1e;
-          font-size: 0.9rem;
-          padding: 0.65rem 0.85rem;
-          outline: none;
-          transition: border-color 0.2s;
-          width: 100%;
-          box-sizing: border-box;
-      }
-
       input::placeholder {
           color: #858381;
       }
@@ -254,30 +239,7 @@ export class UrlListManager extends LitElement {
           letter-spacing: 0.03em;
       }
 
-      .btn-add {
-          background: #c8a96e;
-          border: none;
-          color: #0d0d0d;
-          font-size: 0.8rem;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          padding: 0 1.4rem;
-          height: 2.5rem;
-          cursor: pointer;
-          align-self: end;
-          transition: background 0.2s, transform 0.1s;
-          white-space: nowrap;
-      }
-
-      .btn-add:hover {
-          background: #d9bb80;
-      }
-
-      .btn-add:active {
-          transform: scale(0.97);
-      }
-
+        
       /* ── URL list ── */
 
       .list-header {
@@ -297,90 +259,82 @@ export class UrlListManager extends LitElement {
           margin-top: 40px;
 
       }
+        .link-preview-card {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 12px;
+            background: var(--moss-main-green, #E0EED5);
+            text-decoration: none;
+            color: var(--moss-dark-button, #151A11);
+            transition: background 0.2s ease;
+            margin-top: 8px;
+        }
 
-      ul {
-          list-style: none;
-          margin: 0;
-          margin-top: 40px;
-          padding: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-      }
+        .link-preview-card:hover {
+            background: color-mix(in srgb, var(--moss-main-green, #E0EED5) 80%, #000 10%);
+        }
 
-      li {
-          display: grid;
-          grid-template-columns: 1fr auto;
-          align-items: center;
-          gap: 1rem;
-          background: #f6f5f5;
-          border: 1px solid #1e1e1e;
-          padding: 0.85rem 1rem;
-          transition: border-color 0.2s, opacity 0.3s, transform 0.3s;
-      }
+        .link-preview-favicon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
 
-      li:hover {
-          border-color: #2a2a2a;
-      }
+        .link-preview-favicon img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
 
-      li.removing {
-          opacity: 0;
-          transform: translateX(12px);
-      }
+        .link-preview-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow: hidden;
+        }
 
-      .url-info {
-          min-width: 0;
-      }
+        .link-preview-domain {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--moss-dark-button, #151A11);
+        }
 
-      .url-name {
-          font-size: 0.95rem;
-          color: #248b1e;
-          margin-bottom: 0.2rem;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          text-decoration: none;
-      }
-      .url-name:hover {
-          color: #c8a96e;
-      }
+        .link-preview-url {
+            font-size: 11px;
+            color: rgba(21, 26, 17, 0.6);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-      .url-href {
-          font-size: 0.78rem;
-          color: #5a5550;
-          text-decoration: none;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          display: block;
-          transition: color 0.15s;
-      }
+        .open-wal-button {
+            background: #fff;
+            color: var(--moss-dark-button);
+            cursor: pointer;
+            display: flex;
+            padding: 8px 10px;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            border-radius: 8px;
+            border: none;
+            transition: background 0.1s ease, color 0.1s ease;
+        }
 
-      .url-href:hover {
-          color: #c8a96e;
-      }
+        .open-wal-button:hover {
+            background: var(--moss-dark-button);
+            color: #fff;
+        }
+        
 
-      .btn-remove {
-          background: transparent;
-          border: 1px solid #2a2a2a;
-          color: #4a4540;
-          font-size: 0.95rem;
-          width: 2rem;
-          height: 2rem;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: border-color 0.2s, color 0.2s, background 0.2s;
-          flex-shrink: 0;
-          line-height: 1;
-      }
-
-      .btn-remove:hover {
-          border-color: #8b3a3a;
-          color: #c04040;
-          background: #1a0d0d;
-      }
-
-  `;
+    `];
 }
