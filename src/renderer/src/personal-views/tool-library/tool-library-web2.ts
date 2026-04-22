@@ -44,7 +44,7 @@ import {
 } from '../../elements/_new_design/icons.js';
 import '../../elements/_new_design/moss-dialog.js';
 import {MossDialog} from "../../elements/_new_design/moss-dialog";
-import {NamedUrl} from "./elements/curation-list-manager";
+import {NamedUrl, UrlListManager} from "./elements/curation-list-manager";
 
 export const DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   {
@@ -90,6 +90,9 @@ export class ToolLibraryWeb2 extends LitElement {
 
   @query('#curation-dialog')
   _curationListDialog!: MossDialog;
+
+  @query('#curation-manager')
+  _curationManagerDialog!: UrlListManager;
 
   @state()
   _selectedTool: ToolAndCurationInfo | undefined;
@@ -137,6 +140,8 @@ export class ToolLibraryWeb2 extends LitElement {
         this._toolCurationConfigs = DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS;
       }
     }
+    /** Initialize curation list manager */
+    await this._curationManagerDialog.initializeList(this._toolCurationConfigs.map((i) => i.url));
     /** Load tools from config */
     await this.fetchToolLists();
   }
@@ -432,13 +437,13 @@ export class ToolLibraryWeb2 extends LitElement {
                 headerAlign="center">
             <span slot="header">${msg('Curation Lists')}</span>
             <div slot="content">
-                <curation-list-manager .initialConfig=${this._toolCurationConfigs} 
-                               @urls-changed=${async (e) => {
-                                 const urls = e.detail.map((url: NamedUrl) => url.url);
-                                 this._toolCurationConfigs = urls.map((url: string) => {return {url, useLists: ['default']}});
-                                 await this.fetchToolLists();
-                                 window.localStorage.setItem("mossCurationConfig", JSON.stringify(urls));
-                               }}></curation-list-manager>
+              <curation-list-manager id="curation-manager"
+                             @urls-changed=${async (e) => {
+                               const urls = e.detail.map((url: NamedUrl) => url.url);
+                               this._toolCurationConfigs = urls.map((url: string) => {return {url, useLists: ['default']}});
+                               await this.fetchToolLists();
+                               window.localStorage.setItem("mossCurationConfig", JSON.stringify(urls));
+                             }}></curation-list-manager>
             </div>
         </moss-dialog>
     `;

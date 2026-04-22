@@ -1,7 +1,7 @@
-import {LitElement, html, css, PropertyValues} from "lit";
-import {customElement, property, state} from "lit/decorators.js";
+import {LitElement, html, css} from "lit";
+import {customElement, state} from "lit/decorators.js";
 import {msg} from "@lit/localize";
-import {ToolCurationConfig, ToolCurations} from "@theweave/moss-types";
+import {ToolCurations} from "@theweave/moss-types";
 import {mossStyles} from "../../../shared-styles";
 import {trashIcon} from "../../../elements/_new_design/icons";
 import {DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS} from "../tool-library-web2";
@@ -16,20 +16,9 @@ export interface NamedUrl {
 @customElement("curation-list-manager")
 export class UrlListManager extends LitElement {
 
-  @property({type: Array})
-  initialConfig: ToolCurationConfig[] = [];
-
   @state() private _urls: NamedUrl[] = [];
-
   @state() private _newUrl = "";
   @state() private _error = "";
-
-
-  /** */
-  protected firstUpdated(_changedProperties: PropertyValues) {
-    super.firstUpdated(_changedProperties);
-    /*await*/ this.initializeList(this.initialConfig.map((i) => i.url));
-  }
 
 
   /** */
@@ -158,7 +147,7 @@ export class UrlListManager extends LitElement {
                       const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
                       return html`
                           <div style="display:flex; flex-direction:row; align-items:center; gap:8px;">
-                            <a href="${u.url}" target="_blank" rel="noopener noreferrer" class="link-preview-card" style="flex-grow:1;">
+                            <a href="${u.url}" target="_blank" rel="noopener noreferrer" class="link-preview-card" style="flex-grow:1; max-width:500px;">
                                 <div class="link-preview-favicon">
                                     <img src="${favicon}" alt=""
                                          @error=${(e: Event) => (e.target as HTMLImageElement).style.display = 'none'}/>
