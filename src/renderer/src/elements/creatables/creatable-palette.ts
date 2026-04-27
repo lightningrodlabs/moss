@@ -111,9 +111,9 @@ export class CreatablePalette extends LitElement {
     if (this._creatableViewDialog) this._creatableViewDialog.hide();
     switch (creatableResult.type) {
       case 'error':
-        notifyError(
+        notifyError(msg(str
           `Failed to create new ${this._showCreatableView?.creatable.label}: ${creatableResult.error}`,
-        );
+        ));
         console.error(
           'Failed to create new ',
           this._showCreatableView?.creatable.label,

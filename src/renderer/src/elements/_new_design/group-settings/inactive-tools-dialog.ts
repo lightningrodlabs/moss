@@ -149,7 +149,7 @@ export class InactiveToolsDialog extends LitElement {
         this.hide();
       }
     } catch (e) {
-      notifyError(`Failed to activate tool (See console for details).`);
+      notifyError(msg(`Failed to activate tool (See console for details).`));
       console.error(e);
     }
     this._joiningNewApplet = undefined;

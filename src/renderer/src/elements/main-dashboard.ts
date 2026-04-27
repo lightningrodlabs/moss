@@ -460,7 +460,7 @@ export class MainDashboard extends LitElement {
     if (alreadyJoinedGroup) {
       this.openGroup(alreadyJoinedGroup[0]);
     } else {
-      notifyError('The link is for a group you are not part of.');
+      notifyError(msg('The link is for a group you are not part of.'));
     }
   }
 
@@ -500,23 +500,23 @@ export class MainDashboard extends LitElement {
     try {
       weaveLocation = weaveUrlToLocation(wurl);
     } catch (e) {
-      notifyError('Invalid URL');
+      notifyError(msg('Invalid URL'));
       console.error(e);
       return;
     }
     if (!weaveLocation) {
-      notifyError('Failed to parse URL');
+      notifyError(msg('Failed to parse URL'));
     } else {
       switch (weaveLocation.type) {
         case 'applet':
           return this.handleOpenAppletMain(weaveLocation.appletHash);
         case 'group':
           // TODO fix after renaming of group links to invite links
-          notifyError('URL type not supported.');
+          notifyError(msg('URL type not supported.'));
           return;
         case 'invitation':
           // TODO implement after renaming of group links to invite links
-          notifyError('URL type not supported.');
+          notifyError(msg('URL type not supported.'));
           return;
         case 'asset':
           return this.handleOpenWal(weaveLocation.wal);

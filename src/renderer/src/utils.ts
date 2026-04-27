@@ -30,7 +30,6 @@ import isEqual from 'lodash-es/isEqual.js';
 
 import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
 import { MessageContentPart, ToolAndCurationInfo, UnifiedToolEntry, VersionBranchInfo } from './types.js';
-import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
 import {
   AsyncReadable,
@@ -773,11 +772,6 @@ export function urlFromAppletHash(appletHash: AppletHash): string {
   const appletHashB64 = encodeHashToBase64(appletHash);
   const lowerCaseAppletId = toLowerCaseB64(appletHashB64);
   return lowerCaseAppletId.replaceAll('$', '%24');
-}
-
-export function notifyAndThrow(message: string) {
-  notifyError(message);
-  throw new Error(message);
 }
 
 export function validateWal(wal: WAL): WAL {

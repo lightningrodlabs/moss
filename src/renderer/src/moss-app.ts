@@ -16,7 +16,7 @@ import { mossStoreContext } from './context.js';
 import { MossStore } from './moss-store.js';
 import { appletDevConfig, getConductorInfo, ImportGroupsProgress } from './electron-api.js';
 import { LegacyProfileInfo } from './electron-api.js';
-import { localized, msg } from '@lit/localize';
+import {localized, msg, str} from '@lit/localize';
 import { arrowLeftShortIcon, createGroupIcon, mossIcon } from './elements/_new_design/icons.js';
 import './elements/_new_design/moss-select-avatar.js';
 import './elements/_new_design/moss-select-avatar-fancy.js';
@@ -288,7 +288,7 @@ export class MossApp extends LitElement {
     try {
       modifiers = partialModifiersFromInviteLink(this.inviteLink);
     } catch (e) {
-      notifyError(`Invalid invite link: ${e}`);
+      notifyError(msg(str`Invalid invite link: ${e}`));
       console.error('Error: Failed to join group: Invite link is invalid: ', e);
       this.creatingGroup = false;
       return;

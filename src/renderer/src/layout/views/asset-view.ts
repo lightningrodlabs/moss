@@ -43,7 +43,7 @@ export class AssetView extends LitElement {
   jumpToApplet() {
     if (this.location.value.status !== 'complete' || this.location.value.value === undefined) {
       console.error('Asset location not defined (yet).');
-      notifyError('Failed to jump to Tool (see console for details).');
+      notifyError(msg('Failed to jump to Tool (see console for details).'));
     } else {
       this.dispatchEvent(
         new CustomEvent('jump-to-applet', {

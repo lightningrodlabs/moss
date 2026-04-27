@@ -2,7 +2,7 @@ import { css, html, LitElement } from 'lit';
 import { state, query, customElement } from 'lit/decorators.js';
 
 import { consume } from '@lit/context';
-import { localized, msg } from '@lit/localize';
+import {localized, msg, str} from '@lit/localize';
 import { ProvisionedCell } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/select-avatar.js';
@@ -66,7 +66,7 @@ export class JoinGroupDialog extends LitElement {
       try {
         modifiers = partialModifiersFromInviteLink(fields.link);
       } catch (e) {
-        notifyError(`Invalid invite link: ${e}`);
+        notifyError(msg(str`Invalid invite link: ${e}`));
         console.error('Error: Failed to join group: Invite link is invalid: ', e);
         return;
       }

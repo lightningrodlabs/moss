@@ -509,7 +509,7 @@ export class GroupHome extends LitElement {
       this._recentlyJoined.push(encodeHashToBase64(appletHash));
       this._showIgnoredApplets = false;
     } catch (e) {
-      notifyError(`Failed to activate Tool (See console for details).`);
+      notifyError(msg(`Failed to activate Tool (See console for details).`));
       console.error(e);
     }
     this._joiningNewApplet = undefined;
@@ -791,7 +791,7 @@ export class GroupHome extends LitElement {
               // TODO: use MossPrivilege instead
               if (!this.amIPrivileged()) {
                 this._editGroupDescription = false;
-                notifyError('No permission to edit group profile.');
+                notifyError(msg('No permission to edit group profile.'));
                 return;
               } else {
                 console.log('Saving description...');

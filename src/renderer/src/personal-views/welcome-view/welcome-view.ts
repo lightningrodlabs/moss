@@ -410,7 +410,7 @@ Changes:
 
   async installMossUpdate() {
     if (!this.availableMossUpdate) {
-      notifyError('No update available.');
+      notifyError(msg('No update available.'));
       return;
     }
     try {
@@ -418,7 +418,7 @@ Changes:
       await window.electronAPI.installMossUpdate();
     } catch (e) {
       console.error('Moss update failed: ', e);
-      notifyError('Update failed (see console for details).');
+      notifyError(msg('Update failed (see console for details).'));
       this.mossUpdatePercentage = undefined;
     }
   }

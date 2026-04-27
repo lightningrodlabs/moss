@@ -1,6 +1,6 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { localized, msg } from '@lit/localize';
+import {localized, msg, str} from '@lit/localize';
 import { consume } from '@lit/context';
 import '@holochain-open-dev/profiles/dist/elements/profiles-context.js';
 
@@ -86,12 +86,12 @@ export class StewardsSettings extends LitElement {
     if (this._expirySelected) {
       const expiryInput = this.shadowRoot?.getElementById('permission-expiry') as HTMLInputElement;
       if (!expiryInput.value) {
-        notifyError('No expiry date selected. Uncheck expiry or select date.');
+        notifyError(msg('No expiry date selected. Uncheck expiry or select date.'));
         return;
       }
       const msTimestamp = new Date(expiryInput.value).getTime();
       if (msTimestamp < Date.now()) {
-        notifyError('Expiry must be in the future');
+        notifyError(msg('Expiry must be in the future'));
         throw new Error('Expiry must be in the future.');
       }
       usTimestamp = msTimestamp * 1000;
@@ -105,7 +105,7 @@ export class StewardsSettings extends LitElement {
       }
     } catch (e) {
       console.error(e);
-      notifyError('Invalid public key.');
+      notifyError(msg('Invalid public key.'));
       return;
     }
     console.log('Creating permission with input: ', {
@@ -119,7 +119,7 @@ export class StewardsSettings extends LitElement {
         expiry: usTimestamp ? usTimestamp : undefined,
       });
     } catch (e) {
-      notifyError(`Failed to create permission: ${e}`);
+      notifyError(msg(str`Failed to create permission: ${e}`));
       return;
     }
     pubkeyInput.value = '';
