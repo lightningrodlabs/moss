@@ -37,7 +37,7 @@ import {
   InstalledAppId,
   LazyHoloHashMap,
   ProvisionedCell,
-  RoleNameCallZomeRequest,
+  RoleNameCallZomeRequest, RoleSettings, RoleSettingsMap,
 } from '@holochain/client';
 import {
   AppletHash,
@@ -1384,8 +1384,21 @@ export class MossStore {
     }
 
     // Only in dev mode AppHashes of type 'happ' are currently allowed
-    if (appHashes.type !== 'webhapp' && !this.isAppletDev)
+    if (appHashes.type !== 'webhapp' && !this.isAppletDev) {
       throw new Error(`Got invalid AppHashes type: ${appHashes.type}. AppHashes: ${appHashes}`);
+    }
+
+    const roles_settings: RoleSettingsMap = Object.fromEntries(
+      Object.entries(applet.properties).map(([key, bytes]) => {
+        const settings: RoleSettings = {
+          type: "provisioned",
+          value: {
+            //membrane_proof?: MembraneProof;
+            modifiers: {properties: bytes},
+          },
+        };
+        return [key, settings];
+      }));
 
     const appInfo = await window.electronAPI.installAppletBundle(
       appId,
@@ -1394,6 +1407,7 @@ export class MossStore {
       distributionInfo,
       appHashes,
       uiPort,
+      roles_settings,
     );
 
     return appInfo;

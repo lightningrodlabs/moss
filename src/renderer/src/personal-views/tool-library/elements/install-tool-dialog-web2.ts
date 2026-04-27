@@ -262,7 +262,7 @@ export class InstallToolDialogWeb2 extends LitElement {
     this.form?.reset();
   }
 
-  async installApplet(fields: { custom_name: string; network_seed?: string }) {
+  async installApplet(fields: { custom_name: string; network_seed?: string; properties?: Record<string, Uint8Array>}) {
     if (this._installing) return;
     if (!this._tool) {
       notifyError(msg('Tool undefined.'));
@@ -288,7 +288,8 @@ export class InstallToolDialogWeb2 extends LitElement {
         this._tool,
         fields.custom_name,
         fields.network_seed ? fields.network_seed : undefined,
-        permission_hash
+        permission_hash,
+        fields.properties ? fields.properties : undefined,
       );
 
       // Add a timeout here to try to fix case where error "Applet not installed in any of the groups" occurs
@@ -448,10 +449,8 @@ export class InstallToolDialogWeb2 extends LitElement {
 
             <span
               style="text-decoration: underline; cursor: pointer; margin-bottom: 10px;"
-              @click=${() => {
-            this._showAdvanced = !this._showAdvanced;
-          }}
-              >${this._showAdvanced ? 'Hide' : 'Show'} Advanced
+              @click=${() => this._showAdvanced = !this._showAdvanced}>
+                      ${this._showAdvanced ? msg('Hide') : msg('Show')} ${msg('Advanced')}
             </span>
 
             ${this._showAdvanced
@@ -462,6 +461,13 @@ export class InstallToolDialogWeb2 extends LitElement {
                     .label=${msg('Custom Network Seed')}
                     style="margin-bottom: 16px"
                   ></sl-input>
+                  <sl-textarea
+                          name="properties"
+                          id="properties-field"
+                          .label=${msg('Custom DNA properties (yaml)')}
+                          rows="6"
+                          style="margin-bottom: 16px"
+                  ></sl-textarea>     
                 `
             : html``}
 

@@ -77,7 +77,7 @@ import {
   InstalledAppId,
   AgentPubKey,
   decodeHashFromBase64,
-  encodeHashToBase64,
+  encodeHashToBase64, RoleSettingsMap,
 } from '@holochain/client';
 import { decode } from '@msgpack/msgpack';
 import { v4 as uuidv4 } from 'uuid';
@@ -2512,6 +2512,7 @@ if (!RUNNING_WITH_COMMAND) {
         distributionInfo: DistributionInfo,
         appHashes: AppHashes,
         uiPort?: number,
+        roles_settings?: RoleSettingsMap,
       ): Promise<AppInfo> => {
         const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
         const alreadyInstalledAppInfo = apps.find((appInfo) => appInfo.installed_app_id === appId);
@@ -2543,8 +2544,9 @@ if (!RUNNING_WITH_COMMAND) {
           }
         }
 
-        if (distributionInfo.type !== 'web2-tool-list')
+        if (distributionInfo.type !== 'web2-tool-list') {
           throw new Error(`Unsupported distribution type ${distributionInfo.type}`);
+          }
 
         // Fetch the icon and store it
         const toolCompatibilityId = toolCompatibilityIdFromDistInfo(distributionInfo);
@@ -2716,6 +2718,7 @@ if (!RUNNING_WITH_COMMAND) {
               installed_app_id: appId,
               agent_key: agentPubKey,
               network_seed: networkSeed,
+              roles_settings,
             });
             console.log('@install-applet-bundle: app installed.');
           } catch (e: any) {

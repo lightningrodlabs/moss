@@ -1322,6 +1322,7 @@ export class GroupStore {
     customName: string,
     networkSeed?: string,
     permissionHash?: ActionHash,
+    properties?: Record<string, Uint8Array>,
   ): Promise<EntryHash> {
     if (!networkSeed) {
       networkSeed = uuidv4();
@@ -1361,7 +1362,7 @@ export class GroupStore {
       sha256_webhapp: latestVersion.hashes.webhappSha256,
       distribution_info: JSON.stringify(distributionInfo),
       network_seed: networkSeed,
-      properties: {},
+      properties: properties? properties : {},
     };
 
     const appletHash = await this.groupClient.hashApplet(applet);

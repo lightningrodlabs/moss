@@ -7,7 +7,7 @@ import {
   InstalledAppId,
   ZomeName,
   FunctionName,
-  DnaHashB64,
+  DnaHashB64, RoleSettingsMap,
 } from '@holochain/client';
 import {
   AppletId,
@@ -141,6 +141,7 @@ declare global {
         distributionInfo: DistributionInfo,
         appHashes: AppHashes,
         uiPort?: number,
+        roles_settings?: RoleSettingsMap,
       ) => Promise<AppInfo>;
       uninstallAppletBundle: (appId: string) => Promise<void>;
       isMainWindowFocused: () => Promise<boolean | undefined>;
