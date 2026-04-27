@@ -9,9 +9,6 @@ roles:
       deferred: false
     dna:
       path: '../dnas/group/workdir/group.dna'
-      properties: ~
-      network_seed: ~
-      version: ~
       clone_limit: 0
   - name: foyer
     provisioning:
@@ -19,9 +16,6 @@ roles:
       deferred: false
     dna:
       path: '../dnas/foyer/workdir/foyer.dna'
-      properties: ~
-      network_seed: ~
-      version: ~
       clone_limit: 0
   - name: assets
     provisioning:
@@ -29,7 +23,4 @@ roles:
       deferred: false
     dna:
       path: '../dnas/assets/workdir/assets.dna'
-      properties: ~
-      network_seed: ~
-      version: ~
       clone_limit: 0

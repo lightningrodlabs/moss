@@ -13,5 +13,4 @@ roles:
         network_seed: ~
         properties: ~
       installed_hash: ~
-      version: ~
       clone_limit: 10

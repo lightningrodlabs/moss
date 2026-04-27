@@ -12,7 +12,7 @@ import {
   enableAndGetAgentApp,
   PlayerApp,
   Scenario,
-} from '@holochain/tryorama';
+} from '@holochain-open-dev/tryorama';
 //import { Accountability, StewardPermission } from '@theweave/group-client';
 //import { getCellByRoleName } from '../../shared';
 //

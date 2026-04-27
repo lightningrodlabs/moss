@@ -1,4 +1,4 @@
-appId: org.lightningrodlabs.moss-0.15
+appId: org.lightningrodlabs.moss-0.16
 productName: Moss
 directories:
   buildResources: build

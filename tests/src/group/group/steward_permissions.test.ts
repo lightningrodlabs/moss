@@ -1,6 +1,6 @@
 import { assert, test } from 'vitest';
 
-import { runScenario, dhtSync } from '@holochain/tryorama';
+import { runScenario, dhtSync } from '@holochain-open-dev/tryorama';
 import {
   AppBundleSource,
   encodeHashToBase64,

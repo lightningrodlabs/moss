@@ -1,8 +1,8 @@
 {
-  "name": "org.lightningrodlabs.moss-0.15",
-  "version": "0.15.6",
+  "name": "org.lightningrodlabs.moss-0.16",
+  "version": "0.16.0-dev.0",
   "private": true,
-  "description": "Moss (0.15)",
+  "description": "Moss (0.16)",
   "main": "./out/main/index.js",
   "workspaces": [
     "libs/*",
@@ -75,11 +75,11 @@
   "dependencies": {
     "@electron-toolkit/preload": "^2.0.0",
     "@electron-toolkit/utils": "^2.0.0",
-    "@holochain-open-dev/elements": "^0.601.0",
-    "@holochain-open-dev/profiles": "^0.601.2",
-    "@holochain-open-dev/stores": "^0.601.0",
-    "@holochain-open-dev/utils": "^0.601.0",
-    "@holochain/client": "=0.20.4-rc.0",
+    "@holochain-open-dev/elements": "^0.700.0-dev.0",
+    "@holochain-open-dev/profiles": "^0.700.0-dev.0",
+    "@holochain-open-dev/stores": "^0.700.0-dev.0",
+    "@holochain-open-dev/utils": "^0.700.0-dev.0",
+    "@holochain/client": "=0.21.0-dev.2",
     "@lightningrodlabs/we-rust-utils": "^0.600.0-dev.0",
     "electron-updater": "6.6.2",
     "@msgpack/msgpack": "^2.8.0",

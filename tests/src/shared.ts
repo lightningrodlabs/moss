@@ -1,4 +1,4 @@
-import { CallableCell, PlayerApp } from '@holochain/tryorama';
+import { CallableCell, PlayerApp } from '@holochain-open-dev/tryorama';
 
 export function getCellByRoleName(player: PlayerApp, roleName: string): CallableCell {
   const cells = player.cells;

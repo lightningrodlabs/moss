@@ -1,0 +1,152 @@
+# Plan: Update Moss to Holochain 0.7
+
+## Status of `main-0.7` today
+
+Reference source lives at `../holochain` (tracking tag `holochain-0.7.0-dev.21`).
+
+**Done in this branch (uncommitted):**
+
+- `Cargo.toml` workspace: `holochain = "=0.7.0-dev.21"`, `hdk = "=0.7.0-dev.13"`, `hdi = "=0.8.0-dev.10"` (and `example/Cargo.toml` matches).
+- `yarn build:zomes` clean against 0.7. The previously-feared 0.7 API breakages (`GetOptions` private fields, `get_agent_activity` arity change, `block_agent` removal, anchor strategy) **did not hit Moss zomes** at this revision — all zomes compile without source changes. Only warning: an unused `use group_integrity::*;` in `dnas/group/zomes/coordinator/group/src/lib.rs:8`.
+- `moss.config.json`: `"holochain": "0.7.0-dev.21"`. `holochain-checksums.json` regenerated from the dev.21 release. `yarn fetch:binaries` + `yarn check:binaries` pass; `holochain-v0.7.0-dev.21` boots and reaches the Lair-connect step (config parses cleanly, no `deny_unknown_fields` errors).
+- Conductor config template (`resources/conductor-config.yaml`) and the strip block in `holochainManager.ts:80-91` already match the 0.7 schema. Validated by booting the 0.7 conductor against a copy of the template.
+
+**Not yet done (blocked or pending):**
+
+- JS client bump (`@holochain/client` 0.20.4-rc.0 → ^0.21.0-dev.2) is **blocked on `@holochain-open-dev/profiles`**. `profiles@0.601.3` (latest) hard-pins `@holochain/client="0.20.4-rc.0"` and there is no 0.700.x release or `main-0.7` branch yet. Profiles is used by libs/api, libs/elements, iframes/applet-iframe, src/renderer (group-store + many components), example/ui, and cli — so the renderer-side bump must wait.
+- HOD packages other than profiles **are** available at 0.700.0-dev.0 (`elements`, `stores`, `utils`).
+- Tryorama: `@holochain-open-dev/tryorama@0.20.0-dev.0` is published and depends on `@holochain/client@^0.21.0-dev.2`. Tests are isolated in `tests/package.json` so this can flip independently of the renderer once we accept dragging in `@holochain/client@0.21.0-dev.X` for the test workspace only.
+- Profile zomes still pull `holochain-open-dev/profiles#main-0.6` Rust crates — same blocker on the Rust side. Other zomes are clean.
+
+## Target version (decided)
+
+**Track `0.7.0-dev.N`**, starting at `holochain-0.7.0-dev.21`. We re-bump at each new dev release as needed and pin to a stable tag when the release branch cuts.
+
+Crate versions at this tag:
+
+- `holochain = 0.7.0-dev.21`
+- `hdk = 0.7.0-dev.13`
+- `hdi = 0.8.0-dev.10`
+
+**Binaries** come from the official Holochain releases at `https://github.com/holochain/holochain/releases` (not `matthme/holochain-binaries`). The release publishes several variants of the conductor binary — `holochain-*`, `holochain-iroh-*`, `holochain-go-pion-*`, plus `*-unstable-*`. Moss needs to pick which variant ships; recommend the iroh build since iroh is the 0.7 default transport (0.7.0-dev.7/8). `lair-keystore` and `kitsune2-bootstrap-srv` continue to come from their own repos.
+
+**HOD parallel work**: `@holochain-open-dev/*` upgrades to 0.7 are happening in parallel, so this branch lands what it can without them and stops at the boundary where their published versions are required.
+
+## Phased work plan
+
+Each phase ends in a green `yarn typecheck && yarn build:zomes && yarn test` (and where possible, a manual `yarn applet-dev-example` smoke run with two agents). PRs land in order so CI gates regressions phase-by-phase.
+
+### Phase 1 — Rust workspace bump and zome compile *(done)*
+
+Changed:
+
+- `Cargo.toml` and `example/Cargo.toml`: `hdi = "=0.8.0-dev.10"`, `hdk = "=0.7.0-dev.13"`, `holochain = "=0.7.0-dev.21"` (root only).
+- All other crates inherit via `workspace = true` patterns; no per-crate edits needed.
+
+`yarn build:zomes` succeeded with one harmless `unused_imports` warning at [dnas/group/zomes/coordinator/group/src/lib.rs:8](dnas/group/zomes/coordinator/group/src/lib.rs#L8). The 0.7 changelog items that *might* have broken Moss zomes (`GetOptions` private fields, `get_agent_activity` arity, `block_agent` removal, `Anchor::with_strategy`) all turned out to be no-ops at this revision — Moss zomes use the helper-builder forms that 0.7 still supports.
+
+**Outstanding for Phase 1**: the `profiles` zomes pull `holochain-open-dev/profiles#main-0.6` (see [dnas/group/zomes/coordinator/profiles/Cargo.toml:12](dnas/group/zomes/coordinator/profiles/Cargo.toml#L12) and [dnas/group/zomes/integrity/profiles/Cargo.toml:13](dnas/group/zomes/integrity/profiles/Cargo.toml#L13)). They compile today only because Cargo allows the dual hdi/hdk-0.6 + 0.7 build graph; the resulting WASM is 0.6-targeted and would not load in a 0.7 conductor. Switch the git ref to a HOD profiles 0.7 branch when one is published.
+
+### Phase 2 — Conductor binary, config, and startup wiring *(done, with one open decision)*
+
+Done:
+
+- `moss.config.json` → `"holochain": "0.7.0-dev.21"`.
+- `holochain-checksums.json` regenerated by `yarn update-hc-checksums` (already pulls from `holochain/holochain` releases — the script in [scripts/get-hc-checksum.mjs](scripts/get-hc-checksum.mjs) uses the moss.config version and `gh release view holochain/holochain`).
+- `scripts/fetch-fns.mjs` line 79 already URLs to `github.com/holochain/holochain/releases/download/holochain-${version}/${file}`. No script change needed.
+- `yarn fetch:binaries` + `yarn check:binaries` pass; `holochain-v0.7.0-dev.21 --version` runs cleanly. The currently-fetched plain `holochain-*` asset reports `holochain 0.7.0-dev.21`.
+- Conductor config schema (`ConductorConfig` and `NetworkConfig` at [crates/holochain_conductor_api/src/config/conductor.rs](../../holochain/crates/holochain_conductor_api/src/config/conductor.rs)) was read and matched against the existing template. Verdict:
+  - `request_timeout_s` is at `network.request_timeout_s` and the template already places it there.
+  - The split auth material is `network.base64_auth_material_bootstrap` / `network.base64_auth_material_relay`. Moss writes neither, and the strip block already removes the old `network.base64_auth_material` — so 0.6 → 0.7 migration is clean.
+  - `network.target_arc_factor`, `network.report`, `network.advanced` are all valid 0.7 fields and the template uses them correctly.
+  - Top-level `db_max_readers` and `incoming_request_concurrency_limit` are new 0.7 ConductorConfig fields with defaults. Moss does not set them; the conductor uses defaults. Consider exposing in Danger Zone later if performance tuning is wanted.
+  - `network.advanced.tx5Transport` and `network.advanced.irohTransport` are accepted (advanced is `serde_json::Value`, no schema enforcement at the config layer). Live test confirmed: a config containing both blocks parses cleanly through the 0.7 conductor.
+- Booted `holochain-v0.7.0-dev.21 -c <test-config>` against a copy of the template; conductor reached the Lair-connect step (i.e., the YAML deserialized without `deny_unknown_fields` or schema errors).
+
+Open decision (Phase 6 candidate, not blocking now):
+
+- **Cell-level bootstrap/signal override in app manifest** (0.7.0-dev.6): the 0.7 conductor honors `bootstrap_url` / `signal_url` set inside an app manifest, overriding conductor defaults per-cell. Decide whether the group.happ manifest should pin these so a Moss release locks the network. Today, conductor-level config (which Moss already wires) is fine.
+
+**Transport variant** (resolved): the plain `holochain-*` binary is built with the holochain crate's default features `["sqlite-encrypted", "schema", "wasmer_sys", "transport-iroh"]` (verified at [crates/holochain/Cargo.toml](../../holochain/crates/holochain/Cargo.toml)). So plain == iroh transport. The `holochain-iroh-*` variant is the same with iroh made explicit; `holochain-go-pion-*` swaps in `transport-tx5-backend-go-pion`; `*-unstable-*` adds the `unstable-*` features. Moss should keep fetching the plain `holochain-*` asset; no script change needed.
+
+Cleanup follow-up (low priority, not blocking): in dev mode, [src/main/holochainManager.ts:114-119](src/main/holochainManager.ts#L114-L119) writes both `tx5Transport.signalAllowPlainText` and `irohTransport.relayAllowPlainText` into `network.advanced`. With an iroh-only binary the tx5 block is dead config; safe to drop. The conductor config's `advanced` field is `serde_json::Value`, so the unused tx5 block parses fine — it's just noise.
+
+### Phase 3 — JS client, types, and admin/app API surface *(blocked on profiles)*
+
+Target versions:
+
+- `@holochain/client` → `^0.21.0-dev.2` (the 0.21.x line tracks HC 0.7; latest published is `0.21.0-dev.2`, three months stale, but that's what corresponds to dev.21 today).
+- `@holochain-open-dev/tryorama` → `^0.20.0-dev.0` (replaces `@holochain/tryorama@^0.19.0`; the upstream `@holochain/tryorama` main branch still pins `@holochain/client@^0.20.0`, so the HOD fork is the unblocked path).
+
+**Blocker**: `@holochain-open-dev/profiles@0.601.3` (latest) hard-pins `@holochain/client="0.20.4-rc.0"`. There is no 0.700.x release and no `main-0.7` branch on `holochain-open-dev/profiles`. Yarn will refuse to resolve a workspace where one package wants `@holochain/client@^0.21.0-dev.2` and another transitively pulls `=0.20.4-rc.0`. Profiles is consumed by `package.json`, `libs/api/package.json`, `libs/elements/package.json`, `iframes/applet-iframe/package.json`, `src/renderer/package.json`, `example/ui/package.json`, and `cli/package.json` — wide enough that splitting the bump per-workspace doesn't help.
+
+What can land before profiles unblocks:
+
+- **`tests/package.json`** — isolated workspace, can flip to `@holochain-open-dev/tryorama@^0.20.0-dev.0` + `@holochain/client@^0.21.0-dev.2` independently. Tests don't import profiles.
+- The renderer-side audit work below (which doesn't need the bump to land).
+
+When profiles 0.700.x ships, perform the bump in one PR across:
+
+- `package.json`, `libs/api/package.json`, `libs/elements/package.json`, `iframes/applet-iframe/package.json`, `src/renderer/package.json`, `example/ui/package.json`, `cli/package.json`, `tests/package.json` (already done if landed early).
+- Any `shared/*/package.json` that pins `@holochain/client`.
+
+API-surface audit (queued diff is small):
+
+- **`DumpNetworkStats` shape change**: in 0.21.x, both admin and app `dumpNetworkStats()` return the unified `DumpNetworkStatsResponse = ApiTransportStats` ( `{ transport_stats: TransportStats; blocked_message_counts: ... }` ). Admin code already used the wrapped shape, so it's clean. **One break**: [src/renderer/src/elements/debugging-panel/debugging-panel.ts:1037](src/renderer/src/elements/debugging-panel/debugging-panel.ts#L1037) — `const networkStats = await client[0].dumpNetworkStats()` previously returned the inner `TransportStats` for the app variant; now it returns the wrapper. Minimal fix: change to `(await client[0].dumpNetworkStats()).transport_stats` so the existing `_networkStats: Record<…, [TransportStats, …]>` typing and the `transportStats.connections` access at line 1065 still work.
+- **`is_webrtc` → `is_direct`** rename on `TransportConnectionStats` (v0.21.0-dev.2): no hits in Moss (`grep is_webrtc src/ libs/ shared/ iframes/` is empty).
+- **`signalingServerUrl` → `relayServerUrl`** rename on `ConnectionServices` (Unreleased on client main): no hits in Moss.
+- **`AppDumpNetworkStatsResponse` removed** (Unreleased on client main): no hits in Moss.
+- **`DumpNetworkMetricsResponse`** in 0.7 added `GossipStateSummary::local_op_count` (additive, dev.16). [src/renderer/src/elements/debugging-panel/debugging-panel.ts:187](src/renderer/src/elements/debugging-panel/debugging-panel.ts#L187) `transformMetrics` still works — new field is just ignored unless we want to surface it.
+- **`GetOptions` field privacy** — only Moss reference is a doc comment in [shared/group-client/src/groupClient.ts:413](shared/group-client/src/groupClient.ts#L413). No functional break.
+- **`install_app_with_manifest` test-only** — Moss uses `adminWebsocket.installApp` (~10 sites in `src/main/`), not affected.
+- The unimplemented broker design in [plans/network-metrics-broker.md](plans/network-metrics-broker.md) needs to be re-read against the unified `ApiTransportStats` shape before implementing — particularly the `payload: this._adminNetworkStats!.transport_stats` extraction (debugging-panel.ts:1026) which already does the unwrap correctly.
+
+### Phase 4 — `@holochain-open-dev/*` and `@theweave/*` lib bumps *(partially unblocked)*
+
+Available now at `0.700.0-dev.0`: `@holochain-open-dev/elements`, `stores`, `utils`. **Not yet**: `profiles` (still 0.601.3, see Phase 3).
+
+Bump order once profiles ships:
+
+1. `@holochain-open-dev/utils`
+2. `@holochain-open-dev/stores`
+3. `@holochain-open-dev/elements`
+4. `@holochain-open-dev/profiles`
+
+Then bump `@theweave/*` internal libs to a new 0.7-aligned version (suggest minor bump to `0.7.0`):
+
+- `@theweave/api`, `@theweave/elements`, `@theweave/group-client`, `@theweave/tool-library-client`, `@theweave/moss-types`, `@theweave/utils`, `@theweave/cli`, `@theweave/wdocker`
+
+This is the riskiest step for type fallout — render-side components consume these heavily. Run `yarn typecheck:web` repeatedly.
+
+### Phase 5 — Tests and CI gating
+
+1. `yarn test:group` — Tryorama scenarios for the group DNA. May need conductor-config updates inside Tryorama.
+2. `yarn test:assets` — same.
+3. Two-agent live smoke via `yarn applet-dev-example` — install example applet, exchange a post, verify peer discovery. The conductor concurrency limits added in 0.7.0-dev.6 (5 cell creations, 10 network joins) shouldn't bite here but log timings.
+4. CI: ensure the existing dev-release workflow can build against 0.7 — it currently uses fetched binaries, which means it will work as soon as `moss.config.json` and checksums are updated.
+
+### Phase 6 — Release bookkeeping
+
+1. **App version** in `package.json` from `0.15.6` → `0.16.0` (Moss minor bump tracks Holochain minor bump per project convention).
+2. **App `name`/identifiers** that embed `0-15` (e.g. `org.lightningrodlabs.moss-0.15`, `binariesAppendix: moss-0.15`, profile dir naming) → `0-16`. Search for `0.15` and `0-15` across the repo.
+3. **`moss-docs/RELEASE.md`** — update example version numbers; the procedure itself doesn't change.
+4. **Group happ version** — bump `groupHapp.version` in `moss.config.json` and re-publish via the `publish-happ` workflow once the new group.happ has been built and tested.
+5. **Translations** — no string changes here unless conductor errors are surfaced; skip `i18n:extract` unless UI strings change.
+
+## Risks and open questions
+
+- **Profile compatibility**: 0.7 changes the WASM-store layout (0.7.0-dev.12) and Spaces struct. Existing 0.15 user profiles will not be readable by 0.16 / Holochain 0.7 — this is a fresh-install release. Confirm with the team how to message this; the binariesAppendix change to `moss-0.16` already isolates profile dirs, so it's a clean break by design. No migration tool needed.
+- **Group happ network seed change**: cell bootstrap/signal manifest pinning (Phase 2 step 6) will only take effect for newly-created groups; existing 0.16 groups created before that change will use conductor-level config. If the team wants pinning, decide before group.happ ships.
+- **Auth material split**: until the field names are confirmed against 0.7's `holochain_conductor_config` crate, treat the bootstrap/relay split as a stub. Read `crates/holochain_conductor_config/src/lib.rs` from the 0.7 source before writing the rewrite logic.
+- **HOD lib availability**: the upgrade is gated on `@holochain-open-dev/*` publishing 0.7-compatible versions. If they lag, the JS client and zome bumps can land first; Phase 4 follows on a separate PR.
+- **Tx5 vs iroh default**: switching defaults to iroh changes the relay/bootstrap URLs Moss should publish. The user-configurable bootstrap/relay/ICE URLs in Danger Zone settings are agnostic but the *defaults* in `moss.config.json` should match what the chosen transport expects.
+
+## Suggested PR sequence
+
+1. `chore: bump cargo workspace + fix zome compile for HC 0.7`  *(Phase 1)*
+2. `chore: HC 0.7 conductor config + binary checksums`  *(Phase 2)*
+3. `chore: bump @holochain/client + tryorama, fix dump-stats consumers`  *(Phase 3)*
+4. `chore: bump @holochain-open-dev/* and @theweave/* to 0.7 line`  *(Phase 4)*
+5. `chore: bump Moss to 0.16, update identifiers and docs`  *(Phase 6)*
+
+Each phase landable independently against `main-0.7`; final merge of `main-0.7` → `main` happens once 0.7.0 stable is pinned and a release candidate has been hand-tested.
