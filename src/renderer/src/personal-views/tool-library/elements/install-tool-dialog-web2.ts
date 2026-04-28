@@ -285,7 +285,7 @@ export class InstallToolDialogWeb2 extends LitElement {
     try {
       // Trigger the download of the icon
       // TODO convert icon to base64 and store it on disk
-      this._installationProgress = 'Checking permission type...';
+      this._installationProgress = msg('Checking permission type...');
       const [isPriv, permission_hash] = await this.checkPrivileges();
       if (!isPriv) {
         console.error('No valid permission to add a Tool to this group.');
@@ -295,7 +295,7 @@ export class InstallToolDialogWeb2 extends LitElement {
         this._installationProgress = undefined;
         return;
       }
-      this._installationProgress = 'Downloading and installing Tool...';
+      this._installationProgress = msg('Downloading and installing Tool...');
       const appletEntryHash = await this.groupStore.installAndAdvertiseApplet(
         this._tool,
         fields.custom_name,
@@ -487,27 +487,24 @@ export class InstallToolDialogWeb2 extends LitElement {
               style="margin-bottom: 16px"
               required
               ${ref((input) => {
-          if (!input) return;
-          setTimeout(() => {
-            if (
-              this._tool &&
-              allAppletsNames.includes(this._tool.toolInfoAndVersions.title)
-            ) {
-              (input as HTMLInputElement).setCustomValidity('Name already exists');
-            } else {
-              (input as HTMLInputElement).setCustomValidity('');
-            }
-          });
-        })}
+                if (!input) return;
+                setTimeout(() => {
+                    if (this._tool && allAppletsNames.includes((input as any).value)) {
+                        (input as HTMLInputElement).setCustomValidity(msg('Name already exists'));
+                  } else {
+                    (input as HTMLInputElement).setCustomValidity('');
+                  }
+                });
+              })}
               @input=${(e) => {
-            if (allAppletsNames.includes(e.target.value)) {
-              e.target.setCustomValidity('Name already exists');
-            } else if (e.target.value === '') {
-              e.target.setCustomValidity('You need to choose a name for the Tool instance.');
-            } else {
-              e.target.setCustomValidity('');
-            }
-          }}
+                if (allAppletsNames.includes(e.target.value)) {
+                  e.target.setCustomValidity(msg('Name already exists'));
+                } else if (e.target.value === '') {
+                  e.target.setCustomValidity(msg('You need to choose a name for the Tool instance.'));
+                } else {
+                  e.target.setCustomValidity('');
+                }
+              }}
               .defaultValue=${this._tool.toolInfoAndVersions.title}
             ></sl-input>
 

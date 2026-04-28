@@ -366,60 +366,9 @@ export async function devSetup(
           const appId = appIdFromAppletHash(appletHash);
           const appletPubKey = groupWebsocket.myPubKey;
           logDevSetup(`Installing applet instance '${appletInstallConfig.instanceName}'...`);
-          await installHapp(holochainManager, appId, networkSeed, appletPubKey, happPath);
-          if (distributionInfo.type === 'web2-tool-list') {
-            const appletIcon = await readIcon(appletConfig.icon);
-            mossFileSystem.storeToolIconIfNecessary(
-              toolCompatibilityIdFromDistInfo(distributionInfo),
-              appletIcon,
-            );
-          }
-          storeAppAssetsInfo(
-            appletConfig,
-            appId,
-            mossFileSystem,
-            distributionInfo,
-            happPath,
-            happHash,
-            maybeWebHappPath,
-            maybeWebHappHash,
-            maybeUiHash,
-          );
-          logDevSetup(`Registering applet instance '${appletInstallConfig.instanceName}'...`);
-          await groupWebsocket.callZome({
-            role_name: 'group',
-            zome_name: 'group',
-            fn_name: 'register_and_join_applet',
-            payload: {
-              applet,
-              joining_pubkey: appletPubKey,
-            },
-          });
-        } else if (isJoiningAgent) {
-          const maybeUnjoinedApplet = unjoinedApplets.find(
-            ([_entryHash, applet]) => applet.custom_name === appletInstallConfig.instanceName,
-          );
+          try {
+            await installHapp(holochainManager, appId, networkSeed, appletPubKey, happPath);
 
-          if (maybeUnjoinedApplet) {
-            logDevSetup(`Joining applet instance ${appletInstallConfig.instanceName} ...`);
-
-            const [appletHash, applet] = maybeUnjoinedApplet;
-
-            const appId = appIdFromAppletHash(appletHash);
-
-            const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
-              installableApplets[appletInstallConfig.name];
-
-            const appletPubKey = groupWebsocket.myPubKey;
-
-            await installHapp(
-              holochainManager,
-              appId,
-              applet.network_seed!,
-              appletPubKey,
-              happPath,
-            );
-            const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
             if (distributionInfo.type === 'web2-tool-list') {
               const appletIcon = await readIcon(appletConfig.icon);
               mossFileSystem.storeToolIconIfNecessary(
@@ -438,15 +387,74 @@ export async function devSetup(
               maybeWebHappHash,
               maybeUiHash,
             );
+            logDevSetup(`Registering applet instance '${appletInstallConfig.instanceName}'...`);
             await groupWebsocket.callZome({
               role_name: 'group',
               zome_name: 'group',
-              fn_name: 'join_applet',
+              fn_name: 'register_and_join_applet',
               payload: {
                 applet,
                 joining_pubkey: appletPubKey,
               },
             });
+          } catch(e) {
+            console.error(`[weave-cli] | [Agent ${config.agentIdx}]: ${e}`);
+          }
+        } else if (isJoiningAgent) {
+          const maybeUnjoinedApplet = unjoinedApplets.find(
+            ([_entryHash, applet]) => applet.custom_name === appletInstallConfig.instanceName,
+          );
+
+          if (maybeUnjoinedApplet) {
+            logDevSetup(`Joining applet instance ${appletInstallConfig.instanceName} ...`);
+
+            const [appletHash, applet] = maybeUnjoinedApplet;
+
+            const appId = appIdFromAppletHash(appletHash);
+
+            const [happPath, happHash, maybeUiHash, maybeWebHappHash, maybeWebHappPath] =
+              installableApplets[appletInstallConfig.name];
+
+            const appletPubKey = groupWebsocket.myPubKey;
+            try {
+              await installHapp(
+                holochainManager,
+                appId,
+                applet.network_seed!,
+                appletPubKey,
+                happPath,
+              );
+              const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
+              if (distributionInfo.type === 'web2-tool-list') {
+                const appletIcon = await readIcon(appletConfig.icon);
+                mossFileSystem.storeToolIconIfNecessary(
+                  toolCompatibilityIdFromDistInfo(distributionInfo),
+                  appletIcon,
+                );
+              }
+              storeAppAssetsInfo(
+                appletConfig,
+                appId,
+                mossFileSystem,
+                distributionInfo,
+                happPath,
+                happHash,
+                maybeWebHappPath,
+                maybeWebHappHash,
+                maybeUiHash,
+              );
+              await groupWebsocket.callZome({
+                role_name: 'group',
+                zome_name: 'group',
+                fn_name: 'join_applet',
+                payload: {
+                  applet,
+                  joining_pubkey: appletPubKey,
+                },
+              });
+            } catch(e) {
+              console.error(`[weave-cli] | [Agent ${config.agentIdx}]: ${e}`);
+            }
           }
         }
       }

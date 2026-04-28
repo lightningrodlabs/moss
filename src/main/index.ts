@@ -2149,8 +2149,16 @@ if (!RUNNING_WITH_COMMAND) {
     ipcMain.handle(
       'fetch-and-validate-happ-or-webhapp',
       async (_e, url: string): Promise<any> => {
-        const response = await net.fetch(url);
-        const byteArray = Array.from(new Uint8Array(await response.arrayBuffer()));
+        let byteArray;
+        if (url.startsWith('file://')) {
+          const relativePath = url.replace('file://', '');
+          const absolutePath = path.resolve(relativePath);
+          const fileBuffer = fs.readFileSync(absolutePath);
+          byteArray =  Array.from(new Uint8Array(fileBuffer));
+        } else {
+          const response = await net.fetch(url);
+          byteArray = Array.from(new Uint8Array(await response.arrayBuffer()));
+        }
         const bytes = new Uint8Array(byteArray);
         const { happSha256, webhappSha256, uiSha256 } = await rustUtils.validateHappOrWebhapp(byteArray);
         if (uiSha256) {
