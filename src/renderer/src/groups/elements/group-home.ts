@@ -445,7 +445,7 @@ export class GroupHome extends LitElement {
         width="590px"
         headerAlign="center">
         <div slot="header">
-          <div>${msg('DNA Properties')}</div>
+          <div>${msg('Custom DNA Properties')}</div>
           <div style="margin-top:10px">\"${this._appletToViewDna.custom_name}\"</div>
         </div>
         <div slot="content" class="column" style="align-items: center; text-align: center;">
