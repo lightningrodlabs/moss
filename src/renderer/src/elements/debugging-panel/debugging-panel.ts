@@ -922,31 +922,14 @@ export class DebuggingPanel extends LitElement {
   }
 
   /**
-   * Extract the transport pub_key from a peer URL.
-   * Peer URLs typically have format: wss://host/tx5-ws/sig/<transport_pub_key>
-   * The transport pub_key is the last path segment.
+   * Extract the transport pub_key from a peer URL. The key is the last path
+   * segment for both tx5-ws (wss://host/tx5-ws/sig/<key>) and iroh
+   * (<scheme>://host:port/<endpoint_id>).
    */
   extractTransportKeyFromUrl(peerUrl: string): string | null {
-    try {
-      const urlObj = new URL(peerUrl);
-      const pathParts = urlObj.pathname.split('/').filter((p) => p.length > 0);
-      // The transport key is the last segment after /tx5-ws/sig/ or similar
-      if (pathParts.length > 0) {
-        const lastPart = pathParts[pathParts.length - 1];
-        // Transport keys are typically 40+ characters in URL-safe base64
-        if (lastPart.length >= 40) {
-          return lastPart;
-        }
-      }
-    } catch {
-      // If URL parsing fails, try direct string splitting
-      const parts = peerUrl.split('/');
-      const lastPart = parts[parts.length - 1];
-      if (lastPart && lastPart.length >= 40) {
-        return lastPart;
-      }
-    }
-    return null;
+    const pathParts = new URL(peerUrl).pathname.split('/').filter((p) => p.length > 0);
+    const lastPart = pathParts[pathParts.length - 1];
+    return lastPart && lastPart.length >= 40 ? lastPart : null;
   }
 
   /**
