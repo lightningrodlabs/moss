@@ -27,18 +27,18 @@ export const isLinux = process.platform === 'linux';
 
 
 export async function decompressHapp(compressedData:any): Promise<Object> {
-  console.log("Decompressing file...");
+  //console.log("Decompressing file...");
   try {
     const decompressedData = await gunzip(compressedData);
     // Convert Buffer to string (assuming UTF-8 data from Rust)
-    console.log(decompressedData.length);
+    //console.log(decompressedData.length);
     const raw: any = decode(decompressedData);
     //console.log(raw.manifest);
     //console.log(JSON.stringify(raw.manifest));
   let result: Object = {};
   for (const roleSettings of raw.manifest.roles) {
-    console.log("\n\nRole:", roleSettings.name);
-    console.log("Modifiers:", JSON.stringify(roleSettings.dna?.modifiers?.properties));
+    //console.log("\n\nRole:", roleSettings.name);
+    //console.log("Modifiers:", JSON.stringify(roleSettings.dna?.modifiers?.properties));
     result[roleSettings.name] = roleSettings.dna?.modifiers?.properties;
   }
   return result;
@@ -50,18 +50,17 @@ export async function decompressHapp(compressedData:any): Promise<Object> {
 
 
 export async function decompressWebHapp(buffer:any): Promise<Object> {
-  console.log("Decompressing web file...", buffer.length, typeof buffer);
+  console.log("Decompressing web file...", buffer.length);
   try {
     const decompressedData = await gunzip(buffer);
-
     // Convert Buffer to string (assuming UTF-8 data from Rust)
     const raw:any = decode(decompressedData);
-    console.log(raw);
+    //console.log(raw);
     for (const resource in raw.resources) {
-      console.log(resource);
+      //console.log(resource);
       if (resource.endsWith(".happ")) {
         const happ = await decompressHapp(raw.resources[resource]);
-        console.log("webHapp dna properties:", JSON.stringify(happ));
+        //console.log("webHapp dna properties:", JSON.stringify(happ));
         return happ;
       }
     }

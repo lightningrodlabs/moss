@@ -1,6 +1,6 @@
 import {css, html, LitElement, TemplateResult} from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
-import { ActionHash, ActionHashB64, AgentPubKey, EntryHash, encodeHashToBase64 } from '@holochain/client';
+import {ActionHash, ActionHashB64, AgentPubKey, EntryHash, encodeHashToBase64, YamlProperties} from '@holochain/client';
 import { localized, msg } from '@lit/localize';
 import { ref } from 'lit/directives/ref.js';
 import { joinAsyncMap, pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
@@ -15,6 +15,7 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
+import SlTextarea from '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 
 import { groupStoreContext } from '../../../groups/context.js';
 import { mossStyles } from '../../../shared-styles.js';
@@ -273,7 +274,7 @@ export class InstallToolDialogWeb2 extends LitElement {
     this.form?.reset();
   }
 
-  async installApplet(fields: { custom_name: string; network_seed?: string; properties?: Record<string, Uint8Array>}) {
+  async installApplet(fields: { custom_name: string; network_seed?: string; properties?: Record<string, YamlProperties>}) {
     if (this._installing) return;
     if (!this._tool) {
       notifyError(msg('Tool undefined.'));
@@ -448,7 +449,7 @@ export class InstallToolDialogWeb2 extends LitElement {
               <sl-tab slot="nav" .panel=${roleName}>${roleName}</sl-tab>
               <sl-tab-panel .name=${roleName}>
                 <sl-textarea filled resize="auto"
-                  name="properties-${roleName}"
+                  name="role-${roleName}"
                   id="properties-field-${roleName}"
                   help-text="yaml"
                   size="small"
@@ -456,6 +457,21 @@ export class InstallToolDialogWeb2 extends LitElement {
                   rows="6"
                   .value=${yamlStr}
                   style="font-family: monospace"
+                  @sl-input=${(e) => {
+                     const value = e.target.value;
+                      const elem = this.shadowRoot!.getElementById(`properties-field-${roleName}`) as unknown as SlTextarea;
+                      try {
+                         const parsed = yaml.load(value);
+                         if (parsed !== null && typeof parsed !== "object") {
+                           throw Error(msg("Invalid yaml"));
+                         }
+                     } catch(e: any) {
+                         console.error("Failed to parse YAML:", value);
+                         elem.setCustomValidity(e.message);
+                         return;
+                     }
+                      elem.setCustomValidity("");
+                  }}
                 ></sl-textarea>
               </sl-tab-panel>
           `);
@@ -510,7 +526,7 @@ export class InstallToolDialogWeb2 extends LitElement {
                     style="margin-bottom: 16px"
                   ></sl-input>
                   ${dnaParams.length > 0 ? html`
-                      <div>${msg('Custom DNA properties per Role')}</div>
+                      <div>${msg('Custom DNA properties (per Role)')}</div>
                       <sl-tab-group>
                           ${dnaParams}
                       </sl-tab-group>
@@ -610,7 +626,17 @@ export class InstallToolDialogWeb2 extends LitElement {
                   ></sl-tooltip
                 >
               </div>
-              <form class="column" ${onSubmit((f) => this.installApplet(f))}>${this.renderForm()}</form>
+              <form class="column" ${onSubmit((f) => {
+                //console.log("fields", f);
+                const transformed = { custom_name: f.custom_name, network_seed: f.network_seed, properties: {}};
+                Object.entries(f).map(([key, value]) => {
+                    if (key.startsWith("role-")) {
+                        transformed.properties[key.substring(5)] = yaml.load(value as string);
+                    }
+                })
+                //console.log("transformed fields", transformed);
+                /*await*/ this.installApplet(transformed);
+              })}>${this.renderForm()}</form>
             `}
         <div>
         </moss-dialog>

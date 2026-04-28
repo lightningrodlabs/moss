@@ -116,7 +116,7 @@ import {
 } from './types.js';
 import { Applet, AssetsClient, GroupClient, GroupProfile } from '@theweave/group-client';
 import { fromUint8Array } from 'js-base64';
-import { encode } from '@msgpack/msgpack';
+import {decode, encode} from '@msgpack/msgpack';
 import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';
 import { PersistedStore, SectionReadStates } from './persisted-store.js';
 import { MossCache } from './cache.js';
@@ -1394,7 +1394,7 @@ export class MossStore {
           type: "provisioned",
           value: {
             //membrane_proof?: MembraneProof;
-            modifiers: {properties: bytes},
+            modifiers: {properties: decode(bytes)},
           },
         };
         return [key, settings];
