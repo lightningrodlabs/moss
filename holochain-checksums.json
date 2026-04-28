@@ -1,31 +1,28 @@
 {
-  "version": "0.7.0-dev.21",
+  "version": "0.7.0-dev.22",
   "hc": {
-    "aarch64-apple-darwin": "ac139753dd380ac7fd25ea9e8e91d44e370a2e221184da4d8850f55675418093",
-    "aarch64-unknown-linux-gnu": "8c55db0b839de79d30ccdc340ecca1d3fec85551f41b54f482df24700ec5b08d",
-    "x86_64-apple-darwin": "f073a48b15b8007068f48900ed178de018ea1e828049ece640fcbe6d9b7624e1",
-    "x86_64-pc-windows-msvc.exe": "311c441c7f35cc201dbec8554661e6f2c23b60734a06efb96b2eb40b4ea3eed8",
-    "x86_64-unknown-linux-gnu": "f8c8fdd9a0f369517eb097c7365a478acc6cc7ff69b9292fe0b4baa402abfd7a"
+    "aarch64-unknown-linux-gnu": "5f33d937f89ef382065b2d6f422c0467c0c95875be9c8cfdf2595fa22fabdabb",
+    "x86_64-unknown-linux-gnu": "77b9069db45fd4ed21a9061d9793690b4fa1f6bf6fb16d5155a897e601ba9505"
   },
   "holochain": {
-    "aarch64-apple-darwin": "556ecb493f0d10b8b58370860cb2445e625b6a32c2d972c7299a442caa55fc21",
-    "aarch64-unknown-linux-gnu": "810035f2d1c377512c83b6946edb2615d6f91aa23b81924bc4114cd8ade31cf7",
-    "x86_64-apple-darwin": "c0d838da657c3abd81da266b9d90c89b123c7b8fb676e13e2ec0d94350a6a6e4",
-    "x86_64-pc-windows-msvc.exe": "f5845aac82b0940cb62ea17e2a515ea0d0a5791a0b288a869d8ba33d3a96208c",
-    "x86_64-unknown-linux-gnu": "c466691924367a6466691aadef2d59a1da89b1a3783698de5d0d4fc8b89a6a3c"
+    "aarch64-apple-darwin": "5060dc2bd0b02c988eb1c4913c3bb2f2690c346b345d92e3da40c9c8a8be1dee",
+    "aarch64-unknown-linux-gnu": "22885bd9884b3f5b2424d221e0270d03ec30e4ff7ca1a86d39e3e75fd08e51f4",
+    "x86_64-apple-darwin": "d6091ee9fdb622819b6883874445f33259d1d221015f9d90150ce4acda1a7e84",
+    "x86_64-pc-windows-msvc.exe": "3ddbda57b57e4978a4b28c291a6c44831040cdce2a0405efd96a635c3c85460e",
+    "x86_64-unknown-linux-gnu": "473617d55214b2bb34922951317fa19aef2bc35183604714639e1d8d6a62fb29"
   },
   "kitsune2-bootstrap-srv": {
     "aarch64-apple-darwin": "c34af9d10a18bc054541af36baa2bd40fa27114a287f910fcad8c508c188c5bb",
     "aarch64-unknown-linux-gnu": "6e085b288b269dcd5ae3185245ee462e04552fd9aaf299154ef0e01180794640",
     "x86_64-apple-darwin": "e601e858e6493b5d88ecba718c5a6f8b4f9159b113783fff674281d82f123471",
-    "x86_64-pc-windows-msvc.exe": "d569007fb7a9c3cd32ff7b048e695bf21abbbd0ce3c9549ffce93a26c285784e",
+    "x86_64-pc-windows-msvc.exe": "56c9d813486737962ac48da46bff0cc913440533523aa5e27afa08d3a56476c3",
     "x86_64-unknown-linux-gnu": "f34d8004111895455f4b8e69c02c20c9b9c8e2f1277ba81badd44867d82f25c6"
   },
   "lair-keystore": {
-    "aarch64-apple-darwin": "8252a837da987dae254dafbec8250a6b0bb67f907424670329b318f731a14b9b",
-    "aarch64-unknown-linux-gnu": "df3de6a87d2a0a17eb7bbf4ddd516f561846f7ae3cf52c60641dabe3a06e34da",
-    "x86_64-apple-darwin": "adef78474f4232bf1e776f28ebf9b498e461b2d2773b27172a9a1dfb1813dc40",
-    "x86_64-pc-windows-msvc.exe": "88de507a2309d8f83882537f39728bb0472fbc53bfc630405a75bf461c4b247d",
-    "x86_64-unknown-linux-gnu": "949d41e7649fad111ccad8c02b8db126f29c9037111cd1334ae12acae8b11889"
+    "aarch64-apple-darwin": "77894c47bbd2e74a200557519799537c3c06495a52f864953e850a011a15e95b",
+    "aarch64-unknown-linux-gnu": "80b7438d5d7ca24014d190c31fe467023f3ba6a9a8fe6c550817a71783b8eb79",
+    "x86_64-apple-darwin": "1f3ff64b43310e4d1809f5cb0e4a24efba1085cafb3e8d49192d7cb38c1096ce",
+    "x86_64-pc-windows-msvc.exe": "9e2cfbf52f5b98fea9733279c908654ad1403d3990edfafb70c190fed481740d",
+    "x86_64-unknown-linux-gnu": "cff1f7900b55f68e6c6fefbc9e7d7db3b2b46c26263ec1389ac7ea9218ec850b"
   }
 }

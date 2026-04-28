@@ -2396,9 +2396,9 @@ dependencies = [
 
 [[package]]
 name = "hdk"
-version = "0.7.0-dev.13"
+version = "0.7.0-dev.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a5dd9e32e1ab8bbd38da122714ca5231da3b7676ff645d0021abbe7c8435e5a"
+checksum = "188f738ac82a32c77d50d35f4058fe96beba29cb6d6b495b653e29b419291b42"
 dependencies = [
  "getrandom 0.3.3",
  "hdi",
@@ -2567,9 +2567,9 @@ dependencies = [
 
 [[package]]
 name = "holochain"
-version = "0.7.0-dev.21"
+version = "0.7.0-dev.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73e869476ffe326a7ee96b5ddea6ae231dc62c7a2ff607b30d797632a0b37209"
+checksum = "8faf38a6309ade35afe06da3c34c8dd8c7f254616066598bda9336a346037864"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3014,9 +3014,9 @@ dependencies = [
 
 [[package]]
 name = "holochain_test_wasm_common"
-version = "0.7.0-dev.13"
+version = "0.7.0-dev.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd55d63a12cdcd58b6d36bc253a6f20947939995ad67afdd50baf58291dd2e7c"
+checksum = "c15e4afa7b4789a149349f375dda749c39bab416543fcc9011294367cfb1faca"
 dependencies = [
  "hdk",
  "holochain_serialized_bytes",
@@ -3408,7 +3408,7 @@ dependencies = [
  "tokio",
  "tower-service",
  "tracing",
- "windows-registry 0.4.0",
+ "windows-registry 0.6.1",
 ]
 
 [[package]]
@@ -5742,7 +5742,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9120690fafc389a67ba3803df527d0ec9cbbc9cc45e4cc20b332996dfb672425"
 dependencies = [
  "anyhow",
- "itertools 0.12.1",
+ "itertools 0.14.0",
  "proc-macro2",
  "quote",
  "syn 2.0.101",

@@ -10,7 +10,7 @@ resolver = "2"
 
 [workspace.dependencies]
 hdi = "=0.8.0-dev.10"
-hdk = "=0.7.0-dev.13"
+hdk = "=0.7.0-dev.14"
 serde = "1"
 holochain_serialized_bytes = "0.0.56"
 
