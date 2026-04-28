@@ -1,7 +1,7 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 // IPC_CHANGE_HERE
-import { ActionHashB64, AgentPubKeyB64, CallZomeRequest, DnaHashB64 } from '@holochain/client';
+import {ActionHashB64, AgentPubKeyB64, CallZomeRequest, DnaHashB64, RoleSettingsMap} from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
 import {
   AppletId,
@@ -101,6 +101,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     distributionInfo: DistributionInfo,
     appHashes: AppHashes,
     uiPort?: number,
+    roles_settings?: RoleSettingsMap,
   ) =>
     ipcRenderer.invoke(
       'install-applet-bundle',
@@ -111,6 +112,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       distributionInfo,
       appHashes,
       uiPort,
+      roles_settings,
     ),
   uninstallAppletBundle: (appId: string) => ipcRenderer.invoke('uninstall-applet-bundle', appId),
   isDevModeEnabled: () => ipcRenderer.invoke('is-dev-mode-enabled'),

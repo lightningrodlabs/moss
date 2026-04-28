@@ -37,7 +37,7 @@ import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import {
-  breakingVersion,
+  breakingVersion, decompressHapp, decompressWebHapp,
   emitToWindow,
   logIf,
   readIcon,
@@ -77,7 +77,7 @@ import {
   InstalledAppId,
   AgentPubKey,
   decodeHashFromBase64,
-  encodeHashToBase64,
+  encodeHashToBase64, RoleSettingsMap,
 } from '@holochain/client';
 import { decode } from '@msgpack/msgpack';
 import { v4 as uuidv4 } from 'uuid';
@@ -2148,11 +2148,19 @@ if (!RUNNING_WITH_COMMAND) {
     );
     ipcMain.handle(
       'fetch-and-validate-happ-or-webhapp',
-      async (_e, url: string): Promise<AppHashes> => {
-        const response = await net.fetch(url);
-        const byteArray = Array.from(new Uint8Array(await response.arrayBuffer()));
-        const { happSha256, webhappSha256, uiSha256 } =
-          await rustUtils.validateHappOrWebhapp(byteArray);
+      async (_e, url: string): Promise<any> => {
+        let byteArray;
+        if (url.startsWith('file://')) {
+          const relativePath = url.replace('file://', '');
+          const absolutePath = path.resolve(relativePath);
+          const fileBuffer = fs.readFileSync(absolutePath);
+          byteArray =  Array.from(new Uint8Array(fileBuffer));
+        } else {
+          const response = await net.fetch(url);
+          byteArray = Array.from(new Uint8Array(await response.arrayBuffer()));
+        }
+        const bytes = new Uint8Array(byteArray);
+        const { happSha256, webhappSha256, uiSha256 } = await rustUtils.validateHappOrWebhapp(byteArray);
         if (uiSha256) {
           if (!webhappSha256) throw Error('Ui sha256 defined but not webhapp sha256.');
           return {
@@ -2160,6 +2168,7 @@ if (!RUNNING_WITH_COMMAND) {
             sha256: webhappSha256,
             happ: {
               sha256: happSha256,
+              roles: await decompressWebHapp(bytes),
             },
             ui: {
               sha256: uiSha256,
@@ -2169,6 +2178,7 @@ if (!RUNNING_WITH_COMMAND) {
           return {
             type: 'happ',
             sha256: happSha256,
+            roles: await decompressHapp(bytes),
           };
         }
       },
@@ -2512,6 +2522,7 @@ if (!RUNNING_WITH_COMMAND) {
         distributionInfo: DistributionInfo,
         appHashes: AppHashes,
         uiPort?: number,
+        roles_settings?: RoleSettingsMap,
       ): Promise<AppInfo> => {
         const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
         const alreadyInstalledAppInfo = apps.find((appInfo) => appInfo.installed_app_id === appId);
@@ -2543,8 +2554,9 @@ if (!RUNNING_WITH_COMMAND) {
           }
         }
 
-        if (distributionInfo.type !== 'web2-tool-list')
+        if (distributionInfo.type !== 'web2-tool-list') {
           throw new Error(`Unsupported distribution type ${distributionInfo.type}`);
+          }
 
         // Fetch the icon and store it
         const toolCompatibilityId = toolCompatibilityIdFromDistInfo(distributionInfo);
@@ -2716,6 +2728,7 @@ if (!RUNNING_WITH_COMMAND) {
               installed_app_id: appId,
               agent_key: agentPubKey,
               network_seed: networkSeed,
+              roles_settings,
             });
             console.log('@install-applet-bundle: app installed.');
           } catch (e: any) {

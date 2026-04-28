@@ -112,7 +112,7 @@ export class PocketSearch extends LitElement implements FormField {
     const invalid = this.required !== false && this.value === undefined;
 
     if (invalid) {
-      this._textField.setCustomValidity(`This field is required`);
+      this._textField.setCustomValidity(msg(`This field is required`));
       this._textField.reportValidity();
     }
 

@@ -51,7 +51,7 @@ export class MossSelectAvatar extends LitElement implements FormField {
   reportValidity() {
     const invalid = this.required !== false && !this.value;
     if (invalid) {
-      this._errorInput.setCustomValidity('Avatar is required');
+      this._errorInput.setCustomValidity(msg('Avatar is required'));
       this._errorInput.reportValidity();
     }
 
