@@ -37,7 +37,7 @@ import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import {
-  breakingVersion,
+  breakingVersion, decompressHapp, decompressWebHapp,
   emitToWindow,
   logIf,
   readIcon,
@@ -2148,11 +2148,11 @@ if (!RUNNING_WITH_COMMAND) {
     );
     ipcMain.handle(
       'fetch-and-validate-happ-or-webhapp',
-      async (_e, url: string): Promise<AppHashes> => {
+      async (_e, url: string): Promise<any> => {
         const response = await net.fetch(url);
         const byteArray = Array.from(new Uint8Array(await response.arrayBuffer()));
-        const { happSha256, webhappSha256, uiSha256 } =
-          await rustUtils.validateHappOrWebhapp(byteArray);
+        const bytes = new Uint8Array(byteArray);
+        const { happSha256, webhappSha256, uiSha256 } = await rustUtils.validateHappOrWebhapp(byteArray);
         if (uiSha256) {
           if (!webhappSha256) throw Error('Ui sha256 defined but not webhapp sha256.');
           return {
@@ -2160,6 +2160,7 @@ if (!RUNNING_WITH_COMMAND) {
             sha256: webhappSha256,
             happ: {
               sha256: happSha256,
+              roles: await decompressWebHapp(bytes),
             },
             ui: {
               sha256: uiSha256,
@@ -2169,6 +2170,7 @@ if (!RUNNING_WITH_COMMAND) {
           return {
             type: 'happ',
             sha256: happSha256,
+            roles: await decompressHapp(bytes),
           };
         }
       },

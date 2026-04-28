@@ -1,4 +1,4 @@
-import { css, html, LitElement } from 'lit';
+import {css, html, LitElement, TemplateResult} from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { ActionHash, ActionHashB64, AgentPubKey, EntryHash, encodeHashToBase64 } from '@holochain/client';
 import { localized, msg } from '@lit/localize';
@@ -30,6 +30,8 @@ import { DistributionInfo, TDistributionInfo, ToolInfoAndVersions } from '@thewe
 import { Value } from '@sinclair/typebox/value';
 import { getLocalizedTimeAgo } from '../../../locales/localization.js';
 import { toolSettingsStyles } from '../../../elements/_new_design/group-settings/tool-settings-styles.js';
+import {fetchAndValidateHappOrWebhapp} from "../../../electron-api";
+import yaml from "js-yaml";
 
 type MatchingInactiveTool = {
   toolHash: EntryHash;
@@ -86,6 +88,9 @@ export class InstallToolDialogWeb2 extends LitElement {
   _tool: ToolAndCurationInfo | undefined;
 
   @state()
+  _dnaProperties: Object = {};
+
+  @state()
   _showAdvanced: boolean = false;
 
   @state()
@@ -108,6 +113,8 @@ export class InstallToolDialogWeb2 extends LitElement {
     // reload all advertised applets
     await this.groupStore.allAdvertisedApplets.reload();
     this._tool = tool;
+    this._dnaProperties = {};
+    this._showAdvanced = false;
     this._matchingInactiveTool = undefined;
     this._activatingExisting = false;
 
@@ -120,6 +127,8 @@ export class InstallToolDialogWeb2 extends LitElement {
       this._showDuplicateWarning = false;
     }
 
+    this.downloadWebHapp().then((obj) => this._dnaProperties = obj)
+
     setTimeout(() => {
       if (!this._showDuplicateWarning) {
         this.form?.reset();
@@ -131,6 +140,8 @@ export class InstallToolDialogWeb2 extends LitElement {
   close() {
     this.form?.reset();
     this._tool = undefined;
+    this._dnaProperties = {};
+    this._showAdvanced = false;
     this._showDuplicateWarning = false;
     this._matchingInactiveTool = undefined;
     this._appletDialog.hide();
@@ -401,6 +412,20 @@ export class InstallToolDialogWeb2 extends LitElement {
     `;
   }
 
+
+  async downloadWebHapp(): Promise<Object> {
+    if (!this._tool) return Promise.reject("No tool defined.");
+    const url = this._tool.latestVersion.url;
+    console.log("download webHapp", url);
+    const res = await fetchAndValidateHappOrWebhapp(url);
+    console.log("download webHapp res", res);
+    if (res.type === 'webhapp') {
+      return res.happ.roles;
+    }
+    return res.roles;
+  }
+
+
   renderForm() {
     if (!this._tool) return html`Error.`;
 
@@ -413,6 +438,29 @@ export class InstallToolDialogWeb2 extends LitElement {
         const allAppletsNames = Array.from(this._registeredApplets.value.value.values()).map(
           (applet) => (applet as Applet)?.custom_name,
         );
+        /** Generate UI for dna properties per role */
+        //console.log("dnaProperties", this._dnaProperties);
+        const dnaParams: TemplateResult<1>[] = [];
+        for (const [roleName, properties] of Object.entries(this._dnaProperties)) {
+          const yamlStr = yaml.dump(properties);
+          //const yamlStr = JSON.stringify(properties, null, 2);
+          dnaParams.push(html`
+              <sl-tab slot="nav" .panel=${roleName}>${roleName}</sl-tab>
+              <sl-tab-panel .name=${roleName}>
+                <sl-textarea filled resize="auto"
+                  name="properties-${roleName}"
+                  id="properties-field-${roleName}"
+                  help-text="yaml"
+                  size="small"
+                  .placeholder=${yamlStr}
+                  rows="6"
+                  .value=${yamlStr}
+                  style="font-family: monospace"
+                ></sl-textarea>
+              </sl-tab-panel>
+          `);
+        }
+        /** */
         return html`
           <div class="column install-form">
             <sl-input
@@ -461,14 +509,13 @@ export class InstallToolDialogWeb2 extends LitElement {
                     .label=${msg('Custom Network Seed')}
                     style="margin-bottom: 16px"
                   ></sl-input>
-                  <sl-textarea
-                          name="properties"
-                          id="properties-field"
-                          .label=${msg('Custom DNA properties (yaml)')}
-                          rows="6"
-                          style="margin-bottom: 16px"
-                  ></sl-textarea>     
-                `
+                  ${dnaParams.length > 0 ? html`
+                      <div>${msg('Custom DNA properties per Role')}</div>
+                      <sl-tab-group>
+                          ${dnaParams}
+                      </sl-tab-group>
+                  ` : html``}
+                    `
             : html``}
 
             <div

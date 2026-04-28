@@ -229,7 +229,7 @@ declare global {
         vmSizeBytes: number;
         pid: number;
       } | null>;
-      fetchAndValidateHappOrWebhapp: (url: string) => Promise<AppHashes>;
+      fetchAndValidateHappOrWebhapp: (url: string) => Promise<any>;
       validateHappOrWebhapp: (bytes: number[]) => Promise<AppHashes>;
       // Dev UI Override
       selectDevUiWebhapp: () => Promise<string | undefined>;
