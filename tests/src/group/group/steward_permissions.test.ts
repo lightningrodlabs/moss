@@ -10,7 +10,6 @@ import {
 
 import { getCellByRoleName, GROUP_HAPP_PATH } from '../../shared.js';
 import {
-  sleep,
   threeAgentsOneProgenitorOneStewardOneMember,
   twoAgentsOneProgenitorAndOneSteward,
 } from './common.js';
@@ -163,7 +162,7 @@ test('Create expiring steward permission and retrieve it in different ways', asy
         encodeHashToBase64(bobPermissionHash),
     );
 
-    // Alice's query of Bob: no longer Steward (empty array since Member is implicit).
+    // At expiry: Bob should still be Steward
     let bobAccsAfter: Accountability[] = await groupCellAlice.callZome({
       zome_name: 'group',
       fn_name: 'get_agent_accountabilities',
@@ -172,13 +171,18 @@ test('Create expiring steward permission and retrieve it in different ways', asy
     assert(bobAccsAfter.some((a) => a.type === 'Steward'));
     assert(!bobAccsAfter.some((a) => a.type === 'Progenitor'));
 
-    // Alice's query of Bob: no longer Steward (empty array since Member is implicit).
+    // At expiry + 1: Bob should no longer be Steward (empty array since Member is implicit).
     bobAccsAfter = await groupCellAlice.callZome({
       zome_name: 'group',
       fn_name: 'get_agent_accountabilities',
       payload: { input: [bobPubKey, now_101], local: true },
     });
     assert(bobAccsAfter.length == 0);
+    assert.equal(
+      bobAccsAfter.length,
+      0,
+      `Bob should have no accountabilities, got: ${JSON.stringify(bobAccsAfter)}`,
+    );
 
     // Bob's query of himself: also no longer Steward.
     const bobMyAccsAfter: Accountability[] = await groupCellBob.callZome({
@@ -186,7 +190,11 @@ test('Create expiring steward permission and retrieve it in different ways', asy
       fn_name: 'get_my_accountabilities',
       payload: { input: now_101, local: false },
     });
-    assert(bobMyAccsAfter.length == 0);
+    assert.equal(
+      bobMyAccsAfter.length,
+      0,
+      `Bob should have no accountabilities, got: ${JSON.stringify(bobMyAccsAfter)}`,
+    );
   });
 });
 

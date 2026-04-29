@@ -103,12 +103,11 @@ jobs:
         run: |
           nix develop --command yarn test
 
-      - name: Run tryorama tests
-        if: matrix.platform == 'ubuntu-22.04'
-        run: |
-          export PATH="$PATH:$GITHUB_WORKSPACE/resources/bins"
-          echo $PATH
-          yarn test
+#      - name: Run tryorama tests
+#        if: matrix.platform == 'ubuntu-22.04'
+#        run: |
+#          export PATH="$PATH:$GITHUB_WORKSPACE/resources/bins"
+#          yarn test
 
       - name: Build cli
         if: matrix.platform == 'ubuntu-22.04'
