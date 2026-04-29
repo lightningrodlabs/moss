@@ -14,7 +14,6 @@ import {
 
 test('Add an asset relation, remove it again and try to get it from the ALL_ASSET_RELATIONS_ANCHOR', async () => {
   await runScenario(async (scenario) => {
-    console.log('Hello!');
     // Construct proper paths for your app.
     // This assumes app bundle created by the `hc app pack` command.
     const testAppPath = GROUP_HAPP_PATH;

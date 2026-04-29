@@ -112,6 +112,7 @@ test('Create unlimited steward permission and retrieve it in different ways', as
   });
 });
 
+
 test('Create expiring steward permission and retrieve it in different ways', async () => {
   await runScenario(async (scenario) => {
     const appBundleSource: AppBundleSource = {
@@ -119,9 +120,13 @@ test('Create expiring steward permission and retrieve it in different ways', asy
       value: GROUP_HAPP_PATH,
     };
 
-    const expiry = (Date.now() + 100_000) * 1_000;
+    const now = Date.now() * 1_000;
+    const now_1 = now + 1_000 * 1_000;
+    const now_100 = now + 100_000 * 1_000;
+    const now_101 = now + 101_000 * 1_000;
+    const expiry = now_100;
 
-    const [[alice, alicePubKey], [bob, bobPubKey, bobPermissionHash]] =
+    const [[alice, _alicePubKey], [bob, bobPubKey, bobPermissionHash]] =
       await twoAgentsOneProgenitorAndOneSteward(scenario, appBundleSource, ['group'], expiry);
 
     const groupCellBob = getCellByRoleName(bob, 'group');
@@ -131,7 +136,7 @@ test('Create expiring steward permission and retrieve it in different ways', asy
     const bobAccsBefore: Accountability[] = await groupCellAlice.callZome({
       zome_name: 'group',
       fn_name: 'get_agent_accountabilities',
-      payload: { input: [bobPubKey, Date.now() * 1000], local: true },
+      payload: { input: [bobPubKey, now_1], local: true },
     });
     const bobStewardBefore = expectStewardAccountability(bobAccsBefore);
     assert(
@@ -149,7 +154,7 @@ test('Create expiring steward permission and retrieve it in different ways', asy
     const bobMyAccsBefore: Accountability[] = await groupCellBob.callZome({
       zome_name: 'group',
       fn_name: 'get_my_accountabilities',
-      payload: { input: Date.now() * 1000, local: false },
+      payload: { input: now, local: false },
     });
     const bobMyStewardBefore = expectStewardAccountability(bobMyAccsBefore);
     assert.equal(bobMyStewardBefore.content.permission.expiry, expiry);
@@ -158,29 +163,33 @@ test('Create expiring steward permission and retrieve it in different ways', asy
         encodeHashToBase64(bobPermissionHash),
     );
 
-    // Wait until the permission expires.
-    const timeUntilExpiry = expiry / 1000 - Date.now();
-    await sleep(timeUntilExpiry);
-
     // Alice's query of Bob: no longer Steward (empty array since Member is implicit).
-    const bobAccsAfter: Accountability[] = await groupCellAlice.callZome({
+    let bobAccsAfter: Accountability[] = await groupCellAlice.callZome({
       zome_name: 'group',
       fn_name: 'get_agent_accountabilities',
-      payload: { input: [bobPubKey, Date.now() * 1000], local: true },
+      payload: { input: [bobPubKey, expiry], local: true },
     });
-    assert(!bobAccsAfter.some((a) => a.type === 'Steward'));
+    assert(bobAccsAfter.some((a) => a.type === 'Steward'));
     assert(!bobAccsAfter.some((a) => a.type === 'Progenitor'));
+
+    // Alice's query of Bob: no longer Steward (empty array since Member is implicit).
+    bobAccsAfter = await groupCellAlice.callZome({
+      zome_name: 'group',
+      fn_name: 'get_agent_accountabilities',
+      payload: { input: [bobPubKey, now_101], local: true },
+    });
+    assert(bobAccsAfter.length == 0);
 
     // Bob's query of himself: also no longer Steward.
     const bobMyAccsAfter: Accountability[] = await groupCellBob.callZome({
       zome_name: 'group',
       fn_name: 'get_my_accountabilities',
-      payload: { input: Date.now() * 1000, local: false },
+      payload: { input: now_101, local: false },
     });
-    assert(!bobMyAccsAfter.some((a) => a.type === 'Steward'));
-    assert(!bobMyAccsAfter.some((a) => a.type === 'Progenitor'));
+    assert(bobMyAccsAfter.length == 0);
   });
 });
+
 
 test("get_my_accountabilities returns the correct result after querying another agent's accountabilities", async () => {
   // Regression test for the privilege-escalation bug fixed in commit 48211967.
