@@ -2173,7 +2173,7 @@ begint nu</target>
 </trans-unit>
 <trans-unit id="scde621ffddd995ac">
   <source>Save &amp; Relaunch</source>
-  <target>Opslaan & opnieuw starten</target>
+  <target>Opslaan &amp; opnieuw starten</target>
 </trans-unit>
 <trans-unit id="se32638c57d4ec6ba">
   <source>Importing groups...</source>
@@ -2202,6 +2202,14 @@ begint nu</target>
 <trans-unit id="s7301570d0bb8fc6d">
   <source>Done.</source>
   <target>Klaar.</target>
+</trans-unit>
+<trans-unit id="s2d257675024acff2">
+  <source>Cannot update Tool from distribution type other than 'web2-tool-list'</source>
+  <target>Kan tool niet bijwerken vanuit een ander distributietype dan 'web2-tool-list'</target>
+</trans-unit>
+<trans-unit id="s7c6ddb11656cc241">
+  <source>Update all <x id="0" equiv-text="${updateCount}"/></source>
+  <target>Alles bijwerken (<x id="0" equiv-text="${updateCount}"/>)</target>
 </trans-unit>
 </body>
 </file>

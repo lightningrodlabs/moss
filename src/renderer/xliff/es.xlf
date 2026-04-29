@@ -2203,6 +2203,14 @@ comienza ahora</target>
   <source>Done.</source>
   <target>Hecho.</target>
 </trans-unit>
+<trans-unit id="s2d257675024acff2">
+  <source>Cannot update Tool from distribution type other than 'web2-tool-list'</source>
+  <target>No se puede actualizar la herramienta desde un tipo de distribución distinto de 'web2-tool-list'</target>
+</trans-unit>
+<trans-unit id="s7c6ddb11656cc241">
+  <source>Update all <x id="0" equiv-text="${updateCount}"/></source>
+  <target>Actualizar todo (<x id="0" equiv-text="${updateCount}"/>)</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
