@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-openAppletMain: (appletHash: EntryHash) => Promise<void>;
+openAppletMain: (appletHash: EntryHash, wal?: WAL) => Promise<void>;
 ```

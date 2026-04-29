@@ -91,4 +91,4 @@ Thus, abilities can define a set of **Notification Definitions** that end-users 
 
 ### Services
 
-There are often specific types of functions that all Tools in a group may want to access, for example consider sending SMS or email notifications or messages.  This is a kind of functionality that a givThe social fabric of complex and healthy societies is composed of many interlocking social contracts involving many community subsets.  We propose a grammar and implementation of **The Weave**, of a set of open protocols and standards for spinning up all kinds of small social agreement units and knitting them together in a meaningful and easy to use way.
+There are often specific types of functions that all Tools in a group may want to access, for example consider sending SMS or email notifications or messages.  This is a kind of functionality that a given group may want to provide once and have available to all of its Tools, rather than each Tool re-implementing it.  Call such shared, group-level capabilities **Services**.

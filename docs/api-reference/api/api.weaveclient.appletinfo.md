@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-appletInfo: (appletHash: any) => Promise<AppletInfo | undefined>;
+appletInfo: (appletHash: AppletHash) => Promise<AppletInfo | undefined>;
 ```

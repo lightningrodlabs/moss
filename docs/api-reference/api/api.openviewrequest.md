@@ -10,6 +10,7 @@
 export type OpenViewRequest = {
     type: 'applet-main';
     appletHash: EntryHash;
+    wal?: WAL;
 } | {
     type: 'cross-group-main';
     appletBundleId: string;

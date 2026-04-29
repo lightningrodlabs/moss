@@ -43,7 +43,7 @@ Description
 
 </td><td>
 
-(appletHash: any) =&gt; Promise&lt;[AppletInfo](./api.appletinfo.md) \| undefined&gt;
+(appletHash: [AppletHash](./api.applethash.md)<!-- -->) =&gt; Promise&lt;[AppletInfo](./api.appletinfo.md) \| undefined&gt;
 
 
 </td><td>
@@ -82,6 +82,23 @@ Gets all the agents that joined the Tool instance of the Tool calling this funct
 </td><td>
 
 [AssetServices](./api.assetservices.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[bootstrapUrls](./api.weaveservices.bootstrapurls.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(groupHash?: DnaHash) =&gt; string\[\]
 
 
 </td><td>
@@ -143,6 +160,25 @@ Create a cloned cell and optionally have it be registered in the group DNA for o
 </td></tr>
 <tr><td>
 
+[getLocale](./api.weaveservices.getlocale.md)
+
+
+</td><td>
+
+
+</td><td>
+
+() =&gt; string
+
+
+</td><td>
+
+Get the current UI locale (e.g. 'en', 'de', 'fr', 'es')
+
+
+</td></tr>
+<tr><td>
+
 [groupProfile](./api.weaveservices.groupprofile.md)
 
 
@@ -151,7 +187,7 @@ Create a cloned cell and optionally have it be registered in the group DNA for o
 
 </td><td>
 
-(groupHash: any) =&gt; Promise&lt;any&gt;
+(groupHash: DnaHash) =&gt; Promise&lt;any&gt;
 
 
 </td><td>
@@ -179,7 +215,7 @@ Get the group profile of the specified group
 </td></tr>
 <tr><td>
 
-[myGroupPermissionType](./api.weaveservices.mygrouppermissiontype.md)
+[myAccountabilitiesPerGroup](./api.weaveservices.myaccountabilitiespergroup.md)
 
 
 </td><td>
@@ -187,12 +223,12 @@ Get the group profile of the specified group
 
 </td><td>
 
-() =&gt; Promise&lt;[GroupPermissionType](./api.grouppermissiontype.md)<!-- -->&gt;
+() =&gt; Promise&lt;\[DnaHash, [MossAccountability](./api.mossaccountability.md)<!-- -->\[\]\]\[\]&gt;
 
 
 </td><td>
 
-Gets the group permission type. May be used to restrict certain actions in the UI.
+Gets the agent's accountabilities for this applet. May be used to restrict certain actions in the UI.
 
 
 </td></tr>
@@ -233,6 +269,44 @@ Sends notifications to We and depending on user settings and urgency level furth
 Event listener allowing to register a callback that will get executed before the applet gets reloaded, for example to save intermediate user input (e.g. commit the most recent changes of a document to the source chain).
 
 If this callback takes too long, users may be offered to force reload, thereby ignoring/cancelling the pending callback.
+
+
+</td></tr>
+<tr><td>
+
+[onLocaleChange](./api.weaveservices.onlocalechange.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(callback: (locale: string) =&gt; any) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
+
+
+</td><td>
+
+Register a callback to be called when the UI locale changes
+
+
+</td></tr>
+<tr><td>
+
+[onNetworkStatsUpdate](./api.weaveservices.onnetworkstatsupdate.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(callback: (payload: TransportStats) =&gt; any) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
+
+
+</td><td>
+
+Event handler for network stats updates.
 
 
 </td></tr>
@@ -303,7 +377,7 @@ Open the specified block view of the specified Applet
 
 </td><td>
 
-(appletHash: EntryHash) =&gt; Promise&lt;void&gt;
+(appletHash: EntryHash, wal?: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;
 
 
 </td><td>
@@ -398,12 +472,31 @@ Requests to close the containing window. Will only work if the applet is being r
 
 </td><td>
 
-(payload: Uint8Array) =&gt; Promise&lt;void&gt;
+(payload: Uint8Array, toAgents?: AgentPubKey\[\]) =&gt; Promise&lt;void&gt;
 
 
 </td><td>
 
 Allows to send small sized "fire-and-forget" signals to all group participants that are currently online.
+
+
+</td></tr>
+<tr><td>
+
+[toolInstaller](./api.weaveservices.toolinstaller.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(appletHash: [AppletHash](./api.applethash.md)<!-- -->, groupHash?: DnaHash) =&gt; Promise&lt;AgentPubKey \| undefined&gt;
+
+
+</td><td>
+
+Get the AgentPubKey of the installer of a tool for the specified group
 
 
 </td></tr>

@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-export type OpenAssetMode = 'front' | 'side' | 'window';
+export type OpenAssetMode = 'side' | 'window';
 ```

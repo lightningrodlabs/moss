@@ -15,8 +15,10 @@ export type IframeConfig = {
     authenticationToken: AppAuthenticationToken;
     weaveProtocolVersion: string;
     mossVersion: string;
+    locale: string;
     profilesLocation: ProfilesLocation;
     groupProfiles: GroupProfile[];
+    groupHash: DnaHash | null;
     zomeCallLogging: boolean;
 } | {
     type: 'cross-group';
@@ -24,6 +26,7 @@ export type IframeConfig = {
     mainUiOrigin: string;
     weaveProtocolVersion: string;
     mossVersion: string;
+    locale: string;
     applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>;
     zomeCallLogging: boolean;
 } | {
