@@ -13,133 +13,148 @@ import {
   PlayerApp,
   Scenario,
 } from '@holochain/tryorama';
-//import { Accountability, StewardPermission } from '@theweave/group-client';
-//import { getCellByRoleName } from '../../shared';
-//
-// export async function threeAgentsOneProgenitorOneStewardOneMember(
-//   scenario: Scenario,
-//   appBundleSource: AppBundleSource,
-//   roleNames: RoleName[],
-//   expiry?: number,
-// ): Promise<
-//   [[PlayerApp, AgentPubKey], [PlayerApp, AgentPubKey, ActionHash], [PlayerApp, AgentPubKey]]
-// > {
-//   console.log('@threeAgentsOneProgenitorOneStewardOneMember: calling nAgentsOneProgenitor...');
-//
-//   const [[alice, alicePubKey], [bob, bobPubKey], [neitherBobNorAlice, neitherBobNorAlicePubKey]] =
-//     await nAgentsOneProgenitor(scenario, appBundleSource, roleNames, 3);
-//
-//   const groupCellAlice = getCellByRoleName(alice, 'group');
-//
-//   const input: StewardPermission = {
-//     for_agent: bobPubKey,
-//     expiry,
-//   };
-//   await groupCellAlice.callZome({
-//     zome_name: 'group',
-//     fn_name: 'create_steward_permission',
-//     payload: input,
-//   });
-//
-//   const permissionType: Accountability = await groupCellAlice.callZome({
-//     zome_name: 'group',
-//     fn_name: 'get_agent_permission_type',
-//     payload: { input: bobPubKey },
-//   });
-//
-//   if (permissionType.type !== 'Steward') {
-//     const now = Date.now() * 1000;
-//     throw new Error(
-//       `Bob should have steward permission at this point but got permission: ${JSON.stringify(permissionType)}.\nExpiry (us): ${expiry}\nTime now (us): ${now}\nTime left until expiry: ${expiry - now}`,
-//     );
-//   }
-//
-//   console.log('@threeAgentsOneProgenitorOneStewardOneMember: awaiting dht sync...');
-//
-//   // Wait for dht sync to make sure that Bob has access to his permission
-//   await dhtSync([alice, bob, neitherBobNorAlice], groupCellAlice.cell_id[0], undefined, 10_000);
-//
-//   return [
-//     [alice, alicePubKey],
-//     [bob, bobPubKey, permissionType.content.permission_hash],
-//     [neitherBobNorAlice, neitherBobNorAlicePubKey],
-//   ];
-// }
-//
-// export async function twoAgentsOneProgenitorAndOneSteward(
-//   scenario: Scenario,
-//   appBundleSource: AppBundleSource,
-//   roleNames: RoleName[],
-//   expiry?: number,
-// ): Promise<[[PlayerApp, AgentPubKey], [PlayerApp, AgentPubKey, ActionHash]]> {
-//   const [[alice, alicePubKey], [bob, bobPubKey]] = await nAgentsOneProgenitor(
-//     scenario,
-//     appBundleSource,
-//     roleNames,
-//     2,
-//   );
-//   const groupCellAlice = getCellByRoleName(alice, 'group');
-//
-//   const input: StewardPermission = {
-//     for_agent: bobPubKey,
-//     expiry,
-//   };
-//   await groupCellAlice.callZome({
-//     zome_name: 'group',
-//     fn_name: 'create_steward_permission',
-//     payload: input,
-//   });
-//
-//   const permissionType: PermissionType = await groupCellAlice.callZome({
-//     zome_name: 'group',
-//     fn_name: 'get_agent_permission_type',
-//     payload: { input: bobPubKey },
-//   });
-//
-//   if (permissionType.type !== 'Steward') {
-//     const now = Date.now() * 1000;
-//     throw new Error(
-//       `Bob should have steward permission at this point but got permission: ${JSON.stringify(permissionType)}.\nExpiry (us): ${expiry}\nTime now (us): ${now}\nTime left until expiry: ${expiry - now}`,
-//     );
-//   }
-//
-//   // Wait for dht sync to make sure that Bob has access to his permission
-//   await dhtSync([alice, bob], groupCellAlice.cell_id[0]);
-//
-//   return [
-//     [alice, alicePubKey],
-//     [bob, bobPubKey, permissionType.content.permission_hash],
-//   ];
-// }
-//
-// export async function nAgentsOneProgenitor(
-//   scenario: Scenario,
-//   appBundleSource: AppBundleSource,
-//   roleNames: RoleName[],
-//   nAgents: number,
-// ): Promise<[PlayerApp, AgentPubKey][]> {
-//   const [alice, alicePubKey] = await installAppWithProgenitor(
-//     scenario,
-//     appBundleSource,
-//     roleNames,
-//     true,
-//   );
-//
-//   const allAgents: [PlayerApp, AgentPubKey][] = [[alice, alicePubKey]];
-//
-//   for (let i = 0; i < nAgents; i++) {
-//     const [player, playerPubKey] = await installAppWithProgenitor(
-//       scenario,
-//       appBundleSource,
-//       roleNames,
-//       true,
-//       alicePubKey,
-//     );
-//     allAgents.push([player, playerPubKey]);
-//   }
-//
-//   return allAgents;
-// }
+import { Accountability, StewardPermission } from '@theweave/group-client';
+import { getCellByRoleName } from '../../shared.js';
+
+/**
+ * Spin up `nAgents` players sharing a single group, with the first agent as the
+ * progenitor. The progenitor's pubkey is used as the `progenitor` DNA property
+ * for everyone, so all agents land in the same group.
+ */
+export async function nAgentsOneProgenitor(
+  scenario: Scenario,
+  appBundleSource: AppBundleSource,
+  roleNames: RoleName[],
+  nAgents: number,
+): Promise<[PlayerApp, AgentPubKey][]> {
+  const [alice, alicePubKey] = await installAppWithProgenitor(
+    scenario,
+    appBundleSource,
+    roleNames,
+    true,
+  );
+
+  const allAgents: [PlayerApp, AgentPubKey][] = [[alice, alicePubKey]];
+
+  for (let i = 0; i < nAgents - 1; i++) {
+    const [player, playerPubKey] = await installAppWithProgenitor(
+      scenario,
+      appBundleSource,
+      roleNames,
+      true,
+      alicePubKey,
+    );
+    allAgents.push([player, playerPubKey]);
+  }
+
+  return allAgents;
+}
+
+/**
+ * Set up a group with Alice as progenitor and Bob as steward. Alice issues Bob a
+ * `StewardPermission` (optionally expiring at `expiry`, microseconds since epoch),
+ * then waits for DHT sync so Bob can see his permission.
+ *
+ * Returns [[alice, alicePubKey], [bob, bobPubKey, bobPermissionHash]].
+ */
+export async function twoAgentsOneProgenitorAndOneSteward(
+  scenario: Scenario,
+  appBundleSource: AppBundleSource,
+  roleNames: RoleName[],
+  expiry?: number,
+): Promise<[[PlayerApp, AgentPubKey], [PlayerApp, AgentPubKey, ActionHash]]> {
+  const [[alice, alicePubKey], [bob, bobPubKey]] = await nAgentsOneProgenitor(
+    scenario,
+    appBundleSource,
+    roleNames,
+    2,
+  );
+  const groupCellAlice = getCellByRoleName(alice, 'group');
+
+  const input: StewardPermission = {
+    for_agent: bobPubKey,
+    expiry,
+  };
+  await groupCellAlice.callZome({
+    zome_name: 'group',
+    fn_name: 'create_steward_permission',
+    payload: input,
+  });
+
+  const accs: Accountability[] = await groupCellAlice.callZome({
+    zome_name: 'group',
+    fn_name: 'get_agent_accountabilities',
+    payload: { input: [bobPubKey, Date.now() * 1000], local: true },
+  });
+
+  const stewardAcc = accs.find((a) => a.type === 'Steward');
+  if (!stewardAcc || stewardAcc.type !== 'Steward') {
+    const now = Date.now() * 1000;
+    throw new Error(
+      `Bob should have a Steward accountability immediately after issuance. Got: ${JSON.stringify(accs)}.\nExpiry (us): ${expiry}\nTime now (us): ${now}\nTime left until expiry: ${expiry === undefined ? 'never' : expiry - now}`,
+    );
+  }
+
+  // Wait for dht sync so Bob can see his own permission via the DHT.
+  await dhtSync([alice, bob], groupCellAlice.cell_id[0]);
+
+  return [
+    [alice, alicePubKey],
+    [bob, bobPubKey, stewardAcc.content.permission_hash],
+  ];
+}
+
+/**
+ * Set up a group with Alice as progenitor, Bob as steward, and Charlie as a plain
+ * member. Same flow as `twoAgentsOneProgenitorAndOneSteward` but with a third
+ * non-privileged agent in the same group, useful for testing how queries by a
+ * non-privileged agent affect that agent's own accountabilities.
+ */
+export async function threeAgentsOneProgenitorOneStewardOneMember(
+  scenario: Scenario,
+  appBundleSource: AppBundleSource,
+  roleNames: RoleName[],
+  expiry?: number,
+): Promise<
+  [[PlayerApp, AgentPubKey], [PlayerApp, AgentPubKey, ActionHash], [PlayerApp, AgentPubKey]]
+> {
+  const [[alice, alicePubKey], [bob, bobPubKey], [charlie, charliePubKey]] =
+    await nAgentsOneProgenitor(scenario, appBundleSource, roleNames, 3);
+
+  const groupCellAlice = getCellByRoleName(alice, 'group');
+
+  const input: StewardPermission = {
+    for_agent: bobPubKey,
+    expiry,
+  };
+  await groupCellAlice.callZome({
+    zome_name: 'group',
+    fn_name: 'create_steward_permission',
+    payload: input,
+  });
+
+  const accs: Accountability[] = await groupCellAlice.callZome({
+    zome_name: 'group',
+    fn_name: 'get_agent_accountabilities',
+    payload: { input: [bobPubKey, Date.now() * 1000], local: true },
+  });
+  const stewardAcc = accs.find((a) => a.type === 'Steward');
+  if (!stewardAcc || stewardAcc.type !== 'Steward') {
+    const now = Date.now() * 1000;
+    throw new Error(
+      `Bob should have a Steward accountability immediately after issuance. Got: ${JSON.stringify(accs)}.\nExpiry (us): ${expiry}\nTime now (us): ${now}\nTime left until expiry: ${expiry === undefined ? 'never' : expiry - now}`,
+    );
+  }
+
+  // Generous timeout: three-way DHT sync over a tryorama localnet is occasionally slow.
+  await dhtSync([alice, bob, charlie], groupCellAlice.cell_id[0], undefined, 30_000);
+
+  return [
+    [alice, alicePubKey],
+    [bob, bobPubKey, stewardAcc.content.permission_hash],
+    [charlie, charliePubKey],
+  ];
+}
 
 /**
  *

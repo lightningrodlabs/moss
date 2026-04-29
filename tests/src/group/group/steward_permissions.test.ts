@@ -14,103 +14,99 @@ import {
   threeAgentsOneProgenitorOneStewardOneMember,
   twoAgentsOneProgenitorAndOneSteward,
 } from './common.js';
-import { PermissionType, StewardPermission } from '@theweave/group-client';
+import { Accountability, StewardPermission } from '@theweave/group-client';
 import { fail } from 'assert';
+
+// Helper: pull the Steward variant out of a `Vec<Accountability>` response and
+// fail loudly if there isn't exactly one.
+function expectStewardAccountability(accs: Accountability[]): Extract<
+  Accountability,
+  { type: 'Steward' }
+> {
+  const steward = accs.find((a): a is Extract<Accountability, { type: 'Steward' }> => a.type === 'Steward');
+  if (!steward) {
+    fail(`Expected a Steward accountability, got: ${JSON.stringify(accs)}`);
+  }
+  return steward;
+}
 
 test('Create unlimited steward permission and retrieve it in different ways', async () => {
   await runScenario(async (scenario) => {
-    // Construct proper paths for your app.
-    // This assumes app bundle created by the `hc app pack` command.
-    const testAppPath = GROUP_HAPP_PATH;
-
     const appBundleSource: AppBundleSource = {
       type: 'path',
-      value: testAppPath,
+      value: GROUP_HAPP_PATH,
     };
 
-    // Set up the app to be installed
-    const appSource = { appBundleSource };
-
     const [[alice, alicePubKey], [bob, bobPubKey, bobPermissionHash]] =
-      await twoAgentsOneProgenitorAndOneSteward(scenario, appSource.appBundleSource, ['group']);
+      await twoAgentsOneProgenitorAndOneSteward(scenario, appBundleSource, ['group']);
 
     const groupCellBob = getCellByRoleName(bob, 'group');
     const groupCellAlice = getCellByRoleName(alice, 'group');
 
-    // Check that Alice is progenitor
-    const permissionTypeAlice: PermissionType = await groupCellAlice.callZome({
+    // Alice (progenitor): get_my_accountabilities should include Progenitor.
+    const aliceMyAccs: Accountability[] = await groupCellAlice.callZome({
       zome_name: 'group',
-      fn_name: 'get_my_permission_type',
-      payload: { input: null },
+      fn_name: 'get_my_accountabilities',
+      payload: { input: Date.now() * 1000, local: true },
     });
+    assert(aliceMyAccs.some((a) => a.type === 'Progenitor'));
 
-    assert(permissionTypeAlice.type === 'Progenitor');
-
-    const permissionTypeAlice2: PermissionType = await groupCellAlice.callZome({
+    // Alice queries her own pubkey: same.
+    const aliceAgentAccs: Accountability[] = await groupCellAlice.callZome({
       zome_name: 'group',
-      fn_name: 'get_agent_permission_type',
-      payload: { input: alicePubKey },
+      fn_name: 'get_agent_accountabilities',
+      payload: { input: [alicePubKey, Date.now() * 1000], local: true },
     });
+    assert(aliceAgentAccs.some((a) => a.type === 'Progenitor'));
 
-    assert(permissionTypeAlice2.type === 'Progenitor');
-
-    // Get permission type of Bob and verify that it's of type Steward and has no expiry
-    const permissionTypeBob: PermissionType = await groupCellAlice.callZome({
+    // Alice asks about Bob → Bob should be a Steward with the expected claim shape.
+    const bobAccsViaAlice: Accountability[] = await groupCellAlice.callZome({
       zome_name: 'group',
-      fn_name: 'get_agent_permission_type',
-      payload: { input: bobPubKey },
+      fn_name: 'get_agent_accountabilities',
+      payload: { input: [bobPubKey, Date.now() * 1000], local: true },
     });
-
-    assert(permissionTypeBob.type === 'Steward');
+    const bobStewardViaAlice = expectStewardAccountability(bobAccsViaAlice);
     assert(
-      encodeHashToBase64(permissionTypeBob.content.permission.for_agent) ===
+      encodeHashToBase64(bobStewardViaAlice.content.permission.for_agent) ===
         encodeHashToBase64(bobPubKey),
     );
-    assert(!permissionTypeBob.content.permission.expiry);
-    // This should be undefined/null since it has been created by the progenitor (Alice)
-    assert(!permissionTypeBob.content.permission.permission_hash);
+    assert(!bobStewardViaAlice.content.permission.expiry);
+    // permission_hash on the inner StewardPermission is null for permissions issued by
+    // the progenitor (they aren't derived from a parent permission).
+    assert(!bobStewardViaAlice.content.permission.permission_hash);
     assert(
-      encodeHashToBase64(permissionTypeBob.content.permission_hash) ===
+      encodeHashToBase64(bobStewardViaAlice.content.permission_hash) ===
         encodeHashToBase64(bobPermissionHash),
     );
 
-    // Bob gets his own permission type
-    const permissionTypeBob2: PermissionType = await groupCellBob.callZome({
+    // Bob asks about himself → same Steward claim.
+    const bobMyAccs: Accountability[] = await groupCellBob.callZome({
       zome_name: 'group',
-      fn_name: 'get_my_permission_type',
-      payload: { input: null },
+      fn_name: 'get_my_accountabilities',
+      payload: { input: Date.now() * 1000, local: false },
     });
-
-    assert(permissionTypeBob2.type === 'Steward');
+    const bobMySteward = expectStewardAccountability(bobMyAccs);
     assert(
-      encodeHashToBase64(permissionTypeBob2.content.permission.for_agent) ===
+      encodeHashToBase64(bobMySteward.content.permission.for_agent) ===
         encodeHashToBase64(bobPubKey),
     );
-    assert(!permissionTypeBob2.content.permission.expiry);
-    // This should be undefined/null since it has been created by the progenitor (Alice)
-    assert(!permissionTypeBob2.content.permission.permission_hash);
+    assert(!bobMySteward.content.permission.expiry);
+    assert(!bobMySteward.content.permission.permission_hash);
     assert(
-      encodeHashToBase64(permissionTypeBob2.content.permission_hash) ===
+      encodeHashToBase64(bobMySteward.content.permission_hash) ===
         encodeHashToBase64(bobPermissionHash),
     );
 
-    // Get permission type of Bob and verify that it's of type Steward and has no expiry
-    const permissionTypeBob3: PermissionType = await groupCellAlice.callZome({
+    // Alice queries Bob a second time (now that Bob's claim has been seen at least once on
+    // the network) — should still report Steward.
+    const bobAccsViaAliceAgain: Accountability[] = await groupCellAlice.callZome({
       zome_name: 'group',
-      fn_name: 'get_agent_permission_type',
-      payload: { input: bobPubKey },
+      fn_name: 'get_agent_accountabilities',
+      payload: { input: [bobPubKey, Date.now() * 1000], local: true },
     });
-
-    assert(permissionTypeBob3.type === 'Steward');
+    const bobStewardViaAliceAgain = expectStewardAccountability(bobAccsViaAliceAgain);
     assert(
-      encodeHashToBase64(permissionTypeBob3.content.permission.for_agent) ===
-        encodeHashToBase64(bobPubKey),
-    );
-    assert(!permissionTypeBob3.content.permission.expiry);
-    // This should be undefined/null since it has been created by the progenitor (Alice)
-    assert(!permissionTypeBob3.content.permission.permission_hash);
-    assert(
-      encodeHashToBase64(permissionTypeBob3.content.permission_hash) ===
+      encodeHashToBase64(bobStewardViaAliceAgain.content.permission_hash) ===
         encodeHashToBase64(bobPermissionHash),
     );
   });
@@ -118,178 +114,161 @@ test('Create unlimited steward permission and retrieve it in different ways', as
 
 test('Create expiring steward permission and retrieve it in different ways', async () => {
   await runScenario(async (scenario) => {
-    // Construct proper paths for your app.
-    // This assumes app bundle created by the `hc app pack` command.
-    const testAppPath = GROUP_HAPP_PATH;
-
     const appBundleSource: AppBundleSource = {
       type: 'path',
-      value: testAppPath,
+      value: GROUP_HAPP_PATH,
     };
-
-    // Set up the app to be installed
-    const appSource = { appBundleSource };
 
     const expiry = (Date.now() + 100_000) * 1_000;
 
     const [[alice, alicePubKey], [bob, bobPubKey, bobPermissionHash]] =
-      await twoAgentsOneProgenitorAndOneSteward(
-        scenario,
-        appSource.appBundleSource,
-        ['group'],
-        expiry,
-      );
+      await twoAgentsOneProgenitorAndOneSteward(scenario, appBundleSource, ['group'], expiry);
 
     const groupCellBob = getCellByRoleName(bob, 'group');
     const groupCellAlice = getCellByRoleName(alice, 'group');
 
-    // Get permission type of Bob and verify that it's of type Steward and has the correct expiry
-    const permissionTypeBob: PermissionType = await groupCellAlice.callZome({
+    // Alice queries Bob: Steward with the expected expiry.
+    const bobAccsBefore: Accountability[] = await groupCellAlice.callZome({
       zome_name: 'group',
-      fn_name: 'get_agent_permission_type',
-      payload: { input: bobPubKey },
+      fn_name: 'get_agent_accountabilities',
+      payload: { input: [bobPubKey, Date.now() * 1000], local: true },
     });
-
-    assert(permissionTypeBob.type === 'Steward');
+    const bobStewardBefore = expectStewardAccountability(bobAccsBefore);
     assert(
-      encodeHashToBase64(permissionTypeBob.content.permission.for_agent) ===
+      encodeHashToBase64(bobStewardBefore.content.permission.for_agent) ===
         encodeHashToBase64(bobPubKey),
     );
-    assert.equal(permissionTypeBob.content.permission.expiry, expiry);
-    // This should be undefined/null since it has been created by the progenitor (Alice)
-    assert(!permissionTypeBob.content.permission.permission_hash);
+    assert.equal(bobStewardBefore.content.permission.expiry, expiry);
+    assert(!bobStewardBefore.content.permission.permission_hash);
     assert(
-      encodeHashToBase64(permissionTypeBob.content.permission_hash) ===
+      encodeHashToBase64(bobStewardBefore.content.permission_hash) ===
         encodeHashToBase64(bobPermissionHash),
     );
 
-    // Bob gets his own permission type
-    const permissionTypeBob2: PermissionType = await groupCellBob.callZome({
+    // Bob queries himself: same Steward claim.
+    const bobMyAccsBefore: Accountability[] = await groupCellBob.callZome({
       zome_name: 'group',
-      fn_name: 'get_my_permission_type',
-      payload: { input: null },
+      fn_name: 'get_my_accountabilities',
+      payload: { input: Date.now() * 1000, local: false },
     });
-
-    assert(permissionTypeBob2.type === 'Steward');
+    const bobMyStewardBefore = expectStewardAccountability(bobMyAccsBefore);
+    assert.equal(bobMyStewardBefore.content.permission.expiry, expiry);
     assert(
-      encodeHashToBase64(permissionTypeBob2.content.permission.for_agent) ===
-        encodeHashToBase64(bobPubKey),
-    );
-    assert.equal(permissionTypeBob2.content.permission.expiry, expiry);
-    // This should be undefined/null since it has been created by the progenitor (Alice)
-    assert(!permissionTypeBob2.content.permission.permission_hash);
-    assert(
-      encodeHashToBase64(permissionTypeBob2.content.permission_hash) ===
+      encodeHashToBase64(bobMyStewardBefore.content.permission_hash) ===
         encodeHashToBase64(bobPermissionHash),
     );
 
-    // Wait until expiry is over
+    // Wait until the permission expires.
     const timeUntilExpiry = expiry / 1000 - Date.now();
     await sleep(timeUntilExpiry);
 
-    // Alice gets permission type of Bob which should now be of type Member since the Steward permission has expired
-    const permissionTypeBob3: PermissionType = await groupCellAlice.callZome({
+    // Alice's query of Bob: no longer Steward (empty array since Member is implicit).
+    const bobAccsAfter: Accountability[] = await groupCellAlice.callZome({
       zome_name: 'group',
-      fn_name: 'get_agent_permission_type',
-      payload: { input: bobPubKey },
+      fn_name: 'get_agent_accountabilities',
+      payload: { input: [bobPubKey, Date.now() * 1000], local: true },
     });
+    assert(!bobAccsAfter.some((a) => a.type === 'Steward'));
+    assert(!bobAccsAfter.some((a) => a.type === 'Progenitor'));
 
-    assert(permissionTypeBob3.type === 'Member');
-
-    // Bob gets his own permission type that should now be of type Member since the Steward permission has expired
-    const permissionTypeBob4: PermissionType = await groupCellBob.callZome({
+    // Bob's query of himself: also no longer Steward.
+    const bobMyAccsAfter: Accountability[] = await groupCellBob.callZome({
       zome_name: 'group',
-      fn_name: 'get_my_permission_type',
-      payload: { input: null },
+      fn_name: 'get_my_accountabilities',
+      payload: { input: Date.now() * 1000, local: false },
     });
-
-    assert(permissionTypeBob4.type === 'Member');
+    assert(!bobMyAccsAfter.some((a) => a.type === 'Steward'));
+    assert(!bobMyAccsAfter.some((a) => a.type === 'Progenitor'));
   });
 });
 
-test('get_my_permission_type returns the correct result after getting permission type of another agent with unlimited steward permission', async () => {
+test("get_my_accountabilities returns the correct result after querying another agent's accountabilities", async () => {
+  // Regression test for the privilege-escalation bug fixed in commit 48211967.
+  //
+  // Pre-fix, when a non-privileged agent (Charlie) called `is_agent_a_steward`
+  // for some other agent (Bob), the zome would unconditionally write a private
+  // `StewardPermissionClaim` entry to Charlie's source chain — even though that
+  // claim was for Bob, not Charlie. Then `get_my_permission_type` would query
+  // local source-chain claims without filtering by `for_agent == my_pub_key` and
+  // wrongly answer "Steward" for Charlie.
+  //
+  // Both paths now have filters: `is_agent_a_steward` only writes the claim if
+  // the queried agent is the caller, and `get_my_accountabilities` filters
+  // claims by `for_agent`. This test verifies the user-visible invariant that a
+  // cross-agent query does not pollute the caller's own accountabilities.
   await runScenario(async (scenario) => {
-    // Construct proper paths for your app.
-    // This assumes app bundle created by the `hc app pack` command.
-    const testAppPath = GROUP_HAPP_PATH;
-
     const appBundleSource: AppBundleSource = {
       type: 'path',
-      value: testAppPath,
+      value: GROUP_HAPP_PATH,
     };
 
-    // Set up the app to be installed
-    const appSource = { appBundleSource };
-
-    console.log('Starting conductors');
-
     const [
-      [progenitor, progenitorPubKey],
-      [steward, stewardPubKey, stewardPermissionHash],
-      [member, memberPubKey],
-    ] = await threeAgentsOneProgenitorOneStewardOneMember(scenario, appSource.appBundleSource, [
-      'group',
-    ]);
+      [_alice, _alicePubKey],
+      [_bob, bobPubKey, _bobPermissionHash],
+      [charlie, _charliePubKey],
+    ] = await threeAgentsOneProgenitorOneStewardOneMember(scenario, appBundleSource, ['group']);
 
-    const groupCellProgenitor = getCellByRoleName(progenitor, 'group');
-    const groupCellSteward = getCellByRoleName(steward, 'group');
-    const groupCellMember = getCellByRoleName(member, 'group');
+    const groupCellCharlie = getCellByRoleName(charlie, 'group');
 
-    // Normal member gets permission type of themselves to make sure the
-    // threeAgentsOneProgenitorOneStewardOneMember() function did its job correctlyu
-    const myPermissionTypeBefore: PermissionType = await groupCellMember.callZome({
+    // Sanity: Charlie has no accountabilities to start with (not progenitor, not steward).
+    const charlieAccsBefore: Accountability[] = await groupCellCharlie.callZome({
       zome_name: 'group',
-      fn_name: 'get_my_permission_type',
-      payload: { input: null },
+      fn_name: 'get_my_accountabilities',
+      payload: { input: Date.now() * 1000, local: false },
     });
-    assert(myPermissionTypeBefore.type === 'Member');
+    assert.equal(
+      charlieAccsBefore.length,
+      0,
+      `Charlie should have no accountabilities before any cross-agent query, got: ${JSON.stringify(charlieAccsBefore)}`,
+    );
 
-    // Normal member gets permission type of steward
-    const permissionTypeSteward: PermissionType = await groupCellMember.callZome({
+    // Charlie asks about Bob (a real steward). This is the path that pre-fix would
+    // have polluted Charlie's source chain.
+    const bobAccsViaCharlie: Accountability[] = await groupCellCharlie.callZome({
       zome_name: 'group',
-      fn_name: 'get_agent_permission_type',
-      payload: { input: groupCellSteward.cell_id[1] },
+      fn_name: 'get_agent_accountabilities',
+      payload: { input: [bobPubKey, Date.now() * 1000], local: false },
     });
+    assert(
+      bobAccsViaCharlie.some((a) => a.type === 'Steward'),
+      `Bob should still be reported as a Steward when queried by Charlie. Got: ${JSON.stringify(bobAccsViaCharlie)}`,
+    );
 
-    // Normal member then gets permission type of themselves
-    const myPermissionTypeAfter: PermissionType = await groupCellMember.callZome({
+    // Critical: after that cross-agent query, Charlie still has no accountabilities of
+    // his own. If either filter regresses (write filter in is_agent_a_steward, or read
+    // filter in get_my_accountabilities), Charlie's source chain ends up with Bob's
+    // claim AND that claim leaks back as Charlie's accountability — both filters need
+    // to be in place to prevent the false-positive.
+    const charlieAccsAfter: Accountability[] = await groupCellCharlie.callZome({
       zome_name: 'group',
-      fn_name: 'get_my_permission_type',
-      payload: { input: null },
+      fn_name: 'get_my_accountabilities',
+      payload: { input: Date.now() * 1000, local: false },
     });
-    assert(myPermissionTypeAfter.type === 'Member');
+    assert.equal(
+      charlieAccsAfter.length,
+      0,
+      `Charlie's accountabilities should remain empty after querying Bob's. Got: ${JSON.stringify(charlieAccsAfter)}`,
+    );
   });
 });
 
 test('Steward can nominate additional stewards if their steward permission is not expiring', async () => {
   await runScenario(async (scenario) => {
-    // Construct proper paths for your app.
-    // This assumes app bundle created by the `hc app pack` command.
-    const testAppPath = GROUP_HAPP_PATH;
-
     const appBundleSource: AppBundleSource = {
       type: 'path',
-      value: testAppPath,
+      value: GROUP_HAPP_PATH,
     };
 
-    // Set up the app to be installed
-    const appSource = { appBundleSource };
-
-    const [
-      [alice, alicePubKey],
-      [bob, bobPubKey, bobPermissionHash],
-      [neitherBobNorAlice, neitherBobNorAlicePubKey],
-    ] = await threeAgentsOneProgenitorOneStewardOneMember(scenario, appSource.appBundleSource, [
-      'group',
-    ]);
+    const [[alice, _alicePubKey], [bob, _bobPubKey, bobPermissionHash], [charlie, charliePubKey]] =
+      await threeAgentsOneProgenitorOneStewardOneMember(scenario, appBundleSource, ['group']);
 
     const groupCellAlice = getCellByRoleName(alice, 'group');
     const groupCellBob = getCellByRoleName(bob, 'group');
-    const groupCellNeitherBobNorAlice = getCellByRoleName(neitherBobNorAlice, 'group');
+    const groupCellCharlie = getCellByRoleName(charlie, 'group');
 
-    // Bob creates another steward permission for nbnoralice
+    // Bob (steward, unlimited permission) issues Charlie a steward permission.
     const input: StewardPermission = {
-      for_agent: neitherBobNorAlicePubKey,
+      for_agent: charliePubKey,
       permission_hash: bobPermissionHash,
     };
 
@@ -299,62 +278,50 @@ test('Steward can nominate additional stewards if their steward permission is no
       payload: input,
     });
 
-    await dhtSync([alice, bob, neitherBobNorAlice], groupCellAlice.cell_id[0]);
+    await dhtSync([alice, bob, charlie], groupCellAlice.cell_id[0]);
 
-    // Check that permission type of nbnoralice is now indeed Steward
-    const permissionTypeNbnoralice: PermissionType = await groupCellNeitherBobNorAlice.callZome({
+    // Charlie queries his own accountabilities → should now include Steward.
+    const charlieAccs: Accountability[] = await groupCellCharlie.callZome({
       zome_name: 'group',
-      fn_name: 'get_my_permission_type',
-      payload: { input: null },
+      fn_name: 'get_my_accountabilities',
+      payload: { input: Date.now() * 1000, local: false },
     });
+    const charlieSteward = expectStewardAccountability(charlieAccs);
 
-    assert(permissionTypeNbnoralice.type === 'Steward');
     assert(
-      encodeHashToBase64(permissionTypeNbnoralice.content.permission.for_agent) ===
-        encodeHashToBase64(neitherBobNorAlicePubKey),
+      encodeHashToBase64(charlieSteward.content.permission.for_agent) ===
+        encodeHashToBase64(charliePubKey),
     );
-    assert(!permissionTypeNbnoralice.content.permission.expiry);
-    // This should be undefined/null since it has been created by the progenitor (Alice)
-    assert(!!permissionTypeNbnoralice.content.permission.permission_hash);
+    assert(!charlieSteward.content.permission.expiry);
+    // Charlie's permission was created by Bob, so its inner permission_hash points at
+    // Bob's permission (i.e. derivation chain is recorded).
+    assert(!!charlieSteward.content.permission.permission_hash);
     assert(
-      encodeHashToBase64(permissionTypeNbnoralice.content.permission.permission_hash) ===
+      encodeHashToBase64(charlieSteward.content.permission.permission_hash!) ===
         encodeHashToBase64(bobPermissionHash),
     );
     assert(
       encodeHashToBase64(permissionRecord.signed_action.hashed.hash) ===
-        encodeHashToBase64(permissionTypeNbnoralice.content.permission_hash),
+        encodeHashToBase64(charlieSteward.content.permission_hash),
     );
   });
 });
 
 test('Steward can NOT nominate additional stewards if their steward permission is expiring', async () => {
   await runScenario(async (scenario) => {
-    // Construct proper paths for your app.
-    // This assumes app bundle created by the `hc app pack` command.
-    const testAppPath = GROUP_HAPP_PATH;
-
     const appBundleSource: AppBundleSource = {
       type: 'path',
-      value: testAppPath,
+      value: GROUP_HAPP_PATH,
     };
 
-    // Set up the app to be installed
-    const appSource = { appBundleSource };
-
-    // Expiry is far in the future
+    // Expiry is far in the future, but it's still expiring.
     const expiry = (Date.now() + 600_000) * 1_000;
 
-    const [[alice, alicePubKey], [bob, bobPubKey, bobPermissionHash]] =
-      await twoAgentsOneProgenitorAndOneSteward(
-        scenario,
-        appSource.appBundleSource,
-        ['group'],
-        expiry,
-      );
+    const [[_alice, _alicePubKey], [bob, _bobPubKey, bobPermissionHash]] =
+      await twoAgentsOneProgenitorAndOneSteward(scenario, appBundleSource, ['group'], expiry);
 
     const groupCellBob = getCellByRoleName(bob, 'group');
 
-    // Bob creates another steward permission for nbnoralice
     const input: StewardPermission = {
       for_agent: await fakeAgentPubKey(),
       permission_hash: bobPermissionHash,
@@ -367,7 +334,7 @@ test('Steward can NOT nominate additional stewards if their steward permission i
         payload: input,
       });
       fail(
-        'Bob should not be able to create a steward permission with having only an expiring steward permission himself',
+        'Bob should not be able to create a steward permission while only holding an expiring one himself',
       );
     } catch (e) {
       if (
@@ -376,7 +343,7 @@ test('Steward can NOT nominate additional stewards if their steward permission i
           .includes('Only non-expiring StewardPermissions are allowed to take this action')
       ) {
         fail(
-          'Bob should not be able to create a steward permission with having only an expiring steward permission himself',
+          `Expected validation rejection about expiring StewardPermissions, got: ${e}`,
         );
       }
     }
@@ -385,32 +352,19 @@ test('Steward can NOT nominate additional stewards if their steward permission i
 
 test('Steward can NOT nominate additional stewards without providing a valid permission hash', async () => {
   await runScenario(async (scenario) => {
-    // Construct proper paths for your app.
-    // This assumes app bundle created by the `hc app pack` command.
-    const testAppPath = GROUP_HAPP_PATH;
-
     const appBundleSource: AppBundleSource = {
       type: 'path',
-      value: testAppPath,
+      value: GROUP_HAPP_PATH,
     };
 
-    // Set up the app to be installed
-    const appSource = { appBundleSource };
-
-    // Expiry is far in the future
+    // Expiry is far in the future.
     const expiry = (Date.now() + 600_000) * 1_000;
 
-    const [[alice, alicePubKey], [bob, bobPubKey, bobPermissionHash]] =
-      await twoAgentsOneProgenitorAndOneSteward(
-        scenario,
-        appSource.appBundleSource,
-        ['group'],
-        expiry,
-      );
+    const [[_alice, _alicePubKey], [bob, _bobPubKey, _bobPermissionHash]] =
+      await twoAgentsOneProgenitorAndOneSteward(scenario, appBundleSource, ['group'], expiry);
 
     const groupCellBob = getCellByRoleName(bob, 'group');
 
-    // Bob creates another steward permission for nbnoralice
     const input: StewardPermission = {
       for_agent: await fakeAgentPubKey(),
       permission_hash: null,
@@ -430,7 +384,7 @@ test('Steward can NOT nominate additional stewards without providing a valid per
         !e.toString().includes('No valid permission hash provided and agent is not the progenitor')
       ) {
         fail(
-          'Bob should not be able to create a steward permission with having only an expiring steward permission himself',
+          `Expected validation rejection about missing permission hash, got: ${e}`,
         );
       }
     }
@@ -438,6 +392,6 @@ test('Steward can NOT nominate additional stewards without providing a valid per
 });
 
 // TODO
-// - test that no steward permission returns member
-// - test that Steward permission entries cannot be created for oneself
-// - test retrieval of all agents' permission types
+// - test that no steward permission returns an empty Accountability list
+// - test that StewardPermission entries cannot be created for oneself
+// - test retrieval of all agents' accountabilities (get_all_agents_accountabilities)

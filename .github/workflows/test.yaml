@@ -78,7 +78,17 @@ jobs:
       - name: Build example-applet
         if: matrix.platform == 'ubuntu-22.04'
         run: |
-          yarn workspace example-applet package     
+          yarn workspace example-applet package
+
+      - name: Build group.happ from source
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          yarn build:group-happ
+
+      - name: Run tryorama tests
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          yarn test
 
       - name: Build cli
         if: matrix.platform == 'ubuntu-22.04'
