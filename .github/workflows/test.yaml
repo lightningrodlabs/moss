@@ -85,6 +85,24 @@ jobs:
         run: |
           yarn build:group-happ
 
+      - name: Install nix
+        if: matrix.platform == 'ubuntu-22.04'
+        uses: cachix/install-nix-action@v25
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Setup holochain-ci cachix
+        if: matrix.platform == 'ubuntu-22.04'
+        uses: cachix/cachix-action@v15
+        with:
+          name: holochain-ci
+
+      - name: Run tryorama tests with nix
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          nix develop --command yarn test
+
       - name: Run tryorama tests
         if: matrix.platform == 'ubuntu-22.04'
         run: |
