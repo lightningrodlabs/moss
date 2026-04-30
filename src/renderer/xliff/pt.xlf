@@ -250,17 +250,9 @@
   <source>Published by:</source>
   <target>Publicado por:</target>
 </trans-unit>
-<trans-unit id="s4bbd8057b8726b43">
-  <source>Publish A Tool</source>
-  <target>Publicar um Tool</target>
-</trans-unit>
 <trans-unit id="s3d4ca40eab578130">
   <source>Tool Library</source>
   <target>Tool Library</target>
-</trans-unit>
-<trans-unit id="s8de2ae4fdfa77943">
-  <source>Publish a tool</source>
-  <target>Publicar um tool</target>
 </trans-unit>
 <trans-unit id="sd05405ee1ffc6ddd">
   <source>Add to Pocket</source>
@@ -1904,21 +1896,6 @@ começa agora</target>
   <source>Enable Design Feedback Mode to show a feedback button in the top-left corner. Click it to capture a screenshot of any area and submit feedback.</source>
   <target>Ative o Modo de Feedback de Design para mostrar um botão de feedback no canto superior esquerdo. Clique nele para capturar uma captura de tela de qualquer área e enviar feedback.</target>
 </trans-unit>
-<trans-unit id="hd4a02aa009e99701">
-  <source>To publish a Moss Tool it needs to be added to a Tool &amp; Curation list hosted at a web2 URL. For an example of how
-          this works, look at the initial curation repository of Lightningrod Labs
-          <x id="0" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/weave-tool-curation&quot;&gt;"/>here<x id="1" equiv-text="&lt;/a&gt;"/>.</source>
-  <target>Para publicar uma ferramenta Moss, ela precisa ser adicionada a uma lista de ferramentas &amp; curadoria hospedada em uma URL web2. Para um exemplo de como isso funciona, veja o repositório de curadoria inicial do Lightningrod Labs <x id="0" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/weave-tool-curation&quot;&gt;"/>aqui<x id="1" equiv-text="&lt;/a&gt;"/>.</target>
-</trans-unit>
-<trans-unit id="ha299b6e88ba10399">
-  <source>If you would like to publish a Tool, please contact us at
-          <x id="0" equiv-text="&lt;a href=&quot;mailto:moss.0.15.feedback@theweave.social&quot;&gt;"/>moss.0.15.feedback@theweave.social<x id="1" equiv-text="&lt;/a&gt;"/>
-          or
-          <x id="2" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/moss/issues/new&quot;&gt;"/>create an issue on Github<x id="3" equiv-text="&lt;/a&gt;"/>
-          so that we can assist add your tool to our curation list. Future versions of Moss will include adding custom
-          curation lists.</source>
-  <target>Se você gostaria de publicar uma ferramenta, entre em contato conosco em <x id="0" equiv-text="&lt;a href=&quot;mailto:moss.0.15.feedback@theweave.social&quot;&gt;"/>moss.0.15.feedback@theweave.social<x id="1" equiv-text="&lt;/a&gt;"/> ou <x id="2" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/moss/issues/new&quot;&gt;"/>crie uma issue no Github<x id="3" equiv-text="&lt;/a&gt;"/> para que possamos ajudar a adicionar sua ferramenta à nossa lista de curadoria. Versões futuras do Moss incluirão a adição de listas de curadoria personalizadas.</target>
-</trans-unit>
 <trans-unit id="sb2edfc16609b1d38">
   <source>Tested and loved tools.</source>
   <target>Ferramentas testadas e adoradas.</target>
@@ -2202,6 +2179,130 @@ começa agora</target>
 <trans-unit id="s7301570d0bb8fc6d">
   <source>Done.</source>
   <target>Concluído.</target>
+</trans-unit>
+<trans-unit id="s29f3ebb63de0fcf2">
+  <source>No update available.</source>
+</trans-unit>
+<trans-unit id="s0b9e8f89ec95e3bb">
+  <source>Update failed (see console for details).</source>
+</trans-unit>
+<trans-unit id="sd9f5f2484b0f0d29">
+  <source>Invalid invite link: <x id="0" equiv-text="${e}"/></source>
+</trans-unit>
+<trans-unit id="h9ba913e545f30f9a">
+  <source>Learn more about
+            <x id="0" equiv-text="&lt;a href=&quot;https://dev.theweave.social/build/publishing-a-tool.html&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>publishing a Tool<x id="1" equiv-text="&lt;/a&gt;"/>
+            and how to create your own curation list.</source>
+  <target>Saiba mais sobre <x id="0" equiv-text="&lt;a href=&quot;https://dev.theweave.social/build/publishing-a-tool.html&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>como publicar uma ferramenta<x id="1" equiv-text="&lt;/a&gt;"/> e como criar sua própria lista de curadoria.</target>
+</trans-unit>
+<trans-unit id="sd947928196d52aa4">
+  <source>Add List</source>
+  <target>Adicionar lista</target>
+</trans-unit>
+<trans-unit id="s259a97c05b121b09">
+  <source>Enter a valid URL</source>
+  <target>Digite uma URL válida</target>
+</trans-unit>
+<trans-unit id="s0fbc6eecad0a437b">
+  <source>No lists found</source>
+  <target>Nenhuma lista encontrada</target>
+</trans-unit>
+<trans-unit id="s5b9ae3c135aaa068">
+  <source>Remove curation list</source>
+  <target>Remover lista de curadoria</target>
+</trans-unit>
+<trans-unit id="s521ae78ae0304cd5">
+  <source>Visit developer's website</source>
+</trans-unit>
+<trans-unit id="s46249fe17f6f2595">
+  <source>Unknown Tool</source>
+</trans-unit>
+<trans-unit id="s0f7056666f4e5638">
+  <source>Failed to activate tool (See console for details).</source>
+</trans-unit>
+<trans-unit id="sfe55542ae951e457">
+  <source>Tool undefined.</source>
+</trans-unit>
+<trans-unit id="s399de38558f723d4">
+  <source>No valid permission to add a Tool to this group.</source>
+</trans-unit>
+<trans-unit id="s03ea4011da9cf5af">
+  <source>Installation failed! (See console for details)</source>
+</trans-unit>
+<trans-unit id="se2b056a31e2b1942">
+  <source>Failed to jump to Tool (see console for details).</source>
+</trans-unit>
+<trans-unit id="s1b1bba93aa37e334">
+  <source>Open in Window</source>
+</trans-unit>
+<trans-unit id="sf2539d153cdb861c">
+  <source>Jump to parent Tool</source>
+</trans-unit>
+<trans-unit id="s9a2321d0350ae9bf">
+  <source>No expiry date selected. Uncheck expiry or select date.</source>
+</trans-unit>
+<trans-unit id="sccfcb0b7e78ac9d3">
+  <source>Expiry must be in the future</source>
+</trans-unit>
+<trans-unit id="sf0fcc2b36e8adbcc">
+  <source>Invalid public key.</source>
+</trans-unit>
+<trans-unit id="s32c5c41a394d97a2">
+  <source>Failed to create permission: <x id="0" equiv-text="${e}"/></source>
+</trans-unit>
+<trans-unit id="s4c4a1dee1fb3d7b4">
+  <source>Radio selection undefined.</source>
+</trans-unit>
+<trans-unit id="s235307a92cb5f971">
+  <source>Datepicker undefined,</source>
+</trans-unit>
+<trans-unit id="se6d4177fa61fc566">
+  <source>Datepicker value undefined,</source>
+</trans-unit>
+<trans-unit id="s7a98e9c93e22afd8">
+  <source>Failed to activate Tool (See console for details).</source>
+</trans-unit>
+<trans-unit id="s7e4a76b2e2bef4ea">
+  <source>No permission to edit group profile.</source>
+</trans-unit>
+<trans-unit id="s88674b8611547f51">
+  <source>Failed to create new <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/>: <x id="1" equiv-text="${creatableResult.error}"/></source>
+</trans-unit>
+<trans-unit id="sb5d4188254f9de4d">
+  <source>The link is for a group you are not part of.</source>
+</trans-unit>
+<trans-unit id="s9b2d80cfe7406ee1">
+  <source>Invalid URL</source>
+</trans-unit>
+<trans-unit id="s3045548ed41fce47">
+  <source>Failed to parse URL</source>
+</trans-unit>
+<trans-unit id="sd18a4e500ceac421">
+  <source>URL type not supported.</source>
+</trans-unit>
+<trans-unit id="s7c776f2aeaef3e9f">
+  <source>Tool Curation Lists</source>
+  <target>Listas de curadoria de ferramentas</target>
+</trans-unit>
+<trans-unit id="sab453af53117cea5">
+  <source>Invalid curation list</source>
+  <target>Lista de curadoria inválida</target>
+</trans-unit>
+<trans-unit id="scb9f80384a582a5c">
+  <source>Reset to default list</source>
+  <target>Redefinir para lista padrão</target>
+</trans-unit>
+<trans-unit id="s4a40c8bbf9fa0497">
+  <source>Are you sure? This will replace your curation lists with the default.</source>
+  <target>Tem certeza? Isso substituirá suas listas de curadoria pela padrão.</target>
+</trans-unit>
+<trans-unit id="s256cb9ca5cacfc88">
+  <source>Confirm Reset</source>
+  <target>Confirmar redefinição</target>
+</trans-unit>
+<trans-unit id="s255ac18852a2c391">
+  <source>Tool Sources</source>
+  <target>Fontes de ferramentas</target>
 </trans-unit>
 </body>
 </file>

@@ -21,7 +21,7 @@ import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
 import { mossStyles } from '../../shared-styles.js';
 import '../../elements/_new_design/select-group.js';
-import {mdiEmailOutline, mdiHelpCircle, mdiWeb} from '@mdi/js';
+import {mdiEmailOutline, mdiWeb} from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import './elements/curation-list-manager.js';
 import './elements/installable-tools-web2.js';
@@ -39,6 +39,7 @@ import { ToolAndCurationInfo, ToolListUrl } from '../../types';
 import { deriveToolCompatibilityId } from '@theweave/utils';
 import {
   appStoreIcon,
+  devIcon,
   experimentalToolIcon,
   stableToolIcon,
 } from '../../elements/_new_design/icons.js';
@@ -84,9 +85,6 @@ export class ToolLibraryWeb2 extends LitElement {
 
   @query('#select-group')
   _selectGroup!: SelectGroup;
-
-  @query('#publish-dialog')
-  _publishDialog!: MossDialog;
 
   @query('#curation-dialog')
   _curationListDialog!: MossDialog;
@@ -407,35 +405,13 @@ export class ToolLibraryWeb2 extends LitElement {
 
 
   /** */
-  renderPublishDialog() {
-    return html`
-      <moss-dialog
-        id="publish-dialog"
-        width="670px"
-        headerAlign="center">
-        <span slot="header">${msg('Publish A Tool')}</span>
-        <div slot="content">
-          ${msg(html`To publish a Tool in Moss it needs to be added to a Tool list and a Curation list hosted each at a web2 URL and added to the Curation lists in Moss' Tool Library. 
-            For an example of how this works, see the code repository for Lightningrod Labs lists 
-            <a href="https://github.com/lightningrodlabs/weave-tool-curation">here</a>.`)}
-            <br /><br />
-            ${msg(html`If you need any help 
-            <a href="https://github.com/lightningrodlabs/moss/issues/new">create an issue on Github</a>
-          `)}
-        </div>
-      </moss-dialog>
-    `;
-  }
-
-
-  /** */
   renderCurationLists() {
     return html`
         <moss-dialog
                 id="curation-dialog"
                 width="870px"
                 headerAlign="center">
-            <span slot="header">${msg('Curation Lists')}</span>
+            <span slot="header">${msg('Tool Curation Lists')}</span>
             <div slot="content">
               <curation-list-manager id="curation-manager"
                              @urls-changed=${async (e) => {
@@ -522,7 +498,6 @@ export class ToolLibraryWeb2 extends LitElement {
   /** */
   render() {
     return html`
-        ${this.renderPublishDialog()}
         ${this.renderCurationLists()}
         <group-context .groupDnaHash=${this._selectedGroupDnaHash? decodeHashFromBase64(this._selectedGroupDnaHash): undefined}>
         <install-tool-dialog-web2 id="install-tool-dialog"
@@ -544,19 +519,13 @@ export class ToolLibraryWeb2 extends LitElement {
             <span style="flex: 1; margin-left: 10px; font-weight: bold;">
                 ${msg('Tool Library')}
             </span>
-              <sl-tooltip .content=${msg('Help')}>
-                  <sl-icon-button
-                          .src=${wrapPathInSvg(mdiHelpCircle)}
-                          style="font-size: 1.5rem"
-                          @click=${(_e) => {this._publishDialog.show()}}
-                  ></sl-icon-button>
-              </sl-tooltip>
           </div>
             <button class="moss-button"
                     style="border-radius:8px; padding: 8px 10px;position: absolute; right: 20px;border: 1px solid #89D6AA; color: #89D6AA"
                     @click=${() => {this._curationListDialog.show()}}>
                 <div class="row items-center">
-                    <span style="margin-left: 5px;font-size: 12px; ">${msg('Manage Curation Lists')}</span>
+                    ${devIcon(14)}
+                    <span style="margin-left: 5px;font-size: 12px; ">${msg('Tool Sources')}</span>
                 </div>
             </button>
         </div>
@@ -659,11 +628,6 @@ export class ToolLibraryWeb2 extends LitElement {
         background: var(--sl-color-primary-600);
       }
 
-      .publish-dialog {
-        padding: 20px;
-        border-radius: 20px;
-        line-height: 1.2;
-      }
       .tool-classification-selector {
         border-radius: 8px;
         background-color: color(from var(--moss-hint-green) srgb r g b / 0.1);

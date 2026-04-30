@@ -250,17 +250,9 @@
   <source>Published by:</source>
   <target>公開者:</target>
 </trans-unit>
-<trans-unit id="s4bbd8057b8726b43">
-  <source>Publish A Tool</source>
-  <target>ツールを公開</target>
-</trans-unit>
 <trans-unit id="s3d4ca40eab578130">
   <source>Tool Library</source>
   <target>ツールライブラリ</target>
-</trans-unit>
-<trans-unit id="s8de2ae4fdfa77943">
-  <source>Publish a tool</source>
-  <target>ツールを公開</target>
 </trans-unit>
 <trans-unit id="sd05405ee1ffc6ddd">
   <source>Add to Pocket</source>
@@ -1904,21 +1896,6 @@ starts now</source>
   <source>Enable Design Feedback Mode to show a feedback button in the top-left corner. Click it to capture a screenshot of any area and submit feedback.</source>
   <target>デザインフィードバックモードを有効にすると、左上隅にフィードバックボタンが表示されます。クリックすると任意の領域のスクリーンショットをキャプチャしてフィードバックを送信できます。</target>
 </trans-unit>
-<trans-unit id="hd4a02aa009e99701">
-  <source>To publish a Moss Tool it needs to be added to a Tool &amp; Curation list hosted at a web2 URL. For an example of how
-          this works, look at the initial curation repository of Lightningrod Labs
-          <x id="0" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/weave-tool-curation&quot;&gt;"/>here<x id="1" equiv-text="&lt;/a&gt;"/>.</source>
-  <target>Mossツールを公開するには、web2 URLでホストされているツール＆キュレーションリストに追加する必要があります。仕組みの例については、Lightningrod Labsの初期キュレーションリポジトリを<x id="0" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/weave-tool-curation&quot;&gt;"/>こちら<x id="1" equiv-text="&lt;/a&gt;"/>でご覧ください。</target>
-</trans-unit>
-<trans-unit id="ha299b6e88ba10399">
-  <source>If you would like to publish a Tool, please contact us at
-          <x id="0" equiv-text="&lt;a href=&quot;mailto:moss.0.15.feedback@theweave.social&quot;&gt;"/>moss.0.15.feedback@theweave.social<x id="1" equiv-text="&lt;/a&gt;"/>
-          or
-          <x id="2" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/moss/issues/new&quot;&gt;"/>create an issue on Github<x id="3" equiv-text="&lt;/a&gt;"/>
-          so that we can assist add your tool to our curation list. Future versions of Moss will include adding custom
-          curation lists.</source>
-  <target>ツールを公開したい場合は、<x id="0" equiv-text="&lt;a href=&quot;mailto:moss.0.15.feedback@theweave.social&quot;&gt;"/>moss.0.15.feedback@theweave.social<x id="1" equiv-text="&lt;/a&gt;"/>までご連絡いただくか、<x id="2" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/moss/issues/new&quot;&gt;"/>Githubでissueを作成<x id="3" equiv-text="&lt;/a&gt;"/>してください。キュレーションリストへのツールの追加をお手伝いします。将来のMossバージョンでは、カスタムキュレーションリストの追加が可能になります。</target>
-</trans-unit>
 <trans-unit id="sb2edfc16609b1d38">
   <source>Tested and loved tools.</source>
   <target>テスト済みで人気のツール。</target>
@@ -2202,6 +2179,130 @@ starts now</source>
 <trans-unit id="s7301570d0bb8fc6d">
   <source>Done.</source>
   <target>完了。</target>
+</trans-unit>
+<trans-unit id="s29f3ebb63de0fcf2">
+  <source>No update available.</source>
+</trans-unit>
+<trans-unit id="s0b9e8f89ec95e3bb">
+  <source>Update failed (see console for details).</source>
+</trans-unit>
+<trans-unit id="sd9f5f2484b0f0d29">
+  <source>Invalid invite link: <x id="0" equiv-text="${e}"/></source>
+</trans-unit>
+<trans-unit id="h9ba913e545f30f9a">
+  <source>Learn more about
+            <x id="0" equiv-text="&lt;a href=&quot;https://dev.theweave.social/build/publishing-a-tool.html&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>publishing a Tool<x id="1" equiv-text="&lt;/a&gt;"/>
+            and how to create your own curation list.</source>
+  <target><x id="0" equiv-text="&lt;a href=&quot;https://dev.theweave.social/build/publishing-a-tool.html&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>ツールの公開方法<x id="1" equiv-text="&lt;/a&gt;"/>と独自のキュレーションリストの作成方法について詳しく学ぶ。</target>
+</trans-unit>
+<trans-unit id="sd947928196d52aa4">
+  <source>Add List</source>
+  <target>リストを追加</target>
+</trans-unit>
+<trans-unit id="s259a97c05b121b09">
+  <source>Enter a valid URL</source>
+  <target>有効なURLを入力してください</target>
+</trans-unit>
+<trans-unit id="s0fbc6eecad0a437b">
+  <source>No lists found</source>
+  <target>リストが見つかりません</target>
+</trans-unit>
+<trans-unit id="s5b9ae3c135aaa068">
+  <source>Remove curation list</source>
+  <target>キュレーションリストを削除</target>
+</trans-unit>
+<trans-unit id="s521ae78ae0304cd5">
+  <source>Visit developer's website</source>
+</trans-unit>
+<trans-unit id="s46249fe17f6f2595">
+  <source>Unknown Tool</source>
+</trans-unit>
+<trans-unit id="s0f7056666f4e5638">
+  <source>Failed to activate tool (See console for details).</source>
+</trans-unit>
+<trans-unit id="sfe55542ae951e457">
+  <source>Tool undefined.</source>
+</trans-unit>
+<trans-unit id="s399de38558f723d4">
+  <source>No valid permission to add a Tool to this group.</source>
+</trans-unit>
+<trans-unit id="s03ea4011da9cf5af">
+  <source>Installation failed! (See console for details)</source>
+</trans-unit>
+<trans-unit id="se2b056a31e2b1942">
+  <source>Failed to jump to Tool (see console for details).</source>
+</trans-unit>
+<trans-unit id="s1b1bba93aa37e334">
+  <source>Open in Window</source>
+</trans-unit>
+<trans-unit id="sf2539d153cdb861c">
+  <source>Jump to parent Tool</source>
+</trans-unit>
+<trans-unit id="s9a2321d0350ae9bf">
+  <source>No expiry date selected. Uncheck expiry or select date.</source>
+</trans-unit>
+<trans-unit id="sccfcb0b7e78ac9d3">
+  <source>Expiry must be in the future</source>
+</trans-unit>
+<trans-unit id="sf0fcc2b36e8adbcc">
+  <source>Invalid public key.</source>
+</trans-unit>
+<trans-unit id="s32c5c41a394d97a2">
+  <source>Failed to create permission: <x id="0" equiv-text="${e}"/></source>
+</trans-unit>
+<trans-unit id="s4c4a1dee1fb3d7b4">
+  <source>Radio selection undefined.</source>
+</trans-unit>
+<trans-unit id="s235307a92cb5f971">
+  <source>Datepicker undefined,</source>
+</trans-unit>
+<trans-unit id="se6d4177fa61fc566">
+  <source>Datepicker value undefined,</source>
+</trans-unit>
+<trans-unit id="s7a98e9c93e22afd8">
+  <source>Failed to activate Tool (See console for details).</source>
+</trans-unit>
+<trans-unit id="s7e4a76b2e2bef4ea">
+  <source>No permission to edit group profile.</source>
+</trans-unit>
+<trans-unit id="s88674b8611547f51">
+  <source>Failed to create new <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/>: <x id="1" equiv-text="${creatableResult.error}"/></source>
+</trans-unit>
+<trans-unit id="sb5d4188254f9de4d">
+  <source>The link is for a group you are not part of.</source>
+</trans-unit>
+<trans-unit id="s9b2d80cfe7406ee1">
+  <source>Invalid URL</source>
+</trans-unit>
+<trans-unit id="s3045548ed41fce47">
+  <source>Failed to parse URL</source>
+</trans-unit>
+<trans-unit id="sd18a4e500ceac421">
+  <source>URL type not supported.</source>
+</trans-unit>
+<trans-unit id="s7c776f2aeaef3e9f">
+  <source>Tool Curation Lists</source>
+  <target>ツールキュレーションリスト</target>
+</trans-unit>
+<trans-unit id="sab453af53117cea5">
+  <source>Invalid curation list</source>
+  <target>無効なキュレーションリストです</target>
+</trans-unit>
+<trans-unit id="scb9f80384a582a5c">
+  <source>Reset to default list</source>
+  <target>デフォルトのリストにリセット</target>
+</trans-unit>
+<trans-unit id="s4a40c8bbf9fa0497">
+  <source>Are you sure? This will replace your curation lists with the default.</source>
+  <target>本当によろしいですか？キュレーションリストがデフォルトに置き換えられます。</target>
+</trans-unit>
+<trans-unit id="s256cb9ca5cacfc88">
+  <source>Confirm Reset</source>
+  <target>リセットを確認</target>
+</trans-unit>
+<trans-unit id="s255ac18852a2c391">
+  <source>Tool Sources</source>
+  <target>ツールソース</target>
 </trans-unit>
 </body>
 </file>

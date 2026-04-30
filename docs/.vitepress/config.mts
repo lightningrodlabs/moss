@@ -57,6 +57,7 @@ export default defineConfig({
               },
             ],
           },
+          { text: 'Publishing a Tool', link: '/build/publishing-a-tool' },
           // { text: 'Step 2: Add Weave sugar', link: '/markdown-examples' },
           // { text: 'Markdown Examples', link: '/markdown-examples' },
           // { text: 'Runtime API Examples', link: '/api-examples' },
