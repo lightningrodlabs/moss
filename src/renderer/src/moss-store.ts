@@ -1421,7 +1421,7 @@ export class MossStore {
     await this.adminWebsocket.disableApp({
       installed_app_id: appIdFromAppletHash(appletHash),
     });
-    await this.reloadManualStores();
+    await this.reloadAfterAppletEnableDisable(appletHash);
   }
 
   async enableApplet(appletHash: EntryHash) {
@@ -1431,7 +1431,7 @@ export class MossStore {
     await this.adminWebsocket.enableApp({
       installed_app_id: appIdFromAppletHash(appletHash),
     });
-    await this.reloadManualStores();
+    await this.reloadAfterAppletEnableDisable(appletHash);
   }
 
   /**
@@ -1894,6 +1894,43 @@ export class MossStore {
     // );
     await this.installedApps.reload();
     await this.allAppAssetInfos.reload();
+  }
+
+  /**
+   * Targeted reload after activating (joining) an existing applet in a group.
+   *
+   * Unlike reloadManualStores(), this does NOT call groupStores.reload(), which
+   * would destroy and recreate every GroupStore instance and cause the
+   * surrounding UI (settings dialogs, sidebars, etc.) to unmount/remount via
+   * Lit context invalidation. Activation does not change the set of groups, so
+   * the existing GroupStore for the activating group is still valid; only its
+   * joined-applet state and the conductor's installed-app list need to refresh.
+   */
+  async reloadAfterAppletActivation(groupStore: GroupStore) {
+    await this.installedApps.reload();
+    await this.allAppAssetInfos.reload();
+    await groupStore.allMyApplets.reload();
+    await groupStore.allMyInstalledApplets.reload();
+    await groupStore.allMyRunningApplets.reload();
+  }
+
+  /**
+   * Targeted reload after enabling/disabling an existing applet.
+   *
+   * Same rationale as reloadAfterAppletActivation: avoid groupStores.reload()
+   * so the surrounding settings UI does not unmount. Enable/disable does not
+   * change which applets are joined or which groups exist; it only changes the
+   * conductor's running-app set, so refresh installedApps and the per-group
+   * allMyRunningApplets for every group containing this applet.
+   */
+  async reloadAfterAppletEnableDisable(appletHash: AppletHash) {
+    await this.installedApps.reload();
+    const groupStores = await toPromise(this.groupsForApplet.get(appletHash)!);
+    await Promise.all(
+      Array.from(groupStores.values()).map(async (gs) => {
+        if (gs) await gs.allMyRunningApplets.reload();
+      }),
+    );
   }
 
   async emitParentToAppletMessage(message: ParentToAppletMessage, forApplets: AppletId[]) {
