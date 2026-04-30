@@ -531,6 +531,13 @@ export class AppletDetailCard extends LitElement {
           await this.mossStore.enableApplet(this.appletHash);
           notify(msg('Tool enabled.'));
         }
+        // Refresh local appInfo so the switch reflects the new state.
+        // Previously this happened implicitly because the surrounding
+        // dialog was unmounted/remounted by reloadManualStores().
+        const [appletClient] = await this.mossStore.getAppClient(
+          appIdFromAppletHash(this.appletHash),
+        );
+        this.appInfo = await appletClient.appInfo();
       }}
               >
               </sl-switch>
