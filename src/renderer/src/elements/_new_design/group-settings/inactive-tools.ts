@@ -42,7 +42,7 @@ export class InactiveTools extends LitElement {
 
       // Only reload for single activations; batch activation reloads once at the end
       if (!this._activatingAll) {
-        await this._mossStore.reloadManualStores();
+        await this._mossStore.reloadAfterAppletActivation(this._groupStore);
       }
 
       // Don't dispatch 'applet-installed' event here to keep the settings window open
@@ -145,7 +145,7 @@ export class InactiveTools extends LitElement {
     }
 
     // Reload stores once after all activations complete
-    await this._mossStore.reloadManualStores();
+    await this._mossStore.reloadAfterAppletActivation(this._groupStore);
 
     this._activatingAll = false;
 

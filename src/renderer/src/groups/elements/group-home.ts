@@ -494,7 +494,7 @@ export class GroupHome extends LitElement {
     this._joiningNewApplet = encodeHashToBase64(appletHash);
     try {
       await this._groupStore.installApplet(appletHash);
-      await this.mossStore.reloadManualStores();
+      await this.mossStore.reloadAfterAppletActivation(this._groupStore);
       this.dispatchEvent(
         new CustomEvent('applet-installed', {
           detail: {
