@@ -2182,12 +2182,15 @@ starts now</source>
 </trans-unit>
 <trans-unit id="s29f3ebb63de0fcf2">
   <source>No update available.</source>
+  <target>利用可能な更新はありません。</target>
 </trans-unit>
 <trans-unit id="s0b9e8f89ec95e3bb">
   <source>Update failed (see console for details).</source>
+  <target>更新に失敗しました（詳細はコンソールを参照してください）。</target>
 </trans-unit>
 <trans-unit id="sd9f5f2484b0f0d29">
   <source>Invalid invite link: <x id="0" equiv-text="${e}"/></source>
+  <target>無効な招待リンクです: <x id="0" equiv-text="${e}"/></target>
 </trans-unit>
 <trans-unit id="h9ba913e545f30f9a">
   <source>Learn more about
@@ -2213,72 +2216,95 @@ starts now</source>
 </trans-unit>
 <trans-unit id="s521ae78ae0304cd5">
   <source>Visit developer's website</source>
+  <target>開発者のウェブサイトを訪問</target>
 </trans-unit>
 <trans-unit id="s46249fe17f6f2595">
   <source>Unknown Tool</source>
+  <target>不明なツール</target>
 </trans-unit>
 <trans-unit id="s0f7056666f4e5638">
   <source>Failed to activate tool (See console for details).</source>
+  <target>ツールの有効化に失敗しました（詳細はコンソールを参照してください）。</target>
 </trans-unit>
 <trans-unit id="sfe55542ae951e457">
   <source>Tool undefined.</source>
+  <target>ツールが未定義です。</target>
 </trans-unit>
 <trans-unit id="s399de38558f723d4">
   <source>No valid permission to add a Tool to this group.</source>
+  <target>このグループにツールを追加する有効な権限がありません。</target>
 </trans-unit>
 <trans-unit id="s03ea4011da9cf5af">
   <source>Installation failed! (See console for details)</source>
+  <target>インストールに失敗しました！（詳細はコンソールを参照してください）</target>
 </trans-unit>
 <trans-unit id="se2b056a31e2b1942">
   <source>Failed to jump to Tool (see console for details).</source>
+  <target>ツールへのジャンプに失敗しました（詳細はコンソールを参照してください）。</target>
 </trans-unit>
 <trans-unit id="s1b1bba93aa37e334">
   <source>Open in Window</source>
+  <target>ウィンドウで開く</target>
 </trans-unit>
 <trans-unit id="sf2539d153cdb861c">
   <source>Jump to parent Tool</source>
+  <target>親ツールにジャンプ</target>
 </trans-unit>
 <trans-unit id="s9a2321d0350ae9bf">
   <source>No expiry date selected. Uncheck expiry or select date.</source>
+  <target>有効期限が選択されていません。有効期限のチェックを外すか、日付を選択してください。</target>
 </trans-unit>
 <trans-unit id="sccfcb0b7e78ac9d3">
   <source>Expiry must be in the future</source>
+  <target>有効期限は未来である必要があります</target>
 </trans-unit>
 <trans-unit id="sf0fcc2b36e8adbcc">
   <source>Invalid public key.</source>
+  <target>無効な公開鍵です。</target>
 </trans-unit>
 <trans-unit id="s32c5c41a394d97a2">
   <source>Failed to create permission: <x id="0" equiv-text="${e}"/></source>
+  <target>権限の作成に失敗しました: <x id="0" equiv-text="${e}"/></target>
 </trans-unit>
 <trans-unit id="s4c4a1dee1fb3d7b4">
   <source>Radio selection undefined.</source>
+  <target>ラジオ選択が未定義です。</target>
 </trans-unit>
 <trans-unit id="s235307a92cb5f971">
   <source>Datepicker undefined,</source>
+  <target>日付選択が未定義です、</target>
 </trans-unit>
 <trans-unit id="se6d4177fa61fc566">
   <source>Datepicker value undefined,</source>
+  <target>日付選択の値が未定義です、</target>
 </trans-unit>
 <trans-unit id="s7a98e9c93e22afd8">
   <source>Failed to activate Tool (See console for details).</source>
+  <target>ツールの有効化に失敗しました（詳細はコンソールを参照してください）。</target>
 </trans-unit>
 <trans-unit id="s7e4a76b2e2bef4ea">
   <source>No permission to edit group profile.</source>
+  <target>グループプロファイルを編集する権限がありません。</target>
 </trans-unit>
 <trans-unit id="s88674b8611547f51">
   <source>Failed to create new <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/>: <x id="1" equiv-text="${creatableResult.error}"/></source>
+  <target>新しい <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/> の作成に失敗しました: <x id="1" equiv-text="${creatableResult.error}"/></target>
 </trans-unit>
 <trans-unit id="sb5d4188254f9de4d">
   <source>The link is for a group you are not part of.</source>
+  <target>このリンクは、あなたが所属していないグループのものです。</target>
 </trans-unit>
 <trans-unit id="s9b2d80cfe7406ee1">
   <source>Invalid URL</source>
+  <target>無効なURLです</target>
 </trans-unit>
 <trans-unit id="s3045548ed41fce47">
   <source>Failed to parse URL</source>
+  <target>URLの解析に失敗しました</target>
 </trans-unit>
 <trans-unit id="sd18a4e500ceac421">
   <source>URL type not supported.</source>
+  <target>サポートされていないURLタイプです。</target>
 </trans-unit>
 <trans-unit id="s7c776f2aeaef3e9f">
   <source>Tool Curation Lists</source>

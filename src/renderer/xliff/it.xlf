@@ -2182,12 +2182,15 @@ inizia ora</target>
 </trans-unit>
 <trans-unit id="s29f3ebb63de0fcf2">
   <source>No update available.</source>
+  <target>Nessun aggiornamento disponibile.</target>
 </trans-unit>
 <trans-unit id="s0b9e8f89ec95e3bb">
   <source>Update failed (see console for details).</source>
+  <target>Aggiornamento fallito (consulta la console per i dettagli).</target>
 </trans-unit>
 <trans-unit id="sd9f5f2484b0f0d29">
   <source>Invalid invite link: <x id="0" equiv-text="${e}"/></source>
+  <target>Link di invito non valido: <x id="0" equiv-text="${e}"/></target>
 </trans-unit>
 <trans-unit id="h9ba913e545f30f9a">
   <source>Learn more about
@@ -2213,72 +2216,95 @@ inizia ora</target>
 </trans-unit>
 <trans-unit id="s521ae78ae0304cd5">
   <source>Visit developer's website</source>
+  <target>Visita il sito web dello sviluppatore</target>
 </trans-unit>
 <trans-unit id="s46249fe17f6f2595">
   <source>Unknown Tool</source>
+  <target>Strumento sconosciuto</target>
 </trans-unit>
 <trans-unit id="s0f7056666f4e5638">
   <source>Failed to activate tool (See console for details).</source>
+  <target>Attivazione dello strumento fallita (consulta la console per i dettagli).</target>
 </trans-unit>
 <trans-unit id="sfe55542ae951e457">
   <source>Tool undefined.</source>
+  <target>Strumento non definito.</target>
 </trans-unit>
 <trans-unit id="s399de38558f723d4">
   <source>No valid permission to add a Tool to this group.</source>
+  <target>Nessun permesso valido per aggiungere uno strumento a questo gruppo.</target>
 </trans-unit>
 <trans-unit id="s03ea4011da9cf5af">
   <source>Installation failed! (See console for details)</source>
+  <target>Installazione fallita! (Consulta la console per i dettagli)</target>
 </trans-unit>
 <trans-unit id="se2b056a31e2b1942">
   <source>Failed to jump to Tool (see console for details).</source>
+  <target>Salto allo strumento fallito (consulta la console per i dettagli).</target>
 </trans-unit>
 <trans-unit id="s1b1bba93aa37e334">
   <source>Open in Window</source>
+  <target>Apri in finestra</target>
 </trans-unit>
 <trans-unit id="sf2539d153cdb861c">
   <source>Jump to parent Tool</source>
+  <target>Vai allo strumento principale</target>
 </trans-unit>
 <trans-unit id="s9a2321d0350ae9bf">
   <source>No expiry date selected. Uncheck expiry or select date.</source>
+  <target>Nessuna data di scadenza selezionata. Deseleziona scadenza o seleziona una data.</target>
 </trans-unit>
 <trans-unit id="sccfcb0b7e78ac9d3">
   <source>Expiry must be in the future</source>
+  <target>La scadenza deve essere nel futuro</target>
 </trans-unit>
 <trans-unit id="sf0fcc2b36e8adbcc">
   <source>Invalid public key.</source>
+  <target>Chiave pubblica non valida.</target>
 </trans-unit>
 <trans-unit id="s32c5c41a394d97a2">
   <source>Failed to create permission: <x id="0" equiv-text="${e}"/></source>
+  <target>Creazione del permesso fallita: <x id="0" equiv-text="${e}"/></target>
 </trans-unit>
 <trans-unit id="s4c4a1dee1fb3d7b4">
   <source>Radio selection undefined.</source>
+  <target>Selezione radio non definita.</target>
 </trans-unit>
 <trans-unit id="s235307a92cb5f971">
   <source>Datepicker undefined,</source>
+  <target>Datepicker non definito,</target>
 </trans-unit>
 <trans-unit id="se6d4177fa61fc566">
   <source>Datepicker value undefined,</source>
+  <target>Valore del datepicker non definito,</target>
 </trans-unit>
 <trans-unit id="s7a98e9c93e22afd8">
   <source>Failed to activate Tool (See console for details).</source>
+  <target>Attivazione dello strumento fallita (consulta la console per i dettagli).</target>
 </trans-unit>
 <trans-unit id="s7e4a76b2e2bef4ea">
   <source>No permission to edit group profile.</source>
+  <target>Nessun permesso per modificare il profilo del gruppo.</target>
 </trans-unit>
 <trans-unit id="s88674b8611547f51">
   <source>Failed to create new <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/>: <x id="1" equiv-text="${creatableResult.error}"/></source>
+  <target>Creazione di nuovo <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/> fallita: <x id="1" equiv-text="${creatableResult.error}"/></target>
 </trans-unit>
 <trans-unit id="sb5d4188254f9de4d">
   <source>The link is for a group you are not part of.</source>
+  <target>Il link è per un gruppo di cui non fai parte.</target>
 </trans-unit>
 <trans-unit id="s9b2d80cfe7406ee1">
   <source>Invalid URL</source>
+  <target>URL non valido</target>
 </trans-unit>
 <trans-unit id="s3045548ed41fce47">
   <source>Failed to parse URL</source>
+  <target>Analisi URL fallita</target>
 </trans-unit>
 <trans-unit id="sd18a4e500ceac421">
   <source>URL type not supported.</source>
+  <target>Tipo di URL non supportato.</target>
 </trans-unit>
 <trans-unit id="s7c776f2aeaef3e9f">
   <source>Tool Curation Lists</source>

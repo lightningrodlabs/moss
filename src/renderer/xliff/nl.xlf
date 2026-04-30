@@ -2182,12 +2182,15 @@ begint nu</target>
 </trans-unit>
 <trans-unit id="s29f3ebb63de0fcf2">
   <source>No update available.</source>
+  <target>Geen update beschikbaar.</target>
 </trans-unit>
 <trans-unit id="s0b9e8f89ec95e3bb">
   <source>Update failed (see console for details).</source>
+  <target>Update mislukt (zie console voor details).</target>
 </trans-unit>
 <trans-unit id="sd9f5f2484b0f0d29">
   <source>Invalid invite link: <x id="0" equiv-text="${e}"/></source>
+  <target>Ongeldige uitnodigingslink: <x id="0" equiv-text="${e}"/></target>
 </trans-unit>
 <trans-unit id="h9ba913e545f30f9a">
   <source>Learn more about
@@ -2213,72 +2216,95 @@ begint nu</target>
 </trans-unit>
 <trans-unit id="s521ae78ae0304cd5">
   <source>Visit developer's website</source>
+  <target>Bezoek de website van de ontwikkelaar</target>
 </trans-unit>
 <trans-unit id="s46249fe17f6f2595">
   <source>Unknown Tool</source>
+  <target>Onbekende Tool</target>
 </trans-unit>
 <trans-unit id="s0f7056666f4e5638">
   <source>Failed to activate tool (See console for details).</source>
+  <target>Tool activeren mislukt (zie console voor details).</target>
 </trans-unit>
 <trans-unit id="sfe55542ae951e457">
   <source>Tool undefined.</source>
+  <target>Tool ongedefinieerd.</target>
 </trans-unit>
 <trans-unit id="s399de38558f723d4">
   <source>No valid permission to add a Tool to this group.</source>
+  <target>Geen geldige rechten om een Tool aan deze groep toe te voegen.</target>
 </trans-unit>
 <trans-unit id="s03ea4011da9cf5af">
   <source>Installation failed! (See console for details)</source>
+  <target>Installatie mislukt! (Zie console voor details)</target>
 </trans-unit>
 <trans-unit id="se2b056a31e2b1942">
   <source>Failed to jump to Tool (see console for details).</source>
+  <target>Springen naar Tool mislukt (zie console voor details).</target>
 </trans-unit>
 <trans-unit id="s1b1bba93aa37e334">
   <source>Open in Window</source>
+  <target>In venster openen</target>
 </trans-unit>
 <trans-unit id="sf2539d153cdb861c">
   <source>Jump to parent Tool</source>
+  <target>Spring naar bovenliggende Tool</target>
 </trans-unit>
 <trans-unit id="s9a2321d0350ae9bf">
   <source>No expiry date selected. Uncheck expiry or select date.</source>
+  <target>Geen vervaldatum gekozen. Schakel vervaltijd uit of kies een datum.</target>
 </trans-unit>
 <trans-unit id="sccfcb0b7e78ac9d3">
   <source>Expiry must be in the future</source>
+  <target>Vervaltijd moet in de toekomst liggen</target>
 </trans-unit>
 <trans-unit id="sf0fcc2b36e8adbcc">
   <source>Invalid public key.</source>
+  <target>Ongeldige publieke sleutel.</target>
 </trans-unit>
 <trans-unit id="s32c5c41a394d97a2">
   <source>Failed to create permission: <x id="0" equiv-text="${e}"/></source>
+  <target>Toestemming aanmaken mislukt: <x id="0" equiv-text="${e}"/></target>
 </trans-unit>
 <trans-unit id="s4c4a1dee1fb3d7b4">
   <source>Radio selection undefined.</source>
+  <target>Radioselectie ongedefinieerd.</target>
 </trans-unit>
 <trans-unit id="s235307a92cb5f971">
   <source>Datepicker undefined,</source>
+  <target>Datepicker ongedefinieerd,</target>
 </trans-unit>
 <trans-unit id="se6d4177fa61fc566">
   <source>Datepicker value undefined,</source>
+  <target>Datepicker-waarde ongedefinieerd,</target>
 </trans-unit>
 <trans-unit id="s7a98e9c93e22afd8">
   <source>Failed to activate Tool (See console for details).</source>
+  <target>Tool activeren mislukt (zie console voor details).</target>
 </trans-unit>
 <trans-unit id="s7e4a76b2e2bef4ea">
   <source>No permission to edit group profile.</source>
+  <target>Geen rechten om groepsprofiel te bewerken.</target>
 </trans-unit>
 <trans-unit id="s88674b8611547f51">
   <source>Failed to create new <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/>: <x id="1" equiv-text="${creatableResult.error}"/></source>
+  <target>Aanmaken van nieuwe <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/> mislukt: <x id="1" equiv-text="${creatableResult.error}"/></target>
 </trans-unit>
 <trans-unit id="sb5d4188254f9de4d">
   <source>The link is for a group you are not part of.</source>
+  <target>De link is voor een groep waar je geen deel van uitmaakt.</target>
 </trans-unit>
 <trans-unit id="s9b2d80cfe7406ee1">
   <source>Invalid URL</source>
+  <target>Ongeldige URL</target>
 </trans-unit>
 <trans-unit id="s3045548ed41fce47">
   <source>Failed to parse URL</source>
+  <target>URL parsen mislukt</target>
 </trans-unit>
 <trans-unit id="sd18a4e500ceac421">
   <source>URL type not supported.</source>
+  <target>URL-type niet ondersteund.</target>
 </trans-unit>
 <trans-unit id="s7c776f2aeaef3e9f">
   <source>Tool Curation Lists</source>
