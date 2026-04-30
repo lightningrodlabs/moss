@@ -1033,7 +1033,9 @@ Changes:
         : undefined;
     const isThisToolUpdating =
       this.updatingToolId !== undefined && this.updatingToolId === toolCompatibilityId;
-    const anyUpdateInFlight = this.updatingToolId !== undefined;
+    // Include updatingAll so per-card disabled/suppressed state stays true
+    // during the brief gap between updateTool iterations in updateAll().
+    const anyUpdateInFlight = this.updatingToolId !== undefined || this.updatingAll;
     const suppressed = anyUpdateInFlight && !isThisToolUpdating;
     const outerClasses = [
       'tool-update-outer',
@@ -1151,7 +1153,7 @@ Changes:
     }));
 
     const sortedToolUpdates = toolUpdates.sort((a, b) => b.timestamp - a.timestamp);
-    const anyUpdateInFlight = this.updatingToolId !== undefined;
+    const anyUpdateInFlight = this.updatingToolId !== undefined || this.updatingAll;
 
     return html`
       <div class="tool-updates-container column">
@@ -1160,7 +1162,7 @@ Changes:
               <div class="update-all-row">
                 <sl-button
                   class="update-all-button"
-                  ?disabled=${anyUpdateInFlight && !this.updatingAll}
+                  ?disabled=${anyUpdateInFlight}
                   ?loading=${this.updatingAll}
                   @click=${() => this.updateAll()}
                   >${msg(str`Update all ${updateCount}`)}</sl-button
