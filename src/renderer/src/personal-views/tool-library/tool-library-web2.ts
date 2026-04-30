@@ -2,7 +2,7 @@ import { html, LitElement, css } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { validate as validateSemver } from 'compare-versions';
-import { sortVersionsDescending, groupToolsByBaseId, getPrimaryVersionBranch } from '../../utils.js';
+import {sortVersionsDescending, groupToolsByBaseId, getPrimaryVersionBranch} from '../../utils.js';
 import {
   DeveloperCollective,
   DeveloperCollectiveToolList,
@@ -21,8 +21,9 @@ import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
 import { mossStyles } from '../../shared-styles.js';
 import '../../elements/_new_design/select-group.js';
-import { mdiEmailOutline, mdiWeb } from '@mdi/js';
+import {mdiEmailOutline, mdiWeb} from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
+import './elements/curation-list-manager.js';
 import './elements/installable-tools-web2.js';
 import './elements/tool-publisher-detail.js';
 import { mossStoreContext } from '../../context.js';
@@ -42,10 +43,11 @@ import {
   experimentalToolIcon,
   stableToolIcon,
 } from '../../elements/_new_design/icons.js';
-import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
 import '../../elements/_new_design/moss-dialog.js';
+import {MossDialog} from "../../elements/_new_design/moss-dialog";
+import {NamedUrl, UrlListManager} from "./elements/curation-list-manager";
 
-const PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
+export const DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   {
     url: 'https://lightningrodlabs.org/weave-tool-curation/0.15/curations-0.15.json',
     useLists: ['default'],
@@ -54,13 +56,13 @@ const PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
 
 enum ToolLibraryView {
   Main,
-  ToolDetail,
+  //ToolDetail,
 }
 
 enum ToolDetailView {
   Description,
-  VersionHistory,
-  PublisherInfo,
+  //VersionHistory,
+  //PublisherInfo,
 }
 
 @localized()
@@ -70,7 +72,7 @@ export class ToolLibraryWeb2 extends LitElement {
   mossStore!: MossStore;
 
   @consume({ context: groupStoreContext, subscribe: true })
-  groupStore: GroupStore | undefined; // will only be defined if the tools library is being accessed from within a group
+  groupStore: GroupStore | undefined; // will only be defined if the Tools library is being accessed from within a group
 
   @state()
   view: ToolLibraryView = ToolLibraryView.Main;
@@ -84,8 +86,11 @@ export class ToolLibraryWeb2 extends LitElement {
   @query('#select-group')
   _selectGroup!: SelectGroup;
 
-  @query('#publish-dialog')
-  _publishDialog!: MossDialog;
+  @query('#curation-dialog')
+  _curationListDialog!: MossDialog;
+
+  @query('#curation-manager')
+  _curationManagerDialog!: UrlListManager;
 
   @state()
   _selectedTool: ToolAndCurationInfo | undefined;
@@ -100,35 +105,64 @@ export class ToolLibraryWeb2 extends LitElement {
   availableTools: Record<ToolCompatibilityId, ToolAndCurationInfo> = {};
 
   @state()
+  curationLists: { curator: ToolCurator; list: ToolCurationList }[] = [];
+
+  @state()
+  _toolCurationConfigs: ToolCurationConfig[] = [];
+
+  @state()
   unifiedTools: Map<string, UnifiedToolEntry> = new Map();
 
   @state()
   classification = 'all';
 
-  async firstUpdated() {
-    // TODO Option to add additional curator URLs and store them to localstorage
 
+  /** */
+  async firstUpdated() {
+    /** Set initial config */
+    // In applet dev mode, we use a fake list generated from the weave.dev.config
+    if (!!this.mossStore.appletDevConfig) {
+      this._toolCurationConfigs = this.mossStore.appletDevConfig.toolCurations;
+    } else {
+      // Get list of lists from localStorage
+      const json: string | null = window.localStorage.getItem("mossCurationConfig");
+      if (json) {
+        try {
+          const urls = JSON.parse(json) as string[];
+          this._toolCurationConfigs = urls.map((url) => ({ url, useLists: ['default'] })) // TODO: handle multiple useLists
+        } catch {
+          this._toolCurationConfigs = DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS;
+        }
+      } else {
+        // If none, use default
+        this._toolCurationConfigs = DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS;
+      }
+    }
+    /** Initialize curation list manager */
+    await this._curationManagerDialog.initializeList(this._toolCurationConfigs.map((i) => i.url));
+    /** Load tools from config */
+    await this.fetchToolLists();
+  }
+
+
+  /** */
+  async fetchToolLists() {
     const allTools: Record<ToolCompatibilityId, ToolAndCurationInfo> = {};
     const developerCollectives: Record<ToolListUrl, DeveloperCollective> = {};
 
-    let toolCurationConfigs: ToolCurationConfig[];
-    // In applet dev mode, we use a fake list generated from the weave.dev.config
+    // 0. In devmode, load tools and collectives from mossStore
     if (!!this.mossStore.appletDevConfig) {
-      toolCurationConfigs = this.mossStore.appletDevConfig.toolCurations;
-      const { tools, devCollective } = this.mossStore.devModeToolLibrary as DevModeToolLibrary; // should always be defined in dev mode
+      const {tools, devCollective} = this.mossStore.devModeToolLibrary as DevModeToolLibrary; // should always be defined in dev mode
       tools.forEach((tool) => {
         allTools[tool.toolCompatibilityId] = tool;
         developerCollectives[tool.toolListUrl] = devCollective;
       });
-    } else {
-      toolCurationConfigs = PRODUCTION_TOOL_CURATION_CONFIGS;
-      // TODO read curation URLs from localStorage here
     }
 
     // 1. Fetch all the curation lists from all the curators
     const curationLists: { curator: ToolCurator; list: ToolCurationList }[] = [];
     await Promise.allSettled(
-      toolCurationConfigs.map(async (config) => {
+      this._toolCurationConfigs.map(async (config) => {
         try {
           const resp = await fetch(config.url, { cache: 'no-cache' });
           const toolCurations: ToolCurations = await resp.json();
@@ -159,7 +193,6 @@ export class ToolLibraryWeb2 extends LitElement {
       new Set(curationLists.map((list) => list.list.tools.map((tool) => tool.toolListUrl)).flat()),
     );
     console.log('curationLists: ', curationLists);
-
     console.log('distinctToolListUrls: ', distinctToolListUrls);
 
     await Promise.allSettled(
@@ -224,16 +257,17 @@ export class ToolLibraryWeb2 extends LitElement {
     console.log('AVAILABLE TOOLS: ', allTools);
 
     // Group tools by base ID to unify tools with same toolId but different versionBranch
-    const unifiedTools = groupToolsByBaseId(allTools);
-
+    this.unifiedTools = groupToolsByBaseId(allTools);
     this.allDeveloperCollectives = developerCollectives;
     this.availableTools = allTools;
-    this.unifiedTools = unifiedTools;
+    this.curationLists = curationLists;
   }
+
 
   resetView() {
     this.view = ToolLibraryView.Main;
   }
+
 
   renderMainView() {
     const unifiedToolsArray = Array.from(this.unifiedTools.values());
@@ -259,40 +293,29 @@ export class ToolLibraryWeb2 extends LitElement {
           <div class="tool-classification-selector">
             <button
               class="classification-button classification-button-all ${this.classification === 'all'
-        ? 'classification-active'
-        : ''}"
-              @click=${async () => {
-        this.classification = 'all';
-      }}
-            >
+                ? 'classification-active'
+                : ''}"
+              @click=${async () => this.classification = 'all'}>
               ${appStoreIcon(16)} <span style="margin-left:5px">${msg('all tools')}</span>
             </button>
             <sl-tooltip .content=${msg('Tested and loved tools.')}>
               <button
                 class="classification-button classification-button-stable ${this.classification ===
-        'stable'
-        ? 'classification-active'
-        : ''}"
-                @click=${async () => {
-        this.classification = 'stable';
-      }}
-              >
+                  'stable'
+                  ? 'classification-active'
+                  : ''}"
+                @click=${async () => this.classification = 'stable'}>
                 ${stableToolIcon(16)} ${msg('stable')}
-              </button></sl-tooltip
-            >
+              </button></sl-tooltip>
             <sl-tooltip .content=${msg('Fun, but may glitch!')}>
               <button
                 class="classification-button classification-button-experimental ${this
-        .classification === 'experimental'
-        ? 'classification-active'
-        : ''}"
-                @click=${async () => {
-        this.classification = 'experimental';
-      }}
-              >
+                  .classification === 'experimental'
+                  ? 'classification-active'
+                  : ''}"
+                @click=${async () => this.classification = 'experimental'}>
                 ${experimentalToolIcon(16)} ${msg('experimental')}
-              </button></sl-tooltip
-            >
+              </button></sl-tooltip>
           </div>
         </div>
         <installable-tools-web2
@@ -300,44 +323,44 @@ export class ToolLibraryWeb2 extends LitElement {
           .devCollectives=${this.allDeveloperCollectives}
           .unifiedTools=${filteredUnifiedTools}
           @install-tool-to-group=${(e) => {
-        // Handle both old format (tool) and new format (unifiedTool + versionBranch)
-        if (e.detail.unifiedTool) {
-          const versionBranch = e.detail.versionBranch;
-          const branchInfo = e.detail.unifiedTool.versionBranches.get(versionBranch);
-          if (branchInfo) {
-            // Convert to ToolAndCurationInfo for the install dialog (backward compatibility)
-            const toolForDialog: ToolAndCurationInfo = {
-              toolCompatibilityId: branchInfo.toolCompatibilityId,
-              toolInfoAndVersions: branchInfo.toolInfoAndVersions,
-              latestVersion: branchInfo.latestVersion,
-              curationInfos: branchInfo.curationInfos,
-              toolListUrl: e.detail.unifiedTool.toolListUrl,
-              developerCollectiveId: e.detail.unifiedTool.developerCollectiveId,
-            };
-            this._selectedTool = toolForDialog;
-            this._selectedGroupDnaHash = e.detail.groupDnaHash;
-            setTimeout(async () => this._installToolDialog.open(this._selectedTool!), 50);
-          }
-        } else if (e.detail.tool) {
-          // Old format for backward compatibility
-          this._selectedTool = e.detail.tool;
-          this._selectedGroupDnaHash = e.detail.groupDnaHash;
-          setTimeout(async () => this._installToolDialog.open(this._selectedTool!), 50);
-        }
-      }}
+            // Handle both old format (tool) and new format (unifiedTool + versionBranch)
+            if (e.detail.unifiedTool) {
+              const versionBranch = e.detail.versionBranch;
+              const branchInfo = e.detail.unifiedTool.versionBranches.get(versionBranch);
+              if (branchInfo) {
+                // Convert to ToolAndCurationInfo for the install dialog (backward compatibility)
+                const toolForDialog: ToolAndCurationInfo = {
+                  toolCompatibilityId: branchInfo.toolCompatibilityId,
+                  toolInfoAndVersions: branchInfo.toolInfoAndVersions,
+                  latestVersion: branchInfo.latestVersion,
+                  curationInfos: branchInfo.curationInfos,
+                  toolListUrl: e.detail.unifiedTool.toolListUrl,
+                  developerCollectiveId: e.detail.unifiedTool.developerCollectiveId,
+                };
+                this._selectedTool = toolForDialog;
+                this._selectedGroupDnaHash = e.detail.groupDnaHash;
+                setTimeout(async () => this._installToolDialog.open(this._selectedTool!), 50);
+              }
+            } else if (e.detail.tool) {
+              // Old format for backward compatibility
+              this._selectedTool = e.detail.tool;
+              this._selectedGroupDnaHash = e.detail.groupDnaHash;
+              setTimeout(async () => this._installToolDialog.open(this._selectedTool!), 50);
+            }
+          }}
           @applet-installed=${(_e) => {
-        console.log('@group-home: GOT APPLET INSTALLED EVENT.');
-        this.view = ToolLibraryView.Main;
-        this.detailView = ToolDetailView.Description;
-        // re-dispatch event since for some reason it doesn't bubble further
-        // this.dispatchEvent(
-        //   new CustomEvent("applet-installed", {
-        //     detail: e.detail,
-        //     composed: true,
-        //     bubbles: true,
-        //   })
-        // );
-      }}
+            console.log('@group-home: GOT APPLET INSTALLED EVENT.');
+            this.view = ToolLibraryView.Main;
+            this.detailView = ToolDetailView.Description;
+            // re-dispatch event since for some reason it doesn't bubble further
+            // this.dispatchEvent(
+            //   new CustomEvent("applet-installed", {
+            //     detail: e.detail,
+            //     composed: true,
+            //     bubbles: true,
+            //   })
+            // );
+          }}
         ></installable-tools-web2>
       </div>
     `;
@@ -369,10 +392,8 @@ export class ToolLibraryWeb2 extends LitElement {
             <button
               class="moss-button"
               style="background: white; color: black;"
-              @click=${async () => {
-        this._selectGroup.show();
-      }}
-            >
+              @click=${async () => this._selectGroup.show()}
+              </button>>
               ${msg('+ Add to Group')}
             </button>
           </div>
@@ -382,6 +403,30 @@ export class ToolLibraryWeb2 extends LitElement {
     `;
   }
 
+
+  /** */
+  renderCurationLists() {
+    return html`
+        <moss-dialog
+                id="curation-dialog"
+                width="870px"
+                headerAlign="center">
+            <span slot="header">${msg('Tool Curation Lists')}</span>
+            <div slot="content">
+              <curation-list-manager id="curation-manager"
+                             @urls-changed=${async (e) => {
+                               const urls = e.detail.map((url: NamedUrl) => url.url);
+                               this._toolCurationConfigs = urls.map((url: string) => {return {url, useLists: ['default']}});
+                               await this.fetchToolLists();
+                               window.localStorage.setItem("mossCurationConfig", JSON.stringify(urls));
+                             }}></curation-list-manager>
+            </div>
+        </moss-dialog>
+    `;
+  }
+
+
+  /** */
   renderPublisher(publisher: DeveloperCollective | undefined) {
     if (!publisher) return html``;
 
@@ -389,7 +434,7 @@ export class ToolLibraryWeb2 extends LitElement {
       <div class="column">
         <div class="row" style="align-items: center; font-size: 1.1rem;">
           <img
-            alt="${publisher.name}"
+            alt=${publisher.name}
             .src=${publisher.icon}
             style="width: 40px; height: 40px; border-radius: 50%;"
           />
@@ -403,9 +448,7 @@ export class ToolLibraryWeb2 extends LitElement {
           ></sl-icon>
           <span style="margin-right: 10px;">${msg('Website')}:</span>
           ${publisher.contact.website && publisher.contact.website !== ''
-        ? html`
-                <span><a href="${publisher.contact.website}">${publisher.contact.website}</a></span>
-              `
+        ? html`<span><a href="${publisher.contact.website}">${publisher.contact.website}</a></span>`
         : html`<span>N/A</span>`}
         </div>
         <div class="row" style="align-items: center; margin-top: 8px;">
@@ -440,99 +483,57 @@ export class ToolLibraryWeb2 extends LitElement {
     }
   }
 
-  renderPublishDialog() {
-    return html` <moss-dialog
-      id="publish-dialog"
-      width="670px"
-      headerAlign="center"
-    >
-      
-          <span slot="header">${msg('Publish A Tool')}</span>
-        
-        <div slot="content">
-          ${msg(html`To publish a Moss Tool it needs to be added to a Tool &amp; Curation list hosted at a web2 URL. For an example of how
-          this works, look at the initial curation repository of Lightningrod Labs
-          <a href="https://github.com/lightningrodlabs/weave-tool-curation">here</a>.`)}
-          <br /><br />
-          ${msg(html`If you would like to publish a Tool, please contact us at
-          <a href="mailto:moss.0.15.feedback@theweave.social">moss.0.15.feedback@theweave.social</a>
-          or
-          <a href="https://github.com/lightningrodlabs/moss/issues/new">create an issue on Github</a>
-          so that we can assist add your tool to our curation list. Future versions of Moss will include adding custom
-          curation lists.`)}
-        </div>
-    </moss-dialog>`;
-  }
 
+  /** */
   renderContent() {
     switch (this.view) {
       case ToolLibraryView.Main:
         return this.renderMainView();
-      case ToolLibraryView.ToolDetail:
-        return this.renderToolDetail();
+      //case ToolLibraryView.ToolDetail:
+      //  return this.renderToolDetail();
     }
   }
 
+
+  /** */
   render() {
     return html`
-      ${this._selectedGroupDnaHash
-        ? html`
-            <group-context .groupDnaHash=${decodeHashFromBase64(this._selectedGroupDnaHash)}>
-              <install-tool-dialog-web2
-                @install-tool-dialog-closed=${() => {
+        ${this.renderCurationLists()}
+        <group-context .groupDnaHash=${this._selectedGroupDnaHash? decodeHashFromBase64(this._selectedGroupDnaHash): undefined}>
+        <install-tool-dialog-web2 id="install-tool-dialog"
+          @install-tool-dialog-closed=${() => {
             this._selectedGroupDnaHash = undefined;
+            this._selectedTool = undefined;
           }}
-                @applet-installed=${() => {
+          @applet-installed=${() => {
             this._selectedGroupDnaHash = undefined;
             this._selectedTool = undefined;
             this.view = ToolLibraryView.Main;
             this.detailView = ToolDetailView.Description;
           }}
-                id="install-tool-dialog"
-              ></install-tool-dialog-web2>
-            </group-context>
-          `
-        : this.groupStore
-          ? html`
-              <install-tool-dialog-web2
-                @install-tool-dialog-closed=${() => {
-              this._selectedGroupDnaHash = undefined;
-              this._selectedTool = undefined;
-            }}
-                @applet-installed=${() => {
-              this._selectedGroupDnaHash = undefined;
-              this._selectedTool = undefined;
-              this.view = ToolLibraryView.Main;
-              this.detailView = ToolDetailView.Description;
-            }}
-                id="install-tool-dialog"
-              ></install-tool-dialog-web2>
-            `
-          : html``}
+        ></install-tool-dialog-web2>
+      </group-context>
       <div class="column container" style="flex: 1;">
-
         <div class="header column center-content">
           <div class="row" style="align-items: center; font-size: 34px;">
-            <span style="flex: 1; margin-left: 10px; font-weight: bold;"
-              >${msg('Tool Library')}</span
-            >
+            <span style="flex: 1; margin-left: 10px; font-weight: bold;">
+                ${msg('Tool Library')}
+            </span>
           </div>
-          <button
-            class="moss-button"
-            style="border-radius:8px; padding: 8px 10px;position: absolute; right: 20px;border: 1px solid #89D6AA; color: #89D6AA"
-            @click=${() => this._publishDialog.show()}
-          >
-            <div class="row items-center">
-              ${devIcon(16)}
-              <span style="margin-left: 5px;font-size: 12px; ">${msg('Publish a tool')}</span>
-            </div>
-          </button>
+            <button class="moss-button"
+                    style="border-radius:8px; padding: 8px 10px;position: absolute; right: 20px;border: 1px solid #89D6AA; color: #89D6AA"
+                    @click=${() => {this._curationListDialog.show()}}>
+                <div class="row items-center">
+                    ${devIcon(14)}
+                    <span style="margin-left: 5px;font-size: 12px; ">${msg('Tool Sources')}</span>
+                </div>
+            </button>
         </div>
         <div class="column flex-scrollable-parent" style="position:relative">
           <div class="flex-scrollable-container">
-                          
-
-            <div class="column flex-scrollable-y">${this.renderPublishDialog()}${this.renderContent()}</div>
+            <div class="column flex-scrollable-y">
+                ${this.renderContent()}
+            </div>
           </div>
         </div>
       </div>
@@ -627,11 +628,6 @@ export class ToolLibraryWeb2 extends LitElement {
         background: var(--sl-color-primary-600);
       }
 
-      .publish-dialog {
-        padding: 20px;
-        border-radius: 20px;
-        line-height: 1.2;
-      }
       .tool-classification-selector {
         border-radius: 8px;
         background-color: color(from var(--moss-hint-green) srgb r g b / 0.1);

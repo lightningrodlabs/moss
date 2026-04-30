@@ -34,7 +34,7 @@ export class InstallableToolsWeb2 extends LitElement {
   mossStore!: MossStore;
 
   @property()
-  installableTools: ToolAndCurationInfo[] = []; // Keep for backward compatibility, but prefer unifiedTools
+  installableTools: ToolAndCurationInfo[] = []; // Keep for backward compatibility but prefer unifiedTools
 
   @property()
   unifiedTools: UnifiedToolEntry[] = [];
@@ -119,7 +119,7 @@ export class InstallableToolsWeb2 extends LitElement {
                   </div>
                 `
         : ''}
-            <sl-tooltip content="visit developer's website">
+            <sl-tooltip content=${msg("Visit developer's website")}>
               <div class="tool-developer">
                 <span  style="opacity:.4">${msg('by')}</span>
                 <a href="${this.devCollectives[tool.toolListUrl].contact.website}"
@@ -202,20 +202,23 @@ export class InstallableToolsWeb2 extends LitElement {
     return html`
       <moss-dialog
         id="library-tool-details-dialog"
-        class="library-tool-details-dialog"
-      >
+        class="library-tool-details-dialog">
       <div slot="header">
         ${this.selectedTool ? html`
-        ${this.selectedTool.title}
-
-          <sl-tooltip content="visit developer's website">
-        <div class="tool-developer">
-          <span style="opacity:.4">${msg('by')}</span>
-            <a href="${this.devCollectives[this.selectedTool.toolListUrl].contact.website}"
-              >${this.devCollectives[this.selectedTool.toolListUrl].name}</a
-            >
-        </div>          </sl-tooltip>
-      `: 'Unknown Tool'}
+          ${this.selectedTool.title}
+            <div class="tool-developer">
+              <span style="opacity:.4">${msg('by')}</span>
+              <sl-tooltip content=${msg("Visit developer's website")}>
+                <a href="${this.devCollectives[this.selectedTool.toolListUrl].contact.website}">
+                  ${this.devCollectives[this.selectedTool.toolListUrl].name}
+                </a>
+              </sl-tooltip>                  
+            </div>
+            <div class="tool-developer" style="color:grey">
+                (curator:<a href=${this.selectedTool.curationInfos[0].curator.contact.website}>
+                ${this.selectedTool.curationInfos[0].curator.name}</a>)
+            </div>
+        `: msg('Unknown Tool')}
       </div>
       
           <library-tool-details slot="content"

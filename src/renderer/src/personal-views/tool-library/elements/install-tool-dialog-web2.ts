@@ -248,7 +248,7 @@ export class InstallToolDialogWeb2 extends LitElement {
       );
       this.close();
     } catch (e) {
-      notifyError('Failed to activate tool (See console for details).');
+      notifyError(msg('Failed to activate tool (See console for details).'));
       console.error(e);
     }
     this._activatingExisting = false;
@@ -265,7 +265,7 @@ export class InstallToolDialogWeb2 extends LitElement {
   async installApplet(fields: { custom_name: string; network_seed?: string }) {
     if (this._installing) return;
     if (!this._tool) {
-      notifyError('Tool undefined.');
+      notifyError(msg('Tool undefined.'));
       throw new Error('Tool undefined.');
     }
 
@@ -277,7 +277,7 @@ export class InstallToolDialogWeb2 extends LitElement {
       const [isPriv, permission_hash] = await this.checkPrivileges();
       if (!isPriv) {
         console.error('No valid permission to add a Tool to this group.');
-        notifyError('No valid permission to add a Tool to this group.');
+        notifyError(msg('No valid permission to add a Tool to this group.'));
         this._appletDialog.hide();
         this._installing = false;
         this._installationProgress = undefined;
@@ -311,7 +311,7 @@ export class InstallToolDialogWeb2 extends LitElement {
       }, 200);
     } catch (e) {
       this._installationProgress = undefined;
-      notifyError('Installation failed! (See console for details)');
+      notifyError(msg('Installation failed! (See console for details)'));
       console.error(`Installation error: ${e}`);
       this._installing = false;
     }

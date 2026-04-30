@@ -2,7 +2,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
 import { consume } from '@lit/context';
-import { localized } from '@lit/localize';
+import {localized, msg} from '@lit/localize';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
@@ -32,7 +32,7 @@ export class WalToPocket extends LitElement {
 
   render() {
     return html`
-      <sl-tooltip content="Add to Clipboard">
+      <sl-tooltip content=${msg("Add to Clipboard")}>
         <div
           class="row btn"
           tabindex="0"

@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-groupProfile: (groupHash: any) => Promise<any>;
+groupProfile: (groupHash: DnaHash) => Promise<any>;
 ```

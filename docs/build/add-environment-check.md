@@ -8,8 +8,6 @@ This code will need to be adapted if you did not choose Lit as the UI framework 
 
 At the top of `ui/src/holochain-app.ts`, add the following imports:
 
-<!-- DOCS_TODO Rename -->
-
 ```typescript
 import { WeaveClient, initializeHotReload, isWeaveContext } from '@theweave/api'; // [!code ++]
 ```

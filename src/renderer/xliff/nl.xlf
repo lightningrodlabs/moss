@@ -282,17 +282,9 @@
   <source>Published by:</source>
   <target>Gepubliceerd door:</target>
 </trans-unit>
-<trans-unit id="s4bbd8057b8726b43">
-  <source>Publish A Tool</source>
-  <target>Een Tool publiceren</target>
-</trans-unit>
 <trans-unit id="s3d4ca40eab578130">
   <source>Tool Library</source>
   <target>Tool Bibliotheek</target>
-</trans-unit>
-<trans-unit id="s8de2ae4fdfa77943">
-  <source>Publish a tool</source>
-  <target>Een tool publiceren</target>
 </trans-unit>
 <trans-unit id="sd05405ee1ffc6ddd">
   <source>Add to Pocket</source>
@@ -1904,21 +1896,6 @@ begint nu</target>
   <source>Enable Design Feedback Mode to show a feedback button in the top-left corner. Click it to capture a screenshot of any area and submit feedback.</source>
   <target>Schakel de Ontwerp Feedback Modus in om een feedbackknop in de linkerbovenhoek te tonen. Klik erop om een screenshot van elk gebied te maken en feedback te versturen.</target>
 </trans-unit>
-<trans-unit id="hd4a02aa009e99701">
-  <source>To publish a Moss Tool it needs to be added to a Tool &amp; Curation list hosted at a web2 URL. For an example of how
-          this works, look at the initial curation repository of Lightningrod Labs
-          <x id="0" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/weave-tool-curation&quot;&gt;"/>here<x id="1" equiv-text="&lt;/a&gt;"/>.</source>
-  <target>Om een Moss-tool te publiceren, moet deze worden toegevoegd aan een Tool &amp; Curation-lijst die op een web2-URL wordt gehost. Voor een voorbeeld van hoe dit werkt, bekijk de initiële curatieopslag van Lightningrod Labs <x id="0" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/weave-tool-curation&quot;&gt;"/>hier<x id="1" equiv-text="&lt;/a&gt;"/>.</target>
-</trans-unit>
-<trans-unit id="ha299b6e88ba10399">
-  <source>If you would like to publish a Tool, please contact us at
-          <x id="0" equiv-text="&lt;a href=&quot;mailto:moss.0.15.feedback@theweave.social&quot;&gt;"/>moss.0.15.feedback@theweave.social<x id="1" equiv-text="&lt;/a&gt;"/>
-          or
-          <x id="2" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/moss/issues/new&quot;&gt;"/>create an issue on Github<x id="3" equiv-text="&lt;/a&gt;"/>
-          so that we can assist add your tool to our curation list. Future versions of Moss will include adding custom
-          curation lists.</source>
-  <target>Als u een tool wilt publiceren, neem dan contact met ons op via <x id="0" equiv-text="&lt;a href=&quot;mailto:moss.0.15.feedback@theweave.social&quot;&gt;"/>moss.0.15.feedback@theweave.social<x id="1" equiv-text="&lt;/a&gt;"/> of <x id="2" equiv-text="&lt;a href=&quot;https://github.com/lightningrodlabs/moss/issues/new&quot;&gt;"/>maak een issue aan op Github<x id="3" equiv-text="&lt;/a&gt;"/> zodat we u kunnen helpen uw tool aan onze curatielijst toe te voegen. Toekomstige versies van Moss zullen het toevoegen van aangepaste curatielijsten bevatten.</target>
-</trans-unit>
 <trans-unit id="sb2edfc16609b1d38">
   <source>Tested and loved tools.</source>
   <target>Geteste en geliefde tools.</target>
@@ -2173,7 +2150,7 @@ begint nu</target>
 </trans-unit>
 <trans-unit id="scde621ffddd995ac">
   <source>Save &amp; Relaunch</source>
-  <target>Opslaan & opnieuw starten</target>
+  <target>Opslaan &amp; opnieuw starten</target>
 </trans-unit>
 <trans-unit id="se32638c57d4ec6ba">
   <source>Importing groups...</source>
@@ -2202,6 +2179,164 @@ begint nu</target>
 <trans-unit id="s7301570d0bb8fc6d">
   <source>Done.</source>
   <target>Klaar.</target>
+</trans-unit>
+<trans-unit id="s29f3ebb63de0fcf2">
+  <source>No update available.</source>
+  <target>Geen update beschikbaar.</target>
+</trans-unit>
+<trans-unit id="s0b9e8f89ec95e3bb">
+  <source>Update failed (see console for details).</source>
+  <target>Update mislukt (zie console voor details).</target>
+</trans-unit>
+<trans-unit id="sd9f5f2484b0f0d29">
+  <source>Invalid invite link: <x id="0" equiv-text="${e}"/></source>
+  <target>Ongeldige uitnodigingslink: <x id="0" equiv-text="${e}"/></target>
+</trans-unit>
+<trans-unit id="h9ba913e545f30f9a">
+  <source>Learn more about
+            <x id="0" equiv-text="&lt;a href=&quot;https://dev.theweave.social/build/publishing-a-tool.html&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>publishing a Tool<x id="1" equiv-text="&lt;/a&gt;"/>
+            and how to create your own curation list.</source>
+  <target>Lees meer over <x id="0" equiv-text="&lt;a href=&quot;https://dev.theweave.social/build/publishing-a-tool.html&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>het publiceren van een Tool<x id="1" equiv-text="&lt;/a&gt;"/> en hoe je je eigen curatielijst maakt.</target>
+</trans-unit>
+<trans-unit id="sd947928196d52aa4">
+  <source>Add List</source>
+  <target>Lijst toevoegen</target>
+</trans-unit>
+<trans-unit id="s259a97c05b121b09">
+  <source>Enter a valid URL</source>
+  <target>Voer een geldige URL in</target>
+</trans-unit>
+<trans-unit id="s0fbc6eecad0a437b">
+  <source>No lists found</source>
+  <target>Geen lijsten gevonden</target>
+</trans-unit>
+<trans-unit id="s5b9ae3c135aaa068">
+  <source>Remove curation list</source>
+  <target>Curatielijst verwijderen</target>
+</trans-unit>
+<trans-unit id="s521ae78ae0304cd5">
+  <source>Visit developer's website</source>
+  <target>Bezoek de website van de ontwikkelaar</target>
+</trans-unit>
+<trans-unit id="s46249fe17f6f2595">
+  <source>Unknown Tool</source>
+  <target>Onbekende Tool</target>
+</trans-unit>
+<trans-unit id="s0f7056666f4e5638">
+  <source>Failed to activate tool (See console for details).</source>
+  <target>Tool activeren mislukt (zie console voor details).</target>
+</trans-unit>
+<trans-unit id="sfe55542ae951e457">
+  <source>Tool undefined.</source>
+  <target>Tool ongedefinieerd.</target>
+</trans-unit>
+<trans-unit id="s399de38558f723d4">
+  <source>No valid permission to add a Tool to this group.</source>
+  <target>Geen geldige rechten om een Tool aan deze groep toe te voegen.</target>
+</trans-unit>
+<trans-unit id="s03ea4011da9cf5af">
+  <source>Installation failed! (See console for details)</source>
+  <target>Installatie mislukt! (Zie console voor details)</target>
+</trans-unit>
+<trans-unit id="se2b056a31e2b1942">
+  <source>Failed to jump to Tool (see console for details).</source>
+  <target>Springen naar Tool mislukt (zie console voor details).</target>
+</trans-unit>
+<trans-unit id="s1b1bba93aa37e334">
+  <source>Open in Window</source>
+  <target>In venster openen</target>
+</trans-unit>
+<trans-unit id="sf2539d153cdb861c">
+  <source>Jump to parent Tool</source>
+  <target>Spring naar bovenliggende Tool</target>
+</trans-unit>
+<trans-unit id="s9a2321d0350ae9bf">
+  <source>No expiry date selected. Uncheck expiry or select date.</source>
+  <target>Geen vervaldatum gekozen. Schakel vervaltijd uit of kies een datum.</target>
+</trans-unit>
+<trans-unit id="sccfcb0b7e78ac9d3">
+  <source>Expiry must be in the future</source>
+  <target>Vervaltijd moet in de toekomst liggen</target>
+</trans-unit>
+<trans-unit id="sf0fcc2b36e8adbcc">
+  <source>Invalid public key.</source>
+  <target>Ongeldige publieke sleutel.</target>
+</trans-unit>
+<trans-unit id="s32c5c41a394d97a2">
+  <source>Failed to create permission: <x id="0" equiv-text="${e}"/></source>
+  <target>Toestemming aanmaken mislukt: <x id="0" equiv-text="${e}"/></target>
+</trans-unit>
+<trans-unit id="s4c4a1dee1fb3d7b4">
+  <source>Radio selection undefined.</source>
+  <target>Radioselectie ongedefinieerd.</target>
+</trans-unit>
+<trans-unit id="s235307a92cb5f971">
+  <source>Datepicker undefined,</source>
+  <target>Datepicker ongedefinieerd,</target>
+</trans-unit>
+<trans-unit id="se6d4177fa61fc566">
+  <source>Datepicker value undefined,</source>
+  <target>Datepicker-waarde ongedefinieerd,</target>
+</trans-unit>
+<trans-unit id="s7a98e9c93e22afd8">
+  <source>Failed to activate Tool (See console for details).</source>
+  <target>Tool activeren mislukt (zie console voor details).</target>
+</trans-unit>
+<trans-unit id="s7e4a76b2e2bef4ea">
+  <source>No permission to edit group profile.</source>
+  <target>Geen rechten om groepsprofiel te bewerken.</target>
+</trans-unit>
+<trans-unit id="s88674b8611547f51">
+  <source>Failed to create new <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/>: <x id="1" equiv-text="${creatableResult.error}"/></source>
+  <target>Aanmaken van nieuwe <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/> mislukt: <x id="1" equiv-text="${creatableResult.error}"/></target>
+</trans-unit>
+<trans-unit id="sb5d4188254f9de4d">
+  <source>The link is for a group you are not part of.</source>
+  <target>De link is voor een groep waar je geen deel van uitmaakt.</target>
+</trans-unit>
+<trans-unit id="s9b2d80cfe7406ee1">
+  <source>Invalid URL</source>
+  <target>Ongeldige URL</target>
+</trans-unit>
+<trans-unit id="s3045548ed41fce47">
+  <source>Failed to parse URL</source>
+  <target>URL parsen mislukt</target>
+</trans-unit>
+<trans-unit id="sd18a4e500ceac421">
+  <source>URL type not supported.</source>
+  <target>URL-type niet ondersteund.</target>
+</trans-unit>
+<trans-unit id="s7c776f2aeaef3e9f">
+  <source>Tool Curation Lists</source>
+  <target>Tool-curatielijsten</target>
+</trans-unit>
+<trans-unit id="sab453af53117cea5">
+  <source>Invalid curation list</source>
+  <target>Ongeldige curatielijst</target>
+</trans-unit>
+<trans-unit id="scb9f80384a582a5c">
+  <source>Reset to default list</source>
+  <target>Terugzetten naar standaardlijst</target>
+</trans-unit>
+<trans-unit id="s4a40c8bbf9fa0497">
+  <source>Are you sure? This will replace your curation lists with the default.</source>
+  <target>Weet je het zeker? Hierdoor worden je curatielijsten vervangen door de standaardlijst.</target>
+</trans-unit>
+<trans-unit id="s256cb9ca5cacfc88">
+  <source>Confirm Reset</source>
+  <target>Reset bevestigen</target>
+</trans-unit>
+<trans-unit id="s255ac18852a2c391">
+  <source>Tool Sources</source>
+  <target>Toolbronnen</target>
+</trans-unit>
+<trans-unit id="s2d257675024acff2">
+  <source>Cannot update Tool from distribution type other than 'web2-tool-list'</source>
+  <target>Kan tool niet bijwerken vanuit een ander distributietype dan 'web2-tool-list'</target>
+</trans-unit>
+<trans-unit id="s7c6ddb11656cc241">
+  <source>Update all <x id="0" equiv-text="${updateCount}"/></source>
+  <target>Alles bijwerken (<x id="0" equiv-text="${updateCount}"/>)</target>
 </trans-unit>
 </body>
 </file>

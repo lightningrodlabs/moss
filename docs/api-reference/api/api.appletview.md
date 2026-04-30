@@ -9,6 +9,7 @@
 ```typescript
 export type AppletView = {
     type: 'main';
+    wal?: WAL;
 } | {
     type: 'block';
     block: string;
@@ -25,5 +26,5 @@ export type AppletView = {
     cancel: () => Promise<void>;
 };
 ```
-**References:** [RecordInfo](./api.recordinfo.md)<!-- -->, [WAL](./api.wal.md)<!-- -->, [CreatableName](./api.creatablename.md)
+**References:** [WAL](./api.wal.md)<!-- -->, [RecordInfo](./api.recordinfo.md)<!-- -->, [CreatableName](./api.creatablename.md)
 

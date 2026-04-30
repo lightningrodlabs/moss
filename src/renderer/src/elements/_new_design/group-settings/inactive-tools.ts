@@ -55,7 +55,7 @@ export class InactiveTools extends LitElement {
       this._recentlyJoined.push(encodeHashToBase64(appletHash));
       //this._showIgnoredApplets = false;
     } catch (e) {
-      notifyError(`Failed to activate tool (See console for details).`);
+      notifyError(msg(`Failed to activate tool (See console for details).`));
       console.error(e);
       throw e; // Re-throw to let activateAllTools handle it
     }

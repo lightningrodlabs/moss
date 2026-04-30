@@ -86,7 +86,10 @@ export class WelcomeView extends LitElement {
   mossUpdatePercentage: number | undefined;
 
   @state()
-  updatingTool = false;
+  updatingToolId: ToolCompatibilityId | undefined = undefined;
+
+  @state()
+  updatingAll = false;
 
   @state()
   _designFeedbackMode = false;
@@ -410,7 +413,7 @@ Changes:
 
   async installMossUpdate() {
     if (!this.availableMossUpdate) {
-      notifyError('No update available.');
+      notifyError(msg('No update available.'));
       return;
     }
     try {
@@ -418,19 +421,22 @@ Changes:
       await window.electronAPI.installMossUpdate();
     } catch (e) {
       console.error('Moss update failed: ', e);
-      notifyError('Update failed (see console for details).');
+      notifyError(msg('Update failed (see console for details).'));
       this.mossUpdatePercentage = undefined;
     }
   }
 
   async updateTool(toolInfo: ToolInfoAndLatestVersion) {
+    if (toolInfo.distributionInfo.type !== 'web2-tool-list') {
+      notifyError(msg("Cannot update Tool from distribution type other than 'web2-tool-list'"));
+      return;
+    }
+    const toolCompatibilityId = toolInfo.distributionInfo.info.toolCompatibilityId;
     try {
-      this.updatingTool = true;
-      if (toolInfo.distributionInfo.type !== 'web2-tool-list')
-        throw new Error("Cannot update Tool from distribution type other than 'web2-tool-list'");
+      this.updatingToolId = toolCompatibilityId;
 
       const appletIds = await window.electronAPI.batchUpdateAppletUis(
-        toolInfo.distributionInfo.info.toolCompatibilityId,
+        toolCompatibilityId,
         toolInfo.latestVersion.url,
         toolInfo.distributionInfo,
         toolInfo.latestVersion.hashes.happSha256,
@@ -439,16 +445,42 @@ Changes:
       );
       console.log('UPDATED UI FOR APPLET IDS: ', appletIds);
       await this._mossStore.checkForUiUpdates();
+      // Removing the just-updated tool drops the section count by one. If the
+      // user previously viewed the section at that lower count, the equality
+      // check in isSectionCollapsed would now collapse it mid-flow. Decrement
+      // lastViewedCount to keep the section expanded for further updates.
+      const states = this._sectionReadStates.value ?? {};
+      const sw = states['software-updates'];
+      if (sw && sw.lastViewedCount > 0) {
+        this._mossStore.recordSectionViewed('software-updates', sw.lastViewedCount - 1);
+      }
+      this._collapsedSections = new Set(
+        [...this._collapsedSections].filter((s) => s !== 'software-updates'),
+      );
       (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
       notify(msg('Tool updated.'));
       // Reload all the associated UIs
       appletIds.forEach((id) => refreshAllAppletIframes(id));
-      this.updatingTool = false;
     } catch (e) {
-      this.updatingTool = false;
       console.error(`Failed to update Tool: ${e}`);
       notifyError(msg('Failed to update Tool.'));
       (this.shadowRoot!.getElementById('loading-dialog') as LoadingDialog).hide();
+    } finally {
+      this.updatingToolId = undefined;
+    }
+  }
+
+  async updateAll() {
+    if (this.updatingToolId !== undefined || this.updatingAll) return;
+    this.updatingAll = true;
+    try {
+      const tools = Object.values(this.getToolUpdatesSource());
+      for (const toolInfo of tools) {
+        if (toolInfo.distributionInfo.type !== 'web2-tool-list') continue;
+        await this.updateTool(toolInfo);
+      }
+    } finally {
+      this.updatingAll = false;
     }
   }
 
@@ -995,12 +1027,29 @@ Changes:
   }
 
   renderToolUpdate(toolInfo: ToolInfoAndLatestVersion) {
+    const toolCompatibilityId =
+      toolInfo.distributionInfo.type === 'web2-tool-list'
+        ? toolInfo.distributionInfo.info.toolCompatibilityId
+        : undefined;
+    const isThisToolUpdating =
+      this.updatingToolId !== undefined && this.updatingToolId === toolCompatibilityId;
+    // Include updatingAll so per-card disabled/suppressed state stays true
+    // during the brief gap between updateTool iterations in updateAll().
+    const anyUpdateInFlight = this.updatingToolId !== undefined || this.updatingAll;
+    const suppressed = anyUpdateInFlight && !isThisToolUpdating;
+    const outerClasses = [
+      'tool-update-outer',
+      isThisToolUpdating ? 'updating' : '',
+      suppressed ? 'suppressed' : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
     return html`
-      <div class="tool-update-outer ${this.updatingTool ? 'updating' : ''}">
+      <div class="${outerClasses}">
         <div class="install-tool-overlay">
           <sl-button
-            ?disabled=${this.updatingTool}
-            ?loading=${this.updatingTool}
+            ?disabled=${anyUpdateInFlight}
+            ?loading=${isThisToolUpdating}
             @click=${() => this.updateTool(toolInfo)}
             >${msg('Update') + ' ' + toolInfo.toolInfo.title}</sl-button
           >
@@ -1091,6 +1140,7 @@ Changes:
 
   renderToolUpdateFeed() {
     const toolUpdatesSource = this.getToolUpdatesSource();
+    const updateCount = Object.keys(toolUpdatesSource).length;
 
     const toolUpdates: UpdateFeedMessageGeneric[] = Object.values(
       toolUpdatesSource,
@@ -1103,9 +1153,23 @@ Changes:
     }));
 
     const sortedToolUpdates = toolUpdates.sort((a, b) => b.timestamp - a.timestamp);
+    const anyUpdateInFlight = this.updatingToolId !== undefined || this.updatingAll;
 
     return html`
       <div class="tool-updates-container column">
+        ${updateCount > 1
+        ? html`
+              <div class="update-all-row">
+                <sl-button
+                  class="update-all-button"
+                  ?disabled=${anyUpdateInFlight}
+                  ?loading=${this.updatingAll}
+                  @click=${() => this.updateAll()}
+                  >${msg(str`Update all ${updateCount}`)}</sl-button
+                >
+              </div>
+            `
+        : ''}
         ${sortedToolUpdates.length === 0
         ? html`${msg('No Tool updates available.')}`
         : sortedToolUpdates.map(
@@ -1932,15 +1996,33 @@ Changes:
         color: #FFF;
       }
 
-      .tool-update-outer:hover .install-tool-overlay,
+      .tool-update-outer:not(.suppressed):hover .install-tool-overlay,
       .tool-update-outer.updating .install-tool-overlay {
         background: color-mix(in srgb, var(--moss-purple, #7461EB) 40%, transparent);
         z-index: 1;
       }
 
-      .tool-update-outer:hover .install-tool-overlay > sl-button,
+      .tool-update-outer:not(.suppressed):hover .install-tool-overlay > sl-button,
       .tool-update-outer.updating .install-tool-overlay > sl-button {
         opacity: 1;
+      }
+
+      .update-all-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 4px;
+      }
+
+      .update-all-button::part(base) {
+        background: var(--moss-purple, #7461EB);
+        border-color: var(--moss-purple, #7461EB);
+        color: #FFF;
+      }
+
+      .update-all-button::part(base):hover {
+        background: color-mix(in srgb, var(--moss-purple, #7461EB) 80%, #FFF 20%);
+        border-color: color-mix(in srgb, var(--moss-purple, #7461EB) 80%, #FFF 20%);
+        color: #FFF;
       }
 
       .tool-update-left-center {

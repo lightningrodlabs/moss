@@ -39,6 +39,7 @@ import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import {
   breakingVersion,
   emitToWindow,
+  formatUpdaterArg,
   logIf,
   readIcon,
   retryNTimes,
@@ -919,14 +920,39 @@ if (!RUNNING_WITH_COMMAND) {
 
     registerIPCHandlers(notificationIcon);
 
-    console.log('RUN_OPTIONS on startup: ', RUN_OPTIONS);
+    WE_EMITTER.emitMossLog(`RUN_OPTIONS on startup: ${formatUpdaterArg(RUN_OPTIONS)}`);
 
     MAIN_WINDOW = createOrShowMainWindow();
 
     // Check for updates
     if (app.isPackaged) {
+      WE_EMITTER.emitMossLog(
+        `[autoUpdater] Startup: platform=${process.platform} arch=${process.arch} appVersion=${appVersion} exe=${app.getPath('exe')}`,
+      );
       autoUpdater.allowPrerelease = false;
       autoUpdater.autoDownload = false;
+      autoUpdater.logger = {
+        info: (m) => WE_EMITTER.emitMossLog(`[autoUpdater] ${formatUpdaterArg(m)}`),
+        warn: (m) => WE_EMITTER.emitMossError(`[autoUpdater] WARN ${formatUpdaterArg(m)}`),
+        error: (m) => WE_EMITTER.emitMossError(`[autoUpdater] ERROR ${formatUpdaterArg(m)}`),
+        debug: (m) => WE_EMITTER.emitMossLog(`[autoUpdater] ${formatUpdaterArg(m)}`),
+      };
+      // The 'error' event delivers a proper Error (with stack); the logger.error hook above
+      // only receives whatever the library chose to log, which is sometimes a plain string.
+      autoUpdater.on('error', (err) => {
+        WE_EMITTER.emitMossError(`[autoUpdater] event:error ${formatUpdaterArg(err)}`);
+      });
+      // Register download-lifecycle listeners once here rather than inside install-moss-update,
+      // so retries after a failure don't stack duplicate listeners.
+      autoUpdater.on('update-downloaded', () => {
+        WE_EMITTER.emitMossLog('[autoUpdater] event:update-downloaded — calling quitAndInstall');
+        autoUpdater.quitAndInstall();
+      });
+      autoUpdater.on('download-progress', (progressInfo) => {
+        if (MAIN_WINDOW) {
+          emitToWindow(MAIN_WINDOW, 'moss-update-progress', progressInfo);
+        }
+      });
       autoUpdater.setFeedURL({
         provider: 'generic',
         url: 'https://github.com/lightningrodlabs/moss/releases/latest/download'
@@ -939,14 +965,18 @@ if (!RUNNING_WITH_COMMAND) {
         try {
           const yaml = require('js-yaml');
           const devConfig = yaml.load(fs.readFileSync(devUpdateConfigPath, 'utf8'));
-          console.log('Using dev update config from:', devUpdateConfigPath);
-          console.log('Config:', devConfig);
+          WE_EMITTER.emitMossLog(
+            `[autoUpdater] Using dev update config from: ${devUpdateConfigPath}`,
+          );
+          WE_EMITTER.emitMossLog(`[autoUpdater] Config: ${formatUpdaterArg(devConfig)}`);
           autoUpdater.setFeedURL({
             provider: devConfig.provider,
             url: devConfig.url,
           });
         } catch (e) {
-          console.warn('Failed to load dev update config:', e);
+          WE_EMITTER.emitMossError(
+            `[autoUpdater] Failed to load dev update config: ${formatUpdaterArg(e)}`,
+          );
         }
       }
 
@@ -955,10 +985,14 @@ if (!RUNNING_WITH_COMMAND) {
       try {
         updateCheckResult = await autoUpdater.checkForUpdates();
       } catch (e) {
-        console.warn('Failed to check for updates: ', e);
+        WE_EMITTER.emitMossError(
+          `[autoUpdater] Failed to check for updates: ${formatUpdaterArg(e)}`,
+        );
       }
 
-      console.log('updateCheckResult: ', updateCheckResult);
+      WE_EMITTER.emitMossLog(
+        `[autoUpdater] updateCheckResult: ${formatUpdaterArg(updateCheckResult)}`,
+      );
 
       // We only install semver compatible updates
       if (
@@ -966,7 +1000,9 @@ if (!RUNNING_WITH_COMMAND) {
         breakingVersion(updateCheckResult.updateInfo.version) === breakingVersion(appVersion) &&
         semver.gt(updateCheckResult.updateInfo.version, appVersion)
       ) {
-        console.log('updateCheckResult.files:', JSON.stringify(updateCheckResult.updateInfo.files));
+        WE_EMITTER.emitMossLog(
+          `[autoUpdater] updateCheckResult.files: ${JSON.stringify(updateCheckResult.updateInfo.files)}`,
+        );
         UPDATE_AVAILABLE = {
           version: updateCheckResult.updateInfo.version,
           releaseDate: updateCheckResult.updateInfo.releaseDate,
@@ -2780,18 +2816,18 @@ if (!RUNNING_WITH_COMMAND) {
     ipcMain.handle('moss-update-available', () => UPDATE_AVAILABLE);
     ipcMain.handle('install-moss-update', async () => {
       if (!UPDATE_AVAILABLE) throw new Error('No update available.');
-      // downloading means that with the next start of the application it's automatically going to be installed
-      autoUpdater.on('update-downloaded', () => {
-        console.log('Update downloaded');
-        autoUpdater.quitAndInstall();
-      });
-      autoUpdater.on('download-progress', (progressInfo) => {
-        if (MAIN_WINDOW) {
-          emitToWindow(MAIN_WINDOW, 'moss-update-progress', progressInfo);
-        }
-      });
-      const paths = await autoUpdater.downloadUpdate();
-      console.log('Update downloaded at:', paths);
+      WE_EMITTER.emitMossLog(
+        `[autoUpdater] install-moss-update requested for version ${UPDATE_AVAILABLE.version}`,
+      );
+      // update-downloaded and download-progress listeners are registered once at app startup,
+      // so the download will automatically install on the next launch.
+      try {
+        const paths = await autoUpdater.downloadUpdate();
+        WE_EMITTER.emitMossLog(`[autoUpdater] Update downloaded at: ${formatUpdaterArg(paths)}`);
+      } catch (e) {
+        WE_EMITTER.emitMossError(`[autoUpdater] downloadUpdate failed: ${formatUpdaterArg(e)}`);
+        throw e;
+      }
     });
   }
 

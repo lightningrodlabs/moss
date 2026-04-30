@@ -38,10 +38,17 @@ export type AppletToParentRequest = {
     type: 'get-applet-info';
     appletHash: AppletHash;
 } | {
+    type: 'get-tool-installer';
+    appletHash: AppletHash;
+    groupHash: DnaHash | undefined;
+} | {
+    type: 'get-bootstrap-urls';
+    groupHash: DnaHash | undefined;
+} | {
     type: 'get-group-profile';
     groupHash: DnaHash;
 } | {
-    type: 'my-group-permission-type';
+    type: 'my-accountabilities-per-group';
 } | {
     type: 'applet-participants';
 } | {
@@ -62,6 +69,7 @@ export type AppletToParentRequest = {
 } | {
     type: 'send-remote-signal';
     payload: Uint8Array;
+    toAgents?: AgentPubKey[];
 } | {
     type: 'create-clone-cell';
     req: CreateCloneCellRequest;
@@ -81,7 +89,7 @@ export type AppletToParentRequest = {
     wal: WAL;
 } | {
     type: 'user-select-asset';
-    from?: 'search' | 'pocket' | 'create';
+    from?: 'search' | 'pocket' | 'create' | 'pocket-no-create';
 } | {
     type: 'user-select-asset-relation-tag';
 } | {

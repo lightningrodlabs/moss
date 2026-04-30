@@ -15,6 +15,7 @@ export type RenderInfo = {
     peerStatusStore: ReadonlyPeerStatusStore;
     appletHash: AppletHash;
     groupProfiles: GroupProfile[];
+    groupHash: DnaHash | null;
 } | {
     type: 'cross-group-view';
     view: CrossGroupView;

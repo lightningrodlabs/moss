@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "test": "vitest run",
+    "test:one": "vitest --reporter=verbose -t 'Create expiring steward permission and retrieve it in different ways'",
     "test:group": "vitest --dir ./src/group/group run",
     "test:assets": "vitest --dir ./src/assets/assets run"
   },

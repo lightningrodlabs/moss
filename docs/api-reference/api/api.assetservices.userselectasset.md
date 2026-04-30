@@ -9,5 +9,5 @@ Prompts the user to select an Asset and returns the associated WAL as soon as th
 **Signature:**
 
 ```typescript
-userSelectAsset: (from?: 'search' | 'pocket' | 'create') => Promise<WAL | undefined>;
+userSelectAsset: (from?: 'search' | 'pocket' | 'create' | 'pocket-no-create') => Promise<WAL | undefined>;
 ```

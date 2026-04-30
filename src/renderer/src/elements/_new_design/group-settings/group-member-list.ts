@@ -2,7 +2,7 @@ import { hashProperty, notify, notifyError } from '@holochain-open-dev/elements'
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { AgentPubKey, DnaHash, encodeHashToBase64 } from '@holochain/client';
 import { consume } from '@lit/context';
-import { localized, msg } from '@lit/localize';
+import {localized, msg, str} from '@lit/localize';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 
@@ -68,7 +68,7 @@ export class GroupMemberList extends LitElement {
       | undefined;
     if (!permissionTypeRadio) {
       this.assigning = false;
-      notifyError('Radio selection undefined,');
+      notifyError(msg('Radio selection undefined.'));
       throw new Error('Radio selection undefined.');
     }
 
@@ -83,13 +83,13 @@ export class GroupMemberList extends LitElement {
 
       if (!datePicker) {
         this.assigning = false;
-        notifyError('Datepicker undefined,');
+        notifyError(msg('Datepicker undefined,'));
         throw new Error('Datepicker undefined');
       }
 
       if (!datePicker.value) {
         this.assigning = false;
-        notifyError('Datepicker value undefined,');
+        notifyError(msg('Datepicker value undefined,'));
         throw new Error('Datepicker value undefined');
       }
 
@@ -111,7 +111,7 @@ export class GroupMemberList extends LitElement {
       });
     } catch (e) {
       this.assigning = false;
-      notifyError(`Failed to create permission: ${e}`);
+      notifyError(msg(str`Failed to create permission: ${e}`));
       return;
     }
     // In case the reloading of the group store below fails we still want to show the notifications

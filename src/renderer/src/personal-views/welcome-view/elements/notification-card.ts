@@ -269,7 +269,7 @@ export class NotificationCard extends LitElement {
             </div>
             <div class="notification-buttons">
               ${aboutWal ? html`
-                <sl-tooltip content="Open asset in sidebar" placement="left">
+                <sl-tooltip content=${msg("Open asset in sidebar")} placement="left">
                   <button
                     class="open-wal-button"
                     @click=${() => {
