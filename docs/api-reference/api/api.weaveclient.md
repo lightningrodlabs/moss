@@ -44,7 +44,7 @@ Description
 
 </td><td>
 
-(appletHash: any) =&gt; Promise&lt;[AppletInfo](./api.appletinfo.md) \| undefined&gt;
+(appletHash: [AppletHash](./api.applethash.md)<!-- -->) =&gt; Promise&lt;[AppletInfo](./api.appletinfo.md) \| undefined&gt;
 
 
 </td><td>
@@ -79,6 +79,23 @@ Description
 </td><td>
 
 [AssetServices](./api.assetservices.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[bootstrapUrls](./api.weaveclient.bootstrapurls.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(groupHash?: DnaHash) =&gt; string\[\]
 
 
 </td><td>
@@ -138,6 +155,23 @@ Description
 </td></tr>
 <tr><td>
 
+[getLocale](./api.weaveclient.getlocale.md)
+
+
+</td><td>
+
+
+</td><td>
+
+() =&gt; string
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
 [groupProfile](./api.weaveclient.groupprofile.md)
 
 
@@ -146,7 +180,7 @@ Description
 
 </td><td>
 
-(groupHash: any) =&gt; Promise&lt;any&gt;
+(groupHash: DnaHash) =&gt; Promise&lt;any&gt;
 
 
 </td><td>
@@ -172,7 +206,7 @@ Description
 </td></tr>
 <tr><td>
 
-[myGroupPermissionType](./api.weaveclient.mygrouppermissiontype.md)
+[myAccountabilitiesPerGroup](./api.weaveclient.myaccountabilitiespergroup.md)
 
 
 </td><td>
@@ -180,7 +214,7 @@ Description
 
 </td><td>
 
-() =&gt; Promise&lt;[GroupPermissionType](./api.grouppermissiontype.md)<!-- -->&gt;
+() =&gt; Promise&lt;\[import("@holochain/client").HoloHash, [MossAccountability](./api.mossaccountability.md)<!-- -->\[\]\]\[\]&gt;
 
 
 </td><td>
@@ -215,6 +249,40 @@ Description
 </td><td>
 
 (callback: () =&gt; any) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[onLocaleChange](./api.weaveclient.onlocalechange.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(callback: (locale: string) =&gt; any) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[onNetworkStatsUpdate](./api.weaveclient.onnetworkstatsupdate.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(callback: (payload: TransportStats) =&gt; any) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
 
 
 </td><td>
@@ -282,7 +350,7 @@ Description
 
 </td><td>
 
-(appletHash: EntryHash) =&gt; Promise&lt;void&gt;
+(appletHash: EntryHash, wal?: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;
 
 
 </td><td>
@@ -386,7 +454,24 @@ Description
 
 </td><td>
 
-(payload: Uint8Array) =&gt; Promise&lt;void&gt;
+(payload: Uint8Array, toAgents?: AgentPubKey\[\]) =&gt; Promise&lt;void&gt;
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[toolInstaller](./api.weaveclient.toolinstaller.md)
+
+
+</td><td>
+
+
+</td><td>
+
+(appletHash: [AppletHash](./api.applethash.md)<!-- -->, groupHash?: DnaHash) =&gt; Promise&lt;import("@holochain/client").HoloHash \| undefined&gt;
 
 
 </td><td>

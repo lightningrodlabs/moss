@@ -9,5 +9,5 @@ Allows to send small sized "fire-and-forget" signals to all group participants t
 **Signature:**
 
 ```typescript
-sendRemoteSignal: (payload: Uint8Array) => Promise<void>;
+sendRemoteSignal: (payload: Uint8Array, toAgents?: AgentPubKey[]) => Promise<void>;
 ```

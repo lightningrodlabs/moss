@@ -2330,6 +2330,14 @@ starts now</source>
   <source>Tool Sources</source>
   <target>ツールソース</target>
 </trans-unit>
+<trans-unit id="s2d257675024acff2">
+  <source>Cannot update Tool from distribution type other than 'web2-tool-list'</source>
+  <target>'web2-tool-list' 以外の配布タイプからツールを更新できません</target>
+</trans-unit>
+<trans-unit id="s7c6ddb11656cc241">
+  <source>Update all <x id="0" equiv-text="${updateCount}"/></source>
+  <target>すべて更新 (<x id="0" equiv-text="${updateCount}"/>)</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

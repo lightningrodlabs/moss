@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-sendRemoteSignal: (payload: Uint8Array) => Promise<void>;
+sendRemoteSignal: (payload: Uint8Array, toAgents?: AgentPubKey[]) => Promise<void>;
 ```
