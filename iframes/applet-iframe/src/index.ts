@@ -5,7 +5,6 @@ import {
   AgentPubKeyB64,
   AppAuthenticationToken,
   AppClient,
-  AppWebsocket,
   CallZomeRequest,
   CallZomeRequestSigned,
   CreateCloneCellRequest,
@@ -14,7 +13,6 @@ import {
   EntryHash,
   EntryHashMap,
   HoloHashMap,
-  RoleNameCallZomeRequest,
   decodeHashFromBase64,
   encodeHashToBase64, TransportStats, DnaHash,
 } from '@holochain/client';
@@ -47,7 +45,7 @@ import {
   IframeKind,
 } from '@theweave/api';
 import { AsyncStatus, readable } from '@holochain-open-dev/stores';
-import { toOriginalCaseB64 } from '@theweave/utils';
+import { createAppWebsocket, instrumentZomeCallLogging, toOriginalCaseB64 } from '@theweave/utils';
 
 type CallbackWithId = {
   id: number;
@@ -702,7 +700,7 @@ async function postMessage(request: AppletToParentRequest): Promise<any> {
 }
 
 async function setupAppClient(appPort: number, token: AppAuthenticationToken) {
-  const appletClient = await AppWebsocket.connect({
+  const appletClient = await createAppWebsocket({
     url: new URL(`ws://127.0.0.1:${appPort}`),
     token,
     callZomeTransform: {
@@ -722,29 +720,12 @@ async function setupAppClient(appPort: number, token: AppAuthenticationToken) {
 
   if (window.__ZOME_CALL_LOGGING_ENABLED__) {
     // ZOME_CALL_LOGGING (this comment is just for the purpose of code searchability)
-    const callZomePure = AppWebsocket.prototype.callZome;
-
-    // Overwrite the callZome function to measure the duration of the zome call and log it
-    appletClient.callZome = async <ReturnType>(
-      request: CallZomeRequest | RoleNameCallZomeRequest,
-      timeout?: number,
-    ): Promise<ReturnType> => {
-      const start = Date.now();
-      const response = await callZomePure.apply(appletClient, [request, timeout]);
-      const end = Date.now();
-      // We don't want to await this so we just schedule it
-      setTimeout(async () => {
-        postMessage({
-          type: 'log-zome-call',
-          info: {
-            installedAppId,
-            fnName: request.fn_name,
-            durationMs: end - start,
-          },
-        });
+    instrumentZomeCallLogging(appletClient, ({ fnName, durationMs }) => {
+      postMessage({
+        type: 'log-zome-call',
+        info: { installedAppId, fnName, durationMs },
       });
-      return response as ReturnType;
-    };
+    });
   }
 
   return appletClient;

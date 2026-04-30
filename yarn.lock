@@ -3209,19 +3209,6 @@
     "@msgpack/msgpack" "^2.7.2"
     "@theweave/api" "^0.6.6"
 
-"@theweave/utils@0.5.2":
-  version "0.5.2"
-  resolved "https://registry.yarnpkg.com/@theweave/utils/-/utils-0.5.2.tgz#6bc5b4a75afd31a50cac745717a1f7f735fb7c48"
-  integrity sha512-bfzg/hNxYYHa+7Lm7clx8TVpT9I9IC4TnWXoT5KVCRH53xoaUys8yvXnszL4ZvoielB6cIYjqdCzRIHPImNgpw==
-  dependencies:
-    "@holochain/client" "=0.20.4-rc.0"
-    "@msgpack/msgpack" "^2.7.2"
-    "@theweave/api" "^0.6.4"
-    "@theweave/moss-types" "^0.5.2"
-    compare-versions "6.1.1"
-    js-base64 "^3.7.2"
-    ts-md5 "1.3.1"
-
 "@theweave/utils@file:shared/utils":
   version "0.5.3"
   dependencies:

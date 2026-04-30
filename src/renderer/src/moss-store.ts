@@ -25,7 +25,6 @@ import {
   AppInfo,
   AppStatusFilter,
   AppWebsocket,
-  CallZomeRequest,
   decodeHashFromBase64,
   DnaHash,
   DnaHashB64,
@@ -37,7 +36,6 @@ import {
   InstalledAppId,
   LazyHoloHashMap,
   ProvisionedCell,
-  RoleNameCallZomeRequest,
 } from '@holochain/client';
 import {
   AppletHash,
@@ -96,8 +94,10 @@ import {
   appIdFromAppletId,
   appletHashFromAppId,
   appletIdFromAppId,
+  createAppWebsocket,
   deriveToolCompatibilityId,
   getLatestVersionFromToolInfo,
+  instrumentZomeCallLogging,
   isAppDisabled,
   isAppRunning,
   toolCompatibilityIdFromDistInfo,
@@ -1785,39 +1785,56 @@ export class MossStore {
   _appClients: Record<InstalledAppId, [AppWebsocket, AppAuthenticationToken]> = {};
 
   async getAppClient(appId: InstalledAppId): Promise<[AppWebsocket, AppAuthenticationToken]> {
-    let appClient = this._appClients[appId];
-    if (appClient) return appClient;
-    const token = await this.getAuthenticationToken(appId);
-    const appWs = await AppWebsocket.connect({
-      token,
-    });
+    const cached = this._appClients[appId];
+    if (cached && this.isAppClientHealthy(cached[0])) return cached;
+    if (cached) await this.closeAppClient(appId);
+    return this.connectAppClient(appId);
+  }
+
+  private isAppClientHealthy(appWs: AppWebsocket): boolean {
+    // The cached AppWebsocket can become unusable for two reasons we can't
+    // recover from in-place: the underlying socket is no longer OPEN, or
+    // holochain-client-js cleared its internal auth token after a failed
+    // reconnect (in which case future requests reject with WebsocketClosedError
+    // forever). The readyState check catches the former; we fall back to
+    // rebuilding the client in either case.
+    const socket = (appWs as unknown as { client: { socket: WebSocket } }).client.socket;
+    return socket.readyState === WebSocket.OPEN;
+  }
+
+  private async connectAppClient(
+    appId: InstalledAppId,
+  ): Promise<[AppWebsocket, AppAuthenticationToken]> {
+    let token = await this.getAuthenticationToken(appId);
+    let appWs: AppWebsocket;
+    try {
+      appWs = await createAppWebsocket({ token });
+    } catch (e) {
+      // If the conductor rejects the cached token (e.g. the conductor
+      // restarted and lost its in-memory token store), drop the cached
+      // token and re-issue once.
+      if (this.isInvalidTokenError(e)) {
+        delete this._authenticationTokens[appId];
+        token = await this.getAuthenticationToken(appId);
+        appWs = await createAppWebsocket({ token });
+      } else {
+        throw e;
+      }
+    }
     if (window.__ZOME_CALL_LOGGING_ENABLED__) {
       // ZOME_CALL_LOGGING (this comment is just for the purpose of code searchability)
-      const callZomePure = AppWebsocket.prototype.callZome;
-
-      // Overwrite the callZome function to measure the duration of the zome call and log it
-      appWs.callZome = async <ReturnType>(
-        request: CallZomeRequest | RoleNameCallZomeRequest,
-        timeout?: number,
-      ): Promise<ReturnType> => {
-        const start = Date.now();
-        const response = callZomePure.apply(appWs, [request, timeout]);
-        const end = Date.now();
-        // We don't want to await this so we just schedule it
-        setTimeout(() =>
-          this.logZomeCall({
-            info: {
-              durationMs: end - start,
-              fnName: request.fn_name,
-              installedAppId: appId,
-            },
-          }),
-        );
-        return response as ReturnType;
-      };
+      instrumentZomeCallLogging(appWs, ({ fnName, durationMs }) =>
+        this.logZomeCall({
+          info: { durationMs, fnName, installedAppId: appId },
+        }),
+      );
     }
     this._appClients[appId] = [appWs, token];
     return [appWs, token];
+  }
+
+  private isInvalidTokenError(e: unknown): boolean {
+    return e instanceof Error && e.name === 'InvalidTokenError';
   }
 
   async closeAppClient(appId: InstalledAppId): Promise<void> {
