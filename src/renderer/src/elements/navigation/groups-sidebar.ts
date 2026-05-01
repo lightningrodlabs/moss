@@ -294,6 +294,7 @@ export class GroupsSidebar extends LitElement {
             style="margin-top: 10px;"
             size="large"
             circle
+            aria-label=${msg('Add Group')}
             @click=${() => {
               this.dispatchEvent(
                 new CustomEvent('request-add-group', {
