@@ -25,6 +25,8 @@ weave.dev.config*
 *.exe
 *.deb
 test-updates
+test-results-e2e
+playwright-report
 
 # vitepress
 **/.vitepress/cache/**

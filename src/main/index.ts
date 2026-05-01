@@ -235,6 +235,11 @@ program
   )
   .addCommand(hashWebhapp);
 
+// why: Electron may forward its own flags (e.g. --inspect=0, --remote-debugging-port=0
+// when launched by Playwright) into argv. Those aren't Moss CLI options, so allow
+// unknowns rather than aborting startup.
+program.allowUnknownOption(true);
+
 program.parseAsync();
 
 console.log('ELECTRON VERSION: ', process.versions.electron);

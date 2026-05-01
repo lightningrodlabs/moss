@@ -6,7 +6,10 @@
     "test": "vitest run",
     "test:one": "vitest --reporter=verbose -t 'Create expiring steward permission and retrieve it in different ways'",
     "test:group": "vitest --dir ./src/group/group run",
-    "test:assets": "vitest --dir ./src/assets/assets run"
+    "test:assets": "vitest --dir ./src/assets/assets run",
+    "test:e2e": "playwright test --config e2e/playwright.config.ts",
+    "test:e2e:ui": "playwright test --config e2e/playwright.config.ts --ui",
+    "test:e2e:headed": "playwright test --config e2e/playwright.config.ts --headed"
   },
   "dependencies": {
     "@msgpack/msgpack": "^2.8.0",
@@ -17,6 +20,10 @@
     "@theweave/api": "^0.6.4",
     "typescript": "^5.8.3",
     "vitest": "^0.28.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^18.17.5"
   },
   "type": "module"
 }
