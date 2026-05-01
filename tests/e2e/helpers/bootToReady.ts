@@ -78,8 +78,12 @@ export async function startFreshIfLegacyImport(page: Page): Promise<MossStateNam
   // inside the import dialog. Role-based first; fall back to text.
   const startFresh = page.getByRole('button', { name: /start.*fresh|skip|don.?t import/i });
   await startFresh.first().click();
-  // After Start Fresh we expect InitialSetup (or, rarely, Loading then InitialSetup).
-  return waitForState(page, ['InitialSetup', 'Running'], 30_000);
+  // why: after Start Fresh, moss-app loops back to Loading and continues setup —
+  // lair init, conductor boot, admin-websocket connect, listApps, then either
+  // InitialSetup (packaged + no legacy + no groups) or Running. On the user's
+  // machine with multiple prior Moss versions on disk this can take ~60s under
+  // suite load, so we allow up to 120s.
+  return waitForState(page, ['InitialSetup', 'Running'], 120_000);
 }
 
 /**
