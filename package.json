@@ -70,6 +70,7 @@
     "test:e2e": "yarn workspace tests test:e2e",
     "test:e2e:ui": "yarn workspace tests test:e2e:ui",
     "test:e2e:headed": "yarn workspace tests test:e2e:headed",
+    "test:e2e:clean": "yarn workspace tests test:e2e:clean",
     "update-server": "node scripts/update-server.mjs",
     "gen-update-meta": "node scripts/generate-update-yml.mjs",
     "update-hc-checksums": "node scripts/get-hc-checksum.mjs holochain/holochain",

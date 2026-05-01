@@ -12,7 +12,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
-  timeout: 90_000,
+  // why: launches are 5-30s including conductor boot, and tests like #6 do
+  // multiple group-create flows (each ~15s). On the user's machine with legacy
+  // profile data, the post-StartFresh continuation can push setup near 60s.
+  // 240s leaves room without masking real hangs.
+  timeout: 240_000,
   expect: {
     timeout: 15_000,
   },

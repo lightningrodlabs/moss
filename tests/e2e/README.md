@@ -20,11 +20,31 @@ yarn test:e2e
 # Variants
 yarn test:e2e:ui       # Playwright UI mode (interactive, great for authoring)
 yarn test:e2e:headed   # See the windows; useful for debugging selectors
+yarn test:e2e:clean    # Wipe accumulated test profile dirs (see "Test data" below)
 ```
 
 You also need the Holochain + lair binaries fetched (`yarn fetch:binaries`,
 included in `yarn setup`). Run from inside the project's nix shell so
 `@lightningrodlabs/we-rust-utils` resolves correctly.
+
+## Test data isolation
+
+Each test launches Moss with `--user-data-dir=<repo>/test-results-e2e/profiles/<test-id>`,
+so all profile data — conductor DBs, lair keystore, applet caches, logs —
+lives entirely inside the repo's `test-results-e2e/profiles/` tree.
+
+**Test data never touches the user's real Moss config dir**
+(`~/.config/org.lightningrodlabs.moss-0.15/`). This matters because:
+
+- A test crash can't corrupt actual user profiles.
+- `findLegacyProfiles()` won't pick up test artifacts.
+- Wiping test data is one command (`yarn test:e2e:clean`) instead of careful
+  surgery in the user config tree.
+
+The fixture **does not auto-delete** profile dirs after a test runs. Logs
+under `<test-id>/<version>/<profile>/logs/` are useful when chasing real
+failures. Clean up explicitly with `yarn test:e2e:clean` whenever the dir
+gets large.
 
 ## Structure
 

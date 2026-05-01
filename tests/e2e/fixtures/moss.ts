@@ -1,14 +1,38 @@
 import { test as base, _electron as electron, Page, ElectronApplication } from '@playwright/test';
 import path from 'node:path';
 import fs from 'node:fs';
-import os from 'os';
 
 export type LaunchOptions = {
   /**
-   * Profile name passed to Moss via --profile. Profile dir lives at
-   * ~/.config/Moss/profiles/<profileName>/ (Linux) and is removed in teardown.
+   * Logical name for this launch. Used as the directory name under
+   * `<repo>/test-results-e2e/profiles/`. Does NOT become Moss's `--profile`
+   * value — see `mossProfile` for that.
+   *
+   * why: isolation between tests/agents is provided by `userDataDir`, not
+   * Moss's profile name. Keeping the logical test name separate from Moss's
+   * profile name lets us relaunch against the same userDataDir without having
+   * to thread Moss's profile string through the test.
    */
   profileName: string;
+  /**
+   * Absolute path to use as Electron's userData root, passed via --user-data-dir.
+   * If omitted, a dir is created at `<repo>/test-results-e2e/profiles/<profileName>/`.
+   *
+   * why: tests must NOT share the user's real Moss data dir
+   * (~/.config/org.lightningrodlabs.moss-0.15/) — that would risk corrupting
+   * actual user profiles and would let `findLegacyProfiles()` pick up test
+   * artifacts. Each test gets its own isolated tree.
+   *
+   * Pass an explicit `userDataDir` to relaunch against an existing dir
+   * (smoke #8 relaunch persistence).
+   */
+  userDataDir?: string;
+  /**
+   * Moss CLI --profile value. Defaults to `'e2e'`. Constant by default so
+   * relaunches against the same userDataDir find the same Moss profile subdir.
+   * Override for niche scenarios; rarely needed.
+   */
+  mossProfile?: string;
   /** Extra CLI args appended after --profile. */
   extraArgs?: string[];
   /** Extra env vars merged into the child process. */
@@ -21,8 +45,24 @@ export type LaunchedMoss = {
   app: ElectronApplication;
   /** The main "admin" window. Splashscreen is filtered out. */
   mainWindow: Page;
-  profileDir: string;
+  /**
+   * The userData root passed to Electron. Real on-disk profile data lives at
+   * `<userDataDir>/<breakingAppVersion>/<profileName>/`. Kept after the test
+   * runs so logs are inspectable on failure; clean en masse with
+   * `yarn test:e2e:clean`.
+   */
+  userDataDir: string;
 };
+
+/** Repo-local root for all test profile dirs. Gitignored. */
+export const E2E_PROFILES_ROOT = path.resolve(
+  __dirname,
+  '..',
+  '..',
+  '..',
+  'test-results-e2e',
+  'profiles',
+);
 
 /**
  * Resolve the repo root and verify the built artifact exists. We hand the
@@ -42,37 +82,29 @@ function resolveRepoRoot(): string {
   return repoRoot;
 }
 
-/**
- * Profile dirs Moss writes to on Linux. We delete the whole tree on teardown so
- * each test starts truly fresh (conductor DBs, lair, applet caches all gone).
- */
-function profileDirFor(profileName: string): string {
-  // why: filesystem.ts:connect() places profile data at
-  //   $userData/<breakingAppVersion>/<profile>/
-  // For Moss 0.15.x in production NODE_ENV, $userData is ~/.config/Moss/.
-  // The breaking-version string for 0.15.x is the literal "0.15.x" (see
-  // src/main/utils.ts:breakingAppVersion).
-  return path.join(os.homedir(), '.config', 'Moss', '0.15.x', profileName);
-}
-
-function rmIfExists(p: string) {
-  try {
-    fs.rmSync(p, { recursive: true, force: true });
-  } catch {
-    // best-effort
-  }
+function ensureDir(p: string) {
+  fs.mkdirSync(p, { recursive: true });
 }
 
 export async function launchMoss(opts: LaunchOptions): Promise<LaunchedMoss> {
   const repoRoot = resolveRepoRoot();
-  const profileDir = profileDirFor(opts.profileName);
-  // why: ensure no cross-test contamination if a prior run died mid-test.
-  rmIfExists(profileDir);
+  const userDataDir = opts.userDataDir ?? path.join(E2E_PROFILES_ROOT, opts.profileName);
+  ensureDir(userDataDir);
 
   // why: pass the repo root (not the absolute main.js path) so app.getAppPath()
   // resolves to a directory containing moss.config.json + holochain-checksums.json,
   // matching what `yarn start` (electron-vite preview → `electron .`) does.
-  const args = [repoRoot, '--profile', opts.profileName, ...(opts.extraArgs ?? [])];
+  // --user-data-dir is an Electron built-in flag that overrides app.getPath('userData')
+  // before any user code runs, so Moss's filesystem.ts roots its profile tree
+  // inside our isolated test dir instead of ~/.config/org.lightningrodlabs.moss-0.15/.
+  const mossProfile = opts.mossProfile ?? 'e2e';
+  const args = [
+    repoRoot,
+    `--user-data-dir=${userDataDir}`,
+    '--profile',
+    mossProfile,
+    ...(opts.extraArgs ?? []),
+  ];
 
   // why: if these are set in the user's shell (some devs set ELECTRON_RUN_AS_NODE=1
   // for ad-hoc scripting), Electron launches as plain Node and the main-process
@@ -119,7 +151,7 @@ export async function launchMoss(opts: LaunchOptions): Promise<LaunchedMoss> {
   }
 
   const mainWindow = await waitForAdminWindow(app, opts.adminWindowTimeoutMs ?? 60_000);
-  return { app, mainWindow, profileDir };
+  return { app, mainWindow, userDataDir };
 }
 
 /**
@@ -168,12 +200,17 @@ type MossFixtures = {
 
 /**
  * Use this `test` instead of the bare Playwright one. It gives you:
- *   - `moss`: a launched Moss instance with a fresh profile, auto-cleaned up.
- *   - `secondAgent(opts?)`: launches an additional Moss instance (different profile),
- *     also tracked for cleanup. Use for multi-agent tests (smoke #9 etc.).
+ *   - `moss`: a launched Moss instance with an isolated userDataDir under
+ *     `<repo>/test-results-e2e/profiles/`. Closed (gracefully) at end of test;
+ *     the profile dir is intentionally NOT deleted so logs are inspectable.
+ *   - `secondAgent(opts?)`: launches an additional Moss instance (different
+ *     profile + dir), tracked for close at end of test. For multi-agent tests
+ *     (smoke #9 etc.).
  *
  * Holochain ports are auto-allocated by Moss via `get-port`, so multiple agents
  * coexist on one machine without manual port offsets.
+ *
+ * To wipe accumulated test profile data: `yarn test:e2e:clean`.
  */
 export const test = base.extend<MossFixtures>({
   moss: async ({}, use, testInfo) => {
@@ -182,7 +219,7 @@ export const test = base.extend<MossFixtures>({
     try {
       await use(launched);
     } finally {
-      await safeClose(launched);
+      await closeMoss(launched);
     }
   },
   secondAgent: async ({}, use, testInfo) => {
@@ -199,7 +236,7 @@ export const test = base.extend<MossFixtures>({
       await use(factory);
     } finally {
       for (const l of launched) {
-        await safeClose(l);
+        await closeMoss(l);
       }
     }
   },
@@ -209,11 +246,28 @@ function sanitize(s: string): string {
   return s.replace(/[^a-zA-Z0-9-]/g, '-').slice(0, 40) || 'test';
 }
 
-async function safeClose(launched: LaunchedMoss): Promise<void> {
-  // why: ask Electron to quit gracefully first so Moss's own before-quit hooks
-  // (which kill the spawned lair-keystore + holochain children) actually run.
-  // Without this, force-closing leaves orphaned subprocesses that slow down
-  // subsequent test launches.
+/**
+ * Close a launched Moss instance and wait for all of its child processes
+ * (lair-keystore, holochain) to actually exit.
+ *
+ * why: it isn't enough to call `app.close()` and move on. lair and conductor
+ * are spawned as children of the Electron main process; when Electron dies,
+ * they get reparented to init, so `descendants(electronPid)` afterwards finds
+ * nothing. The reparented processes can keep holding lair sockets / conductor
+ * DB locks for a few seconds, which makes a quick relaunch (smoke #8) fail.
+ *
+ * Capture the descendant pid set BEFORE close, then poll `/proc` until each
+ * pid is gone. Bounded wait so a stuck child doesn't deadlock the suite.
+ */
+export async function closeMoss(launched: LaunchedMoss): Promise<void> {
+  let descendants: number[] = [];
+  try {
+    const electronPid = launched.app.process().pid;
+    if (electronPid) descendants = collectDescendants(electronPid);
+  } catch {
+    // pid may already be gone
+  }
+
   try {
     await launched.app.evaluate(({ app }) => app.quit());
   } catch {
@@ -224,22 +278,34 @@ async function safeClose(launched: LaunchedMoss): Promise<void> {
   } catch {
     // already exiting
   }
-  // Belt-and-suspenders: kill any descendants of the launched Electron pid
-  // that haven't exited yet (lair/holochain that didn't get the signal).
-  try {
-    const pid = launched.app.process().pid;
-    if (pid) killDescendants(pid);
-  } catch {
-    // pid may be gone
+
+  // Force-kill any of the captured descendants that didn't exit on quit.
+  for (const pid of descendants) {
+    try {
+      process.kill(pid, 'SIGKILL');
+    } catch {
+      // already gone
+    }
   }
-  // why: lair / conductor children sometimes leak databases that contaminate the
-  // next test. Removing the profile dir is the simplest correct teardown.
-  rmIfExists(launched.profileDir);
+
+  // Poll until everything is actually gone or 5s elapses.
+  const deadline = Date.now() + 5000;
+  while (Date.now() < deadline) {
+    const stillAlive = descendants.filter((p) => fs.existsSync(`/proc/${p}`));
+    if (stillAlive.length === 0) break;
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  // why: deliberately keep userDataDir on disk after the test. Logs in
+  // `<userDataDir>/<version>/<profile>/logs/` are useful for debugging real
+  // failures; tests run against an isolated repo-local tree, not the user's
+  // real Moss data. Run `yarn test:e2e:clean` to wipe accumulated test data.
 }
 
-function killDescendants(rootPid: number): void {
-  // Linux-only by plan. Walks /proc to find descendants and SIGKILLs them.
-  let pids: number[] = [];
+/**
+ * Walk /proc and return all transitive descendants of `rootPid`. Linux-only
+ * by plan.
+ */
+function collectDescendants(rootPid: number): number[] {
   try {
     const all = fs.readdirSync('/proc').filter((n) => /^\d+$/.test(n)).map(Number);
     const parentMap = new Map<number, number>();
@@ -264,16 +330,9 @@ function killDescendants(rootPid: number): void {
         }
       }
     }
-    pids = descendants;
+    return descendants;
   } catch {
-    return;
-  }
-  for (const pid of pids) {
-    try {
-      process.kill(pid, 'SIGKILL');
-    } catch {
-      // already dead
-    }
+    return [];
   }
 }
 
