@@ -1633,6 +1633,7 @@ export class MainDashboard extends LitElement {
           <sl-tooltip .content="${msg('Settings')}" placement="right" hoist>
             <button
               class="moss-sidebar-button"
+              aria-label=${msg('Settings')}
               @click=${() => this.settingsDialog.show()}
             >
               <div class="column center-content">
