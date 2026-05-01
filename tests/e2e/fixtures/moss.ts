@@ -102,7 +102,7 @@ export async function launchMoss(opts: LaunchOptions): Promise<LaunchedMoss> {
     executablePath: electronPath,
     args,
     env,
-    timeout: 60_000,
+    timeout: 90_000,
   });
 
   // why: surface main-process stdio when debugging. Otherwise a crash inside
@@ -210,14 +210,71 @@ function sanitize(s: string): string {
 }
 
 async function safeClose(launched: LaunchedMoss): Promise<void> {
+  // why: ask Electron to quit gracefully first so Moss's own before-quit hooks
+  // (which kill the spawned lair-keystore + holochain children) actually run.
+  // Without this, force-closing leaves orphaned subprocesses that slow down
+  // subsequent test launches.
+  try {
+    await launched.app.evaluate(({ app }) => app.quit());
+  } catch {
+    // app may already be detached / dead — fall through to force close
+  }
   try {
     await launched.app.close();
   } catch {
-    // app may already be exiting
+    // already exiting
+  }
+  // Belt-and-suspenders: kill any descendants of the launched Electron pid
+  // that haven't exited yet (lair/holochain that didn't get the signal).
+  try {
+    const pid = launched.app.process().pid;
+    if (pid) killDescendants(pid);
+  } catch {
+    // pid may be gone
   }
   // why: lair / conductor children sometimes leak databases that contaminate the
   // next test. Removing the profile dir is the simplest correct teardown.
   rmIfExists(launched.profileDir);
+}
+
+function killDescendants(rootPid: number): void {
+  // Linux-only by plan. Walks /proc to find descendants and SIGKILLs them.
+  let pids: number[] = [];
+  try {
+    const all = fs.readdirSync('/proc').filter((n) => /^\d+$/.test(n)).map(Number);
+    const parentMap = new Map<number, number>();
+    for (const p of all) {
+      try {
+        const stat = fs.readFileSync(`/proc/${p}/stat`, 'utf8');
+        // Format: pid (comm) state ppid ...
+        const m = stat.match(/\)\s+\S+\s+(\d+)/);
+        if (m) parentMap.set(p, Number(m[1]));
+      } catch {
+        // process gone or perms — skip
+      }
+    }
+    const descendants: number[] = [];
+    const queue = [rootPid];
+    while (queue.length > 0) {
+      const cur = queue.shift()!;
+      for (const [child, parent] of parentMap.entries()) {
+        if (parent === cur) {
+          descendants.push(child);
+          queue.push(child);
+        }
+      }
+    }
+    pids = descendants;
+  } catch {
+    return;
+  }
+  for (const pid of pids) {
+    try {
+      process.kill(pid, 'SIGKILL');
+    } catch {
+      // already dead
+    }
+  }
 }
 
 export const expect = base.expect;
