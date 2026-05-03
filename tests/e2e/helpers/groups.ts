@@ -16,7 +16,74 @@ export type CreateGroupOptions = {
   groupType?: 'stewarded' | 'unstewarded';
   /** Path to an avatar image on disk. If omitted, the first default icon is picked. */
   avatarPath?: string;
+  /**
+   * Per-group nickname for the moss-create-profile screen that appears after
+   * group creation. Defaults to 'tester'. Must be at least 3 chars.
+   */
+  nickname?: string;
 };
+
+/**
+ * If the moss-create-profile screen is showing (which happens once per agent
+ * the first time they enter a group), fill in the nickname and press
+ * "Enter the space". Idempotent — does nothing if the screen isn't visible.
+ *
+ * why: createGroupFromMainDashboard and joinGroupByInviteLink both leave the
+ * agent on this screen the first time around. Without setting a profile, the
+ * group view never finishes loading, so amIPrivileged() stays false and the
+ * Invite People button never renders.
+ */
+export async function enterSpaceIfPrompted(page: Page, nickname: string) {
+  const enterButton = page.getByRole('button', { name: /enter the space/i });
+  if ((await enterButton.count()) === 0) {
+    return;
+  }
+  // why: bypass the sl-input event chain entirely. The moss-edit-profile
+  // component's `nickname` and `disabled` are reactive Lit properties; setting
+  // them imperatively + calling checkDisabled() drives the button to enabled
+  // exactly as user typing would. Doing this through page.evaluate sidesteps a
+  // Playwright internal "generateSelector" crash that fires when locator
+  // actions target this particular Lit + Shoelace shadow tree.
+  await page.evaluate((v: string) => {
+    function findInDeepDom(root: Document | ShadowRoot, sel: string): Element | null {
+      const direct = root.querySelector(sel);
+      if (direct) return direct;
+      const all = root.querySelectorAll('*');
+      for (const el of Array.from(all)) {
+        const sr = (el as Element & { shadowRoot: ShadowRoot | null }).shadowRoot;
+        if (sr) {
+          const found = findInDeepDom(sr, sel);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+    // moss-edit-profile is also used in profile-settings, so scope to the
+    // moss-create-profile that's currently mounted as the entry view.
+    const createEl = findInDeepDom(document, 'moss-create-profile');
+    if (!createEl) throw new Error('moss-create-profile not in deep DOM (screen not present)');
+    const editEl = (createEl.shadowRoot
+      ? findInDeepDom(createEl.shadowRoot, 'moss-edit-profile')
+      : null) as
+      | (HTMLElement & { nickname?: string; disabled?: boolean; checkDisabled?: () => void })
+      | null;
+    if (!editEl) throw new Error('moss-edit-profile not found inside moss-create-profile');
+    // Also reflect the value on the sl-input so the avatar component's required-
+    // check and any later read of the input shows the right value.
+    const sl = (editEl.shadowRoot?.querySelector('sl-input#nickname-input') ?? null) as
+      | (HTMLElement & { value: string })
+      | null;
+    if (sl) sl.value = v;
+    editEl.nickname = v;
+    if (typeof editEl.checkDisabled === 'function') editEl.checkDisabled();
+  }, nickname);
+
+  // Give Lit one frame to flip `disabled` on the button.
+  await page.waitForTimeout(150);
+  await enterButton.click();
+  // Success signal: moss-create-profile unmounts and the group view shows up.
+  await expect(page.locator('moss-create-profile')).toHaveCount(0, { timeout: 30_000 });
+}
 
 /**
  * Create a group from main-dashboard. Assumes the app is already in the
@@ -65,29 +132,76 @@ export async function createGroupFromMainDashboard(page: Page, opts: CreateGroup
   // The dialog hides after a successful commit and a `group-created` event
   // fires; sl-dialog removes its `open` attribute. Use that as the close signal.
   await expect(createDialog.locator('sl-dialog[open]')).toHaveCount(0, { timeout: 60_000 });
-}
 
-export async function joinGroupByInviteLink(page: Page, inviteLink: string) {
-  await waitForState(page, ['Running']);
-  await page.getByRole('button', { name: 'Add Group' }).click();
-  const addGroupDialog = page.locator('#add-group-dialog');
-  await expect(addGroupDialog).toBeVisible();
-  await addGroupDialog.getByRole('button', { name: /join group/i }).click();
-
-  // The join-group dialog locator + invite-link field locator will be tightened
-  // when smoke #3 / #9 are first wired up against a real build.
-  await page.getByLabel(/invite.*link/i).fill(inviteLink);
-  await page.getByRole('button', { name: /join/i }).click();
-  await waitForState(page, ['Running'], 120_000);
+  // Note: the moss-create-profile screen ("Enter the space") may appear here
+  // the first time this agent enters any group. We do NOT auto-handle it from
+  // this helper — only some tests need the group view fully entered, and the
+  // saved-persona pre-population can leave the button disabled if you call
+  // enterSpaceIfPrompted twice with the same nickname. Tests that need the
+  // group fully entered should call enterSpaceIfPrompted explicitly.
 }
 
 /**
- * Read an invite link for the current group from the first-agent UI.
- * Returns the link string. Used by smoke #9 to bootstrap the second agent.
+ * Join the currently-selected agent into a group via paste-an-invite-link.
+ *
+ * Drives: Add Group dialog → Join Group → paste link → submit. The join
+ * succeeds when the join-group-dialog hides itself (`sl-dialog[open]` goes away).
  */
-export async function getCurrentGroupInviteLink(_page: Page): Promise<string> {
-  // why: there is no programmatic surface for this yet — pulling from clipboard
-  // after clicking "copy invite" is the realistic path. To be filled in once
-  // the smoke suite first exercises it; throw early so it's obvious in failures.
-  throw new Error('getCurrentGroupInviteLink: not yet implemented — wire up on first use');
+export async function joinGroupByInviteLink(page: Page, inviteLink: string) {
+  await waitForState(page, ['Running']);
+  await page.getByRole('button', { name: 'Add Group' }).click();
+  // why: scope to the choice dialog. There's also a "Join Group" submit button
+  // *inside* the join-group-dialog (form submit), which would match the same
+  // role+name once that dialog opens. Playwright's auto-actionability picks
+  // the visible/enabled one, but being explicit avoids races on slower hosts.
+  await page.getByRole('button', { name: /join group/i }).first().click();
+
+  const joinDialog = page.locator('join-group-dialog');
+  await joinDialog.getByLabel(/invite link/i).fill(inviteLink);
+  await joinDialog.locator('button[type="submit"]').click();
+
+  // Dialog closes on success — same shape as create-group success signal.
+  await expect(joinDialog.locator('sl-dialog[open]')).toHaveCount(0, { timeout: 120_000 });
+  // moss-create-profile may appear if this is the agent's first group entry.
+  // Tests that need to interact with the group beyond the sidebar should call
+  // enterSpaceIfPrompted explicitly afterwards.
+}
+
+/**
+ * Open the Invite People dialog for the currently-selected group, read the
+ * invite link out of the input, and close the dialog. Returns the link.
+ *
+ * Requires the agent to be a steward/progenitor of the group — otherwise the
+ * "Invite People" button is hidden (see group-area-sidebar.ts:652-668).
+ * Tests created with `createGroupFromMainDashboard` default to stewarded so
+ * the creator IS privileged.
+ */
+export async function getCurrentGroupInviteLink(page: Page): Promise<string> {
+  // why: amIPrivileged() returns false until myAccountabilities resolves to
+  // 'complete'. The Invite People button is gated on that, so wait for it
+  // to be present before clicking instead of racing a click timeout.
+  await expect(page.getByRole('button', { name: 'Invite People' })).toBeVisible({
+    timeout: 60_000,
+  });
+  await page.getByRole('button', { name: 'Invite People' }).click();
+
+  // why: sl-input is a custom element, so locator.inputValue() rejects it
+  // ("Node is not an <input>"). Read its `.value` JS property via evaluate.
+  // Poll because the template binds `.value=...` reactively — first render
+  // frame may have an empty value before invitationUrl resolves.
+  const readLink = () =>
+    page
+      .locator('invite-people-dialog sl-input.copy-link-input')
+      .evaluate((el) => (el as HTMLElement & { value: string }).value);
+  await expect.poll(readLink, { timeout: 10_000 }).toMatch(/invite/i);
+  const link = await readLink();
+
+  // Close the dialog so it doesn't sit on top of the peer-list when we go
+  // check that. sl-dialog dismisses on Escape by default.
+  await page.keyboard.press('Escape');
+  await expect(page.locator('invite-people-dialog sl-dialog[open]')).toHaveCount(0, {
+    timeout: 5_000,
+  });
+
+  return link;
 }
