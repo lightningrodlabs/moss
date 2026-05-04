@@ -178,6 +178,11 @@ program
     'Runs Moss with a custom profile with its own dedicated data store.',
   )
   .option(
+    '--seed-fork <string>',
+    'When importing existing data, appends this suffix to all imported network seeds.',
+  )
+  .addOption(new Option('--seedfork <string>').hideHelp())
+  .option(
     '-n, --network-seed <string>',
     'Installs any default apps with the provided network seed in case there are any and have not yet been installed.',
   )
@@ -1059,21 +1064,21 @@ if (!RUNNING_WITH_COMMAND) {
         app.quit();
       }
     }),
-    ipcMain.handle('get-network-overrides', () => {
-      const overrides = WE_FILE_SYSTEM.getNetworkOverrides();
-      const networkUrls = getNetworkUrls();
-      return {
-        overrides,
-        defaults: {
-          bootstrapUrl: PRODUCTION_BOOTSTRAP_URLS[0],
-          relayUrl: PRODUCTION_RELAY_URLS[0],
-        },
-        current: {
-          bootstrapUrl: networkUrls.bootstrap_urls[0],
-          relayUrl: networkUrls.relay_urls[0],
-        },
-      };
-    });
+      ipcMain.handle('get-network-overrides', () => {
+        const overrides = WE_FILE_SYSTEM.getNetworkOverrides();
+        const networkUrls = getNetworkUrls();
+        return {
+          overrides,
+          defaults: {
+            bootstrapUrl: PRODUCTION_BOOTSTRAP_URLS[0],
+            relayUrl: PRODUCTION_RELAY_URLS[0],
+          },
+          current: {
+            bootstrapUrl: networkUrls.bootstrap_urls[0],
+            relayUrl: networkUrls.relay_urls[0],
+          },
+        };
+      });
     ipcMain.handle('set-network-overrides', async (_e, overrides: { bootstrapUrl?: string; relayUrl?: string }) => {
       WE_FILE_SYSTEM.setNetworkOverrides(overrides);
       // Relaunch Moss
@@ -1110,7 +1115,7 @@ if (!RUNNING_WITH_COMMAND) {
       app.relaunch(options);
       app.quit();
     });
-      ipcMain.handle('is-main-window-focused', (): boolean | undefined => MAIN_WINDOW?.isFocused());
+    ipcMain.handle('is-main-window-focused', (): boolean | undefined => MAIN_WINDOW?.isFocused());
     ipcMain.handle(
       'notification',
       (
@@ -1486,7 +1491,7 @@ if (!RUNNING_WITH_COMMAND) {
       let network_info: NetworkInfo = { bootstrap_urls: [], signal_urls: [], relay_urls: [] };
       try {
         network_info = getNetworkUrls();
-      } catch (e) {console.error('Failed to get network urls', e)}
+      } catch (e) { console.error('Failed to get network urls', e) }
       /** */
       return HOLOCHAIN_MANAGER
         ? {
@@ -1800,6 +1805,12 @@ if (!RUNNING_WITH_COMMAND) {
     // Execute a groups import from a parsed array. Used by both dialog-based and
     // auto-import (pending) flows.
     const runGroupsImport = async (groups: GroupExportEntry[]): Promise<ImportResult[]> => {
+      const forkImportedSeed = (seed: string | undefined): string | undefined => {
+        if (!seed || !RUN_OPTIONS.seedFork) return seed;
+        console.log(`Forking imported seed "${seed}" with fork "${RUN_OPTIONS.seedFork}"`);
+        return `${seed}${RUN_OPTIONS.seedFork}`;
+      };
+
       const allApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       let myPubKey = globalPubKeyFromListAppsResponse(allApps);
       if (!myPubKey) myPubKey = await getOrCreateAgentPubKey();
@@ -1814,7 +1825,9 @@ if (!RUNNING_WITH_COMMAND) {
       for (let gi = 0; gi < groups.length; gi++) {
         const group = groups[gi];
         const current = gi + 1;
-        const { networkSeed, progenitor, groupProfile, agentProfile, description } = group;
+        const { progenitor, groupProfile, agentProfile, description } = group;
+        const networkSeed = forkImportedSeed(group.networkSeed);
+        console.log(`Importing group ${current}/${total}: "${groupProfile?.name || 'Unnamed'}" with network seed "${networkSeed}" and progenitor "${progenitor}"`);
 
         if (!networkSeed) {
           results.push({ groupName: groupProfile?.name, status: 'error', error: 'Missing network seed' });
@@ -1944,6 +1957,7 @@ if (!RUNNING_WITH_COMMAND) {
           if (group.tools && group.tools.length > 0) {
             for (let ti = 0; ti < group.tools.length; ti++) {
               const tool = group.tools[ti];
+              const toolNetworkSeed = forkImportedSeed(tool.network_seed);
               emitProgress(current, groupProfile?.name, 'installing-tool', {
                 toolName: tool.toolName || tool.custom_name,
                 toolIndex: ti + 1,
@@ -1995,7 +2009,7 @@ if (!RUNNING_WITH_COMMAND) {
                   sha256_ui: sha256Ui,
                   sha256_webhapp: sha256Webhapp,
                   distribution_info: JSON.stringify(newDistributionInfo),
-                  network_seed: tool.network_seed,
+                  network_seed: toolNetworkSeed,
                   properties: {},
                 };
 
@@ -2057,7 +2071,7 @@ if (!RUNNING_WITH_COMMAND) {
                     fs.writeFileSync(webHappPath, new Uint8Array(buffer));
                     const { happPath } = await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
                     happToBeInstalledPath = happPath;
-                    try { fs.rmSync(tmpImportDir, { recursive: true }); } catch (_) {}
+                    try { fs.rmSync(tmpImportDir, { recursive: true }); } catch (_) { }
                   }
 
                   const appAssetsInfo: AppAssetsInfo = deriveAppAssetsInfo(
@@ -2073,7 +2087,7 @@ if (!RUNNING_WITH_COMMAND) {
                     source: { type: 'path', value: happToBeInstalledPath },
                     installed_app_id: appletAppId,
                     agent_key: myPubKey,
-                    network_seed: tool.network_seed,
+                    network_seed: toolNetworkSeed,
                   });
                   await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appletAppId });
 
