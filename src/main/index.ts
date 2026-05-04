@@ -1939,6 +1939,13 @@ if (!RUNNING_WITH_COMMAND) {
           // Set the agent's own profile in this group if we have one from the export.
           if (agentProfile) {
             try {
+              const normalizedAgentFields =
+                agentProfile.fields &&
+                  typeof agentProfile.fields === 'object' &&
+                  !Array.isArray(agentProfile.fields)
+                  ? agentProfile.fields
+                  : {};
+
               emitProgress(current, groupProfile?.name, 'setting-profile');
               await appWs.callZome({
                 role_name: 'group',
@@ -1946,7 +1953,7 @@ if (!RUNNING_WITH_COMMAND) {
                 fn_name: 'create_profile',
                 payload: {
                   nickname: agentProfile.nickname,
-                  fields: agentProfile.fields,
+                  fields: normalizedAgentFields,
                 },
               });
             } catch (profileErr) {
