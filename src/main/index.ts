@@ -1871,7 +1871,7 @@ if (!RUNNING_WITH_COMMAND) {
           });
 
           let importGroupStatus: ImportStatus;
-          if (amProgenitor) {
+          if (amProgenitor || !progenitor) {
             if (groupProfile) {
               emitProgress(current, groupProfile?.name, 'setting-profile');
               await appWs.callZome({
@@ -1891,49 +1891,7 @@ if (!RUNNING_WITH_COMMAND) {
             }
             importGroupStatus = 'created';
           } else {
-            let profileSynced = false;
-            const deadline = Date.now() + 20000;
-            while (Date.now() < deadline) {
-              const secondsLeft = Math.ceil((deadline - Date.now()) / 1000);
-              emitProgress(current, groupProfile?.name, 'waiting-for-sync', { secondsLeft });
-              await new Promise((r) => setTimeout(r, 5000));
-              try {
-                const profileRecord = await appWs.callZome({
-                  role_name: 'group',
-                  zome_name: 'group',
-                  fn_name: 'get_group_profile',
-                  payload: { input: null, local: false },
-                });
-                if (profileRecord) { profileSynced = true; break; }
-              } catch (_pollErr) {
-                // continue polling
-              }
-            }
-
-            if (profileSynced) {
-              importGroupStatus = 'joined';
-            } else if (!progenitor) {
-              if (groupProfile) {
-                emitProgress(current, groupProfile?.name, 'setting-profile');
-                await appWs.callZome({
-                  role_name: 'group',
-                  zome_name: 'group',
-                  fn_name: 'set_group_profile',
-                  payload: { name: groupProfile.name, icon_src: groupProfile.icon_src },
-                });
-              }
-              if (description) {
-                await appWs.callZome({
-                  role_name: 'group',
-                  zome_name: 'group',
-                  fn_name: 'set_group_meta_data',
-                  payload: { name: 'description', data: description, permission_hash: null },
-                });
-              }
-              importGroupStatus = 'created';
-            } else {
-              importGroupStatus = 'joined-no-profile';
-            }
+            importGroupStatus = 'joined-no-profile';
           }
 
           // Set the agent's own profile in this group if we have one from the export.
@@ -1962,6 +1920,14 @@ if (!RUNNING_WITH_COMMAND) {
           }
 
           if (group.tools && group.tools.length > 0) {
+            if (progenitor && !amProgenitor) {
+              console.log(
+                `Skipping tool import for group ${appId} because importing agent is not the listed progenitor.`
+              );
+            }
+          }
+
+          if (group.tools && group.tools.length > 0 && (amProgenitor || !progenitor)) {
             for (let ti = 0; ti < group.tools.length; ti++) {
               const tool = group.tools[ti];
               const toolNetworkSeed = forkImportedSeed(tool.network_seed);
