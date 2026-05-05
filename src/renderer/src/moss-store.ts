@@ -36,7 +36,7 @@ import {
   InstalledAppId,
   LazyHoloHashMap,
   ProvisionedCell,
-  RoleNameCallZomeRequest, RoleSettings, RoleSettingsMap,
+  RoleSettings, RoleSettingsMap,
 } from '@holochain/client';
 import {
   AppletHash,
