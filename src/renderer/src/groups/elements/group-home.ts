@@ -1,6 +1,6 @@
 import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { localized, msg } from '@lit/localize';
-import { css, html, LitElement } from 'lit';
+import {css, html, LitElement, TemplateResult} from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import {
   ActionHash,
@@ -29,6 +29,7 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 import '@shoelace-style/shoelace/dist/components/tab-group/tab-group.js';
+import '@shoelace-style/shoelace/dist/components/tab-panel/tab-panel.js';
 import '@shoelace-style/shoelace/dist/components/tab/tab.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -73,6 +74,8 @@ import { appIdFromAppletHash } from '@theweave/utils';
 import { GroupSettings } from '../../elements/_new_design/group-settings.js';
 import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
 import { editIcon, closeIcon, saveIcon, personPlusIcon } from '../../elements/_new_design/icons.js';
+import yaml from "js-yaml";
+import {decode} from "@msgpack/msgpack";
 
 type View =
   | {
@@ -119,6 +122,9 @@ export class GroupHome extends LitElement {
 
   @query('#uninstall-confirm-dialog')
   _uninstallDialog!: MossDialog;
+
+  @query('#dna-properties-dialog')
+  _dnaPropertiesDialog!: MossDialog;
 
   @query('invite-people-dialog')
   inviteMemberDialog: any;
@@ -242,6 +248,9 @@ export class GroupHome extends LitElement {
   _appletToUninstall: { hash: AppletHash; name: string; version: string } | undefined;
 
   @state()
+  _appletToViewDna: Applet | undefined;
+
+  @state()
   _uninstalling = false;
 
   _peerStatusInterval: number | null | undefined;
@@ -361,10 +370,10 @@ export class GroupHome extends LitElement {
         width="490px"
         headerAlign="center"
         @sl-request-close=${(e) => {
-        if (this._uninstalling) {
-          e.preventDefault();
-        }
-      }}
+      if (this._uninstalling) {
+        e.preventDefault();
+      }
+    }}
       >
         <span slot="header"
           >${msg('Uninstalling')} ${this._appletToUninstall.name}
@@ -377,8 +386,8 @@ export class GroupHome extends LitElement {
 
           <div style="font-size: 14px; color: #C35C1D; margin-bottom: 15px; max-width: 400px;">
             ${msg(
-        'You will not be able to use this app anymore, but your group will keep using it until a Steward deprecates it for everyone.',
-      )}
+      'You will not be able to use this app anymore, but your group will keep using it until a Steward deprecates it for everyone.',
+    )}
           </div>
 
           <div style="font-size: 16px; margin-bottom: 30px;">
@@ -406,6 +415,58 @@ export class GroupHome extends LitElement {
         </div>
       </moss-dialog>
     `;
+  }
+
+  renderDnaPropertiesDialog() {
+    if (!this._appletToViewDna) return html``;
+
+    /** Generate UI for dna properties per role */
+      //console.log("dnaProperties", this._dnaProperties);
+    const dnaParams: TemplateResult<1>[] = [];
+    for (const [roleName, properties] of Object.entries(this._appletToViewDna.properties)) {
+      const yamlStr = yaml.dump(decode(properties));
+      //const yamlStr = JSON.stringify(properties, null, 2);
+      dnaParams.push(html`
+              <sl-tab slot="nav" .panel=${roleName}>${roleName}</sl-tab>
+              <sl-tab-panel .name=${roleName}>
+                <sl-textarea filled resize="auto" readonly
+                  size="small"
+                  rows="6"
+                  .value=${yamlStr}
+                  style="font-family: monospace"
+                ></sl-textarea>
+              </sl-tab-panel>
+          `);
+    }
+
+    return html`
+      <moss-dialog
+        id="dna-properties-dialog"
+        width="590px"
+        headerAlign="center">
+        <div slot="header">
+          <div>${msg('Custom DNA Properties')}</div>
+          <div style="margin-top:10px">\"${this._appletToViewDna.custom_name}\"</div>
+        </div>
+        <div slot="content" class="column" style="align-items: center; text-align: center;">
+          ${dnaParams.length > 0 ? html`
+                    <sl-tab-group style="width:100%;">
+                        ${dnaParams}
+                    </sl-tab-group>
+                ` : html`${msg("None")}`}            
+        </div>
+      </moss-dialog>
+    `;
+  }
+
+  async viewDnaProperties(appletHash: AppletHash) {
+    console.log("viewDnaProperties", appletHash);
+    // Get applet info for dialog
+    const applet = await toPromise(this._groupStore.applets.get(appletHash)!);
+    if (!applet) return;
+    this._appletToViewDna = applet;
+    await this.updateComplete;
+    this._dnaPropertiesDialog.show();
   }
 
   async uninstallApplet(e: CustomEvent) {
@@ -941,10 +1002,12 @@ export class GroupHome extends LitElement {
         <group-settings slot="content"
             id="group-settings"
             @uninstall-applet=${async (e) => this.uninstallApplet(e)}
+            @view-dna-properties=${async (e) => this.viewDnaProperties(e.detail)}
         ></group-settings>
 
       </moss-dialog>
 
+      ${this.renderDnaPropertiesDialog()}
       ${this.renderUninstallConfirmDialog()}
 
       <div class="row" style="flex: 1;">

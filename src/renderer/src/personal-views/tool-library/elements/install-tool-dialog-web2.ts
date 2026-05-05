@@ -1,6 +1,6 @@
-import { css, html, LitElement } from 'lit';
+import {css, html, LitElement, TemplateResult} from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
-import { ActionHash, ActionHashB64, AgentPubKey, EntryHash, encodeHashToBase64 } from '@holochain/client';
+import {ActionHash, ActionHashB64, AgentPubKey, EntryHash, encodeHashToBase64, YamlProperties} from '@holochain/client';
 import { localized, msg } from '@lit/localize';
 import { ref } from 'lit/directives/ref.js';
 import { joinAsyncMap, pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
@@ -15,6 +15,7 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
+import SlTextarea from '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 
 import { groupStoreContext } from '../../../groups/context.js';
 import { mossStyles } from '../../../shared-styles.js';
@@ -30,6 +31,8 @@ import { DistributionInfo, TDistributionInfo, ToolInfoAndVersions } from '@thewe
 import { Value } from '@sinclair/typebox/value';
 import { getLocalizedTimeAgo } from '../../../locales/localization.js';
 import { toolSettingsStyles } from '../../../elements/_new_design/group-settings/tool-settings-styles.js';
+import {fetchAndValidateHappOrWebhapp} from "../../../electron-api";
+import yaml from "js-yaml";
 
 type MatchingInactiveTool = {
   toolHash: EntryHash;
@@ -86,6 +89,9 @@ export class InstallToolDialogWeb2 extends LitElement {
   _tool: ToolAndCurationInfo | undefined;
 
   @state()
+  _dnaProperties: Object = {};
+
+  @state()
   _showAdvanced: boolean = false;
 
   @state()
@@ -108,6 +114,8 @@ export class InstallToolDialogWeb2 extends LitElement {
     // reload all advertised applets
     await this.groupStore.allAdvertisedApplets.reload();
     this._tool = tool;
+    this._dnaProperties = {};
+    this._showAdvanced = false;
     this._matchingInactiveTool = undefined;
     this._activatingExisting = false;
 
@@ -120,6 +128,8 @@ export class InstallToolDialogWeb2 extends LitElement {
       this._showDuplicateWarning = false;
     }
 
+    this.downloadWebHapp().then((obj) => this._dnaProperties = obj)
+
     setTimeout(() => {
       if (!this._showDuplicateWarning) {
         this.form?.reset();
@@ -131,6 +141,8 @@ export class InstallToolDialogWeb2 extends LitElement {
   close() {
     this.form?.reset();
     this._tool = undefined;
+    this._dnaProperties = {};
+    this._showAdvanced = false;
     this._showDuplicateWarning = false;
     this._matchingInactiveTool = undefined;
     this._appletDialog.hide();
@@ -262,7 +274,7 @@ export class InstallToolDialogWeb2 extends LitElement {
     this.form?.reset();
   }
 
-  async installApplet(fields: { custom_name: string; network_seed?: string }) {
+  async installApplet(fields: { custom_name: string; network_seed?: string; properties?: Record<string, YamlProperties>}) {
     if (this._installing) return;
     if (!this._tool) {
       notifyError(msg('Tool undefined.'));
@@ -273,7 +285,7 @@ export class InstallToolDialogWeb2 extends LitElement {
     try {
       // Trigger the download of the icon
       // TODO convert icon to base64 and store it on disk
-      this._installationProgress = 'Checking permission type...';
+      this._installationProgress = msg('Checking permission type...');
       const [isPriv, permission_hash] = await this.checkPrivileges();
       if (!isPriv) {
         console.error('No valid permission to add a Tool to this group.');
@@ -283,12 +295,13 @@ export class InstallToolDialogWeb2 extends LitElement {
         this._installationProgress = undefined;
         return;
       }
-      this._installationProgress = 'Downloading and installing Tool...';
+      this._installationProgress = msg('Downloading and installing Tool...');
       const appletEntryHash = await this.groupStore.installAndAdvertiseApplet(
         this._tool,
         fields.custom_name,
         fields.network_seed ? fields.network_seed : undefined,
-        permission_hash
+        permission_hash,
+        fields.properties ? fields.properties : undefined,
       );
 
       // Add a timeout here to try to fix case where error "Applet not installed in any of the groups" occurs
@@ -400,6 +413,20 @@ export class InstallToolDialogWeb2 extends LitElement {
     `;
   }
 
+
+  async downloadWebHapp(): Promise<Object> {
+    if (!this._tool) return Promise.reject("No tool defined.");
+    const url = this._tool.latestVersion.url;
+    console.log("download webHapp", url);
+    const res = await fetchAndValidateHappOrWebhapp(url);
+    console.log("download webHapp res", res);
+    if (res.type === 'webhapp') {
+      return res.happ.roles;
+    }
+    return res.roles;
+  }
+
+
   renderForm() {
     if (!this._tool) return html`Error.`;
 
@@ -412,6 +439,44 @@ export class InstallToolDialogWeb2 extends LitElement {
         const allAppletsNames = Array.from(this._registeredApplets.value.value.values()).map(
           (applet) => (applet as Applet)?.custom_name,
         );
+        /** Generate UI for dna properties per role */
+        //console.log("dnaProperties", this._dnaProperties);
+        const dnaParams: TemplateResult<1>[] = [];
+        for (const [roleName, properties] of Object.entries(this._dnaProperties)) {
+          const yamlStr = yaml.dump(properties);
+          //const yamlStr = JSON.stringify(properties, null, 2);
+          dnaParams.push(html`
+              <sl-tab slot="nav" .panel=${roleName}>${roleName}</sl-tab>
+              <sl-tab-panel .name=${roleName}>
+                <sl-textarea filled resize="auto"
+                  name="role-${roleName}"
+                  id="properties-field-${roleName}"
+                  help-text="yaml"
+                  size="small"
+                  .placeholder=${yamlStr}
+                  rows="6"
+                  .value=${yamlStr}
+                  style="font-family: monospace"
+                  @sl-input=${(e) => {
+                     const value = e.target.value;
+                      const elem = this.shadowRoot!.getElementById(`properties-field-${roleName}`) as unknown as SlTextarea;
+                      try {
+                         const parsed = yaml.load(value);
+                         if (parsed !== null && typeof parsed !== "object") {
+                           throw Error(msg("Invalid yaml"));
+                         }
+                     } catch(e: any) {
+                         console.error("Failed to parse YAML:", value);
+                         elem.setCustomValidity(e.message);
+                         return;
+                     }
+                      elem.setCustomValidity("");
+                  }}
+                ></sl-textarea>
+              </sl-tab-panel>
+          `);
+        }
+        /** */
         return html`
           <div class="column install-form">
             <sl-input
@@ -422,36 +487,31 @@ export class InstallToolDialogWeb2 extends LitElement {
               style="margin-bottom: 16px"
               required
               ${ref((input) => {
-          if (!input) return;
-          setTimeout(() => {
-            if (
-              this._tool &&
-              allAppletsNames.includes(this._tool.toolInfoAndVersions.title)
-            ) {
-              (input as HTMLInputElement).setCustomValidity('Name already exists');
-            } else {
-              (input as HTMLInputElement).setCustomValidity('');
-            }
-          });
-        })}
+                if (!input) return;
+                setTimeout(() => {
+                    if (this._tool && allAppletsNames.includes((input as any).value)) {
+                        (input as HTMLInputElement).setCustomValidity(msg('Name already exists'));
+                  } else {
+                    (input as HTMLInputElement).setCustomValidity('');
+                  }
+                });
+              })}
               @input=${(e) => {
-            if (allAppletsNames.includes(e.target.value)) {
-              e.target.setCustomValidity('Name already exists');
-            } else if (e.target.value === '') {
-              e.target.setCustomValidity('You need to choose a name for the Tool instance.');
-            } else {
-              e.target.setCustomValidity('');
-            }
-          }}
+                if (allAppletsNames.includes(e.target.value)) {
+                  e.target.setCustomValidity(msg('Name already exists'));
+                } else if (e.target.value === '') {
+                  e.target.setCustomValidity(msg('You need to choose a name for the Tool instance.'));
+                } else {
+                  e.target.setCustomValidity('');
+                }
+              }}
               .defaultValue=${this._tool.toolInfoAndVersions.title}
             ></sl-input>
 
             <span
               style="text-decoration: underline; cursor: pointer; margin-bottom: 10px;"
-              @click=${() => {
-            this._showAdvanced = !this._showAdvanced;
-          }}
-              >${this._showAdvanced ? 'Hide' : 'Show'} Advanced
+              @click=${() => this._showAdvanced = !this._showAdvanced}>
+                      ${this._showAdvanced ? msg('Hide') : msg('Show')} ${msg('Advanced')}
             </span>
 
             ${this._showAdvanced
@@ -462,7 +522,13 @@ export class InstallToolDialogWeb2 extends LitElement {
                     .label=${msg('Custom Network Seed')}
                     style="margin-bottom: 16px"
                   ></sl-input>
-                `
+                  ${dnaParams.length > 0 ? html`
+                      <div>${msg('Custom DNA properties (per Role)')}</div>
+                      <sl-tab-group>
+                          ${dnaParams}
+                      </sl-tab-group>
+                  ` : html``}
+                    `
             : html``}
 
             <div
@@ -557,7 +623,17 @@ export class InstallToolDialogWeb2 extends LitElement {
                   ></sl-tooltip
                 >
               </div>
-              <form class="column" ${onSubmit((f) => this.installApplet(f))}>${this.renderForm()}</form>
+              <form class="column" ${onSubmit((f) => {
+                //console.log("fields", f);
+                const transformed = { custom_name: f.custom_name, network_seed: f.network_seed, properties: {}};
+                Object.entries(f).map(([key, value]) => {
+                    if (key.startsWith("role-")) {
+                        transformed.properties[key.substring(5)] = yaml.load(value as string);
+                    }
+                })
+                //console.log("transformed fields", transformed);
+                /*await*/ this.installApplet(transformed);
+              })}>${this.renderForm()}</form>
             `}
         <div>
         </moss-dialog>

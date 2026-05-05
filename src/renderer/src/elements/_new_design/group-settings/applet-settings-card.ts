@@ -3,7 +3,7 @@ import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { css, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { mdiTrashCanOutline } from '@mdi/js';
+import {mdiTrashCanOutline, mdiTune} from '@mdi/js';
 
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
@@ -320,9 +320,31 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
   protected renderDetailsActions() {
     if (!this.appInfo) return html``;
     return html`
-      ${this.renderAdvancedSettingsToggle()}
-
       <div class="row">
+          ${this.renderAdvancedSettingsToggle()}
+
+          <moss-mini-button
+                variant="primary"
+                color="#EEEEEE"
+                style="margin-right:8px;"
+                @click=${() => this.dispatchEvent(
+                        new CustomEvent('view-dna-properties', {
+                            bubbles: true,
+                            composed: true,
+                            detail: this.appletHash,
+                        }),
+                )}>
+            <div class="row center-content">
+                <sl-icon
+                        style="height: 20px; width: 20px;"
+                        .src=${wrapPathInSvg(mdiTune)}
+                ></sl-icon
+                ><span style="margin-left: 5px;">${msg('DNA Properties')}</span>
+            </div>
+        </moss-mini-button>
+      
+         <div style="flex-grow: 1"></div> 
+          
         <sl-tooltip content=${msg('Uninstall this Tool for yourself (irreversible)')}>
           <moss-mini-button
             variant="secondary"
@@ -330,11 +352,10 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
             style=" margin-right:8px;"
             @click=${() => this.uninstallApplet()}
             @keypress=${(e: KeyboardEvent) => {
-        if (e.key === 'Enter') {
-          this.uninstallApplet();
-        }
-      }}
-          >
+              if (e.key === 'Enter') {
+                this.uninstallApplet();
+              }
+            }}>
             <div class="row center-content">
               <sl-icon
                 style="height: 20px; width: 20px;"

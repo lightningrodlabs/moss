@@ -21,20 +21,20 @@ import {
 } from '@holochain-open-dev/stores';
 import {EntryRecord, GetonlyMap, mapValues} from '@holochain-open-dev/utils';
 import {
-    ActionHash,
-    AgentPubKey,
-    AgentPubKeyB64,
-    AppAuthenticationToken,
-    AppWebsocket,
-    CellType,
-    DnaHash,
-    EntryHash,
-    EntryHashMap,
-    decodeHashFromBase64,
-    encodeHashToBase64,
-    hashFrom32AndType,
-    HoloHashType,
-    LazyHoloHashMap, HoloHashMap,
+  ActionHash,
+  AgentPubKey,
+  AgentPubKeyB64,
+  AppAuthenticationToken,
+  AppWebsocket,
+  CellType,
+  DnaHash,
+  EntryHash,
+  EntryHashMap,
+  decodeHashFromBase64,
+  encodeHashToBase64,
+  hashFrom32AndType,
+  HoloHashType,
+  LazyHoloHashMap, HoloHashMap, YamlProperties,
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
 import { DnaModifiers } from '@holochain/client';
@@ -1322,6 +1322,7 @@ export class GroupStore {
     customName: string,
     networkSeed?: string,
     permissionHash?: ActionHash,
+    properties?: Record<string, YamlProperties>,
   ): Promise<EntryHash> {
     if (!networkSeed) {
       networkSeed = uuidv4();
@@ -1361,7 +1362,10 @@ export class GroupStore {
       sha256_webhapp: latestVersion.hashes.webhappSha256,
       distribution_info: JSON.stringify(distributionInfo),
       network_seed: networkSeed,
-      properties: {},
+      // Applet stores properties encoded
+      properties: properties
+        ? Object.fromEntries(Object.entries(properties).map(([key, props]) => [key, encode(props)]))
+        : {},
     };
 
     const appletHash = await this.groupClient.hashApplet(applet);

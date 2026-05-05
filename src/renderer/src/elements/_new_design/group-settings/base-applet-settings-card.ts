@@ -247,11 +247,10 @@ export abstract class BaseAppletSettingsCard extends LitElement {
               style="margin-right: 5px;"
               @click=${() => deprecateTool(this.groupStore, this.appletHash)}
               @keypress=${async (e: KeyboardEvent) => {
-            if (e.key === 'Enter') {
-              deprecateTool(this.groupStore, this.appletHash);
-            }
-          }}
-            >
+                if (e.key === 'Enter') {
+                  deprecateTool(this.groupStore, this.appletHash);
+                }
+              }}>
               <div class="row center-content">
                 ${deprecateIcon(18)}
                 <span style="margin-left: 5px;">${msg('Deprecate for Group')}</span>
@@ -289,19 +288,19 @@ export abstract class BaseAppletSettingsCard extends LitElement {
 
   renderAdvancedSettingsToggle() {
     return html`
-      <button
-        class="moss-button"
-        style="height:18px;border-radius:8px; padding: 8px 10px;border: 1px solid #89D6AA; color: #89D6AA"
+      <moss-mini-button
+        variant="primary"
+        color="#89D6AA"
+        style="margin-right:8px;"
         @click=${(e: MouseEvent) => {
-        e.stopPropagation();
-        this.showAdvanced = !this.showAdvanced;
-      }}
-      >
-        <div class="row items-center">
-          ${devIcon(16)}
-          <span style="margin-left: 5px;font-size: 12px; ">${msg('advanced settings')}</span>
+          e.stopPropagation();
+          this.showAdvanced = !this.showAdvanced;
+        }}>
+        <div class="row center-content">
+            ${devIcon(16)}
+            <span style="margin-left:5px;">${msg('Advanced settings')}</span>
         </div>
-      </button>
+      </moss-mini-button>
     `;
   }
 

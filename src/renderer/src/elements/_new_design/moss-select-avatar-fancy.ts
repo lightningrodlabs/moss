@@ -1,6 +1,6 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
-import { msg } from '@lit/localize';
+import {msg, str} from '@lit/localize';
 import '@shoelace-style/shoelace/dist/components/avatar/avatar.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
@@ -49,7 +49,7 @@ export class MossSelectAvatarFancy extends LitElement implements FormField {
   reportValidity() {
     const invalid = this.required !== false && !this.value;
     if (invalid) {
-      this._errorInput.setCustomValidity(`${this.label} is required`);
+      this._errorInput.setCustomValidity(msg(str`${this.label} is required`));
       this._errorInput.reportValidity();
     }
 
