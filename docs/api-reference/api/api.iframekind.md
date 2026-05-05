@@ -10,6 +10,7 @@
 export type IframeKind = {
     type: 'applet';
     appletHash: AppletHash;
+    groupHash: DnaHash | null;
     subType: string;
 } | {
     type: 'cross-group';

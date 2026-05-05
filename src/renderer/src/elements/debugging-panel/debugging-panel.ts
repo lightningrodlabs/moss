@@ -367,12 +367,31 @@ export class DebuggingPanel extends LitElement {
   // Cache: DnaHashB64 -> cell/role name (resolved from appInfo)
   private _dnaNameCache: Record<DnaHashB64, string> = {};
 
+  // True while the panel is actually visible to the user. The panel stays
+  // mounted in the DOM when its tab is unselected or the asset viewer is
+  // collapsed, so disconnectedCallback alone isn't enough to stop polling —
+  // see renderOpenTabs/asset-viewer in main-dashboard.ts. We gate every
+  // poll on this flag so background ticks become no-ops.
+  private _isVisible = false;
+  private _visibilityObserver?: IntersectionObserver;
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    this._visibilityObserver = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        this._isVisible = entry.isIntersecting;
+      }
+    });
+    this._visibilityObserver.observe(this);
+  }
+
   async firstUpdated() {
     // Poll network stats periodically
     // Uses safeSetInterval to prevent call stacking if polling is slow
     this._refreshInterval = safeSetInterval({
       name: 'pollNetworkStats',
       fn: async () => {
+        if (!this._isVisible) return;
         await this.pollNetworkStats();
         this.requestUpdate();
       },
@@ -393,6 +412,11 @@ export class DebuggingPanel extends LitElement {
   }
 
   disconnectedCallback(): void {
+    super.disconnectedCallback();
+    if (this._visibilityObserver) {
+      this._visibilityObserver.disconnect();
+      this._visibilityObserver = undefined;
+    }
     if (this._refreshInterval) {
       this._refreshInterval.cancel();
       this._refreshInterval = undefined;
@@ -459,6 +483,7 @@ export class DebuggingPanel extends LitElement {
       this._conductorMemoryPollInterval = safeSetInterval({
         name: 'pollConductorMemory',
         fn: async () => {
+          if (!this._isVisible) return;
           await this.pollConductorMemory();
         },
         intervalMs: 2000,
@@ -484,6 +509,7 @@ export class DebuggingPanel extends LitElement {
       this._memoryPollInterval = safeSetInterval({
         name: 'pollMemory',
         fn: async () => {
+          if (!this._isVisible) return;
           await this.pollMemory();
         },
         intervalMs: 2000,
@@ -576,7 +602,10 @@ export class DebuggingPanel extends LitElement {
       this.pollStorageInfo();
       this._storagePollInterval = safeSetInterval({
         name: 'pollStorageInfo',
-        fn: () => this.pollStorageInfo(),
+        fn: () => {
+          if (!this._isVisible) return Promise.resolve();
+          return this.pollStorageInfo();
+        },
         intervalMs: 5000,
       });
     }
@@ -922,31 +951,14 @@ export class DebuggingPanel extends LitElement {
   }
 
   /**
-   * Extract the transport pub_key from a peer URL.
-   * Peer URLs typically have format: wss://host/tx5-ws/sig/<transport_pub_key>
-   * The transport pub_key is the last path segment.
+   * Extract the transport pub_key from a peer URL. The key is the last path
+   * segment for both tx5-ws (wss://host/tx5-ws/sig/<key>) and iroh
+   * (<scheme>://host:port/<endpoint_id>).
    */
   extractTransportKeyFromUrl(peerUrl: string): string | null {
-    try {
-      const urlObj = new URL(peerUrl);
-      const pathParts = urlObj.pathname.split('/').filter((p) => p.length > 0);
-      // The transport key is the last segment after /tx5-ws/sig/ or similar
-      if (pathParts.length > 0) {
-        const lastPart = pathParts[pathParts.length - 1];
-        // Transport keys are typically 40+ characters in URL-safe base64
-        if (lastPart.length >= 40) {
-          return lastPart;
-        }
-      }
-    } catch {
-      // If URL parsing fails, try direct string splitting
-      const parts = peerUrl.split('/');
-      const lastPart = parts[parts.length - 1];
-      if (lastPart && lastPart.length >= 40) {
-        return lastPart;
-      }
-    }
-    return null;
+    const pathParts = new URL(peerUrl).pathname.split('/').filter((p) => p.length > 0);
+    const lastPart = pathParts[pathParts.length - 1];
+    return lastPart && lastPart.length >= 40 ? lastPart : null;
   }
 
   /**

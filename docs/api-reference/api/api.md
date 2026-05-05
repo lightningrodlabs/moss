@@ -37,6 +37,30 @@ Description
 </td></tr>
 </tbody></table>
 
+## Enumerations
+
+<table><thead><tr><th>
+
+Enumeration
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[MossPrivilege](./api.mossprivilege.md)
+
+
+</td><td>
+
+
+</td></tr>
+</tbody></table>
+
 ## Functions
 
 <table><thead><tr><th>
@@ -207,6 +231,17 @@ Description
 
 </th></tr></thead>
 <tbody><tr><td>
+
+[MossRole](./api.mossrole.md)
+
+
+</td><td>
+
+MossRole is a typed Enum of GroupRoles
+
+
+</td></tr>
+<tr><td>
 
 [NULL\_HASH](./api.null_hash.md)
 
@@ -407,7 +442,7 @@ The name that's being used in RenderInfo to tell which creatable should be rende
 </td></tr>
 <tr><td>
 
-[GroupPermissionType](./api.grouppermissiontype.md)
+[GroupProfile](./api.groupprofile.md)
 
 
 </td><td>
@@ -416,7 +451,7 @@ The name that's being used in RenderInfo to tell which creatable should be rende
 </td></tr>
 <tr><td>
 
-[GroupProfile](./api.groupprofile.md)
+[GroupRole](./api.grouprole.md)
 
 
 </td><td>
@@ -461,6 +496,24 @@ The name that's being used in RenderInfo to tell which creatable should be rende
 </td></tr>
 <tr><td>
 
+[MossAccountability](./api.mossaccountability.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[MossRole](./api.mossrole.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
 [NotificationCount](./api.notificationcount.md)
 
 
@@ -484,7 +537,7 @@ The name that's being used in RenderInfo to tell which creatable should be rende
 
 </td><td>
 
-Hash of Holohash lenght but all zeroes
+Hash of HoloHash length but all zeroes
 
 
 </td></tr>

@@ -4,7 +4,7 @@
 
 ## NullHash type
 
-Hash of Holohash lenght but all zeroes
+Hash of HoloHash length but all zeroes
 
 **Signature:**
 

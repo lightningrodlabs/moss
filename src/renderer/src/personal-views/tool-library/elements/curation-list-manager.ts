@@ -19,6 +19,29 @@ export class UrlListManager extends LitElement {
   @state() private _urls: NamedUrl[] = [];
   @state() private _newUrl = "";
   @state() private _error = "";
+  @state() private _confirmingReset = false;
+
+
+  /** */
+  private _isDefault(): boolean {
+    const current = new Set(this._urls.map((u) => this._normalizeUrl(u.url)));
+    const defaults = new Set(
+      DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS.map((c) => this._normalizeUrl(c.url))
+    );
+    if (current.size !== defaults.size) return false;
+    for (const url of current) if (!defaults.has(url)) return false;
+    return true;
+  }
+
+
+  /** */
+  private async _doFactoryReset() {
+    this._confirmingReset = false;
+    await this.initializeList(DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS.map((i) => i.url));
+    this.dispatchEvent(
+      new CustomEvent("urls-changed", { detail: this._urls, bubbles: true })
+    );
+  }
 
 
   /** */
@@ -67,19 +90,30 @@ export class UrlListManager extends LitElement {
       return;
     }
 
-    let toolCurations: ToolCurations;
+    let url: URL;
     try {
-      const url = new URL(
+      url = new URL(
         this._newUrl.startsWith("http")
           ? this._newUrl
           : `https://${this._newUrl}`
       );
-      const resp = await fetch(url, { cache: 'no-cache' });
-      toolCurations = await resp.json();
-      console.log("Curation list found. Curator:", toolCurations.curator.name)
-      // TODO validate format strictly here
     } catch {
       this._error = "url";
+      return;
+    }
+
+    let toolCurations: ToolCurations;
+    try {
+      const resp = await fetch(url, { cache: 'no-cache' });
+      toolCurations = await resp.json();
+      if (!toolCurations?.curator?.name) {
+        throw new Error("Not a curation list");
+      }
+      console.log("Curation list found. Curator:", toolCurations.curator.name)
+      // TODO validate format strictly here
+    } catch (err) {
+      // network/DNS failure surfaces as TypeError ("Failed to fetch")
+      this._error = err instanceof TypeError ? "url" : "curation";
       return;
     }
 
@@ -118,8 +152,14 @@ export class UrlListManager extends LitElement {
     //console.debug("<curation-list-manager> render", this._urls);
     return html`
         <div class="container">
+        <div class="publish-info">
+          ${msg(html`Learn more about
+            <a href="https://dev.theweave.social/build/publishing-a-tool.html"
+               target="_blank" rel="noopener noreferrer">publishing a Tool</a>
+            and how to create your own curation list.`)}
+        </div>
         <div class="add-form">
-          <div class="field ${this._error === "url" ? "error" : ""}">
+          <div class="field ${this._error ? "error" : ""}">
             <sl-input
               id="inp-url"
               class="moss-input"
@@ -128,14 +168,16 @@ export class UrlListManager extends LitElement {
               .value=${this._newUrl}
               @input=${(e: InputEvent) => this._newUrl = (e.target as HTMLInputElement).value}
               @keydown=${this._onKeydown}
-            />
+            ></sl-input>
+            ${this._error === "url"
+                ? html`<span class="error-msg">${msg('Enter a valid URL')}</span>`
+                : this._error === "curation"
+                ? html`<span class="error-msg">${msg('Invalid curation list')}</span>`
+                : ""}
           </div>
 
           <button class="moss-button" @click=${this._addUrl}>${msg('Add List')}</button>
         </div>
-        ${this._error === "url"
-                ? html`<span class="error-msg">${msg('Enter a valid URL')}</span>`
-                : ""}
         <!-- List -->
         ${this._urls.length === 0
           ? html`<div class="empty-state">${msg('No lists found')}</div>`
@@ -168,26 +210,45 @@ export class UrlListManager extends LitElement {
                       `
                   })}
             `}
-            <div style="margin-top:50px;">
-                <div><b>${msg('Factory Reset')}</b></div>
-                <div class="row items-center"
-                     style="background: #ffaaaa; padding: 10px 15px; border-radius: 8px; margin-top: 12px;">
-                    <span style="margin-right: 20px; flex: 1;">
-                        ${msg('Fully reset list to initial setting')}
-                    </span>
-                    <sl-button
-                            variant="danger"
-                            @click=${async () => {
-                                await this.initializeList(DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS.map((i) => i.url));
-                                this.dispatchEvent(
-                                        new CustomEvent("urls-changed", { detail: this._urls, bubbles: true })
-                                );
-                            }}
-                    >
-                        ${msg('Factory Reset')}
-                    </sl-button>                    
+            ${this._isDefault() ? "" : html`
+                <div style="margin-top:50px;">
+                    <div><b>${msg('Factory Reset')}</b></div>
+                    <div class="row items-center"
+                         style="background: #ffaaaa; padding: 10px 15px; border-radius: 8px; margin-top: 12px;">
+                        <span style="margin-right: 20px; flex: 1;">
+                            ${this._confirmingReset
+                                ? msg('Are you sure? This will replace your curation lists with the default.')
+                                : msg('Reset to default list')}
+                        </span>
+                        ${this._confirmingReset
+                            ? html`
+                                <sl-button
+                                        style="margin-right: 8px;"
+                                        @click=${() => { this._confirmingReset = false; }}>
+                                    ${msg('Cancel')}
+                                </sl-button>
+                                <sl-button
+                                        variant="danger"
+                                        @click=${() => this._doFactoryReset()}>
+                                    ${msg('Confirm Reset')}
+                                </sl-button>
+                            `
+                            : html`
+                                <sl-button
+                                        variant="danger"
+                                        @click=${() => {
+                                            if (this._urls.length === 0) {
+                                                this._doFactoryReset();
+                                            } else {
+                                                this._confirmingReset = true;
+                                            }
+                                        }}>
+                                    ${msg('Factory Reset')}
+                                </sl-button>
+                            `}
+                    </div>
                 </div>
-            </div>
+            `}
       </div>
     `;
   }
@@ -214,11 +275,23 @@ export class UrlListManager extends LitElement {
       }
 
 
+      .publish-info {
+          margin-bottom: 20px;
+          font-size: 0.85rem;
+          color: #3a3530;
+      }
+
+      .publish-info a {
+          color: var(--moss-dark-button, #151A11);
+          text-decoration: underline;
+      }
+
       /* ── Add form ── */
 
       .add-form {
           display: flex;
           flex-direction: row;
+          align-items: flex-start;
           gap: 10px;
           margin-bottom: 30px;
       }

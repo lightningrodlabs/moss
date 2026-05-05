@@ -146,6 +146,20 @@ export function emitToWindow<T>(targetWindow: BrowserWindow, channel: string, pa
   targetWindow.webContents.send(channel, payload);
 }
 
+// Safely stringify electron-updater log arguments (which can be Error, string, object, or undefined)
+// for inclusion in a single-line log message.
+export function formatUpdaterArg(arg: unknown): string {
+  if (arg === undefined) return 'undefined';
+  if (arg === null) return 'null';
+  if (typeof arg === 'string') return arg;
+  if (arg instanceof Error) return arg.stack ?? `${arg.name}: ${arg.message}`;
+  try {
+    return JSON.stringify(arg);
+  } catch {
+    return String(arg);
+  }
+}
+
 export function breakingVersion(version: string): string {
   if (!semver.valid(version)) {
     throw new Error('App has an invalid version number.');

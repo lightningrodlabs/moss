@@ -1,0 +1,217 @@
+name: 'publish-dev'
+# Cuts a test build across all platforms for early real-world testing
+# (primarily the ASR feature). Builds are uploaded to a prerelease
+# tagged v<pkg.version>-test.<run_number> — marked prerelease so the
+# production auto-updater (which reads releases/latest/download) never
+# serves them to existing Moss installs.
+#
+# Trigger manually from the Actions tab → "publish-dev" → Run workflow.
+# Testers download installers from the resulting GitHub release page.
+on:
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        description: 'Short note shown on the release page'
+        required: false
+        default: 'Dev test build. NOT served by auto-update.'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.tag.outputs.TAG }}
+      version: ${{ steps.tag.outputs.APP_VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute tag
+        id: tag
+        shell: bash
+        run: |
+          APP_VERSION=$(node -p -e "require('./package.json').version")
+          TAG="v${APP_VERSION}-test.${{ github.run_number }}"
+          echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_OUTPUT
+          echo "TAG=${TAG}" >> $GITHUB_OUTPUT
+
+      - name: Create prerelease
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          # --prerelease keeps this out of the auto-updater path. --notes
+          # body is editable after the run.
+          gh release create "${{ steps.tag.outputs.TAG }}" \
+            --title "Moss ${{ steps.tag.outputs.APP_VERSION }} (test ${{ github.run_number }})" \
+            --prerelease \
+            --notes "${{ github.event.inputs.release_notes }}
+
+          Installed version will report as ${{ steps.tag.outputs.APP_VERSION }}. When the
+          real ${{ steps.tag.outputs.APP_VERSION }} ships to stable, auto-update will NOT
+          migrate you (version equality). Install the stable build manually when it's out."
+
+  build:
+    needs: create-release
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [windows-2022, macos-15-intel, macos-latest, ubuntu-22.04, ubuntu-22.04-arm]
+    env:
+      MACOSX_DEPLOYMENT_TARGET: 10.15
+
+    permissions:
+      contents: write
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup for macOS code signing
+        if: matrix.platform == 'macos-15-intel' || matrix.platform == 'macos-latest'
+        uses: matthme/import-codesign-certs@5565bb656f60c98c8fc515f3444dd8db73545dc2
+        with:
+          p12-file-base64: ${{ secrets.HBE_APPLE_CERTIFICATE_BASE64 }}
+          p12-password: ${{ secrets.HBE_APPLE_CERTIFICATE_PASS }}
+
+      - name: setup node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 20
+
+      - name: Retrieve name
+        id: name
+        shell: bash
+        run: |
+          echo "APP_NAME=$(node -p -e "require('./package.json').name")" >> $GITHUB_OUTPUT
+
+      - name: install Go stable
+        uses: actions/setup-go@v4
+        with:
+          go-version: 'stable'
+
+      - name: Environment setup
+        run: |
+          mkdir resources/default-apps
+          mkdir resources/bins
+          yarn setup:release
+
+      - name: Build zomes
+        run: |
+          rustup target add wasm32-unknown-unknown
+          yarn build:zomes
+
+      - name: build the app (macOS arm64)
+        if: matrix.platform == 'macos-latest'
+        env:
+          APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
+          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          DEBUG: electron-osx-sign*,electron-notarize*
+        run: |
+          yarn build:mac-arm64
+          ls dist
+
+      - name: build the app (macOS x86)
+        if: matrix.platform == 'macos-15-intel'
+        env:
+          APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
+          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          DEBUG: electron-osx-sign*,electron-notarize*
+        run: |
+          yarn build:mac-x64
+          ls dist
+
+      - name: Install FUSE
+        if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fuse libfuse2
+
+      - name: build (Ubuntu 22.04)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          yarn build:linux
+
+      - name: build (Ubuntu 22.04 aarch64)
+        if: matrix.platform == 'ubuntu-22.04-arm'
+        run: |
+          sudo apt-get install ruby-dev build-essential
+          sudo gem install fpm
+          export USE_SYSTEM_FPM=true
+          yarn build:linux
+
+      - name: build (Windows)
+        shell: bash
+        if: matrix.platform == 'windows-2022'
+        run: |
+          # Retry 5 times on Windows due to weird flaky issue
+          yarn build:win || yarn build:win || yarn build:win || yarn build:win || yarn build:win
+
+      - name: sign the app (Windows)
+        if: matrix.platform == 'windows-2022'
+        uses: azure/trusted-signing-action@v0.5.0
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ secrets.AZURE_ENDPOINT }}
+          trusted-signing-account-name: ${{ secrets.AZURE_CODE_SIGNING_NAME }}
+          certificate-profile-name: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
+          files-folder: dist
+          files-folder-filter: exe
+
+      # Installer-only upload. We intentionally skip latest*.yml files
+      # so the production auto-updater won't resolve this release — the
+      # prerelease flag gives belt-and-braces protection on top.
+      - name: upload installers (Ubuntu 22.04)
+        if: matrix.platform == 'ubuntu-22.04'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ needs.create-release.outputs.tag }}" \
+            "dist/${{ steps.name.outputs.APP_NAME }}-${{ needs.create-release.outputs.version }}-amd64.deb" \
+            "dist/${{ steps.name.outputs.APP_NAME }}-${{ needs.create-release.outputs.version }}-x86_64.AppImage" \
+            --clobber
+
+      - name: upload installers (Ubuntu 22.04 aarch64)
+        if: matrix.platform == 'ubuntu-22.04-arm'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ needs.create-release.outputs.tag }}" \
+            "dist/${{ steps.name.outputs.APP_NAME }}-${{ needs.create-release.outputs.version }}-arm64.deb" \
+            "dist/${{ steps.name.outputs.APP_NAME }}-${{ needs.create-release.outputs.version }}-arm64.AppImage" \
+            --clobber
+
+      - name: upload installers (Windows)
+        shell: bash
+        if: matrix.platform == 'windows-2022'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ needs.create-release.outputs.tag }}" \
+            "dist/${{ steps.name.outputs.APP_NAME }}-${{ needs.create-release.outputs.version }}-setup.exe" \
+            --clobber
+
+      - name: upload installers (macOS arm64)
+        if: matrix.platform == 'macos-latest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          gh release upload "${{ needs.create-release.outputs.tag }}" \
+            "dist/${{ steps.name.outputs.APP_NAME }}-${{ needs.create-release.outputs.version }}-arm64.dmg" \
+            --clobber
+
+      - name: upload installers (macOS x86)
+        if: matrix.platform == 'macos-15-intel'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          gh release upload "${{ needs.create-release.outputs.tag }}" \
+            "dist/${{ steps.name.outputs.APP_NAME }}-${{ needs.create-release.outputs.version }}-x64.dmg" \
+            --clobber

@@ -252,7 +252,7 @@ Removes the specified tags from an asset relation
 
 </td><td>
 
-(from?: 'search' \| 'pocket' \| 'create') =&gt; Promise&lt;[WAL](./api.wal.md) \| undefined&gt;
+(from?: 'search' \| 'pocket' \| 'create' \| 'pocket-no-create') =&gt; Promise&lt;[WAL](./api.wal.md) \| undefined&gt;
 
 
 </td><td>

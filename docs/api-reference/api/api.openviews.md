@@ -34,7 +34,7 @@ Description
 </td></tr>
 <tr><td>
 
-[openAppletMain(appletHash)](./api.openviews.openappletmain.md)
+[openAppletMain(appletHash, wal)](./api.openviews.openappletmain.md)
 
 
 </td><td>

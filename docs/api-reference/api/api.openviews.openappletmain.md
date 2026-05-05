@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-openAppletMain(appletHash: EntryHash): void;
+openAppletMain(appletHash: EntryHash, wal?: WAL): void;
 ```
 
 ## Parameters
@@ -39,6 +39,22 @@ EntryHash
 
 
 </td><td>
+
+
+</td></tr>
+<tr><td>
+
+wal
+
+
+</td><td>
+
+[WAL](./api.wal.md)
+
+
+</td><td>
+
+_(Optional)_
 
 
 </td></tr>

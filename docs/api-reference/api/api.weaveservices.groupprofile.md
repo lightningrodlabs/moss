@@ -9,5 +9,5 @@ Get the group profile of the specified group
 **Signature:**
 
 ```typescript
-groupProfile: (groupHash: any) => Promise<any>;
+groupProfile: (groupHash: DnaHash) => Promise<any>;
 ```
