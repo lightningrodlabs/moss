@@ -16,7 +16,13 @@ on:
 jobs:
   smoke-e2e:
     runs-on: ubuntu-22.04
-    timeout-minutes: 25
+    # why: locally the suite runs in ~2min, but on a cold GitHub runner the
+    # first-attempt of each test hits the 240s per-test timeout (lair/conductor
+    # warm-up + cold cache). Retries pass in seconds. Net effect is the suite
+    # runs for ~20min including retries; setup adds ~5min. 60min gives margin.
+    # Once we identify the root cause of first-run slowness on CI we can drop
+    # retries and dial this back down.
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v4
