@@ -560,7 +560,14 @@ if (!RUNNING_WITH_COMMAND) {
     });
 
     // Open the DevTools.
-    if (!app.isPackaged || (app.isPackaged && !!RUN_OPTIONS.devInfo)) {
+    // why: gate on MOSS_DISABLE_DEVTOOLS so the Playwright e2e fixture can
+    // suppress devtools in test runs. With devtools open, Playwright's CDP
+    // sometimes tracks the devtools window instead of the admin window and
+    // electron.launch never resolves — see plans/ui-testing-and-cruft-cleanup.md.
+    if (
+      (!app.isPackaged || (app.isPackaged && !!RUN_OPTIONS.devInfo)) &&
+      !process.env.MOSS_DISABLE_DEVTOOLS
+    ) {
       console.log('OPENING DEV TOOLS');
       mainWindow.webContents.openDevTools();
     }

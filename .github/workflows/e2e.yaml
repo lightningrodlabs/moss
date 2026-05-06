@@ -86,6 +86,13 @@ jobs:
       - name: Build group.happ from source
         run: yarn build:group-happ
 
+      - name: Build example-applet (.webhapp for tool-library fixture)
+        # why: smoke #4 / #5 use the toolCurationServer worker fixture, which
+        # publishes example-applet.webhapp from example/workdir/. If that file
+        # isn't built the fixture errors out at startup and every test that
+        # depends on it fails instantly. Building it after build:zomes is fast.
+        run: yarn build:example-applet
+
       - name: Build Moss (electron-vite)
         # why: produces out/main/index.js + renderer assets that the e2e
         # harness launches against. We don't run electron-builder packaging

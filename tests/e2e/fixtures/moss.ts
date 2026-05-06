@@ -141,6 +141,12 @@ export async function launchMoss(opts: LaunchOptions): Promise<LaunchedMoss> {
   delete env.ELECTRON_NO_ATTACH_CONSOLE;
   Object.assign(env, opts.env ?? {});
   env.NODE_ENV = env.NODE_ENV ?? 'production';
+  // why: in unpackaged builds main/index.ts auto-opens devtools. With
+  // devtools open, Playwright's CDP sometimes attaches to the devtools
+  // window instead of the admin window, and electron.launch never resolves.
+  // Set this env var (read in main/index.ts) so e2e launches keep devtools
+  // closed regardless of packaged-state.
+  env.MOSS_DISABLE_DEVTOOLS = '1';
 
   // why: pass the resolved electron binary explicitly. Yarn workspaces hoist
   // electron to the repo root; Playwright's auto-resolution sometimes picks

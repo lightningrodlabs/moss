@@ -10,7 +10,13 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
+  // why: retries are off everywhere. They were originally on in CI to mask
+  // first-attempt slowness, but the retry-passes-fast pattern was hiding the
+  // root cause (CDP picking up the wrong window when devtools auto-opened on
+  // unpackaged builds). With MOSS_DISABLE_DEVTOOLS=1 set by the fixture, the
+  // first attempt should reliably succeed. If a real flake surfaces, fix the
+  // root cause rather than re-enabling retries.
+  retries: 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   // why: launches are 5-30s including conductor boot, and tests like #6 do
   // multiple group-create flows (each ~15s). On the user's machine with legacy
