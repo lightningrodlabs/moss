@@ -1,0 +1,100 @@
+name: e2e
+
+on:
+  push:
+    branches: [main, main-*, develop]
+  pull_request:
+    branches: [main, main-*, develop]
+
+# why: per plans/ui-testing-and-cruft-cleanup.md, the suite runs Linux-only,
+# single-worker, against a built artifact. Don't gate merges yet — let the
+# suite shake out flakes for a week and then flip required-checks on.
+jobs:
+  smoke-e2e:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Go stable
+        uses: actions/setup-go@v4
+        with:
+          go-version: 'stable'
+
+      - name: Install nix
+        uses: cachix/install-nix-action@v25
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Setup holochain-ci cachix
+        uses: cachix/cachix-action@v15
+        with:
+          name: holochain-ci
+
+      # why: xvfb is needed because Electron windows require a display server.
+      # Even though the test runs headless from Playwright's perspective, the
+      # underlying Electron process still creates real GUI windows.
+      - name: Install xvfb
+        run: sudo apt-get install -y xvfb
+
+      - name: Setup environment dirs
+        run: |
+          mkdir -p resources/default-apps
+          mkdir -p resources/bins
+
+      - name: Install JS deps
+        # why: --ignore-engines because some transitive deps pin Node >=20.12
+        # but Node 20.x in CI is fine for the test workload (matches existing
+        # test.yaml behavior).
+        run: yarn install --ignore-engines
+
+      - name: Build libs + iframes + default apps
+        run: |
+          yarn build:libs
+          yarn build:iframes
+          yarn prepare:default-apps
+
+      - name: Fetch holochain + lair + kitsune2-bootstrap-srv binaries
+        run: |
+          yarn fetch:hc
+          yarn fetch:binaries
+          yarn check:binaries
+          yarn install --check-files --ignore-engines
+
+      - name: Build zomes
+        run: |
+          rustup target add wasm32-unknown-unknown
+          yarn build:zomes
+
+      - name: Build group.happ from source
+        run: yarn build:group-happ
+
+      - name: Build Moss (electron-vite)
+        # why: produces out/main/index.js + renderer assets that the e2e
+        # harness launches against. We don't run electron-builder packaging
+        # here — the unpackaged build is what the harness expects.
+        run: nix develop --command yarn build
+
+      - name: Run smoke E2E suite
+        # why: xvfb-run gives Electron a virtual display. The Holochain
+        # binaries that ship in resources/bins need glibc/libstdc++ from
+        # nix, so wrap the command in `nix develop --command`.
+        run: nix develop --command xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" yarn test:e2e
+
+      - name: Upload Playwright trace + video artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            test-results-e2e/
+            !test-results-e2e/profiles/**
+          if-no-files-found: ignore
+          retention-days: 14
