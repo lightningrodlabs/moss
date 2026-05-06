@@ -34,22 +34,30 @@ export type CreateGroupOptions = {
  * Invite People button never renders.
  */
 export async function enterSpaceIfPrompted(page: Page, nickname: string) {
-  const enterButton = page.getByRole('button', { name: /enter the space/i });
-  if ((await enterButton.count()) === 0) {
+  // why: ANY Playwright locator action (.click, .fill, .pressSequentially,
+  // .evaluate via locator) against elements inside the moss-edit-profile
+  // shadow tree triggers Playwright's internal "generateSelector" crash —
+  // the engine can't synthesize a stable CSS selector for these specific
+  // Lit + Shoelace shadow-root layouts. We do the entire interaction inside
+  // a single page.evaluate, which doesn't go through that codepath.
+
+  // why: moss-create-profile appears asynchronously after a group is created
+  // or joined — empirically about 5s after the join dialog closes. A simple
+  // count check here races: count == 0 just means the screen hasn't mounted
+  // yet, not that no profile is needed. Wait up to 20s for it to appear.
+  // If it never does, this agent already has a saved persona for this group
+  // and we can move on.
+  try {
+    await page.waitForSelector('moss-create-profile', { state: 'attached', timeout: 20_000 });
+  } catch {
     return;
   }
-  // why: bypass the sl-input event chain entirely. The moss-edit-profile
-  // component's `nickname` and `disabled` are reactive Lit properties; setting
-  // them imperatively + calling checkDisabled() drives the button to enabled
-  // exactly as user typing would. Doing this through page.evaluate sidesteps a
-  // Playwright internal "generateSelector" crash that fires when locator
-  // actions target this particular Lit + Shoelace shadow tree.
-  await page.evaluate((v: string) => {
+
+  await page.evaluate(async (v: string) => {
     function findInDeepDom(root: Document | ShadowRoot, sel: string): Element | null {
       const direct = root.querySelector(sel);
       if (direct) return direct;
-      const all = root.querySelectorAll('*');
-      for (const el of Array.from(all)) {
+      for (const el of Array.from(root.querySelectorAll('*'))) {
         const sr = (el as Element & { shadowRoot: ShadowRoot | null }).shadowRoot;
         if (sr) {
           const found = findInDeepDom(sr, sel);
@@ -58,30 +66,56 @@ export async function enterSpaceIfPrompted(page: Page, nickname: string) {
       }
       return null;
     }
-    // moss-edit-profile is also used in profile-settings, so scope to the
-    // moss-create-profile that's currently mounted as the entry view.
+
+    // Scope: moss-create-profile is the screen we want. moss-edit-profile is
+    // also rendered inside moss-settings; explicitly walk into the create-
+    // profile screen first so we get the right component.
     const createEl = findInDeepDom(document, 'moss-create-profile');
-    if (!createEl) throw new Error('moss-create-profile not in deep DOM (screen not present)');
+    if (!createEl) throw new Error('moss-create-profile not found in deep DOM');
     const editEl = (createEl.shadowRoot
       ? findInDeepDom(createEl.shadowRoot, 'moss-edit-profile')
       : null) as
-      | (HTMLElement & { nickname?: string; disabled?: boolean; checkDisabled?: () => void })
+      | (HTMLElement & {
+          nickname?: string;
+          disabled?: boolean;
+          checkDisabled?: () => void;
+          emitSaveProfile?: () => void;
+          updateComplete?: Promise<unknown>;
+        })
       | null;
     if (!editEl) throw new Error('moss-edit-profile not found inside moss-create-profile');
-    // Also reflect the value on the sl-input so the avatar component's required-
-    // check and any later read of the input shows the right value.
+
+    // Mirror the value on the visible sl-input so the screen displays what
+    // we set. Pure cosmetic — the form's actual save reads `editEl.nickname`.
     const sl = (editEl.shadowRoot?.querySelector('sl-input#nickname-input') ?? null) as
       | (HTMLElement & { value: string })
       | null;
     if (sl) sl.value = v;
+
     editEl.nickname = v;
     if (typeof editEl.checkDisabled === 'function') editEl.checkDisabled();
+
+    // why: wait for Lit to flush the disabled-attr update before clicking.
+    // Without this, the submit button still has the disabled attribute from
+    // the prior render and the click is a no-op.
+    if (editEl.updateComplete && typeof editEl.updateComplete.then === 'function') {
+      await editEl.updateComplete;
+    }
+
+    // The submit button is inside moss-edit-profile's shadow root. Click it
+    // directly. Avoiding the @click handler indirection by calling the
+    // component's `emitSaveProfile` would also work, but the click path runs
+    // the disabled-attr check end-to-end — which is closer to user behavior.
+    const btn = editEl.shadowRoot?.querySelector(
+      'button.moss-button:not([disabled])',
+    ) as HTMLButtonElement | null;
+    if (!btn) {
+      throw new Error('enter-the-space button is still disabled after nickname set');
+    }
+    btn.click();
   }, nickname);
 
-  // Give Lit one frame to flip `disabled` on the button.
-  await page.waitForTimeout(150);
-  await enterButton.click();
-  // Success signal: moss-create-profile unmounts and the group view shows up.
+  // Success signal: moss-create-profile unmounts.
   await expect(page.locator('moss-create-profile')).toHaveCount(0, { timeout: 30_000 });
 }
 
@@ -98,12 +132,24 @@ export async function createGroupFromMainDashboard(page: Page, opts: CreateGroup
   // Open the add-group dialog from the groups sidebar's "+" button.
   // The button is icon-only — we added aria-label="Add Group" in
   // groups-sidebar.ts so role-based location works.
-  await page.getByRole('button', { name: 'Add Group' }).click();
+  //
+  // why: explicit wait + scope to groups-sidebar before the click. Without
+  // these, on a cold dashboard the locator can resolve to the document root
+  // before groups-sidebar's reactive store is populated, and Playwright's
+  // actionability-retry hits a 30s wall trying to click an element whose
+  // shadow ancestor's layout is still settling.
+  const addGroupButton = page
+    .locator('groups-sidebar')
+    .getByRole('button', { name: 'Add Group' });
+  await expect(addGroupButton).toBeVisible({ timeout: 30_000 });
+  await addGroupButton.click();
 
   // Pick "Create Group" in the choice dialog. We rely on Playwright's
   // auto-filtering to the visible/actionable button — the form's submit also
   // labeled "Create Group" hasn't been opened yet at this point.
-  await page.getByRole('button', { name: /create group/i }).click();
+  const createGroupChoice = page.getByRole('button', { name: /create group/i });
+  await expect(createGroupChoice).toBeVisible({ timeout: 10_000 });
+  await createGroupChoice.click();
 
   // Fill the create-group form. Scope to the create-group-dialog so we don't
   // accidentally match form fields elsewhere.

@@ -1,6 +1,7 @@
 import { test as base, _electron as electron, Page, ElectronApplication } from '@playwright/test';
 import path from 'node:path';
 import fs from 'node:fs';
+import { startBootstrap, stopBootstrap, BootstrapUrls, RunningBootstrap } from './bootstrap';
 
 export type LaunchOptions = {
   /**
@@ -33,6 +34,13 @@ export type LaunchOptions = {
    * Override for niche scenarios; rarely needed.
    */
   mossProfile?: string;
+  /**
+   * Local kitsune2 bootstrap URLs to plumb to Moss via --bootstrap-url /
+   * --signaling-url / --relay-url. When provided, both agents in a multi-agent
+   * test share a single in-process bootstrap, so cross-agent peer discovery
+   * converges in seconds rather than minutes.
+   */
+  bootstrap?: BootstrapUrls;
   /** Extra CLI args appended after --profile. */
   extraArgs?: string[];
   /** Extra env vars merged into the child process. */
@@ -103,6 +111,16 @@ export async function launchMoss(opts: LaunchOptions): Promise<LaunchedMoss> {
     `--user-data-dir=${userDataDir}`,
     '--profile',
     mossProfile,
+    ...(opts.bootstrap
+      ? [
+          '--bootstrap-url',
+          opts.bootstrap.bootstrapUrl,
+          '--signaling-url',
+          opts.bootstrap.signalingUrl,
+          '--relay-url',
+          opts.bootstrap.relayUrl,
+        ]
+      : []),
     ...(opts.extraArgs ?? []),
   ];
 
@@ -134,7 +152,11 @@ export async function launchMoss(opts: LaunchOptions): Promise<LaunchedMoss> {
     executablePath: electronPath,
     args,
     env,
-    timeout: 90_000,
+    // why: Electron launch via Playwright CDP can be slow on a host that's
+    // accumulated state across many test runs. 180s is generous but doesn't
+    // mask a real hang — if launch never completes, the process is stuck and
+    // we want to see the error rather than retry-loop.
+    timeout: 180_000,
   });
 
   // why: surface main-process stdio when debugging. Otherwise a crash inside
@@ -196,6 +218,14 @@ export type SecondAgentFactory = (
 type MossFixtures = {
   moss: LaunchedMoss;
   secondAgent: SecondAgentFactory;
+  /**
+   * A locally-running kitsune2-bootstrap-srv. Opt-in: the fixture only spawns
+   * if the test asks for it. When you do, you should pass its URLs to all
+   * agents in the test (via launchMoss `bootstrap:` option or by handing
+   * to `secondAgent({...})`) — otherwise they'll talk to the production
+   * server instead, which defeats the point.
+   */
+  bootstrapSrv: BootstrapUrls;
 };
 
 /**
@@ -238,6 +268,20 @@ export const test = base.extend<MossFixtures>({
       for (const l of launched) {
         await closeMoss(l);
       }
+    }
+  },
+  // eslint-disable-next-line no-empty-pattern
+  bootstrapSrv: async ({}, use) => {
+    let running: RunningBootstrap | undefined;
+    try {
+      running = await startBootstrap();
+      await use({
+        bootstrapUrl: running.bootstrapUrl,
+        signalingUrl: running.signalingUrl,
+        relayUrl: running.relayUrl,
+      });
+    } finally {
+      if (running) stopBootstrap(running);
     }
   },
 });

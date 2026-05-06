@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/moss';
+import { test, expect, launchMoss, closeMoss } from '../fixtures/moss';
 import { startFreshIfLegacyImport, waitForBoot } from '../helpers/bootToReady';
 import {
   createGroupFromMainDashboard,
@@ -9,68 +9,89 @@ import {
 import { expectPeerCount } from '../helpers/tools';
 
 /**
- * Smoke #9 (reduced) — Multi-agent group join via invite link.
+ * Smoke #9 — Multi-agent peer discovery via local bootstrap.
  *
- * why: this is the load-bearing multi-agent baseline. Without it the smoke
- * suite proves only that a single-agent Moss boots; it doesn't prove that the
- * invite-link round-trip works or that two Moss instances run independently
- * with their own conductor + lair against the same network.
+ * why: this is the load-bearing peer-to-peer baseline. Without it the smoke
+ * suite proves only that a single-agent Moss boots; it doesn't prove that two
+ * Moss instances actually talk to each other over gossip / Iroh. A regression
+ * that breaks invite-link round-tripping, signaling, or peer discovery would
+ * slip through every other test in the suite.
  *
- * Verified here:
+ * Both agents share a single locally-spawned kitsune2-bootstrap-srv (the
+ * `bootstrapSrv` fixture). This brings cross-agent peer discovery down from
+ * "minutes against bootstrap.moss.social, often flaky" to "seconds, deterministic,
+ * offline-capable" — see fixtures/bootstrap.ts.
+ *
+ * Verified end-to-end:
  *   - Agent 1 creates a group and emits a real invite link.
- *   - Agent 2 launches with its own profile + userDataDir, parses the invite
- *     link, joins the group, ends up with that group in its sidebar.
- *   - Each agent sees themselves in their own group peer-list (proves both
- *     agents successfully published their per-group profile to their group cell).
+ *   - Agent 2 launches with its own profile + dir against the same bootstrap,
+ *     parses the invite link, joins the group.
+ *   - Each agent sees the other in its group peer-list — proves gossip /
+ *     bootstrap / signaling / relay all completed end-to-end.
  *
- * NOT verified here (deferred to Phase 4):
- *   - Cross-agent gossip discovery — i.e., agent 1 sees agent 2 in the peer
- *     list and vice versa. That depends on the bootstrap / signaling / relay
- *     path completing, which is too slow and too flaky against the public
- *     server (bootstrap.moss.social) to be a reliable smoke signal — empirically
- *     does not converge within 4+ minutes on a typical dev box. Lock that down
- *     once the harness can spin up a local kitsune2-bootstrap-srv as a test
- *     fixture and pass --bootstrap-url to both agents.
+ * Tool sharing (the original (a)+(b) parts of the plan) is still deferred to
+ * the in-library install test (#4) once a local toolCurations fixture lands.
  */
-test('second agent joins same group as agent 1 via an invite link', async ({
-  moss,
-  secondAgent,
+test('two agents on a local bootstrap discover each other in the same group', async ({
+  bootstrapSrv,
 }) => {
   test.setTimeout(360_000);
 
-  // ---- Agent 1: create group, set per-group profile, copy invite link ----
-  await waitForBoot(moss.mainWindow, 90_000);
-  await startFreshIfLegacyImport(moss.mainWindow);
-  await createGroupFromMainDashboard(moss.mainWindow, { name: 'Multiagent Smoke' });
+  // why: launch directly (rather than using the standard `moss` / `secondAgent`
+  // fixtures) so we can pass `bootstrap:` to BOTH agents — the fixture's
+  // `moss` field doesn't accept opts.
+  const agent1 = await launchMoss({
+    profileName: `pw-multi-1-${Date.now()}`,
+    bootstrap: bootstrapSrv,
+  });
 
-  // why: getCurrentGroupInviteLink and the peer-list both live inside the group
-  // pane (group-area-sidebar). That pane only finishes mounting after the
-  // moss-create-profile screen is dismissed.
-  await enterSpaceIfPrompted(moss.mainWindow, 'agent-one');
+  try {
+    // ---- Agent 1: create group, set per-group profile, copy invite link ----
+    await waitForBoot(agent1.mainWindow, 90_000);
+    await startFreshIfLegacyImport(agent1.mainWindow);
+    await createGroupFromMainDashboard(agent1.mainWindow, { name: 'Multiagent Smoke' });
+    await enterSpaceIfPrompted(agent1.mainWindow, 'agent-one');
 
-  const inviteLink = await getCurrentGroupInviteLink(moss.mainWindow);
-  expect(inviteLink).toMatch(/invite/i);
+    const inviteLink = await getCurrentGroupInviteLink(agent1.mainWindow);
+    expect(inviteLink).toMatch(/invite/i);
 
-  // Agent 1's local peer list should show just self (1).
-  await expectPeerCount(moss.mainWindow, 1, 60_000);
+    // Sanity: agent 1's local peer list shows just self.
+    await expectPeerCount(agent1.mainWindow, 1, 60_000);
 
-  // ---- Agent 2: launch separate instance, join via link ----
-  const agent2 = await secondAgent();
-  await waitForBoot(agent2.mainWindow, 120_000);
-  await startFreshIfLegacyImport(agent2.mainWindow);
-  await joinGroupByInviteLink(agent2.mainWindow, inviteLink);
-  await enterSpaceIfPrompted(agent2.mainWindow, 'agent-two');
+    // why: dev mode (yarn applet-dev-example) sleeps 10s between launching
+    // agents 1 and 2. Without this, agent 2 starts joining before agent 1's
+    // group cell has registered with the bootstrap, and the gossip rendezvous
+    // never converges. Mirror the dev-mode pattern.
+    await new Promise((r) => setTimeout(r, 10_000));
 
-  // Agent 2 has the group in their sidebar (invite-link parse + join succeeded).
-  await expect(agent2.mainWindow.locator('groups-sidebar group-sidebar-button')).toHaveCount(
-    1,
-    { timeout: 30_000 },
-  );
+    // ---- Agent 2: launch separate instance against the same bootstrap ----
+    const agent2 = await launchMoss({
+      profileName: `pw-multi-2-${Date.now()}`,
+      bootstrap: bootstrapSrv,
+    });
 
-  // Agent 2's local peer list shows self (proves agent 2's profile zome call
-  // landed in agent 2's own conductor).
-  await expectPeerCount(agent2.mainWindow, 1, 60_000);
+    try {
+      await waitForBoot(agent2.mainWindow, 120_000);
+      await startFreshIfLegacyImport(agent2.mainWindow);
+      await joinGroupByInviteLink(agent2.mainWindow, inviteLink);
+      await enterSpaceIfPrompted(agent2.mainWindow, 'agent-two');
 
-  // Agent 1's view should still have its group, unchanged by agent 2's actions.
-  await expect(moss.mainWindow.locator('groups-sidebar group-sidebar-button')).toHaveCount(1);
+      // Agent 2 has the group in their sidebar.
+      await expect(agent2.mainWindow.locator('groups-sidebar group-sidebar-button')).toHaveCount(
+        1,
+        { timeout: 30_000 },
+      );
+
+      // ---- The actual peer-discovery assertion ----
+      // why: the gossip-path proof. With a local bootstrap the round trip
+      // should be on the order of seconds; allow up to 120s to absorb
+      // first-time conductor warm-up and the initial gossip exchange.
+      await expectPeerCount(agent1.mainWindow, 2, 120_000);
+      await expectPeerCount(agent2.mainWindow, 2, 120_000);
+    } finally {
+      await closeMoss(agent2);
+    }
+  } finally {
+    await closeMoss(agent1);
+  }
 });
