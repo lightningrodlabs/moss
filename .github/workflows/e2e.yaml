@@ -2,9 +2,13 @@ name: e2e
 
 on:
   push:
-    branches: [main, main-*, develop]
+    # why: include feat/** so the suite runs on feature-branch pushes during
+    # development — otherwise nothing fires until a PR is opened. main-* covers
+    # the active 0.6 line.
+    branches: [main, main-*, develop, 'feat/**']
   pull_request:
     branches: [main, main-*, develop]
+  workflow_dispatch:
 
 # why: per plans/ui-testing-and-cruft-cleanup.md, the suite runs Linux-only,
 # single-worker, against a built artifact. Don't gate merges yet — let the
