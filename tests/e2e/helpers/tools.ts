@@ -8,22 +8,48 @@ import { Page, FrameLocator, expect } from '@playwright/test';
 export type InstallToolOptions = {
   /** Display name shown in the tool library UI. */
   toolName: string;
+  /** Group display name. The tool list shows a select-group dropdown per tool. */
+  groupName: string;
 };
 
 /**
- * Install a tool from the in-app tool library. Assumes the user is already in a
- * group (Running state, group selected).
+ * Open the in-app Tool Library by clicking the sidebar button. Locator is the
+ * sl-tooltip wrapping the moss-sidebar-button — see main-dashboard.ts:1596.
+ */
+export async function openToolLibrary(page: Page) {
+  await page.getByRole('button', { name: 'Tool Library' }).click();
+  // why: tool-library-web2 fetches curation lists asynchronously in firstUpdated;
+  // wait for at least one tool card before we try to click one.
+  await expect(page.locator('installable-tools-web2')).toBeVisible({ timeout: 30_000 });
+}
+
+/**
+ * Install a tool from the in-app tool library into the named group. Assumes
+ * the user is already in Running state and the group exists.
  *
  * Smoke #4 verifies that after this completes, the tool is listed inside the
  * group pane (the new design — *not* across the top of the main page).
  */
 export async function installToolFromLibrary(page: Page, opts: InstallToolOptions) {
-  // Open tool library from the group pane. The "Add tool" / "Install tool" button
-  // lives somewhere in the new-design group pane — locator tightened on first run.
-  await page.getByRole('button', { name: /add.*tool|install.*tool|tool.*library/i }).first().click();
-  await page.getByRole('button', { name: new RegExp(opts.toolName, 'i') }).click();
-  await page.getByRole('button', { name: /install/i }).click();
-  await expect(page.getByText(new RegExp(opts.toolName, 'i'))).toBeVisible({ timeout: 60_000 });
+  await openToolLibrary(page);
+  // Click the tool card by title — opens the tool detail dialog (library-tool-details).
+  await page.getByText(opts.toolName, { exact: false }).first().click();
+  // why: target the dialog's <select-group> rather than the hover-only one
+  // on the card itself. The card's select-group has class="show-on-hover"
+  // (visibility: hidden until hover); the dialog's one is always visible.
+  // <library-tool-details> is rendered inside the moss-dialog opened above.
+  const dialogSelect = page.locator('library-tool-details select-group').first();
+  await dialogSelect.locator('button.install-button').click();
+  await dialogSelect.locator(`sl-menu-item:has-text("${opts.groupName}")`).first().click();
+  // Confirm in the install dialog. install-tool-dialog-web2's submit button is
+  // labelled "Add to Group" (see install-tool-dialog-web2.ts:473).
+  await page
+    .locator('install-tool-dialog-web2')
+    .getByRole('button', { name: /add to group/i })
+    .click();
+  // why: install includes a webhapp download + DNA registration; can take a while
+  // even from a localhost fixture (lair signing, conductor admin calls, gossip).
+  await expect(page.locator('install-tool-dialog-web2')).toBeHidden({ timeout: 120_000 });
 }
 
 /**
@@ -38,9 +64,8 @@ export async function openToolInGroup(page: Page, toolName: string): Promise<Fra
 
 /**
  * Smoke #5: assert the WeaveClient handshake completed inside the iframe by
- * waiting for a marker the applet renders post-handshake. The example applet
- * needs a deterministic marker for this to work — TODO: add `data-weave-ready`
- * attribute on the applet's root once we wire this up.
+ * waiting for the [data-weave-ready] marker the example applet sets on its
+ * host element once renderInfo is set (see example/ui/src/example-applet.ts).
  */
 export async function waitForAppletHandshake(frame: FrameLocator, timeoutMs = 30_000) {
   await expect(frame.locator('[data-weave-ready]')).toBeVisible({ timeout: timeoutMs });

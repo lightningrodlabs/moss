@@ -221,6 +221,10 @@ program
     'Print holochain logs directly to the terminal (they will be still written to the logfile as well)',
   )
   .option('--disable-os-notifications', 'Disables all notifications to the Operating System')
+  .option(
+    '--tool-curation-url <url>',
+    'Override the default tool curation list URL. Used by the E2E test harness to point at a local curation fixture; not persisted across restarts.',
+  )
   .addOption(
     new Option(
       '--agent-idx <number>',
@@ -1391,6 +1395,13 @@ if (!RUNNING_WITH_COMMAND) {
     );
     ipcMain.handle('is-dev-mode-enabled', (_e): boolean => !app.isPackaged || RUN_OPTIONS.dev);
     ipcMain.handle('is-applet-dev', (_e): boolean => !!RUN_OPTIONS.devInfo);
+    // why: lets the renderer's tool-library override the default production
+    // curation URL with one passed on the command line. Used by the E2E
+    // harness to point at a locally-served fixture curation.
+    ipcMain.handle(
+      'get-tool-curation-override',
+      (_e): string | undefined => RUN_OPTIONS.toolCurationUrl,
+    );
     ipcMain.handle(
       'applet-dev-config',
       (_e): WeaveDevConfig | undefined => RUN_OPTIONS.devInfo?.config,
