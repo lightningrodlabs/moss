@@ -2,6 +2,7 @@ import { test as base, _electron as electron, Page, ElectronApplication } from '
 import path from 'node:path';
 import fs from 'node:fs';
 import { startBootstrap, stopBootstrap, BootstrapUrls, RunningBootstrap } from './bootstrap';
+import { startToolCurationServer, RunningToolCuration } from './toolCuration';
 
 export type LaunchOptions = {
   /**
@@ -41,6 +42,12 @@ export type LaunchOptions = {
    * converges in seconds rather than minutes.
    */
   bootstrap?: BootstrapUrls;
+  /**
+   * Local tool curation URL to plumb to Moss via --tool-curation-url. Used by
+   * smoke #4 / #5 to point Moss's tool library at a fixture-served curation
+   * instead of the production CDN.
+   */
+  toolCurationUrl?: string;
   /** Extra CLI args appended after --profile. */
   extraArgs?: string[];
   /** Extra env vars merged into the child process. */
@@ -121,6 +128,7 @@ export async function launchMoss(opts: LaunchOptions): Promise<LaunchedMoss> {
           opts.bootstrap.relayUrl,
         ]
       : []),
+    ...(opts.toolCurationUrl ? ['--tool-curation-url', opts.toolCurationUrl] : []),
     ...(opts.extraArgs ?? []),
   ];
 
@@ -173,6 +181,14 @@ export async function launchMoss(opts: LaunchOptions): Promise<LaunchedMoss> {
   }
 
   const mainWindow = await waitForAdminWindow(app, opts.adminWindowTimeoutMs ?? 60_000);
+  if (process.env.MOSS_E2E_DEBUG) {
+    mainWindow.on('console', (msg) =>
+      process.stdout.write(`[moss:${opts.profileName}:console:${msg.type()}] ${msg.text()}\n`),
+    );
+    mainWindow.on('pageerror', (err) =>
+      process.stderr.write(`[moss:${opts.profileName}:pageerror] ${err.message}\n`),
+    );
+  }
   return { app, mainWindow, userDataDir };
 }
 
@@ -215,17 +231,36 @@ export type SecondAgentFactory = (
   overrides?: Partial<LaunchOptions>,
 ) => Promise<LaunchedMoss>;
 
-type MossFixtures = {
+type MossTestFixtures = {
   moss: LaunchedMoss;
   secondAgent: SecondAgentFactory;
+};
+
+type MossWorkerFixtures = {
   /**
-   * A locally-running kitsune2-bootstrap-srv. Opt-in: the fixture only spawns
-   * if the test asks for it. When you do, you should pass its URLs to all
-   * agents in the test (via launchMoss `bootstrap:` option or by handing
-   * to `secondAgent({...})`) — otherwise they'll talk to the production
-   * server instead, which defeats the point.
+   * A locally-running kitsune2-bootstrap-srv shared across every test in the
+   * worker. Spawned once per worker (we run with workers: 1 → once per suite).
+   *
+   * why worker scope: every Moss agent we launch points its conductor at this
+   * server via `--bootstrap-url` / `--signaling-url` / `--relay-url` so the
+   * peer-discovery + transport stack runs against a local, deterministic
+   * service rather than the production CDN. That brings cold-start time on
+   * a fresh CI runner from "minutes per test (DNS / TLS / iroh-relay
+   * first-handshake to bootstrap.moss.social)" to "seconds per test". Also
+   * unblocks offline-capable runs.
+   *
+   * The moss / secondAgent fixtures auto-plumb these URLs into launchMoss.
+   * Tests that call `launchMoss(...)` directly (e.g. smoke #9 with two
+   * agents under explicit control) should destructure this fixture and
+   * pass `bootstrap: bootstrapSrv` themselves.
    */
   bootstrapSrv: BootstrapUrls;
+  /**
+   * Local tool curation HTTP server, also worker-scoped. Pass
+   * `toolCurationServer.curationUrl` to `launchMoss` so Moss's renderer
+   * loads a fixture-served curation list instead of the production CDN.
+   */
+  toolCurationServer: RunningToolCuration;
 };
 
 /**
@@ -233,32 +268,75 @@ type MossFixtures = {
  *   - `moss`: a launched Moss instance with an isolated userDataDir under
  *     `<repo>/test-results-e2e/profiles/`. Closed (gracefully) at end of test;
  *     the profile dir is intentionally NOT deleted so logs are inspectable.
+ *     Auto-points at the worker-scoped local bootstrap-srv.
  *   - `secondAgent(opts?)`: launches an additional Moss instance (different
  *     profile + dir), tracked for close at end of test. For multi-agent tests
- *     (smoke #9 etc.).
+ *     (smoke #9 etc.). Also auto-points at the local bootstrap-srv.
+ *   - `bootstrapSrv` / `toolCurationServer`: worker-scoped fixtures backing
+ *     the above. Destructure them directly when calling `launchMoss()` from
+ *     a test rather than going through the `moss` fixture.
  *
  * Holochain ports are auto-allocated by Moss via `get-port`, so multiple agents
  * coexist on one machine without manual port offsets.
  *
  * To wipe accumulated test profile data: `yarn test:e2e:clean`.
  */
-export const test = base.extend<MossFixtures>({
-  moss: async ({}, use, testInfo) => {
+export const test = base.extend<MossTestFixtures, MossWorkerFixtures>({
+  // worker-scoped: spawn once per worker, shared by every test that runs in it
+  bootstrapSrv: [
+    // eslint-disable-next-line no-empty-pattern
+    async ({}, use) => {
+      let running: RunningBootstrap | undefined;
+      try {
+        running = await startBootstrap();
+        await use({
+          bootstrapUrl: running.bootstrapUrl,
+          signalingUrl: running.signalingUrl,
+          relayUrl: running.relayUrl,
+        });
+      } finally {
+        if (running) stopBootstrap(running);
+      }
+    },
+    { scope: 'worker' },
+  ],
+  toolCurationServer: [
+    // eslint-disable-next-line no-empty-pattern
+    async ({}, use) => {
+      const running = await startToolCurationServer();
+      try {
+        await use(running);
+      } finally {
+        await running.close().catch(() => undefined);
+      }
+    },
+    { scope: 'worker' },
+  ],
+
+  // test-scoped: per-test launches that depend on the worker-scoped servers
+  moss: async ({ bootstrapSrv }, use, testInfo) => {
     const profileName = `pw-${sanitize(testInfo.title)}-${testInfo.workerIndex}-${Date.now()}`;
-    const launched = await launchMoss({ profileName });
+    const launched = await launchMoss({ profileName, bootstrap: bootstrapSrv });
     try {
       await use(launched);
     } finally {
       await closeMoss(launched);
     }
   },
-  secondAgent: async ({}, use, testInfo) => {
+  secondAgent: async ({ bootstrapSrv }, use, testInfo) => {
     const launched: LaunchedMoss[] = [];
     const factory: SecondAgentFactory = async (overrides) => {
       const profileName =
         overrides?.profileName ??
         `pw-${sanitize(testInfo.title)}-2-${testInfo.workerIndex}-${Date.now()}`;
-      const second = await launchMoss({ ...(overrides ?? {}), profileName });
+      // why: bootstrap defaults to the worker-scoped server; explicit
+      // override in `overrides` still wins for tests that need a custom
+      // network configuration.
+      const second = await launchMoss({
+        bootstrap: bootstrapSrv,
+        ...(overrides ?? {}),
+        profileName,
+      });
       launched.push(second);
       return second;
     };
@@ -268,20 +346,6 @@ export const test = base.extend<MossFixtures>({
       for (const l of launched) {
         await closeMoss(l);
       }
-    }
-  },
-  // eslint-disable-next-line no-empty-pattern
-  bootstrapSrv: async ({}, use) => {
-    let running: RunningBootstrap | undefined;
-    try {
-      running = await startBootstrap();
-      await use({
-        bootstrapUrl: running.bootstrapUrl,
-        signalingUrl: running.signalingUrl,
-        relayUrl: running.relayUrl,
-      });
-    } finally {
-      if (running) stopBootstrap(running);
     }
   },
 });
