@@ -1,18 +1,19 @@
 import { html, LitElement, css } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { validate as validateSemver } from 'compare-versions';
-import {sortVersionsDescending, groupToolsByBaseId, getPrimaryVersionBranch} from '../../utils.js';
+import { getPrimaryVersionBranch } from '../../utils.js';
 import {
   DeveloperCollective,
-  DeveloperCollectiveToolList,
   ToolCompatibilityId,
   ToolCurationConfig,
   ToolCurationList,
-  ToolCurations,
   ToolCurator,
 } from '@theweave/moss-types';
 import { UnifiedToolEntry } from '../../types.js';
+import {
+  DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS,
+  fetchUnifiedTools,
+} from './fetch-unified-tools.js';
 
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
@@ -28,7 +29,7 @@ import './elements/installable-tools-web2.js';
 import './elements/tool-publisher-detail.js';
 import { mossStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
-import { DevModeToolLibrary, MossStore } from '../../moss-store.js';
+import { MossStore } from '../../moss-store.js';
 import { groupStoreContext } from '../../groups/context.js';
 import { GroupStore } from '../../groups/group-store.js';
 import { SelectGroup } from '../../elements/_new_design/select-group.js';
@@ -36,7 +37,6 @@ import { DnaHashB64, decodeHashFromBase64 } from '@holochain/client';
 import { InstallToolDialogWeb2 } from './elements/install-tool-dialog-web2.js';
 import './elements/install-tool-dialog-web2.js';
 import { ToolAndCurationInfo, ToolListUrl } from '../../types';
-import { deriveToolCompatibilityId } from '@theweave/utils';
 import {
   appStoreIcon,
   devIcon,
@@ -47,12 +47,7 @@ import '../../elements/_new_design/moss-dialog.js';
 import {MossDialog} from "../../elements/_new_design/moss-dialog";
 import {NamedUrl, UrlListManager} from "./elements/curation-list-manager";
 
-export const DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
-  {
-    url: 'https://lightningrodlabs.org/weave-tool-curation/0.15/curations-0.15.json',
-    useLists: ['default'],
-  },
-];
+export { DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS } from './fetch-unified-tools.js';
 
 enum ToolLibraryView {
   Main,
@@ -147,120 +142,14 @@ export class ToolLibraryWeb2 extends LitElement {
 
   /** */
   async fetchToolLists() {
-    const allTools: Record<ToolCompatibilityId, ToolAndCurationInfo> = {};
-    const developerCollectives: Record<ToolListUrl, DeveloperCollective> = {};
-
-    // 0. In devmode, load tools and collectives from mossStore
-    if (!!this.mossStore.appletDevConfig) {
-      const {tools, devCollective} = this.mossStore.devModeToolLibrary as DevModeToolLibrary; // should always be defined in dev mode
-      tools.forEach((tool) => {
-        allTools[tool.toolCompatibilityId] = tool;
-        developerCollectives[tool.toolListUrl] = devCollective;
-      });
-    }
-
-    // 1. Fetch all the curation lists from all the curators
-    const curationLists: { curator: ToolCurator; list: ToolCurationList }[] = [];
-    await Promise.allSettled(
-      this._toolCurationConfigs.map(async (config) => {
-        try {
-          const resp = await fetch(config.url, { cache: 'no-cache' });
-          const toolCurations: ToolCurations = await resp.json();
-          // TODO validate format strictly here
-          config.useLists.forEach((listName) => {
-            const relevantList = toolCurations.curationLists[listName];
-            if (relevantList) {
-              curationLists.push({
-                curator: toolCurations.curator,
-                list: relevantList,
-              });
-            }
-          });
-        } catch (e) {
-          console.warn(
-            "Failed to fetch, parse or validate curator's list from url ",
-            config.url,
-            ':',
-            e,
-          );
-        }
-      }),
+    const result = await fetchUnifiedTools(
+      this._toolCurationConfigs,
+      this.mossStore.devModeToolLibrary,
     );
-
-    // 2. Identify all distinct tool lists and fetch them
-    const toolLists: Record<ToolListUrl, DeveloperCollectiveToolList> = {};
-    const distinctToolListUrls = Array.from(
-      new Set(curationLists.map((list) => list.list.tools.map((tool) => tool.toolListUrl)).flat()),
-    );
-    console.log('curationLists: ', curationLists);
-    console.log('distinctToolListUrls: ', distinctToolListUrls);
-
-    await Promise.allSettled(
-      distinctToolListUrls.map(async (url) => {
-        try {
-          const resp = await fetch(url, { cache: 'no-cache' });
-          const toolList: DeveloperCollectiveToolList = await resp.json();
-          console.log('Fetched tool list: ', toolList);
-          toolLists[url] = toolList;
-          developerCollectives[url] = toolList.developerCollective;
-        } catch (e) {
-          console.warn('Failed to fetch, parse or validate Tool list from url ', url, ':', e);
-        }
-      }),
-    );
-
-    // For each curated Tool, extract the relevant information
-    curationLists.forEach(({ curator, list }) => {
-      list.tools.forEach((curatedTool) => {
-        const toolList = toolLists[curatedTool.toolListUrl];
-        if (!toolList) return;
-        const relevantTool = toolList.tools.find(
-          (tool) =>
-            tool.id === curatedTool.toolId && tool.versionBranch === curatedTool.versionBranch,
-        );
-        if (!relevantTool) return;
-        // Sort versions in descending order (highest first)
-        relevantTool.versions = sortVersionsDescending(relevantTool.versions);
-        const latestVersion = relevantTool.versions
-          .filter((version) => validateSemver(version.version))[0];
-        if (!latestVersion) return;
-        const toolCompatibilityId = deriveToolCompatibilityId({
-          toolListUrl: curatedTool.toolListUrl,
-          toolId: relevantTool.id,
-          versionBranch: relevantTool.versionBranch,
-        });
-        let toolAndCurationInfo = allTools[toolCompatibilityId];
-        if (toolAndCurationInfo) {
-          toolAndCurationInfo.curationInfos.push({
-            info: curatedTool,
-            curator,
-          });
-        } else {
-          toolAndCurationInfo = {
-            toolCompatibilityId,
-            toolInfoAndVersions: relevantTool,
-            toolListUrl: curatedTool.toolListUrl,
-            latestVersion,
-            developerCollectiveId: toolList.developerCollective.id,
-            curationInfos: [
-              {
-                info: curatedTool,
-                curator,
-              },
-            ],
-          };
-        }
-        allTools[toolCompatibilityId] = toolAndCurationInfo;
-      });
-    });
-
-    console.log('AVAILABLE TOOLS: ', allTools);
-
-    // Group tools by base ID to unify tools with same toolId but different versionBranch
-    this.unifiedTools = groupToolsByBaseId(allTools);
-    this.allDeveloperCollectives = developerCollectives;
-    this.availableTools = allTools;
-    this.curationLists = curationLists;
+    this.unifiedTools = result.unifiedTools;
+    this.allDeveloperCollectives = result.developerCollectives;
+    this.availableTools = result.availableTools;
+    this.curationLists = result.curationLists;
   }
 
 

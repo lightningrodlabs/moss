@@ -110,6 +110,11 @@ Suspected redundant with new design (verify with grep + run smoke suite after ea
 - `tool-personal-bar-button.ts` — only one caller, may be obsolete
 - Components in [`src/renderer/src/elements/`](src/renderer/src/elements/) referencing the pre-`_new_design` "tools across the top of the main page" layout
 - Routes / view branches in [`src/renderer/src/elements/main-dashboard.ts`](src/renderer/src/elements/main-dashboard.ts) (72KB — likely the highest-payoff target) that are no longer reachable
+- **Creatables-panel chain** — discovered 2026-05-06 while wiring tool-info-popup right-click. The new-design group sidebar is `_new_design/navigation/group-area-sidebar.ts` rendering `<applet-sidebar-button>`; the older [`src/renderer/src/elements/navigation/group-applets-row.ts`](src/renderer/src/elements/navigation/group-applets-row.ts) is *not* in any visible UI path. It is imported only by:
+  - [`src/renderer/src/elements/creatables/creatable-panel.ts`](src/renderer/src/elements/creatables/creatable-panel.ts) (renders `<group-applets-row>`) — but `<creatable-panel>` itself is never rendered. `main-dashboard.ts` carries `showCreatablePanel` / `openCreatablePanel` state with no matching tag in any render path. [`creatable-view.ts`](src/renderer/src/elements/creatables/creatable-view.ts) only imports the `CreatableInfo` type re-exported from this file.
+  - [`src/renderer/src/elements/creatables/creatable-palette.ts`](src/renderer/src/elements/creatables/creatable-palette.ts) — imports `group-applets-row` but never renders it (dead import).
+
+  Suggested removal order: confirm `creatable-panel.ts` is unreachable → delete it (move `CreatableInfo` type to a shared types file) → drop the dead import from `creatable-palette.ts` → delete `group-applets-row.ts` → drop the unused `showCreatablePanel`/`openCreatablePanel` state from `main-dashboard.ts`.
 
 Cleanup procedure for each candidate:
 1. Grep imports across `src/`, `iframes/`, `libs/`, `shared/`. Zero hits → delete.

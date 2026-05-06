@@ -52,6 +52,8 @@ import './debugging-panel/debugging-panel.js';
 import './_new_design/moss-dialog.js';
 import './_new_design/moss-settings/moss-settings.js';
 import './design-feedback/design-feedback-controller.js';
+import './tool-info-dialog.js';
+import { ToolInfoDialog, ToolInfoInput } from './tool-info-dialog.js';
 
 import { mossStyles } from '../shared-styles.js';
 import { mossStoreContext } from '../context.js';
@@ -142,6 +144,9 @@ export class MainDashboard extends LitElement {
 
   @query('#create-group-dialog')
   createGroupDialog!: CreateGroupDialog;
+
+  @query('#tool-info-dialog')
+  toolInfoDialog!: ToolInfoDialog;
 
   @query('#add-group-dialog')
   addGroupDialog!: MossDialog;
@@ -583,6 +588,17 @@ export class MainDashboard extends LitElement {
     }
   };
 
+  private _toolInfoListener = (e: Event) => {
+    const detail = (e as CustomEvent<ToolInfoInput>).detail;
+    if (!detail) return;
+    this.toolInfoDialog?.show(detail);
+  };
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    this.addEventListener('open-tool-info', this._toolInfoListener);
+  }
+
   async firstUpdated() {
     if (this.initialGroup) this.openGroup(this.initialGroup);
     // add the beforeunload listener only 10 seconds later as there won't be anything
@@ -778,6 +794,7 @@ export class MainDashboard extends LitElement {
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.removeEventListener('open-tool-info', this._toolInfoListener);
     if (this._appletMessageListener) {
       window.removeEventListener('message', this._appletMessageListener);
       this._appletMessageListener = undefined;
@@ -1451,6 +1468,8 @@ export class MainDashboard extends LitElement {
         this.openGroup(e.detail.groupDnaHash);
       }}
       ></create-group-dialog>
+
+      <tool-info-dialog id="tool-info-dialog"></tool-info-dialog>
 
       <div
         class="group-viewer invisible-scrollbars column ${this._dashboardState.value.viewType ===

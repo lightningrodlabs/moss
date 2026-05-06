@@ -32,6 +32,9 @@ export class LibraryToolDetails extends LitElement {
   @property()
   devCollectives: Record<string, DeveloperCollective> = {};
 
+  @property({ type: Boolean })
+  readonly: boolean = false;
+
   @state()
   tabsState: TabsState = TabsState.Overview;
 
@@ -61,7 +64,7 @@ export class LibraryToolDetails extends LitElement {
         >
       </div>
       <div>Change Log: ${version.changelog}</div>
-          ${showInstallButton && hasMultipleBranches ? html`
+          ${!this.readonly && showInstallButton && hasMultipleBranches ? html`
           <select-group
             .buttonWidth=${'auto'}
             .buttonText=${msg(str`Install v${version.version} to a group space`)}
@@ -221,7 +224,7 @@ export class LibraryToolDetails extends LitElement {
             </div>
           </div>
           <div class="column" style="align-items: flex-end;">
-            ${primaryBranch ? html`
+            ${this.readonly ? '' : primaryBranch ? html`
               <select-group
                 .buttonWidth=${'auto'}
                 .buttonText=${msg(str`Install v${primaryBranch.latestVersion.version} to a group space`)}
@@ -258,7 +261,7 @@ export class LibraryToolDetails extends LitElement {
         }}
               ></select-group>
             ` : ''}
-            ${hasMultipleBranches ? html`
+            ${!this.readonly && hasMultipleBranches ? html`
               <div style="font-size: 12px; color: rgba(0, 0, 0, 0.4); margin-top: -15px; text-align: right;">
                 older versions available
               </div>
