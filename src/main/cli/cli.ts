@@ -33,8 +33,7 @@ export const APPLET_DEV_TMP_FOLDER_PREFIX = 'moss-applet-dev';
 
 export interface CliOpts {
   profile?: string;
-  seedFork?: string;
-  seedfork?: string;
+  fork?: string;
   devConfig?: string | undefined;
   devDataDir?: string | undefined;
   agentIdx?: number | undefined;
@@ -57,7 +56,7 @@ export interface CliOpts {
 
 export interface RunOptions {
   profile: string | undefined;
-  seedFork: string | undefined;
+  fork: string | undefined;
   appstoreNetworkSeed: string;
   devInfo: WeAppletDevInfo | undefined;
   bootstrapUrl: string | undefined;
@@ -75,7 +74,7 @@ export interface RunOptions {
 }
 
 export function validateArgs(args: CliOpts): RunOptions {
-  const seedFork = args.seedFork ?? args.seedfork;
+  const fork = args.fork;
 
   // validate --profile argument
   const allowedProfilePattern = /^[0-9a-zA-Z-]+$/;
@@ -133,8 +132,8 @@ export function validateArgs(args: CliOpts): RunOptions {
   if (args.holochainPath && typeof args.holochainPath !== 'string') {
     throw new Error('The --holochain-path argument must be of type string.');
   }
-  if (seedFork && typeof seedFork !== 'string') {
-    throw new Error('The --seed-fork/--seedfork argument must be of type string.');
+  if (fork && typeof fork !== 'string') {
+    throw new Error('The --fork argument must be of type string.');
   }
   if (args.holochainRustLog && typeof args.holochainRustLog !== 'string') {
     throw new Error('The --holochain-rust-log argument must be of type string.');
@@ -186,7 +185,7 @@ export function validateArgs(args: CliOpts): RunOptions {
 
   return {
     profile,
-    seedFork: seedFork ? seedFork : undefined,
+    fork: fork ? fork : undefined,
     appstoreNetworkSeed,
     devInfo,
     bootstrapUrl: args.bootstrapUrl,

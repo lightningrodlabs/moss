@@ -178,10 +178,9 @@ program
     'Runs Moss with a custom profile with its own dedicated data store.',
   )
   .option(
-    '--seed-fork <string>',
+    '--fork <string>',
     'When importing existing data, appends this suffix to all imported network seeds.',
   )
-  .addOption(new Option('--seedfork <string>').hideHelp())
   .option(
     '-n, --network-seed <string>',
     'Installs any default apps with the provided network seed in case there are any and have not yet been installed.',
@@ -430,6 +429,7 @@ if (!RUNNING_WITH_COMMAND) {
   let SYSTRAY: Tray | undefined = undefined;
   let isAppQuitting = false;
   let LOCAL_SERVICES_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
+  const skipLegacyProfileImportPrompt = !!RUN_OPTIONS.profile && !RUN_OPTIONS.fork;
   const WAL_WINDOWS: Record<
     string,
     {
@@ -1555,6 +1555,11 @@ if (!RUNNING_WITH_COMMAND) {
       return !WE_FILE_SYSTEM.keystoreInitialized();
     });
     ipcMain.handle('find-legacy-profiles', (): LegacyProfileInfo[] => {
+      // Skip the legacy import choice for explicit custom profiles, but still let
+      // the renderer continue into the normal first-launch setup flow.
+      if (skipLegacyProfileImportPrompt) {
+        return [];
+      }
       return findLegacyProfiles(app);
     });
     ipcMain.handle('get-lair-binary-version', (): string => {
@@ -1829,9 +1834,16 @@ if (!RUNNING_WITH_COMMAND) {
     // auto-import (pending) flows.
     const runGroupsImport = async (groups: GroupExportEntry[]): Promise<ImportResult[]> => {
       const forkImportedSeed = (seed: string | undefined): string | undefined => {
-        if (!seed || !RUN_OPTIONS.seedFork) return seed;
-        console.log(`Forking imported seed "${seed}" with fork "${RUN_OPTIONS.seedFork}"`);
-        return `${seed}${RUN_OPTIONS.seedFork}`;
+        if (!seed) {
+          console.warn('No seed provided for group. Skipping seed forking.');
+          return undefined;
+        } else if (!RUN_OPTIONS.fork) {
+          console.warn('Fork option is enabled but no seed fork string provided. Skipping seed forking.');
+          return seed;
+        } else {
+          console.log(`Forking imported seed "${seed}" with fork "${RUN_OPTIONS.fork}"`);
+          return `${seed}${RUN_OPTIONS.fork}`;
+        }
       };
 
       const allApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
