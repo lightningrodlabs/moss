@@ -70,6 +70,7 @@ import {
 } from './electron-api.js';
 import {
   devModeToolLibraryFromDevConfig,
+  encodeAndStringify,
   findAppForDnaHash,
   getNotificationState,
   sortVersionsDescending,
@@ -166,6 +167,13 @@ export type DevModeToolLibrary = {
   tools: ToolAndCurationInfo[];
   devCollective: DeveloperCollective;
 };
+
+function getNotificationFeedEntryId({ source, notification }: MossNotification): string {
+  const sourceKey =
+    source.type === 'applet' ? `applet:${source.appletId}` : `group:${source.groupDnaHash}`;
+
+  return `${sourceKey}:${encodeAndStringify(notification)}`;
+}
 
 export class MossStore {
   constructor(
@@ -698,12 +706,12 @@ export class MossStore {
   ): Promise<void> {
     const mainWindowFocused = await window.electronAPI.isMainWindowFocused();
 
-    for (const notification of notifications) {
-      // 1. Persist if requested (tools do this, foyer doesn't)
-      if (options.persist && source.type === 'applet') {
-        storeAppletNotifications([notification], source.appletId, true, this.persistedStore);
-      }
+    // 1. Persist if requested (tools do this, foyer doesn't)
+    if (options.persist && source.type === 'applet') {
+      const unreadNotifications = storeAppletNotifications(notifications, source.appletId, true, this.persistedStore);
+    }
 
+    for (const notification of notifications) {
       // 2. Update unread count for sidebar dot
       if (options.updateUnreadCount) {
         if (source.type === 'applet') {
@@ -731,7 +739,15 @@ export class MossStore {
       if (options.showInFeed) {
         this._notificationFeed.update((feed) => {
           const newNotification: MossNotification = { source, notification, sourceName: options.sourceName };
-          return [newNotification, ...feed].sort(
+          const deduplicatedFeed = [newNotification, ...feed].filter(
+            (entry, index, allEntries) =>
+              index ===
+              allEntries.findIndex(
+                (candidate) => getNotificationFeedEntryId(candidate) === getNotificationFeedEntryId(entry),
+              ),
+          );
+
+          return deduplicatedFeed.sort(
             (a, b) => b.notification.timestamp - a.notification.timestamp,
           );
         });
