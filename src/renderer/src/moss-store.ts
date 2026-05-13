@@ -1897,14 +1897,9 @@ export class MossStore {
   }
 
   /**
-   * Targeted reload after activating (joining) an existing applet in a group.
-   *
-   * Unlike reloadManualStores(), this does NOT call groupStores.reload(), which
-   * would destroy and recreate every GroupStore instance and cause the
-   * surrounding UI (settings dialogs, sidebars, etc.) to unmount/remount via
-   * Lit context invalidation. Activation does not change the set of groups, so
-   * the existing GroupStore for the activating group is still valid; only its
-   * joined-applet state and the conductor's installed-app list need to refresh.
+   * Refresh the stores that go stale when an applet is activated (joined) in a
+   * group: the conductor's installed-app list and the activating group's
+   * joined-applet state.
    */
   async reloadAfterAppletActivation(groupStore: GroupStore) {
     await this.installedApps.reload();
@@ -1915,13 +1910,9 @@ export class MossStore {
   }
 
   /**
-   * Targeted reload after enabling/disabling an existing applet.
-   *
-   * Same rationale as reloadAfterAppletActivation: avoid groupStores.reload()
-   * so the surrounding settings UI does not unmount. Enable/disable does not
-   * change which applets are joined or which groups exist; it only changes the
-   * conductor's running-app set, so refresh installedApps and the per-group
-   * allMyRunningApplets for every group containing this applet.
+   * Refresh the stores that go stale when an applet is enabled or disabled:
+   * the conductor's installed-app list and the running-applets store of every
+   * group containing this applet.
    */
   async reloadAfterAppletEnableDisable(appletHash: AppletHash) {
     await this.installedApps.reload();
