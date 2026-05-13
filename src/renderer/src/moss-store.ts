@@ -1436,7 +1436,7 @@ export class MossStore {
     await this.adminWebsocket.disableApp({
       installed_app_id: appIdFromAppletHash(appletHash),
     });
-    await this.reloadManualStores();
+    await this.reloadAfterAppletEnableDisable(appletHash);
   }
 
   async enableApplet(appletHash: EntryHash) {
@@ -1446,7 +1446,7 @@ export class MossStore {
     await this.adminWebsocket.enableApp({
       installed_app_id: appIdFromAppletHash(appletHash),
     });
-    await this.reloadManualStores();
+    await this.reloadAfterAppletEnableDisable(appletHash);
   }
 
   /**
@@ -1909,6 +1909,34 @@ export class MossStore {
     // );
     await this.installedApps.reload();
     await this.allAppAssetInfos.reload();
+  }
+
+  /**
+   * Refresh the stores that go stale when an applet is activated (joined) in a
+   * group: the conductor's installed-app list and the activating group's
+   * joined-applet state.
+   */
+  async reloadAfterAppletActivation(groupStore: GroupStore) {
+    await this.installedApps.reload();
+    await this.allAppAssetInfos.reload();
+    await groupStore.allMyApplets.reload();
+    await groupStore.allMyInstalledApplets.reload();
+    await groupStore.allMyRunningApplets.reload();
+  }
+
+  /**
+   * Refresh the stores that go stale when an applet is enabled or disabled:
+   * the conductor's installed-app list and the running-applets store of every
+   * group containing this applet.
+   */
+  async reloadAfterAppletEnableDisable(appletHash: AppletHash) {
+    await this.installedApps.reload();
+    const groupStores = await toPromise(this.groupsForApplet.get(appletHash)!);
+    await Promise.all(
+      Array.from(groupStores.values()).map(async (gs) => {
+        if (gs) await gs.allMyRunningApplets.reload();
+      }),
+    );
   }
 
   async emitParentToAppletMessage(message: ParentToAppletMessage, forApplets: AppletId[]) {
