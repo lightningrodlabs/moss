@@ -16,6 +16,7 @@ Moss is a Holochain-based runtime for composable peer-to-peer collaboration tool
 3. Don't add claude co-authored/generated messages in commit descriptions
 4. **Strong typing**: when possible allways use strong typing in typescript.
 5. **Holochain reference sources**: We are using Holochain 0.6.  The source for this is local and lives at the same level as this repo. DO NOT USE .cargo files or web searches to research holochain, just look locally.
+6. **Code comments**: Code comments must explain intent (what the code is trying to achieve), not the change itself. Do not write comments that compare to prior behavior, contrast with other functions, or describe what the code is *no longer* doing — that belongs in the PR description or commit message.
 
 ## Development Commands
 
