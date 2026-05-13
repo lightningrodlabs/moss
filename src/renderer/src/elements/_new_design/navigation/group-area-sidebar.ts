@@ -302,6 +302,20 @@ export class GroupAppletsSidebar extends LitElement {
             encodeHashToBase64(appletStore.appletHash),
           )}
                   placement="bottom"
+                  @contextmenu=${(e: MouseEvent) => {
+            e.preventDefault();
+            this.dispatchEvent(
+              new CustomEvent('open-tool-info', {
+                detail: {
+                  kind: 'activated-applet',
+                  appletHash: appletStore.appletHash,
+                  applet: appletStore.applet,
+                },
+                bubbles: true,
+                composed: true,
+              }),
+            );
+          }}
                   @click=${() => {
             this.dispatchEvent(
               new CustomEvent('applet-selected', {
