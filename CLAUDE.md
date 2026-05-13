@@ -105,13 +105,13 @@ yarn typecheck:web
 
 Moss uses `@lit/localize` for internationalization. UI strings are marked with `msg()` and translations are stored in XLIFF files.
 
-**Supported languages**: English (source), German (de), French (fr), Spanish (es), Turkish (tr)
+**Supported languages**: English (source), German (de), French (fr), Spanish (es), Turkish (tr), Italian (it), Portuguese (pt), Japanese (ja), Dutch (nl). The authoritative list lives in `src/renderer/lit-localize.json` under `targetLocales` — add or remove locales there, not here.
 
 **Key files**:
 - `src/renderer/lit-localize.json` - Configuration for lit-localize
 - `src/renderer/src/locales/localization.ts` - Runtime locale management
 - `src/renderer/src/locales/generated/` - Generated translation modules (do not edit directly)
-- `src/renderer/xliff/` - XLIFF translation files (de.xlf, fr.xlf, es.xlf, tr.xlf)
+- `src/renderer/xliff/` - XLIFF translation files, one per target locale (`de.xlf`, `fr.xlf`, `es.xlf`, `tr.xlf`, `it.xlf`, `pt.xlf`, `ja.xlf`, `nl.xlf`)
 
 #### Adding/Changing/Deleting Strings
 

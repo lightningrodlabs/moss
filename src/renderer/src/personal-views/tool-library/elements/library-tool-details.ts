@@ -57,16 +57,16 @@ export class LibraryToolDetails extends LitElement {
     return html`<div class="column" style="margin-top: 10px; padding-left: 0; border-left: none;">
       <div class="row" style="justify-content: space-between; align-items: center;">
         <div class="version" style="padding-left: 0; border-left: none;">
-          v${version.version} ${isFirstInList ? ' (latest)' : ''}
+          v${version.version} ${isFirstInList ? msg('(latest)') : ''}
         </div>
       </div>
       <div>
-        Released:
+        ${msg('Released:')}
         <sl-tooltip .content="${`${new Date(version.releasedAt)}`}">
           <span>${this.timeAgo.format(version.releasedAt)}</span></sl-tooltip
         >
       </div>
-      <div>Change Log: ${version.changelog}</div>
+      <div>${msg(str`Change Log: ${version.changelog}`)}</div>
           ${!this.informational && showInstallButton && hasMultipleBranches ? html`
           <select-group
             .buttonWidth=${'auto'}
