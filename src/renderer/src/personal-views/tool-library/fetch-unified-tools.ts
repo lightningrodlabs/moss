@@ -8,13 +8,9 @@ import {
   ToolCurations,
   ToolCurator,
 } from '@theweave/moss-types';
-import { deriveToolCompatibilityId } from '@theweave/utils';
+import { deriveToolCompatibilityId, toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
 import { ToolAndCurationInfo, ToolListUrl, UnifiedToolEntry } from '../../types.js';
-import {
-  deriveToolBaseId,
-  groupToolsByBaseId,
-  sortVersionsDescending,
-} from '../../utils.js';
+import { groupToolsByBaseId, sortVersionsDescending } from '../../utils.js';
 import { DevModeToolLibrary, MossStore } from '../../moss-store.js';
 
 export const DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
@@ -159,27 +155,42 @@ export async function fetchUnifiedTools(
 }
 
 /**
- * Given an Applet entry and a unified-tools map, find the matching UnifiedToolEntry.
- * Returns undefined when the applet's source isn't in the map (offline / curation removed / dev applet).
+ * Find the UnifiedToolEntry whose version branches include the given compatibility id.
+ *
+ * TODO(test): unit test deferred — see plans/tool-info-popup.md "TDD plan" #2.
+ *   Cover hit and miss cases. Re-enable when renderer-side Vitest infra lands.
+ */
+export function findUnifiedToolByCompatibilityId(
+  unifiedTools: Map<string, UnifiedToolEntry>,
+  toolCompatibilityId: string,
+): UnifiedToolEntry | undefined {
+  for (const tool of unifiedTools.values()) {
+    for (const branch of tool.versionBranches.values()) {
+      if (branch.toolCompatibilityId === toolCompatibilityId) {
+        return tool;
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Given an Applet entry's distribution_info JSON and a unified-tools map, find the matching UnifiedToolEntry.
+ * Returns undefined when the JSON is malformed or the applet's source isn't in the map (offline / curation removed / dev applet).
  *
  * TODO(test): unit test deferred — see plans/tool-info-popup.md "TDD plan" #2.
  *   Cases to cover: well-formed distribution_info hits/misses, malformed JSON,
- *   wrong `type`, missing `toolListUrl`/`toolId`. Re-enable when renderer-side
- *   Vitest infra lands.
+ *   wrong shape. Re-enable when renderer-side Vitest infra lands.
  */
 export function resolveUnifiedToolForApplet(
   distributionInfo: string,
   unifiedTools: Map<string, UnifiedToolEntry>,
 ): UnifiedToolEntry | undefined {
-  let parsed: { type: string; info?: { toolListUrl?: string; toolId?: string } };
+  let compatId: string;
   try {
-    parsed = JSON.parse(distributionInfo);
+    compatId = toolCompatibilityIdFromDistInfoString(distributionInfo);
   } catch {
     return undefined;
   }
-  if (parsed.type !== 'web2-tool-list' || !parsed.info?.toolListUrl || !parsed.info?.toolId) {
-    return undefined;
-  }
-  const baseId = deriveToolBaseId(parsed.info.toolListUrl, parsed.info.toolId);
-  return unifiedTools.get(baseId);
+  return findUnifiedToolByCompatibilityId(unifiedTools, compatId);
 }

@@ -12,6 +12,7 @@ import { Applet } from '@theweave/group-client';
 import {
   activeToolCurationConfigs,
   fetchUnifiedTools,
+  findUnifiedToolByCompatibilityId,
   resolveUnifiedToolForApplet,
 } from '../personal-views/tool-library/fetch-unified-tools.js';
 import './_new_design/moss-dialog.js';
@@ -60,9 +61,12 @@ export class ToolInfoDialog extends LitElement {
   private _loading: boolean = false;
 
   // Cache the unified tools map so we don't re-fetch on every right-click.
-  // Why: curation lists live on remote URLs; one fetch per session is enough for the info-popup use case.
-  // TODO: invalidate when mossCurationConfig changes mid-session (rare; deferred until the moss-store hoist).
-  private _unifiedToolsCache: Map<string, UnifiedToolEntry> | undefined;
+  // Why: curation lists live on remote URLs. Keyed by a signature of the active
+  // curation configs so a mid-session change to mossCurationConfig (via the URL
+  // list manager) invalidates the cache automatically.
+  private _unifiedToolsCache:
+    | { signature: string; tools: Map<string, UnifiedToolEntry> }
+    | undefined;
 
   async show(input: ToolInfoInput) {
     this._resolvedTool = undefined;
@@ -98,15 +102,7 @@ export class ToolInfoDialog extends LitElement {
     // 'available-tool' is reserved for the future first-run flow; resolve by
     // toolCompatibilityId across version branches.
     const map = await this._ensureUnifiedTools();
-    for (const tool of map.values()) {
-      for (const branch of tool.versionBranches.values()) {
-        if (branch.toolCompatibilityId === input.toolCompatibilityId) {
-          this._resolvedTool = tool;
-          break;
-        }
-      }
-      if (this._resolvedTool) break;
-    }
+    this._resolvedTool = findUnifiedToolByCompatibilityId(map, input.toolCompatibilityId);
     this._loading = false;
   }
 
@@ -115,20 +111,23 @@ export class ToolInfoDialog extends LitElement {
   }
 
   private async _ensureUnifiedTools(): Promise<Map<string, UnifiedToolEntry>> {
-    if (this._unifiedToolsCache) return this._unifiedToolsCache;
     const configs = activeToolCurationConfigs(this.mossStore);
+    const signature = JSON.stringify(configs);
+    if (this._unifiedToolsCache && this._unifiedToolsCache.signature === signature) {
+      return this._unifiedToolsCache.tools;
+    }
     const result = await fetchUnifiedTools(configs, this.mossStore.devModeToolLibrary);
-    this._unifiedToolsCache = result.unifiedTools;
-    return this._unifiedToolsCache;
+    this._unifiedToolsCache = { signature, tools: result.unifiedTools };
+    return result.unifiedTools;
   }
 
   private renderHeader() {
     const title = this._resolvedTool?.title ?? this._fallbackTitle ?? msg('Tool info');
     return html`
-      <span style="display: inline-flex; align-items: baseline; gap: 8px;">
+      <span class="header">
         <span>${title}</span>
         ${this._installedAs
-          ? html`<span style="font-size: 18px; font-weight: 400; opacity: 0.6;">
+          ? html`<span class="installed-as">
               ${msg(str`(installed as: ${this._installedAs})`)}
             </span>`
           : ''}
@@ -138,22 +137,22 @@ export class ToolInfoDialog extends LitElement {
 
   private renderBody() {
     if (this._loading) {
-      return html`<div style="padding: 30px;">${msg('Loading…')}</div>`;
+      return html`<div class="loading">${msg('Loading…')}</div>`;
     }
     if (this._resolvedTool) {
       return html`
         <library-tool-details
           .unifiedTool=${this._resolvedTool}
-          .readonly=${true}
+          .informational=${true}
         ></library-tool-details>
       `;
     }
     return html`
-      <div class="column" style="padding: 20px; gap: 10px;">
+      <div class="column fallback">
         ${this._fallbackSubtitle
-          ? html`<div style="font-size: 16px; opacity: 0.8;">${this._fallbackSubtitle}</div>`
+          ? html`<div class="fallback-subtitle">${this._fallbackSubtitle}</div>`
           : ''}
-        <div style="font-size: 13px; opacity: 0.6;">
+        <div class="fallback-note">
           ${msg('Limited info available — this tool is not in any active curation list.')}
         </div>
       </div>
@@ -169,7 +168,36 @@ export class ToolInfoDialog extends LitElement {
     `;
   }
 
-  static styles = [mossStyles, css``];
+  static styles = [
+    mossStyles,
+    css`
+      .header {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+      .installed-as {
+        font-size: 18px;
+        font-weight: 400;
+        opacity: 0.6;
+      }
+      .loading {
+        padding: 30px;
+      }
+      .fallback {
+        padding: 20px;
+        gap: 10px;
+      }
+      .fallback-subtitle {
+        font-size: 16px;
+        opacity: 0.8;
+      }
+      .fallback-note {
+        font-size: 13px;
+        opacity: 0.6;
+      }
+    `,
+  ];
 }
 
 declare global {

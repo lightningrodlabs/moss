@@ -57,7 +57,7 @@ That changes a few choices in this plan:
 
 Three pieces, each independently shippable.
 
-### Piece A — `library-tool-details` gets a `readonly` mode
+### Piece A — `library-tool-details` gets an `informational` mode
 
 A boolean prop. When `true`:
 
@@ -73,7 +73,7 @@ That's the entire change in this file. No event removal; just don't render the b
 
 ### Piece B — Global "tool info dialog" host
 
-A single mounted instance owns the `<moss-dialog>` + `<library-tool-details readonly>`. Right-click sites don't each carry their own dialog.
+A single mounted instance owns the `<moss-dialog>` + `<library-tool-details informational>`. Right-click sites don't each carry their own dialog.
 
 - New element `tool-info-dialog` (suggested location: `src/renderer/src/elements/tool-info-dialog.ts`) wraps `moss-dialog` + `library-tool-details`. Exposes `show(input)` / `hide()`.
 - **Dialog input shape** — discriminated union, designed so the future first-run variant slots in:
@@ -139,7 +139,7 @@ Spec sources to honor when the infra lands:
 
 ### Unit tests (Vitest)
 
-1. `library-tool-details.readonly-mode.test.ts` — mounts the component with `readonly={true}`, asserts neither the primary install button nor any versions-tab install button is rendered; asserts overview/version content still renders. With `installedAs="My Forum"`, asserts the custom-name line is shown.
+1. `library-tool-details.informational-mode.test.ts` — mounts the component with `informational={true}`, asserts neither the primary install button nor any versions-tab install button is rendered; asserts overview/version content still renders. With `installedAs="My Forum"`, asserts the custom-name line is shown.
 2. `tool-info-resolver.test.ts` — for `kind: 'activated-applet'`: given a fixture `Applet` + a fixture `unifiedTools` map, returns the right `UnifiedToolEntry` with `activation.state = 'activated'` and the correct `customName`; with the entry missing, returns the fallback shape; with malformed `distribution_info`, returns fallback (does not throw). Add a smoke case for `kind: 'unified'` passthrough.
 3. `tool-info-dialog.test.ts` — fires `open-tool-info` event with `kind: 'activated-applet'` and `kind: 'unified'`; asserts dialog opens with the correct tool data and (where applicable) the `installed as` line.
 
@@ -156,23 +156,23 @@ The test uses fixtures already wired in `tests/e2e/fixtures/moss.ts`. Single age
 Each step is a separate commit; CI gates each.
 
 1. **Piece A first — pure UI change, lowest risk.**
-   - Add `readonly` + `installedAs` props to `library-tool-details`.
+   - Add `informational` + `installedAs` props to `library-tool-details`.
    - Conditionalize install button rendering and the custom-name line.
-   - Unit test #1.
-   - Existing library use sites unchanged (default `readonly=false`, `installedAs` undefined).
+   - Unit test #N (deferred on this branch — see "Status" above): #1.
+   - Existing library use sites unchanged (default `informational=false`, `installedAs` undefined).
 2. **Piece C — resolver + store hoist.**
    - Hoist unified-tools building to moss-store; rewire tool-library-web2 to consume.
    - Add `resolveToolInfo` + `ResolvedToolInfo` (with `activation` field) + fallback type.
    - Implement `'activated-applet'` and `'unified'` paths; leave `'available-tool'` typed but stubbed (return `'available'` activation, look up tool by compatibility id, fallback otherwise).
-   - Unit test #2.
+   - Unit test #N (deferred on this branch — see "Status" above): #2.
    - No UI change yet; should be a pure refactor verified by existing library tests + typecheck.
 3. **Piece B — dialog host + event wire-up.**
    - New `tool-info-dialog` element, mount at app root.
-   - Listen for `open-tool-info`. On event, resolve input → render `library-tool-details readonly installedAs=…`.
-   - Unit test #3.
+   - Listen for `open-tool-info`. On event, resolve input → render `library-tool-details informational installedAs=…`.
+   - Unit test #N (deferred on this branch — see "Status" above): #3.
 4. **Wire up right-click on the group tools sidebar (single site for v1).**
    - In `group-applets-row.ts`, add `@contextmenu` handler that fires `open-tool-info` with `kind: 'activated-applet'` and the applet hash. `e.preventDefault()` to suppress browser menu.
-5. **E2E spec #10**, plus a manual pass through the group sidebar (see Manual Verification below).
+5. **E2E spec #10** (deferred — see "Status" above), plus a manual pass through the group sidebar (see Manual Verification below).
 
 ## Manual verification (UI feature, not just code correctness)
 

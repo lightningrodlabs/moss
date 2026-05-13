@@ -33,11 +33,10 @@ export class LibraryToolDetails extends LitElement {
   devCollectives: Record<string, DeveloperCollective> = {};
 
   // TODO(test): unit test deferred — see plans/tool-info-popup.md "TDD plan" #1.
-  //   When readonly=true, neither the primary install button (~L227) nor the
-  //   per-version install controls (~L64) should render; the rest of the body
-  //   must still render. Re-enable when renderer-side Vitest infra lands.
+  //   When informational=true, no install controls should render; the rest of
+  //   the body must still render. Re-enable when renderer-side Vitest infra lands.
   @property({ type: Boolean })
-  readonly: boolean = false;
+  informational: boolean = false;
 
   @state()
   tabsState: TabsState = TabsState.Overview;
@@ -68,7 +67,7 @@ export class LibraryToolDetails extends LitElement {
         >
       </div>
       <div>Change Log: ${version.changelog}</div>
-          ${!this.readonly && showInstallButton && hasMultipleBranches ? html`
+          ${!this.informational && showInstallButton && hasMultipleBranches ? html`
           <select-group
             .buttonWidth=${'auto'}
             .buttonText=${msg(str`Install v${version.version} to a group space`)}
@@ -228,7 +227,7 @@ export class LibraryToolDetails extends LitElement {
             </div>
           </div>
           <div class="column" style="align-items: flex-end;">
-            ${this.readonly ? '' : primaryBranch ? html`
+            ${this.informational ? '' : primaryBranch ? html`
               <select-group
                 .buttonWidth=${'auto'}
                 .buttonText=${msg(str`Install v${primaryBranch.latestVersion.version} to a group space`)}
@@ -265,7 +264,7 @@ export class LibraryToolDetails extends LitElement {
         }}
               ></select-group>
             ` : ''}
-            ${!this.readonly && hasMultipleBranches ? html`
+            ${!this.informational && hasMultipleBranches ? html`
               <div style="font-size: 12px; color: rgba(0, 0, 0, 0.4); margin-top: -15px; text-align: right;">
                 older versions available
               </div>
