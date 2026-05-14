@@ -1,4 +1,5 @@
 import { html, LitElement, css } from 'lit';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { consume } from '@lit/context';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
@@ -18,7 +19,7 @@ import { MossStore } from '../../../moss-store.js';
 import { mossStoreContext } from '../../../context.js';
 import './tool-publisher.js';
 import { ToolAndCurationInfo, UnifiedToolEntry } from '../../../types.js';
-import { getPrimaryVersionBranch, extractMajorVersion } from '../../../utils.js';
+import { getPrimaryVersionBranch, extractMajorVersion, markdownParseSafe } from '../../../utils.js';
 import { experimentalToolIcon } from '../../../elements/_new_design/icons.js';
 import './library-tool-details.js';
 import { LibraryToolDetails } from './library-tool-details.js';
@@ -109,7 +110,7 @@ export class InstallableToolsWeb2 extends LitElement {
             <div class="tool-title" title="${tool.subtitle}">
               ${tool.title} v${primaryBranch.latestVersion.version}${versionBadge}
             </div>
-            <div class="tool-description">${tool.description}</div>
+            <div class="tool-description">${unsafeHTML(markdownParseSafe(tool.description))}</div>
             ${tool.tags.length > 0
         ? html`
                   <div class="row tool-tag-list" style="margin-top:6px">

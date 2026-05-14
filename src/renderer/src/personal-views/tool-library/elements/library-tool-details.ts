@@ -1,8 +1,9 @@
 import { css, html, LitElement } from 'lit';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg, str } from '@lit/localize';
 import { ToolAndCurationInfo, UnifiedToolEntry, VersionBranchInfo } from '../../../types';
-import { getPrimaryVersionBranch } from '../../../utils';
+import { getPrimaryVersionBranch, markdownParseSafe } from '../../../utils';
 import { mossStyles } from '../../../shared-styles';
 import { DeveloperCollective } from '@theweave/moss-types';
 import { libraryStyles } from '../libraryStyles';
@@ -39,9 +40,10 @@ export class LibraryToolDetails extends LitElement {
     const tool = this.unifiedTool || (this.tool ? {
       description: this.tool.toolInfoAndVersions.description,
     } : null);
+    const description = tool?.description || this.tool?.toolInfoAndVersions.description || '';
     return html`
       <div class="tool-description" style="margin-top:25px;">
-        ${tool?.description || this.tool?.toolInfoAndVersions.description}
+        ${unsafeHTML(markdownParseSafe(description))}
       </div>
     `;
   }
