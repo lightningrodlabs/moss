@@ -1,6 +1,6 @@
 {
   "name": "@theweave/api",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
@@ -26,8 +26,8 @@
   },
   "type": "module",
   "dependencies": {
-    "@holochain-open-dev/profiles": "^0.601.2",
-    "@holochain/client": "=0.20.4-rc.0",
+    "@holochain-open-dev/profiles": "^0.601.4",
+    "@holochain/client": "=0.20.4",
     "@msgpack/msgpack": "^2.8.0",
     "js-base64": "^3.7.2"
   },
