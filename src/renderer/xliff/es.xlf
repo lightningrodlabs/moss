@@ -694,10 +694,6 @@
   <source>Undeprecate</source>
   <target>Eliminar deprecación</target>
 </trans-unit>
-<trans-unit id="s58cf3830485fd5ec">
-  <source>advanced settings</source>
-  <target>configuración avanzada</target>
-</trans-unit>
 <trans-unit id="s195a1ab2540d51a4">
   <source>Deprecated</source>
   <target>Deprecado</target>
@@ -2337,6 +2333,79 @@ comienza ahora</target>
 <trans-unit id="s7c6ddb11656cc241">
   <source>Update all <x id="0" equiv-text="${updateCount}"/></source>
   <target>Actualizar todo (<x id="0" equiv-text="${updateCount}"/>)</target>
+</trans-unit>
+<trans-unit id="s0015d648b3decb5a">
+  <source>Checking permission type...</source>
+</trans-unit>
+<trans-unit id="s0944d19ad37c29fb">
+  <source>Downloading and installing Tool...</source>
+</trans-unit>
+<trans-unit id="s19b2de5d76a5877f">
+  <source>Invalid yaml</source>
+</trans-unit>
+<trans-unit id="sb6bc98edf4790c72">
+  <source>Name already exists</source>
+</trans-unit>
+<trans-unit id="s880048a4582bed09">
+  <source>You need to choose a name for the Tool instance.</source>
+</trans-unit>
+<trans-unit id="s716a6024e3fe999c">
+  <source>Show</source>
+</trans-unit>
+<trans-unit id="s21b06c38fc4164db">
+  <source>Advanced</source>
+</trans-unit>
+<trans-unit id="s9529b843ec1c909c">
+  <source>Custom DNA properties (per Role)</source>
+</trans-unit>
+<trans-unit id="s8701828d19191145">
+  <source>Avatar is required</source>
+</trans-unit>
+<trans-unit id="scb6620fcd5bff04c">
+  <source>Advanced settings</source>
+</trans-unit>
+<trans-unit id="s87c5c0a9573688c3">
+  <source>DNA Properties</source>
+</trans-unit>
+<trans-unit id="s1e301f6e1224b5ec">
+  <source>Custom DNA Properties</source>
+</trans-unit>
+<trans-unit id="s669b18c6d2d9c95b">
+  <source>None</source>
+</trans-unit>
+<trans-unit id="s45ef262cb6badb45">
+  <source>Tool info</source>
+  <target>Información de la herramienta</target>
+</trans-unit>
+<trans-unit id="s880e209b0ca11e86">
+  <source>(installed as: <x id="0" equiv-text="${this._installedAs}"/>)</source>
+  <target>(instalado como: <x id="0" equiv-text="${this._installedAs}"/>)</target>
+</trans-unit>
+<trans-unit id="s6ebc9bd6feae62a3">
+  <source>Loading…</source>
+  <target>Cargando…</target>
+</trans-unit>
+<trans-unit id="s41cffddcfb0e86cb">
+  <source>Limited info available — this tool is not in any active curation list.</source>
+  <target>Información limitada — esta herramienta no figura en ninguna lista de curación activa.</target>
+</trans-unit>
+<trans-unit id="s13f20cb257e12fac">
+  <source>This field is required</source>
+</trans-unit>
+<trans-unit id="s94ec139e88fa8580">
+  <source><x id="0" equiv-text="${this.label}"/> is required</source>
+</trans-unit>
+<trans-unit id="sd43e41dadca35537">
+  <source>(latest)</source>
+  <target>(la más reciente)</target>
+</trans-unit>
+<trans-unit id="s97b6a0a6a8995ddc">
+  <source>Released:</source>
+  <target>Publicado:</target>
+</trans-unit>
+<trans-unit id="s0246d749f0d614a1">
+  <source>Change Log: <x id="0" equiv-text="${version.changelog}"/></source>
+  <target>Registro de cambios: <x id="0" equiv-text="${version.changelog}"/></target>
 </trans-unit>
 </body>
 </file>

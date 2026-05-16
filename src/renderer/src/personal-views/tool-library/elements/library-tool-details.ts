@@ -33,6 +33,12 @@ export class LibraryToolDetails extends LitElement {
   @property()
   devCollectives: Record<string, DeveloperCollective> = {};
 
+  // TODO(test): unit test deferred — see plans/tool-info-popup.md "TDD plan" #1.
+  //   When informational=true, no install controls should render; the rest of
+  //   the body must still render. Re-enable when renderer-side Vitest infra lands.
+  @property({ type: Boolean })
+  informational: boolean = false;
+
   @state()
   tabsState: TabsState = TabsState.Overview;
 
@@ -53,17 +59,17 @@ export class LibraryToolDetails extends LitElement {
     return html`<div class="column" style="margin-top: 10px; padding-left: 0; border-left: none;">
       <div class="row" style="justify-content: space-between; align-items: center;">
         <div class="version" style="padding-left: 0; border-left: none;">
-          v${version.version} ${isFirstInList ? ' (latest)' : ''}
+          v${version.version} ${isFirstInList ? msg('(latest)') : ''}
         </div>
       </div>
       <div>
-        Released:
+        ${msg('Released:')}
         <sl-tooltip .content="${`${new Date(version.releasedAt)}`}">
           <span>${this.timeAgo.format(version.releasedAt)}</span></sl-tooltip
         >
       </div>
-      <div>Change Log: ${version.changelog}</div>
-          ${showInstallButton && hasMultipleBranches ? html`
+      <div>${msg(str`Change Log: ${version.changelog}`)}</div>
+          ${!this.informational && showInstallButton && hasMultipleBranches ? html`
           <select-group
             .buttonWidth=${'auto'}
             .buttonText=${msg(str`Install v${version.version} to a group space`)}
@@ -223,7 +229,7 @@ export class LibraryToolDetails extends LitElement {
             </div>
           </div>
           <div class="column" style="align-items: flex-end;">
-            ${primaryBranch ? html`
+            ${this.informational ? '' : primaryBranch ? html`
               <select-group
                 .buttonWidth=${'auto'}
                 .buttonText=${msg(str`Install v${primaryBranch.latestVersion.version} to a group space`)}
@@ -260,7 +266,7 @@ export class LibraryToolDetails extends LitElement {
         }}
               ></select-group>
             ` : ''}
-            ${hasMultipleBranches ? html`
+            ${!this.informational && hasMultipleBranches ? html`
               <div style="font-size: 12px; color: rgba(0, 0, 0, 0.4); margin-top: -15px; text-align: right;">
                 older versions available
               </div>
