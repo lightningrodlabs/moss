@@ -1,11 +1,48 @@
-import { test } from '../fixtures/moss';
-import { waitForBoot } from '../helpers/bootToReady';
-import { joinGroupByInviteLink } from '../helpers/groups';
+import { test, expect } from '../fixtures/moss';
+import { startFreshIfLegacyImport, waitForBoot } from '../helpers/bootToReady';
+import {
+  createGroupFromMainDashboard,
+  enterSpaceIfPrompted,
+  getCurrentGroupInviteLink,
+  joinGroupByInviteLink,
+} from '../helpers/groups';
 
-test.skip('join a group via invite link', async ({ moss }) => {
-  // why: skipped until we have a deterministic source of invite links — a fixture
-  // group with a known seed will need to exist before this can run. See the multi-agent
-  // smoke (#9) for the realistic version where agent 1 emits the invite for agent 2.
-  await waitForBoot(moss.mainWindow);
-  await joinGroupByInviteLink(moss.mainWindow, 'TODO-fixture-invite-link');
+/**
+ * Smoke #3 — Join a group via an invite link.
+ *
+ * why: isolates the join flow from peer discovery. Joining a group installs
+ * the group DNA locally with the network seed encoded in the invite link — it
+ * is a conductor-local operation that does NOT require the inviting agent to
+ * be online or any gossip to converge. Keeping this separate from the
+ * multi-agent discovery test (#9) means a failure here points squarely at the
+ * invite-link parse / join-group-dialog / group-install path, while a failure
+ * only in #9 points at gossip.
+ *
+ * Two agents are used purely as a deterministic source of a real invite link:
+ * agent 1 creates a group and emits one; agent 2 consumes it. No shared
+ * network state is asserted.
+ */
+test('agent 2 joins a group from agent 1\'s invite link', async ({ moss, secondAgent }) => {
+  // ---- Agent 1: create a group and emit an invite link ----
+  await waitForBoot(moss.mainWindow, 90_000);
+  await startFreshIfLegacyImport(moss.mainWindow);
+  await createGroupFromMainDashboard(moss.mainWindow, { name: 'Joinable Group' });
+  // why: getCurrentGroupInviteLink needs the "Invite People" button, which is
+  // gated on the agent being a privileged steward with a set profile. Entering
+  // the space sets that profile.
+  await enterSpaceIfPrompted(moss.mainWindow, 'inviter');
+
+  const inviteLink = await getCurrentGroupInviteLink(moss.mainWindow);
+  expect(inviteLink).toMatch(/invite/i);
+
+  // ---- Agent 2: launch a separate instance and join via the link ----
+  const agent2 = await secondAgent({ profileName: 'joiner' });
+  await waitForBoot(agent2.mainWindow, 120_000);
+  await startFreshIfLegacyImport(agent2.mainWindow);
+  await joinGroupByInviteLink(agent2.mainWindow, inviteLink);
+
+  // Success signal: the joined group appears in agent 2's groups sidebar.
+  await expect(agent2.mainWindow.locator('groups-sidebar group-sidebar-button')).toHaveCount(1, {
+    timeout: 30_000,
+  });
 });

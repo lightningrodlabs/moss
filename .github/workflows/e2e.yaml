@@ -103,15 +103,26 @@ jobs:
         # why: xvfb-run gives Electron a virtual display. The Holochain
         # binaries that ship in resources/bins need glibc/libstdc++ from
         # nix, so wrap the command in `nix develop --command`.
+        #
+        # why MOSS_E2E_DEBUG: the multi-agent peer-discovery test (#9) only
+        # fails on CI, never locally — so the moss / conductor / bootstrap-srv
+        # stdio is the only way to diagnose it. The fixture pipes that stdio to
+        # the job log only when this is set. Verbose, but the suite is small.
+        env:
+          MOSS_E2E_DEBUG: '1'
         run: nix develop --command xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" yarn test:e2e
 
-      - name: Upload Playwright trace + video artifacts on failure
+      - name: Upload Playwright trace + video + conductor logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-artifacts
+          # why: exclude the bulky per-profile data (conductor DBs, keystore,
+          # cached UIs/happs) but keep the `logs/` subtree — those conductor
+          # logs are what a real peer-discovery failure needs to be diagnosed.
           path: |
             test-results-e2e/
             !test-results-e2e/profiles/**
+            test-results-e2e/profiles/**/logs/**
           if-no-files-found: ignore
           retention-days: 14

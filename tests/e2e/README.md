@@ -53,21 +53,24 @@ e2e/
   playwright.config.ts             # single worker, traces on first retry
   fixtures/
     moss.ts                        # `test`, `expect`, launchMoss(), secondAgent()
+    bootstrap.ts                   # worker-scoped local kitsune2-bootstrap-srv
+    toolCuration.ts                # worker-scoped local tool-curation HTTP server
   helpers/                         # functional helpers — flat, no class hierarchy
     bootToReady.ts
     groups.ts
     tools.ts
     settings.ts
-  smoke/                           # the 9 load-bearing flows
-    01.boot.spec.ts                # ← Phase-0 spike, the only one currently active
-    02.create-group.spec.ts        # skipped — locator hardening pending
-    03.join-group.spec.ts          # skipped
+  smoke/                           # the 10 load-bearing flows — all active
+    01.boot.spec.ts
+    02.create-group.spec.ts
+    03.join-group.spec.ts
     04.install-applet-from-library.spec.ts
     05.applet-iframe-handshake.spec.ts
     06.switch-groups.spec.ts
     07.settings-language.spec.ts
     08.relaunch-persistence.spec.ts
     09.second-agent-activates-tool.spec.ts
+    10.tool-info-popup.spec.ts
   profiles/                        # tmp profile dirs (gitignored)
 ```
 

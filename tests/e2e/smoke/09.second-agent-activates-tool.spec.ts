@@ -35,7 +35,12 @@ import { expectPeerCount } from '../helpers/tools';
 test('two agents on a local bootstrap discover each other in the same group', async ({
   bootstrapSrv,
 }) => {
-  test.setTimeout(360_000);
+  // why: on a cold CI runner conductor warm-up, the bootstrap re-poll cadence,
+  // and the first gossip round are all dramatically slower than on a warm dev
+  // machine (locally this whole test finishes in ~70s). The peer-discovery
+  // assertions below budget up to 240s each; setup adds ~120s on CI. Give the
+  // whole test 9 minutes so a slow-but-successful convergence isn't cut off.
+  test.setTimeout(540_000);
 
   // why: launch directly (rather than using the standard `moss` / `secondAgent`
   // fixtures) so we can pass `bootstrap:` to BOTH agents — the fixture's
@@ -83,10 +88,14 @@ test('two agents on a local bootstrap discover each other in the same group', as
       );
 
       // ---- The actual peer-discovery assertion ----
-      // why: the gossip-path proof. With a local bootstrap the round trip
-      // should be on the order of seconds; allow up to 120s to absorb
-      // first-time conductor warm-up and the initial gossip exchange.
-      await expectPeerCount(agent1.mainWindow, 2, 120_000);
+      // why: the gossip-path proof. Locally the round trip is seconds, but on
+      // a cold CI runner agent 1 has been alone in the space long enough for
+      // its bootstrap poll interval to back off, so re-discovering agent 2
+      // (and running the first gossip round that carries agent 2's profile)
+      // can take into the low minutes. 240s covers that without masking a
+      // genuine hang. Agent 2's view converges right after agent 1's — the
+      // transport connection is already up by then — so its window is shorter.
+      await expectPeerCount(agent1.mainWindow, 2, 240_000);
       await expectPeerCount(agent2.mainWindow, 2, 120_000);
     } finally {
       await closeMoss(agent2);
