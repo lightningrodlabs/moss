@@ -1,13 +1,17 @@
 name: e2e
 
 on:
-  push:
-    # why: include feat/** so the suite runs on feature-branch pushes during
-    # development — otherwise nothing fires until a PR is opened. main-* covers
-    # the active 0.6 line.
-    branches: [main, main-*, develop, release, 'release-*', 'feat/**']
+  # why: the pre-merge gate. A pull_request run fires on PR open and on every
+  # push to the PR's branch, so feature work is covered without running the
+  # ~12-15min job on every push to branches that have no PR yet. For an ad-hoc
+  # run before opening a PR, use workflow_dispatch.
   pull_request:
     branches: [main, main-*, develop]
+  # why: post-merge safety net on the integration branches (a non-ff merge
+  # commit's tree was never tested as-is), and the release-branch pushes the
+  # slow project keys off. Deliberately no feat/** here.
+  push:
+    branches: [main, main-*, develop, release, 'release-*']
   # why: the slow project (multi-agent peer discovery) is too expensive to gate
   # every push on, but should still run regularly. This weekly schedule plus
   # release-branch pushes and manual dispatch give it occasional coverage.
@@ -15,12 +19,23 @@ on:
     - cron: '0 6 * * 1'
   workflow_dispatch:
 
+# why: when several pushes land on a PR branch in quick succession, only the
+# newest needs to finish — cancel the superseded in-flight runs rather than
+# letting all of them run the full job.
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
 # why: per plans/ui-testing-and-cruft-cleanup.md, the suite runs Linux-only,
 # single-worker, against a built artifact. Don't gate merges yet — let the
 # suite shake out flakes for a week and then flip required-checks on.
 jobs:
   smoke-e2e:
     runs-on: ubuntu-22.04
+    # why: skip draft PRs — a draft is still WIP, so don't spend a runner on it
+    # until it's marked ready for review. push / schedule / dispatch runs (no
+    # pull_request payload) are unaffected.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     # why: locally the suite runs in ~2min, but on a cold GitHub runner the
     # first-attempt of each test hits the 240s per-test timeout (lair/conductor
     # warm-up + cold cache). Retries pass in seconds. Net effect is the suite
