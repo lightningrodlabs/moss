@@ -42,7 +42,11 @@ test('agent 2 joins a group from agent 1\'s invite link', async ({ moss, secondA
   await joinGroupByInviteLink(agent2.mainWindow, inviteLink);
 
   // Success signal: the joined group appears in agent 2's groups sidebar.
+  // why: joinGroupByInviteLink returns when the join dialog closes, but the
+  // group cell install and the groups-sidebar store update continue after
+  // that. On a contended CI runner that tail can run well past 30s, so give
+  // the sidebar button a generous window.
   await expect(agent2.mainWindow.locator('groups-sidebar group-sidebar-button')).toHaveCount(1, {
-    timeout: 30_000,
+    timeout: 120_000,
   });
 });

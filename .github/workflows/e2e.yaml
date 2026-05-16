@@ -105,6 +105,7 @@ jobs:
         run: nix develop --command yarn build
 
       - name: Run smoke E2E suite
+        id: smoke
         # why: xvfb-run gives Electron a virtual display. The Holochain
         # binaries that ship in resources/bins need glibc/libstdc++ from
         # nix, so wrap the command in `nix develop --command`. This is the
@@ -118,10 +119,18 @@ jobs:
         # ordinary pushes on, so it runs only on release branches, the weekly
         # schedule, and manual dispatch.
         #
+        # why the smoke-outcome guard: the two suites are independent, so a
+        # smoke failure must not hide the slow result — run slow whenever smoke
+        # actually ran (pass or fail). If an earlier build step failed, smoke
+        # is skipped and this stays skipped too.
+        #
         # why MOSS_E2E_DEBUG: peer-discovery failures only reproduce on CI, so
         # the moss / conductor / bootstrap-srv stdio piped by the fixture when
         # this is set is the only way to diagnose them.
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/release' || startsWith(github.ref, 'refs/heads/release-')
+        if: >-
+          !cancelled()
+          && (steps.smoke.outcome == 'success' || steps.smoke.outcome == 'failure')
+          && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/release' || startsWith(github.ref, 'refs/heads/release-'))
         env:
           MOSS_E2E_DEBUG: '1'
         run: nix develop --command xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" yarn test:e2e:slow

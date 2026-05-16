@@ -91,9 +91,12 @@ test('two agents on a local bootstrap discover each other in the same group', as
       await enterSpaceIfPrompted(agent2.mainWindow, 'agent-two');
 
       // Agent 2 has the group in their sidebar.
+      // why: joinGroupByInviteLink returns when the join dialog closes, but the
+      // group cell install and the groups-sidebar store update continue after
+      // that — on a contended CI runner that tail runs well past 30s.
       await expect(agent2.mainWindow.locator('groups-sidebar group-sidebar-button')).toHaveCount(
         1,
-        { timeout: 30_000 },
+        { timeout: 120_000 },
       );
 
       // ---- The actual peer-discovery assertion ----
