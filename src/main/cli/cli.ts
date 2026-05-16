@@ -50,6 +50,7 @@ export interface CliOpts {
   iceUrls?: string;
   forceProductionUrls?: boolean;
   printHolochainLogs?: boolean;
+  toolCurationUrl?: string;
 }
 
 export interface RunOptions {
@@ -67,6 +68,7 @@ export interface RunOptions {
   printHolochainLogs: boolean;
   disableOsNotifications: boolean;
   dev: boolean;
+  toolCurationUrl: string | undefined;
 }
 
 export function validateArgs(args: CliOpts): RunOptions {
@@ -189,6 +191,7 @@ export function validateArgs(args: CliOpts): RunOptions {
     printHolochainLogs: args.printHolochainLogs ? true : false,
     disableOsNotifications: args.disableOsNotifications ? true : false,
     dev: args.dev ? true : false,
+    toolCurationUrl: args.toolCurationUrl,
   };
 }
 

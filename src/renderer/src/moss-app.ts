@@ -162,6 +162,14 @@ export class MossApp extends LitElement {
     }
   }
 
+  // why: e2e tests synchronize on app state via this DOM attribute rather than
+  // inspecting view internals. Keep it reflective of MossAppState by name.
+  updated(changed: Map<string | number | symbol, unknown>) {
+    if (changed.has('state')) {
+      this.setAttribute('data-state', MossAppState[this.state]);
+    }
+  }
+
   async connect() {
     this.state = MossAppState.Loading;
     let isFirstLaunch = await window.electronAPI.lairSetupRequired();

@@ -1615,6 +1615,7 @@ export class MainDashboard extends LitElement {
           <sl-tooltip .content="${msg('Tool Library')}" placement="right" hoist>
             <button
               class="moss-sidebar-button ${this.isLibrarySelected() ? 'library-selected' : ''}"
+              aria-label=${msg('Tool Library')}
               style="position: relative;"
               @click=${() => {
         this._mossStore.setDashboardState({
@@ -1633,6 +1634,7 @@ export class MainDashboard extends LitElement {
           <sl-tooltip .content="${msg('Settings')}" placement="right" hoist>
             <button
               class="moss-sidebar-button"
+              aria-label=${msg('Settings')}
               @click=${() => this.settingsDialog.show()}
             >
               <div class="column center-content">

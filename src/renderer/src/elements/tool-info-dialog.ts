@@ -33,8 +33,7 @@ export type ToolInfoInput =
  * TODO(test): unit test deferred — see plans/tool-info-popup.md "TDD plan" #3.
  *   Cover the `open-tool-info` dispatch path for `kind: 'activated-applet'` and
  *   `kind: 'unified'`, including the "installed as" header line. E2E coverage
- *   (smoke #10) is specced on the feat/tool-info-popup branch (PR #210) and
- *   lands with the Playwright harness.
+ *   for the activated-applet path lives in tests/e2e/smoke/10.tool-info-popup.spec.ts.
  */
 @localized()
 @customElement('tool-info-dialog')

@@ -115,8 +115,14 @@ export class ToolLibraryWeb2 extends LitElement {
   /** */
   async firstUpdated() {
     /** Set initial config */
+    // why: an explicit --tool-curation-url CLI override (used by the E2E test
+    // harness) takes precedence over both dev config and persisted user config,
+    // so a test can deterministically point at a local fixture.
+    const cliOverride = await window.electronAPI.getToolCurationOverride();
     // In applet dev mode, we use a fake list generated from the weave.dev.config
-    if (!!this.mossStore.appletDevConfig) {
+    if (cliOverride) {
+      this._toolCurationConfigs = [{ url: cliOverride, useLists: ['default'] }];
+    } else if (!!this.mossStore.appletDevConfig) {
       this._toolCurationConfigs = this.mossStore.appletDevConfig.toolCurations;
     } else {
       // Get list of lists from localStorage

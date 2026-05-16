@@ -221,6 +221,10 @@ program
     'Print holochain logs directly to the terminal (they will be still written to the logfile as well)',
   )
   .option('--disable-os-notifications', 'Disables all notifications to the Operating System')
+  .option(
+    '--tool-curation-url <url>',
+    'Override the default tool curation list URL. Used by the E2E test harness to point at a local curation fixture; not persisted across restarts.',
+  )
   .addOption(
     new Option(
       '--agent-idx <number>',
@@ -234,6 +238,11 @@ program
     ).argParser(parseInt),
   )
   .addCommand(hashWebhapp);
+
+// why: Electron may forward its own flags (e.g. --inspect=0, --remote-debugging-port=0
+// when launched by Playwright) into argv. Those aren't Moss CLI options, so allow
+// unknowns rather than aborting startup.
+program.allowUnknownOption(true);
 
 program.parseAsync();
 
@@ -551,7 +560,14 @@ if (!RUNNING_WITH_COMMAND) {
     });
 
     // Open the DevTools.
-    if (!app.isPackaged || (app.isPackaged && !!RUN_OPTIONS.devInfo)) {
+    // why: gate on MOSS_DISABLE_DEVTOOLS so the Playwright e2e fixture can
+    // suppress devtools in test runs. With devtools open, Playwright's CDP
+    // sometimes tracks the devtools window instead of the admin window and
+    // electron.launch never resolves — see plans/ui-testing-and-cruft-cleanup.md.
+    if (
+      (!app.isPackaged || (app.isPackaged && !!RUN_OPTIONS.devInfo)) &&
+      !process.env.MOSS_DISABLE_DEVTOOLS
+    ) {
       console.log('OPENING DEV TOOLS');
       mainWindow.webContents.openDevTools();
     }
@@ -1386,6 +1402,13 @@ if (!RUNNING_WITH_COMMAND) {
     );
     ipcMain.handle('is-dev-mode-enabled', (_e): boolean => !app.isPackaged || RUN_OPTIONS.dev);
     ipcMain.handle('is-applet-dev', (_e): boolean => !!RUN_OPTIONS.devInfo);
+    // why: lets the renderer's tool-library override the default production
+    // curation URL with one passed on the command line. Used by the E2E
+    // harness to point at a locally-served fixture curation.
+    ipcMain.handle(
+      'get-tool-curation-override',
+      (_e): string | undefined => RUN_OPTIONS.toolCurationUrl,
+    );
     ipcMain.handle(
       'applet-dev-config',
       (_e): WeaveDevConfig | undefined => RUN_OPTIONS.devInfo?.config,

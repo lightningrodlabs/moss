@@ -63,6 +63,7 @@ declare global {
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       isAppletDev: () => Promise<boolean>;
       appletDevConfig: () => Promise<WeaveDevConfig | undefined>;
+      getToolCurationOverride: () => Promise<string | undefined>;
       factoryReset: () => Promise<void>;
       getNetworkOverrides: () => Promise<NetworkOverridesInfo>;
       setNetworkOverrides: (overrides: NetworkOverrides) => Promise<void>;

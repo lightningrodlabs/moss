@@ -66,6 +66,11 @@ export class ExampleApplet extends LitElement {
 
   render() {
     if (!this.weaveClient.renderInfo) return html`loading...`;
+    // why: deterministic marker the E2E suite (smoke #5) can wait for to
+    // confirm the applet-iframe → WeaveClient handshake completed. Set on
+    // the host element rather than a child so a single getByTestId-like
+    // query is enough.
+    this.dataset.weaveReady = '';
     switch (this.weaveClient.renderInfo.type) {
       case 'applet-view':
         switch (this.weaveClient.renderInfo.view.type) {

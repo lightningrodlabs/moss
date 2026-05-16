@@ -42,6 +42,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   launch: () => ipcRenderer.invoke('launch'),
   isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
   appletDevConfig: () => ipcRenderer.invoke('applet-dev-config'),
+  getToolCurationOverride: () => ipcRenderer.invoke('get-tool-curation-override'),
   factoryReset: () => ipcRenderer.invoke('factory-reset'),
   getNetworkOverrides: () => ipcRenderer.invoke('get-network-overrides'),
   setNetworkOverrides: (overrides: { bootstrapUrl?: string; relayUrl?: string }) =>
