@@ -11,6 +11,13 @@ on:
   pull_request:
     branches: [main, main-*, develop]
 
+# why: when several pushes land on a PR branch in quick succession, only the
+# newest needs to finish — cancel the superseded in-flight runs rather than
+# letting each run the full ~15min tryorama suite.
+concurrency:
+  group: test-workflow-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tryorama-tests:
     runs-on: ubuntu-22.04
