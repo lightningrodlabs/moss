@@ -14,14 +14,26 @@ These tests run against the **built** app, not a dev server. From repo root:
 # 1. Build once (or after any renderer / main change)
 yarn build
 
-# 2. Run the suite
+# 2. Run the fast smoke suite (gates every push/PR)
 yarn test:e2e
 
 # Variants
+yarn test:e2e:slow     # the slow `slow/` project — multi-agent peer discovery
 yarn test:e2e:ui       # Playwright UI mode (interactive, great for authoring)
 yarn test:e2e:headed   # See the windows; useful for debugging selectors
 yarn test:e2e:clean    # Wipe accumulated test profile dirs (see "Test data" below)
 ```
+
+### Suites: `smoke` vs `slow`
+
+The harness defines two Playwright projects:
+
+- **`smoke`** (`smoke/`) — the fast load-bearing flows. Runs on every push/PR.
+- **`slow`** (`slow/`) — multi-agent tests whose peer discovery depends on real
+  gossip convergence. On a contended CI runner these run ~15-20× slower than on
+  a dev machine (a sub-second remote call was measured at ~18s), so they take
+  minutes. Too expensive to gate every push on — the e2e workflow runs `slow`
+  only on release branches, a weekly schedule, and manual dispatch.
 
 You also need the Holochain + lair binaries fetched (`yarn fetch:binaries`,
 included in `yarn setup`). Run from inside the project's nix shell so
@@ -60,7 +72,7 @@ e2e/
     groups.ts
     tools.ts
     settings.ts
-  smoke/                           # the 10 load-bearing flows — all active
+  smoke/                           # fast `smoke` project — gates every push/PR
     01.boot.spec.ts
     02.create-group.spec.ts
     03.join-group.spec.ts
@@ -69,8 +81,9 @@ e2e/
     06.switch-groups.spec.ts
     07.settings-language.spec.ts
     08.relaunch-persistence.spec.ts
-    09.second-agent-activates-tool.spec.ts
     10.tool-info-popup.spec.ts
+  slow/                            # `slow` project — release/schedule/dispatch only
+    09.second-agent-activates-tool.spec.ts
   profiles/                        # tmp profile dirs (gitignored)
 ```
 
@@ -97,7 +110,7 @@ the `waitForState` / `waitForBoot` / `waitForRunning` helpers in
 If you find yourself tempted to add a new state name, add it to the
 `MossStateName` union in `bootToReady.ts` so all tests typecheck against it.
 
-## Multi-agent tests (smoke #9)
+## Multi-agent tests (slow #9)
 
 Use the `secondAgent` fixture to launch additional Moss instances. Holochain
 ports are auto-allocated, so no manual port offsets are needed:

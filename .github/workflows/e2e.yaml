@@ -5,9 +5,14 @@ on:
     # why: include feat/** so the suite runs on feature-branch pushes during
     # development — otherwise nothing fires until a PR is opened. main-* covers
     # the active 0.6 line.
-    branches: [main, main-*, develop, 'feat/**']
+    branches: [main, main-*, develop, release, 'release-*', 'feat/**']
   pull_request:
     branches: [main, main-*, develop]
+  # why: the slow project (multi-agent peer discovery) is too expensive to gate
+  # every push on, but should still run regularly. This weekly schedule plus
+  # release-branch pushes and manual dispatch give it occasional coverage.
+  schedule:
+    - cron: '0 6 * * 1'
   workflow_dispatch:
 
 # why: per plans/ui-testing-and-cruft-cleanup.md, the suite runs Linux-only,
@@ -102,15 +107,24 @@ jobs:
       - name: Run smoke E2E suite
         # why: xvfb-run gives Electron a virtual display. The Holochain
         # binaries that ship in resources/bins need glibc/libstdc++ from
-        # nix, so wrap the command in `nix develop --command`.
+        # nix, so wrap the command in `nix develop --command`. This is the
+        # fast `smoke` project — it gates every push/PR.
+        run: nix develop --command xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" yarn test:e2e
+
+      - name: Run slow E2E suite (multi-agent peer discovery)
+        # why: the `slow` project launches two full Moss instances and waits for
+        # real cross-agent gossip convergence, which takes minutes on a
+        # contended runner — see playwright.config.ts. Too expensive to gate
+        # ordinary pushes on, so it runs only on release branches, the weekly
+        # schedule, and manual dispatch.
         #
-        # why MOSS_E2E_DEBUG: the multi-agent peer-discovery test (#9) only
-        # fails on CI, never locally — so the moss / conductor / bootstrap-srv
-        # stdio is the only way to diagnose it. The fixture pipes that stdio to
-        # the job log only when this is set. Verbose, but the suite is small.
+        # why MOSS_E2E_DEBUG: peer-discovery failures only reproduce on CI, so
+        # the moss / conductor / bootstrap-srv stdio piped by the fixture when
+        # this is set is the only way to diagnose them.
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/release' || startsWith(github.ref, 'refs/heads/release-')
         env:
           MOSS_E2E_DEBUG: '1'
-        run: nix develop --command xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" yarn test:e2e
+        run: nix develop --command xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" yarn test:e2e:slow
 
       - name: Upload Playwright trace + video + conductor logs on failure
         if: failure()

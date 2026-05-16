@@ -5,8 +5,16 @@ import path from 'node:path';
 // run a single worker so tests don't fight over ports / profile dirs / OS notifications.
 // See plans/ui-testing-and-cruft-cleanup.md for rationale.
 export default defineConfig({
-  testDir: path.resolve(__dirname, 'smoke'),
-  // Phase-4 regression specs live under e2e/regression — point this at multiple dirs once that exists.
+  // why: two projects split the suite by cost. `smoke` is the fast suite that
+  // gates every push/PR. `slow` holds multi-agent tests whose peer-discovery
+  // depends on real gossip convergence — on a shared CI runner that runs
+  // ~15-20x slower than a dev machine, so those tests take minutes and only
+  // run occasionally (release branches / schedule / manual). Select with
+  // `--project=smoke` or `--project=slow`; see tests/package.json scripts.
+  projects: [
+    { name: 'smoke', testDir: path.resolve(__dirname, 'smoke') },
+    { name: 'slow', testDir: path.resolve(__dirname, 'slow') },
+  ],
   fullyParallel: false,
   workers: 1,
   forbidOnly: !!process.env.CI,
