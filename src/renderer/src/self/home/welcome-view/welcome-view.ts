@@ -2,41 +2,41 @@ import { html, LitElement, css, nothing } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { localized, msg, str } from '@lit/localize';
 import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
-import { mossStyles } from '../../shared-styles.js';
+import { mossStyles } from '../../../shared-styles.js';
 import { createMockToolUpdates, createMockAppletsData, WELCOME_DEV_MODE } from './mock-data.js';
-import { mossStoreContext } from '../../context.js';
+import { mossStoreContext } from '../../../context.js';
 import { consume } from '@lit/context';
-import { MossStore } from '../../moss-store.js';
+import { MossStore } from '../../../moss-store.js';
 import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { decodeHashFromBase64 } from '@holochain/client';
 import { until } from 'lit/directives/until.js';
-import { getLocalizedTimeAgo } from '../../locales/localization.js';
+import { getLocalizedTimeAgo } from '../../../locales/localization.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import { markdownParseSafe, refreshAllAppletIframes } from '../../utils.js';
-import { MossUpdateInfo } from '../../electron-api.js';
-import { LoadingDialog } from '../../app/dialogs/loading-dialog.js';
-import { MossNotification, ToolInfoAndLatestVersion, UpdateFeedMessage } from '../../types.js';
-import { commentHeartIconFilled } from '../../icons/icons.js';
-import { MossDialog } from '../../ui/moss-dialog.js';
+import { markdownParseSafe, refreshAllAppletIframes } from '../../../utils.js';
+import { MossUpdateInfo } from '../../../electron-api.js';
+import { LoadingDialog } from '../../../app/dialogs/loading-dialog.js';
+import { MossNotification, ToolInfoAndLatestVersion, UpdateFeedMessage } from '../../../types.js';
+import { commentHeartIconFilled } from '../../../icons/icons.js';
+import { MossDialog } from '../../../ui/moss-dialog.js';
 import pluralize from 'pluralize';
 import quotesData from './SnapTalkFunnies.json';
 import { mdiGraph } from '@mdi/js';
 import { AppletId } from '@theweave/api';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 
-import '../../ui/moss-dialog.js';
-import { PersistedStore } from '../../persisted-store.js';
+import '../../../ui/moss-dialog.js';
+import { PersistedStore } from '../../../persisted-store.js';
 
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
-import '../../app/dialogs/select-group-dialog.js';
+import '../../../app/dialogs/select-group-dialog.js';
 import './elements/feed-element.js';
-import '../../applets/elements/applet-logo.js';
-import '../../applets/elements/applet-logo-raw.js';
-import '../../applets/elements/applet-title.js';
-import '../../app/dialogs/loading-dialog.js';
+import '../../../applets/elements/applet-logo.js';
+import '../../../applets/elements/applet-logo-raw.js';
+import '../../../applets/elements/applet-title.js';
+import '../../../app/dialogs/loading-dialog.js';
 import './elements/notification-card.js'
-import '../../groups/elements/groups-for-tool.js';
+import '../../../groups/elements/groups-for-tool.js';
 
 
 type UpdateFeedMessageGeneric =

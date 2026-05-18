@@ -36,8 +36,8 @@ import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@theweave/elements/dist/elements/weave-client-context.js';
 import '@theweave/elements/dist/elements/wal-to-pocket.js';
 
-import '../personal-views/welcome-view/welcome-view.js';
-import '../personal-views/activity-view/activity-view.js';
+import '../self/home/welcome-view/welcome-view.js';
+import '../self/home/activity-view/activity-view.js';
 import '../personal-views/assets-graph/assets-graph.js';
 import '../groups/elements/entry-title.js';
 import './navigation/groups-sidebar.js';

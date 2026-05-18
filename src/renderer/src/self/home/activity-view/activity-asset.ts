@@ -2,22 +2,22 @@ import { pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { html, LitElement, css } from 'lit';
 import { customElement, state, property } from 'lit/decorators.js';
 import { localized } from '@lit/localize';
-import { encodeAndStringify } from '../../utils.js';
+import { encodeAndStringify } from '../../../utils.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
-import '../../applets/elements/applet-logo.js';
-import '../../applets/elements/applet-title.js';
-import '../../app/dialogs/loading-dialog.js';
-import { mossStoreContext } from '../../context.js';
+import '../../../applets/elements/applet-logo.js';
+import '../../../applets/elements/applet-title.js';
+import '../../../app/dialogs/loading-dialog.js';
+import { mossStoreContext } from '../../../context.js';
 import { consume } from '@lit/context';
-import { MossStore } from '../../moss-store.js';
+import { MossStore } from '../../../moss-store.js';
 import { AppletHash } from '@theweave/api';
 import { msg } from '@lit/localize';
 import { formatDistanceToNow } from 'date-fns';
-import { AppletNotification } from '../../types.js';
+import { AppletNotification } from '../../../types.js';
 import { deStringifyWal } from '@theweave/api';
 
 @localized()

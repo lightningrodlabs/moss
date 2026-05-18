@@ -1,6 +1,6 @@
 import { GroupProfile } from '@theweave/api';
 import { ToolCompatibilityId } from '@theweave/moss-types';
-import { ToolInfoAndLatestVersion } from '../../types.js';
+import { ToolInfoAndLatestVersion } from '../../../types.js';
 
 // Set to true to test welcome-view UI with mock data
 export const WELCOME_DEV_MODE = false;

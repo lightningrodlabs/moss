@@ -5,24 +5,24 @@ import { until } from 'lit/directives/until.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { localized } from '@lit/localize';
 import type { FrameNotification } from '@theweave/api';
-import { mossStoreContext } from '../../../context.js';
+import { mossStoreContext } from '../../../../context.js';
 import { consume } from '@lit/context';
-import { MossStore } from '../../../moss-store.js';
+import { MossStore } from '../../../../moss-store.js';
 import { AppletHash } from '@theweave/api';
 import { msg } from '@lit/localize';
 // import { formatDistanceToNow } from 'date-fns';
-import { AppletNotification } from '../../../types.js';
-import { mossStyles } from '../../../shared-styles.js';
+import { AppletNotification } from '../../../../types.js';
+import { mossStyles } from '../../../../shared-styles.js';
 import { decodeHashFromBase64, AgentPubKey, encodeHashToBase64 } from '@holochain/client';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
-import '../../../applets/elements/applet-logo.js';
-import '../../../applets/elements/applet-title.js';
-import '../../../app/dialogs/loading-dialog.js';
-import { getLocalizedTimeAgo } from '../../../locales/localization.js';
+import '../../../../applets/elements/applet-logo.js';
+import '../../../../applets/elements/applet-title.js';
+import '../../../../app/dialogs/loading-dialog.js';
+import { getLocalizedTimeAgo } from '../../../../locales/localization.js';
 
 @localized()
 @customElement('notification-card')

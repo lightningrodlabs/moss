@@ -12,7 +12,7 @@ import { toPromise } from '@holochain-open-dev/stores';
 import { encodeHashToBase64 } from '@holochain/client';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 import { appletHashFromAppId, toolCompatibilityIdFromDistInfo } from '@theweave/utils';
-import { WELCOME_DEV_MODE, getMockGroupProfiles } from '../../personal-views/welcome-view/mock-data.js';
+import { WELCOME_DEV_MODE, getMockGroupProfiles } from '../../self/home/welcome-view/mock-data.js';
 
 @customElement('groups-for-tool')
 export class GroupsForTool extends LitElement {

@@ -7,20 +7,20 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
-import { mossStyles } from '../../shared-styles.js';
-import '../../applets/elements/applet-logo.js';
-import '../../applets/elements/applet-title.js';
-import '../../app/dialogs/loading-dialog.js';
+import { mossStyles } from '../../../shared-styles.js';
+import '../../../applets/elements/applet-logo.js';
+import '../../../applets/elements/applet-title.js';
+import '../../../app/dialogs/loading-dialog.js';
 import './activity-asset.js';
 import './notification-asset.js';
-import { mossStoreContext } from '../../context.js';
+import { mossStoreContext } from '../../../context.js';
 import { consume } from '@lit/context';
-import { MossStore } from '../../moss-store.js';
+import { MossStore } from '../../../moss-store.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
-import { encodeAndStringify } from '../../utils.js';
+import { encodeAndStringify } from '../../../utils.js';
 import { AppletHash, stringifyWal } from '@theweave/api';
 import { decodeHashFromBase64 } from '@holochain/client';
-import { MossNotification, NotificationSource } from '../../types.js';
+import { MossNotification, NotificationSource } from '../../../types.js';
 import { appIdFromAppletId, appletHashFromAppId } from '@theweave/utils';
 
 @localized()

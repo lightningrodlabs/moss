@@ -6,20 +6,20 @@ import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
-import '../../../app/dialogs/select-group-dialog.js';
-import '../../../applets/elements/applet-logo.js';
-import '../../../applets/elements/applet-title.js';
-import '../../../groups/elements/group-context.js';
-import '../../../self/profile/profile-detail.js';
+import '../../../../app/dialogs/select-group-dialog.js';
+import '../../../../applets/elements/applet-logo.js';
+import '../../../../applets/elements/applet-title.js';
+import '../../../../groups/elements/group-context.js';
+import '../../../profile/profile-detail.js';
 
 import { consume } from '@lit/context';
 import { decodeHashFromBase64 } from '@holochain/client';
-import { AppletNotification, GroupDnaHash } from '../../../types.js';
-import { mossStoreContext } from '../../../context.js';
-import { MossStore } from '../../../moss-store.js';
-import { getLocalizedTimeAgo } from '../../../locales/localization.js';
-import { mossStyles } from '../../../shared-styles.js';
-import { stringToMessageParts } from '../../../utils.js';
+import { AppletNotification, GroupDnaHash } from '../../../../types.js';
+import { mossStoreContext } from '../../../../context.js';
+import { MossStore } from '../../../../moss-store.js';
+import { getLocalizedTimeAgo } from '../../../../locales/localization.js';
+import { mossStyles } from '../../../../shared-styles.js';
+import { stringToMessageParts } from '../../../../utils.js';
 import { toPromise } from '@holochain-open-dev/stores';
 
 @localized()
