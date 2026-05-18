@@ -16,7 +16,7 @@ import { GroupStore, IDLE_THRESHOLD, MaybeProfile, OFFLINE_THRESHOLD } from '../
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 
-import '../../elements/reusable/profile-detail.js';
+import '../../self/profile/profile-detail.js';
 import { localTimeFromUtcOffset } from '../../utils.js';
 
 export type AgentAndTzOffset = {

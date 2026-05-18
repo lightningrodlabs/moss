@@ -30,7 +30,7 @@ import '../../groups/elements/group-context.js';
 import '../../groups/elements/group-logo.js';
 import '../../applets/elements/applet-logo.js';
 import '../dialogs/create-group-dialog.js';
-import '../../elements/reusable/groups-for-applet.js';
+import '../../groups/elements/groups-for-applet.js';
 import './state-dump.js';
 import './cell-details.js';
 import './app-debugging-details.js';

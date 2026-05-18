@@ -10,7 +10,7 @@ import '../../../app/dialogs/select-group-dialog.js';
 import '../../../applets/elements/applet-logo.js';
 import '../../../applets/elements/applet-title.js';
 import '../../../groups/elements/group-context.js';
-import '../../../elements/reusable/profile-detail.js';
+import '../../../self/profile/profile-detail.js';
 
 import { consume } from '@lit/context';
 import { decodeHashFromBase64 } from '@holochain/client';

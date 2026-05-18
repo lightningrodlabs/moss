@@ -8,7 +8,7 @@ import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '../../groups/elements/group-context.js';
 import '../../applets/elements/applet-logo.js';
 import '../dialogs/create-group-dialog.js';
-import '../../elements/reusable/groups-for-applet.js';
+import '../../groups/elements/groups-for-applet.js';
 import './cell-details.js';
 
 import { mossStyles } from '../../shared-styles.js';

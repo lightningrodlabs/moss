@@ -36,7 +36,7 @@ import '../../applets/elements/applet-logo-raw.js';
 import '../../applets/elements/applet-title.js';
 import '../../app/dialogs/loading-dialog.js';
 import './elements/notification-card.js'
-import '../../elements/reusable/groups-for-tool.js';
+import '../../groups/elements/groups-for-tool.js';
 
 
 type UpdateFeedMessageGeneric =

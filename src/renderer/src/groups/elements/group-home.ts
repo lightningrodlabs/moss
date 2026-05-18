@@ -44,7 +44,7 @@ import './looking-for-peers.js';
 import '../../custom-views/elements/all-custom-views.js';
 import './create-custom-group-view.js';
 import './edit-custom-group-view.js';
-import '../../elements/reusable/tab-group.js';
+import '../../ui/tab-group.js';
 import './foyer-stream.js';
 import './agent-permission.js';
 import './settings/group-settings.js';
