@@ -4,15 +4,15 @@ import { css, html, LitElement } from 'lit';
 import { localized, msg } from '@lit/localize';
 import { notify } from '@holochain-open-dev/elements';
 
-import { mossStoreContext } from '../../../context.js';
-import { MossStore } from '../../../moss-store.js';
-import { mossStyles } from '../../../shared-styles.js';
+import { mossStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStyles } from '../../shared-styles.js';
 import {
   setLocale,
   allLocales,
   LANGUAGE_NAMES,
   SupportedLocale,
-} from '../../../locales/localization.js';
+} from '../../locales/localization.js';
 
 @localized()
 @customElement('moss-language-settings')

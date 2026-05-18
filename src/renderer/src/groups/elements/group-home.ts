@@ -49,7 +49,7 @@ import './foyer-stream.js';
 import './agent-permission.js';
 import '../../elements/_new_design/group-settings.js';
 import '../../ui/moss-dialog.js';
-import '../../elements/_new_design/profile/moss-profile-detail.js';
+import '../../self/profile/moss-profile-detail.js';
 import '../../ui/copy-hash.js';
 import '../../elements/_new_design/invite-people-dialog.js';
 

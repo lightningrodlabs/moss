@@ -10,11 +10,11 @@ import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@holochain-open-dev/elements/dist/elements/select-avatar.js';
 import { Profile, ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
-import { mossStyles } from '../../../shared-styles';
+import { mossStyles } from '../../shared-styles';
 
-import '../../../ui/moss-select-avatar';
+import '../../ui/moss-select-avatar';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
-import { MossSelectAvatar } from '../../../ui/moss-select-avatar';
+import { MossSelectAvatar } from '../../ui/moss-select-avatar';
 
 /**
  * @element edit-profile

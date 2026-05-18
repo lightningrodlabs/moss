@@ -49,7 +49,7 @@ import '../groups/elements/group-container.js';
 import './debugging-panel/debugging-panel.js';
 
 import '../ui/moss-dialog.js';
-import './_new_design/moss-settings/moss-settings.js';
+import '../self/settings/moss-settings.js';
 import './design-feedback/design-feedback-controller.js';
 import './tool-info-dialog.js';
 import { ToolInfoDialog, ToolInfoInput } from './tool-info-dialog.js';

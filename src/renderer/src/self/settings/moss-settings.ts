@@ -6,9 +6,9 @@ import { notify } from '@holochain-open-dev/elements';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
-import { mossStyles } from '../../../shared-styles.js';
-import { PersistedStore } from '../../../persisted-store.js';
-import './profile-settings.js';
+import { mossStyles } from '../../shared-styles.js';
+import { PersistedStore } from '../../persisted-store.js';
+import '../profile/profile-settings.js';
 import './language-settings.js';
 import './notification-settings.js';
 import './danger-zone-settings.js';

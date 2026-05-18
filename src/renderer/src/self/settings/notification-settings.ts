@@ -10,19 +10,19 @@ import '@shoelace-style/shoelace/dist/components/range/range.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
-import { mossStoreContext } from '../../../context.js';
-import { MossStore } from '../../../moss-store.js';
-import { mossStyles } from '../../../shared-styles.js';
+import { mossStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStyles } from '../../shared-styles.js';
 import {
   GlobalNotificationSoundSettings,
   NotificationSoundId,
   CustomSound,
-} from '../../../applets/types.js';
+} from '../../applets/types.js';
 import {
   notificationAudio,
   NotificationAudioService,
   DEFAULT_NOTIFICATION_SOUND_SETTINGS,
-} from '../../../services/notification-audio.js';
+} from '../../services/notification-audio.js';
 
 type UrgencyLevel = 'high' | 'medium' | 'low';
 

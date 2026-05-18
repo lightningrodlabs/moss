@@ -1,12 +1,12 @@
 import { customElement, state } from 'lit/decorators.js';
 import { css, html, LitElement } from 'lit';
 import { localized, msg } from '@lit/localize';
-import { GroupImportResult, ImportGroupsProgress, NetworkOverridesInfo } from '../../../electron-api.js';
+import { GroupImportResult, ImportGroupsProgress, NetworkOverridesInfo } from '../../electron-api.js';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 
-import { mossStyles } from '../../../shared-styles.js';
+import { mossStyles } from '../../shared-styles.js';
 
 @localized()
 @customElement('moss-danger-zone-settings')

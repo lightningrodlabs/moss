@@ -14,7 +14,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import './applet-main-views.js';
 import '../../elements/_new_design/navigation/group-area-sidebar.js';
 import './group-home.js';
-import '../../elements/_new_design/profile/moss-profile-prompt.js';
+import '../../self/profile/moss-profile-prompt.js';
 import '../../elements/_new_design/group-settings/my-profile-settings.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiPowerPlugOff } from '@mdi/js';

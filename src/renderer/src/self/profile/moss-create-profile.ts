@@ -8,9 +8,9 @@ import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import './moss-edit-profile.js';
 import { Profile, ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
-import { mossStyles } from '../../../shared-styles.js';
-import { mossStoreContext } from '../../../context.js';
-import { MossStore } from '../../../moss-store.js';
+import { mossStyles } from '../../shared-styles.js';
+import { mossStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
 import { MossEditProfile } from './moss-edit-profile.js';
 
 /**

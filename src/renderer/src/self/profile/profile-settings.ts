@@ -5,12 +5,12 @@ import { localized, msg } from '@lit/localize';
 import { notify } from '@holochain-open-dev/elements';
 import { Profile } from '@holochain-open-dev/profiles';
 
-import { mossStoreContext } from '../../../context.js';
-import { MossStore } from '../../../moss-store.js';
-import { mossStyles } from '../../../shared-styles.js';
+import { mossStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStyles } from '../../shared-styles.js';
 
-import '../profile/moss-edit-profile.js';
-import { MossEditProfile } from '../profile/moss-edit-profile.js';
+import './moss-edit-profile.js';
+import { MossEditProfile } from './moss-edit-profile.js';
 
 @localized()
 @customElement('moss-profile-settings')
