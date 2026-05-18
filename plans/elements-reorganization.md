@@ -66,11 +66,12 @@ being a catch-all. `_new_design/` is **dissolved**, not renamed.
 src/renderer/src/
   app/                         the Moss runtime shell — the frame, not its contents
     main-dashboard.ts
-    navigation/                groups-sidebar, personal-view-sidebar, sidebar-button,
-                               group-sidebar-button, topbar-button, applet-topbar-button,
+    navigation/                groups-sidebar, sidebar-button, group-sidebar-button,
                                group-applets-row, applet-sidebar-button, group-area-sidebar
-    dialogs/                   create-group, join-group, select-group, loading
-    debug/                     debugging-panel/*, design-feedback/*
+    dialogs/                   create-group, join-group, select-group, loading, tool-info
+    debugging-panel/           dev tooling — conductor/DHT inspection
+    design-feedback/           first-class app feature (has settings, on main page),
+                               kept distinct from debugging-panel
 
   self/                        the agent's own domain
     profile/                   moss-create-profile, moss-edit-profile, moss-profile-detail,
@@ -218,14 +219,15 @@ suite.
    files + the `false &&` block + the stale side-effect imports.
 3. ✅ **DONE** — **Dissolve `_new_design/`** into the homes in the table above.
    `git mv` per ontological group; `_new_design/` removed.
-4. **Reorganize the rest of `elements/`** into `app/`, `assets/`, `ui/` as the
-   tree shows. Larger churn, lower urgency — can land incrementally.
+4. ✅ **DONE** — **Reorganize the rest of `elements/`** into `app/` (shell,
+   navigation, dialogs, debugging-panel, design-feedback), `assets/` (pocket,
+   creatables, asset-tags) and `ui/` (tab-group); `reusable/` split by subject;
+   `elements/` removed.
 5. **Dissolve `personal-views/`** into `self/home/`, `assets/`, and a promoted
    top-level `tool-library/`; move the `cross-group-*` views into
    `self/cross-group/`.
 
-Steps 1–3 (the core of the user request) are done. Steps 4–5 are the broader
-rationalization and can wait.
+Steps 1–4 are done. Step 5 is the remaining slice.
 
 Each step is mechanical and guarded by the e2e smoke suite. Do `git mv` (never
 delete+recreate) so `git log --follow` keeps working, and run
