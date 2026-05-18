@@ -40,11 +40,7 @@ import '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 
 import './group-peers-status.js';
 import './group-applets.js';
-import './group-applets-settings.js';
-import './stewards-settings.js';
-import './your-settings.js';
 import './looking-for-peers.js';
-import './edit-group-profile.js';
 import '../../custom-views/elements/all-custom-views.js';
 import './create-custom-group-view.js';
 import './edit-custom-group-view.js';

@@ -11,6 +11,7 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import './applet-settings-card.js';
 import './abandoned-applet-settings-card.js';
 import './inactive-tools.js';
+import '../../../groups/elements/applet-detail-card.js';
 
 import { repeat } from 'lit/directives/repeat.js';
 import { mossStoreContext } from '../../../context.js';
