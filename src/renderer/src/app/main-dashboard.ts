@@ -38,7 +38,7 @@ import '@theweave/elements/dist/elements/wal-to-pocket.js';
 
 import '../self/home/welcome-view/welcome-view.js';
 import '../self/home/activity-view/activity-view.js';
-import '../personal-views/assets-graph/assets-graph.js';
+import '../assets/assets-graph/assets-graph.js';
 import '../groups/elements/entry-title.js';
 import './navigation/groups-sidebar.js';
 import './dialogs/join-group-dialog.js';
