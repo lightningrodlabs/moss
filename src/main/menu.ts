@@ -1,6 +1,8 @@
-import { Menu, app } from 'electron';
+import { Menu, app, shell } from 'electron';
 import { MossFileSystem } from './filesystem';
 import { isMac } from './utils';
+
+const DEV_DOCS_URL = 'https://lightningrodlabs.github.io/moss/';
 
 // extending from electron's default menu: https://github.com/electron/electron/blob/398dde9dfbdfcfd7757ead9a30785c01de9f0808/lib/browser/default-menu.ts#L12
 export const mossMenu = (mossFileSystem: MossFileSystem) => {
@@ -8,6 +10,13 @@ export const mossMenu = (mossFileSystem: MossFileSystem) => {
   const helpMenu: Electron.MenuItemConstructorOptions = {
     role: 'help',
     submenu: [
+      {
+        label: 'Developer Documentation',
+        async click() {
+          await shell.openExternal(DEV_DOCS_URL);
+        },
+      },
+      { type: 'separator' },
       {
         label: 'Open Logs',
         async click() {

@@ -14,6 +14,10 @@ export default defineConfig({
   projects: [
     { name: 'smoke', testDir: path.resolve(__dirname, 'smoke') },
     { name: 'slow', testDir: path.resolve(__dirname, 'slow') },
+    // why: not a regression suite — drives documented flows to capture PNGs
+    // for the user guide (writes into the moss-user-docs repo). Run on demand
+    // via `yarn workspace tests capture:screenshots`, never gates CI.
+    { name: 'screenshots', testDir: path.resolve(__dirname, 'screenshots') },
   ],
   // why: rebuilds example/workdir/example-applet.webhapp when stale so smoke
   // #4/#5 install the current applet UI (incl. the [data-weave-ready] handshake

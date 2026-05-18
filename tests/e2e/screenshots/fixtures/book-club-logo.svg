@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" rx="20" fill="#f4ecd8"/>
+  <!-- A stack of book spines -->
+  <rect x="30" y="48" width="140" height="22" rx="3" fill="#8b3a3a"/>
+  <rect x="40" y="72" width="120" height="20" rx="3" fill="#4a6b8a"/>
+  <rect x="30" y="94" width="140" height="22" rx="3" fill="#c9a14a"/>
+  <rect x="45" y="118" width="110" height="20" rx="3" fill="#3a6b4a"/>
+  <rect x="35" y="140" width="130" height="22" rx="3" fill="#5a3a6b"/>
+</svg>
