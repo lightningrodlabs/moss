@@ -60,12 +60,12 @@ import { MossStore } from '../moss-store.js';
 import { JoinGroupDialog } from './dialogs/join-group-dialog.js';
 import { CreateGroupDialog } from './dialogs/create-group-dialog.js';
 
-import '../elements/asset-tags/tag-selection-dialog.js';
-import '../elements/pocket/pocket.js';
-import '../elements/pocket/pocket-drop.js';
-import '../elements/creatables/creatable-palette.js';
-import { MossPocket } from '../elements/pocket/pocket.js';
-import { CreatablePalette } from '../elements/creatables/creatable-palette.js';
+import '../assets/asset-tags/tag-selection-dialog.js';
+import '../assets/pocket/pocket.js';
+import '../assets/pocket/pocket-drop.js';
+import '../assets/creatables/creatable-palette.js';
+import { MossPocket } from '../assets/pocket/pocket.js';
+import { CreatablePalette } from '../assets/creatables/creatable-palette.js';
 import { appletMessageHandler, handleAppletIframeMessage } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
@@ -75,7 +75,7 @@ import {
 import { dialogMessagebox } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
 import { ToolCompatibilityId } from '@theweave/moss-types';
-import { TagSelectionDialog } from '../elements/asset-tags/tag-selection-dialog.js';
+import { TagSelectionDialog } from '../assets/asset-tags/tag-selection-dialog.js';
 import {
   appStoreIcon,
   chevronDoubleLeftIcon,
