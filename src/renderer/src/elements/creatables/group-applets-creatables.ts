@@ -12,7 +12,6 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import '../../groups/elements/group-context.js';
 import '../../applets/elements/applet-logo-raw.js';
-import '../navigation/applet-topbar-button.js';
 import '../dialogs/create-group-dialog.js';
 import '../../applets/elements/applet-title.js';
 

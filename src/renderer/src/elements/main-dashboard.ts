@@ -41,7 +41,6 @@ import '../personal-views/activity-view/activity-view.js';
 import '../personal-views/assets-graph/assets-graph.js';
 import '../groups/elements/entry-title.js';
 import './navigation/groups-sidebar.js';
-import './navigation/personal-view-sidebar.js';
 import './dialogs/join-group-dialog.js';
 import '../layout/views/cross-group-main.js';
 import '../personal-views/tool-library/tool-library-web2.js';
@@ -76,7 +75,6 @@ import {
 import { dialogMessagebox } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
 import { ToolCompatibilityId } from '@theweave/moss-types';
-import { AssetsGraph } from '../personal-views/assets-graph/assets-graph.js';
 import { TagSelectionDialog } from './asset-tags/tag-selection-dialog.js';
 import {
   appStoreIcon,
@@ -204,12 +202,6 @@ export class MainDashboard extends LitElement {
 
   @state()
   hoverPersonalView = false;
-
-  @state()
-  hoverMossButton = false;
-
-  @state()
-  hoverTopBar = false;
 
   @state()
   reloading = false;
@@ -1699,62 +1691,6 @@ export class MainDashboard extends LitElement {
 
       ${this.hoverPersonalView && this._dashboardState.value.viewType === 'group'
         ? html`<div class="personal-view-indicator">${msg('switch to personal view')}</div>`
-        : html``}
-
-      <!-- TOP BAR -->
-      ${false && this._dashboardState.value.viewType === 'personal'
-        ? html`
-            <div
-              class="top-bar row personal-top-bar"
-              style="flex: 1; position: fixed; left: var(--sidebar-width); top: 8px; right: 8px;"
-              @mouseenter=${() => {
-            this.hoverTopBar = true;
-          }}
-              @mouseleave=${() => {
-            this.hoverTopBar = false;
-            setTimeout(() => {
-              if (!this.hoverMossButton) {
-                this.hoverPersonalView = false;
-              }
-            }, 50);
-          }}
-            >
-              <div
-                id="top-bar-scroller"
-                class="row invisible-scrollbars"
-                style="overflow-x: auto; padding-right: 40px; height: 80px;"
-                @wheel=${(e) => {
-            const el = this.shadowRoot!.getElementById('top-bar-scroller');
-            if (el)
-              el.scrollBy({
-                left: e.deltaY < 0 ? -30 : 30,
-              });
-          }}
-              >
-                <personal-view-sidebar
-                  style="margin-left: 12px; flex: 1; overflow-x: sroll; padding-left: 4px;"
-                  .selectedView=${(this._dashboardState.value as any).viewState}
-                  @personal-view-selected=${async (e) => {
-            console.log('@personal-view-selected: ', e);
-            this._mossStore.setDashboardState({
-              viewType: 'personal',
-              viewState: e.detail,
-            });
-            if (e.detail.type === 'moss' && e.detail.name === 'assets-graph') {
-              const assetsGraphEl = this.shadowRoot!.getElementById('assets-graph') as
-                | AssetsGraph
-                | null
-                | undefined;
-              if (assetsGraphEl) {
-                await assetsGraphEl.load();
-              }
-            }
-          }}
-                ></personal-view-sidebar>
-              </div>
-              <div style="display: flex; flex: 1;"></div>
-            </div>
-          `
         : html``}
 
       <!-- ASSET VIEWER TOGGLE -->
