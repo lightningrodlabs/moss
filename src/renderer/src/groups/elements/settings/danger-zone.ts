@@ -9,8 +9,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
-import { groupStoreContext } from '../../../groups/context.js';
-import { GroupStore } from '../../../groups/group-store.js';
+import { groupStoreContext } from '../../context.js';
+import { GroupStore } from '../../group-store.js';
 import { mossStyles } from '../../../shared-styles.js';
 import { cloneIcon, doorIcon } from '../../../ui/icons.js';
 import { mdiPowerPlugOffOutline } from '@mdi/js';

@@ -7,17 +7,17 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
 import '@shoelace-style/shoelace/dist/components/radio/radio.js';
 
-import { mossStyles } from '../../shared-styles.js';
-import './group-settings/general-settings.js';
-import './group-settings/tools-settings.js';
-import './group-settings/group-member-list.js';
-import './group-settings/my-profile-settings.js';
-import './group-settings/danger-zone.js';
+import { mossStyles } from '../../../shared-styles.js';
+import './general-settings.js';
+import './tools-settings.js';
+import '../members/group-member-list.js';
+import './my-profile-settings.js';
+import './danger-zone.js';
 
-import { GroupStore } from '../../groups/group-store.js';
-import { groupStoreContext } from '../../groups/context.js';
+import { GroupStore } from '../../group-store.js';
+import { groupStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
-import { ToolsSettings } from './group-settings/tools-settings.js';
+import { ToolsSettings } from './tools-settings.js';
 
 enum TabsState {
   General,

@@ -6,9 +6,9 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
-import '../../../applets/elements/applet-logo';
+import './applet-logo';
 
-import { chevronSingleDownIcon, chevronSingleUpIcon } from '../../../ui/icons';
+import { chevronSingleDownIcon, chevronSingleUpIcon } from '../../ui/icons';
 import { BaseAppletSettingsCard } from './base-applet-settings-card.js';
 
 @localized()

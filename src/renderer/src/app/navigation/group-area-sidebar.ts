@@ -53,8 +53,8 @@ import {
   SafeIntervalHandle,
 } from '../../utils.js';
 import { MossDialog } from '../../ui/moss-dialog.js';
-import '../../elements/_new_design/group-settings/inactive-tools-dialog.js';
-import '../../elements/_new_design/invite-people-dialog.js';
+import '../../groups/elements/settings/inactive-tools-dialog.js';
+import '../../groups/elements/invite/invite-people-dialog.js';
 
 // Sidebar for the applet instances of a group
 @localized()

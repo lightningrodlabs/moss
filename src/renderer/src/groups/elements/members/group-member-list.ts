@@ -12,12 +12,12 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@vaadin/date-time-picker';
 
 import '../../../ui/copy-hash';
-import '../../../groups/elements/agent-permission';
+import '../agent-permission';
 import './agent-permission-button';
 
 import { MossStore } from '../../../moss-store.js';
-import { groupStoreContext } from '../../../groups/context.js';
-import { GroupStore, MaybeProfile } from '../../../groups/group-store.js';
+import { groupStoreContext } from '../../context.js';
+import { GroupStore, MaybeProfile } from '../../group-store.js';
 import { mossStyles } from '../../../shared-styles.js';
 import { mossStoreContext } from '../../../context.js';
 import { SlRadioGroup } from '@shoelace-style/shoelace';

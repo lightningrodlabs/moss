@@ -9,7 +9,7 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
-import '../../../elements/_new_design/select-group.js';
+import '../../../groups/elements/invite/select-group.js';
 
 import './install-tool-dialog.js';
 import '../../../groups/elements/group-context.js';

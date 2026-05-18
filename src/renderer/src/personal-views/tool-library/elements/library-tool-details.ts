@@ -9,7 +9,7 @@ import { DeveloperCollective } from '@theweave/moss-types';
 import { libraryStyles } from '../libraryStyles';
 import { getLocalizedTimeAgo } from '../../../locales/localization.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
-import '../../../elements/_new_design/select-group.js';
+import '../../../groups/elements/invite/select-group.js';
 
 enum TabsState {
   Overview,

@@ -30,7 +30,7 @@ import { toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
 import { DistributionInfo, TDistributionInfo, ToolInfoAndVersions } from '@theweave/moss-types';
 import { Value } from '@sinclair/typebox/value';
 import { getLocalizedTimeAgo } from '../../../locales/localization.js';
-import { toolSettingsStyles } from '../../../elements/_new_design/group-settings/tool-settings-styles.js';
+import { toolSettingsStyles } from '../../../groups/elements/settings/tool-settings-styles.js';
 import {fetchAndValidateHappOrWebhapp} from "../../../electron-api";
 import yaml from "js-yaml";
 

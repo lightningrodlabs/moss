@@ -13,10 +13,10 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import SlDropdown from '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
 
-import { mossStoreContext } from '../../context.js';
-import { MossStore } from '../../moss-store.js';
-import { mossStyles } from '../../shared-styles.js';
-import { installToolIcon } from '../../ui/icons.js';
+import { mossStoreContext } from '../../../context.js';
+import { MossStore } from '../../../moss-store.js';
+import { mossStyles } from '../../../shared-styles.js';
+import { installToolIcon } from '../../../ui/icons.js';
 
 @localized()
 @customElement('select-group')

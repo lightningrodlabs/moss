@@ -10,8 +10,8 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
 import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
-import { groupStoreContext } from '../../../groups/context.js';
-import { GroupStore } from '../../../groups/group-store.js';
+import { groupStoreContext } from '../../context.js';
+import { GroupStore } from '../../group-store.js';
 import { mossStyles } from '../../../shared-styles.js';
 import { MossEditProfile } from '../../../self/profile/moss-edit-profile.js';
 import { Profile } from '@holochain-open-dev/profiles';

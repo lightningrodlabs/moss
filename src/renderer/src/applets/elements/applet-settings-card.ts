@@ -14,8 +14,8 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 
-import '../../../ui/copy-hash';
-import '../../../applets/elements/applet-logo';
+import '../../ui/copy-hash';
+import './applet-logo';
 
 import { ALWAYS_ONLINE_TAG } from '@theweave/group-client';
 
@@ -25,15 +25,15 @@ import {
   dnaHashForCell,
   getCellNetworkSeed,
   getProvisionedCells,
-} from '../../../utils.js';
-import { chevronSingleDownIcon, chevronSingleUpIcon } from '../../../ui/icons.js';
+} from '../../utils.js';
+import { chevronSingleDownIcon, chevronSingleUpIcon } from '../../ui/icons.js';
 import { BaseAppletSettingsCard } from './base-applet-settings-card.js';
 import {
   selectDevUiWebhapp,
   setDevUiOverride,
   clearDevUiOverride,
   getDevUiOverride,
-} from '../../../electron-api.js';
+} from '../../electron-api.js';
 
 @localized()
 @customElement('applet-settings-card')

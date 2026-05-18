@@ -12,8 +12,8 @@ import { mossStyles } from '../../../shared-styles.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
-import { GroupStore } from '../../../groups/group-store.js';
-import { groupStoreContext } from '../../../groups/context.js';
+import { GroupStore } from '../../group-store.js';
+import { groupStoreContext } from '../../context.js';
 
 import '../../../ui/moss-select-avatar.js';
 import '../../../ui/copy-hash.js';

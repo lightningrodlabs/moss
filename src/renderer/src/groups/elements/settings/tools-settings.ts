@@ -8,16 +8,16 @@ import {AsyncStatus, pipe, sliceAndJoin, StoreSubscriber} from '@holochain-open-
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
-import './applet-settings-card.js';
-import './abandoned-applet-settings-card.js';
+import '../../../applets/elements/applet-settings-card.js';
+import '../../../applets/elements/abandoned-applet-settings-card.js';
 import './inactive-tools.js';
-import '../../../groups/elements/applet-detail-card.js';
+import '../applet-detail-card.js';
 
 import { repeat } from 'lit/directives/repeat.js';
 import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
-import { groupStoreContext } from '../../../groups/context.js';
-import { GroupStore } from '../../../groups/group-store.js';
+import { groupStoreContext } from '../../context.js';
+import { GroupStore } from '../../group-store.js';
 import { mossStyles } from '../../../shared-styles.js';
 import {GetonlyMap} from "@holochain-open-dev/utils";
 

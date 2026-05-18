@@ -21,7 +21,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
 import { mossStyles } from '../../shared-styles.js';
-import '../../elements/_new_design/select-group.js';
+import '../../groups/elements/invite/select-group.js';
 import {mdiEmailOutline, mdiWeb} from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import './elements/curation-list-manager.js';
@@ -32,7 +32,7 @@ import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';
 import { groupStoreContext } from '../../groups/context.js';
 import { GroupStore } from '../../groups/group-store.js';
-import { SelectGroup } from '../../elements/_new_design/select-group.js';
+import { SelectGroup } from '../../groups/elements/invite/select-group.js';
 import { DnaHashB64, decodeHashFromBase64 } from '@holochain/client';
 import { InstallToolDialogWeb2 } from './elements/install-tool-dialog-web2.js';
 import './elements/install-tool-dialog-web2.js';

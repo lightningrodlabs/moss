@@ -11,8 +11,8 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
 import { Accountability } from '@theweave/group-client';
 import { localized, msg } from '@lit/localize';
-import { groupStoreContext } from '../../../groups/context.js';
-import { GroupStore } from '../../../groups/group-store.js';
+import { groupStoreContext } from '../../context.js';
+import { GroupStore } from '../../group-store.js';
 import { mossStyles } from '../../../shared-styles.js';
 import { pencilIcon } from '../../../icons/icons.js';
 

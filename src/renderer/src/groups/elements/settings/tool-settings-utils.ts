@@ -1,5 +1,5 @@
 import { EntryHash } from '@holochain/client';
-import { GroupStore } from '../../../groups/group-store';
+import { GroupStore } from '../../group-store';
 import { notify, notifyError } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
 
