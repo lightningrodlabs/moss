@@ -134,6 +134,33 @@ if (ranViaCli) {
 
 let RUNNING_WITH_COMMAND = true;
 
+// Truncate a network seed for log output. Seeds are stored in plaintext on
+// disk anyway (moss-groups-export.json, conductor config), so this is not
+// access control — it just keeps full seeds out of logs, which are the
+// artifact users tend to share in bug reports.
+function redactSeed(seed: string | undefined): string {
+  if (!seed) return '<none>';
+  return seed.length <= 8 ? '********' : `${seed.slice(0, 8)}…`;
+}
+
+// Optionally fork an imported network seed by appending the --fork suffix.
+//
+// NOTE: a network seed is hashed into the DNA/cell identity, so changing it
+// does NOT merely fork the source chain — it places the imported group/tool
+// into an entirely separate, isolated DHT network that will not sync with the
+// original group's peers. This is intended for running multiple profiles of
+// the same Moss version on one machine without source-chain forking; a forked
+// profile is deliberately disconnected from the real shared network.
+function forkImportedSeed(seed: string | undefined, fork: string | undefined): string | undefined {
+  if (!fork) return seed; // normal, unforked import — leave the seed untouched
+  if (!seed) {
+    console.warn('No seed provided. Skipping seed forking.');
+    return undefined;
+  }
+  console.log(`Forking imported seed "${redactSeed(seed)}" with fork "${fork}"`);
+  return `${seed}${fork}`;
+}
+
 // CLI command to compute the sha256 of a webhapp
 const hashWebhapp = new Command();
 hashWebhapp
@@ -176,6 +203,10 @@ program
   .option(
     '-p, --profile <string>',
     'Runs Moss with a custom profile with its own dedicated data store.',
+  )
+  .option(
+    '--fork <string>',
+    'When importing existing data, appends this suffix to all imported network seeds.',
   )
   .option(
     '-n, --network-seed <string>',
@@ -425,6 +456,11 @@ if (!RUNNING_WITH_COMMAND) {
   let SYSTRAY: Tray | undefined = undefined;
   let isAppQuitting = false;
   let LOCAL_SERVICES_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
+  // A custom --profile normally means the user wants a fresh, dedicated data
+  // store, so we skip the legacy-import prompt. The exception is --fork: forking
+  // imported seeds only makes sense as part of the import flow, so when --fork
+  // is set we keep the prompt so the import path stays reachable.
+  const skipLegacyProfileImportPrompt = !!RUN_OPTIONS.profile && !RUN_OPTIONS.fork;
   const WAL_WINDOWS: Record<
     string,
     {
@@ -1126,7 +1162,7 @@ if (!RUNNING_WITH_COMMAND) {
       app.relaunch(options);
       app.quit();
     });
-      ipcMain.handle('is-main-window-focused', (): boolean | undefined => MAIN_WINDOW?.isFocused());
+    ipcMain.handle('is-main-window-focused', (): boolean | undefined => MAIN_WINDOW?.isFocused());
     ipcMain.handle(
       'notification',
       (
@@ -1509,7 +1545,7 @@ if (!RUNNING_WITH_COMMAND) {
       let network_info: NetworkInfo = { bootstrap_urls: [], signal_urls: [], relay_urls: [] };
       try {
         network_info = getNetworkUrls();
-      } catch (e) {console.error('Failed to get network urls', e)}
+      } catch (e) { console.error('Failed to get network urls', e) }
       /** */
       return HOLOCHAIN_MANAGER
         ? {
@@ -1550,6 +1586,11 @@ if (!RUNNING_WITH_COMMAND) {
       return !WE_FILE_SYSTEM.keystoreInitialized();
     });
     ipcMain.handle('find-legacy-profiles', (): LegacyProfileInfo[] => {
+      // Skip the legacy import choice for explicit custom profiles, but still let
+      // the renderer continue into the normal first-launch setup flow.
+      if (skipLegacyProfileImportPrompt) {
+        return [];
+      }
       return findLegacyProfiles(app);
     });
     ipcMain.handle('get-lair-binary-version', (): string => {
@@ -1837,7 +1878,9 @@ if (!RUNNING_WITH_COMMAND) {
       for (let gi = 0; gi < groups.length; gi++) {
         const group = groups[gi];
         const current = gi + 1;
-        const { networkSeed, progenitor, groupProfile, agentProfile, description } = group;
+        const { progenitor, groupProfile, agentProfile, description } = group;
+        const networkSeed = forkImportedSeed(group.networkSeed, RUN_OPTIONS.fork);
+        console.log(`Importing group ${current}/${total}: "${groupProfile?.name || 'Unnamed'}" with network seed "${redactSeed(networkSeed)}" and progenitor "${progenitor}"`);
 
         if (!networkSeed) {
           results.push({ groupName: groupProfile?.name, status: 'error', error: 'Missing network seed' });
@@ -1881,7 +1924,7 @@ if (!RUNNING_WITH_COMMAND) {
           });
 
           let importGroupStatus: ImportStatus;
-          if (amProgenitor) {
+          if (amProgenitor || !progenitor) {
             if (groupProfile) {
               emitProgress(current, groupProfile?.name, 'setting-profile');
               await appWs.callZome({
@@ -1901,54 +1944,23 @@ if (!RUNNING_WITH_COMMAND) {
             }
             importGroupStatus = 'created';
           } else {
-            let profileSynced = false;
-            const deadline = Date.now() + 20000;
-            while (Date.now() < deadline) {
-              const secondsLeft = Math.ceil((deadline - Date.now()) / 1000);
-              emitProgress(current, groupProfile?.name, 'waiting-for-sync', { secondsLeft });
-              await new Promise((r) => setTimeout(r, 5000));
-              try {
-                const profileRecord = await appWs.callZome({
-                  role_name: 'group',
-                  zome_name: 'group',
-                  fn_name: 'get_group_profile',
-                  payload: { input: null, local: false },
-                });
-                if (profileRecord) { profileSynced = true; break; }
-              } catch (_pollErr) {
-                // continue polling
-              }
-            }
-
-            if (profileSynced) {
-              importGroupStatus = 'joined';
-            } else if (!progenitor) {
-              if (groupProfile) {
-                emitProgress(current, groupProfile?.name, 'setting-profile');
-                await appWs.callZome({
-                  role_name: 'group',
-                  zome_name: 'group',
-                  fn_name: 'set_group_profile',
-                  payload: { name: groupProfile.name, icon_src: groupProfile.icon_src },
-                });
-              }
-              if (description) {
-                await appWs.callZome({
-                  role_name: 'group',
-                  zome_name: 'group',
-                  fn_name: 'set_group_meta_data',
-                  payload: { name: 'description', data: description, permission_hash: null },
-                });
-              }
-              importGroupStatus = 'created';
-            } else {
-              importGroupStatus = 'joined-no-profile';
-            }
+            importGroupStatus = 'joined-no-profile';
           }
 
           // Set the agent's own profile in this group if we have one from the export.
           if (agentProfile) {
             try {
+              // The `profiles` zome expects `fields` to be a plain object map.
+              // Exported data can be hand-edited or come from older versions,
+              // so coerce anything that isn't a plain object (null, array,
+              // primitive) to an empty object to avoid a zome-call rejection.
+              const normalizedAgentFields =
+                agentProfile.fields &&
+                typeof agentProfile.fields === 'object' &&
+                !Array.isArray(agentProfile.fields)
+                  ? agentProfile.fields
+                  : {};
+
               emitProgress(current, groupProfile?.name, 'setting-profile');
               await appWs.callZome({
                 role_name: 'group',
@@ -1956,7 +1968,7 @@ if (!RUNNING_WITH_COMMAND) {
                 fn_name: 'create_profile',
                 payload: {
                   nickname: agentProfile.nickname,
-                  fields: agentProfile.fields,
+                  fields: normalizedAgentFields,
                 },
               });
             } catch (profileErr) {
@@ -1964,9 +1976,18 @@ if (!RUNNING_WITH_COMMAND) {
             }
           }
 
-          if (group.tools && group.tools.length > 0) {
+          // Only the progenitor (or a non-progenitor-gated group) installs tools
+          // on import; a stewarded group joined by a non-progenitor picks up its
+          // tools by syncing instead.
+          const shouldImportTools = amProgenitor || !progenitor;
+          if (group.tools && group.tools.length > 0 && !shouldImportTools) {
+            console.log(
+              `Skipping tool import for group ${appId} because importing agent is not the listed progenitor.`,
+            );
+          } else if (group.tools && group.tools.length > 0) {
             for (let ti = 0; ti < group.tools.length; ti++) {
               const tool = group.tools[ti];
+              const toolNetworkSeed = forkImportedSeed(tool.network_seed, RUN_OPTIONS.fork);
               emitProgress(current, groupProfile?.name, 'installing-tool', {
                 toolName: tool.toolName || tool.custom_name,
                 toolIndex: ti + 1,
@@ -2018,7 +2039,7 @@ if (!RUNNING_WITH_COMMAND) {
                   sha256_ui: sha256Ui,
                   sha256_webhapp: sha256Webhapp,
                   distribution_info: JSON.stringify(newDistributionInfo),
-                  network_seed: tool.network_seed,
+                  network_seed: toolNetworkSeed,
                   properties: {},
                 };
 
@@ -2080,7 +2101,7 @@ if (!RUNNING_WITH_COMMAND) {
                     fs.writeFileSync(webHappPath, new Uint8Array(buffer));
                     const { happPath } = await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
                     happToBeInstalledPath = happPath;
-                    try { fs.rmSync(tmpImportDir, { recursive: true }); } catch (_) {}
+                    try { fs.rmSync(tmpImportDir, { recursive: true }); } catch (_) { }
                   }
 
                   const appAssetsInfo: AppAssetsInfo = deriveAppAssetsInfo(
@@ -2096,7 +2117,7 @@ if (!RUNNING_WITH_COMMAND) {
                     source: { type: 'path', value: happToBeInstalledPath },
                     installed_app_id: appletAppId,
                     agent_key: myPubKey,
-                    network_seed: tool.network_seed,
+                    network_seed: toolNetworkSeed,
                   });
                   await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appletAppId });
 
