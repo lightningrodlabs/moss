@@ -15,10 +15,10 @@ lto = true
 
 
 [workspace.dependencies]
-hdi = { version = "=0.8.0-dev.10" }
-hdk = { version = "=0.7.0-dev.14" }
-holochain = { version = "=0.7.0-dev.22" }
-holochain_serialized_bytes = "0.0.56"
+hdi = { version = "=0.8.0-dev.12" }
+hdk = { version = "=0.7.0-dev.17" }
+holochain = { version = "=0.7.0-dev.25" }
+holochain_serialized_bytes = "0.0.57"
 
 serde = "1"
 
