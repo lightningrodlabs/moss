@@ -42,7 +42,7 @@ import '../assets/assets-graph/assets-graph.js';
 import '../groups/elements/entry-title.js';
 import './navigation/groups-sidebar.js';
 import './dialogs/join-group-dialog.js';
-import '../layout/views/cross-group-main.js';
+import '../self/cross-group/cross-group-main.js';
 import '../tool-library/tool-library-web2.js';
 import '../layout/views/asset-view.js';
 import '../groups/elements/group-container.js';

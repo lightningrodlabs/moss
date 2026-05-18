@@ -7,7 +7,7 @@ import { localized } from '@lit/localize';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 
-import './view-frame.js';
+import '../../layout/views/view-frame.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { mossStyles } from '../../shared-styles.js';
