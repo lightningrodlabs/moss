@@ -3,15 +3,15 @@ import { customElement, property } from 'lit/decorators.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { msg, localized } from '@lit/localize';
-import { AppletStore } from '../../../applets/applet-store.js';
+import { AppletStore } from '../../applets/applet-store.js';
 
-import '../../../applets/elements/applet-logo-raw.js';
+import '../../applets/elements/applet-logo-raw.js';
 import { consume } from '@lit/context';
-import { mossStoreContext } from '../../../context.js';
-import { MossStore } from '../../../moss-store.js';
-import { mossStyles } from '../../../shared-styles.js';
-import { groupStoreContext } from '../../../groups/context.js';
-import { GroupStore } from '../../../groups/group-store.js';
+import { mossStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStyles } from '../../shared-styles.js';
+import { groupStoreContext } from '../../groups/context.js';
+import { GroupStore } from '../../groups/group-store.js';
 
 @localized()
 @customElement('applet-sidebar-button')

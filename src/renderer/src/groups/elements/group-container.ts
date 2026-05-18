@@ -12,7 +12,7 @@ import { consume } from '@lit/context';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import './applet-main-views.js';
-import '../../elements/_new_design/navigation/group-area-sidebar.js';
+import '../../app/navigation/group-area-sidebar.js';
 import './group-home.js';
 import '../../self/profile/moss-profile-prompt.js';
 import '../../elements/_new_design/group-settings/my-profile-settings.js';

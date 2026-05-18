@@ -20,15 +20,15 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import { AppletHash, AppletId, GroupProfile } from '@theweave/api';
 import { repeat } from 'lit/directives/repeat.js';
-import { mossStoreContext } from '../../../context.js';
-import { MossStore } from '../../../moss-store.js';
-import { groupStoreContext } from '../../../groups/context.js';
-import { GroupStore } from '../../../groups/group-store.js';
-import { AppletStore } from '../../../applets/applet-store.js';
-import { mossStyles } from '../../../shared-styles.js';
-import { PersistedStore } from '../../../persisted-store.js';
+import { mossStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { groupStoreContext } from '../../groups/context.js';
+import { GroupStore } from '../../groups/group-store.js';
+import { AppletStore } from '../../applets/applet-store.js';
+import { mossStyles } from '../../shared-styles.js';
+import { PersistedStore } from '../../persisted-store.js';
 
-import '../../../groups/elements/group-peers-status.js';
+import '../../groups/elements/group-peers-status.js';
 import './applet-sidebar-button.js';
 import {
   chevronSingleUpIcon,
@@ -41,20 +41,20 @@ import {
   closeIcon,
   personPlusIcon,
   questionMarkInfoIcon,
-} from '../../../ui/icons.js';
+} from '../../ui/icons.js';
 import { Profile } from '@holochain-open-dev/profiles';
 import { EntryRecord, GetonlyMap } from '@holochain-open-dev/utils';
-import { AgentAndTzOffset } from '../../../groups/elements/group-peers-status.js';
+import { AgentAndTzOffset } from '../../groups/elements/group-peers-status.js';
 import {
   localTimeFromUtcOffset,
   relativeTzOffsetString,
   UTCOffsetStringFromOffsetMinutes,
   safeSetInterval,
   SafeIntervalHandle,
-} from '../../../utils.js';
-import { MossDialog } from '../../../ui/moss-dialog.js';
-import '../group-settings/inactive-tools-dialog.js';
-import '../invite-people-dialog.js';
+} from '../../utils.js';
+import { MossDialog } from '../../ui/moss-dialog.js';
+import '../../elements/_new_design/group-settings/inactive-tools-dialog.js';
+import '../../elements/_new_design/invite-people-dialog.js';
 
 // Sidebar for the applet instances of a group
 @localized()
