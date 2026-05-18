@@ -50,7 +50,7 @@ import './debugging-panel/debugging-panel.js';
 
 import '../ui/moss-dialog.js';
 import '../self/settings/moss-settings.js';
-import '../elements/design-feedback/design-feedback-controller.js';
+import './design-feedback/design-feedback-controller.js';
 import './dialogs/tool-info-dialog.js';
 import { ToolInfoDialog, ToolInfoInput } from './dialogs/tool-info-dialog.js';
 
