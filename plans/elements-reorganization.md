@@ -114,10 +114,12 @@ Why this serves a future agent browsing the code:
 - **Era-neutral.** Nothing in the tree references a redesign, so the next redesign
   edits files in place instead of spawning `_new_design_2/`.
 
-## `_new_design/` dissolution — file-by-file
+## `_new_design/` dissolution — file-by-file — ✅ DONE
 
-This is the immediate, self-contained first step (35 files). It moves new-design
-code to its ontological home; no behaviour changes, only `import` path updates.
+Completed (step 3). All 34 files moved to the homes below, `_new_design/`
+removed; imports updated, typecheck + smoke #1/#2/#5 green. Commits:
+`54cd15d0` (ui/), `5462c5c0` (self/), `d45ba061` (app/navigation/),
+`2cc6c922` (groups/ + applets/).
 
 | Current (`elements/_new_design/`) | New home |
 |---|---|
@@ -210,22 +212,20 @@ the reference. Nothing needs parking in `self/utils/`.
 Done in steps; each step is independently shippable and guarded by the e2e smoke
 suite.
 
-1. **Verify + delete the dead twins and orphans above** — shrinks the surface
-   before anything moves. Each removal followed by a green smoke run.
-2. **Delete the pre-`_new_design` top-bar subtree** — the four files + the
-   `false &&` block + the stale side-effect imports. One commit. Pure deletion,
-   no behaviour change (cross-group nav already lives in welcome-view).
-3. **Dissolve `_new_design/`** into the homes in the table above. Pure file moves
-   + import-path fixes; `git mv` per ontological group so history follows. One
-   commit per destination folder.
+1. ✅ **DONE** — **Verify + delete the dead twins and orphans** — shrinks the
+   surface before anything moves.
+2. ✅ **DONE** — **Delete the pre-`_new_design` top-bar subtree** — the four
+   files + the `false &&` block + the stale side-effect imports.
+3. ✅ **DONE** — **Dissolve `_new_design/`** into the homes in the table above.
+   `git mv` per ontological group; `_new_design/` removed.
 4. **Reorganize the rest of `elements/`** into `app/`, `assets/`, `ui/` as the
    tree shows. Larger churn, lower urgency — can land incrementally.
 5. **Dissolve `personal-views/`** into `self/home/`, `assets/`, and a promoted
    top-level `tool-library/`; move the `cross-group-*` views into
    `self/cross-group/`.
 
-Steps 1–3 are the core of the user request and are independently shippable.
-Steps 4–5 are the broader rationalization and can wait.
+Steps 1–3 (the core of the user request) are done. Steps 4–5 are the broader
+rationalization and can wait.
 
 Each step is mechanical and guarded by the e2e smoke suite. Do `git mv` (never
 delete+recreate) so `git log --follow` keeps working, and run
