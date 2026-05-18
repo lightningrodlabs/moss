@@ -185,7 +185,7 @@ export function validateArgs(args: CliOpts): RunOptions {
 
   return {
     profile,
-    fork: fork ? fork : undefined,
+    fork: fork ? fork : undefined, // coerce '' to undefined so an empty --fork is a no-op
     appstoreNetworkSeed,
     devInfo,
     bootstrapUrl: args.bootstrapUrl,
