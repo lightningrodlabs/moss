@@ -223,11 +223,15 @@ suite.
    navigation, dialogs, debugging-panel, design-feedback), `assets/` (pocket,
    creatables, asset-tags) and `ui/` (tab-group); `reusable/` split by subject;
    `elements/` removed.
-5. **Dissolve `personal-views/`** into `self/home/`, `assets/`, and a promoted
-   top-level `tool-library/`; move the `cross-group-*` views into
-   `self/cross-group/`.
+5. ✅ **DONE** — **Dissolve `personal-views/`**: welcome + activity views →
+   `self/home/`, `assets-graph` → `assets/`, `tool-library` + `tool-publishing`
+   promoted to top-level `tool-library/` (publishing under `tool-library/
+   publishing/`); `cross-group-*` views → `self/cross-group/`; `personal-views/`
+   removed.
 
-Steps 1–4 are done. Step 5 is the remaining slice.
+All five steps are done. The renderer is organized by ontological subject;
+the era-named (`_new_design/`) and location-named (`elements/`,
+`personal-views/`) folders are gone.
 
 Each step is mechanical and guarded by the e2e smoke suite. Do `git mv` (never
 delete+recreate) so `git log --follow` keeps working, and run
