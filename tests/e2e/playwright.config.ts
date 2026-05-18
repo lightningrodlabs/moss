@@ -15,6 +15,10 @@ export default defineConfig({
     { name: 'smoke', testDir: path.resolve(__dirname, 'smoke') },
     { name: 'slow', testDir: path.resolve(__dirname, 'slow') },
   ],
+  // why: rebuilds example/workdir/example-applet.webhapp when stale so smoke
+  // #4/#5 install the current applet UI (incl. the [data-weave-ready] handshake
+  // marker). No-op when the webhapp is already fresh. See global-setup.ts.
+  globalSetup: path.resolve(__dirname, 'global-setup.ts'),
   fullyParallel: false,
   workers: 1,
   forbidOnly: !!process.env.CI,
