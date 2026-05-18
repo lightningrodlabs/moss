@@ -708,10 +708,23 @@ export class MossStore {
 
     // 1. Persist if requested (tools do this, foyer doesn't)
     if (options.persist && source.type === 'applet') {
-      const unreadNotifications = storeAppletNotifications(notifications, source.appletId, true, this.persistedStore);
+      storeAppletNotifications(notifications, source.appletId, true, this.persistedStore);
     }
 
-    for (const notification of notifications) {
+    // Deduplicate incoming notifications against what's already in the feed so that
+    // OS notifications, sounds, and unread counts are not triggered for duplicates.
+    const existingFeedIds = new Set(
+      get(this._notificationFeed).map((entry) => getNotificationFeedEntryId(entry)),
+    );
+    const seenInBatch = new Set<string>();
+    const newNotifications = notifications.filter((notification) => {
+      const id = getNotificationFeedEntryId({ source, notification, sourceName: options.sourceName });
+      if (existingFeedIds.has(id) || seenInBatch.has(id)) return false;
+      seenInBatch.add(id);
+      return true;
+    });
+
+    for (const notification of newNotifications) {
       // 2. Update unread count for sidebar dot
       if (options.updateUnreadCount) {
         if (source.type === 'applet') {
@@ -733,24 +746,6 @@ export class MossStore {
             groupStore.incrementUnreadGroupNotifications(notification.urgency);
           }
         }
-      }
-
-      // 3. Add to activity feed
-      if (options.showInFeed) {
-        this._notificationFeed.update((feed) => {
-          const newNotification: MossNotification = { source, notification, sourceName: options.sourceName };
-          const deduplicatedFeed = [newNotification, ...feed].filter(
-            (entry, index, allEntries) =>
-              index ===
-              allEntries.findIndex(
-                (candidate) => getNotificationFeedEntryId(candidate) === getNotificationFeedEntryId(entry),
-              ),
-          );
-
-          return deduplicatedFeed.sort(
-            (a, b) => b.notification.timestamp - a.notification.timestamp,
-          );
-        });
       }
 
       // 4. Send OS notification if conditions are met
@@ -778,6 +773,20 @@ export class MossStore {
         const soundSettings = this.persistedStore.notificationSoundSettings.value();
         notificationAudio.playForUrgency(notification.urgency, soundSettings);
       }
+    }
+
+    // 3. Add to activity feed (done once after the loop to avoid O(k*n²))
+    if (options.showInFeed && newNotifications.length > 0) {
+      this._notificationFeed.update((feed) => {
+        const newEntries: MossNotification[] = newNotifications.map((notification) => ({
+          source,
+          notification,
+          sourceName: options.sourceName,
+        }));
+        return [...newEntries, ...feed].sort(
+          (a, b) => b.notification.timestamp - a.notification.timestamp,
+        );
+      });
     }
 
   }
