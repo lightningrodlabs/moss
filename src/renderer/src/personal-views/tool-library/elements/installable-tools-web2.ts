@@ -20,13 +20,13 @@ import { mossStoreContext } from '../../../context.js';
 import './tool-publisher.js';
 import { ToolAndCurationInfo, UnifiedToolEntry } from '../../../types.js';
 import { getPrimaryVersionBranch, extractMajorVersion, markdownParseSafe } from '../../../utils.js';
-import { experimentalToolIcon } from '../../../elements/_new_design/icons.js';
+import { experimentalToolIcon } from '../../../ui/icons.js';
 import './library-tool-details.js';
 import { LibraryToolDetails } from './library-tool-details.js';
 import { libraryStyles } from '../libraryStyles.js';
 import { DeveloperCollective } from '@theweave/moss-types';
-import { MossDialog } from '../../../elements/_new_design/moss-dialog.js';
-import '../../../elements/_new_design/moss-dialog.js';
+import { MossDialog } from '../../../ui/moss-dialog.js';
+import '../../../ui/moss-dialog.js';
 
 @localized()
 @customElement('installable-tools-web2')

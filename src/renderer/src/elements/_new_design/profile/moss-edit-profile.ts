@@ -12,9 +12,9 @@ import '@holochain-open-dev/elements/dist/elements/select-avatar.js';
 import { Profile, ProfilesStore, profilesStoreContext } from '@holochain-open-dev/profiles';
 import { mossStyles } from '../../../shared-styles';
 
-import '../moss-select-avatar';
+import '../../../ui/moss-select-avatar';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
-import { MossSelectAvatar } from '../moss-select-avatar';
+import { MossSelectAvatar } from '../../../ui/moss-select-avatar';
 
 /**
  * @element edit-profile

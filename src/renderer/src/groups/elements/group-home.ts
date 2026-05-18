@@ -48,9 +48,9 @@ import '../../elements/reusable/tab-group.js';
 import './foyer-stream.js';
 import './agent-permission.js';
 import '../../elements/_new_design/group-settings.js';
-import '../../elements/_new_design/moss-dialog.js';
+import '../../ui/moss-dialog.js';
 import '../../elements/_new_design/profile/moss-profile-detail.js';
-import '../../elements/_new_design/copy-hash.js';
+import '../../ui/copy-hash.js';
 import '../../elements/_new_design/invite-people-dialog.js';
 
 import { groupStoreContext } from '../context.js';
@@ -68,8 +68,8 @@ import { markdownParseSafe } from '../../utils.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { appIdFromAppletHash } from '@theweave/utils';
 import { GroupSettings } from '../../elements/_new_design/group-settings.js';
-import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
-import { editIcon, closeIcon, saveIcon, personPlusIcon } from '../../elements/_new_design/icons.js';
+import { MossDialog } from '../../ui/moss-dialog.js';
+import { editIcon, closeIcon, saveIcon, personPlusIcon } from '../../ui/icons.js';
 import yaml from "js-yaml";
 import {decode} from "@msgpack/msgpack";
 

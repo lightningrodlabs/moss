@@ -41,7 +41,7 @@ import {
   closeIcon,
   personPlusIcon,
   questionMarkInfoIcon,
-} from '../icons.js';
+} from '../../../ui/icons.js';
 import { Profile } from '@holochain-open-dev/profiles';
 import { EntryRecord, GetonlyMap } from '@holochain-open-dev/utils';
 import { AgentAndTzOffset } from '../../../groups/elements/group-peers-status.js';
@@ -52,7 +52,7 @@ import {
   safeSetInterval,
   SafeIntervalHandle,
 } from '../../../utils.js';
-import { MossDialog } from '../moss-dialog.js';
+import { MossDialog } from '../../../ui/moss-dialog.js';
 import '../group-settings/inactive-tools-dialog.js';
 import '../invite-people-dialog.js';
 

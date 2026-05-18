@@ -22,8 +22,8 @@ import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { AppletHash } from '@theweave/api';
 import { GroupHome } from './group-home.js';
 import { MyProfileSettings } from '../../elements/_new_design/group-settings/my-profile-settings.js';
-import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
-import '../../elements/_new_design/moss-dialog.js';
+import { MossDialog } from '../../ui/moss-dialog.js';
+import '../../ui/moss-dialog.js';
 
 @localized()
 @customElement('group-container')

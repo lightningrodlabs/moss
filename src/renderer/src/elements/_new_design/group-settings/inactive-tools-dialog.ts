@@ -19,10 +19,10 @@ import {
   activateToolIcon,
   chevronSingleDownIcon,
   chevronSingleUpIcon,
-} from '../icons';
-import '../moss-mini-button.js';
+} from '../../../ui/icons';
+import '../../../ui/moss-mini-button.js';
 import { toolSettingsStyles } from './tool-settings-styles.js';
-import { MossDialog } from '../moss-dialog.js';
+import { MossDialog } from '../../../ui/moss-dialog.js';
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';

@@ -8,7 +8,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import '../../../applets/elements/applet-logo';
 
-import { chevronSingleDownIcon, chevronSingleUpIcon } from '../icons';
+import { chevronSingleDownIcon, chevronSingleUpIcon } from '../../../ui/icons';
 import { BaseAppletSettingsCard } from './base-applet-settings-card.js';
 
 @localized()

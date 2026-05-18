@@ -14,7 +14,7 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 
-import '../copy-hash';
+import '../../../ui/copy-hash';
 import '../../../applets/elements/applet-logo';
 
 import { ALWAYS_ONLINE_TAG } from '@theweave/group-client';
@@ -26,7 +26,7 @@ import {
   getCellNetworkSeed,
   getProvisionedCells,
 } from '../../../utils.js';
-import { chevronSingleDownIcon, chevronSingleUpIcon } from '../icons.js';
+import { chevronSingleDownIcon, chevronSingleUpIcon } from '../../../ui/icons.js';
 import { BaseAppletSettingsCard } from './base-applet-settings-card.js';
 import {
   selectDevUiWebhapp,

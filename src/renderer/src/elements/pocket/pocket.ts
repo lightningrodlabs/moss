@@ -19,8 +19,8 @@ import './pocket-search.js';
 import { PocketSearch } from './pocket-search.js';
 import { mdiDelete } from '@mdi/js';
 import { mossStyles } from '../../shared-styles.js';
-import { MossDialog } from '../_new_design/moss-dialog.js';
-import '../_new_design/moss-dialog.js';
+import { MossDialog } from '../../ui/moss-dialog.js';
+import '../../ui/moss-dialog.js';
 
 export interface SearchResult {
   hrlsWithInfo: Array<[WAL, AssetLocationAndInfo]>;

@@ -22,7 +22,7 @@ import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStyles } from '../../shared-styles.js';
 import { PersistedStore } from '../../persisted-store.js';
-import { plusIcon } from '../_new_design/icons.js';
+import { plusIcon } from '../../ui/icons.js';
 
 @localized()
 @customElement('groups-sidebar')

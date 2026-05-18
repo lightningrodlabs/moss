@@ -17,14 +17,14 @@ import { MossUpdateInfo } from '../../electron-api.js';
 import { LoadingDialog } from '../../elements/dialogs/loading-dialog.js';
 import { MossNotification, ToolInfoAndLatestVersion, UpdateFeedMessage } from '../../types.js';
 import { commentHeartIconFilled } from '../../icons/icons.js';
-import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
+import { MossDialog } from '../../ui/moss-dialog.js';
 import pluralize from 'pluralize';
 import quotesData from './SnapTalkFunnies.json';
 import { mdiGraph } from '@mdi/js';
 import { AppletId } from '@theweave/api';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 
-import '../../elements/_new_design/moss-dialog.js';
+import '../../ui/moss-dialog.js';
 import { PersistedStore } from '../../persisted-store.js';
 
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';

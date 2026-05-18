@@ -30,8 +30,8 @@ import '../reusable/group-selector.js';
 
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { mossStyles } from '../../shared-styles.js';
-import { MossDialog } from '../_new_design/moss-dialog.js';
-import '../_new_design/moss-dialog.js';
+import { MossDialog } from '../../ui/moss-dialog.js';
+import '../../ui/moss-dialog.js';
 
 export type CreatableInfo = {
   appletHash: AppletHash;

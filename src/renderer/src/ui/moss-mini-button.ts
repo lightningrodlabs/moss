@@ -5,7 +5,7 @@ import { localized } from '@lit/localize';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 
-import { mossStyles } from '../../shared-styles.js';
+import { mossStyles } from '../shared-styles.js';
 
 /**
  * @element moss-mini-button

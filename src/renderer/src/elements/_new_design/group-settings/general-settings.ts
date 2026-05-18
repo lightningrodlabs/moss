@@ -15,9 +15,9 @@ import { MossStore } from '../../../moss-store.js';
 import { GroupStore } from '../../../groups/group-store.js';
 import { groupStoreContext } from '../../../groups/context.js';
 
-import '../moss-select-avatar.js';
-import '../copy-hash.js';
-import { MossSelectAvatar } from '../moss-select-avatar.js';
+import '../../../ui/moss-select-avatar.js';
+import '../../../ui/copy-hash.js';
+import { MossSelectAvatar } from '../../../ui/moss-select-avatar.js';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 import { encodeHashToBase64 } from '@holochain/client';
 

@@ -18,8 +18,8 @@ import { mossStoreContext } from '../../context.js';
 import { mossStyles } from '../../shared-styles.js';
 import { PartialModifiers } from '@theweave/moss-types';
 import { partialModifiersFromInviteLink } from '@theweave/utils';
-import { MossDialog } from '../_new_design/moss-dialog.js';
-import '../_new_design/moss-dialog.js';
+import { MossDialog } from '../../ui/moss-dialog.js';
+import '../../ui/moss-dialog.js';
 
 /**
  * @element join-group-dialog

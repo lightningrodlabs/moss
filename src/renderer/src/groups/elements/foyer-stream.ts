@@ -25,7 +25,7 @@ import { AgentPubKey, HoloHashMap, decodeHashFromBase64, encodeHashToBase64 } fr
 import { mdiChat, mdiMessageCog, mdiSofa } from '@mdi/js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { mossStyles } from '../../shared-styles.js';
-import { sendIcon } from '../../elements/_new_design/icons.js';
+import { sendIcon } from '../../ui/icons.js';
 import {
   FoyerNotificationSettings,
   FoyerMessageUrgency,

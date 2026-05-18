@@ -11,7 +11,7 @@ import '@holochain-open-dev/elements/dist/elements/holo-identicon.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@vaadin/date-time-picker';
 
-import '../copy-hash';
+import '../../../ui/copy-hash';
 import '../../../groups/elements/agent-permission';
 import './agent-permission-button';
 

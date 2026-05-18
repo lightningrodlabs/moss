@@ -3,7 +3,7 @@ import {customElement, state} from "lit/decorators.js";
 import {msg} from "@lit/localize";
 import {ToolCurations} from "@theweave/moss-types";
 import {mossStyles} from "../../../shared-styles";
-import {trashIcon} from "../../../elements/_new_design/icons";
+import {trashIcon} from "../../../ui/icons";
 import {DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS} from "../tool-library-web2";
 
 export interface NamedUrl {

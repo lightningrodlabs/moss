@@ -16,7 +16,7 @@ import SlDropdown from '@shoelace-style/shoelace/dist/components/dropdown/dropdo
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStyles } from '../../shared-styles.js';
-import { installToolIcon } from './icons.js';
+import { installToolIcon } from '../../ui/icons.js';
 
 @localized()
 @customElement('select-group')

@@ -20,8 +20,8 @@ import {
   chevronSingleDownIcon,
   chevronSingleUpIcon,
   ignoreToolIcon,
-} from '../icons';
-import '../moss-mini-button.js';
+} from '../../../ui/icons';
+import '../../../ui/moss-mini-button.js';
 import { toolSettingsStyles } from './tool-settings-styles.js';
 
 @localized()

@@ -1,25 +1,21 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
-import { msg } from '@lit/localize';
+import {msg, str} from '@lit/localize';
 import '@shoelace-style/shoelace/dist/components/avatar/avatar.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
-import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 
-import { resizeAndExportImg } from '../../utils.js';
+import { resizeAndExportImg } from '../utils.js';
 import { FormField, FormFieldController } from '@holochain-open-dev/elements';
-import { mossStyles } from '../../shared-styles.js';
-import { plusIcon } from './icons.js';
+import { mossStyles } from '../shared-styles.js';
+import { editIcon, plusIcon, rebootIcon, trashIcon } from './icons.js';
 
-@customElement('moss-select-avatar')
-export class MossSelectAvatar extends LitElement implements FormField {
+@customElement('moss-select-avatar-fancy')
+export class MossSelectAvatarFancy extends LitElement implements FormField {
   @property({ attribute: 'name' })
   name: string = 'avatar';
 
   @property()
   required: boolean = false;
-
-  @property({ attribute: 'reset-on-click' })
-  resetOnClick: boolean = false;
 
   @property()
   shape: 'circle' | 'square' | 'rounded' = 'circle';
@@ -28,10 +24,16 @@ export class MossSelectAvatar extends LitElement implements FormField {
   disabled: boolean = false;
 
   @property()
-  defaultValue: string | undefined;
+  defaultImgs: string[] | undefined;
 
   @property()
-  label: string = msg('Choose Profile Picture');
+  label: string = msg('Avatar');
+
+  @property({ type: Boolean })
+  showLabel = false;
+
+  @property()
+  tooltipText = msg('Choose Avatar');
 
   @query('#avatar-file-picker')
   private _avatarFilePicker!: HTMLInputElement;
@@ -42,20 +44,40 @@ export class MossSelectAvatar extends LitElement implements FormField {
   @state()
   value: string | undefined;
 
-  reset() {
-    this.value = this.defaultValue;
-  }
-
   _controller = new FormFieldController(this);
 
   reportValidity() {
     const invalid = this.required !== false && !this.value;
     if (invalid) {
-      this._errorInput.setCustomValidity(msg('Avatar is required'));
+      this._errorInput.setCustomValidity(msg(str`${this.label} is required`));
       this._errorInput.reportValidity();
     }
 
     return !invalid;
+  }
+
+  firstUpdated() {
+    // If default images are passed, choose a random one to start with
+    if (this.defaultImgs) this.reset();
+  }
+
+  reset() {
+    if (this.defaultImgs) {
+      // Randomly select one of the default images
+      const randomIndex = Math.floor(Math.random() * this.defaultImgs.length);
+      this.value = this.defaultImgs[randomIndex];
+      this.dispatchEvent(
+        new CustomEvent('avatar-selected', {
+          composed: true,
+          bubbles: true,
+          detail: {
+            avatar: this.value,
+          },
+        }),
+      );
+    } else {
+      this.value = undefined;
+    }
   }
 
   onAvatarUploaded() {
@@ -67,17 +89,18 @@ export class MossSelectAvatar extends LitElement implements FormField {
         img.onload = () => {
           this.value = resizeAndExportImg(img);
           this._avatarFilePicker.value = '';
-          this.dispatchEvent(
-            new CustomEvent('avatar-selected', {
-              composed: true,
-              bubbles: true,
-              detail: {
-                avatar: this.value,
-              },
-            }),
-          );
         };
         img.src = e.target?.result as string;
+
+        this.dispatchEvent(
+          new CustomEvent('avatar-selected', {
+            composed: true,
+            bubbles: true,
+            detail: {
+              avatar: img.src,
+            },
+          }),
+        );
       };
       reader.readAsDataURL(this._avatarFilePicker.files[0]);
     }
@@ -87,31 +110,18 @@ export class MossSelectAvatar extends LitElement implements FormField {
     if (this.value)
       return html`
         <img
-          class="image-picker-img ${this.shape === 'rounded' ? 'rounded' : ''}"
+          class="image-picker-img"
           alt=${this.label ? this.label : 'image picker'}
           src=${this.value}
-          @click=${() => {
-            if (this.resetOnClick) {
-              this.value = '';
-              this.dispatchEvent(
-                new CustomEvent('avatar-selected', {
-                  composed: true,
-                  bubbles: true,
-                  detail: {
-                    avatar: '',
-                  },
-                }),
-              );
-            } else {
-              this._avatarFilePicker.click();
-            }
-          }}
         />
+        <div class="overlay column center-content" @click=${() => this._avatarFilePicker.click()}>
+          ${editIcon(20)}
+        </div>
       `;
     else
       return html` <div class="column" style="align-items: center;">
         <button
-          class="image-picker-button ${this.shape === 'rounded' ? 'rounded' : ''}"
+          class="image-picker-button"
           .disabled=${this.disabled}
           @click=${() => this._avatarFilePicker.click()}
         >
@@ -132,9 +142,26 @@ export class MossSelectAvatar extends LitElement implements FormField {
           id="error-input"
           style="position: absolute; z-index: -1; left: 50%; top: 30px; height: 0; width: 0"
         />
-        <sl-tooltip placement="bottom" content="${this.label}">
-          ${this.renderAvatar()}
-        </sl-tooltip>
+        ${this.showLabel
+        ? html`
+              <span style="font-size: var(--sl-input-label-font-size-medium); margin-bottom: 4px"
+                >${this.label}${this.required !== false ? ' *' : ''}</span
+              >
+            `
+        : html``}
+        <div style="position: relative; margin: 0; padding: 0; height: 82px;">
+          <sl-tooltip placement="bottom" content=${this.tooltipText}>
+            ${this.renderAvatar()}
+          </sl-tooltip>
+          <div class="column center-content" style="position: absolute; right: -28px; bottom: 2px;">
+            <!-- <sl-tooltip content=${msg('Clear')}>
+            <button class="icon-btn grey" style="margin-bottom: 4px;">${trashIcon()}</button>
+          </sl-tooltip> -->
+            <sl-tooltip content=${msg('random image')} placement="right">
+              <button class="icon-btn" @click=${() => this.reset()}>${rebootIcon()}</button>
+            </sl-tooltip>
+          </div>
+        </div>
       </div>`;
   }
 
@@ -146,7 +173,7 @@ export class MossSelectAvatar extends LitElement implements FormField {
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 50%;
+        border-radius: 12px;
         height: 80px;
         width: 80px;
         cursor: pointer;
@@ -155,12 +182,27 @@ export class MossSelectAvatar extends LitElement implements FormField {
       }
 
       .image-picker-img {
-        border-radius: 50%;
+        border-radius: 12px;
         height: 80px;
         width: 80px;
         cursor: pointer;
-        border: 1px solid #778355;
-        background-color: #4c6a3961;
+        border: 1px solid transparent;
+      }
+
+      .overlay {
+        position: absolute;
+        top: 0;
+        border-radius: 12px;
+        height: 82px;
+        width: 82px;
+        cursor: pointer;
+        background: transparent;
+        color: transparent;
+      }
+
+      .overlay:hover {
+        background: #000000a9;
+        color: white;
       }
 
       .icon-btn {
@@ -177,10 +219,6 @@ export class MossSelectAvatar extends LitElement implements FormField {
 
       .grey {
         background: var(--moss-grey-light);
-      }
-
-      .rounded {
-        border-radius: 12px;
       }
     `,
   ];

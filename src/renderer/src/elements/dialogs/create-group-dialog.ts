@@ -14,9 +14,9 @@ import '@shoelace-style/shoelace/dist/components/radio/radio.js';
 import { mossStyles } from '../../shared-styles.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
-import { defaultIcons } from '../_new_design/defaultIcons.js';
-import '../_new_design/moss-dialog.js';
-import { MossDialog } from '../_new_design/moss-dialog.js';
+import { defaultIcons } from '../../ui/defaultIcons.js';
+import '../../ui/moss-dialog.js';
+import { MossDialog } from '../../ui/moss-dialog.js';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 
 

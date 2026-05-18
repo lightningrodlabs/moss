@@ -11,7 +11,7 @@ import '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
 import '@shoelace-style/shoelace/dist/components/radio/radio.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
-import { mossStyles } from '../../shared-styles.js';
+import { mossStyles } from '../shared-styles.js';
 import { closeIcon } from './icons.js';
 
 

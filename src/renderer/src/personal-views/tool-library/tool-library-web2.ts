@@ -42,9 +42,9 @@ import {
   devIcon,
   experimentalToolIcon,
   stableToolIcon,
-} from '../../elements/_new_design/icons.js';
-import '../../elements/_new_design/moss-dialog.js';
-import {MossDialog} from "../../elements/_new_design/moss-dialog";
+} from '../../ui/icons.js';
+import '../../ui/moss-dialog.js';
+import {MossDialog} from "../../ui/moss-dialog";
 import {NamedUrl, UrlListManager} from "./elements/curation-list-manager";
 
 export { DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS } from './fetch-unified-tools.js';

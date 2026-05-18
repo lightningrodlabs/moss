@@ -15,8 +15,8 @@ import {
   findUnifiedToolByCompatibilityId,
   resolveUnifiedToolForApplet,
 } from '../personal-views/tool-library/fetch-unified-tools.js';
-import './_new_design/moss-dialog.js';
-import { MossDialog } from './_new_design/moss-dialog.js';
+import '../ui/moss-dialog.js';
+import { MossDialog } from '../ui/moss-dialog.js';
 import '../personal-views/tool-library/elements/library-tool-details.js';
 
 export type ToolInfoInput =

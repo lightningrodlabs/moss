@@ -12,9 +12,9 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
-import '../copy-hash';
-import '../moss-mini-button.js';
-import { deprecateIcon, devIcon } from '../icons.js';
+import '../../../ui/copy-hash';
+import '../../../ui/moss-mini-button.js';
+import { deprecateIcon, devIcon } from '../../../ui/icons.js';
 import { deprecateTool, undeprecateTool } from './tool-settings-utils.js';
 
 import { ALWAYS_ONLINE_TAG, Applet, GroupAppletsMetaData } from '@theweave/group-client';

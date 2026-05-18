@@ -6,7 +6,7 @@ import { GroupProfile } from '@theweave/api';
 import { notify } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/input/input.js';
-import './moss-dialog.js';
+import '../../ui/moss-dialog.js';
 
 import { modifiersToInviteUrl } from '../../utils.js';
 import { mossStyles } from '../../shared-styles.js';

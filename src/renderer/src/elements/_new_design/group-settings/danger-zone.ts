@@ -12,15 +12,15 @@ import { MossStore } from '../../../moss-store.js';
 import { groupStoreContext } from '../../../groups/context.js';
 import { GroupStore } from '../../../groups/group-store.js';
 import { mossStyles } from '../../../shared-styles.js';
-import { cloneIcon, doorIcon } from '../icons.js';
+import { cloneIcon, doorIcon } from '../../../ui/icons.js';
 import { mdiPowerPlugOffOutline } from '@mdi/js';
 import { dialogMessagebox } from '../../../electron-api.js';
 import { progenitorFromProperties } from '../../../utils.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
 import '@shoelace-style/shoelace/dist/components/radio/radio.js';
-import { MossDialog } from '../moss-dialog.js';
-import '../moss-dialog.js';
+import { MossDialog } from '../../../ui/moss-dialog.js';
+import '../../../ui/moss-dialog.js';
 
 @localized()
 @customElement('danger-zone')
