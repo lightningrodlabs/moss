@@ -10,7 +10,7 @@ import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import { mossStyles } from '../../shared-styles.js';
 import '../../applets/elements/applet-logo.js';
 import '../../applets/elements/applet-title.js';
-import '../../elements/dialogs/loading-dialog.js';
+import '../../app/dialogs/loading-dialog.js';
 import './activity-asset.js';
 import './notification-asset.js';
 import { mossStoreContext } from '../../context.js';

@@ -14,7 +14,7 @@ import { getLocalizedTimeAgo } from '../../locales/localization.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { markdownParseSafe, refreshAllAppletIframes } from '../../utils.js';
 import { MossUpdateInfo } from '../../electron-api.js';
-import { LoadingDialog } from '../../elements/dialogs/loading-dialog.js';
+import { LoadingDialog } from '../../app/dialogs/loading-dialog.js';
 import { MossNotification, ToolInfoAndLatestVersion, UpdateFeedMessage } from '../../types.js';
 import { commentHeartIconFilled } from '../../icons/icons.js';
 import { MossDialog } from '../../ui/moss-dialog.js';
@@ -29,12 +29,12 @@ import { PersistedStore } from '../../persisted-store.js';
 
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
-import '../../elements/dialogs/select-group-dialog.js';
+import '../../app/dialogs/select-group-dialog.js';
 import './elements/feed-element.js';
 import '../../applets/elements/applet-logo.js';
 import '../../applets/elements/applet-logo-raw.js';
 import '../../applets/elements/applet-title.js';
-import '../../elements/dialogs/loading-dialog.js';
+import '../../app/dialogs/loading-dialog.js';
 import './elements/notification-card.js'
 import '../../elements/reusable/groups-for-tool.js';
 

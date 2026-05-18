@@ -12,7 +12,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import '../../groups/elements/group-context.js';
 import '../../applets/elements/applet-logo-raw.js';
-import '../dialogs/create-group-dialog.js';
+import '../../app/dialogs/create-group-dialog.js';
 import '../../applets/elements/applet-title.js';
 
 import { mossStoreContext } from '../../context.js';

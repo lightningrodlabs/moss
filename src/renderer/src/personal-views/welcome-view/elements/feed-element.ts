@@ -6,7 +6,7 @@ import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
-import '../../../elements/dialogs/select-group-dialog.js';
+import '../../../app/dialogs/select-group-dialog.js';
 import '../../../applets/elements/applet-logo.js';
 import '../../../applets/elements/applet-title.js';
 import '../../../groups/elements/group-context.js';

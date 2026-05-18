@@ -18,7 +18,7 @@
 // import { MossStore } from '../../moss-store.js';
 // import { groupStoreContext } from '../../groups/context.js';
 // import { GroupStore } from '../../groups/group-store.js';
-// import { SelectGroupDialog } from '../../elements/dialogs/select-group-dialog.js';
+// import { SelectGroupDialog } from '../../app/dialogs/select-group-dialog.js';
 // import { DnaHashB64, decodeHashFromBase64 } from '@holochain/client';
 // import { InstallToolDialog } from './elements/install-tool-dialog.js';
 // import './elements/install-tool-dialog.js';

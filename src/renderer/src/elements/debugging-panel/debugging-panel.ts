@@ -29,7 +29,7 @@ import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 import '../../groups/elements/group-context.js';
 import '../../groups/elements/group-logo.js';
 import '../../applets/elements/applet-logo.js';
-import '../dialogs/create-group-dialog.js';
+import '../../app/dialogs/create-group-dialog.js';
 import '../reusable/groups-for-applet.js';
 import './state-dump.js';
 import './cell-details.js';

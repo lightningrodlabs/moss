@@ -25,7 +25,7 @@ import './group-applets-creatables.js';
 import '../pocket/wal-element.js';
 import '../pocket/pocket-search.js';
 import './creatable-view.js';
-import '../navigation/group-applets-row.js';
+import '../../app/navigation/group-applets-row.js';
 import '../reusable/group-selector.js';
 
 import { StoreSubscriber } from '@holochain-open-dev/stores';

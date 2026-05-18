@@ -4,20 +4,20 @@ import { localized, msg, str } from '@lit/localize';
 import { consume } from '@lit/context';
 import { DnaHash, EntryHash } from '@holochain/client';
 
-import { mossStoreContext } from '../context.js';
-import { MossStore } from '../moss-store.js';
-import { mossStyles } from '../shared-styles.js';
-import { UnifiedToolEntry } from '../types.js';
+import { mossStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStyles } from '../../shared-styles.js';
+import { UnifiedToolEntry } from '../../types.js';
 import { Applet } from '@theweave/group-client';
 import {
   activeToolCurationConfigs,
   fetchUnifiedTools,
   findUnifiedToolByCompatibilityId,
   resolveUnifiedToolForApplet,
-} from '../personal-views/tool-library/fetch-unified-tools.js';
-import '../ui/moss-dialog.js';
-import { MossDialog } from '../ui/moss-dialog.js';
-import '../personal-views/tool-library/elements/library-tool-details.js';
+} from '../../personal-views/tool-library/fetch-unified-tools.js';
+import '../../ui/moss-dialog.js';
+import { MossDialog } from '../../ui/moss-dialog.js';
+import '../../personal-views/tool-library/elements/library-tool-details.js';
 
 export type ToolInfoInput =
   | { kind: 'activated-applet'; appletHash: EntryHash; applet: Applet }

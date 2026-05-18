@@ -11,7 +11,7 @@ import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
 import '../../applets/elements/applet-logo.js';
 import '../../applets/elements/applet-title.js';
-import '../../elements/dialogs/loading-dialog.js';
+import '../../app/dialogs/loading-dialog.js';
 import { mossStoreContext } from '../../context.js';
 import { consume } from '@lit/context';
 import { MossStore } from '../../moss-store.js';

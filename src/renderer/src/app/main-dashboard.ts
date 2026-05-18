@@ -46,13 +46,13 @@ import '../layout/views/cross-group-main.js';
 import '../personal-views/tool-library/tool-library-web2.js';
 import '../layout/views/asset-view.js';
 import '../groups/elements/group-container.js';
-import './debugging-panel/debugging-panel.js';
+import '../elements/debugging-panel/debugging-panel.js';
 
 import '../ui/moss-dialog.js';
 import '../self/settings/moss-settings.js';
-import './design-feedback/design-feedback-controller.js';
-import './tool-info-dialog.js';
-import { ToolInfoDialog, ToolInfoInput } from './tool-info-dialog.js';
+import '../elements/design-feedback/design-feedback-controller.js';
+import './dialogs/tool-info-dialog.js';
+import { ToolInfoDialog, ToolInfoInput } from './dialogs/tool-info-dialog.js';
 
 import { mossStyles } from '../shared-styles.js';
 import { mossStoreContext } from '../context.js';
@@ -60,12 +60,12 @@ import { MossStore } from '../moss-store.js';
 import { JoinGroupDialog } from './dialogs/join-group-dialog.js';
 import { CreateGroupDialog } from './dialogs/create-group-dialog.js';
 
-import './asset-tags/tag-selection-dialog.js';
-import './pocket/pocket.js';
-import './pocket/pocket-drop.js';
-import './creatables/creatable-palette.js';
-import { MossPocket } from './pocket/pocket.js';
-import { CreatablePalette } from './creatables/creatable-palette.js';
+import '../elements/asset-tags/tag-selection-dialog.js';
+import '../elements/pocket/pocket.js';
+import '../elements/pocket/pocket-drop.js';
+import '../elements/creatables/creatable-palette.js';
+import { MossPocket } from '../elements/pocket/pocket.js';
+import { CreatablePalette } from '../elements/creatables/creatable-palette.js';
 import { appletMessageHandler, handleAppletIframeMessage } from '../applets/applet-host.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
@@ -75,7 +75,7 @@ import {
 import { dialogMessagebox } from '../electron-api.js';
 import { UpdateFeedMessage } from '../types.js';
 import { ToolCompatibilityId } from '@theweave/moss-types';
-import { TagSelectionDialog } from './asset-tags/tag-selection-dialog.js';
+import { TagSelectionDialog } from '../elements/asset-tags/tag-selection-dialog.js';
 import {
   appStoreIcon,
   chevronDoubleLeftIcon,

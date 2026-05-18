@@ -21,7 +21,7 @@ import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
 import '../../../applets/elements/applet-logo.js';
 import '../../../applets/elements/applet-title.js';
-import '../../../elements/dialogs/loading-dialog.js';
+import '../../../app/dialogs/loading-dialog.js';
 import { getLocalizedTimeAgo } from '../../../locales/localization.js';
 
 @localized()

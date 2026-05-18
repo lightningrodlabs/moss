@@ -10,7 +10,7 @@ import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
 import '@shoelace-style/shoelace/dist/components/radio/radio.js';
 
-import './elements/main-dashboard.js';
+import './app/main-dashboard.js';
 import { mossStyles } from './shared-styles.js';
 import { mossStoreContext } from './context.js';
 import { MossStore } from './moss-store.js';
