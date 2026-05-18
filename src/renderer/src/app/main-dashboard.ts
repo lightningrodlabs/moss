@@ -46,7 +46,7 @@ import '../layout/views/cross-group-main.js';
 import '../personal-views/tool-library/tool-library-web2.js';
 import '../layout/views/asset-view.js';
 import '../groups/elements/group-container.js';
-import '../elements/debugging-panel/debugging-panel.js';
+import './debugging-panel/debugging-panel.js';
 
 import '../ui/moss-dialog.js';
 import '../self/settings/moss-settings.js';

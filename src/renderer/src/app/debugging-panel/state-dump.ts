@@ -22,8 +22,8 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import '../../groups/elements/group-context.js';
 import '../../applets/elements/applet-logo.js';
-import '../../app/dialogs/create-group-dialog.js';
-import '../reusable/groups-for-applet.js';
+import '../dialogs/create-group-dialog.js';
+import '../../elements/reusable/groups-for-applet.js';
 
 import { mossStyles } from '../../shared-styles.js';
 import { dateStr } from '../../utils.js';
