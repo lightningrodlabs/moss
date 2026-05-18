@@ -17,21 +17,21 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
 import SlTextarea from '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 
-import { groupStoreContext } from '../../../groups/context.js';
-import { mossStyles } from '../../../shared-styles.js';
-import { GroupStore } from '../../../groups/group-store.js';
-import { mossStoreContext } from '../../../context.js';
-import { MossStore } from '../../../moss-store.js';
-import { ToolAndCurationInfo } from '../../../types.js';
-import { MossDialog } from '../../../ui/moss-dialog.js';
-import '../../../ui/moss-dialog.js';
+import { groupStoreContext } from '../../groups/context.js';
+import { mossStyles } from '../../shared-styles.js';
+import { GroupStore } from '../../groups/group-store.js';
+import { mossStoreContext } from '../../context.js';
+import { MossStore } from '../../moss-store.js';
+import { ToolAndCurationInfo } from '../../types.js';
+import { MossDialog } from '../../ui/moss-dialog.js';
+import '../../ui/moss-dialog.js';
 import {Applet, AppletAgent} from "@theweave/group-client";
 import { toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
 import { DistributionInfo, TDistributionInfo, ToolInfoAndVersions } from '@theweave/moss-types';
 import { Value } from '@sinclair/typebox/value';
-import { getLocalizedTimeAgo } from '../../../locales/localization.js';
-import { toolSettingsStyles } from '../../../groups/elements/settings/tool-settings-styles.js';
-import {fetchAndValidateHappOrWebhapp} from "../../../electron-api";
+import { getLocalizedTimeAgo } from '../../locales/localization.js';
+import { toolSettingsStyles } from '../../groups/elements/settings/tool-settings-styles.js';
+import {fetchAndValidateHappOrWebhapp} from "../../electron-api";
 import yaml from "js-yaml";
 
 type MatchingInactiveTool = {

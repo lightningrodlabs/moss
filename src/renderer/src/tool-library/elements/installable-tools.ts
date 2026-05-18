@@ -14,10 +14,10 @@
 // import './install-tool-dialog.js';
 // import '../../../groups/elements/group-context.js';
 
-// import { mossStyles } from '../../../shared-styles.js';
-// import { MossStore } from '../../../moss-store.js';
-// import { mossStoreContext } from '../../../context.js';
-// import { SelectGroupDialog } from '../../../app/dialogs/select-group-dialog.js';
+// import { mossStyles } from '../../shared-styles.js';
+// import { MossStore } from '../../moss-store.js';
+// import { mossStoreContext } from '../../context.js';
+// import { SelectGroupDialog } from '../../app/dialogs/select-group-dialog.js';
 // import '../../../elements/dialogs/select-group-dialog.js';
 // import TimeAgo from 'javascript-time-ago';
 // import './tool-publisher.js';

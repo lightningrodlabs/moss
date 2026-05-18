@@ -9,9 +9,9 @@ import {
   ToolCurator,
 } from '@theweave/moss-types';
 import { deriveToolCompatibilityId, toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
-import { ToolAndCurationInfo, ToolListUrl, UnifiedToolEntry } from '../../types.js';
-import { groupToolsByBaseId, sortVersionsDescending } from '../../utils.js';
-import { DevModeToolLibrary, MossStore } from '../../moss-store.js';
+import { ToolAndCurationInfo, ToolListUrl, UnifiedToolEntry } from '../types.js';
+import { groupToolsByBaseId, sortVersionsDescending } from '../utils.js';
+import { DevModeToolLibrary, MossStore } from '../moss-store.js';
 
 export const DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   {

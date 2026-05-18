@@ -10,15 +10,16 @@
 // import { ActionHash } from '@holochain/client';
 // import { hashProperty, wrapPathInSvg } from '@holochain-open-dev/elements';
 
-// import { MossStore } from '../../../moss-store.js';
-// import { mossStoreContext } from '../../../context.js';
-// import { mossStyles } from '../../../shared-styles.js';
+// import { MossStore } from '../../moss-store.js';
+// import { mossStoreContext } from '../../context.js';
+// import { mossStyles } from '../../shared-styles.js';
+// import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
+// import { mdiInformationVariantCircle } from '@mdi/js';
 // import { DeveloperCollective, UpdateableEntity } from '@theweave/tool-library-client';
-// import { mdiEmailOutline, mdiWeb } from '@mdi/js';
 
 // @localized()
-// @customElement('tool-publisher-detail')
-// export class ToolPublisherDetail extends LitElement {
+// @customElement('tool-publisher')
+// export class ToolPublisher extends LitElement {
 //   @consume({ context: mossStoreContext, subscribe: true })
 //   _mossStore!: MossStore;
 
@@ -32,26 +33,27 @@
 //     () => [this.developerCollectiveHash],
 //   );
 
+//   get publisherDetailsDialog(): SlDialog {
+//     return this.shadowRoot?.getElementById('publisher-details-dialog') as SlDialog;
+//   }
+
 //   renderPublisher(publisher: UpdateableEntity<DeveloperCollective>) {
 //     if (!publisher) return html``;
 
-//     return html`
-//       <div class="column">
-//         <div class="row" style="align-items: center; font-size: 1.1rem;">
-//           <img
-//             alt="${publisher.record.entry.name}"
-//             .src=${publisher.record.entry.icon}
-//             style="width: 40px; height: 40px; border-radius: 50%;"
-//           />
-//           <div style="margin-left: 10px; font-size: 1.2rem;">${publisher.record.entry.name}</div>
-//         </div>
-//         <div style="margin-top: 20px; opacity: 0.8;">${publisher.record.entry.description}</div>
-//         <div class="row" style="align-items: center; margin-top: 20px;">
-//           <sl-icon
-//             style="font-size: 1.3rem; margin-right: 2px;"
-//             .src=${wrapPathInSvg(mdiWeb)}
-//           ></sl-icon>
-//           <span style="margin-right: 10px;">${msg('Website')}:</span>
+//     return html` <sl-dialog
+//         id="publisher-details-dialog"
+//         .label=${publisher.record.entry.name}
+//         @click=${(e) => {
+//           e.stopPropagation();
+//         }}
+//         @keypress=${(e: KeyboardEvent) => {
+//           if (e.key === 'Enter' || e.key === ' ') {
+//             e.stopPropagation();
+//           }
+//         }}
+//       >
+//         <div class="row" style="align-items: center;">
+//           <span style="margin-right: 5px;">${msg('website')}:</span>
 //           ${publisher.record.entry.website && publisher.record.entry.website !== ''
 //             ? html`
 //                 <span
@@ -60,20 +62,35 @@
 //                   ></span
 //                 >
 //               `
-//             : html`<span>N/A</span>`}
+//             : html`<span>(no website)</span>`}
 //         </div>
-//         <div class="row" style="align-items: center; margin-top: 8px;">
-//           <sl-icon
-//             style="font-size: 1.3rem; margin-right: 2px;"
-//             .src=${wrapPathInSvg(mdiEmailOutline)}
-//           ></sl-icon>
-//           <span style="margin-right: 10px;">${msg('Contact')}:</span>
-//           ${publisher.record.entry.contact && publisher.record.entry.contact !== ''
-//             ? html` <span>${publisher.record.entry.contact}</span> `
-//             : html`<span>N/A</span>`}
-//         </div>
-//       </div>
-//     `;
+//       </sl-dialog>
+
+//       <div class="row" style="align-items: center;">
+//         <img
+//           alt="${publisher.record.entry.name}"
+//           .src=${publisher.record.entry.icon}
+//           style="width: 35px; height: 35px; border-radius: 50%; margin-left: 5px;"
+//         />
+//         <div style="margin-left:5px">${publisher.record.entry.name}</div>
+//         <sl-icon
+//           tabindex="0"
+//           class="info-btn"
+//           style="font-size: 20px; margin-left: 5px;"
+//           .src=${wrapPathInSvg(mdiInformationVariantCircle)}
+//           @click=${(e) => {
+//             this.publisherDetailsDialog.show();
+//             e.stopPropagation();
+//           }}
+//           @keypress=${(e: KeyboardEvent) => {
+//             if (e.key === 'Enter' || e.key === ' ') {
+//               this.publisherDetailsDialog.show();
+//               e.stopPropagation();
+//             }
+//           }}
+//         >
+//         </sl-icon>
+//       </div>`;
 //   }
 
 //   render() {

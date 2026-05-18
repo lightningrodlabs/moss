@@ -14,10 +14,10 @@ import {
   fetchUnifiedTools,
   findUnifiedToolByCompatibilityId,
   resolveUnifiedToolForApplet,
-} from '../../personal-views/tool-library/fetch-unified-tools.js';
+} from '../../tool-library/fetch-unified-tools.js';
 import '../../ui/moss-dialog.js';
 import { MossDialog } from '../../ui/moss-dialog.js';
-import '../../personal-views/tool-library/elements/library-tool-details.js';
+import '../../tool-library/elements/library-tool-details.js';
 
 export type ToolInfoInput =
   | { kind: 'activated-applet'; appletHash: EntryHash; applet: Applet }

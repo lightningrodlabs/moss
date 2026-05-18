@@ -2,14 +2,14 @@ import { css, html, LitElement } from 'lit';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg, str } from '@lit/localize';
-import { ToolAndCurationInfo, UnifiedToolEntry, VersionBranchInfo } from '../../../types';
-import { getPrimaryVersionBranch, markdownParseSafe } from '../../../utils';
-import { mossStyles } from '../../../shared-styles';
+import { ToolAndCurationInfo, UnifiedToolEntry, VersionBranchInfo } from '../../types';
+import { getPrimaryVersionBranch, markdownParseSafe } from '../../utils';
+import { mossStyles } from '../../shared-styles';
 import { DeveloperCollective } from '@theweave/moss-types';
 import { libraryStyles } from '../libraryStyles';
-import { getLocalizedTimeAgo } from '../../../locales/localization.js';
+import { getLocalizedTimeAgo } from '../../locales/localization.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
-import '../../../groups/elements/invite/select-group.js';
+import '../../groups/elements/invite/select-group.js';
 
 enum TabsState {
   Overview,

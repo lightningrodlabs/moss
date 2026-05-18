@@ -9,24 +9,24 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
-import '../../../groups/elements/invite/select-group.js';
+import '../../groups/elements/invite/select-group.js';
 
 import './install-tool-dialog.js';
-import '../../../groups/elements/group-context.js';
+import '../../groups/elements/group-context.js';
 
-import { mossStyles } from '../../../shared-styles.js';
-import { MossStore } from '../../../moss-store.js';
-import { mossStoreContext } from '../../../context.js';
+import { mossStyles } from '../../shared-styles.js';
+import { MossStore } from '../../moss-store.js';
+import { mossStoreContext } from '../../context.js';
 import './tool-publisher.js';
-import { ToolAndCurationInfo, UnifiedToolEntry } from '../../../types.js';
-import { getPrimaryVersionBranch, extractMajorVersion, markdownParseSafe } from '../../../utils.js';
-import { experimentalToolIcon } from '../../../ui/icons.js';
+import { ToolAndCurationInfo, UnifiedToolEntry } from '../../types.js';
+import { getPrimaryVersionBranch, extractMajorVersion, markdownParseSafe } from '../../utils.js';
+import { experimentalToolIcon } from '../../ui/icons.js';
 import './library-tool-details.js';
 import { LibraryToolDetails } from './library-tool-details.js';
 import { libraryStyles } from '../libraryStyles.js';
 import { DeveloperCollective } from '@theweave/moss-types';
-import { MossDialog } from '../../../ui/moss-dialog.js';
-import '../../../ui/moss-dialog.js';
+import { MossDialog } from '../../ui/moss-dialog.js';
+import '../../ui/moss-dialog.js';
 
 @localized()
 @customElement('installable-tools-web2')

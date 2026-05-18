@@ -6,19 +6,19 @@
 // import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 // import '@shoelace-style/shoelace/dist/components/button/button.js';
 
-// import { mossStyles } from '../../shared-styles.js';
+// import { mossStyles } from '../shared-styles.js';
 // import '../../elements/dialogs/select-group-dialog.js';
 // import { mdiChevronLeft, mdiTools } from '@mdi/js';
 // import { wrapPathInSvg } from '@holochain-open-dev/elements';
 // import './elements/installable-tools.js';
 // import './elements/tool-publisher-detail.js';
 // import { Tool, UpdateableEntity } from '@theweave/tool-library-client';
-// import { mossStoreContext } from '../../context.js';
+// import { mossStoreContext } from '../context.js';
 // import { consume } from '@lit/context';
-// import { MossStore } from '../../moss-store.js';
-// import { groupStoreContext } from '../../groups/context.js';
-// import { GroupStore } from '../../groups/group-store.js';
-// import { SelectGroupDialog } from '../../app/dialogs/select-group-dialog.js';
+// import { MossStore } from '../moss-store.js';
+// import { groupStoreContext } from '../groups/context.js';
+// import { GroupStore } from '../groups/group-store.js';
+// import { SelectGroupDialog } from '../app/dialogs/select-group-dialog.js';
 // import { DnaHashB64, decodeHashFromBase64 } from '@holochain/client';
 // import { InstallToolDialog } from './elements/install-tool-dialog.js';
 // import './elements/install-tool-dialog.js';
