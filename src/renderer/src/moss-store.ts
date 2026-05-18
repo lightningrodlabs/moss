@@ -119,7 +119,7 @@ import {
 import { Applet, AssetsClient, GroupClient, GroupProfile } from '@theweave/group-client';
 import { fromUint8Array } from 'js-base64';
 import {decode, encode} from '@msgpack/msgpack';
-import { AssetViewerState, DashboardState } from './elements/main-dashboard.js';
+import { AssetViewerState, DashboardState } from './app/main-dashboard.js';
 import { PersistedStore, SectionReadStates } from './persisted-store.js';
 import { MossCache } from './cache.js';
 import { compareVersions } from 'compare-versions';

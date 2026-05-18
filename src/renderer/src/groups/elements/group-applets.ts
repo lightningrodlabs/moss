@@ -18,7 +18,7 @@ import { appIdFromAppletHash } from '@theweave/utils';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
 
-import '../../elements/navigation/sidebar-button.js';
+import '../../app/navigation/sidebar-button.js';
 import '../../applets/elements/applet-logo.js';
 
 import { groupStoreContext } from '../context.js';

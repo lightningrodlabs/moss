@@ -40,22 +40,18 @@ import '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 
 import './group-peers-status.js';
 import './group-applets.js';
-import './group-applets-settings.js';
-import './stewards-settings.js';
-import './your-settings.js';
 import './looking-for-peers.js';
-import './edit-group-profile.js';
 import '../../custom-views/elements/all-custom-views.js';
 import './create-custom-group-view.js';
 import './edit-custom-group-view.js';
-import '../../elements/reusable/tab-group.js';
+import '../../ui/tab-group.js';
 import './foyer-stream.js';
 import './agent-permission.js';
-import '../../elements/_new_design/group-settings.js';
-import '../../elements/_new_design/moss-dialog.js';
-import '../../elements/_new_design/profile/moss-profile-detail.js';
-import '../../elements/_new_design/copy-hash.js';
-import '../../elements/_new_design/invite-people-dialog.js';
+import './settings/group-settings.js';
+import '../../ui/moss-dialog.js';
+import '../../self/profile/moss-profile-detail.js';
+import '../../ui/copy-hash.js';
+import './invite/invite-people-dialog.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
@@ -71,9 +67,9 @@ import { Applet, AppletAgent } from '../../../../../shared/group-client/dist/ind
 import { markdownParseSafe } from '../../utils.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { appIdFromAppletHash } from '@theweave/utils';
-import { GroupSettings } from '../../elements/_new_design/group-settings.js';
-import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
-import { editIcon, closeIcon, saveIcon, personPlusIcon } from '../../elements/_new_design/icons.js';
+import { GroupSettings } from './settings/group-settings.js';
+import { MossDialog } from '../../ui/moss-dialog.js';
+import { editIcon, closeIcon, saveIcon, personPlusIcon } from '../../ui/icons.js';
 import yaml from "js-yaml";
 import {decode} from "@msgpack/msgpack";
 
