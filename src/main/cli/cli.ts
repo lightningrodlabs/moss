@@ -33,6 +33,7 @@ export const APPLET_DEV_TMP_FOLDER_PREFIX = 'moss-applet-dev';
 
 export interface CliOpts {
   profile?: string;
+  fork?: string;
   devConfig?: string | undefined;
   devDataDir?: string | undefined;
   agentIdx?: number | undefined;
@@ -50,10 +51,12 @@ export interface CliOpts {
   iceUrls?: string;
   forceProductionUrls?: boolean;
   printHolochainLogs?: boolean;
+  toolCurationUrl?: string;
 }
 
 export interface RunOptions {
   profile: string | undefined;
+  fork: string | undefined;
   appstoreNetworkSeed: string;
   devInfo: WeAppletDevInfo | undefined;
   bootstrapUrl: string | undefined;
@@ -67,9 +70,12 @@ export interface RunOptions {
   printHolochainLogs: boolean;
   disableOsNotifications: boolean;
   dev: boolean;
+  toolCurationUrl: string | undefined;
 }
 
 export function validateArgs(args: CliOpts): RunOptions {
+  const fork = args.fork;
+
   // validate --profile argument
   const allowedProfilePattern = /^[0-9a-zA-Z-]+$/;
   if (args.profile && !allowedProfilePattern.test(args.profile)) {
@@ -126,6 +132,9 @@ export function validateArgs(args: CliOpts): RunOptions {
   if (args.holochainPath && typeof args.holochainPath !== 'string') {
     throw new Error('The --holochain-path argument must be of type string.');
   }
+  if (fork && typeof fork !== 'string') {
+    throw new Error('The --fork argument must be of type string.');
+  }
   if (args.holochainRustLog && typeof args.holochainRustLog !== 'string') {
     throw new Error('The --holochain-rust-log argument must be of type string.');
   }
@@ -176,6 +185,7 @@ export function validateArgs(args: CliOpts): RunOptions {
 
   return {
     profile,
+    fork: fork ? fork : undefined, // coerce '' to undefined so an empty --fork is a no-op
     appstoreNetworkSeed,
     devInfo,
     bootstrapUrl: args.bootstrapUrl,
@@ -189,6 +199,7 @@ export function validateArgs(args: CliOpts): RunOptions {
     printHolochainLogs: args.printHolochainLogs ? true : false,
     disableOsNotifications: args.disableOsNotifications ? true : false,
     dev: args.dev ? true : false,
+    toolCurationUrl: args.toolCurationUrl,
   };
 }
 
@@ -319,7 +330,7 @@ function readAndValidateDevConfig(
   const allGroupNetworkSeeds = groups.map((group) => group.networkSeed);
   const uniqueGroupNetworkSeeds = new Set(allGroupNetworkSeeds);
   if (uniqueGroupNetworkSeeds.size !== allGroupNetworkSeeds.length) {
-      throw new Error(`Invalid We dev config: Group network seeds must all be unique.`);
+    throw new Error(`Invalid We dev config: Group network seeds must all be unique.`);
   }
   // validate applets
   applets.forEach((applet) => {
@@ -389,7 +400,7 @@ function readAndValidateDevConfig(
   });
 
   if (configObject && !configObject.toolCurations) {
-      configObject.toolCurations = [];
+    configObject.toolCurations = [];
   }
 
   const allAppletNames = applets.map((applet) => applet.name);

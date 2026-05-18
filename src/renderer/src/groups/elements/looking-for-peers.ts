@@ -16,7 +16,7 @@ import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { encodeHashToBase64 } from '@holochain/client';
 import { dialogMessagebox } from '../../electron-api.js';
-import { telescopeIcon } from '../../elements/_new_design/icons.js';
+import { telescopeIcon } from '../../ui/icons.js';
 import { mossStyles } from '../../shared-styles.js';
 
 @localized()

@@ -12,18 +12,18 @@ import { consume } from '@lit/context';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import './applet-main-views.js';
-import '../../elements/_new_design/navigation/group-area-sidebar.js';
+import '../../app/navigation/group-area-sidebar.js';
 import './group-home.js';
-import '../../elements/_new_design/profile/moss-profile-prompt.js';
-import '../../elements/_new_design/group-settings/my-profile-settings.js';
+import '../../self/profile/moss-profile-prompt.js';
+import './settings/my-profile-settings.js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiPowerPlugOff } from '@mdi/js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { AppletHash } from '@theweave/api';
 import { GroupHome } from './group-home.js';
-import { MyProfileSettings } from '../../elements/_new_design/group-settings/my-profile-settings.js';
-import { MossDialog } from '../../elements/_new_design/moss-dialog.js';
-import '../../elements/_new_design/moss-dialog.js';
+import { MyProfileSettings } from './settings/my-profile-settings.js';
+import { MossDialog } from '../../ui/moss-dialog.js';
+import '../../ui/moss-dialog.js';
 
 @localized()
 @customElement('group-container')

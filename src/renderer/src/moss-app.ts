@@ -10,17 +10,17 @@ import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
 import '@shoelace-style/shoelace/dist/components/radio/radio.js';
 
-import './elements/main-dashboard.js';
+import './app/main-dashboard.js';
 import { mossStyles } from './shared-styles.js';
 import { mossStoreContext } from './context.js';
 import { MossStore } from './moss-store.js';
 import { appletDevConfig, getConductorInfo, ImportGroupsProgress } from './electron-api.js';
 import { LegacyProfileInfo } from './electron-api.js';
 import {localized, msg, str} from '@lit/localize';
-import { arrowLeftShortIcon, createGroupIcon, mossIcon } from './elements/_new_design/icons.js';
-import './elements/_new_design/moss-select-avatar.js';
-import './elements/_new_design/moss-select-avatar-fancy.js';
-import { defaultIcons } from './elements/_new_design/defaultIcons.js';
+import { arrowLeftShortIcon, createGroupIcon, mossIcon } from './ui/icons.js';
+import './ui/moss-select-avatar.js';
+import './ui/moss-select-avatar-fancy.js';
+import { defaultIcons } from './ui/defaultIcons.js';
 // import { GroupProfile } from '@theweave/api';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 import { partialModifiersFromInviteLink } from '@theweave/utils';
@@ -159,6 +159,14 @@ export class MossApp extends LitElement {
     if (this._happMessageListener) {
       window.removeEventListener('message', this._happMessageListener);
       this._happMessageListener = undefined;
+    }
+  }
+
+  // why: e2e tests synchronize on app state via this DOM attribute rather than
+  // inspecting view internals. Keep it reflective of MossAppState by name.
+  updated(changed: Map<string | number | symbol, unknown>) {
+    if (changed.has('state')) {
+      this.setAttribute('data-state', MossAppState[this.state]);
     }
   }
 

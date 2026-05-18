@@ -3,7 +3,8 @@ manifest_version: '0'
 name: forum
 integrity:
   network_seed: ~
-  properties: ~
+  properties:
+    invalid: false
   zomes:
     - name: posts_integrity
       hash: ~

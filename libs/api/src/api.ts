@@ -574,14 +574,17 @@ export class WeaveClient implements WeaveServices {
   };
 
   toolInstaller = (appletHash: AppletHash, groupHash?: DnaHash) => {
-    // If groupHash not provided, use the groupHash from the current applet instance
+    // The installer is a property of an applet within a single group, so the
+    // question is not answerable from a cross-group view unless the caller
+    // disambiguates by passing an explicit groupHash. Resolve to undefined in
+    // that case so shared code paths can call this without try/catch noise.
     const effectiveGroupHash = groupHash ?? (
       this.renderInfo.type === 'applet-view'
         ? this.renderInfo.groupHash
         : undefined
     );
     if (!effectiveGroupHash) {
-      throw new Error('groupHash is required but was not provided and could not be determined from renderInfo. Please pass groupHash explicitly to toolInstaller() or ensure the applet iframe has a valid groupHash.');
+      return Promise.resolve(undefined);
     }
     return window.__WEAVE_API__.toolInstaller(appletHash, effectiveGroupHash);
   };

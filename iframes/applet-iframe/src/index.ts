@@ -78,6 +78,14 @@ declare global {
   }
 }
 
+/**
+ * Cache of asset stores keyed by stringified WAL. Each entry's readable is
+ * shared by all callers of weaveApi.assets.assetStore(wal) for that WAL; the
+ * entry is evicted when the last subscriber detaches so a fresh one will be
+ * created on the next call.
+ */
+const assetStoreCache = new Map<string, ReturnType<typeof readable<AsyncStatus<AssetStoreContent>>>>();
+
 /** All weaveApi functions shoot an event to parent */
 const weaveApi: WeaveServices = {
   bootstrapUrls: (groupHash?: DnaHash) => postMessage({
@@ -151,7 +159,16 @@ const weaveApi: WeaveServices = {
         crossGroup,
       }),
     assetStore: (wal) => {
-      const readableStore = readable<AsyncStatus<AssetStoreContent>>(
+      // Share one readable per WAL so repeated calls (e.g. from components that
+      // recreate the store on each render) don't each open their own host
+      // subscription. start/stop fire only on the 0↔1 subscriber transition,
+      // so subscribe/unsubscribe to the host happen at most once per WAL until
+      // every consumer has detached.
+      const walKey = stringifyWal(wal);
+      const cached = assetStoreCache.get(walKey);
+      if (cached) return cached;
+
+      const store = readable<AsyncStatus<AssetStoreContent>>(
         { status: 'pending' },
         (set) => {
           const listener = (
@@ -161,20 +178,20 @@ const weaveApi: WeaveServices = {
               value: AsyncStatus<AssetStoreContent>;
             }>,
           ) => {
-            // Check whether the WAL is meant for the given store
-            if (stringifyWal(wal) === e.detail.walStringified) {
-              console.log(
-                '@applet-iframe: got asset-store-update event for the correct wal and resetting the store.',
-              );
+            if (walKey === e.detail.walStringified) {
               set(e.detail.value);
             }
           };
           window.addEventListener('asset-store-update', listener);
+          setTimeout(async () => {
+            await postMessage({
+              type: 'subscribe-to-asset-store',
+              wal,
+            });
+          });
           return () => {
-            // TODO verify that this does not remove the event listener for other
-            // subscribers to the same WAL
             window.removeEventListener('asset-store-update', listener);
-            console.log('@applet-iframe: UNSUBSCRIBING from assetStore of wal ', stringifyWal(wal));
+            assetStoreCache.delete(walKey);
             setTimeout(async () => {
               await postMessage({
                 type: 'unsubscribe-from-asset-store',
@@ -184,13 +201,8 @@ const weaveApi: WeaveServices = {
           };
         },
       );
-      setTimeout(async () => {
-        await postMessage({
-          type: 'subscribe-to-asset-store',
-          wal,
-        });
-      });
-      return readableStore;
+      assetStoreCache.set(walKey, store);
+      return store;
     },
   },
 

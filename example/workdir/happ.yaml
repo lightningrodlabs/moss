@@ -11,6 +11,7 @@ roles:
       path: '../dnas/forum/workdir/forum.dna'
       modifiers:
         network_seed: ~
-        properties: ~
+        properties:
+          invalid: false
       installed_hash: ~
       clone_limit: 10

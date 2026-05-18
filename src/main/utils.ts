@@ -10,16 +10,68 @@ import {
   getNonceExpiration,
   randomNonce,
 } from '@holochain/client';
-import { encode } from '@msgpack/msgpack';
+import {decode, encode} from '@msgpack/msgpack';
 import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import { ResourceLocation, ToolVersionInfo, WeaveDevConfig } from '@theweave/moss-types';
 import { sha512 } from 'js-sha512';
 import { WeEmitter } from './weEmitter';
 import { compareVersions, validate as validateSemver } from 'compare-versions';
+import zlib from 'zlib';
+import { promisify } from 'util';
+
+const gunzip = promisify(zlib.gunzip);
 
 export const isMac = process.platform === 'darwin';
 export const isWindows = process.platform === 'win32';
 export const isLinux = process.platform === 'linux';
+
+
+export async function decompressHapp(compressedData:any): Promise<Object> {
+  //console.log("Decompressing file...");
+  try {
+    const decompressedData = await gunzip(compressedData);
+    // Convert Buffer to string (assuming UTF-8 data from Rust)
+    //console.log(decompressedData.length);
+    const raw: any = decode(decompressedData);
+    //console.log(raw.manifest);
+    //console.log(JSON.stringify(raw.manifest));
+  let result: Object = {};
+  for (const roleSettings of raw.manifest.roles) {
+    //console.log("\n\nRole:", roleSettings.name);
+    //console.log("Modifiers:", JSON.stringify(roleSettings.dna?.modifiers?.properties));
+    result[roleSettings.name] = roleSettings.dna?.modifiers?.properties;
+  }
+  return result;
+  } catch (err) {
+    console.error("Decompression failed:", err);
+    return Promise.reject("Decompression failed: " + err);
+  }
+}
+
+
+export async function decompressWebHapp(buffer:any): Promise<Object> {
+  console.log("Decompressing web file...", buffer.length);
+  try {
+    const decompressedData = await gunzip(buffer);
+    // Convert Buffer to string (assuming UTF-8 data from Rust)
+    const raw:any = decode(decompressedData);
+    //console.log(raw);
+    for (const resource in raw.resources) {
+      //console.log(resource);
+      if (resource.endsWith(".happ")) {
+        const happ = await decompressHapp(raw.resources[resource]);
+        //console.log("webHapp dna properties:", JSON.stringify(happ));
+        return happ;
+      }
+    }
+    //console.log(JSON.stringify(raw.manifest));
+    //return decompressHapp(decompressedData);
+  } catch (err) {
+    console.error("Decompression failed:", err);
+    return Promise.reject("Decompression failed: " + err);
+  }
+  return Promise.reject("No happ file in webapp bundle");
+}
 
 export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // links in happ windows should open in the system default application

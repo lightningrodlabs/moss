@@ -7,7 +7,7 @@ import {
   InstalledAppId,
   ZomeName,
   FunctionName,
-  DnaHashB64,
+  DnaHashB64, RoleSettingsMap,
 } from '@holochain/client';
 import {
   AppletId,
@@ -63,6 +63,7 @@ declare global {
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       isAppletDev: () => Promise<boolean>;
       appletDevConfig: () => Promise<WeaveDevConfig | undefined>;
+      getToolCurationOverride: () => Promise<string | undefined>;
       factoryReset: () => Promise<void>;
       getNetworkOverrides: () => Promise<NetworkOverridesInfo>;
       setNetworkOverrides: (overrides: NetworkOverrides) => Promise<void>;
@@ -141,6 +142,7 @@ declare global {
         distributionInfo: DistributionInfo,
         appHashes: AppHashes,
         uiPort?: number,
+        roles_settings?: RoleSettingsMap,
       ) => Promise<AppInfo>;
       uninstallAppletBundle: (appId: string) => Promise<void>;
       isMainWindowFocused: () => Promise<boolean | undefined>;
@@ -228,7 +230,7 @@ declare global {
         vmSizeBytes: number;
         pid: number;
       } | null>;
-      fetchAndValidateHappOrWebhapp: (url: string) => Promise<AppHashes>;
+      fetchAndValidateHappOrWebhapp: (url: string) => Promise<any>;
       validateHappOrWebhapp: (bytes: number[]) => Promise<AppHashes>;
       // Dev UI Override
       selectDevUiWebhapp: () => Promise<string | undefined>;
