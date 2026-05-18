@@ -1080,21 +1080,21 @@ if (!RUNNING_WITH_COMMAND) {
         app.quit();
       }
     }),
-      ipcMain.handle('get-network-overrides', () => {
-        const overrides = WE_FILE_SYSTEM.getNetworkOverrides();
-        const networkUrls = getNetworkUrls();
-        return {
-          overrides,
-          defaults: {
-            bootstrapUrl: PRODUCTION_BOOTSTRAP_URLS[0],
-            relayUrl: PRODUCTION_RELAY_URLS[0],
-          },
-          current: {
-            bootstrapUrl: networkUrls.bootstrap_urls[0],
-            relayUrl: networkUrls.relay_urls[0],
-          },
-        };
-      });
+    ipcMain.handle('get-network-overrides', () => {
+      const overrides = WE_FILE_SYSTEM.getNetworkOverrides();
+      const networkUrls = getNetworkUrls();
+      return {
+        overrides,
+        defaults: {
+          bootstrapUrl: PRODUCTION_BOOTSTRAP_URLS[0],
+          relayUrl: PRODUCTION_RELAY_URLS[0],
+        },
+        current: {
+          bootstrapUrl: networkUrls.bootstrap_urls[0],
+          relayUrl: networkUrls.relay_urls[0],
+        },
+      };
+    });
     ipcMain.handle('set-network-overrides', async (_e, overrides: { bootstrapUrl?: string; relayUrl?: string }) => {
       WE_FILE_SYSTEM.setNetworkOverrides(overrides);
       // Relaunch Moss
