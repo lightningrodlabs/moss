@@ -110,6 +110,59 @@ import { Jimp } from 'jimp';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
+/**
+ * Saves a downloaded happ/webhapp and ensures the resulting file lives at
+ * `{happsDir}/{expectedHappSha256}.happ`. The bytes we-rust-utils writes are
+ * the unpack/repack of the download under the current holochain_types
+ * schema, whose sha256 may differ from the published hash (see
+ * `verifyHappSha256`); subsequent Moss code paths look up the happ file by
+ * the published hash, so we rename to match.
+ */
+async function saveHappAtCanonicalPath(
+  webHappPath: string,
+  happsDir: string,
+  uisDir: string,
+  expectedHappSha256: string,
+): Promise<string> {
+  const { happPath } = await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
+  const canonicalPath = path.join(happsDir, `${expectedHappSha256}.happ`);
+  if (happPath !== canonicalPath) {
+    try {
+      fs.renameSync(happPath, canonicalPath);
+    } catch (e) {
+      fs.copyFileSync(happPath, canonicalPath);
+      try { fs.unlinkSync(happPath); } catch (_) {}
+    }
+  }
+  return canonicalPath;
+}
+
+/**
+ * Verifies that a downloaded happ matches the expected sha256. If the current
+ * unpack/repack hash mismatches, falls back to the "legacy" hash computed
+ * against the holochain_types@0.6.0-dev.28 manifest schema used by Moss 0.15.6
+ * to publish tools — bundles in the existing 0.15 curation list were hashed
+ * under that schema and would otherwise fail verification after the
+ * relay_url / bootstrap_url manifest changes in holochain 0.6.1.
+ */
+async function verifyHappSha256(
+  expected: string,
+  got: string,
+  assetBytes: number[],
+): Promise<void> {
+  if (got === expected) return;
+  const legacy = await rustUtils.legacyHappSha256FromBytes(assetBytes);
+  if (legacy === expected) {
+    console.log(
+      `happ hash matched via legacy (Moss 0.15.x) schema: ${expected}`,
+    );
+    return;
+  }
+  throw new Error(
+    `happ hash mismatch: expected ${expected}, got ${got} (legacy: ${legacy})`,
+  );
+}
+
 let appVersion = app.getVersion();
 console.log('MOSS VERSION: ', appVersion);
 
@@ -2089,8 +2142,7 @@ if (!RUNNING_WITH_COMMAND) {
                     const assetBytes = Array.from(new Uint8Array(buffer));
                     const { happSha256: gotHappSha256, webhappSha256: gotWebhappSha256, uiSha256: gotUiSha256 } =
                       await rustUtils.validateHappOrWebhapp(assetBytes);
-                    if (gotHappSha256 !== sha256Happ)
-                      throw new Error(`happ hash mismatch: expected ${sha256Happ}, got ${gotHappSha256}`);
+                    await verifyHappSha256(sha256Happ, gotHappSha256, assetBytes);
                     if (sha256Webhapp && gotWebhappSha256 && gotWebhappSha256 !== sha256Webhapp)
                       throw new Error(`webhapp hash mismatch: expected ${sha256Webhapp}, got ${gotWebhappSha256}`);
                     if (sha256Ui && gotUiSha256 && gotUiSha256 !== sha256Ui)
@@ -2099,8 +2151,7 @@ if (!RUNNING_WITH_COMMAND) {
                     fs.mkdirSync(tmpImportDir, { recursive: true });
                     const webHappPath = path.join(tmpImportDir, 'applet_to_install.webhapp');
                     fs.writeFileSync(webHappPath, new Uint8Array(buffer));
-                    const { happPath } = await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
-                    happToBeInstalledPath = happPath;
+                    happToBeInstalledPath = await saveHappAtCanonicalPath(webHappPath, happsDir, uisDir, sha256Happ);
                     try { fs.rmSync(tmpImportDir, { recursive: true }); } catch (_) { }
                   }
 
@@ -2410,10 +2461,7 @@ if (!RUNNING_WITH_COMMAND) {
           const { happSha256, webhappSha256, uiSha256 } =
             await rustUtils.validateHappOrWebhapp(assetBytes);
 
-          if (happSha256 !== sha256Happ)
-            throw new Error(
-              `The downloaded resource has an invalid happ hash. The source may be corrupted.\nGot hash '${happSha256}' but expected hash ${sha256Happ}`,
-            );
+          await verifyHappSha256(sha256Happ, happSha256, assetBytes);
           if (webhappSha256 && webhappSha256 !== sha256Webhapp)
             throw new Error(
               `The downloaded resource has an invalid webhapp hash. The source may be corrupted.\nGot hash '${webhappSha256}' but expected hash ${sha256Webhapp}`,
@@ -2432,7 +2480,7 @@ if (!RUNNING_WITH_COMMAND) {
           const uisDir = path.join(WE_FILE_SYSTEM.uisDir);
           const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
           // NOTE: It's possible that an existing happ is being overwritten here. This shouldn't be a problem though.
-          await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
+          await saveHappAtCanonicalPath(webHappPath, happsDir, uisDir, sha256Happ);
           try {
             // clean up
             fs.rmSync(tmpDir, { recursive: true });
@@ -2505,10 +2553,7 @@ if (!RUNNING_WITH_COMMAND) {
           const { happSha256, webhappSha256, uiSha256 } =
             await rustUtils.validateHappOrWebhapp(assetBytes);
 
-          if (happSha256 !== sha256Happ)
-            throw new Error(
-              `The downloaded resource has an invalid happ hash. The source may be corrupted.\nGot hash '${happSha256}' but expected hash ${sha256Happ}`,
-            );
+          await verifyHappSha256(sha256Happ, happSha256, assetBytes);
           if (webhappSha256 && webhappSha256 !== sha256Webhapp)
             throw new Error(
               `The downloaded resource has an invalid webhapp hash. The source may be corrupted.\nGot hash '${webhappSha256}' but expected hash ${sha256Webhapp}`,
@@ -2527,7 +2572,7 @@ if (!RUNNING_WITH_COMMAND) {
           const uisDir = path.join(WE_FILE_SYSTEM.uisDir);
           const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
           // NOTE: It's possible that an existing happ is being overwritten here. This shouldn't be a problem though.
-          await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
+          await saveHappAtCanonicalPath(webHappPath, happsDir, uisDir, sha256Happ);
           try {
             // clean up
             fs.rmSync(tmpDir, { recursive: true });
@@ -2748,10 +2793,7 @@ if (!RUNNING_WITH_COMMAND) {
             RUN_OPTIONS.devInfo && distributionInfo.info.toolListUrl.startsWith('###DEVCONFIG###');
 
           if (!isTrustedToolFromDevConfig) {
-            if (happSha256 !== sha256Happ)
-              throw new Error(
-                `The downloaded resource has an invalid happ hash. The source may be corrupted.\nGot hash '${happSha256}' but expected hash ${sha256Happ}`,
-              );
+            await verifyHappSha256(sha256Happ, happSha256, assetBytes);
             if (webhappSha256 && webhappSha256 !== sha256Webhapp)
               throw new Error(
                 `The downloaded resource has an invalid webhapp hash. The source may be corrupted.\nGot hash '${webhappSha256}' but expected hash ${sha256Webhapp}`,
@@ -2770,10 +2812,8 @@ if (!RUNNING_WITH_COMMAND) {
           fs.writeFileSync(webHappPath, new Uint8Array(buffer));
           // NOTE: It's possible that an existing happ is being overwritten here. This shouldn't be a problem though.
           console.log('Saving webhapp...');
-          const { happPath } = await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
+          happToBeInstalledPath = await saveHappAtCanonicalPath(webHappPath, happsDir, uisDir, sha256Happ);
           console.log('webhapp saved.');
-
-          happToBeInstalledPath = happPath;
           try {
             // clean up
             fs.rmSync(tmpDir, { recursive: true });

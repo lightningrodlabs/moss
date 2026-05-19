@@ -85,7 +85,7 @@
     "@holochain-open-dev/stores": "^0.601.1",
     "@holochain-open-dev/utils": "^0.601.1",
     "@holochain/client": "=0.20.4",
-    "@lightningrodlabs/we-rust-utils": "^0.601.1",
+    "@lightningrodlabs/we-rust-utils": "^0.601.2",
     "electron-updater": "6.6.2",
     "@msgpack/msgpack": "^2.8.0",
     "@sinclair/typebox": "0.33.12",
