@@ -20,7 +20,7 @@
     "@holochain-open-dev/profiles": "^0.700.0-dev.0",
     "@holochain-open-dev/stores": "^0.700.0-dev.0",
     "@holochain-open-dev/utils": "^0.700.0-dev.0",
-    "@lightningrodlabs/we-rust-utils": "^0.600.0-dev.0",
+    "@lightningrodlabs/we-rust-utils": "^0.700.0-dev.0",
     "@electron-toolkit/preload": "^2.0.0",
     "@electron-toolkit/utils": "^2.0.0",
     "electron-updater": "6.6.2",
