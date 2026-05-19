@@ -15,7 +15,7 @@ import { DevModeToolLibrary, MossStore } from '../moss-store.js';
 
 export const DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   {
-    url: 'https://lightningrodlabs.org/weave-tool-curation/0.15/curations-0.15.json',
+    url: 'https://lightningrodlabs.org/weave-tool-curation/0.16/curations-0.16.json',
     useLists: ['default'],
   },
 ];
