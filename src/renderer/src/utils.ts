@@ -877,9 +877,21 @@ export async function groupModifiersToAppId(modifiers: DnaModifiers): Promise<In
   return `group#${hashedSeed}#${groupDnaProperties.progenitor ? groupDnaProperties.progenitor : null}`;
 }
 
+// Allow weave-0.15:// in addition to DOMPurify's default URI schemes, so that
+// weave-asset links survive sanitization and reach setWindowOpenHandler.
+const MARKDOWN_ALLOWED_URI_REGEXP =
+  /^(?:(?:https?|ftps?|mailto|tel|callto|sms|cid|xmpp|weave-0\.15):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
+
+DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+  if (node.tagName === 'A') {
+    node.setAttribute('target', '_blank');
+    node.setAttribute('rel', 'noopener noreferrer');
+  }
+});
+
 export function markdownParseSafe(input: string) {
   const markedData = marked.parse(input) as string;
-  return DOMPurify.sanitize(markedData);
+  return DOMPurify.sanitize(markedData, { ALLOWED_URI_REGEXP: MARKDOWN_ALLOWED_URI_REGEXP });
 }
 
 export function lazyReloadableStore<T>(
