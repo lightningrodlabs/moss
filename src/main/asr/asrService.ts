@@ -19,7 +19,7 @@ import path from 'node:path';
 import type { LocalModelCapabilities } from '@theweave/api';
 
 import { AsrBroker } from './broker';
-import { resolveWhisperServerCommand } from './binaryResolver';
+import { resolveWhisperServerCommand, WhisperCommandResolveError } from './binaryResolver';
 import { computeAsrCapabilities } from './capabilities';
 
 export const BUNDLED_ASR_MODEL_FILENAME = 'ggml-base.en.bin';
@@ -51,32 +51,53 @@ export interface AsrServiceConfig {
 let broker: AsrBroker | null = null;
 let initialized = false;
 let capabilities: LocalModelCapabilities = computeAsrCapabilities({ modelPath: null });
+let initError: Error | null = null;
 
 /**
  * Wire up the broker with everything it needs. Idempotent — second
- * call is a no-op. Required before getAsrBroker() will succeed.
+ * call is a no-op.
+ *
+ * If whisper-server can't be resolved (no bundled binary, no env
+ * override, and nix fallback disabled in packaged builds), init
+ * completes without a broker: capabilities reports `available: false`
+ * and getAsrBroker() throws the resolver error. This keeps the app
+ * startable from a `yarn build:linux` (which doesn't build the sidecar)
+ * while still surfacing the real problem when an applet tries to use
+ * ASR.
  */
-export function initAsrService(config: AsrServiceConfig): AsrBroker {
-  if (initialized && broker) return broker;
-  const resolved = resolveWhisperServerCommand({
-    binariesDir: config.binariesDir,
-    whisperServerVersion: config.whisperServerVersion,
-    isPackaged: config.isPackaged,
-  });
-  broker = new AsrBroker({
-    server: {
-      command: resolved.command,
-      modelPath: config.modelPath,
-      onLog: config.onLog,
-    },
-    idleTimeoutMs: config.idleTimeoutMs,
-  });
-  capabilities = computeAsrCapabilities({
-    modelPath: config.modelPath,
-    latencyTier: config.latencyTier,
-  });
+export function initAsrService(config: AsrServiceConfig): AsrBroker | null {
+  if (initialized) return broker;
   initialized = true;
-  return broker;
+  try {
+    const resolved = resolveWhisperServerCommand({
+      binariesDir: config.binariesDir,
+      whisperServerVersion: config.whisperServerVersion,
+      isPackaged: config.isPackaged,
+    });
+    broker = new AsrBroker({
+      server: {
+        command: resolved.command,
+        modelPath: config.modelPath,
+        onLog: config.onLog,
+      },
+      idleTimeoutMs: config.idleTimeoutMs,
+    });
+    capabilities = computeAsrCapabilities({
+      modelPath: config.modelPath,
+      latencyTier: config.latencyTier,
+    });
+    return broker;
+  } catch (err) {
+    if (err instanceof WhisperCommandResolveError) {
+      initError = err;
+      capabilities = computeAsrCapabilities({
+        modelPath: null,
+        latencyTier: config.latencyTier,
+      });
+      return null;
+    }
+    throw err;
+  }
 }
 
 /**
@@ -91,9 +112,14 @@ export function getAsrCapabilities(): LocalModelCapabilities {
 /**
  * Look up the singleton broker. Throws if initAsrService() hasn't
  * been called yet — this is intentional: silently lazy-initing here
- * would hide wiring bugs in main.
+ * would hide wiring bugs in main. Also throws if init ran but
+ * whisper-server couldn't be located (re-throws the stored resolver
+ * error so callers get the helpful "tried X, Y, Z" message).
  */
 export function getAsrBroker(): AsrBroker {
+  if (initError) {
+    throw initError;
+  }
   if (!broker) {
     throw new Error('AsrBroker not initialized; call initAsrService() first');
   }
@@ -112,11 +138,13 @@ export function isAsrServiceInitialized(): boolean {
 export async function shutdownAsrService(): Promise<void> {
   if (!broker) {
     initialized = false;
+    initError = null;
     return;
   }
   const b = broker;
   broker = null;
   initialized = false;
+  initError = null;
   await b.destroy();
 }
 
@@ -128,6 +156,7 @@ export async function shutdownAsrService(): Promise<void> {
 export function _resetAsrServiceForTests(): void {
   broker = null;
   initialized = false;
+  initError = null;
   capabilities = computeAsrCapabilities({ modelPath: null });
 }
 

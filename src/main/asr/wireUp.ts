@@ -15,6 +15,7 @@ import { app, BrowserWindow, ipcMain, webContents } from 'electron';
 
 import {
   defaultModelPath,
+  getAsrBroker,
   getAsrCapabilities,
   initAsrService,
   shutdownAsrService,
@@ -90,7 +91,7 @@ export function registerAsrIpc(config: AsrWireUpConfig): void {
     defaultModelPath(config.repoRoot ?? process.cwd(), config.resourcesPath);
 
   const latencyTier = config.latencyTier ?? readLatencyTierEnv();
-  const broker = initAsrService({
+  initAsrService({
     binariesDir: config.binariesDir,
     whisperServerVersion: config.whisperServerVersion ?? WHISPER_SERVER_VERSION,
     isPackaged: app.isPackaged,
@@ -106,7 +107,10 @@ export function registerAsrIpc(config: AsrWireUpConfig): void {
 
   const registry = new SessionRegistry();
   const ctx: AsrIpcHandlerContext = {
-    getBroker: () => broker,
+    // Routed through getAsrBroker() so a deferred resolver failure
+    // (no whisper-server binary) throws at session-open time with the
+    // helpful error message, instead of crashing app startup.
+    getBroker: () => getAsrBroker(),
     registry,
     emitEvent: (ownerId, event) => {
       const wc = webContents.fromId(ownerId);

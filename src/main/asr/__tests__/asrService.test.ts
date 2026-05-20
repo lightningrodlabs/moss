@@ -4,6 +4,7 @@ import {
   _resetAsrServiceForTests,
   defaultModelPath,
   getAsrBroker,
+  getAsrCapabilities,
   initAsrService,
   isAsrServiceInitialized,
   shutdownAsrService,
@@ -28,8 +29,9 @@ describe('asrService singleton', () => {
       modelPath: '/dev/null/some-model.bin',
     });
     expect(isAsrServiceInitialized()).toBe(true);
+    expect(broker).not.toBeNull();
     expect(getAsrBroker()).toBe(broker);
-    expect(broker.openSessionCount).toBe(0);
+    expect(broker!.openSessionCount).toBe(0);
   });
 
   it('initAsrService() is idempotent on the second call', () => {
@@ -48,16 +50,17 @@ describe('asrService singleton', () => {
     expect(a).toBe(b);
   });
 
-  it('throws WhisperCommandResolveError when packaged with no resolvable binary', () => {
-    expect(() =>
-      initAsrService({
-        binariesDir: '/tmp/nonexistent',
-        whisperServerVersion: '1.8.4',
-        isPackaged: true,
-        modelPath: '/dev/null/some-model.bin',
-      }),
-    ).toThrow(/Cannot locate whisper-server/);
-    expect(isAsrServiceInitialized()).toBe(false);
+  it('returns null when packaged with no resolvable binary; getAsrBroker() throws with the resolver message', () => {
+    const result = initAsrService({
+      binariesDir: '/tmp/nonexistent',
+      whisperServerVersion: '1.8.4',
+      isPackaged: true,
+      modelPath: '/dev/null/some-model.bin',
+    });
+    expect(result).toBeNull();
+    expect(isAsrServiceInitialized()).toBe(true);
+    expect(() => getAsrBroker()).toThrow(/Cannot locate whisper-server/);
+    expect(getAsrCapabilities().asr.available).toBe(false);
   });
 
   it('shutdownAsrService() resets the singleton and is idempotent', async () => {
