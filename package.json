@@ -3,6 +3,7 @@
   "version": "0.16.0-dev.1",
   "private": true,
   "description": "Moss (0.16)",
+  "homepage": "https://github.com/lightningrodlabs/moss",
   "main": "./out/main/index.js",
   "workspaces": [
     "libs/*",
@@ -70,7 +71,6 @@
     "i18n:extract": "cd src/renderer && npx lit-localize extract",
     "i18n:build": "cd src/renderer && npx lit-localize build",
     "test": "yarn workspace tests test",
-    "test:unit": "vitest run",
     "test:e2e": "yarn workspace tests test:e2e",
     "test:e2e:slow": "yarn workspace tests test:e2e:slow",
     "test:e2e:ui": "yarn workspace tests test:e2e:ui",
