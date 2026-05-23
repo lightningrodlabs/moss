@@ -1049,6 +1049,7 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
     throw new Error('No groups found for applet.');
   }
   const groupHash = groups[0];
+  const queryString = renderViewToQueryString(renderView) + `&group-hash=${encodeHashToBase64(groupHash)}`;
   if (mossStore.isAppletDev) {
     const appId = appIdFromAppletId(appletId);
     const appletDevPort = await getAppletDevPort(appId);
@@ -1059,13 +1060,11 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
         groupHash,
         subType: 'asset',
       };
-      const iframeSrc = `http://localhost:${appletDevPort}?${renderViewToQueryString(
-        renderView,
-      )}#${fromUint8Array(encode(iframeKind))}`;
+      const iframeSrc = `http://localhost:${appletDevPort}?${queryString}#${fromUint8Array(encode(iframeKind))}`;
       return window.electronAPI.openWalWindow(iframeSrc, appletId, encodeHashToBase64(groupHash), wal);
     }
   }
-  const iframeSrc = `${iframeOrigin({ type: 'applet', appletHash, groupHash, subType: 'asset' })}?${renderViewToQueryString(renderView)}`;
+  const iframeSrc = `${iframeOrigin({ type: 'applet', appletHash, groupHash, subType: 'asset' })}?${queryString}`;
   return window.electronAPI.openWalWindow(iframeSrc, appletId, encodeHashToBase64(groupHash), wal);
 }
 
