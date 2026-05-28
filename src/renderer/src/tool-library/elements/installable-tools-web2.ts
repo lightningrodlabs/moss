@@ -43,6 +43,9 @@ export class InstallableToolsWeb2 extends LitElement {
   @property()
   devCollectives: Record<string, DeveloperCollective> = {};
 
+  @property()
+  sortMode: 'releaseDesc' | 'releaseAsc' | 'alphaAsc' | 'alphaDesc' = 'releaseDesc';
+
   @state()
   _selectedGroupDnaHash: DnaHashB64 | undefined;
 
@@ -188,17 +191,17 @@ export class InstallableToolsWeb2 extends LitElement {
         const primaryA = getPrimaryVersionBranch(tool_a);
         const primaryB = getPrimaryVersionBranch(tool_b);
         if (!primaryA || !primaryB) return 0;
-        return primaryB.latestVersion.releasedAt - primaryA.latestVersion.releasedAt;
-      })
-      .sort((tool_a, tool_b) => {
-        const primaryA = getPrimaryVersionBranch(tool_a);
-        const primaryB = getPrimaryVersionBranch(tool_b);
-        if (!primaryA || !primaryB) return 0;
-        const visibilityA = primaryA.curationInfos[0]?.info.visiblity || 'high';
-        const visibilityB = primaryB.curationInfos[0]?.info.visiblity || 'high';
-        if (visibilityA === 'low' && visibilityB !== 'low') return 1;
-        if (visibilityB === 'low' && visibilityA !== 'low') return -1;
-        return 0;
+        switch (this.sortMode) {
+          case 'releaseAsc':
+            return primaryA.latestVersion.releasedAt - primaryB.latestVersion.releasedAt;
+          case 'alphaAsc':
+            return tool_a.title.localeCompare(tool_b.title);
+          case 'alphaDesc':
+            return tool_b.title.localeCompare(tool_a.title);
+          case 'releaseDesc':
+          default:
+            return primaryB.latestVersion.releasedAt - primaryA.latestVersion.releasedAt;
+        }
       });
     return html`
       <moss-dialog
