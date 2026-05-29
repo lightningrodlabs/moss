@@ -1171,6 +1171,19 @@ if (!RUNNING_WITH_COMMAND) {
           return { ok: false, reason: 'unsupported-scheme' };
         }
 
+        // SSRF guard: reject internal/loopback/private hosts up front so a
+        // steward can't aim the probe at the host's own network. We can only
+        // check the URL the user supplied — Electron's net.fetch throws on
+        // redirect:'manual' ("Redirect was cancelled") and leaves res.url empty
+        // on redirect:'follow', so we can't re-validate redirect hops. A public
+        // URL that 30x-redirects to an internal address is therefore still
+        // reachable; the steward learns only ok/fail, not the response.
+        try {
+          await assertPublicHost(parsed.hostname);
+        } catch {
+          return { ok: false, reason: 'private-host' };
+        }
+
         // Bound the probe: a few-second timeout so a slow/hung host can't pin
         // a main-process socket open indefinitely.
         const controller = new AbortController();
@@ -1182,42 +1195,13 @@ if (!RUNNING_WITH_COMMAND) {
           } catch {}
         };
         try {
-          // Follow redirects manually so every hop's host is re-validated —
-          // otherwise a public URL could 30x-redirect to an internal address.
-          let current = parsed;
-          let res: Response | undefined;
-          for (let hop = 0; hop < 5; hop++) {
-            await assertPublicHost(current.hostname);
-            // GET (not HEAD — unreliable on many origins) with redirect:manual
-            // so we control the hop; we only need headers, not the body.
-            res = await net.fetch(current.toString(), {
-              method: 'GET',
-              redirect: 'manual',
-              signal: controller.signal,
-            });
-            if (res.status >= 300 && res.status < 400) {
-              const location = res.headers.get('location');
-              await drain(res);
-              if (!location) return { ok: false, reason: 'redirect-without-location' };
-              let next: URL;
-              try {
-                next = new URL(location, current);
-              } catch {
-                return { ok: false, reason: 'invalid-redirect' };
-              }
-              if (next.protocol !== 'http:' && next.protocol !== 'https:') {
-                return { ok: false, reason: 'unsupported-scheme' };
-              }
-              current = next;
-              continue;
-            }
-            break;
-          }
-          if (!res) return { ok: false, reason: 'too-many-redirects' };
-          if (res.status >= 300 && res.status < 400) {
-            await drain(res);
-            return { ok: false, reason: 'too-many-redirects' };
-          }
+          // GET (not HEAD — unreliable on many origins) following redirects; we
+          // only need the final response headers, not the body.
+          const res = await net.fetch(parsed.toString(), {
+            method: 'GET',
+            redirect: 'follow',
+            signal: controller.signal,
+          });
           if (!res.ok) {
             await drain(res);
             return { ok: false, reason: `http-${res.status}` };
@@ -1248,8 +1232,6 @@ if (!RUNNING_WITH_COMMAND) {
           return { ok: true, contentType: ct };
         } catch (e) {
           if (controller.signal.aborted) return { ok: false, reason: 'timeout' };
-          if ((e as Error).message === 'private-host')
-            return { ok: false, reason: 'private-host' };
           return { ok: false, reason: `fetch-failed: ${(e as Error).message}` };
         } finally {
           clearTimeout(timeout);
