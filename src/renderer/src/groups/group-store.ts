@@ -1543,6 +1543,30 @@ export class GroupStore {
     return output;
   });
 
+  // Applets I have joined and installed locally but which are currently disabled
+  // (installed in the conductor but not running).
+  allMyDisabledApplets = manualReloadStore(async () => {
+    const allMyApplets = await (async () => {
+      if (!this.constructed) {
+        return retryUntilResolved<Array<AppletHash>>(
+          () => this.groupClient.getMyJoinedAppletsHashes(),
+          200,
+          undefined,
+          false,
+        );
+      }
+      return this.groupClient.getMyJoinedAppletsHashes();
+    })();
+    const installedApps = await this.mossStore.adminWebsocket.listApps({});
+    const disabledAppIds = installedApps
+      .filter((app) => isAppDisabled(app))
+      .map((appInfo) => appInfo.installed_app_id);
+
+    return allMyApplets.filter((appletHash) =>
+      disabledAppIds.includes(`applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`),
+    );
+  });
+
   allMyApplets = manualReloadStore(async () => {
     if (!this.constructed) {
       return retryUntilResolved<Array<AppletHash>>(

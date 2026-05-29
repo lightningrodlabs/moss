@@ -53,6 +53,8 @@ import '../self/settings/moss-settings.js';
 import './design-feedback/design-feedback-controller.js';
 import './dialogs/tool-info-dialog.js';
 import { ToolInfoDialog, ToolInfoInput } from './dialogs/tool-info-dialog.js';
+import './dialogs/reenable-tool-dialog.js';
+import { ReenableToolDialog, ReenableToolInput } from './dialogs/reenable-tool-dialog.js';
 
 import { mossStyles } from '../shared-styles.js';
 import { mossStoreContext } from '../context.js';
@@ -145,6 +147,9 @@ export class MainDashboard extends LitElement {
 
   @query('#tool-info-dialog')
   toolInfoDialog!: ToolInfoDialog;
+
+  @query('#reenable-tool-dialog')
+  reenableToolDialog!: ReenableToolDialog;
 
   @query('#add-group-dialog')
   addGroupDialog!: MossDialog;
@@ -586,9 +591,16 @@ export class MainDashboard extends LitElement {
     this.toolInfoDialog?.show(detail);
   };
 
+  private _reenableToolListener = (e: Event) => {
+    const detail = (e as CustomEvent<ReenableToolInput>).detail;
+    if (!detail) return;
+    this.reenableToolDialog?.show(detail);
+  };
+
   connectedCallback(): void {
     super.connectedCallback();
     this.addEventListener('open-tool-info', this._toolInfoListener);
+    this.addEventListener('open-reenable-tool', this._reenableToolListener);
   }
 
   async firstUpdated() {
@@ -787,6 +799,7 @@ export class MainDashboard extends LitElement {
   disconnectedCallback(): void {
     super.disconnectedCallback();
     this.removeEventListener('open-tool-info', this._toolInfoListener);
+    this.removeEventListener('open-reenable-tool', this._reenableToolListener);
     if (this._appletMessageListener) {
       window.removeEventListener('message', this._appletMessageListener);
       this._appletMessageListener = undefined;
@@ -1462,6 +1475,7 @@ export class MainDashboard extends LitElement {
       ></create-group-dialog>
 
       <tool-info-dialog id="tool-info-dialog"></tool-info-dialog>
+      <reenable-tool-dialog id="reenable-tool-dialog"></reenable-tool-dialog>
 
       <div
         class="group-viewer invisible-scrollbars column ${this._dashboardState.value.viewType ===
