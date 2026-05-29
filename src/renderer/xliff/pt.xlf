@@ -2522,6 +2522,34 @@ começa agora</target>
   <source>Could not reach that URL.</source>
   <target>Não foi possível acessar essa URL.</target>
 </trans-unit>
+<trans-unit id="s3606b9d856cdbafe">
+  <source>Sort by</source>
+  <target>Ordenar por</target>
+</trans-unit>
+<trans-unit id="sba2a0427963d1a25">
+  <source>Newest first</source>
+  <target>Mais recentes primeiro</target>
+</trans-unit>
+<trans-unit id="sda134a52656c41b0">
+  <source>Oldest first</source>
+  <target>Mais antigos primeiro</target>
+</trans-unit>
+<trans-unit id="s09fe7f2f425a38bb">
+  <source>Name (A–Z)</source>
+  <target>Nome (A–Z)</target>
+</trans-unit>
+<trans-unit id="sdc5f061efb77eec7">
+  <source>Name (Z–A)</source>
+  <target>Nome (Z–A)</target>
+</trans-unit>
+<trans-unit id="s6ce0cb19e201b153">
+  <source>Tag</source>
+  <target>Tag</target>
+</trans-unit>
+<trans-unit id="s750b854e0b9e8895">
+  <source>All tags</source>
+  <target>Todas as tags</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

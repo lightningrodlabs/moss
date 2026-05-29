@@ -2522,6 +2522,34 @@ starts now</source>
   <source>Could not reach that URL.</source>
   <target>Bu URL'ye erişilemedi.</target>
 </trans-unit>
+<trans-unit id="s3606b9d856cdbafe">
+  <source>Sort by</source>
+  <target>Şuna göre sırala</target>
+</trans-unit>
+<trans-unit id="sba2a0427963d1a25">
+  <source>Newest first</source>
+  <target>Önce en yeni</target>
+</trans-unit>
+<trans-unit id="sda134a52656c41b0">
+  <source>Oldest first</source>
+  <target>Önce en eski</target>
+</trans-unit>
+<trans-unit id="s09fe7f2f425a38bb">
+  <source>Name (A–Z)</source>
+  <target>Ad (A–Z)</target>
+</trans-unit>
+<trans-unit id="sdc5f061efb77eec7">
+  <source>Name (Z–A)</source>
+  <target>Ad (Z–A)</target>
+</trans-unit>
+<trans-unit id="s6ce0cb19e201b153">
+  <source>Tag</source>
+  <target>Etiket</target>
+</trans-unit>
+<trans-unit id="s750b854e0b9e8895">
+  <source>All tags</source>
+  <target>Tüm etiketler</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
