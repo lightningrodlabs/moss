@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   assertPublicHost,
   frameAncestorsBlocks,
+  hasImageExtension,
+  imageContentAccepted,
   isDataImageUrl,
   isPrivateIp,
 } from './mediaUrlValidation';
@@ -63,6 +65,40 @@ describe('assertPublicHost (no-DNS branches)', () => {
   it('accepts literal public IPs without touching DNS', async () => {
     await expect(assertPublicHost('8.8.8.8')).resolves.toBeUndefined();
     await expect(assertPublicHost('[2606:4700:4700::1111]')).resolves.toBeUndefined();
+  });
+});
+
+describe('hasImageExtension', () => {
+  it('matches common image extensions', () => {
+    for (const p of ['/a/b/emergence_icon.png', '/x.JPG', '/y.jpeg', '/z.svg', '/w.webp', '/v.avif']) {
+      expect(hasImageExtension(p), p).toBe(true);
+    }
+  });
+  it('does not match non-image or extensionless paths', () => {
+    for (const p of ['/download/asset', '/page.html', '/a.png.exe', '/release/v0.5.0']) {
+      expect(hasImageExtension(p), p).toBe(false);
+    }
+  });
+});
+
+describe('imageContentAccepted', () => {
+  it('accepts a real image/* content-type regardless of path', () => {
+    expect(imageContentAccepted('image/png', '/download/asset')).toBe(true);
+    expect(imageContentAccepted('image/svg+xml; charset=utf-8', '/x')).toBe(true);
+  });
+  it('accepts a generic-binary type when the path has an image extension (GitHub release assets)', () => {
+    expect(
+      imageContentAccepted('application/octet-stream', '/releases/download/v0.5.0/emergence_icon.png'),
+    ).toBe(true);
+    expect(imageContentAccepted('', '/icon.webp')).toBe(true);
+  });
+  it('rejects a generic-binary type without an image extension', () => {
+    expect(imageContentAccepted('application/octet-stream', '/releases/download/v0.5.0/tool.happ')).toBe(
+      false,
+    );
+  });
+  it('rejects an HTML error page even when the path ends in .png', () => {
+    expect(imageContentAccepted('text/html', '/x.png')).toBe(false);
   });
 });
 

@@ -20,7 +20,12 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import url from 'url';
-import { assertPublicHost, frameAncestorsBlocks, isDataImageUrl } from './mediaUrlValidation';
+import {
+  assertPublicHost,
+  frameAncestorsBlocks,
+  imageContentAccepted,
+  isDataImageUrl,
+} from './mediaUrlValidation';
 import mime from 'mime';
 import * as childProcess from 'child_process';
 import { createHash } from 'crypto';
@@ -1219,7 +1224,7 @@ if (!RUNNING_WITH_COMMAND) {
           }
           const ct = (res.headers.get('content-type') ?? '').toLowerCase();
           if (kind === 'image') {
-            if (!ct.startsWith('image/')) {
+            if (!imageContentAccepted(ct, parsed.pathname)) {
               await drain(res);
               return { ok: false, reason: 'not-an-image' };
             }

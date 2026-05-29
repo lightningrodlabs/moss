@@ -12,6 +12,38 @@ export function isDataImageUrl(rawUrl: string): boolean {
 }
 
 /**
+ * Content-types CDNs serve binary downloads as when they don't know (or don't
+ * bother declaring) the real type. GitHub release assets, for instance, come
+ * back as `application/octet-stream` attachments even for `.png` files.
+ */
+const GENERIC_BINARY_TYPES = new Set([
+  '',
+  'application/octet-stream',
+  'binary/octet-stream',
+  'application/download',
+  'application/x-download',
+]);
+
+/** True when a URL path ends in a known raster/vector image extension. */
+export function hasImageExtension(pathname: string): boolean {
+  return /\.(png|jpe?g|gif|webp|svg|bmp|ico|avif|apng|jfif|tiff?)$/i.test(pathname);
+}
+
+/**
+ * Whether a probed response should be treated as an embeddable image. Accept a
+ * real `image/*` content-type outright; otherwise accept a generic-binary type
+ * (see {@link GENERIC_BINARY_TYPES}) only when the URL path carries an image
+ * extension, so download endpoints that mislabel images still work without
+ * letting an HTML error page through. The `<img>` tag is the final arbiter.
+ */
+export function imageContentAccepted(contentType: string, pathname: string): boolean {
+  const ct = (contentType ?? '').toLowerCase().split(';')[0].trim();
+  if (ct.startsWith('image/')) return true;
+  if (GENERIC_BINARY_TYPES.has(ct) && hasImageExtension(pathname)) return true;
+  return false;
+}
+
+/**
  * SSRF guard: classify a literal IP address as private/loopback/link-local so
  * we never probe the host's internal network on behalf of a (possibly
  * malicious) steward-supplied URL. A non-IP string returns `true` (unsafe) so
