@@ -17,8 +17,10 @@ import {
   Applet,
   AppletAgent,
   GROUP_APPLETS_META_DATA_NAME,
+  GROUP_DASHBOARD_NAME,
   GROUP_DESCRIPTION_NAME,
   GroupAppletsMetaData,
+  GroupDashboard,
   GroupMetaData,
   JoinAppletInput,
   AppletEntryPrivate,
@@ -383,6 +385,27 @@ export class GroupClient {
     const maybeAppletsMetadata = metaDataRecord?.entry.data;
     if (!maybeAppletsMetadata) return undefined;
     return JSON.parse(maybeAppletsMetadata);
+  }
+
+  async setGroupDashboard(
+    permissionHash: ActionHash | undefined,
+    dashboard: GroupDashboard,
+  ): Promise<EntryRecord<GroupMetaData>> {
+    return this.setGroupMetaData({
+      permission_hash: permissionHash,
+      name: GROUP_DASHBOARD_NAME,
+      data: JSON.stringify(dashboard),
+    });
+  }
+
+  /**
+   * Returns `undefined` if no dashboard has been published yet — callers should
+   * fall back to rendering the legacy group description in that case.
+   */
+  async getGroupDashboard(local: boolean = true): Promise<GroupDashboard | undefined> {
+    const record = await this.getGroupMetaData(GROUP_DASHBOARD_NAME, local);
+    if (!record?.entry.data) return undefined;
+    return JSON.parse(record.entry.data) as GroupDashboard;
   }
 
   async getGroupMetaData(

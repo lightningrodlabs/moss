@@ -522,33 +522,9 @@
   <source>Tool undeprecated.</source>
   <target>Deprecazione del Tool rimossa.</target>
 </trans-unit>
-<trans-unit id="sf2f0e2d57183480d">
-  <source>Failed to undeprecate Tool (see console for details)</source>
-  <target>Rimozione della deprecazione del Tool non riuscita (vedi la console per i dettagli)</target>
-</trans-unit>
 <trans-unit id="sd13c458659b1b8e7">
   <source>You don't have any Tools installed in this group. Go to the Tool Library to install Tools to this group.</source>
   <target>Non hai nessun Tool installato in questo gruppo. Vai alla Libreria Tool per installare Tool in questo gruppo.</target>
-</trans-unit>
-<trans-unit id="s45a179a4d2fe3729">
-  <source>No abandoned Tools.</source>
-  <target>Nessun Tool abbandonato.</target>
-</trans-unit>
-<trans-unit id="s4e92d160c3305647">
-  <source>Activated Tools</source>
-  <target>Tool attivati</target>
-</trans-unit>
-<trans-unit id="sa670264e8f449d1c">
-  <source>Abandoned Tools</source>
-  <target>Tool abbandonati</target>
-</trans-unit>
-<trans-unit id="s2aac2023bcfa6e62">
-  <source>Add Steward:</source>
-  <target>Aggiungi Referente:</target>
-</trans-unit>
-<trans-unit id="sb78ce49735cd209e">
-  <source>expiry</source>
-  <target>scadenza</target>
 </trans-unit>
 <trans-unit id="s445ad48f4f733285">
   <source>Error leaving the group</source>
@@ -562,14 +538,6 @@
   <source>Are you sure you want to leave this group?</source>
   <target>Sei sicuro di voler lasciare questo gruppo?</target>
 </trans-unit>
-<trans-unit id="s62e9eba92a6d2fef">
-  <source>⚠️ This will delete all your Tools of this group and the data therein</source>
-  <target>⚠️ Questo eliminerà tutti i tuoi Tool di questo gruppo e i dati contenuti</target>
-</trans-unit>
-<trans-unit id="se869a6655b76b079">
-  <source> (unless a Tool is shared with another group of yours).</source>
-  <target> (a meno che un Tool non sia condiviso con un altro tuo gruppo).</target>
-</trans-unit>
 <trans-unit id="s2ceb11be2290bb1b">
   <source>Cancel</source>
   <target>Annulla</target>
@@ -577,10 +545,6 @@
 <trans-unit id="s19bee21a859fbea0">
   <source>Leave</source>
   <target>Esci</target>
-</trans-unit>
-<trans-unit id="sface44df32238223">
-  <source>Your Profile</source>
-  <target>Il tuo profilo</target>
 </trans-unit>
 <trans-unit id="s1faa6574a9c4fd7a">
   <source>Looking for peers...</source>
@@ -942,18 +906,6 @@
   <source>Participants </source>
   <target>Partecipanti </target>
 </trans-unit>
-<trans-unit id="s21f42760d50276ab">
-  <source>No group description.</source>
-  <target>Nessuna descrizione del gruppo.</target>
-</trans-unit>
-<trans-unit id="sd5fd20dba6d7320b">
-  <source>+ Add Description</source>
-  <target>+ Aggiungi descrizione</target>
-</trans-unit>
-<trans-unit id="sd720fd983f132077">
-  <source>Edit Description</source>
-  <target>Modifica descrizione</target>
-</trans-unit>
 <trans-unit id="s3c1efcb18ec4d6c9">
   <source>Group Settings</source>
   <target>Impostazioni del Gruppo</target>
@@ -1126,10 +1078,6 @@
   <source>Open URL</source>
   <target>Apri URL</target>
 </trans-unit>
-<trans-unit id="sa1d04f065ab25208">
-  <source>Select Attachment:</source>
-  <target>Seleziona allegato:</target>
-</trans-unit>
 <trans-unit id="seead559236062e71">
   <source>Recently created:</source>
   <target>Creati di recente:</target>
@@ -1141,10 +1089,6 @@
 <trans-unit id="s007a5e0a003f5515">
   <source>In Your Pocket:</source>
   <target>Nella tua Tasca:</target>
-</trans-unit>
-<trans-unit id="s00b8b5c1000437fe">
-  <source>Reload Tool</source>
-  <target>Ricarica Tool</target>
 </trans-unit>
 <trans-unit id="sc851c05e0ca38177">
   <source>No Creatables available for the selected Group.</source>
@@ -1386,10 +1330,6 @@
   <source>Back</source>
   <target>Indietro</target>
 </trans-unit>
-<trans-unit id="s111b0d2304f543bd">
-  <source>unknown...</source>
-  <target>sconosciuto...</target>
-</trans-unit>
 <trans-unit id="s823aec927799efba">
   <source>starting Holochain...</source>
   <target>avvio di Holochain...</target>
@@ -1561,10 +1501,6 @@
 <trans-unit id="s3a41d065ac965e2a">
   <source>abandoned by:</source>
   <target>abbandonato da:</target>
-</trans-unit>
-<trans-unit id="s6466997515d6d5b3">
-  <source>New Steward Added.</source>
-  <target>Nuovo Referente aggiunto.</target>
 </trans-unit>
 <trans-unit id="s3d0d58199047bee5">
   <source>Uninstalled by:</source>
@@ -2246,18 +2182,6 @@ inizia ora</target>
   <source>Jump to parent Tool</source>
   <target>Vai allo strumento principale</target>
 </trans-unit>
-<trans-unit id="s9a2321d0350ae9bf">
-  <source>No expiry date selected. Uncheck expiry or select date.</source>
-  <target>Nessuna data di scadenza selezionata. Deseleziona scadenza o seleziona una data.</target>
-</trans-unit>
-<trans-unit id="sccfcb0b7e78ac9d3">
-  <source>Expiry must be in the future</source>
-  <target>La scadenza deve essere nel futuro</target>
-</trans-unit>
-<trans-unit id="sf0fcc2b36e8adbcc">
-  <source>Invalid public key.</source>
-  <target>Chiave pubblica non valida.</target>
-</trans-unit>
 <trans-unit id="s32c5c41a394d97a2">
   <source>Failed to create permission: <x id="0" equiv-text="${e}"/></source>
   <target>Creazione del permesso fallita: <x id="0" equiv-text="${e}"/></target>
@@ -2277,10 +2201,6 @@ inizia ora</target>
 <trans-unit id="s7a98e9c93e22afd8">
   <source>Failed to activate Tool (See console for details).</source>
   <target>Attivazione dello strumento fallita (consulta la console per i dettagli).</target>
-</trans-unit>
-<trans-unit id="s7e4a76b2e2bef4ea">
-  <source>No permission to edit group profile.</source>
-  <target>Nessun permesso per modificare il profilo del gruppo.</target>
 </trans-unit>
 <trans-unit id="s88674b8611547f51">
   <source>Failed to create new <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/>: <x id="1" equiv-text="${creatableResult.error}"/></source>
@@ -2406,6 +2326,141 @@ inizia ora</target>
 <trans-unit id="s0246d749f0d614a1">
   <source>Change Log: <x id="0" equiv-text="${version.changelog}"/></source>
   <target>Registro modifiche: <x id="0" equiv-text="${version.changelog}"/></target>
+</trans-unit>
+<trans-unit id="sa17c38293a901a5e">
+  <source>No permission to edit group home.</source>
+</trans-unit>
+<trans-unit id="s6386fa3423a6170a">
+  <source>Failed to save group home.</source>
+</trans-unit>
+<trans-unit id="s0d64c7a168771995">
+  <source>Stop filling height</source>
+</trans-unit>
+<trans-unit id="s0e931ae4cb571552">
+  <source>Fill height (only when nothing is below this tile)</source>
+</trans-unit>
+<trans-unit id="s2060c1487964a3c3">
+  <source>Fill height</source>
+</trans-unit>
+<trans-unit id="s3dc816df0c81e094">
+  <source>Failed to pick asset.</source>
+</trans-unit>
+<trans-unit id="s2a29b511708c0737">
+  <source>An image URL is required.</source>
+</trans-unit>
+<trans-unit id="sd15fe49a4070a7f6">
+  <source>A URL is required.</source>
+</trans-unit>
+<trans-unit id="s173ae992b48b9c1c">
+  <source>Failed to add tile.</source>
+</trans-unit>
+<trans-unit id="s0b0cd8805629de97">
+  <source>Asset tiles can only be deleted and re-picked.</source>
+</trans-unit>
+<trans-unit id="sdfaf0b5a53266736">
+  <source>No tiles on this group home yet.</source>
+</trans-unit>
+<trans-unit id="s388775fe290b928e">
+  <source>Use the pencil button in the header to add tiles.</source>
+</trans-unit>
+<trans-unit id="seb779a76fa43446c">
+  <source>Markdown</source>
+</trans-unit>
+<trans-unit id="s3d93f9ea0c5a13fa">
+  <source>Image</source>
+</trans-unit>
+<trans-unit id="s8e4e6dccfe5f64fb">
+  <source>Asset</source>
+</trans-unit>
+<trans-unit id="s74aa0119e62b2b51">
+  <source>Web</source>
+</trans-unit>
+<trans-unit id="sc8af536e2084ade0">
+  <source>Palette</source>
+</trans-unit>
+<trans-unit id="sf9aee319a006c9b4">
+  <source>Add</source>
+</trans-unit>
+<trans-unit id="sd482f5c7d6ddfc6e">
+  <source>Drag onto the board</source>
+</trans-unit>
+<trans-unit id="s463b8c4e92751ba5">
+  <source>Options</source>
+</trans-unit>
+<trans-unit id="s9e25ce9db7de5dbf">
+  <source>Foyer (chat)</source>
+</trans-unit>
+<trans-unit id="s8a99b0bc3b99dc00">
+  <source>Cycle background color</source>
+</trans-unit>
+<trans-unit id="s0ae1b0b2ed81516f">
+  <source>Unlock (allow move/resize)</source>
+</trans-unit>
+<trans-unit id="s961ac510ab936918">
+  <source>Lock size &amp; position</source>
+</trans-unit>
+<trans-unit id="s59f27fef322a1447">
+  <source>Replace asset</source>
+</trans-unit>
+<trans-unit id="sb601f15d7da66457">
+  <source>Edit tile</source>
+</trans-unit>
+<trans-unit id="s2ccf8e3397594ab3">
+  <source>Remove tile</source>
+</trans-unit>
+<trans-unit id="s7425c897f0bc2b1e">
+  <source>Edit Markdown Tile</source>
+</trans-unit>
+<trans-unit id="s12007eb5e6a7dc5c">
+  <source>Edit Image Tile</source>
+</trans-unit>
+<trans-unit id="sb32b761fa7b4cc8d">
+  <source>Edit Web Tile</source>
+</trans-unit>
+<trans-unit id="s5c7498c6d14b730b">
+  <source>Add Markdown Tile</source>
+</trans-unit>
+<trans-unit id="s7218c395cd7b59cf">
+  <source>Add Image Tile</source>
+</trans-unit>
+<trans-unit id="s64ce67f7c67f22aa">
+  <source>Add Web Tile</source>
+</trans-unit>
+<trans-unit id="se09e3dc382fe557f">
+  <source>Image URL</source>
+</trans-unit>
+<trans-unit id="s81f150afaf1a4483">
+  <source>Alt text</source>
+</trans-unit>
+<trans-unit id="s95f19dbe94745e92">
+  <source>Web URL (https://...)</source>
+</trans-unit>
+<trans-unit id="saecd979590164a69">
+  <source>Error loading group home.</source>
+</trans-unit>
+<trans-unit id="s6fc7828c984ad181">
+  <source>Edit group home</source>
+</trans-unit>
+<trans-unit id="sdb8619a42b0d85a1">
+  <source>Select Asset:</source>
+</trans-unit>
+<trans-unit id="sb90e06511930fdae">
+  <source>That URL is not valid.</source>
+</trans-unit>
+<trans-unit id="s559201d026136283">
+  <source>Only http:// and https:// URLs are allowed.</source>
+</trans-unit>
+<trans-unit id="s5e1ee4411aff9cda">
+  <source>That URL does not point to an image.</source>
+</trans-unit>
+<trans-unit id="s304bec861deca5b5">
+  <source>That URL does not point to an embeddable web page.</source>
+</trans-unit>
+<trans-unit id="s160057b29b6d91be">
+  <source>That site refuses to be embedded in an iframe.</source>
+</trans-unit>
+<trans-unit id="s7fcdced34d85971e">
+  <source>Could not reach that URL.</source>
 </trans-unit>
 </body>
 </file>

@@ -144,7 +144,23 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     assets: {
       assetInfo: async (wal: WAL): Promise<AssetLocationAndInfo | undefined> => {
         const maybeCachedInfo = mossStore.mossCache.assetInfo.value(wal);
-        if (maybeCachedInfo) return maybeCachedInfo;
+        if (maybeCachedInfo) {
+          // why: even if cached, inject the dev port when in applet-dev mode
+          // so host-renderer consumers (group-dashboard wal-embed tiles) get
+          // a working http://localhost iframe src instead of `applet://...`
+          // which the main process can't serve for dev-mode applets.
+          if (mossStore.isAppletDev && !maybeCachedInfo.appletDevPort) {
+            try {
+              const port = await getAppletDevPort(
+                appIdFromAppletHash(maybeCachedInfo.appletHash),
+              );
+              if (port) maybeCachedInfo.appletDevPort = port;
+            } catch {
+              // ignore — fall back to non-dev URL
+            }
+          }
+          return maybeCachedInfo;
+        }
 
         const dnaHash = wal.hrl[0];
 
@@ -159,6 +175,18 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
             appletHash: location.dnaLocation.appletHash,
             assetInfo,
           };
+
+          // Same dev-port injection on the fresh-fetch path.
+          if (mossStore.isAppletDev) {
+            try {
+              const port = await getAppletDevPort(
+                appIdFromAppletHash(assetAndAppletInfo.appletHash),
+              );
+              if (port) assetAndAppletInfo.appletDevPort = port;
+            } catch {
+              // ignore
+            }
+          }
 
           mossStore.mossCache.assetInfo.set(assetAndAppletInfo, wal);
 

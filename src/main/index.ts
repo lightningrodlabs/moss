@@ -1129,6 +1129,58 @@ if (!RUNNING_WITH_COMMAND) {
     });
     ipcMain.handle('open-logs', async () => WE_FILE_SYSTEM.openLogs());
     ipcMain.handle('export-logs', async () => WE_FILE_SYSTEM.exportLogs());
+    /**
+     * Probe a URL from the main process (no CORS) and return the content-type
+     * so the renderer can decide whether to allow embedding an image or an
+     * iframe pointing at it. Returns `{ ok: false, reason }` on any failure
+     * (bad URL, non-http(s), network error, HTTP error, missing/unexpected
+     * content-type, blocked X-Frame-Options for iframe kind).
+     */
+    ipcMain.handle(
+      'validate-media-url',
+      async (
+        _e,
+        rawUrl: string,
+        kind: 'image' | 'iframe',
+      ): Promise<{ ok: true; contentType: string } | { ok: false; reason: string }> => {
+        let parsed: URL;
+        try {
+          parsed = new URL(rawUrl);
+        } catch {
+          return { ok: false, reason: 'invalid-url' };
+        }
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          return { ok: false, reason: 'unsupported-scheme' };
+        }
+        try {
+          // GET with a small read; HEAD is unreliable on many origins, and we
+          // need the response headers for frame-ancestors / X-Frame-Options.
+          const res = await net.fetch(parsed.toString(), {
+            method: 'GET',
+            redirect: 'follow',
+          });
+          if (!res.ok) return { ok: false, reason: `http-${res.status}` };
+          const ct = (res.headers.get('content-type') ?? '').toLowerCase();
+          if (kind === 'image') {
+            if (!ct.startsWith('image/')) return { ok: false, reason: 'not-an-image' };
+          } else {
+            if (!ct.includes('text/html') && !ct.includes('application/xhtml'))
+              return { ok: false, reason: 'not-html' };
+            const xfo = (res.headers.get('x-frame-options') ?? '').toLowerCase();
+            if (xfo === 'deny' || xfo === 'sameorigin') {
+              return { ok: false, reason: 'x-frame-options' };
+            }
+          }
+          // Drain to free the socket; we don't need the body.
+          try {
+            await res.body?.cancel();
+          } catch {}
+          return { ok: true, contentType: ct };
+        } catch (e) {
+          return { ok: false, reason: `fetch-failed: ${(e as Error).message}` };
+        }
+      },
+    );
     ipcMain.handle('factory-reset', async () => {
       const userDecision = await dialog.showMessageBox({
         title: 'Factory Reset',

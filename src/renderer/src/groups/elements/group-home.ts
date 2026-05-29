@@ -1,6 +1,6 @@
 import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { localized, msg } from '@lit/localize';
-import {css, html, LitElement, TemplateResult} from 'lit';
+import { css, html, LitElement, TemplateResult, nothing } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import {
   ActionHash,
@@ -52,6 +52,7 @@ import '../../ui/moss-dialog.js';
 import '../../self/profile/moss-profile-detail.js';
 import '../../ui/copy-hash.js';
 import './invite/invite-people-dialog.js';
+import './group-dashboard.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
@@ -64,14 +65,13 @@ import {
   ToolInfoAndVersions,
 } from '@theweave/moss-types';
 import { Applet, AppletAgent } from '../../../../../shared/group-client/dist/index.js';
-import { markdownParseSafe } from '../../utils.js';
-import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { appIdFromAppletHash } from '@theweave/utils';
 import { GroupSettings } from './settings/group-settings.js';
 import { MossDialog } from '../../ui/moss-dialog.js';
-import { editIcon, closeIcon, saveIcon, personPlusIcon } from '../../ui/icons.js';
+import { personPlusIcon, editIcon, saveIcon, closeIcon } from '../../ui/icons.js';
+import type { GroupDashboardEl } from './group-dashboard.js';
 import yaml from "js-yaml";
-import {decode} from "@msgpack/msgpack";
+import { decode } from "@msgpack/msgpack";
 
 type View =
   | {
@@ -138,13 +138,42 @@ export class GroupHome extends LitElement {
   _selectedTab: 'home' | 'unjoined tools' = 'home';
 
   @state()
-  _editGroupDescription = false;
-
-  @state()
-  _loadingDescription = false;
-
-  @state()
   _settingsDialogOpen = false;
+
+  /**
+   * Mirrors group-dashboard's edit-mode flag so the header can render the
+   * right set of toolbar buttons (pencil in read mode; +Add tile / Save /
+   * Cancel in edit mode). Updated via the dashboard's `editing-changed`
+   * CustomEvent.
+   */
+  @state()
+  private _dashEditing = false;
+
+  /**
+   * Live foyer-enabled override set by the dashboard palette's Foyer toggle
+   * during editing (so it shows/hides immediately, before Save). `undefined`
+   * means "use the persisted dashboard value". Cleared when edit mode ends.
+   */
+  @state()
+  private _foyerEnabledOverride: boolean | undefined = undefined;
+
+  @query('group-dashboard')
+  private _dashboardEl: GroupDashboardEl | undefined;
+
+  _groupDashboard = new StoreSubscriber(
+    this,
+    () => this._groupStore.groupDashboard,
+    () => [this._groupStore],
+  );
+
+  /** Whether the foyer panel should render: live override if editing, else the
+   * persisted dashboard value (default on when unset / no dashboard). */
+  private get _foyerEnabled(): boolean {
+    if (this._foyerEnabledOverride !== undefined) return this._foyerEnabledOverride;
+    const v = this._groupDashboard.value;
+    if (v.status === 'complete' && v.value) return v.value.foyerEnabled !== false;
+    return true;
+  }
 
   @state()
   _showingInactiveTools = false;
@@ -172,12 +201,6 @@ export class GroupHome extends LitElement {
     isIgnored: boolean;
   }> | null = null;
   private _cachedAppletsKey: string | null = null;
-
-  _groupDescription = new StoreSubscriber(
-    this,
-    () => this._groupStore.groupDescription,
-    () => [this._groupStore],
-  );
 
   _unjoinedApplets = new StoreSubscriber(
     this,
@@ -267,7 +290,6 @@ export class GroupHome extends LitElement {
   private _lastGroupDnaHash: string | null = null;
 
   async firstUpdated() {
-    await this._groupStore.groupDescription.reload();
     this._loadFoyerWidth();
   }
 
@@ -366,10 +388,10 @@ export class GroupHome extends LitElement {
         width="490px"
         headerAlign="center"
         @sl-request-close=${(e) => {
-      if (this._uninstalling) {
-        e.preventDefault();
-      }
-    }}
+        if (this._uninstalling) {
+          e.preventDefault();
+        }
+      }}
       >
         <span slot="header"
           >${msg('Uninstalling')} ${this._appletToUninstall.name}
@@ -382,8 +404,8 @@ export class GroupHome extends LitElement {
 
           <div style="font-size: 14px; color: #C35C1D; margin-bottom: 15px; max-width: 400px;">
             ${msg(
-      'You will not be able to use this app anymore, but your group will keep using it until a Steward deprecates it for everyone.',
-    )}
+        'You will not be able to use this app anymore, but your group will keep using it until a Steward deprecates it for everyone.',
+      )}
           </div>
 
           <div style="font-size: 16px; margin-bottom: 30px;">
@@ -417,7 +439,7 @@ export class GroupHome extends LitElement {
     if (!this._appletToViewDna) return html``;
 
     /** Generate UI for dna properties per role */
-      //console.log("dnaProperties", this._dnaProperties);
+    //console.log("dnaProperties", this._dnaProperties);
     const dnaParams: TemplateResult<1>[] = [];
     for (const [roleName, properties] of Object.entries(this._appletToViewDna.properties)) {
       const yamlStr = yaml.dump(decode(properties));
@@ -812,121 +834,61 @@ export class GroupHome extends LitElement {
   }
 
   renderHomeContent() {
-    switch (this._groupDescription.value.status) {
-      case 'pending':
-        return html` <div class="column center-content" style="flex: 1;">Loading...</div> `;
-      case 'error':
-        console.error(this._groupDescription.value.error);
-        return html`
-          <div class="column center-content" style="flex: 1;">
-            Error. Failed to fetch group description.
-          </div>
-        `;
-      case 'complete':
-        if (this._editGroupDescription) {
-          return html`
-            <div class="row" style="justify-content: flex-end; align-items: center;">
-              <sl-tooltip content=${msg("Cancel")}>
-                <button
-                  class="moss-button"
-                  style="margin-right: 8px; padding: 8px; border-radius: 6px;"
-                  @click=${() => {
-              this._editGroupDescription = false;
-            }}
-                >
-                  <div class="column center-content" style="padding-top: 2px;">${closeIcon(18)}</div>
-                </button>
-              </sl-tooltip>
-              <sl-tooltip content=${msg("Save")}>
-                <button
-                  class="moss-button"
-                  style="padding: 8px; border-radius: 6px;"
-                  @click=${async () => {
-              const descriptionInput = this.shadowRoot!.getElementById(
-                'group-description-input',
-              ) as HTMLTextAreaElement;
-              // TODO: use MossPrivilege instead
-              if (!this.amIPrivileged()) {
-                this._editGroupDescription = false;
-                notifyError(msg('No permission to edit group profile.'));
-                return;
-              } else {
-                console.log('Saving description...');
-                console.log('Value: ', descriptionInput.value);
-                const result = await this._groupStore.groupClient.setGroupDescription(
-                  this.getMyPermissionHash(),
-                  descriptionInput.value,
-                );
+    return html`<group-dashboard
+      @editing-changed=${(e: CustomEvent<{ editing: boolean }>) => {
+        this._dashEditing = e.detail.editing;
+        // leaving edit mode: drop the live override and fall back to the
+        // persisted dashboard value (save already wrote it; cancel reverts).
+        if (!e.detail.editing) this._foyerEnabledOverride = undefined;
+      }}
+      @foyer-toggled=${(e: CustomEvent<{ enabled: boolean }>) => {
+        this._foyerEnabledOverride = e.detail.enabled;
+      }}
+    ></group-dashboard>`;
+  }
 
-                console.log('description saved: ', result.entry);
-
-                await this._groupStore.groupDescription.reload();
-                this._editGroupDescription = false;
-              }
-            }}
-                >
-                  <div class="column center-content" style="padding-top: 2px;">${saveIcon(18)}</div>
-                </button>
-              </sl-tooltip>
-            </div>
-
-            <sl-textarea
-              id="group-description-input"
-              size="large"
-              rows="15"
-              value=${this._groupDescription.value.value?.data}
-            ></sl-textarea>
-          `;
-        }
-        if (!this._groupDescription.value.value || !this._groupDescription.value.value.data?.trim()) {
-          return html`
-            <div class="column center-content" style="flex: 1; padding: 40px 0;">
-              ${msg('No group description.')}
-              <button
-                class="moss-button"
-                style="margin-top: 30px; padding-top: 10px; padding-bottom: 10px;${this.amIPrivileged()
-              ? ''
-              : 'display: none;'}"
-                @click=${() => {
-              this._editGroupDescription = true;
-            }}
-              >
-                ${msg('+ Add Description')}
-              </button>
-            </div>
-          `;
-        } else {
-          return html`
-            <div class="column" style="position: relative;">
-              <sl-tooltip content=${msg('Edit Description')}>
-                <button
-                  class="moss-button"
-                  style="${this.amIPrivileged() ? '' : 'display: none;'} position: absolute; top: 0; right: 0; padding: 8px; border-radius: 6px; z-index: 10;"
-                  @click=${async () => {
-              this._loadingDescription = true;
-              // Reload group description in case another Steward has edited it in the meantime
-              try {
-                await this._groupStore.groupDescription.reload();
-              } catch (e) {
-                console.warn('Failed to load description: ', e);
-              }
-              this._loadingDescription = false;
-              this._editGroupDescription = true;
-            }}
-                  ?disabled=${this._loadingDescription}
-                >
-                  <div class="column center-content" style="padding-top: 2px;">
-                    ${this._loadingDescription ? '...' : editIcon(18)}
-                  </div>
-                </button>
-              </sl-tooltip>
-              <div class="group-description">
-                ${unsafeHTML(markdownParseSafe(this._groupDescription.value.value.data))}
-              </div>
-            </div>
-          `;
-        }
+  /**
+   * Render the dashboard toolbar buttons inline in the group header row.
+   * In read mode: a single pencil that asks the dashboard to enter edit mode.
+   * In edit mode: +Add tile (dropdown), Save, Cancel — each delegating to a
+   * public method on group-dashboard via @query ref.
+   */
+  renderDashboardHeaderButtons() {
+    if (!this._dashEditing) {
+      return html`
+        <sl-tooltip content=${msg('Edit group home')}>
+          <button
+            class="moss-button-icon"
+            title=${msg('Edit group home')}
+            @click=${() => this._dashboardEl?.enterEdit()}
+          >
+            ${editIcon(18)}
+          </button>
+        </sl-tooltip>
+      `;
     }
+    // Add-tile now happens by dragging chips from the dashboard's edit-mode
+    // palette rail, so the header only needs Save / Cancel.
+    return html`
+      <sl-tooltip content=${msg('Save')}>
+        <button
+          class="moss-button-icon"
+          title=${msg('Save')}
+          @click=${() => this._dashboardEl?.save()}
+        >
+          ${saveIcon(18)}
+        </button>
+      </sl-tooltip>
+      <sl-tooltip content=${msg('Cancel')}>
+        <button
+          class="moss-button-icon"
+          title=${msg('Cancel')}
+          @click=${() => this._dashboardEl?.cancelEdit()}
+        >
+          ${closeIcon(18)}
+        </button>
+      </sl-tooltip>
+    `;
   }
 
   renderFoyer() {
@@ -944,20 +906,32 @@ export class GroupHome extends LitElement {
           <div class="main-panel-content" style="display:flex; flex: 1; overflow-y: hidden;">
             <div class="flex-scrollable-parent" style="flex: 1; min-width: 0;">
               <div class="flex-scrollable-container">
-                <div class="flex-scrollable-y">
+                <!-- why height:100%: the shared .flex-scrollable-y only sets
+                     max-height:100% (no height), so it collapses to content.
+                     The dashboard needs a full-height scroll viewport so
+                     fill-height tiles have real space to fill and don't
+                     overflow a content-sized scroller (which produced a
+                     persistent scrollbar). -->
+                <div class="flex-scrollable-y" style="height: 100%;">
                   <div class="home-panel">${this.renderHomeContent()}</div>
                 </div>
               </div>
             </div>
-            <div
-              class="foyer-resize-handle ${this._isResizingFoyer ? 'resizing' : ''}"
-              @mousedown=${(e: MouseEvent) => this._startFoyerResize(e)}
-            ></div>
-            <div style="position: relative; width: ${this._foyerWidth}px; flex-shrink: 0;">
-              <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex;">
-                ${this.renderFoyer()}
-              </div>
-            </div>
+            ${this._foyerEnabled
+              ? html`
+                  <div
+                    class="foyer-resize-handle ${this._isResizingFoyer ? 'resizing' : ''}"
+                    @mousedown=${(e: MouseEvent) => this._startFoyerResize(e)}
+                  ></div>
+                  <div style="position: relative; width: ${this._foyerWidth}px; flex-shrink: 0;">
+                    <div
+                      style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex;"
+                    >
+                      ${this.renderFoyer()}
+                    </div>
+                  </div>
+                `
+              : nothing}
           </div>
         `;
       case 'unjoined tools':
@@ -1032,6 +1006,9 @@ export class GroupHome extends LitElement {
             </div>
 
             <div class="row items-center" style="gap: 8px;">
+              ${this._selectedTab === 'home' && this.amIPrivileged()
+        ? this.renderDashboardHeaderButtons()
+        : html``}
               ${this.amIPrivileged()
         ? html`
                     <button
@@ -1258,7 +1235,12 @@ export class GroupHome extends LitElement {
       }
 
       .home-panel {
-        padding: 20px;
+        padding: 10px 5px 10px 0;
+        /* fill the scroll viewport so the dashboard (and its floating,
+           bottom-anchored palette) spans the full visible board, not just the
+           short grid content. box-sizing so padding doesn't overflow. */
+        height: 100%;
+        box-sizing: border-box;
       }
 
       #group-description-input {
