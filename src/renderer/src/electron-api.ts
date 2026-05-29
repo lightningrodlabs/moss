@@ -60,6 +60,10 @@ declare global {
       getLairBinaryVersion: () => Promise<string>;
       copyLegacyProfile: (keystorePath: string) => Promise<void>;
       launch: () => Promise<boolean>;
+      validateMediaUrl: (
+        url: string,
+        kind: 'image' | 'iframe',
+      ) => Promise<{ ok: true; contentType: string } | { ok: false; reason: string }>;
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
       isAppletDev: () => Promise<boolean>;
       appletDevConfig: () => Promise<WeaveDevConfig | undefined>;

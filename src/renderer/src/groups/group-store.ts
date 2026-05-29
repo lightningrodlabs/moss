@@ -902,6 +902,14 @@ export class GroupStore {
     },
   );
 
+  groupDashboard = reloadableLazyLoadAndPollUntil(
+    async () => this.groupClient.getGroupDashboard(true),
+    undefined,
+    10000,
+    'Failed to get group dashboard',
+    async () => this.groupClient.getGroupDashboard(true),
+  );
+
   groupAppletsMetaData = lazyReloadableStore(async () =>
     this.groupClient.getGroupAppletsMetaData(),
   );

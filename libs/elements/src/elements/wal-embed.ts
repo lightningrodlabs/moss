@@ -83,15 +83,24 @@ export class WalEmbed extends LitElement {
       this.assetStatus = { type: 'invalid url' };
     } else {
       this.wal = weaveLocation.wal;
-      const assetInfo = await window.__WEAVE_API__.assets.assetInfo(weaveLocation.wal);
+      let assetInfo;
+      try {
+        assetInfo = await window.__WEAVE_API__.assets.assetInfo(weaveLocation.wal);
+      } catch (e) {
+        console.warn('[wal-embed] assetInfo() failed:', e);
+      }
       this.assetStatus = assetInfo ? { type: 'success', assetInfo } : { type: 'not found' };
       if (assetInfo) {
-        const { appletInfo, groupProfiles } = await getAppletInfoAndGroupsProfiles(
-          window.__WEAVE_API__ as WeaveClient,
-          assetInfo?.appletHash,
-        );
-        this.appletInfo = appletInfo;
-        this.groupProfiles = groupProfiles;
+        try {
+          const { appletInfo, groupProfiles } = await getAppletInfoAndGroupsProfiles(
+            window.__WEAVE_API__ as WeaveClient,
+            assetInfo?.appletHash,
+          );
+          this.appletInfo = appletInfo;
+          this.groupProfiles = groupProfiles;
+        } catch (e) {
+          console.warn('[wal-embed] getAppletInfoAndGroupsProfiles failed:', e);
+        }
       }
     }
     this.iframeId = Date.now().toString();
@@ -119,15 +128,23 @@ export class WalEmbed extends LitElement {
   }
 
   resizeIFrameToFitContent() {
-    console.log('Resizing.');
     const iframe = this.shadowRoot?.getElementById(this.iframeId!.toString()) as
       | HTMLIFrameElement
       | null
       | undefined;
-    console.log('@resizeIFrameToFitContent: got iframe: ', iframe);
-    if (iframe && iframe.contentWindow) {
+    if (!iframe || !iframe.contentWindow) return;
+    // why: applet iframes load from a different origin (a custom protocol
+    // for packaged tools, or a localhost dev-port for hot-reload tools).
+    // Reading contentWindow.document across origins is blocked by the
+    // browser and throws a SecurityError. Catch and silently skip the
+    // auto-size — the iframe stays at the CSS-driven size set by the
+    // surrounding wal-embed layout, which is what users want anyway.
+    try {
       iframe.width = iframe.contentWindow.document.body.scrollWidth.toString();
       iframe.height = iframe.contentWindow.document.body.scrollHeight.toString();
+    } catch (e) {
+      // Cross-origin iframe — auto-size not possible. Leave the iframe at
+      // its CSS-sized dimensions.
     }
   }
 
@@ -254,7 +271,12 @@ export class WalEmbed extends LitElement {
         const queryString = `view=applet-view&view-type=asset&hrl=${stringifyHrl(this.wal!.hrl)}${
           this.wal!.context ? `&context=${encodeContext(this.wal!.context)}` : ''
         }`;
-        if (!this.appletInfo) throw Error("Missing appletInfo in <wal-embed>");
+        // why: firstUpdated sets assetStatus='success' before awaiting the
+        // appletInfo fetch, so Lit can re-render between the two and reach
+        // here with appletInfo still undefined. Show the spinner during that
+        // window instead of throwing — throwing rejects the unhandled
+        // promise chain and breaks rendering of any other tile in the page.
+        if (!this.appletInfo) return html` <sl-spinner></sl-spinner> `;
         const groupHash = this.appletInfo.groupsHashes[0];
         const iframeKind: IframeKind = {
           type: 'applet',
@@ -268,17 +290,20 @@ export class WalEmbed extends LitElement {
             }?${queryString}#${fromUint8Array(encode(iframeKind))}`
           : `${iframeOrigin(iframeKind)}?${queryString}`;
 
+        // why: in bare (embedded) mode the iframe must fill its container
+        // exactly — no padding/resize/width-inset — otherwise it overflows
+        // the tile and the container's scrollbar + border become visible.
+        // In non-bare mode keep the original look (small padding, resizable).
         return html`<iframe
           id="${this.iframeId}"
           frameborder="0"
           title="TODO"
+          style=${this.bare
+            ? 'flex: 1; display: block; margin: 0; padding: 0; border: none; width: 100%; height: 100%;'
+            : 'flex: 1; display: block; padding: 5px; margin: 0; width: calc(100% - 10px);'}
           src="${iframeSrc}"
-          style="flex: 1; display: block; padding: 5px; margin: 0; ${this.bare
-            ? 'resize:both; '
-            : ''} width: calc(100% - 10px);"
           allow="clipboard-write;"
           @load=${() => {
-            console.log('iframe loaded.');
             setTimeout(() => this.resizeIFrameToFitContent(), 1000);
           }}
         ></iframe>`;
@@ -287,7 +312,7 @@ export class WalEmbed extends LitElement {
 
   render() {
     return this.bare
-      ? html`<div class="container">${this.renderContent()}</div>`
+      ? html`<div class="container bare">${this.renderContent()}</div>`
       : this.collapsed
         ? html` <div class="container">${this.renderHeader()}</div> `
         : html` <div class="container">${this.renderHeader()} ${this.renderContent()}</div> `;
@@ -296,16 +321,34 @@ export class WalEmbed extends LitElement {
   static styles = [
     sharedStyles,
     css`
+      :host {
+        display: block;
+        height: 100%;
+        width: 100%;
+      }
       .container {
         border-right: 2px solid #8595bf;
         border-left: 2px solid #8595bf;
         border-bottom: 2px solid #8595bf;
         border-radius: 3px;
-        resize: both;
         font-family: 'Inter Variable', 'Aileron', 'Open Sans', 'Helvetica Neue', sans-serif;
         overflow: auto;
         display: flex;
         flex-direction: column;
+        /* why: previously had no defined height, so the inner iframe (flex:1)
+           collapsed to the HTML default ~150px and the embedded asset view
+           was clipped or invisible. Fill the host's box instead. */
+        height: 100%;
+      }
+
+      /* why: bare mode is for embedding inside a host that provides its own
+         chrome (e.g. group-dashboard tiles). Drop the decorative border and
+         clip overflow so the iframe fills the container exactly without a
+         scrollbar or revealed border edge. */
+      .container.bare {
+        border: none;
+        border-radius: 0;
+        overflow: hidden;
       }
 
       .top-bar {

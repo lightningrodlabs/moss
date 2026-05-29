@@ -127,6 +127,33 @@ export const mossStyles = [
       outline: 2px solid var(--moss-purple);
     }
 
+    /* moss-button-icon — small icon-only variant of moss-button.
+       Same black/white treatment, just tighter padding and a smaller corner
+       radius so an 18px glyph reads as a compact action button. */
+    .moss-button-icon {
+      all: unset;
+      background: black;
+      color: white;
+      border-radius: 6px;
+      padding: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      --sl-color-neutral-0: black;
+      --sl-color-primary-50: #455b36;
+    }
+    .moss-button-icon:hover {
+      background: #455b36;
+    }
+    .moss-button-icon:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+    .moss-button-icon:focus-visible {
+      outline: 2px solid var(--moss-purple);
+    }
+
     /* moss-button-secondary */
 
     .moss-button-secondary {

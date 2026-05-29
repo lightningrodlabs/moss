@@ -20,6 +20,12 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import url from 'url';
+import {
+  assertPublicHost,
+  frameAncestorsBlocks,
+  imageContentAccepted,
+  isDataImageUrl,
+} from './mediaUrlValidation';
 import mime from 'mime';
 import * as childProcess from 'child_process';
 import { createHash } from 'crypto';
@@ -1129,6 +1135,109 @@ if (!RUNNING_WITH_COMMAND) {
     });
     ipcMain.handle('open-logs', async () => WE_FILE_SYSTEM.openLogs());
     ipcMain.handle('export-logs', async () => WE_FILE_SYSTEM.exportLogs());
+    /**
+     * Probe a URL from the main process (no CORS) and return the content-type
+     * so the renderer can decide whether to allow embedding an image or an
+     * iframe pointing at it. Returns `{ ok: false, reason }` on any failure
+     * (bad URL, non-http(s), private/loopback host, network error/timeout,
+     * HTTP error, missing/unexpected content-type, blocked X-Frame-Options or
+     * CSP frame-ancestors for iframe kind).
+     *
+     * This is an advisory UX check only, not an enforcement boundary: a URL
+     * that validates here can serve different content (or become unreachable)
+     * later, and the persisted value is rendered as-is on every load. Its only
+     * job is to give the steward immediate feedback when a URL obviously won't
+     * embed.
+     */
+    ipcMain.handle(
+      'validate-media-url',
+      async (
+        _e,
+        rawUrl: string,
+        kind: 'image' | 'iframe',
+      ): Promise<{ ok: true; contentType: string } | { ok: false; reason: string }> => {
+        // Inline data: images are inert and need no network probe; allow them
+        // for image tiles (they are sanitized at render). Never for iframes.
+        if (kind === 'image' && isDataImageUrl(rawUrl)) {
+          return { ok: true, contentType: 'image/*' };
+        }
+        let parsed: URL;
+        try {
+          parsed = new URL(rawUrl);
+        } catch {
+          return { ok: false, reason: 'invalid-url' };
+        }
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          return { ok: false, reason: 'unsupported-scheme' };
+        }
+
+        // SSRF guard: reject internal/loopback/private hosts up front so a
+        // steward can't aim the probe at the host's own network. We can only
+        // check the URL the user supplied — Electron's net.fetch throws on
+        // redirect:'manual' ("Redirect was cancelled") and leaves res.url empty
+        // on redirect:'follow', so we can't re-validate redirect hops. A public
+        // URL that 30x-redirects to an internal address is therefore still
+        // reachable; the steward learns only ok/fail, not the response.
+        try {
+          await assertPublicHost(parsed.hostname);
+        } catch {
+          return { ok: false, reason: 'private-host' };
+        }
+
+        // Bound the probe: a few-second timeout so a slow/hung host can't pin
+        // a main-process socket open indefinitely.
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        // Drain a response body we don't intend to read so the socket is freed.
+        const drain = async (res: Response) => {
+          try {
+            await res.body?.cancel();
+          } catch {}
+        };
+        try {
+          // GET (not HEAD — unreliable on many origins) following redirects; we
+          // only need the final response headers, not the body.
+          const res = await net.fetch(parsed.toString(), {
+            method: 'GET',
+            redirect: 'follow',
+            signal: controller.signal,
+          });
+          if (!res.ok) {
+            await drain(res);
+            return { ok: false, reason: `http-${res.status}` };
+          }
+          const ct = (res.headers.get('content-type') ?? '').toLowerCase();
+          if (kind === 'image') {
+            if (!imageContentAccepted(ct, parsed.pathname)) {
+              await drain(res);
+              return { ok: false, reason: 'not-an-image' };
+            }
+          } else {
+            if (!ct.includes('text/html') && !ct.includes('application/xhtml')) {
+              await drain(res);
+              return { ok: false, reason: 'not-html' };
+            }
+            const xfo = (res.headers.get('x-frame-options') ?? '').toLowerCase();
+            if (xfo === 'deny' || xfo === 'sameorigin') {
+              await drain(res);
+              return { ok: false, reason: 'x-frame-options' };
+            }
+            // CSP frame-ancestors supersedes X-Frame-Options on modern sites.
+            if (frameAncestorsBlocks(res.headers.get('content-security-policy'))) {
+              await drain(res);
+              return { ok: false, reason: 'frame-ancestors' };
+            }
+          }
+          await drain(res);
+          return { ok: true, contentType: ct };
+        } catch (e) {
+          if (controller.signal.aborted) return { ok: false, reason: 'timeout' };
+          return { ok: false, reason: `fetch-failed: ${(e as Error).message}` };
+        } finally {
+          clearTimeout(timeout);
+        }
+      },
+    );
     ipcMain.handle('factory-reset', async () => {
       const userDecision = await dialog.showMessageBox({
         title: 'Factory Reset',

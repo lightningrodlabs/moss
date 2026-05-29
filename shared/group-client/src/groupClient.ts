@@ -17,8 +17,11 @@ import {
   Applet,
   AppletAgent,
   GROUP_APPLETS_META_DATA_NAME,
+  GROUP_DASHBOARD_NAME,
+  GROUP_DASHBOARD_SCHEMA_VERSION,
   GROUP_DESCRIPTION_NAME,
   GroupAppletsMetaData,
+  GroupDashboard,
   GroupMetaData,
   JoinAppletInput,
   AppletEntryPrivate,
@@ -383,6 +386,34 @@ export class GroupClient {
     const maybeAppletsMetadata = metaDataRecord?.entry.data;
     if (!maybeAppletsMetadata) return undefined;
     return JSON.parse(maybeAppletsMetadata);
+  }
+
+  async setGroupDashboard(
+    permissionHash: ActionHash | undefined,
+    dashboard: GroupDashboard,
+  ): Promise<EntryRecord<GroupMetaData>> {
+    return this.setGroupMetaData({
+      permission_hash: permissionHash,
+      name: GROUP_DASHBOARD_NAME,
+      data: JSON.stringify({ ...dashboard, schemaVersion: GROUP_DASHBOARD_SCHEMA_VERSION }),
+    });
+  }
+
+  /**
+   * Returns `undefined` if no dashboard has been published yet — callers should
+   * fall back to rendering the legacy group description in that case.
+   *
+   * Entries written before schema versioning have no `schemaVersion`; they are
+   * normalized to literal version 1 (NOT the current constant) so that when
+   * the constant is later bumped to drive a migration, a `schemaVersion < N`
+   * check still catches these legacy entries instead of seeing them stamped
+   * with the newest version on read.
+   */
+  async getGroupDashboard(local: boolean = true): Promise<GroupDashboard | undefined> {
+    const record = await this.getGroupMetaData(GROUP_DASHBOARD_NAME, local);
+    if (!record?.entry.data) return undefined;
+    const dashboard = JSON.parse(record.entry.data) as GroupDashboard;
+    return { ...dashboard, schemaVersion: dashboard.schemaVersion ?? 1 };
   }
 
   async getGroupMetaData(
