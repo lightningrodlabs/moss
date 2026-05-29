@@ -5,6 +5,7 @@ This guide explains how to test Moss's auto-update functionality locally without
 ## Prerequisites
 
 1. Install dependencies (this adds `express` needed for the local update server):
+
 ```bash
 yarn install
 ```
@@ -14,6 +15,7 @@ yarn install
 ## Overview
 
 The testing setup consists of:
+
 - **dev-app-update.yml** - Configuration file that points to localhost update server
 - **scripts/update-server.mjs** - Local Express server that serves update files
 - **scripts/generate-update-yml.mjs** - Generates update metadata files
@@ -75,6 +77,7 @@ yarn update-server
 ```
 
 You should see:
+
 ```
 ✓ Update server running at http://localhost:5555
 ✓ Serving from: .../dist
@@ -95,6 +98,7 @@ DEV_UPDATE_CONFIG=/full/path/to/moss/dev-app-update.yml moss
 ```
 
 2. Check the console output - you should see:
+
 ```
 Using dev update config from: /full/path/to/moss/dev-app-update.yml
 Config: { provider: 'generic', url: 'http://localhost:5555/updates' }
@@ -114,22 +118,26 @@ Config: { provider: 'generic', url: 'http://localhost:5555/updates' }
 **IMPORTANT**: Moss uses a special breaking version logic for 0.x versions:
 
 For version 0.x.y:
+
 - Breaking version = `0.x` (minor version changes are breaking)
 - Updates only allowed within same minor version
 
 Examples:
+
 - ✅ 0.15.0 → 0.15.1 (allowed - same 0.15)
 - ✅ 0.15.0 → 0.15.9 (allowed - same 0.15)
 - ❌ 0.15.0 → 0.16.0 (blocked - different 0.16)
 - ❌ 0.15.0 → 0.14.9 (blocked - downgrade)
 
 For version 1.x.y and above:
+
 - Breaking version = `x.y` (major.minor)
 - Updates allowed within same major.minor
 
 ## Testing Scenarios
 
 ### Test 1: Basic Update Flow
+
 ```bash
 # Current: 0.15.0
 # Update:  0.15.1
@@ -137,6 +145,7 @@ For version 1.x.y and above:
 ```
 
 ### Test 2: Breaking Version Block
+
 ```bash
 # Current: 0.15.0
 # Update:  0.16.0
@@ -144,6 +153,7 @@ For version 1.x.y and above:
 ```
 
 ### Test 3: Downgrade Block
+
 ```bash
 # Current: 0.15.1
 # Update:  0.15.0
@@ -165,12 +175,14 @@ DEV_UPDATE_CONFIG=/full/path/to/moss/dev-app-update.yml \
 ```
 
 Check the console for:
+
 ```
 Using dev update config from: /full/path/to/moss/dev-app-update.yml
 Config: { provider: 'generic', url: 'http://localhost:5555/updates' }
 ```
 
 Check the update server logs to see if the app is making requests:
+
 ```
 GET /updates/latest-linux.yml
 GET /updates/org.lightningrodlabs.moss-0.15-0.15.1-x86_64.AppImage
@@ -205,6 +217,7 @@ When done testing:
 See `.claude/auto-update-analysis.plan` for detailed analysis of upgrading from `@matthme/electron-updater` to the official `electron-updater` package.
 
 **Recommendation**: Upgrade to `electron-updater@6.6.2` for:
+
 - 20+ bug fixes since 6.3.0
 - Security updates (semver dependency)
 - Better platform support (Windows/macOS/Linux fixes)

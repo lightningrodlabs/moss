@@ -19,7 +19,7 @@ import {
   toPromise,
   writable,
 } from '@holochain-open-dev/stores';
-import {EntryRecord, GetonlyMap, mapValues} from '@holochain-open-dev/utils';
+import { EntryRecord, GetonlyMap, mapValues } from '@holochain-open-dev/utils';
 import {
   ActionHash,
   AgentPubKey,
@@ -34,7 +34,9 @@ import {
   encodeHashToBase64,
   hashFrom32AndType,
   HoloHashType,
-  LazyHoloHashMap, HoloHashMap, YamlProperties,
+  LazyHoloHashMap,
+  HoloHashMap,
+  YamlProperties,
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
 import { DnaModifiers } from '@holochain/client';
@@ -77,7 +79,7 @@ import {
   deriveToolCompatibilityId,
   isAppDisabled,
   isAppRunning,
-  toLowerCaseB64
+  toLowerCaseB64,
 } from '@theweave/utils';
 import { decode, encode } from '@msgpack/msgpack';
 import {
@@ -89,8 +91,11 @@ import {
 } from '@theweave/group-client';
 import isEqual from 'lodash-es/isEqual.js';
 import { ToolAndCurationInfo } from '../types.js';
-import {AppletStore} from "../applets/applet-store";
-import { FoyerNotificationSettings, DEFAULT_FOYER_NOTIFICATION_SETTINGS } from '../applets/types.js';
+import { AppletStore } from '../applets/applet-store';
+import {
+  FoyerNotificationSettings,
+  DEFAULT_FOYER_NOTIFICATION_SETTINGS,
+} from '../applets/types.js';
 
 export const NEW_APPLETS_POLLING_FREQUENCY = 10000;
 const PING_AGENTS_FREQUENCY_MS = 8000;
@@ -101,12 +106,12 @@ const ASSET_RELATION_POLLING_PERIOD = 10000;
 
 export type MaybeProfile =
   | {
-    type: 'unknown';
-  }
+      type: 'unknown';
+    }
   | {
-    type: 'profile';
-    profile: EntryRecord<Profile>;
-  };
+      type: 'profile';
+      profile: EntryRecord<Profile>;
+    };
 
 // Given a group, all the functionality related to that group
 export class GroupStore {
@@ -139,17 +144,20 @@ export class GroupStore {
    * Used for foyer messages and other group-level notifications.
    * Not persisted across app restarts.
    */
-  private _unreadGroupNotifications: Writable<{ low: number; medium: number; high: number }> = writable({
-    low: 0,
-    medium: 0,
-    high: 0,
-  });
+  private _unreadGroupNotifications: Writable<{ low: number; medium: number; high: number }> =
+    writable({
+      low: 0,
+      medium: 0,
+      high: 0,
+    });
 
   /**
    * Foyer notification settings for this group.
    * Allows separate urgency levels for mentions vs all other messages.
    */
-  private _foyerNotificationSettings: Writable<FoyerNotificationSettings> = writable(DEFAULT_FOYER_NOTIFICATION_SETTINGS);
+  private _foyerNotificationSettings: Writable<FoyerNotificationSettings> = writable(
+    DEFAULT_FOYER_NOTIFICATION_SETTINGS,
+  );
 
   foyerStore!: FoyerStore;
 
@@ -217,37 +225,51 @@ export class GroupStore {
     this._groupIdShort = groupIdShort;
     this._instanceId = Math.random().toString(36).slice(2, 6);
 
-    onlineDebugLog(`[OnlineDebug][${groupIdShort}] GroupStore created (instance=${this._instanceId})`);
+    onlineDebugLog(
+      `[OnlineDebug][${groupIdShort}] GroupStore created (instance=${this._instanceId})`,
+    );
 
     // Track per-agent previous status to only log transitions
     const _prevAgentStatus: Record<string, string> = {};
 
-    this._peerStatusSignalUnsub = this.peerStatusClient.onSignal(async (signal: SignalPayloadPeerStatus) => {
-      const agentB64 = encodeHashToBase64(signal.from_agent);
+    this._peerStatusSignalUnsub = this.peerStatusClient.onSignal(
+      async (signal: SignalPayloadPeerStatus) => {
+        const agentB64 = encodeHashToBase64(signal.from_agent);
 
-      // Ignore signals from hidden agents entirely
-      if (this.isAgentHidden(agentB64)) {
-        onlineDebugLog(`[OnlineDebug][${groupIdShort}] Ignoring ${signal.type} from hidden agent ${agentB64.slice(0, 8)} (instance=${this._instanceId})`);
-        return;
-      }
+        // Ignore signals from hidden agents entirely
+        if (this.isAgentHidden(agentB64)) {
+          onlineDebugLog(
+            `[OnlineDebug][${groupIdShort}] Ignoring ${signal.type} from hidden agent ${agentB64.slice(0, 8)} (instance=${this._instanceId})`,
+          );
+          return;
+        }
 
-      if (signal.type == 'Pong') {
-        const prev = _prevAgentStatus[agentB64];
-        onlineDebugLog(`[OnlineDebug][${groupIdShort}] Pong from ${agentB64.slice(0, 8)}: ${prev ?? 'unknown'} -> ${signal.status} (instance=${this._instanceId})`);
-        _prevAgentStatus[agentB64] = signal.status;
-        this.updatePeerStatus(signal.from_agent, signal.status, signal.tz_utc_offset);
-      }
-      if (signal.type == 'Ping') {
-        const prev = _prevAgentStatus[agentB64];
-        onlineDebugLog(`[OnlineDebug][${groupIdShort}] Ping from ${agentB64.slice(0, 8)}: ${prev ?? 'unknown'} -> ${signal.status} (instance=${this._instanceId})`);
-        _prevAgentStatus[agentB64] = signal.status;
-        const now = Date.now();
-        const status =
-          now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
-        this.updatePeerStatus(signal.from_agent, signal.status, signal.tz_utc_offset);
-        await this.peerStatusClient.pong([signal.from_agent], status, this.mossStore.tzUtcOffset());
-      }
-    });
+        if (signal.type == 'Pong') {
+          const prev = _prevAgentStatus[agentB64];
+          onlineDebugLog(
+            `[OnlineDebug][${groupIdShort}] Pong from ${agentB64.slice(0, 8)}: ${prev ?? 'unknown'} -> ${signal.status} (instance=${this._instanceId})`,
+          );
+          _prevAgentStatus[agentB64] = signal.status;
+          this.updatePeerStatus(signal.from_agent, signal.status, signal.tz_utc_offset);
+        }
+        if (signal.type == 'Ping') {
+          const prev = _prevAgentStatus[agentB64];
+          onlineDebugLog(
+            `[OnlineDebug][${groupIdShort}] Ping from ${agentB64.slice(0, 8)}: ${prev ?? 'unknown'} -> ${signal.status} (instance=${this._instanceId})`,
+          );
+          _prevAgentStatus[agentB64] = signal.status;
+          const now = Date.now();
+          const status =
+            now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
+          this.updatePeerStatus(signal.from_agent, signal.status, signal.tz_utc_offset);
+          await this.peerStatusClient.pong(
+            [signal.from_agent],
+            status,
+            this.mossStore.tzUtcOffset(),
+          );
+        }
+      },
+    );
 
     this.allProfiles = pipe(this.profilesStore.agentsWithProfile, (agents) => {
       return this.agentsProfiles(agents);
@@ -273,7 +295,9 @@ export class GroupStore {
           .filter(([k]) => k !== myPubKeyB64)
           .map(([k, v]) => `${k.slice(0, 8)}:${v.status}`)
           .join(', ');
-        onlineDebugLog(`[OnlineDebug][${groupIdShort}] onlinePeersCount: ${_prevOnlineCount} -> ${count}, totalEntries=${totalEntries}, statuses=[${statuses}] (instance=${this._instanceId})`);
+        onlineDebugLog(
+          `[OnlineDebug][${groupIdShort}] onlinePeersCount: ${_prevOnlineCount} -> ${count}, totalEntries=${totalEntries}, statuses=[${statuses}] (instance=${this._instanceId})`,
+        );
         _prevOnlineCount = count;
       }
 
@@ -342,7 +366,9 @@ export class GroupStore {
       }
     });
 
-    this._assetsSignalUnsub = this.assetsClient.onSignal((signal) => this.assetSignalHandler(signal, true));
+    this._assetsSignalUnsub = this.assetsClient.onSignal((signal) =>
+      this.assetSignalHandler(signal, true),
+    );
 
     this.constructed = true;
   }
@@ -352,7 +378,9 @@ export class GroupStore {
    * Should be called when the GroupStore is no longer needed.
    */
   cleanup(): void {
-    onlineDebugLog(`[OnlineDebug][${this._groupIdShort}] GroupStore cleanup called (instance=${this._instanceId})`);
+    onlineDebugLog(
+      `[OnlineDebug][${this._groupIdShort}] GroupStore cleanup called (instance=${this._instanceId})`,
+    );
     if (this._pingIntervalHandle) {
       this._pingIntervalHandle.cancel();
       this._pingIntervalHandle = undefined;
@@ -1131,9 +1159,7 @@ export class GroupStore {
 
           // Parse the inner agentInfo JSON string
           const agentInfoData =
-            typeof parsed.agentInfo === 'string'
-              ? JSON.parse(parsed.agentInfo)
-              : parsed.agentInfo;
+            typeof parsed.agentInfo === 'string' ? JSON.parse(parsed.agentInfo) : parsed.agentInfo;
 
           // Extract the partial agent ID from the 'agent' field
           const partialAgentId = agentInfoData.agent;
@@ -1159,9 +1185,14 @@ export class GroupStore {
       const prevSize = get(this._knownAgents).size;
       this._knownAgents.set(knownAgents);
       const currentOnlineCount = get(this.onlinePeersCount);
-      onlineDebugLog(`[OnlineDebug][${this._groupIdShort}] pollAgentInfo: knownAgents ${prevSize} -> ${knownAgents.size}, onlineCount=${currentOnlineCount} (instance=${this._instanceId})`);
+      onlineDebugLog(
+        `[OnlineDebug][${this._groupIdShort}] pollAgentInfo: knownAgents ${prevSize} -> ${knownAgents.size}, onlineCount=${currentOnlineCount} (instance=${this._instanceId})`,
+      );
     } catch (error) {
-      onlineDebugLog(`[OnlineDebug][${this._groupIdShort}] Failed to poll agent info (instance=${this._instanceId}):`, error);
+      onlineDebugLog(
+        `[OnlineDebug][${this._groupIdShort}] Failed to poll agent info (instance=${this._instanceId}):`,
+        error,
+      );
       // Don't throw - if agentInfo fails, signaling will likely fail too
       // Just keep using the last known agent list
     }
@@ -1242,7 +1273,9 @@ export class GroupStore {
       return newStatuses;
     });
     const knownAgentsCount = get(this._knownAgents).size;
-    onlineDebugLog(`[OnlineDebug][${this._groupIdShort}] pingClean: markedOffline=${markedOfflineCount}, pinging ${knownAgentsCount} known agents (instance=${this._instanceId})`);
+    onlineDebugLog(
+      `[OnlineDebug][${this._groupIdShort}] pingClean: markedOffline=${markedOfflineCount}, pinging ${knownAgentsCount} known agents (instance=${this._instanceId})`,
+    );
     await this.pingAgents();
   }
 
@@ -1254,9 +1287,7 @@ export class GroupStore {
    */
   async pingAgents(): Promise<void> {
     const now = Date.now();
-    const myStatus = now - this.mossStore.myLatestActivity > IDLE_THRESHOLD
-      ? 'inactive'
-      : 'online';
+    const myStatus = now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
     const tzOffset = this.mossStore.tzUtcOffset();
 
     // Get agents that Holochain knows about in the network (self already excluded)
@@ -1267,7 +1298,6 @@ export class GroupStore {
       ? this.peerStatusClient.ping(knownAgents, myStatus, tzOffset)
       : Promise.resolve();
   }
-
 
   /**
    * Function that returns deterministically but with 50% probability for a given pair
@@ -1452,8 +1482,8 @@ export class GroupStore {
 
     const appletsToEnable = previouslyDisabled
       ? installedApplets.filter(
-        (appletHash) => !previouslyDisabled.includes(encodeHashToBase64(appletHash)),
-      )
+          (appletHash) => !previouslyDisabled.includes(encodeHashToBase64(appletHash)),
+        )
       : installedApplets;
 
     for (const appletHash of appletsToEnable) {
@@ -1468,8 +1498,8 @@ export class GroupStore {
     await this.mossStore.reloadManualStores();
   }
 
-  applets: LazyHoloHashMap<AppletHash, AsyncReadable<Applet | undefined>> = new LazyHoloHashMap((appletHash: EntryHash) =>
-    lazyLoad(async () => this.groupClient.getApplet(appletHash)),
+  applets: LazyHoloHashMap<AppletHash, AsyncReadable<Applet | undefined>> = new LazyHoloHashMap(
+    (appletHash: EntryHash) => lazyLoad(async () => this.groupClient.getApplet(appletHash)),
   );
 
   // Shared polling store for joined applet agents, keyed by applet hash.
@@ -1622,8 +1652,8 @@ export class GroupStore {
   // );
 
   activeAppletStores: AsyncReadable<HoloHashMap<EntryHash, AppletStore>> = pipe(
-        this.allMyRunningApplets,
-        (allApplets) => sliceAndJoin(this.mossStore.appletStores as GetonlyMap<any, any>, allApplets),
+    this.allMyRunningApplets,
+    (allApplets) => sliceAndJoin(this.mossStore.appletStores as GetonlyMap<any, any>, allApplets),
   );
 
   allBlocks = pipe(this.activeAppletStores, (appletsStores) =>

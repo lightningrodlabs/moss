@@ -22,7 +22,7 @@ import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
 import { mossStyles } from '../shared-styles.js';
 import '../groups/elements/invite/select-group.js';
-import {mdiEmailOutline, mdiWeb} from '@mdi/js';
+import { mdiEmailOutline, mdiWeb } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import './elements/curation-list-manager.js';
 import './elements/installable-tools-web2.js';
@@ -37,15 +37,10 @@ import { DnaHashB64, decodeHashFromBase64 } from '@holochain/client';
 import { InstallToolDialogWeb2 } from './elements/install-tool-dialog-web2.js';
 import './elements/install-tool-dialog-web2.js';
 import { ToolAndCurationInfo, ToolListUrl } from '../types';
-import {
-  appStoreIcon,
-  devIcon,
-  experimentalToolIcon,
-  stableToolIcon,
-} from '../ui/icons.js';
+import { appStoreIcon, devIcon, experimentalToolIcon, stableToolIcon } from '../ui/icons.js';
 import '../ui/moss-dialog.js';
-import {MossDialog} from "../ui/moss-dialog";
-import {NamedUrl, UrlListManager} from "./elements/curation-list-manager";
+import { MossDialog } from '../ui/moss-dialog';
+import { NamedUrl, UrlListManager } from './elements/curation-list-manager';
 
 export { DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS } from './fetch-unified-tools.js';
 
@@ -118,7 +113,6 @@ export class ToolLibraryWeb2 extends LitElement {
   @state()
   selectedTag = '';
 
-
   /** */
   async firstUpdated() {
     /** Set initial config */
@@ -133,11 +127,11 @@ export class ToolLibraryWeb2 extends LitElement {
       this._toolCurationConfigs = this.mossStore.appletDevConfig.toolCurations;
     } else {
       // Get list of lists from localStorage
-      const json: string | null = window.localStorage.getItem("mossCurationConfig");
+      const json: string | null = window.localStorage.getItem('mossCurationConfig');
       if (json) {
         try {
           const urls = JSON.parse(json) as string[];
-          this._toolCurationConfigs = urls.map((url) => ({ url, useLists: ['default'] })) // TODO: handle multiple useLists
+          this._toolCurationConfigs = urls.map((url) => ({ url, useLists: ['default'] })); // TODO: handle multiple useLists
         } catch {
           this._toolCurationConfigs = DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS;
         }
@@ -152,7 +146,6 @@ export class ToolLibraryWeb2 extends LitElement {
     await this.fetchToolLists();
   }
 
-
   /** */
   async fetchToolLists() {
     const result = await fetchUnifiedTools(
@@ -165,11 +158,9 @@ export class ToolLibraryWeb2 extends LitElement {
     this.curationLists = result.curationLists;
   }
 
-
   resetView() {
     this.view = ToolLibraryView.Main;
   }
-
 
   renderMainView() {
     const unifiedToolsArray = Array.from(this.unifiedTools.values());
@@ -177,18 +168,14 @@ export class ToolLibraryWeb2 extends LitElement {
       this.classification === 'all'
         ? unifiedToolsArray
         : this.classification === 'stable'
-          ? unifiedToolsArray.filter(
-            (entry) => {
+          ? unifiedToolsArray.filter((entry) => {
               const primary = getPrimaryVersionBranch(entry);
               return primary && primary.curationInfos[0]?.info.visiblity !== 'low';
-            },
-          )
-          : unifiedToolsArray.filter(
-            (entry) => {
+            })
+          : unifiedToolsArray.filter((entry) => {
               const primary = getPrimaryVersionBranch(entry);
               return primary && primary.curationInfos[0]?.info.visiblity === 'low';
-            },
-          );
+            });
     // Offer every tag present across the (classification-filtered) tools, so the
     // tag options track the current classification view.
     const availableTags = Array.from(
@@ -209,9 +196,9 @@ export class ToolLibraryWeb2 extends LitElement {
             <select
               class="sort-select"
               @change=${(e: Event) => {
-                this.sortMode = (e.target as HTMLSelectElement)
-                  .value as typeof this.sortMode;
-              }}>
+                this.sortMode = (e.target as HTMLSelectElement).value as typeof this.sortMode;
+              }}
+            >
               <option value="releaseDesc" ?selected=${this.sortMode === 'releaseDesc'}>
                 ${msg('Newest first')}
               </option>
@@ -234,7 +221,8 @@ export class ToolLibraryWeb2 extends LitElement {
                     class="sort-select"
                     @change=${(e: Event) => {
                       this.selectedTag = (e.target as HTMLSelectElement).value;
-                    }}>
+                    }}
+                  >
                     <option value="" ?selected=${activeTag === ''}>${msg('All tags')}</option>
                     ${availableTags.map(
                       (tag) =>
@@ -249,27 +237,32 @@ export class ToolLibraryWeb2 extends LitElement {
               class="classification-button classification-button-all ${this.classification === 'all'
                 ? 'classification-active'
                 : ''}"
-              @click=${async () => this.classification = 'all'}>
+              @click=${async () => (this.classification = 'all')}
+            >
               ${appStoreIcon(16)} <span style="margin-left:5px">${msg('all tools')}</span>
             </button>
             <sl-tooltip .content=${msg('Tested and loved tools.')}>
               <button
                 class="classification-button classification-button-stable ${this.classification ===
-                  'stable'
+                'stable'
                   ? 'classification-active'
                   : ''}"
-                @click=${async () => this.classification = 'stable'}>
+                @click=${async () => (this.classification = 'stable')}
+              >
                 ${stableToolIcon(16)} ${msg('stable')}
-              </button></sl-tooltip>
+              </button></sl-tooltip
+            >
             <sl-tooltip .content=${msg('Fun, but may glitch!')}>
               <button
                 class="classification-button classification-button-experimental ${this
                   .classification === 'experimental'
                   ? 'classification-active'
                   : ''}"
-                @click=${async () => this.classification = 'experimental'}>
+                @click=${async () => (this.classification = 'experimental')}
+              >
                 ${experimentalToolIcon(16)} ${msg('experimental')}
-              </button></sl-tooltip>
+              </button></sl-tooltip
+            >
           </div>
         </div>
         <installable-tools-web2
@@ -358,28 +351,27 @@ export class ToolLibraryWeb2 extends LitElement {
     `;
   }
 
-
   /** */
   renderCurationLists() {
     return html`
-        <moss-dialog
-                id="curation-dialog"
-                width="870px"
-                headerAlign="center">
-            <span slot="header">${msg('Tool Curation Lists')}</span>
-            <div slot="content">
-              <curation-list-manager id="curation-manager"
-                             @urls-changed=${async (e) => {
-                               const urls = e.detail.map((url: NamedUrl) => url.url);
-                               this._toolCurationConfigs = urls.map((url: string) => {return {url, useLists: ['default']}});
-                               await this.fetchToolLists();
-                               window.localStorage.setItem("mossCurationConfig", JSON.stringify(urls));
-                             }}></curation-list-manager>
-            </div>
-        </moss-dialog>
+      <moss-dialog id="curation-dialog" width="870px" headerAlign="center">
+        <span slot="header">${msg('Tool Curation Lists')}</span>
+        <div slot="content">
+          <curation-list-manager
+            id="curation-manager"
+            @urls-changed=${async (e) => {
+              const urls = e.detail.map((url: NamedUrl) => url.url);
+              this._toolCurationConfigs = urls.map((url: string) => {
+                return { url, useLists: ['default'] };
+              });
+              await this.fetchToolLists();
+              window.localStorage.setItem('mossCurationConfig', JSON.stringify(urls));
+            }}
+          ></curation-list-manager>
+        </div>
+      </moss-dialog>
     `;
   }
-
 
   /** */
   renderPublisher(publisher: DeveloperCollective | undefined) {
@@ -403,8 +395,10 @@ export class ToolLibraryWeb2 extends LitElement {
           ></sl-icon>
           <span style="margin-right: 10px;">${msg('Website')}:</span>
           ${publisher.contact.website && publisher.contact.website !== ''
-        ? html`<span><a href="${publisher.contact.website}">${publisher.contact.website}</a></span>`
-        : html`<span>N/A</span>`}
+            ? html`<span
+                ><a href="${publisher.contact.website}">${publisher.contact.website}</a></span
+              >`
+            : html`<span>N/A</span>`}
         </div>
         <div class="row" style="align-items: center; margin-top: 8px;">
           <sl-icon
@@ -413,8 +407,8 @@ export class ToolLibraryWeb2 extends LitElement {
           ></sl-icon>
           <span style="margin-right: 10px;">${msg('Contact')}:</span>
           ${publisher.contact.email && publisher.contact.email !== ''
-        ? html` <span>${publisher.contact.email}</span> `
-        : html`<span>N/A</span>`}
+            ? html` <span>${publisher.contact.email}</span> `
+            : html`<span>N/A</span>`}
         </div>
       </div>
     `;
@@ -438,7 +432,6 @@ export class ToolLibraryWeb2 extends LitElement {
     }
   }
 
-
   /** */
   renderContent() {
     switch (this.view) {
@@ -449,13 +442,17 @@ export class ToolLibraryWeb2 extends LitElement {
     }
   }
 
-
   /** */
   render() {
     return html`
-        ${this.renderCurationLists()}
-        <group-context .groupDnaHash=${this._selectedGroupDnaHash? decodeHashFromBase64(this._selectedGroupDnaHash): undefined}>
-        <install-tool-dialog-web2 id="install-tool-dialog"
+      ${this.renderCurationLists()}
+      <group-context
+        .groupDnaHash=${this._selectedGroupDnaHash
+          ? decodeHashFromBase64(this._selectedGroupDnaHash)
+          : undefined}
+      >
+        <install-tool-dialog-web2
+          id="install-tool-dialog"
           @install-tool-dialog-closed=${() => {
             this._selectedGroupDnaHash = undefined;
             this._selectedTool = undefined;
@@ -472,23 +469,25 @@ export class ToolLibraryWeb2 extends LitElement {
         <div class="header column center-content">
           <div class="row" style="align-items: center; font-size: 34px;">
             <span style="flex: 1; margin-left: 10px; font-weight: bold;">
-                ${msg('Tool Library')}
+              ${msg('Tool Library')}
             </span>
           </div>
-            <button class="moss-button"
-                    style="border-radius:8px; padding: 8px 10px;position: absolute; right: 20px;border: 1px solid #89D6AA; color: #89D6AA"
-                    @click=${() => {this._curationListDialog.show()}}>
-                <div class="row items-center">
-                    ${devIcon(14)}
-                    <span style="margin-left: 5px;font-size: 12px; ">${msg('Tool Sources')}</span>
-                </div>
-            </button>
+          <button
+            class="moss-button"
+            style="border-radius:8px; padding: 8px 10px;position: absolute; right: 20px;border: 1px solid #89D6AA; color: #89D6AA"
+            @click=${() => {
+              this._curationListDialog.show();
+            }}
+          >
+            <div class="row items-center">
+              ${devIcon(14)}
+              <span style="margin-left: 5px;font-size: 12px; ">${msg('Tool Sources')}</span>
+            </div>
+          </button>
         </div>
         <div class="column flex-scrollable-parent" style="position:relative">
           <div class="flex-scrollable-container">
-            <div class="column flex-scrollable-y">
-                ${this.renderContent()}
-            </div>
+            <div class="column flex-scrollable-y">${this.renderContent()}</div>
           </div>
         </div>
       </div>

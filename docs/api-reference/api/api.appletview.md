@@ -7,24 +7,28 @@
 **Signature:**
 
 ```typescript
-export type AppletView = {
-    type: 'main';
-    wal?: WAL;
-} | {
-    type: 'block';
-    block: string;
-    context: any;
-} | {
-    type: 'asset';
-    recordInfo?: RecordInfo;
-    wal: WAL;
-} | {
-    type: 'creatable';
-    name: CreatableName;
-    resolve: (wal: WAL) => Promise<void>;
-    reject: (error: any) => Promise<void>;
-    cancel: () => Promise<void>;
-};
+export type AppletView =
+  | {
+      type: 'main';
+      wal?: WAL;
+    }
+  | {
+      type: 'block';
+      block: string;
+      context: any;
+    }
+  | {
+      type: 'asset';
+      recordInfo?: RecordInfo;
+      wal: WAL;
+    }
+  | {
+      type: 'creatable';
+      name: CreatableName;
+      resolve: (wal: WAL) => Promise<void>;
+      reject: (error: any) => Promise<void>;
+      cancel: () => Promise<void>;
+    };
 ```
-**References:** [WAL](./api.wal.md)<!-- -->, [RecordInfo](./api.recordinfo.md)<!-- -->, [CreatableName](./api.creatablename.md)
 
+**References:** [WAL](./api.wal.md)<!-- -->, [RecordInfo](./api.recordinfo.md)<!-- -->, [CreatableName](./api.creatablename.md)

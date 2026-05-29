@@ -1,14 +1,15 @@
 import {
-    AgentPubKey,
-    AppClient,
-    CreateCloneCellRequest,
-    CreateCloneCellResponse,
-    DisableCloneCellRequest,
-    DnaHash,
-    EnableCloneCellRequest,
-    EntryHash,
-    decodeHashFromBase64,
-    encodeHashToBase64, TransportStats,
+  AgentPubKey,
+  AppClient,
+  CreateCloneCellRequest,
+  CreateCloneCellResponse,
+  DisableCloneCellRequest,
+  DnaHash,
+  EnableCloneCellRequest,
+  EntryHash,
+  decodeHashFromBase64,
+  encodeHashToBase64,
+  TransportStats,
 } from '@holochain/client';
 import {
   BlockType,
@@ -171,10 +172,10 @@ export const initializeHotReload = async () => {
 
 export class AppletServices {
   constructor() {
-    (this.creatables = {}),
+    ((this.creatables = {}),
       (this.blockTypes = {}),
       (this.search = async (_appletClient, _appletHash, _weaveServices, _searchFilter) => []),
-      (this.getAssetInfo = async (_appletClient, _wal, _recordInfo) => undefined);
+      (this.getAssetInfo = async (_appletClient, _wal, _recordInfo) => undefined));
   }
 
   /**
@@ -236,7 +237,9 @@ export interface AssetServices {
    * @param from (optional) source of the WAL
    * @returns
    */
-  userSelectAsset: (from?: 'search' | 'pocket' | 'create' | 'pocket-no-create') => Promise<WAL | undefined>;
+  userSelectAsset: (
+    from?: 'search' | 'pocket' | 'create' | 'pocket-no-create',
+  ) => Promise<WAL | undefined>;
   /**
    * Prompts the user with a dialog to select an asset relation tag.
    * Returns the associated tag as a string as soon as the user has
@@ -529,7 +532,7 @@ export class WeaveClient implements WeaveServices {
     window.__WEAVE_API__.onPeerStatusUpdate(callback);
 
   onNetworkStatsUpdate = (callback: (payload: TransportStats) => any): UnsubscribeFunction =>
-        window.__WEAVE_API__.onNetworkStatsUpdate(callback);
+    window.__WEAVE_API__.onNetworkStatsUpdate(callback);
 
   onBeforeUnload = (callback: () => any): UnsubscribeFunction =>
     window.__WEAVE_API__.onBeforeUnload(callback);
@@ -578,17 +581,13 @@ export class WeaveClient implements WeaveServices {
     // question is not answerable from a cross-group view unless the caller
     // disambiguates by passing an explicit groupHash. Resolve to undefined in
     // that case so shared code paths can call this without try/catch noise.
-    const effectiveGroupHash = groupHash ?? (
-      this.renderInfo.type === 'applet-view'
-        ? this.renderInfo.groupHash
-        : undefined
-    );
+    const effectiveGroupHash =
+      groupHash ?? (this.renderInfo.type === 'applet-view' ? this.renderInfo.groupHash : undefined);
     if (!effectiveGroupHash) {
       return Promise.resolve(undefined);
     }
     return window.__WEAVE_API__.toolInstaller(appletHash, effectiveGroupHash);
   };
-
 
   bootstrapUrls = (groupHash?: DnaHash) => window.__WEAVE_API__.bootstrapUrls(groupHash);
 

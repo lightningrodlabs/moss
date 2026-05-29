@@ -16,7 +16,7 @@ import '@theweave/elements/dist/elements/weave-client-context.js';
 
 import './applet-main.js';
 import './cross-group-main.js';
-import {ActionHash, CellType, DnaHash, ProvisionedCell, TransportStats} from '@holochain/client';
+import { ActionHash, CellType, DnaHash, ProvisionedCell, TransportStats } from '@holochain/client';
 import { consume } from '@lit/context';
 import { PostsStore } from './posts-store.js';
 import { PostsClient } from './posts-client.js';
@@ -55,9 +55,11 @@ export class ExampleApplet extends LitElement {
     //   const appletHash = this.weaveClient.renderInfo.appletHash;
     //   console.log('we link for applet: ', weaveUrlFromAppletHash(appletHash));
     // }
-    this.networkStatsUpdateUnsubscribe = this.weaveClient.onNetworkStatsUpdate((payload: TransportStats) => {
-      console.log('Got network stats update: ', payload);
-    });
+    this.networkStatsUpdateUnsubscribe = this.weaveClient.onNetworkStatsUpdate(
+      (payload: TransportStats) => {
+        console.log('Got network stats update: ', payload);
+      },
+    );
   }
 
   async notifyWe(notifications: FrameNotification[]) {
@@ -113,7 +115,7 @@ export class ExampleApplet extends LitElement {
           case 'asset':
             if (!this.weaveClient.renderInfo.view.recordInfo) {
               throw new Error(
-                'The example applet does not implement asset views pointing to DNAs instead of Records.'
+                'The example applet does not implement asset views pointing to DNAs instead of Records.',
               );
             } else {
               switch (this.weaveClient.renderInfo.view.recordInfo.roleName) {
@@ -132,17 +134,17 @@ export class ExampleApplet extends LitElement {
                           `;
                         default:
                           throw new Error(
-                            `Unknown entry type ${this.weaveClient.renderInfo.view.recordInfo.entryType}.`
+                            `Unknown entry type ${this.weaveClient.renderInfo.view.recordInfo.entryType}.`,
                           );
                       }
                     default:
                       throw new Error(
-                        `Unknown zome '${this.weaveClient.renderInfo.view.recordInfo.integrityZomeName}'.`
+                        `Unknown zome '${this.weaveClient.renderInfo.view.recordInfo.integrityZomeName}'.`,
                       );
                   }
                 default:
                   throw new Error(
-                    `Unknown role name '${this.weaveClient.renderInfo.view.recordInfo.roleName}'.`
+                    `Unknown role name '${this.weaveClient.renderInfo.view.recordInfo.roleName}'.`,
                   );
               }
             }
@@ -194,7 +196,7 @@ export class ExampleApplet extends LitElement {
                 `;
               default:
                 throw new Error(
-                  `Unknown creatable type '${this.weaveClient.renderInfo.view.name}'.`
+                  `Unknown creatable type '${this.weaveClient.renderInfo.view.name}'.`,
                 );
             }
           default:

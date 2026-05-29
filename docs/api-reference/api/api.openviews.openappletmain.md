@@ -16,50 +16,40 @@ openAppletMain(appletHash: EntryHash, wal?: WAL): void;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 appletHash
 
-
 </td><td>
 
 EntryHash
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 wal
 
-
 </td><td>
 
 [WAL](./api.wal.md)
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 void
-

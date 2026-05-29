@@ -2,7 +2,7 @@ import { hashProperty, notify, notifyError } from '@holochain-open-dev/elements'
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { AgentPubKey, DnaHash, encodeHashToBase64 } from '@holochain/client';
 import { consume } from '@lit/context';
-import {localized, msg, str} from '@lit/localize';
+import { localized, msg, str } from '@lit/localize';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 

@@ -55,17 +55,16 @@ test('install example applet from the in-app tool library', async ({
 
     // The installed tool must appear inside the group pane (new design).
     // group-area-sidebar renders <applet-sidebar-button> per installed applet.
-    await expect(
-      moss.mainWindow.locator('group-area-sidebar applet-sidebar-button'),
-    ).toHaveCount(1, { timeout: 60_000 });
+    await expect(moss.mainWindow.locator('group-area-sidebar applet-sidebar-button')).toHaveCount(
+      1,
+      { timeout: 60_000 },
+    );
 
     // why: negative assertion — old top-bar surface for tools must not be
     // present. After the Phase-3 cleanup deletes those components this is
     // automatic, but until then it ensures cleanup PRs that *also* hide the
     // old surface still pass without regressing the new one.
-    await expect(
-      moss.mainWindow.locator('topbar-button-old, sidebar-button-old'),
-    ).toHaveCount(0);
+    await expect(moss.mainWindow.locator('topbar-button-old, sidebar-button-old')).toHaveCount(0);
   } finally {
     await closeMoss(moss);
   }

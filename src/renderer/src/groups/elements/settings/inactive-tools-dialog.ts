@@ -15,11 +15,7 @@ import { notify, notifyError } from '@holochain-open-dev/elements';
 import { mossStyles } from '../../../shared-styles';
 import { getLocalizedTimeAgo } from '../../../locales/localization.js';
 import { Value } from '@sinclair/typebox/value';
-import {
-  activateToolIcon,
-  chevronSingleDownIcon,
-  chevronSingleUpIcon,
-} from '../../../ui/icons';
+import { activateToolIcon, chevronSingleDownIcon, chevronSingleUpIcon } from '../../../ui/icons';
 import '../../../ui/moss-mini-button.js';
 import { toolSettingsStyles } from './tool-settings-styles.js';
 import { MossDialog } from '../../../ui/moss-dialog.js';
@@ -50,51 +46,50 @@ export class InactiveToolsDialog extends LitElement {
     () =>
       pipe(this._groupStore.unjoinedApplets, async (appletsAndKeys) =>
         Promise.all(
-          Array.from(appletsAndKeys.entries()).map(
-            async ([appletHash, [agentKey, timestamp]]) => {
-              let appletEntry: Applet | undefined;
-              try {
-                appletEntry = await toPromise(this._groupStore.applets.get(appletHash)!);
-              } catch (e) {
-                console.warn('@inactive-tools-dialog @unjoined-applets: Failed to get appletEntry: ', e);
-              }
-              let toolInfoAndVersions: ToolInfoAndVersions | undefined;
-              if (appletEntry) {
-                const distributionInfo: DistributionInfo = JSON.parse(
-                  appletEntry.distribution_info,
+          Array.from(appletsAndKeys.entries()).map(async ([appletHash, [agentKey, timestamp]]) => {
+            let appletEntry: Applet | undefined;
+            try {
+              appletEntry = await toPromise(this._groupStore.applets.get(appletHash)!);
+            } catch (e) {
+              console.warn(
+                '@inactive-tools-dialog @unjoined-applets: Failed to get appletEntry: ',
+                e,
+              );
+            }
+            let toolInfoAndVersions: ToolInfoAndVersions | undefined;
+            if (appletEntry) {
+              const distributionInfo: DistributionInfo = JSON.parse(appletEntry.distribution_info);
+              Value.Assert(TDistributionInfo, distributionInfo);
+              if (distributionInfo.type === 'web2-tool-list') {
+                toolInfoAndVersions = await this._mossStore.toolInfoFromRemote(
+                  distributionInfo.info.toolListUrl,
+                  distributionInfo.info.toolId,
+                  distributionInfo.info.versionBranch,
                 );
-                Value.Assert(TDistributionInfo, distributionInfo);
-                if (distributionInfo.type === 'web2-tool-list') {
-                  toolInfoAndVersions = await this._mossStore.toolInfoFromRemote(
-                    distributionInfo.info.toolListUrl,
-                    distributionInfo.info.toolId,
-                    distributionInfo.info.versionBranch,
-                  );
-                }
               }
-              let joinedMembers: AppletAgent[] = [];
-              try {
-                joinedMembers = await toPromise(this._groupStore.joinedAppletAgents.get(appletHash)!);
-              } catch (e) {
-                console.warn('@inactive-tools-dialog: Failed to get joined members: ', e);
-              }
-              return [
-                appletHash,
-                appletEntry,
-                toolInfoAndVersions,
-                agentKey,
-                timestamp,
-                joinedMembers,
-              ] as [
-                AppletHash,
-                Applet | undefined,
-                ToolInfoAndVersions | undefined,
-                AgentPubKey,
-                number,
-                AppletAgent[],
-              ];
-            },
-          ),
+            }
+            let joinedMembers: AppletAgent[] = [];
+            try {
+              joinedMembers = await toPromise(this._groupStore.joinedAppletAgents.get(appletHash)!);
+            } catch (e) {
+              console.warn('@inactive-tools-dialog: Failed to get joined members: ', e);
+            }
+            return [
+              appletHash,
+              appletEntry,
+              toolInfoAndVersions,
+              agentKey,
+              timestamp,
+              joinedMembers,
+            ] as [
+              AppletHash,
+              Applet | undefined,
+              ToolInfoAndVersions | undefined,
+              AgentPubKey,
+              number,
+              AppletAgent[],
+            ];
+          }),
         ),
       ),
     () => [this._groupStore, this._mossStore],
@@ -167,7 +162,10 @@ export class InactiveToolsDialog extends LitElement {
           <sl-spinner style="font-size: 30px;"></sl-spinner>
         </div>`;
       case 'error':
-        console.error('Failed to get unactivated applets: ', this._unjoinedAppletsWithDetails.value.error);
+        console.error(
+          'Failed to get unactivated applets: ',
+          this._unjoinedAppletsWithDetails.value.error,
+        );
         return html`<div class="column center-content">
           <h3>Error: Failed to fetch unjoined Applets</h3>
           <span>${this._unjoinedAppletsWithDetails.value.error}</span>
@@ -218,7 +216,9 @@ export class InactiveToolsDialog extends LitElement {
                     ${filteredApplets.map(
                       (info) => html`
                         <div
-                          class="column tool ${this.expandedApplets[encodeHashToBase64(info.appletHash)]
+                          class="column tool ${this.expandedApplets[
+                            encodeHashToBase64(info.appletHash)
+                          ]
                             ? 'tool-expanded'
                             : ''}"
                           style="flex: 1;margin-bottom: 20px;"
@@ -235,14 +235,16 @@ export class InactiveToolsDialog extends LitElement {
                                 ${info.toolInfoAndVersions?.icon
                                   ? html`<img
                                       src=${info.toolInfoAndVersions.icon}
-                                      alt=${msg("Tool logo")}
+                                      alt=${msg('Tool logo')}
                                       style="height: 64px; width:64px; margin-right: 10px; border-radius:16px;"
                                     />`
                                   : html``}
                               </sl-tooltip>
                               <div class="column">
                                 <span class="tool-name"
-                                  >${info.appletEntry ? info.appletEntry.custom_name : 'unknown'}</span
+                                  >${info.appletEntry
+                                    ? info.appletEntry.custom_name
+                                    : 'unknown'}</span
                                 >
                                 <span class="tool-short-description"
                                   >${info.toolInfoAndVersions?.subtitle}</span
@@ -253,7 +255,7 @@ export class InactiveToolsDialog extends LitElement {
                               <moss-mini-button
                                 style="margin-left: 20px;"
                                 .loading=${this._joiningNewApplet ===
-                                  encodeHashToBase64(info.appletHash)}
+                                encodeHashToBase64(info.appletHash)}
                                 .disabled=${!!this._joiningNewApplet}
                                 @click=${(e: Event) => {
                                   e.stopPropagation();
@@ -298,7 +300,7 @@ export class InactiveToolsDialog extends LitElement {
                                     )}
                                   </div>
                                 </div>
-                            `
+                              `
                             : ''}
                         </div>
                       `,
@@ -347,11 +349,7 @@ export class InactiveToolsDialog extends LitElement {
 
   render() {
     return html`
-      <moss-dialog
-        id="dialog"
-        headerAlign="left"
-        width="800px"
-      >
+      <moss-dialog id="dialog" headerAlign="left" width="800px">
         <span slot="header">${msg('Before adding a new tool to')} ${this.getGroupName()}...</span>
         <div slot="content">
           <div class="column" style="margin-bottom: 24px;">
@@ -359,7 +357,9 @@ export class InactiveToolsDialog extends LitElement {
               ${msg('Check what your peers already use')}
             </div>
             <div class="description" style="font-size: 12px; opacity: 0.6; line-height: 1.5;">
-              ${msg('They might have been already using a tool that you are looking for. No need to add it to your group space - just activate it for yourself and start collaborating!')}
+              ${msg(
+                'They might have been already using a tool that you are looking for. No need to add it to your group space - just activate it for yourself and start collaborating!',
+              )}
             </div>
           </div>
           ${this.renderInactiveTools()}
@@ -388,4 +388,3 @@ export class InactiveToolsDialog extends LitElement {
     `,
   ];
 }
-

@@ -178,12 +178,8 @@ export async function launchMoss(opts: LaunchOptions): Promise<LaunchedMoss> {
   // default so green runs are quiet.
   if (process.env.MOSS_E2E_DEBUG) {
     const child = app.process();
-    child.stdout?.on('data', (d) =>
-      process.stdout.write(`[moss:${opts.profileName}:out] ${d}`),
-    );
-    child.stderr?.on('data', (d) =>
-      process.stderr.write(`[moss:${opts.profileName}:err] ${d}`),
-    );
+    child.stdout?.on('data', (d) => process.stdout.write(`[moss:${opts.profileName}:out] ${d}`));
+    child.stderr?.on('data', (d) => process.stderr.write(`[moss:${opts.profileName}:err] ${d}`));
   }
 
   const mainWindow = await waitForAdminWindow(app, opts.adminWindowTimeoutMs ?? 60_000);
@@ -233,9 +229,7 @@ async function waitForAdminWindow(app: ElectronApplication, timeoutMs: number): 
   );
 }
 
-export type SecondAgentFactory = (
-  overrides?: Partial<LaunchOptions>,
-) => Promise<LaunchedMoss>;
+export type SecondAgentFactory = (overrides?: Partial<LaunchOptions>) => Promise<LaunchedMoss>;
 
 type MossTestFixtures = {
   moss: LaunchedMoss;
@@ -421,7 +415,10 @@ export async function closeMoss(launched: LaunchedMoss): Promise<void> {
  */
 function collectDescendants(rootPid: number): number[] {
   try {
-    const all = fs.readdirSync('/proc').filter((n) => /^\d+$/.test(n)).map(Number);
+    const all = fs
+      .readdirSync('/proc')
+      .filter((n) => /^\d+$/.test(n))
+      .map(Number);
     const parentMap = new Map<number, number>();
     for (const p of all) {
       try {

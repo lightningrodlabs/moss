@@ -69,7 +69,7 @@ export class EditPost extends LitElement {
       const updateRecord = await this.postsStore.client.updatePost(
         this.originalPostHash,
         this.currentRecord.actionHash,
-        post
+        post,
       );
 
       this.dispatchEvent(
@@ -81,7 +81,7 @@ export class EditPost extends LitElement {
             previousPostHash: this.currentRecord.actionHash,
             updatedPostHash: updateRecord.actionHash,
           },
-        })
+        }),
       );
     } catch (e: any) {
       console.error(e);
@@ -124,7 +124,7 @@ export class EditPost extends LitElement {
                 new CustomEvent('edit-canceled', {
                   bubbles: true,
                   composed: true,
-                })
+                }),
               )}
             style="flex: 1;"
             >${msg('Cancel')}</sl-button

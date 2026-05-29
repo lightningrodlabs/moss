@@ -55,7 +55,7 @@ export class InstallableToolsWeb2 extends LitElement {
   @query('#tool-details')
   toolDetails: LibraryToolDetails | undefined;
 
-  async firstUpdated() { }
+  async firstUpdated() {}
 
   @state()
   selectedTool: UnifiedToolEntry | undefined;
@@ -69,9 +69,12 @@ export class InstallableToolsWeb2 extends LitElement {
       .filter((v, i, arr) => arr.indexOf(v) === i) // unique
       .sort((a, b) => b - a); // descending
 
-    const versionBadge = versionBranches.length > 1
-      ? html`<span style="font-size: 12px; opacity: 0.6; margin-left: 5px;">v${versionBranches.join(', v')}</span>`
-      : html``;
+    const versionBadge =
+      versionBranches.length > 1
+        ? html`<span style="font-size: 12px; opacity: 0.6; margin-left: 5px;"
+            >v${versionBranches.join(', v')}</span
+          >`
+        : html``;
 
     const primaryCuration = primaryBranch.curationInfos[0];
     const visibility = primaryCuration?.info.visiblity || 'high';
@@ -82,30 +85,26 @@ export class InstallableToolsWeb2 extends LitElement {
         class="tool"
         tabindex="0"
         @click=${() => {
-        this.selectedTool = tool;
-        this.toolDetailsDialog?.show();
-      }}
+          this.selectedTool = tool;
+          this.toolDetailsDialog?.show();
+        }}
       >
         <div class="column">
           <div class="row">
             ${tool.icon
-        ? html`<img
+              ? html`<img
                   src=${tool.icon}
                   alt="${tool.title} tool icon"
                   style="height: 64px; width: 64px; border-radius: 16px; margin-right: 15px;"
                 />`
-        : html``}
-            <sl-tooltip
-              content="${visibility === 'low'
-        ? 'experimental tool'
-        : 'stable tool'}"
-            >
+              : html``}
+            <sl-tooltip content="${visibility === 'low' ? 'experimental tool' : 'stable tool'}">
               <div class="row items-center tool-classification">
                 ${visibility === 'low'
-        ? html`<div class="tool-classification-image tool-experimental">
+                  ? html`<div class="tool-classification-image tool-experimental">
                       ${experimentalToolIcon(24)}
                     </div>`
-        : ''}
+                  : ''}
               </div>
             </sl-tooltip>
           </div>
@@ -115,19 +114,18 @@ export class InstallableToolsWeb2 extends LitElement {
             </div>
             <div class="tool-description">${unsafeHTML(markdownParseSafe(tool.description))}</div>
             ${tool.tags.length > 0
-        ? html`
+              ? html`
                   <div class="row tool-tag-list" style="margin-top:6px">
-                    ${tool.tags.map(
-          (tag) => html`<div class="tool-tag">${tag}</div>`,
-        )}
+                    ${tool.tags.map((tag) => html`<div class="tool-tag">${tag}</div>`)}
                   </div>
                 `
-        : ''}
+              : ''}
             <sl-tooltip content=${msg("Visit developer's website")}>
               <div class="tool-developer">
-                <span  style="opacity:.4">${msg('by')}</span>
+                <span style="opacity:.4">${msg('by')}</span>
                 <a href="${this.devCollectives[tool.toolListUrl].contact.website}"
-                  >${this.devCollectives[tool.toolListUrl].name}</a>
+                  >${this.devCollectives[tool.toolListUrl].name}</a
+                >
               </div>
             </sl-tooltip>
           </div>
@@ -135,17 +133,17 @@ export class InstallableToolsWeb2 extends LitElement {
         <select-group
           class="show-on-hover"
           @group-selected=${async (e: CustomEvent) => {
-        this.dispatchEvent(
-          new CustomEvent('install-tool-to-group', {
-            detail: { 
-              unifiedTool: tool,
-              versionBranch: primaryBranch.versionBranch,
-              groupDnaHash: e.detail 
-            },
-            composed: true,
-          }),
-        );
-      }}
+            this.dispatchEvent(
+              new CustomEvent('install-tool-to-group', {
+                detail: {
+                  unifiedTool: tool,
+                  versionBranch: primaryBranch.versionBranch,
+                  groupDnaHash: e.detail,
+                },
+                composed: true,
+              }),
+            );
+          }}
           class=""
           style="margin:auto; width: 263px; height: 32px; margin-top: 20px; margin-bottom: 20px; position:absolute; bottom:30px;left: -22px; right: 0px;"
           id="select-group"
@@ -156,31 +154,38 @@ export class InstallableToolsWeb2 extends LitElement {
 
   render() {
     // Use unifiedTools if available, otherwise fall back to installableTools for backward compatibility
-    const toolsToRender = this.unifiedTools.length > 0 ? this.unifiedTools : 
-      this.installableTools.map(tool => {
-        // Convert ToolAndCurationInfo to UnifiedToolEntry for backward compatibility
-        const unified: UnifiedToolEntry = {
-          toolId: tool.toolInfoAndVersions.id,
-          toolListUrl: tool.toolListUrl,
-          developerCollectiveId: tool.developerCollectiveId,
-          title: tool.toolInfoAndVersions.title,
-          subtitle: tool.toolInfoAndVersions.subtitle,
-          description: tool.toolInfoAndVersions.description,
-          icon: tool.toolInfoAndVersions.icon,
-          tags: tool.toolInfoAndVersions.tags,
-          curationInfos: tool.curationInfos,
-          versionBranches: new Map([[tool.toolInfoAndVersions.versionBranch, {
-            versionBranch: tool.toolInfoAndVersions.versionBranch,
-            toolCompatibilityId: tool.toolCompatibilityId,
-            toolInfoAndVersions: tool.toolInfoAndVersions,
-            latestVersion: tool.latestVersion,
-            allVersions: tool.toolInfoAndVersions.versions,
-            curationInfos: tool.curationInfos,
-          }]]),
-          deprecation: tool.toolInfoAndVersions.deprecation,
-        };
-        return unified;
-      });
+    const toolsToRender =
+      this.unifiedTools.length > 0
+        ? this.unifiedTools
+        : this.installableTools.map((tool) => {
+            // Convert ToolAndCurationInfo to UnifiedToolEntry for backward compatibility
+            const unified: UnifiedToolEntry = {
+              toolId: tool.toolInfoAndVersions.id,
+              toolListUrl: tool.toolListUrl,
+              developerCollectiveId: tool.developerCollectiveId,
+              title: tool.toolInfoAndVersions.title,
+              subtitle: tool.toolInfoAndVersions.subtitle,
+              description: tool.toolInfoAndVersions.description,
+              icon: tool.toolInfoAndVersions.icon,
+              tags: tool.toolInfoAndVersions.tags,
+              curationInfos: tool.curationInfos,
+              versionBranches: new Map([
+                [
+                  tool.toolInfoAndVersions.versionBranch,
+                  {
+                    versionBranch: tool.toolInfoAndVersions.versionBranch,
+                    toolCompatibilityId: tool.toolCompatibilityId,
+                    toolInfoAndVersions: tool.toolInfoAndVersions,
+                    latestVersion: tool.latestVersion,
+                    allVersions: tool.toolInfoAndVersions.versions,
+                    curationInfos: tool.curationInfos,
+                  },
+                ],
+              ]),
+              deprecation: tool.toolInfoAndVersions.deprecation,
+            };
+            return unified;
+          });
 
     const nonDeprecatedTools = toolsToRender
       .filter((tool) => {
@@ -204,46 +209,48 @@ export class InstallableToolsWeb2 extends LitElement {
         }
       });
     return html`
-      <moss-dialog
-        id="library-tool-details-dialog"
-        class="library-tool-details-dialog">
-      <div slot="header">
-        ${this.selectedTool ? html`
-          ${this.selectedTool.title}
-            <div class="tool-developer">
-              <span style="opacity:.4">${msg('by')}</span>
-              <sl-tooltip content=${msg("Visit developer's website")}>
-                <a href="${this.devCollectives[this.selectedTool.toolListUrl].contact.website}">
-                  ${this.devCollectives[this.selectedTool.toolListUrl].name}
-                </a>
-              </sl-tooltip>                  
-            </div>
-            <div class="tool-developer" style="color:grey">
-                (curator:<a href=${this.selectedTool.curationInfos[0].curator.contact.website}>
-                ${this.selectedTool.curationInfos[0].curator.name}</a>)
-            </div>
-        `: msg('Unknown Tool')}
-      </div>
-      
-          <library-tool-details slot="content"
-            id="tool-details"
-            .devCollectives=${this.devCollectives}
-            .unifiedTool=${this.selectedTool}
-            @install-tool-to-group=${() => {
-        this.toolDetailsDialog?.hide();
-      }}
-          ></library-tool-details>
+      <moss-dialog id="library-tool-details-dialog" class="library-tool-details-dialog">
+        <div slot="header">
+          ${this.selectedTool
+            ? html`
+                ${this.selectedTool.title}
+                <div class="tool-developer">
+                  <span style="opacity:.4">${msg('by')}</span>
+                  <sl-tooltip content=${msg("Visit developer's website")}>
+                    <a href="${this.devCollectives[this.selectedTool.toolListUrl].contact.website}">
+                      ${this.devCollectives[this.selectedTool.toolListUrl].name}
+                    </a>
+                  </sl-tooltip>
+                </div>
+                <div class="tool-developer" style="color:grey">
+                  (curator:<a href=${this.selectedTool.curationInfos[0].curator.contact.website}>
+                    ${this.selectedTool.curationInfos[0].curator.name}</a
+                  >)
+                </div>
+              `
+            : msg('Unknown Tool')}
+        </div>
+
+        <library-tool-details
+          slot="content"
+          id="tool-details"
+          .devCollectives=${this.devCollectives}
+          .unifiedTool=${this.selectedTool}
+          @install-tool-to-group=${() => {
+            this.toolDetailsDialog?.hide();
+          }}
+        ></library-tool-details>
       </moss-dialog>
       <div
         style="display: flex; flex-direction: row; flex-wrap: wrap; align-content: flex-start; flex: 1;justify-content: center;"
       >
         ${nonDeprecatedTools.length === 0
-        ? html`
+          ? html`
               <div class="column center-content" style="flex: 1; margin-top: 50px;">
                 <span class="placeholder">${msg('No Tools available yet...')}</span>
               </div>
             `
-        : nonDeprecatedTools.map((tool) => this.renderInstallableTool(tool))}
+          : nonDeprecatedTools.map((tool) => this.renderInstallableTool(tool))}
       </div>
     `;
   }

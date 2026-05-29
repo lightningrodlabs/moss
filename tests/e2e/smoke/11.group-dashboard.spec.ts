@@ -112,9 +112,7 @@ async function openAddTileDialog(page: Page, kind: 'markdown' | 'image' | 'ifram
   }, kind);
 }
 
-test('steward can add markdown and image tiles to the group home dashboard', async ({
-  moss,
-}) => {
+test('steward can add markdown and image tiles to the group home dashboard', async ({ moss }) => {
   await openGroupHome(moss.mainWindow, 'Dashboard Test', 'steward-one');
   const page = moss.mainWindow;
   const { dashboard } = await enterDashboardEditMode(page);
@@ -159,8 +157,8 @@ test('steward can add markdown and image tiles to the group home dashboard', asy
     timeout: 30_000,
   });
   await expect(dashboard.locator('.grid-stack-item')).toHaveCount(2, { timeout: 15_000 });
-  await expect(
-    dashboard.locator('.markdown-tile h1', { hasText: 'Hello dashboard' }),
-  ).toBeVisible({ timeout: 10_000 });
+  await expect(dashboard.locator('.markdown-tile h1', { hasText: 'Hello dashboard' })).toBeVisible({
+    timeout: 10_000,
+  });
   await expect(dashboard.locator('img[alt="tile image"]')).toBeVisible({ timeout: 10_000 });
 });

@@ -40,7 +40,7 @@ export class PostSummary extends LitElement {
   _post = new StoreSubscriber(
     this,
     () => this.postsStore.posts.get(this.postHash)!,
-    () => [this.postHash]
+    () => [this.postHash],
   );
 
   renderSummary(entryRecord: EntryRecord<Post>) {
@@ -67,7 +67,7 @@ export class PostSummary extends LitElement {
         new CustomEvent('notification', {
           detail: [notification],
           bubbles: true,
-        })
+        }),
       );
       knownPosts.push(actionHashB64);
       window.localStorage.setItem('knownPosts', JSON.stringify(knownPosts));
@@ -122,7 +122,7 @@ export class PostSummary extends LitElement {
             detail: {
               postHash: this.postHash,
             },
-          })
+          }),
         )}
       @keypress=${(e: KeyboardEvent) => {
         if (e.key === 'Enter') {
@@ -133,7 +133,7 @@ export class PostSummary extends LitElement {
               detail: {
                 postHash: this.postHash,
               },
-            })
+            }),
           );
         }
       }}
@@ -144,7 +144,7 @@ export class PostSummary extends LitElement {
             detail: this.postHash,
             bubbles: true,
             composed: true,
-          })
+          }),
         );
       }}
     >

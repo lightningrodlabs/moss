@@ -85,10 +85,7 @@ export function nextTileColor(color: string | undefined): string | undefined {
  * overlapping column). Growing a tile that has something below it would just
  * push those tiles down indefinitely, so it's forbidden.
  */
-export function canFillHeight(
-  entry: DashboardTileEntry,
-  tiles: DashboardTileEntry[],
-): boolean {
+export function canFillHeight(entry: DashboardTileEntry, tiles: DashboardTileEntry[]): boolean {
   const aL = entry.layout.x;
   const aR = entry.layout.x + entry.layout.w;
   const aBottom = entry.layout.y + entry.layout.h;

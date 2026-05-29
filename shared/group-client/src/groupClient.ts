@@ -8,7 +8,8 @@ import {
   InstalledAppId,
   AppAuthenticationToken,
   ActionHash,
-  RoleNameCallZomeRequest, Timestamp
+  RoleNameCallZomeRequest,
+  Timestamp,
 } from '@holochain/client';
 import { AppletHash, UnsubscribeFunction } from '@theweave/api';
 import { encode } from '@msgpack/msgpack';
@@ -29,7 +30,8 @@ import {
   AppletClonedCell,
   GroupRemoteSignal,
   SignalPayloadGroup,
-  GroupProfile, Accountability
+  GroupProfile,
+  Accountability,
 } from './types.js';
 
 export class GroupClient {
@@ -38,7 +40,7 @@ export class GroupClient {
     public authenticationToken: AppAuthenticationToken,
     public roleName: string,
     public zomeName: string = 'group',
-  ) { }
+  ) {}
 
   get myPubKey(): AgentPubKey {
     return this.appClient.myPubKey;
@@ -142,7 +144,9 @@ export class GroupClient {
    * @param local Whether to use GetStrategy::Local or not
    * @returns
    */
-  async getUnjoinedApplets(local: boolean = true): Promise<Array<[EntryHash, AgentPubKey, number]>> {
+  async getUnjoinedApplets(
+    local: boolean = true,
+  ): Promise<Array<[EntryHash, AgentPubKey, number]>> {
     return this.callZome('get_unjoined_applets', { input: null, local });
   }
 
@@ -192,7 +196,10 @@ export class GroupClient {
    * @param local Whether to use GetStrategy::Local or not
    * @returns
    */
-  async getJoinedAppletAgents(appletHash: EntryHash, local: boolean = true): Promise<Array<AppletAgent>> {
+  async getJoinedAppletAgents(
+    appletHash: EntryHash,
+    local: boolean = true,
+  ): Promise<Array<AppletAgent>> {
     return this.callZome('get_joined_applet_agents', { input: appletHash, local });
   }
 
@@ -310,7 +317,7 @@ export class GroupClient {
    * @returns
    */
   async getMyAccountabilities(ts?: Timestamp, local: boolean = true): Promise<Accountability[]> {
-    let timestamp = ts? ts : Date.now();
+    let timestamp = ts ? ts : Date.now();
     return this.callZome('get_my_accountabilities', { input: timestamp * 1000, local });
   }
 
@@ -321,8 +328,12 @@ export class GroupClient {
    * @param local Whether to use GetStrategy::Local or not
    * @returns
    */
-  async getAgentAccountabilities(agent: AgentPubKey, ts?: Timestamp, local: boolean = true): Promise<Accountability[]> {
-    let timestamp = ts? ts : Date.now();
+  async getAgentAccountabilities(
+    agent: AgentPubKey,
+    ts?: Timestamp,
+    local: boolean = true,
+  ): Promise<Accountability[]> {
+    let timestamp = ts ? ts : Date.now();
     return this.callZome('get_agent_accountabilities', { input: [agent, timestamp], local });
   }
 
@@ -335,7 +346,7 @@ export class GroupClient {
     ts?: Timestamp,
     local: boolean = true,
   ): Promise<Array<[AgentPubKey, Accountability]> | undefined> {
-    let timestamp = ts? ts : Date.now();
+    let timestamp = ts ? ts : Date.now();
     return this.callZome('get_all_agents_accountabilities', { input: timestamp, local });
   }
 
@@ -361,7 +372,9 @@ export class GroupClient {
    * @param local Whether to use GetStrategy::Local or not
    * @returns
    */
-  async getGroupDescription(local: boolean = true): Promise<EntryRecord<GroupMetaData> | undefined> {
+  async getGroupDescription(
+    local: boolean = true,
+  ): Promise<EntryRecord<GroupMetaData> | undefined> {
     return this.getGroupMetaData(GROUP_DESCRIPTION_NAME, local);
   }
 

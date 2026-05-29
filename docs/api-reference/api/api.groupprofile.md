@@ -8,8 +8,8 @@
 
 ```typescript
 export type GroupProfile = {
-    name: string;
-    icon_src: string;
-    meta_data?: string;
+  name: string;
+  icon_src: string;
+  meta_data?: string;
 };
 ```

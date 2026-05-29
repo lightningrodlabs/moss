@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -34,14 +34,14 @@
       console.log('@example-applet: calling initializeHotReload');
       console.log(
         '@example-applet: initializeHotReload function: ',
-        JSON.stringify(initializeHotReload)
+        JSON.stringify(initializeHotReload),
       );
       if (import.meta.env.DEV) {
         try {
           await initializeHotReload();
         } catch (e) {
           console.warn(
-            'Could not initialize applet hot-reloading. This is only expected to work in a Weave context in dev mode.'
+            'Could not initialize applet hot-reloading. This is only expected to work in a Weave context in dev mode.',
           );
         }
       }
@@ -144,7 +144,7 @@
             return allPosts
               .map((postEntryRecord) => [postEntryRecord.entry, postEntryRecord.actionHash])
               .filter(([post, _actionHash]) =>
-                post.title.toLowerCase().includes(searchFilter.toLowerCase()) ? true : false
+                post.title.toLowerCase().includes(searchFilter.toLowerCase()) ? true : false,
               )
               .map(([post, actionHash]) => ({
                 hrl: [dnaHash, actionHash],
@@ -185,7 +185,7 @@
         customElements.define('example-applet', ExampleApplet);
         const exampleApplet = document.getElementById('example-applet');
         exampleApplet.postsStore = new PostsStore(
-          new PostsClient(weaveClient.renderInfo.appletClient, 'forum')
+          new PostsClient(weaveClient.renderInfo.appletClient, 'forum'),
         );
       })();
     </script>

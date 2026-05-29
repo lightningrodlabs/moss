@@ -7,20 +7,22 @@
 **Signature:**
 
 ```typescript
-export type RenderInfo = {
-    type: 'applet-view';
-    view: AppletView;
-    appletClient: AppClient;
-    profilesClient: ProfilesClient;
-    peerStatusStore: ReadonlyPeerStatusStore;
-    appletHash: AppletHash;
-    groupProfiles: GroupProfile[];
-    groupHash: DnaHash | null;
-} | {
-    type: 'cross-group-view';
-    view: CrossGroupView;
-    applets: ReadonlyMap<EntryHash, AppletClients>;
-};
+export type RenderInfo =
+  | {
+      type: 'applet-view';
+      view: AppletView;
+      appletClient: AppClient;
+      profilesClient: ProfilesClient;
+      peerStatusStore: ReadonlyPeerStatusStore;
+      appletHash: AppletHash;
+      groupProfiles: GroupProfile[];
+      groupHash: DnaHash | null;
+    }
+  | {
+      type: 'cross-group-view';
+      view: CrossGroupView;
+      applets: ReadonlyMap<EntryHash, AppletClients>;
+    };
 ```
-**References:** [AppletView](./api.appletview.md)<!-- -->, [ReadonlyPeerStatusStore](./api.readonlypeerstatusstore.md)<!-- -->, [AppletHash](./api.applethash.md)<!-- -->, [GroupProfile](./api.groupprofile.md)<!-- -->, [CrossGroupView](./api.crossgroupview.md)<!-- -->, [AppletClients](./api.appletclients.md)
 
+**References:** [AppletView](./api.appletview.md)<!-- -->, [ReadonlyPeerStatusStore](./api.readonlypeerstatusstore.md)<!-- -->, [AppletHash](./api.applethash.md)<!-- -->, [GroupProfile](./api.groupprofile.md)<!-- -->, [CrossGroupView](./api.crossgroupview.md)<!-- -->, [AppletClients](./api.appletclients.md)

@@ -8,9 +8,9 @@
 
 ```typescript
 export type CreatableType = {
-    label: string;
-    icon_src: string;
-    width?: 'small' | 'medium' | 'large';
-    height?: 'small' | 'medium' | 'large';
+  label: string;
+  icon_src: string;
+  width?: 'small' | 'medium' | 'large';
+  height?: 'small' | 'medium' | 'large';
 };
 ```

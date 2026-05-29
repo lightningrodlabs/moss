@@ -16,34 +16,27 @@ export declare function weaveUrlToWAL(url: string): WAL;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 url
 
-
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 [WAL](./api.wal.md)
-

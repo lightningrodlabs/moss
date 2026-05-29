@@ -7,28 +7,33 @@
 **Signature:**
 
 ```typescript
-export type OpenViewRequest = {
-    type: 'applet-main';
-    appletHash: EntryHash;
-    wal?: WAL;
-} | {
-    type: 'cross-group-main';
-    appletBundleId: string;
-} | {
-    type: 'applet-block';
-    appletHash: EntryHash;
-    block: string;
-    context: any;
-} | {
-    type: 'cross-group-block';
-    appletBundleId: string;
-    block: string;
-    context: any;
-} | {
-    type: 'asset';
-    wal: WAL;
-    mode?: OpenAssetMode;
-};
+export type OpenViewRequest =
+  | {
+      type: 'applet-main';
+      appletHash: EntryHash;
+      wal?: WAL;
+    }
+  | {
+      type: 'cross-group-main';
+      appletBundleId: string;
+    }
+  | {
+      type: 'applet-block';
+      appletHash: EntryHash;
+      block: string;
+      context: any;
+    }
+  | {
+      type: 'cross-group-block';
+      appletBundleId: string;
+      block: string;
+      context: any;
+    }
+  | {
+      type: 'asset';
+      wal: WAL;
+      mode?: OpenAssetMode;
+    };
 ```
-**References:** [WAL](./api.wal.md)<!-- -->, [OpenAssetMode](./api.openassetmode.md)
 
+**References:** [WAL](./api.wal.md)<!-- -->, [OpenAssetMode](./api.openassetmode.md)

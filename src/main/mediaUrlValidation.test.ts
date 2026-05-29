@@ -70,7 +70,14 @@ describe('assertPublicHost (no-DNS branches)', () => {
 
 describe('hasImageExtension', () => {
   it('matches common image extensions', () => {
-    for (const p of ['/a/b/emergence_icon.png', '/x.JPG', '/y.jpeg', '/z.svg', '/w.webp', '/v.avif']) {
+    for (const p of [
+      '/a/b/emergence_icon.png',
+      '/x.JPG',
+      '/y.jpeg',
+      '/z.svg',
+      '/w.webp',
+      '/v.avif',
+    ]) {
       expect(hasImageExtension(p), p).toBe(true);
     }
   });
@@ -88,14 +95,17 @@ describe('imageContentAccepted', () => {
   });
   it('accepts a generic-binary type when the path has an image extension (GitHub release assets)', () => {
     expect(
-      imageContentAccepted('application/octet-stream', '/releases/download/v0.5.0/emergence_icon.png'),
+      imageContentAccepted(
+        'application/octet-stream',
+        '/releases/download/v0.5.0/emergence_icon.png',
+      ),
     ).toBe(true);
     expect(imageContentAccepted('', '/icon.webp')).toBe(true);
   });
   it('rejects a generic-binary type without an image extension', () => {
-    expect(imageContentAccepted('application/octet-stream', '/releases/download/v0.5.0/tool.happ')).toBe(
-      false,
-    );
+    expect(
+      imageContentAccepted('application/octet-stream', '/releases/download/v0.5.0/tool.happ'),
+    ).toBe(false);
   });
   it('rejects an HTML error page even when the path ends in .png', () => {
     expect(imageContentAccepted('text/html', '/x.png')).toBe(false);

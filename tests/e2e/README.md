@@ -99,7 +99,7 @@ them the suite gets brittle and useless; please don't.
 3. **Every test gets a `// why:` comment** when the assertion isn't self-evident. Without it the next agent loop deletes the test that was protecting an invariant nobody remembers.
 4. **Don't mock the conductor.** Moss's value is in the WebSocket path. Mock only HTTP-side concerns via `page.route()` if you must.
 5. **One test == one fresh profile.** The `moss` fixture handles this — never reach into `~/.config/Moss/profiles/` from a spec.
-6. **When generating tests with an LLM**, do a separate review pass with the prompt: *"what could be wrong that these tests wouldn't catch?"*. Tests written in the same turn as the code they cover tend to be tautological.
+6. **When generating tests with an LLM**, do a separate review pass with the prompt: _"what could be wrong that these tests wouldn't catch?"_. Tests written in the same turn as the code they cover tend to be tautological.
 
 ## State synchronization
 

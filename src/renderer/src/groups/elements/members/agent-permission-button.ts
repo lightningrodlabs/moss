@@ -52,10 +52,9 @@ export class AgentPermissionButton extends LitElement {
     if (this.myAccountabilities.value.status !== 'complete') {
       return false;
     }
-    const myAccountabilities= this.myAccountabilities.value.value;
+    const myAccountabilities = this.myAccountabilities.value.value;
     for (const acc of myAccountabilities) {
-      if (acc.type === 'Progenitor'
-        || (acc.type  === 'Steward' && !acc.content.permission.expiry)) {
+      if (acc.type === 'Progenitor' || (acc.type === 'Steward' && !acc.content.permission.expiry)) {
         return true;
       }
     }
@@ -67,8 +66,7 @@ export class AgentPermissionButton extends LitElement {
     // No accs == Member
     if (accs.length === 0) {
       return this.canIAddStewards() && !this.noSteward
-        ? html`
-          <button
+        ? html` <button
             class="green-btn"
             @click=${() => {
               this.dispatchEvent(new CustomEvent('request-assign-steward', { composed: true }));
@@ -84,15 +82,14 @@ export class AgentPermissionButton extends LitElement {
       case 'Progenitor':
         return html`<div class="hint">${msg('no expiry')}</div>`;
       case 'Steward':
-        return html`
-          <div
-            class="hint"
-            title="${acc.content.permission.expiry
-              ? new Date(acc.content.permission.expiry / 1000).toLocaleString()
-              : undefined}"
-          >
-            ${acc.content.permission.expiry
-              ? html`
+        return html` <div
+          class="hint"
+          title="${acc.content.permission.expiry
+            ? new Date(acc.content.permission.expiry / 1000).toLocaleString()
+            : undefined}"
+        >
+          ${acc.content.permission.expiry
+            ? html`
                 <div class="row items-center">
                   <div>
                     until
@@ -112,8 +109,8 @@ export class AgentPermissionButton extends LitElement {
                     </button>
                     <sl-tooltip>
                 </div>`
-              : msg('no expiry')}
-          </div>`;
+            : msg('no expiry')}
+        </div>`;
       default: {
         console.error('Unknown accountability type: ', acc.type);
         return html``;

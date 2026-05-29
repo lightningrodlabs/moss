@@ -67,51 +67,47 @@ export class InactiveTools extends LitElement {
     () =>
       pipe(this._groupStore.unjoinedApplets, async (appletsAndKeys) =>
         Promise.all(
-          Array.from(appletsAndKeys.entries()).map(
-            async ([appletHash, [agentKey, timestamp]]) => {
-              let appletEntry: Applet | undefined;
-              try {
-                appletEntry = await toPromise(this._groupStore.applets.get(appletHash)!);
-              } catch (e) {
-                console.warn('@inactive-tools @unjoined-applets: Failed to get appletEntry: ', e);
-              }
-              let toolInfoAndVersions: ToolInfoAndVersions | undefined;
-              if (appletEntry) {
-                const distributionInfo: DistributionInfo = JSON.parse(
-                  appletEntry.distribution_info,
+          Array.from(appletsAndKeys.entries()).map(async ([appletHash, [agentKey, timestamp]]) => {
+            let appletEntry: Applet | undefined;
+            try {
+              appletEntry = await toPromise(this._groupStore.applets.get(appletHash)!);
+            } catch (e) {
+              console.warn('@inactive-tools @unjoined-applets: Failed to get appletEntry: ', e);
+            }
+            let toolInfoAndVersions: ToolInfoAndVersions | undefined;
+            if (appletEntry) {
+              const distributionInfo: DistributionInfo = JSON.parse(appletEntry.distribution_info);
+              Value.Assert(TDistributionInfo, distributionInfo);
+              if (distributionInfo.type === 'web2-tool-list') {
+                toolInfoAndVersions = await this._mossStore.toolInfoFromRemote(
+                  distributionInfo.info.toolListUrl,
+                  distributionInfo.info.toolId,
+                  distributionInfo.info.versionBranch,
                 );
-                Value.Assert(TDistributionInfo, distributionInfo);
-                if (distributionInfo.type === 'web2-tool-list') {
-                  toolInfoAndVersions = await this._mossStore.toolInfoFromRemote(
-                    distributionInfo.info.toolListUrl,
-                    distributionInfo.info.toolId,
-                    distributionInfo.info.versionBranch,
-                  );
-                }
               }
-              let joinedMembers: AppletAgent[] = [];
-              try {
-                joinedMembers = await toPromise(this._groupStore.joinedAppletAgents.get(appletHash)!);
-              } catch (e) {
-                console.warn('@inactive-tools: Failed to get joined members: ', e);
-              }
-              return [
-                appletHash,
-                appletEntry,
-                toolInfoAndVersions,
-                agentKey,
-                timestamp,
-                joinedMembers,
-              ] as [
-                  AppletHash,
-                  Applet | undefined,
-                  ToolInfoAndVersions | undefined,
-                  AgentPubKey,
-                  number,
-                  AppletAgent[],
-                ];
-            },
-          ),
+            }
+            let joinedMembers: AppletAgent[] = [];
+            try {
+              joinedMembers = await toPromise(this._groupStore.joinedAppletAgents.get(appletHash)!);
+            } catch (e) {
+              console.warn('@inactive-tools: Failed to get joined members: ', e);
+            }
+            return [
+              appletHash,
+              appletEntry,
+              toolInfoAndVersions,
+              agentKey,
+              timestamp,
+              joinedMembers,
+            ] as [
+              AppletHash,
+              Applet | undefined,
+              ToolInfoAndVersions | undefined,
+              AgentPubKey,
+              number,
+              AppletAgent[],
+            ];
+          }),
         ),
       ),
     () => [this._groupStore, this._mossStore],
@@ -152,7 +148,9 @@ export class InactiveTools extends LitElement {
     if (failCount === 0) {
       notify(msg(str`Successfully activated all ${successCount} tools.`));
     } else if (successCount > 0) {
-      notify(msg(str`Activated ${successCount} tools. ${failCount} failed (see console for details).`));
+      notify(
+        msg(str`Activated ${successCount} tools. ${failCount} failed (see console for details).`),
+      );
     } else {
       notifyError(msg(`Failed to activate all tools (see console for details).`));
     }
@@ -216,15 +214,15 @@ export class InactiveTools extends LitElement {
                   class="placeholder"
                   style="margin: 24px; text-align: center; max-width: 600px; font-size: 16px;"
                   >${this.showIgnoredOnly
-              ? msg('No ignored tools.')
-              : msg('No new tools to activate.')}
+                    ? msg('No ignored tools.')
+                    : msg('No new tools to activate.')}
                 </span>
               </div>
             `
           : html`
               <div class="column" style="position: relative;">
                 ${filteredApplets.length > 1 && !this.showIgnoredOnly
-              ? html`
+                  ? html`
                       <div class="row" style="justify-content: flex-end; margin-bottom: 16px;">
                         <moss-mini-button
                           .loading=${this._activatingAll}
@@ -237,20 +235,20 @@ export class InactiveTools extends LitElement {
                         </moss-mini-button>
                       </div>
                     `
-              : html``}
-                ${(this._joiningNewApplet || this._activatingAll)
-              ? html`<div class="activation-overlay"></div>`
-              : html``}
+                  : html``}
+                ${this._joiningNewApplet || this._activatingAll
+                  ? html`<div class="activation-overlay"></div>`
+                  : html``}
                 ${filteredApplets.map(
-                (info) => html`
+                  (info) => html`
                     <div
                       class="column tool ${this.expandedApplets[encodeHashToBase64(info.appletHash)]
-                    ? 'tool-expanded'
-                    : ''}"
+                        ? 'tool-expanded'
+                        : ''}"
                       style="flex: 1;margin-bottom: 20px;"
                       @click=${() => {
-                    this.toggleExpandedApplets(encodeHashToBase64(info.appletHash));
-                  }}
+                        this.toggleExpandedApplets(encodeHashToBase64(info.appletHash));
+                      }}
                     >
                       <div class="row" style="justify-content: space-between">
                         <div class="row">
@@ -259,12 +257,12 @@ export class InactiveTools extends LitElement {
                             content="${info.toolInfoAndVersions?.description}"
                           >
                             ${info.toolInfoAndVersions?.icon
-                    ? html`<img
+                              ? html`<img
                                   src=${info.toolInfoAndVersions.icon}
-                                  alt=${msg("Tool logo")}
+                                  alt=${msg('Tool logo')}
                                   style="height: 64px; width:64px; margin-right: 10px; border-radius:16px;"
                                 />`
-                    : html``}
+                              : html``}
                           </sl-tooltip>
                           <div class="column">
                             <span class="tool-name"
@@ -279,29 +277,29 @@ export class InactiveTools extends LitElement {
                           <moss-mini-button
                             style="margin-left: 20px;"
                             .loading=${this._joiningNewApplet ===
-                  encodeHashToBase64(info.appletHash)}
+                            encodeHashToBase64(info.appletHash)}
                             .disabled=${!!this._joiningNewApplet || this._activatingAll}
                             @click=${(e) => {
-                    e.stopPropagation();
-                    this.joinNewApplet(info.appletHash);
-                  }}
+                              e.stopPropagation();
+                              this.joinNewApplet(info.appletHash);
+                            }}
                           >
                             ${activateToolIcon(20)}<span style="margin-left: 5px;"
                               >${msg('Activate')}</span
                             >
                           </moss-mini-button>
                           ${info.isIgnored
-                    ? html``
-                    : html`
+                            ? html``
+                            : html`
                                 <moss-mini-button
                                   variant="secondary"
                                   style="margin-left: 8px;"
                                   .disabled=${!!this._joiningNewApplet || this._activatingAll}
                                   @click=${(e) => {
-                        e.stopPropagation();
-                        this._groupStore.ignoreApplet(info.appletHash);
-                        this.requestUpdate();
-                      }}
+                                    e.stopPropagation();
+                                    this._groupStore.ignoreApplet(info.appletHash);
+                                    this.requestUpdate();
+                                  }}
                                 >
                                   ${ignoreToolIcon(20)}<span style="margin-left: 5px;"
                                     >${msg('Ignore')}</span
@@ -310,13 +308,13 @@ export class InactiveTools extends LitElement {
                               `}
                           <div style="margin-left: 24px">
                             ${this.expandedApplets[encodeHashToBase64(info.appletHash)]
-                    ? html`${chevronSingleDownIcon(18)}`
-                    : html`${chevronSingleUpIcon(18)}`}
+                              ? html`${chevronSingleDownIcon(18)}`
+                              : html`${chevronSingleUpIcon(18)}`}
                           </div>
                         </div>
                       </div>
                       ${this.expandedApplets[encodeHashToBase64(info.appletHash)]
-                    ? html`
+                        ? html`
                       <div class="details-container column">
                         <div class="installer row">
                           <agent-avatar
@@ -334,22 +332,22 @@ export class InactiveTools extends LitElement {
                         <div class="participants row">
                           <span style="margin-right: 5px;">${msg('In use by: ')}</span>
                           ${info.joinedMembers.map(
-                      (appletAgent) => html`
+                            (appletAgent) => html`
                               <agent-avatar
                                 style="margin-left: 5px;"
                                 .size=${24}
                                 .agentPubKey=${appletAgent.group_pubkey}
                               ></agent-avatar>
                             `,
-                    )}
+                          )}
                         </div>
                        
                       </div>
                     </div> `
-                    : ''}
+                        : ''}
                     </div>
                   `,
-              )}
+                )}
               </div>
             `}`;
       default:
@@ -357,9 +355,7 @@ export class InactiveTools extends LitElement {
     }
   }
   render() {
-    return html` <div class="column flex-1">
-      ${this.renderInactiveTools()}
-    </div>`;
+    return html` <div class="column flex-1">${this.renderInactiveTools()}</div>`;
   }
   static styles = [
     mossStyles,

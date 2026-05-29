@@ -34,8 +34,12 @@ test('creating two groups and clicking between them moves the selected indicator
   // why: <sidebar-button> sets the `selected` class on its inner button — see
   // navigation/sidebar-button.ts:61. That's the DOM signal for "this is the
   // active group".
-  const alphaContainer = alphaImg.locator('xpath=ancestor::button[contains(@class,"icon-container")]');
-  const betaContainer = betaImg.locator('xpath=ancestor::button[contains(@class,"icon-container")]');
+  const alphaContainer = alphaImg.locator(
+    'xpath=ancestor::button[contains(@class,"icon-container")]',
+  );
+  const betaContainer = betaImg.locator(
+    'xpath=ancestor::button[contains(@class,"icon-container")]',
+  );
 
   await expect(betaContainer).toHaveClass(/(?:^|\s)selected(?:\s|$)/);
 

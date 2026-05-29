@@ -102,13 +102,18 @@ export class MossCreateProfile extends LitElement {
   render() {
     return html`
       <div class="moss-card column">
-        <span class="dialog-title" style="margin-top: 50px; margin-bottom: ${this.errorMessage ? '24px' : '48px'};"
+        <span
+          class="dialog-title"
+          style="margin-top: 50px; margin-bottom: ${this.errorMessage ? '24px' : '48px'};"
           >${this.title}</span
         >
 
         ${this.errorMessage
           ? html`
-              <div class="error-message" style="background-color: #fee; border: 2px solid #c33; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; width: 350px; color: #c33;">
+              <div
+                class="error-message"
+                style="background-color: #fee; border: 2px solid #c33; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; width: 350px; color: #c33;"
+              >
                 <div style="font-weight: 600; margin-bottom: 4px;">${msg('Error')}</div>
                 <div style="font-size: 14px;">${this.errorMessage}</div>
               </div>

@@ -41,7 +41,10 @@ export async function locateHrl(
       fn_name: HRL_LOCATOR_GET_FN_NAME,
     });
   } catch (e) {
-    console.warn('Call to locate_hrl() zome function failed. Attempting to install zome. Error:', e);
+    console.warn(
+      'Call to locate_hrl() zome function failed. Attempting to install zome. Error:',
+      e,
+    );
     await adminWebsocket.updateCoordinators({
       source: await hrlLocatorZome(),
       cell_id: [hrl[0], dnaLocation.appInfo.agent_pub_key],

@@ -34,7 +34,13 @@ import { is } from '@electron-toolkit/utils';
 import contextMenu from 'electron-context-menu';
 import semver from 'semver';
 
-import { MossFileSystem, deriveAppAssetsInfo, findLegacyProfiles, importLegacyProfileData, LegacyProfileInfo } from './filesystem';
+import {
+  MossFileSystem,
+  deriveAppAssetsInfo,
+  findLegacyProfiles,
+  importLegacyProfileData,
+  LegacyProfileInfo,
+} from './filesystem';
 import { LAIR_BINARY } from './const';
 import { MOSS_CONFIG } from './mossConfig';
 // import { AdminWebsocket } from '@holochain/client';
@@ -43,7 +49,9 @@ import { HolochainManager } from './holochainManager';
 import { setupLogs } from './logs';
 import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import {
-  breakingVersion, decompressHapp, decompressWebHapp,
+  breakingVersion,
+  decompressHapp,
+  decompressWebHapp,
   emitToWindow,
   formatUpdaterArg,
   logIf,
@@ -84,7 +92,8 @@ import {
   InstalledAppId,
   AgentPubKey,
   decodeHashFromBase64,
-  encodeHashToBase64, RoleSettingsMap,
+  encodeHashToBase64,
+  RoleSettingsMap,
 } from '@holochain/client';
 import { decode } from '@msgpack/msgpack';
 import { v4 as uuidv4 } from 'uuid';
@@ -137,7 +146,9 @@ async function saveHappAtCanonicalPath(
       fs.renameSync(happPath, canonicalPath);
     } catch (e) {
       fs.copyFileSync(happPath, canonicalPath);
-      try { fs.unlinkSync(happPath); } catch (_) {}
+      try {
+        fs.unlinkSync(happPath);
+      } catch (_) {}
     }
   }
   return canonicalPath;
@@ -159,14 +170,10 @@ async function verifyHappSha256(
   if (got === expected) return;
   const legacy = await rustUtils.legacyHappSha256FromBytes(assetBytes);
   if (legacy === expected) {
-    console.log(
-      `happ hash matched via legacy (Moss 0.15.x) schema: ${expected}`,
-    );
+    console.log(`happ hash matched via legacy (Moss 0.15.x) schema: ${expected}`);
     return;
   }
-  throw new Error(
-    `happ hash mismatch: expected ${expected}, got ${got} (legacy: ${legacy})`,
-  );
+  throw new Error(`happ hash mismatch: expected ${expected}, got ${got} (legacy: ${legacy})`);
 }
 
 let appVersion = app.getVersion();
@@ -242,9 +249,9 @@ hashWebhapp
       version: versionNumber,
       url: pathOrUrl,
       hashes,
-      changelog: "FIXME",
+      changelog: 'FIXME',
       releasedAt: Date.now(),
-    }
+    };
     console.log(JSON.stringify(version, undefined, 4));
 
     app.quit();
@@ -531,10 +538,10 @@ if (!RUNNING_WITH_COMMAND) {
   > = {};
   let UPDATE_AVAILABLE:
     | {
-      version: string;
-      releaseDate: string;
-      releaseNotes: string | undefined;
-    }
+        version: string;
+        releaseDate: string;
+        releaseNotes: string | undefined;
+      }
     | undefined;
 
   // icons
@@ -584,9 +591,13 @@ if (!RUNNING_WITH_COMMAND) {
     // Production
     if (!RUN_OPTIONS.devInfo) {
       return {
-        bootstrap_urls: RUN_OPTIONS.bootstrapUrl ? [RUN_OPTIONS.bootstrapUrl] : PRODUCTION_BOOTSTRAP_URLS,
-        signal_urls: RUN_OPTIONS.signalingUrl ? [RUN_OPTIONS.signalingUrl] : PRODUCTION_SIGNALING_URLS,
-        relay_urls: RUN_OPTIONS.relayUrl ? [RUN_OPTIONS.relayUrl] : PRODUCTION_RELAY_URLS
+        bootstrap_urls: RUN_OPTIONS.bootstrapUrl
+          ? [RUN_OPTIONS.bootstrapUrl]
+          : PRODUCTION_BOOTSTRAP_URLS,
+        signal_urls: RUN_OPTIONS.signalingUrl
+          ? [RUN_OPTIONS.signalingUrl]
+          : PRODUCTION_SIGNALING_URLS,
+        relay_urls: RUN_OPTIONS.relayUrl ? [RUN_OPTIONS.relayUrl] : PRODUCTION_RELAY_URLS,
       };
     }
     const [bootstrapUrl, signalingUrl, relayUrl] = readLocalServices();
@@ -594,8 +605,8 @@ if (!RUNNING_WITH_COMMAND) {
       bootstrap_urls: [RUN_OPTIONS.bootstrapUrl ?? bootstrapUrl],
       signal_urls: [RUN_OPTIONS.signalingUrl ?? signalingUrl],
       relay_urls: [RUN_OPTIONS.relayUrl ?? relayUrl],
-    }
-  }
+    };
+  };
 
   const createOrShowMainWindow = (): BrowserWindow => {
     if (MAIN_WINDOW) {
@@ -909,10 +920,11 @@ if (!RUNNING_WITH_COMMAND) {
             }
           }
 
-          let messageContent = `A Tool wants to access the following:${(details as MediaAccessPermissionRequest).mediaTypes?.includes('video')
-            ? '\n* camera'
-            : ''
-            }${(details as MediaAccessPermissionRequest).mediaTypes?.includes('audio') ? '\n* microphone' : ''}`;
+          let messageContent = `A Tool wants to access the following:${
+            (details as MediaAccessPermissionRequest).mediaTypes?.includes('video')
+              ? '\n* camera'
+              : ''
+          }${(details as MediaAccessPermissionRequest).mediaTypes?.includes('audio') ? '\n* microphone' : ''}`;
           if (unknownRequested) {
             messageContent =
               'A Tool wants to access either or all of the following:\n* camera\n* microphone\n* screen share';
@@ -1002,30 +1014,26 @@ if (!RUNNING_WITH_COMMAND) {
       // in dev mode
       if (RUN_OPTIONS.devInfo) {
         const [bootstrapUrl, signalingUrl, relayUrl, localServicesHandle] =
-          RUN_OPTIONS.devInfo.agentIdx === 1
-            ? await startLocalServices()
-            : readLocalServices();
+          RUN_OPTIONS.devInfo.agentIdx === 1 ? await startLocalServices() : readLocalServices();
         RUN_OPTIONS.bootstrapUrl = RUN_OPTIONS.bootstrapUrl
           ? RUN_OPTIONS.bootstrapUrl
           : bootstrapUrl;
         RUN_OPTIONS.signalingUrl = RUN_OPTIONS.signalingUrl
           ? RUN_OPTIONS.signalingUrl
           : signalingUrl;
-        RUN_OPTIONS.relayUrl = RUN_OPTIONS.relayUrl
-          ? RUN_OPTIONS.relayUrl
-          : relayUrl;
+        RUN_OPTIONS.relayUrl = RUN_OPTIONS.relayUrl ? RUN_OPTIONS.relayUrl : relayUrl;
         LOCAL_SERVICES_HANDLE = localServicesHandle;
       } else {
         const networkOverrides = WE_FILE_SYSTEM.getNetworkOverrides();
         RUN_OPTIONS.bootstrapUrl = RUN_OPTIONS.bootstrapUrl
           ? RUN_OPTIONS.bootstrapUrl
-          : networkOverrides.bootstrapUrl ?? PRODUCTION_BOOTSTRAP_URLS[0];
+          : (networkOverrides.bootstrapUrl ?? PRODUCTION_BOOTSTRAP_URLS[0]);
         RUN_OPTIONS.signalingUrl = RUN_OPTIONS.signalingUrl
           ? RUN_OPTIONS.signalingUrl
           : PRODUCTION_SIGNALING_URLS[0];
         RUN_OPTIONS.relayUrl = RUN_OPTIONS.relayUrl
           ? RUN_OPTIONS.relayUrl
-          : networkOverrides.relayUrl ?? PRODUCTION_RELAY_URLS[0];
+          : (networkOverrides.relayUrl ?? PRODUCTION_RELAY_URLS[0]);
       }
     }
 
@@ -1066,7 +1074,7 @@ if (!RUNNING_WITH_COMMAND) {
       });
       autoUpdater.setFeedURL({
         provider: 'generic',
-        url: 'https://github.com/lightningrodlabs/moss/releases/latest/download'
+        url: 'https://github.com/lightningrodlabs/moss/releases/latest/download',
       });
 
       // Check for dev update config (for local testing)
@@ -1238,7 +1246,7 @@ if (!RUNNING_WITH_COMMAND) {
         }
       },
     );
-    ipcMain.handle('factory-reset', async () => {
+    (ipcMain.handle('factory-reset', async () => {
       const userDecision = await dialog.showMessageBox({
         title: 'Factory Reset',
         type: 'warning',
@@ -1273,39 +1281,42 @@ if (!RUNNING_WITH_COMMAND) {
         app.quit();
       }
     }),
-    ipcMain.handle('get-network-overrides', () => {
-      const overrides = WE_FILE_SYSTEM.getNetworkOverrides();
-      const networkUrls = getNetworkUrls();
-      return {
-        overrides,
-        defaults: {
-          bootstrapUrl: PRODUCTION_BOOTSTRAP_URLS[0],
-          relayUrl: PRODUCTION_RELAY_URLS[0],
-        },
-        current: {
-          bootstrapUrl: networkUrls.bootstrap_urls[0],
-          relayUrl: networkUrls.relay_urls[0],
-        },
-      };
-    });
-    ipcMain.handle('set-network-overrides', async (_e, overrides: { bootstrapUrl?: string; relayUrl?: string }) => {
-      WE_FILE_SYSTEM.setNetworkOverrides(overrides);
-      // Relaunch Moss
-      if (MAIN_WINDOW) MAIN_WINDOW.close();
-      if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
-      for (const window of Object.values(WAL_WINDOWS)) {
-        window.window.close();
-      }
-      if (LAIR_HANDLE) LAIR_HANDLE.kill();
-      if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.processHandle.kill();
-      const options: Electron.RelaunchOptions = { args: process.argv };
-      if (process.env.APPIMAGE) {
-        options.args!.unshift('--appimage-extract-and-run');
-        options.execPath = process.env.APPIMAGE;
-      }
-      app.relaunch(options);
-      app.quit();
-    });
+      ipcMain.handle('get-network-overrides', () => {
+        const overrides = WE_FILE_SYSTEM.getNetworkOverrides();
+        const networkUrls = getNetworkUrls();
+        return {
+          overrides,
+          defaults: {
+            bootstrapUrl: PRODUCTION_BOOTSTRAP_URLS[0],
+            relayUrl: PRODUCTION_RELAY_URLS[0],
+          },
+          current: {
+            bootstrapUrl: networkUrls.bootstrap_urls[0],
+            relayUrl: networkUrls.relay_urls[0],
+          },
+        };
+      }));
+    ipcMain.handle(
+      'set-network-overrides',
+      async (_e, overrides: { bootstrapUrl?: string; relayUrl?: string }) => {
+        WE_FILE_SYSTEM.setNetworkOverrides(overrides);
+        // Relaunch Moss
+        if (MAIN_WINDOW) MAIN_WINDOW.close();
+        if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
+        for (const window of Object.values(WAL_WINDOWS)) {
+          window.window.close();
+        }
+        if (LAIR_HANDLE) LAIR_HANDLE.kill();
+        if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.processHandle.kill();
+        const options: Electron.RelaunchOptions = { args: process.argv };
+        if (process.env.APPIMAGE) {
+          options.args!.unshift('--appimage-extract-and-run');
+          options.execPath = process.env.APPIMAGE;
+        }
+        app.relaunch(options);
+        app.quit();
+      },
+    );
     ipcMain.handle('clear-network-overrides', async () => {
       WE_FILE_SYSTEM.clearNetworkOverrides();
       // Relaunch Moss
@@ -1480,9 +1491,7 @@ if (!RUNNING_WITH_COMMAND) {
           const { screenshot: _, ...rest } = content;
           return rest;
         })
-        .sort(
-          (a: { timestamp: number }, b: { timestamp: number }) => b.timestamp - a.timestamp,
-        );
+        .sort((a: { timestamp: number }, b: { timestamp: number }) => b.timestamp - a.timestamp);
     });
     ipcMain.handle('get-feedback', async (_e, id: string) => {
       const filePath = path.join(WE_FILE_SYSTEM.feedbackDir, `${id}.json`);
@@ -1501,37 +1510,40 @@ if (!RUNNING_WITH_COMMAND) {
     );
     ipcMain.handle('sign-zome-call', handleSignZomeCall);
     ipcMain.handle('sign-zome-call-applet', handleSignZomeCallApplet);
-    ipcMain.handle('open-wal-window', (_e, src: string, appletId: AppletId, groupId: DnaHashB64, wal: WAL) => {
-      const maybeExistingWindowInfo = WAL_WINDOWS[src];
-      if (maybeExistingWindowInfo) {
-        maybeExistingWindowInfo.window.show();
-        return;
-      }
-      const newWalWindow = createWalWindow();
-      // on-before-unload (added here for searchability of event-related code)
-      // This event is forwarded to the window in order to discern in the
-      // onbeforeunload callback between reloading and closing of the window
-      newWalWindow.on('close', () => {
-        // on-before-unload
-        // closing may be prevented by the beforeunload event listener in the window
-        // the first time. The window should however be hidden already anyway.
-        newWalWindow.hide();
-        emitToWindow(newWalWindow, 'window-closing', null);
-      });
-      newWalWindow.on('closed', () => {
-        delete WAL_WINDOWS[src];
-      });
-      WAL_WINDOWS[src] = {
-        window: newWalWindow,
-        appletId,
-        groupId,
-        wal,
-      };
-    });
+    ipcMain.handle(
+      'open-wal-window',
+      (_e, src: string, appletId: AppletId, groupId: DnaHashB64, wal: WAL) => {
+        const maybeExistingWindowInfo = WAL_WINDOWS[src];
+        if (maybeExistingWindowInfo) {
+          maybeExistingWindowInfo.window.show();
+          return;
+        }
+        const newWalWindow = createWalWindow();
+        // on-before-unload (added here for searchability of event-related code)
+        // This event is forwarded to the window in order to discern in the
+        // onbeforeunload callback between reloading and closing of the window
+        newWalWindow.on('close', () => {
+          // on-before-unload
+          // closing may be prevented by the beforeunload event listener in the window
+          // the first time. The window should however be hidden already anyway.
+          newWalWindow.hide();
+          emitToWindow(newWalWindow, 'window-closing', null);
+        });
+        newWalWindow.on('closed', () => {
+          delete WAL_WINDOWS[src];
+        });
+        WAL_WINDOWS[src] = {
+          window: newWalWindow,
+          appletId,
+          groupId,
+          wal,
+        };
+      },
+    );
     // To be called by WAL windows to find out which src the iframe is supposed to use
     ipcMain.handle(
       'get-my-src',
-      (e): { iframeSrc: string; appletId: AppletId; groupId: DnaHashB64, wal: WAL } | undefined => {
+      (e): { iframeSrc: string; appletId: AppletId; groupId: DnaHashB64; wal: WAL } | undefined => {
         console.log();
         const walAndWindowInfo = Object.entries(WAL_WINDOWS).find(
           ([_src, window]) => window.window.webContents.id === e.sender.id,
@@ -1707,16 +1719,18 @@ if (!RUNNING_WITH_COMMAND) {
       let network_info: NetworkInfo = { bootstrap_urls: [], signal_urls: [], relay_urls: [] };
       try {
         network_info = getNetworkUrls();
-      } catch (e) { console.error('Failed to get network urls', e) }
+      } catch (e) {
+        console.error('Failed to get network urls', e);
+      }
       /** */
       return HOLOCHAIN_MANAGER
         ? {
-          app_port: HOLOCHAIN_MANAGER.appPort,
-          admin_port: HOLOCHAIN_MANAGER.adminPort,
-          moss_version: app.getVersion(),
-          weave_protocol_version: '0.15',
-          network_info,
-        }
+            app_port: HOLOCHAIN_MANAGER.appPort,
+            admin_port: HOLOCHAIN_MANAGER.adminPort,
+            moss_version: app.getVersion(),
+            weave_protocol_version: '0.15',
+            network_info,
+          }
         : undefined;
     });
     ipcMain.handle(
@@ -1778,79 +1792,92 @@ if (!RUNNING_WITH_COMMAND) {
       return key;
     };
 
-    ipcMain.handle('install-group-happ', async (_e, withProgenitor: boolean, customGroupSeed: string | undefined = undefined): Promise<AppInfo> => {
-      const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
-      let agentPubKey = globalPubKeyFromListAppsResponse(apps);
-      if (!agentPubKey) {
-        agentPubKey = await getOrCreateAgentPubKey();
-      }
+    ipcMain.handle(
+      'install-group-happ',
+      async (
+        _e,
+        withProgenitor: boolean,
+        customGroupSeed: string | undefined = undefined,
+      ): Promise<AppInfo> => {
+        const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
+        let agentPubKey = globalPubKeyFromListAppsResponse(apps);
+        if (!agentPubKey) {
+          agentPubKey = await getOrCreateAgentPubKey();
+        }
 
-      // generate random network seed
-      const networkSeed = customGroupSeed || uuidv4();
-      const hash = createHash('sha256');
-      hash.update(networkSeed);
-      const hashedSeed = hash.digest('base64');
-      const appId = `group#${hashedSeed}#${withProgenitor ? encodeHashToBase64(agentPubKey) : null}`;
-      console.log('Determined appId for group: ', appId);
+        // generate random network seed
+        const networkSeed = customGroupSeed || uuidv4();
+        const hash = createHash('sha256');
+        hash.update(networkSeed);
+        const hashedSeed = hash.digest('base64');
+        const appId = `group#${hashedSeed}#${withProgenitor ? encodeHashToBase64(agentPubKey) : null}`;
+        console.log('Determined appId for group: ', appId);
 
-      const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
+        const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
 
-      const properties = withProgenitor
-        ? { progenitor: encodeHashToBase64(agentPubKey) }
-        : { progenitor: null };
+        const properties = withProgenitor
+          ? { progenitor: encodeHashToBase64(agentPubKey) }
+          : { progenitor: null };
 
-      let appInfo: AppInfo;
+        let appInfo: AppInfo;
 
-      // Try installing the app twice. It may fail the first time with a timeout error
-      // if wasms take too long to compile. This should only happen the very first time
-      // a group happ is being installed.
-      try {
-        appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-          source: {
-            type: 'path',
-            value: groupHappPath,
-          },
-          installed_app_id: appId,
-          agent_key: agentPubKey,
-          network_seed: networkSeed,
-          roles_settings: {
-            group: {
-              type: 'provisioned',
-              value: {
-                modifiers: {
-                  properties,
+        // Try installing the app twice. It may fail the first time with a timeout error
+        // if wasms take too long to compile. This should only happen the very first time
+        // a group happ is being installed.
+        try {
+          appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
+            source: {
+              type: 'path',
+              value: groupHappPath,
+            },
+            installed_app_id: appId,
+            agent_key: agentPubKey,
+            network_seed: networkSeed,
+            roles_settings: {
+              group: {
+                type: 'provisioned',
+                value: {
+                  modifiers: {
+                    properties,
+                  },
                 },
               },
             },
-          },
-        });
-      } catch (e) {
-        console.warn('Failed to install group happ: ', e, '\nRetrying once...');
-        WE_EMITTER.emitMossError(`Failed to install group happ: ${e}.\n Retrying once...`);
-        appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
-          source: {
-            type: 'path',
-            value: groupHappPath,
-          },
-          installed_app_id: appId,
-          agent_key: agentPubKey,
-          network_seed: networkSeed,
-          roles_settings: {
-            group: {
-              type: 'provisioned',
-              value: {
-                modifiers: {
-                  properties,
+          });
+        } catch (e) {
+          console.warn('Failed to install group happ: ', e, '\nRetrying once...');
+          WE_EMITTER.emitMossError(`Failed to install group happ: ${e}.\n Retrying once...`);
+          appInfo = await HOLOCHAIN_MANAGER!.adminWebsocket.installApp({
+            source: {
+              type: 'path',
+              value: groupHappPath,
+            },
+            installed_app_id: appId,
+            agent_key: agentPubKey,
+            network_seed: networkSeed,
+            roles_settings: {
+              group: {
+                type: 'provisioned',
+                value: {
+                  modifiers: {
+                    properties,
+                  },
                 },
               },
             },
-          },
-        });
-      }
-      await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
-      setTimeout(() => autoSaveGroupsExport().catch((e) => console.warn('Auto-export after install-group-happ failed:', e)), 2000);
-      return appInfo;
-    });
+          });
+        }
+        await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+        setTimeout(
+          () =>
+            autoSaveGroupsExport().catch((e) =>
+              console.warn('Auto-export after install-group-happ failed:', e),
+            ),
+          2000,
+        );
+        return appInfo;
+      },
+    );
     // ── Shared types for groups data export / import ──────────────────────────────
     type ToolExportEntry = {
       custom_name: string;
@@ -1878,137 +1905,160 @@ if (!RUNNING_WITH_COMMAND) {
       const groupApps = allApps.filter((a) => a.installed_app_id.startsWith('group#'));
       const appPort = HOLOCHAIN_MANAGER!.appPort;
 
-      const groupsData = await Promise.all(groupApps.map(async (groupApp) => {
-        const appId = groupApp.installed_app_id;
-        const parts = appId.split('#');
-        const progenitor = parts[2] !== 'null' ? parts[2] : null;
+      const groupsData = await Promise.all(
+        groupApps.map(async (groupApp) => {
+          const appId = groupApp.installed_app_id;
+          const parts = appId.split('#');
+          const progenitor = parts[2] !== 'null' ? parts[2] : null;
 
-        let networkSeed: string | undefined;
-        let dnaHashB64: DnaHashB64 | undefined;
-        const groupCells = groupApp.cell_info['group'];
-        if (groupCells) {
-          for (const cell of groupCells) {
-            if (cell.type === CellType.Provisioned) {
-              networkSeed = cell.value.dna_modifiers.network_seed;
-              dnaHashB64 = encodeHashToBase64(cell.value.cell_id[0]);
-              break;
-            }
-          }
-        }
-
-        let groupProfile: { name: string; icon_src: string } | undefined;
-        let groupDescription: string | undefined;
-        let agentProfile: AgentProfile | undefined;
-        let tools: Array<{
-          custom_name: string;
-          network_seed: string | undefined;
-          toolId: string;
-          toolName?: string;
-          toolListUrl: string;
-          versionBranch: string;
-        }> = [];
-        try {
-          const token = await HOLOCHAIN_MANAGER!.getAppToken(appId);
-          const appWs = await AppWebsocket.connect({
-            url: new URL(`ws://127.0.0.1:${appPort}`),
-            wsClientOptions: { origin: 'moss-admin' },
-            token,
-            callZomeTransform: mossCallZomeTransform(),
-          });
-          const groupProfileRecord = await appWs.callZome({
-            role_name: 'group',
-            zome_name: 'group',
-            fn_name: 'get_group_profile',
-            payload: { input: null, local: false },
-          });
-          if (groupProfileRecord) {
-            const entryBytes = (groupProfileRecord as any).entry?.Present?.entry;
-            if (entryBytes) {
-              const profileEntry = decode(entryBytes) as { name: string; icon_src: string };
-              groupProfile = { name: profileEntry.name, icon_src: profileEntry.icon_src };
-            }
-          }
-
-          try {
-            const descRecord = await appWs.callZome({
-              role_name: 'group',
-              zome_name: 'group',
-              fn_name: 'get_group_meta_data',
-              payload: { input: 'description', local: false },
-            });
-            if (descRecord) {
-              const descEntryBytes = (descRecord as any).entry?.Present?.entry;
-              if (descEntryBytes) {
-                const descEntry = decode(descEntryBytes) as { name: string; data: string; permission_hash: any };
-                groupDescription = descEntry.data;
+          let networkSeed: string | undefined;
+          let dnaHashB64: DnaHashB64 | undefined;
+          const groupCells = groupApp.cell_info['group'];
+          if (groupCells) {
+            for (const cell of groupCells) {
+              if (cell.type === CellType.Provisioned) {
+                networkSeed = cell.value.dna_modifiers.network_seed;
+                dnaHashB64 = encodeHashToBase64(cell.value.cell_id[0]);
+                break;
               }
             }
-          } catch (e) {
-            console.warn(`Failed to get group description for group ${appId}:`, e);
           }
 
-          const agentProfileRecord = await appWs.callZome({
-            role_name: 'group',
-            zome_name: 'profiles',
-            fn_name: 'get_my_profile',
-            payload: null,
-          });
-          if (agentProfileRecord) {
-            const entryBytes = (agentProfileRecord as any).entry?.Present?.entry;
-            if (entryBytes) {
-              const profileEntry = decode(entryBytes) as AgentProfile;
-              agentProfile = { nickname: profileEntry.nickname, fields: profileEntry.fields ?? {} };
-            }
-          }
-
+          let groupProfile: { name: string; icon_src: string } | undefined;
+          let groupDescription: string | undefined;
+          let agentProfile: AgentProfile | undefined;
+          let tools: Array<{
+            custom_name: string;
+            network_seed: string | undefined;
+            toolId: string;
+            toolName?: string;
+            toolListUrl: string;
+            versionBranch: string;
+          }> = [];
           try {
-            const myJoinedApplets: Array<{ public_entry_hash: Uint8Array; applet: any; applet_pubkey: Uint8Array }> | null =
-              await appWs.callZome({
+            const token = await HOLOCHAIN_MANAGER!.getAppToken(appId);
+            const appWs = await AppWebsocket.connect({
+              url: new URL(`ws://127.0.0.1:${appPort}`),
+              wsClientOptions: { origin: 'moss-admin' },
+              token,
+              callZomeTransform: mossCallZomeTransform(),
+            });
+            const groupProfileRecord = await appWs.callZome({
+              role_name: 'group',
+              zome_name: 'group',
+              fn_name: 'get_group_profile',
+              payload: { input: null, local: false },
+            });
+            if (groupProfileRecord) {
+              const entryBytes = (groupProfileRecord as any).entry?.Present?.entry;
+              if (entryBytes) {
+                const profileEntry = decode(entryBytes) as { name: string; icon_src: string };
+                groupProfile = { name: profileEntry.name, icon_src: profileEntry.icon_src };
+              }
+            }
+
+            try {
+              const descRecord = await appWs.callZome({
+                role_name: 'group',
+                zome_name: 'group',
+                fn_name: 'get_group_meta_data',
+                payload: { input: 'description', local: false },
+              });
+              if (descRecord) {
+                const descEntryBytes = (descRecord as any).entry?.Present?.entry;
+                if (descEntryBytes) {
+                  const descEntry = decode(descEntryBytes) as {
+                    name: string;
+                    data: string;
+                    permission_hash: any;
+                  };
+                  groupDescription = descEntry.data;
+                }
+              }
+            } catch (e) {
+              console.warn(`Failed to get group description for group ${appId}:`, e);
+            }
+
+            const agentProfileRecord = await appWs.callZome({
+              role_name: 'group',
+              zome_name: 'profiles',
+              fn_name: 'get_my_profile',
+              payload: null,
+            });
+            if (agentProfileRecord) {
+              const entryBytes = (agentProfileRecord as any).entry?.Present?.entry;
+              if (entryBytes) {
+                const profileEntry = decode(entryBytes) as AgentProfile;
+                agentProfile = {
+                  nickname: profileEntry.nickname,
+                  fields: profileEntry.fields ?? {},
+                };
+              }
+            }
+
+            try {
+              const myJoinedApplets: Array<{
+                public_entry_hash: Uint8Array;
+                applet: any;
+                applet_pubkey: Uint8Array;
+              }> | null = await appWs.callZome({
                 role_name: 'group',
                 zome_name: 'group',
                 fn_name: 'get_my_joined_applets',
                 payload: null,
               });
-            if (myJoinedApplets) {
-              for (const entry of myJoinedApplets) {
-                const applet = entry.applet;
-                let toolId: string | undefined;
-                let toolName: string | undefined;
-                let toolListUrl: string | undefined;
-                let versionBranch: string | undefined;
-                try {
-                  const distInfo: DistributionInfo = JSON.parse(applet.distribution_info);
-                  if (distInfo.type === 'web2-tool-list') {
-                    toolId = distInfo.info.toolId;
-                    toolName = distInfo.info.toolName;
-                    toolListUrl = distInfo.info.toolListUrl;
-                    versionBranch = distInfo.info.versionBranch;
+              if (myJoinedApplets) {
+                for (const entry of myJoinedApplets) {
+                  const applet = entry.applet;
+                  let toolId: string | undefined;
+                  let toolName: string | undefined;
+                  let toolListUrl: string | undefined;
+                  let versionBranch: string | undefined;
+                  try {
+                    const distInfo: DistributionInfo = JSON.parse(applet.distribution_info);
+                    if (distInfo.type === 'web2-tool-list') {
+                      toolId = distInfo.info.toolId;
+                      toolName = distInfo.info.toolName;
+                      toolListUrl = distInfo.info.toolListUrl;
+                      versionBranch = distInfo.info.versionBranch;
+                    }
+                  } catch (e) {
+                    console.warn(
+                      `Failed to parse distribution_info for applet "${applet.custom_name}":`,
+                      e,
+                    );
                   }
-                } catch (e) {
-                  console.warn(`Failed to parse distribution_info for applet "${applet.custom_name}":`, e);
-                }
-                if (toolId && toolListUrl && versionBranch) {
-                  tools.push({
-                    custom_name: applet.custom_name,
-                    network_seed: applet.network_seed,
-                    toolId,
-                    toolName,
-                    toolListUrl,
-                    versionBranch,
-                  });
+                  if (toolId && toolListUrl && versionBranch) {
+                    tools.push({
+                      custom_name: applet.custom_name,
+                      network_seed: applet.network_seed,
+                      toolId,
+                      toolName,
+                      toolListUrl,
+                      versionBranch,
+                    });
+                  }
                 }
               }
+            } catch (toolsFetchErr) {
+              console.warn(`Failed to get applets for group ${appId}:`, toolsFetchErr);
             }
-          } catch (toolsFetchErr) {
-            console.warn(`Failed to get applets for group ${appId}:`, toolsFetchErr);
+          } catch (e) {
+            console.warn(`Failed to get profiles for group ${appId}:`, e);
+            groupProfile = dnaHashB64 ? WE_FILE_SYSTEM.readGroupProfile(dnaHashB64) : undefined;
           }
-        } catch (e) {
-          console.warn(`Failed to get profiles for group ${appId}:`, e);
-          groupProfile = dnaHashB64 ? WE_FILE_SYSTEM.readGroupProfile(dnaHashB64) : undefined;
-        }
 
-        return { appId, networkSeed, progenitor, groupProfile, agentProfile, description: groupDescription, tools };
-      }));
+          return {
+            appId,
+            networkSeed,
+            progenitor,
+            groupProfile,
+            agentProfile,
+            description: groupDescription,
+            tools,
+          };
+        }),
+      );
 
       return groupsData.filter((g) => g.networkSeed);
     };
@@ -2034,18 +2084,35 @@ if (!RUNNING_WITH_COMMAND) {
       const groupHappPath = path.join(DEFAULT_APPS_DIRECTORY, 'group.happ');
       const results: ImportResult[] = [];
       const total = groups.length;
-      const emitProgress = (current: number, groupName: string | undefined, step: string, extra?: object) =>
-        emitToWindow(MAIN_WINDOW!, 'import-groups-progress', { current, total, groupName, step, ...extra });
+      const emitProgress = (
+        current: number,
+        groupName: string | undefined,
+        step: string,
+        extra?: object,
+      ) =>
+        emitToWindow(MAIN_WINDOW!, 'import-groups-progress', {
+          current,
+          total,
+          groupName,
+          step,
+          ...extra,
+        });
 
       for (let gi = 0; gi < groups.length; gi++) {
         const group = groups[gi];
         const current = gi + 1;
         const { progenitor, groupProfile, agentProfile, description } = group;
         const networkSeed = forkImportedSeed(group.networkSeed, RUN_OPTIONS.fork);
-        console.log(`Importing group ${current}/${total}: "${groupProfile?.name || 'Unnamed'}" with network seed "${redactSeed(networkSeed)}" and progenitor "${progenitor}"`);
+        console.log(
+          `Importing group ${current}/${total}: "${groupProfile?.name || 'Unnamed'}" with network seed "${redactSeed(networkSeed)}" and progenitor "${progenitor}"`,
+        );
 
         if (!networkSeed) {
-          results.push({ groupName: groupProfile?.name, status: 'error', error: 'Missing network seed' });
+          results.push({
+            groupName: groupProfile?.name,
+            status: 'error',
+            error: 'Missing network seed',
+          });
           emitProgress(current, groupProfile?.name, 'done', { status: 'error' });
           continue;
         }
@@ -2175,7 +2242,11 @@ if (!RUNNING_WITH_COMMAND) {
                 }
 
                 const developerCollectiveId = new URL(toolListUrl).hostname;
-                const toolCompatibilityId = deriveToolCompatibilityId({ toolListUrl, toolId, versionBranch });
+                const toolCompatibilityId = deriveToolCompatibilityId({
+                  toolListUrl,
+                  toolId,
+                  versionBranch,
+                });
                 const newDistributionInfo: DistributionInfo = {
                   type: 'web2-tool-list',
                   info: {
@@ -2216,15 +2287,19 @@ if (!RUNNING_WITH_COMMAND) {
                 if (!WE_FILE_SYSTEM.readToolIcon(toolCompatibilityId)) {
                   try {
                     const iconUrl = new URL(toolInfoEntry.icon);
-                    const base64Icon = await retryNTimes(async () => {
-                      const iconResponse = await net.fetch(iconUrl.toString());
-                      const image = await Jimp.fromBuffer(await iconResponse.arrayBuffer());
-                      image.resize({ w: 300, h: 300 });
-                      const mimeType = mime.getType(toolInfoEntry.icon) || 'image/png';
-                      if (!['image/jpeg', 'image/png'].includes(mimeType))
-                        throw new Error('Only jpg and png icons are supported.');
-                      return await image.getBase64(mimeType as 'image/jpeg' | 'image/png');
-                    }, 3, 100);
+                    const base64Icon = await retryNTimes(
+                      async () => {
+                        const iconResponse = await net.fetch(iconUrl.toString());
+                        const image = await Jimp.fromBuffer(await iconResponse.arrayBuffer());
+                        image.resize({ w: 300, h: 300 });
+                        const mimeType = mime.getType(toolInfoEntry.icon) || 'image/png';
+                        if (!['image/jpeg', 'image/png'].includes(mimeType))
+                          throw new Error('Only jpg and png icons are supported.');
+                        return await image.getBase64(mimeType as 'image/jpeg' | 'image/png');
+                      },
+                      3,
+                      100,
+                    );
                     WE_FILE_SYSTEM.storeToolIconIfNecessary(toolCompatibilityId, base64Icon);
                   } catch (iconErr) {
                     console.warn(`Failed to fetch icon for tool "${toolId}":`, iconErr);
@@ -2232,7 +2307,9 @@ if (!RUNNING_WITH_COMMAND) {
                 }
 
                 const currentApps2 = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
-                const existingAppletEntry = currentApps2.find((a) => a.installed_app_id === appletAppId);
+                const existingAppletEntry = currentApps2.find(
+                  (a) => a.installed_app_id === appletAppId,
+                );
                 let appletAgentPubKey: Uint8Array;
 
                 if (existingAppletEntry) {
@@ -2249,19 +2326,31 @@ if (!RUNNING_WITH_COMMAND) {
                     const response = await net.fetch(versionToInstall.url);
                     const buffer = await response.arrayBuffer();
                     const assetBytes = Array.from(new Uint8Array(buffer));
-                    const { happSha256: gotHappSha256, webhappSha256: gotWebhappSha256, uiSha256: gotUiSha256 } =
-                      await rustUtils.validateHappOrWebhapp(assetBytes);
+                    const {
+                      happSha256: gotHappSha256,
+                      webhappSha256: gotWebhappSha256,
+                      uiSha256: gotUiSha256,
+                    } = await rustUtils.validateHappOrWebhapp(assetBytes);
                     await verifyHappSha256(sha256Happ, gotHappSha256, assetBytes);
                     if (sha256Webhapp && gotWebhappSha256 && gotWebhappSha256 !== sha256Webhapp)
-                      throw new Error(`webhapp hash mismatch: expected ${sha256Webhapp}, got ${gotWebhappSha256}`);
+                      throw new Error(
+                        `webhapp hash mismatch: expected ${sha256Webhapp}, got ${gotWebhappSha256}`,
+                      );
                     if (sha256Ui && gotUiSha256 && gotUiSha256 !== sha256Ui)
                       throw new Error(`ui hash mismatch: expected ${sha256Ui}, got ${gotUiSha256}`);
                     const tmpImportDir = path.join(os.tmpdir(), `we-applet-${nanoid(8)}`);
                     fs.mkdirSync(tmpImportDir, { recursive: true });
                     const webHappPath = path.join(tmpImportDir, 'applet_to_install.webhapp');
                     fs.writeFileSync(webHappPath, new Uint8Array(buffer));
-                    happToBeInstalledPath = await saveHappAtCanonicalPath(webHappPath, happsDir, uisDir, sha256Happ);
-                    try { fs.rmSync(tmpImportDir, { recursive: true }); } catch (_) { }
+                    happToBeInstalledPath = await saveHappAtCanonicalPath(
+                      webHappPath,
+                      happsDir,
+                      uisDir,
+                      sha256Happ,
+                    );
+                    try {
+                      fs.rmSync(tmpImportDir, { recursive: true });
+                    } catch (_) {}
                   }
 
                   const appAssetsInfo: AppAssetsInfo = deriveAppAssetsInfo(
@@ -2279,7 +2368,9 @@ if (!RUNNING_WITH_COMMAND) {
                     agent_key: myPubKey,
                     network_seed: toolNetworkSeed,
                   });
-                  await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appletAppId });
+                  await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({
+                    installed_app_id: appletAppId,
+                  });
 
                   appletAgentPubKey = appletAppInfo.agent_pub_key;
                 }
@@ -2290,9 +2381,14 @@ if (!RUNNING_WITH_COMMAND) {
                   fn_name: 'register_and_join_applet',
                   payload: { applet, joining_pubkey: appletAgentPubKey },
                 });
-                console.log(`Imported tool "${tool.custom_name}" (${appletAppId}) into group ${appId}`);
+                console.log(
+                  `Imported tool "${tool.custom_name}" (${appletAppId}) into group ${appId}`,
+                );
               } catch (toolErr) {
-                console.error(`Failed to import tool "${tool.custom_name || tool.toolId}":`, toolErr);
+                console.error(
+                  `Failed to import tool "${tool.custom_name || tool.toolId}":`,
+                  toolErr,
+                );
               }
             }
           }
@@ -2382,47 +2478,51 @@ if (!RUNNING_WITH_COMMAND) {
           },
         });
         await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
-        setTimeout(() => autoSaveGroupsExport().catch((e) => console.warn('Auto-export after join-group failed:', e)), 2000);
+        setTimeout(
+          () =>
+            autoSaveGroupsExport().catch((e) =>
+              console.warn('Auto-export after join-group failed:', e),
+            ),
+          2000,
+        );
         return appInfo;
       },
     );
-    ipcMain.handle(
-      'fetch-and-validate-happ-or-webhapp',
-      async (_e, url: string): Promise<any> => {
-        let byteArray;
-        if (url.startsWith('file://')) {
-          const relativePath = url.replace('file://', '');
-          const absolutePath = path.resolve(relativePath);
-          const fileBuffer = fs.readFileSync(absolutePath);
-          byteArray =  Array.from(new Uint8Array(fileBuffer));
-        } else {
-          const response = await net.fetch(url);
-          byteArray = Array.from(new Uint8Array(await response.arrayBuffer()));
-        }
-        const bytes = new Uint8Array(byteArray);
-        const { happSha256, webhappSha256, uiSha256 } = await rustUtils.validateHappOrWebhapp(byteArray);
-        if (uiSha256) {
-          if (!webhappSha256) throw Error('Ui sha256 defined but not webhapp sha256.');
-          return {
-            type: 'webhapp',
-            sha256: webhappSha256,
-            happ: {
-              sha256: happSha256,
-              roles: await decompressWebHapp(bytes),
-            },
-            ui: {
-              sha256: uiSha256,
-            },
-          };
-        } else {
-          return {
-            type: 'happ',
+    ipcMain.handle('fetch-and-validate-happ-or-webhapp', async (_e, url: string): Promise<any> => {
+      let byteArray;
+      if (url.startsWith('file://')) {
+        const relativePath = url.replace('file://', '');
+        const absolutePath = path.resolve(relativePath);
+        const fileBuffer = fs.readFileSync(absolutePath);
+        byteArray = Array.from(new Uint8Array(fileBuffer));
+      } else {
+        const response = await net.fetch(url);
+        byteArray = Array.from(new Uint8Array(await response.arrayBuffer()));
+      }
+      const bytes = new Uint8Array(byteArray);
+      const { happSha256, webhappSha256, uiSha256 } =
+        await rustUtils.validateHappOrWebhapp(byteArray);
+      if (uiSha256) {
+        if (!webhappSha256) throw Error('Ui sha256 defined but not webhapp sha256.');
+        return {
+          type: 'webhapp',
+          sha256: webhappSha256,
+          happ: {
             sha256: happSha256,
-            roles: await decompressHapp(bytes),
-          };
-        }
-      },
-    );
+            roles: await decompressWebHapp(bytes),
+          },
+          ui: {
+            sha256: uiSha256,
+          },
+        };
+      } else {
+        return {
+          type: 'happ',
+          sha256: happSha256,
+          roles: await decompressHapp(bytes),
+        };
+      }
+    });
     ipcMain.handle('validate-happ-or-webhapp', async (_e, bytes: number[]): Promise<AppHashes> => {
       const { happSha256, webhappSha256, uiSha256 } = await rustUtils.validateHappOrWebhapp(bytes);
       if (uiSha256) {
@@ -2593,7 +2693,7 @@ if (!RUNNING_WITH_COMMAND) {
           try {
             // clean up
             fs.rmSync(tmpDir, { recursive: true });
-          } catch (e) { }
+          } catch (e) {}
         } else {
           console.log(
             '@batch-update-applet-uis: UI already on the filesystem. Skipping download from remote source.',
@@ -2685,7 +2785,7 @@ if (!RUNNING_WITH_COMMAND) {
           try {
             // clean up
             fs.rmSync(tmpDir, { recursive: true });
-          } catch (e) { }
+          } catch (e) {}
         } else {
           console.log(
             '@update-applet-ui: UI already on the filesystem. Skipping download from remote source.',
@@ -2725,27 +2825,30 @@ if (!RUNNING_WITH_COMMAND) {
     ipcMain.handle('get-main-process-memory', () => {
       return process.memoryUsage();
     });
-    ipcMain.handle('get-conductor-process-memory', (): {
-      rssBytes: number;
-      vmSizeBytes: number;
-      pid: number;
-    } | null => {
-      const pid = HOLOCHAIN_MANAGER?.processHandle?.pid;
-      if (!pid) return null;
-      try {
-        const status = fs.readFileSync(`/proc/${pid}/status`, 'utf-8');
-        const vmRss = status.match(/^VmRSS:\s+(\d+)\s+kB$/m);
-        const vmSize = status.match(/^VmSize:\s+(\d+)\s+kB$/m);
-        return {
-          rssBytes: vmRss ? parseInt(vmRss[1], 10) * 1024 : 0,
-          vmSizeBytes: vmSize ? parseInt(vmSize[1], 10) * 1024 : 0,
-          pid,
-        };
-      } catch (_e) {
-        // Process may have exited or /proc not available (non-Linux)
-        return null;
-      }
-    });
+    ipcMain.handle(
+      'get-conductor-process-memory',
+      (): {
+        rssBytes: number;
+        vmSizeBytes: number;
+        pid: number;
+      } | null => {
+        const pid = HOLOCHAIN_MANAGER?.processHandle?.pid;
+        if (!pid) return null;
+        try {
+          const status = fs.readFileSync(`/proc/${pid}/status`, 'utf-8');
+          const vmRss = status.match(/^VmRSS:\s+(\d+)\s+kB$/m);
+          const vmSize = status.match(/^VmSize:\s+(\d+)\s+kB$/m);
+          return {
+            rssBytes: vmRss ? parseInt(vmRss[1], 10) * 1024 : 0,
+            vmSizeBytes: vmSize ? parseInt(vmSize[1], 10) * 1024 : 0,
+            pid,
+          };
+        } catch (_e) {
+          // Process may have exited or /proc not available (non-Linux)
+          return null;
+        }
+      },
+    );
     ipcMain.handle(
       'install-applet-bundle',
       async (
@@ -2790,7 +2893,7 @@ if (!RUNNING_WITH_COMMAND) {
 
         if (distributionInfo.type !== 'web2-tool-list') {
           throw new Error(`Unsupported distribution type ${distributionInfo.type}`);
-          }
+        }
 
         // Fetch the icon and store it
         const toolCompatibilityId = toolCompatibilityIdFromDistInfo(distributionInfo);
@@ -2921,12 +3024,17 @@ if (!RUNNING_WITH_COMMAND) {
           fs.writeFileSync(webHappPath, new Uint8Array(buffer));
           // NOTE: It's possible that an existing happ is being overwritten here. This shouldn't be a problem though.
           console.log('Saving webhapp...');
-          happToBeInstalledPath = await saveHappAtCanonicalPath(webHappPath, happsDir, uisDir, sha256Happ);
+          happToBeInstalledPath = await saveHappAtCanonicalPath(
+            webHappPath,
+            happsDir,
+            uisDir,
+            sha256Happ,
+          );
           console.log('webhapp saved.');
           try {
             // clean up
             fs.rmSync(tmpDir, { recursive: true });
-          } catch (e) { }
+          } catch (e) {}
         } else {
           console.log(
             '@install-applet-bundle: happ and UI already on the filesystem. Skipping download from remote source.',
@@ -2990,7 +3098,13 @@ if (!RUNNING_WITH_COMMAND) {
         // The tool snapshot is taken after the handler returns so the renderer can call
         // register_and_join_applet first.
         // timeout allows time for group to setup and processes to calm down
-        setTimeout(() => autoSaveGroupsExport().catch((e) => console.warn('Auto-export after install-applet-bundle failed:', e)), 2000);
+        setTimeout(
+          () =>
+            autoSaveGroupsExport().catch((e) =>
+              console.warn('Auto-export after install-applet-bundle failed:', e),
+            ),
+          2000,
+        );
         return appInfo;
       },
     );

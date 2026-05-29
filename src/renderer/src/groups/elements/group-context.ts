@@ -33,7 +33,6 @@ export class GroupContext extends LitElement {
 
   unsubscribe: Unsubscriber | undefined;
 
-
   /** On groupDnaHash change, update the groupStore and profilesStore. */
   updated(changedValues: PropertyValues) {
     super.updated(changedValues);
@@ -52,7 +51,9 @@ export class GroupContext extends LitElement {
           const newInstance = groupStore._instanceId;
           if (oldInstance !== newInstance) {
             const groupHashShort = encodeHashToBase64(this.groupDnaHash!).slice(0, 8);
-            onlineDebugLog(`[OnlineDebug][${groupHashShort}] group-context: GroupStore changed from instance=${oldInstance ?? 'none'} to instance=${newInstance}`);
+            onlineDebugLog(
+              `[OnlineDebug][${groupHashShort}] group-context: GroupStore changed from instance=${oldInstance ?? 'none'} to instance=${newInstance}`,
+            );
           }
           this.groupStore = groupStore;
           this.profilesStore = groupStore.profilesStore;
@@ -62,17 +63,14 @@ export class GroupContext extends LitElement {
     });
   }
 
-
   disconnectedCallback() {
     super.disconnectedCallback();
     if (this.unsubscribe) this.unsubscribe();
   }
 
-
   render() {
     return html`<slot></slot>`;
   }
-
 
   static styles = css`
     :host {

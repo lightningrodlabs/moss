@@ -7,5 +7,6 @@
 **Signature:**
 
 ```typescript
-toolInstaller: (appletHash: AppletHash, groupHash?: DnaHash) => Promise<import("@holochain/client").HoloHash | undefined>;
+toolInstaller: (appletHash: AppletHash, groupHash?: DnaHash) =>
+  Promise<import('@holochain/client').HoloHash | undefined>;
 ```

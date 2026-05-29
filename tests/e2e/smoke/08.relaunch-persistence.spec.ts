@@ -46,9 +46,10 @@ test('relaunch against same userDataDir retains the previously-created group', a
   // startFreshIfLegacyImport handles that idempotently.
   await waitForBoot(relaunched.mainWindow, 120_000);
   await startFreshIfLegacyImport(relaunched.mainWindow);
-  await expect(
-    relaunched.mainWindow.locator('groups-sidebar group-sidebar-button'),
-  ).toHaveCount(1, { timeout: 60_000 });
+  await expect(relaunched.mainWindow.locator('groups-sidebar group-sidebar-button')).toHaveCount(
+    1,
+    { timeout: 60_000 },
+  );
 
   // Sentinel: a brand-new launch with a different userDataDir should NOT have
   // the group. Skipping that here — it would just duplicate smoke #1's signal.

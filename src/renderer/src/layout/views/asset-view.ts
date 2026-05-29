@@ -48,8 +48,8 @@ export class AssetView extends LitElement {
       this.dispatchEvent(
         new CustomEvent('jump-to-applet', {
           detail: {
-              applet: this.location.value.value.dnaLocation.appletHash,
-              wal: this.wal,
+            applet: this.location.value.value.dnaLocation.appletHash,
+            wal: this.wal,
           },
           bubbles: true,
           composed: true,
@@ -81,7 +81,6 @@ export class AssetView extends LitElement {
     );
     const groupHash = groupCell?.value.cell_id[0];
 
-
     return html`<applet-view
         style="flex: 1"
         .appletHash=${dnaLocation.appletHash}
@@ -101,7 +100,7 @@ export class AssetView extends LitElement {
       ></applet-view>
       <div id="we-toolbar" class="column toolbar">
         <weave-client-context .weaveClient=${buildHeadlessWeaveClient(this._mossStore)}>
-          <sl-tooltip content=${msg("Open in Window")}>
+          <sl-tooltip content=${msg('Open in Window')}>
             <div
               class="row btn toolbar-btn"
               style="font-size: 28px"
@@ -116,7 +115,7 @@ export class AssetView extends LitElement {
               <sl-icon .src=${wrapPathInSvg(mdiOpenInNew)}></sl-icon>
             </div>
           </sl-tooltip>
-          <sl-tooltip content=${msg("Jump to parent Tool")}>
+          <sl-tooltip content=${msg('Jump to parent Tool')}>
             <div
               class="row btn toolbar-btn"
               tabindex="0"
@@ -131,7 +130,7 @@ export class AssetView extends LitElement {
             </div>
           </sl-tooltip>
 
-          <sl-tooltip content=${msg("Add to Pocket")}>
+          <sl-tooltip content=${msg('Add to Pocket')}>
             <div
               class="row btn toolbar-btn"
               tabindex="0"

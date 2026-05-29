@@ -8,11 +8,11 @@
 
 ```typescript
 export type WalRelationAndTags = {
-    relationHash: EntryHash;
-    createdAt: number;
-    wal: WAL;
-    tags: string[];
+  relationHash: EntryHash;
+  createdAt: number;
+  wal: WAL;
+  tags: string[];
 };
 ```
-**References:** [WAL](./api.wal.md)
 
+**References:** [WAL](./api.wal.md)
