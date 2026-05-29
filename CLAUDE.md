@@ -17,6 +17,8 @@ Moss is a Holochain-based runtime for composable peer-to-peer collaboration tool
 4. **Strong typing**: when possible allways use strong typing in typescript.
 5. **Holochain reference sources**: We are using Holochain 0.6.  The source for this is local and lives at the same level as this repo. DO NOT USE .cargo files or web searches to research holochain, just look locally.
 6. **Code comments**: Code comments must explain intent (what the code is trying to achieve), not the change itself. Do not write comments that compare to prior behavior, contrast with other functions, or describe what the code is *no longer* doing — that belongs in the PR description or commit message.
+7. **UI/UX/CSS/layout (and timing/3rd-party-internal) bugs = measure, don't reason.** These emerge from how layers compose at runtime; static reasoning and "looks right" fixes will loop endlessly. Before editing: dump the *real* DOM geometry (walk the ancestor chain incl. across shadow roots; log per element `overflowX/Y`, `clientH/scrollH` (→ which element scrolls), `clientW/scrollW`, rect `top/bottom`). Read back every DOM mutation to confirm it actually applied before building on it. A repro only counts if it reproduces the *failure* — if the repro passes but the app fails, the repro is wrong; replicate the exact containment. With multiple candidate causes, the next action is a measurement that distinguishes them, not a fix for the likeliest. Never tune a formula whose reference frame may be broken (e.g. filling to a container that has collapsed to content height).
+8. **Maintainability** Don't let file sizes get too big.  Split into separate concerns when possible.
 
 ## Development Commands
 

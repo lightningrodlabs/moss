@@ -26,6 +26,7 @@ import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 import { partialModifiersFromInviteLink } from '@theweave/utils';
 import { notifyError } from '@holochain-open-dev/elements';
 import { safeSetInterval, SafeIntervalHandle } from './utils.js';
+import { buildHeadlessWeaveClient } from './applets/applet-host.js';
 import SlRadioGroup from '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
 import {PartialModifiers} from "@theweave/moss-types";
 
@@ -138,6 +139,13 @@ export class MossApp extends LitElement {
     window.addEventListener('message', this._happMessageListener);
 
     if (this._mossStore) {
+      // why: <wal-embed> (from @theweave/elements) reads window.__WEAVE_API__
+      // directly in firstUpdated() instead of taking a client via context. In
+      // applet iframes the iframe bootstrap sets that global, but in the host
+      // renderer it's undefined, so any host-side wal-embed mount throws and
+      // the tile renders "invalid URL." Install the headless client globally
+      // so wal-embed works wherever it's used in the host (group dashboard).
+      window.__WEAVE_API__ = buildHeadlessWeaveClient(this._mossStore) as any;
       await this._mossStore.checkForUiUpdates();
       // Check once every hour or on page refresh
       // Uses safeSetInterval to prevent call stacking

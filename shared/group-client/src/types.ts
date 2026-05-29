@@ -56,6 +56,72 @@ export type GroupProfile = {
 
 export const GROUP_DESCRIPTION_NAME = 'description';
 export const GROUP_APPLETS_META_DATA_NAME = 'APPLETS_META_DATA';
+export const GROUP_DASHBOARD_NAME = 'dashboard';
+
+/**
+ * A single tile placed on the group home dashboard. The discriminated union
+ * lets stewards mix live WAL embeds with simple content blocks.
+ */
+export type DashboardTile =
+  | { kind: 'wal-embed'; wal: string }
+  | { kind: 'markdown'; source: string }
+  | { kind: 'image'; src: string; alt?: string }
+  | { kind: 'iframe'; src: string };
+
+/**
+ * Layout coordinates use Gridstack's 12-column grid model (`w`/`h` are in
+ * grid units, not pixels). `id` is a stable client-side identifier so the
+ * grid can re-associate tiles with DOM nodes across renders.
+ *
+ * `fixed` (default false) marks a tile as a pinned-size element: when true
+ * the tile cannot be moved or resized in edit mode and other tiles flow
+ * around it. Use for "anchor" content (a logo, a fixed-aspect image) where
+ * resizing changes meaning.
+ */
+export type DashboardTileEntry = {
+  id: string;
+  layout: { x: number; y: number; w: number; h: number };
+  tile: DashboardTile;
+  fixed?: boolean;
+  /**
+   * Optional accent background for the tile. When unset, the tile uses the
+   * default (white) background. Otherwise stored as a stable key (e.g.
+   * 'green', 'blue') that the renderer maps to a CSS color so the palette
+   * can evolve without re-encoding existing entries.
+   */
+  color?: string;
+  /**
+   * When true the tile grows to fill the visible vertical space of the
+   * dashboard. Only meaningful for a tile with no other tiles below it in its
+   * column span (otherwise growing would push them down indefinitely). The
+   * renderer recomputes `layout.h` from the available height and re-applies on
+   * resize, since a gridstack grid has no native "fill remaining height".
+   */
+  fillHeight?: boolean;
+};
+
+/**
+ * Current on-chain shape version for {@link GroupDashboard}. Bump whenever the
+ * persisted tile/dashboard shape changes in a non-additive way, and migrate in
+ * {@link GroupClient.getGroupDashboard}. Entries written before versioning was
+ * introduced have no `schemaVersion` and are treated as version 1.
+ */
+export const GROUP_DASHBOARD_SCHEMA_VERSION = 1;
+
+export type GroupDashboard = {
+  /**
+   * Shape version of this dashboard entry. Absent on entries written before
+   * versioning existed — readers treat `undefined` as version 1.
+   */
+  schemaVersion?: number;
+  tiles: DashboardTileEntry[];
+  updatedAt: number;
+  /**
+   * Whether the group's foyer (chat) panel is shown. Optional per group.
+   * `undefined` is treated as enabled so existing groups keep their foyer.
+   */
+  foyerEnabled?: boolean;
+};
 
 export type GroupMetaData = {
   permission_hash?: ActionHash;

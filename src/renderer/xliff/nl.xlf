@@ -582,37 +582,9 @@
   <source>Tool undeprecated.</source>
   <target>Tool goedgekeurd.</target>
 </trans-unit>
-<trans-unit id="sf2f0e2d57183480d">
-  <source>Failed to undeprecate Tool (see console for details)</source>
-  <target>Tool goedkeuren mislukt (zie console voor details)</target>
-</trans-unit>
 <trans-unit id="sd13c458659b1b8e7">
   <source>You don't have any Tools installed in this group. Go to the Tool Library to install Tools to this group.</source>
   <target>Je hebt geen Tools geïnstalleerd in deze groep. Ga naar de Tool Bibliotheek om Tools aan deze groep te installeren.</target>
-</trans-unit>
-<trans-unit id="s45a179a4d2fe3729">
-  <source>No abandoned Tools.</source>
-  <target>Geen verlaten Tools.</target>
-</trans-unit>
-<trans-unit id="s4e92d160c3305647">
-  <source>Activated Tools</source>
-  <target>Geactiveerde Tools</target>
-</trans-unit>
-<trans-unit id="sa670264e8f449d1c">
-  <source>Abandoned Tools</source>
-  <target>Verlaten Tools</target>
-</trans-unit>
-<trans-unit id="s6466997515d6d5b3">
-  <source>New Steward Added.</source>
-  <target>Nieuwe Verzorger toegevoegd.</target>
-</trans-unit>
-<trans-unit id="s2aac2023bcfa6e62">
-  <source>Add Steward:</source>
-  <target>Verzorger toevoegen:</target>
-</trans-unit>
-<trans-unit id="sb78ce49735cd209e">
-  <source>expiry</source>
-  <target>vervaldatum</target>
 </trans-unit>
 <trans-unit id="s445ad48f4f733285">
   <source>Error leaving the group</source>
@@ -626,14 +598,6 @@
   <source>Are you sure you want to leave this group?</source>
   <target>Weet je zeker dat je deze groep wilt verlaten?</target>
 </trans-unit>
-<trans-unit id="s62e9eba92a6d2fef">
-  <source>⚠️ This will delete all your Tools of this group and the data therein</source>
-  <target>⚠️ Dit verwijdert al je Tools van deze groep en de gegevens daarin</target>
-</trans-unit>
-<trans-unit id="se869a6655b76b079">
-  <source> (unless a Tool is shared with another group of yours).</source>
-  <target> (tenzij een Tool wordt gedeeld met een andere groep van jou).</target>
-</trans-unit>
 <trans-unit id="s2ceb11be2290bb1b">
   <source>Cancel</source>
   <target>Annuleren</target>
@@ -641,10 +605,6 @@
 <trans-unit id="s19bee21a859fbea0">
   <source>Leave</source>
   <target>Verlaten</target>
-</trans-unit>
-<trans-unit id="sface44df32238223">
-  <source>Your Profile</source>
-  <target>Jouw Profiel</target>
 </trans-unit>
 <trans-unit id="s1faa6574a9c4fd7a">
   <source>Looking for peers...</source>
@@ -1050,18 +1010,6 @@
   <source>Participants </source>
   <target>Deelnemers </target>
 </trans-unit>
-<trans-unit id="s21f42760d50276ab">
-  <source>No group description.</source>
-  <target>Geen groepsbeschrijving.</target>
-</trans-unit>
-<trans-unit id="sd5fd20dba6d7320b">
-  <source>+ Add Description</source>
-  <target>+ Beschrijving toevoegen</target>
-</trans-unit>
-<trans-unit id="sd720fd983f132077">
-  <source>Edit Description</source>
-  <target>Beschrijving bewerken</target>
-</trans-unit>
 <trans-unit id="s3c1efcb18ec4d6c9">
   <source>Group Settings</source>
   <target>Groepsinstellingen</target>
@@ -1326,10 +1274,6 @@
   <source>Open URL</source>
   <target>URL openen</target>
 </trans-unit>
-<trans-unit id="sa1d04f065ab25208">
-  <source>Select Attachment:</source>
-  <target>Selecteer bijlage:</target>
-</trans-unit>
 <trans-unit id="s14539699e3c478c2">
   <source>to open Clipboard</source>
   <target>om Klembord te openen</target>
@@ -1353,10 +1297,6 @@
 <trans-unit id="s007a5e0a003f5515">
   <source>In Your Pocket:</source>
   <target>In je Pocket:</target>
-</trans-unit>
-<trans-unit id="s00b8b5c1000437fe">
-  <source>Reload Tool</source>
-  <target>Tool herladen</target>
 </trans-unit>
 <trans-unit id="sc851c05e0ca38177">
   <source>No Creatables available for the selected Group.</source>
@@ -1625,10 +1565,6 @@
 <trans-unit id="sc1407b21ee25eeab">
   <source>Nothing in your pocket. Watch out for pocket icons to add assets to your pocket.</source>
   <target>Niets in je pocket. Let op pocket-iconen om assets aan je pocket toe te voegen.</target>
-</trans-unit>
-<trans-unit id="s111b0d2304f543bd">
-  <source>unknown...</source>
-  <target>onbekend...</target>
 </trans-unit>
 <trans-unit id="s020d96334aaddfa3">
   <source>Add Sound</source>
@@ -2246,18 +2182,6 @@ begint nu</target>
   <source>Jump to parent Tool</source>
   <target>Spring naar bovenliggende Tool</target>
 </trans-unit>
-<trans-unit id="s9a2321d0350ae9bf">
-  <source>No expiry date selected. Uncheck expiry or select date.</source>
-  <target>Geen vervaldatum gekozen. Schakel vervaltijd uit of kies een datum.</target>
-</trans-unit>
-<trans-unit id="sccfcb0b7e78ac9d3">
-  <source>Expiry must be in the future</source>
-  <target>Vervaltijd moet in de toekomst liggen</target>
-</trans-unit>
-<trans-unit id="sf0fcc2b36e8adbcc">
-  <source>Invalid public key.</source>
-  <target>Ongeldige publieke sleutel.</target>
-</trans-unit>
 <trans-unit id="s32c5c41a394d97a2">
   <source>Failed to create permission: <x id="0" equiv-text="${e}"/></source>
   <target>Toestemming aanmaken mislukt: <x id="0" equiv-text="${e}"/></target>
@@ -2277,10 +2201,6 @@ begint nu</target>
 <trans-unit id="s7a98e9c93e22afd8">
   <source>Failed to activate Tool (See console for details).</source>
   <target>Tool activeren mislukt (zie console voor details).</target>
-</trans-unit>
-<trans-unit id="s7e4a76b2e2bef4ea">
-  <source>No permission to edit group profile.</source>
-  <target>Geen rechten om groepsprofiel te bewerken.</target>
 </trans-unit>
 <trans-unit id="s88674b8611547f51">
   <source>Failed to create new <x id="0" equiv-text="${this._showCreatableView?.creatable.label}"/>: <x id="1" equiv-text="${creatableResult.error}"/></source>
@@ -2336,42 +2256,55 @@ begint nu</target>
 </trans-unit>
 <trans-unit id="s0015d648b3decb5a">
   <source>Checking permission type...</source>
+  <target>Permissietype controleren...</target>
 </trans-unit>
 <trans-unit id="s0944d19ad37c29fb">
   <source>Downloading and installing Tool...</source>
+  <target>Tool downloaden en installeren...</target>
 </trans-unit>
 <trans-unit id="s19b2de5d76a5877f">
   <source>Invalid yaml</source>
+  <target>Ongeldige YAML</target>
 </trans-unit>
 <trans-unit id="sb6bc98edf4790c72">
   <source>Name already exists</source>
+  <target>Naam bestaat al</target>
 </trans-unit>
 <trans-unit id="s880048a4582bed09">
   <source>You need to choose a name for the Tool instance.</source>
+  <target>Je moet een naam kiezen voor de tool-instantie.</target>
 </trans-unit>
 <trans-unit id="s716a6024e3fe999c">
   <source>Show</source>
+  <target>Tonen</target>
 </trans-unit>
 <trans-unit id="s21b06c38fc4164db">
   <source>Advanced</source>
+  <target>Geavanceerd</target>
 </trans-unit>
 <trans-unit id="s9529b843ec1c909c">
   <source>Custom DNA properties (per Role)</source>
+  <target>Aangepaste DNA-eigenschappen (per Rol)</target>
 </trans-unit>
 <trans-unit id="s8701828d19191145">
   <source>Avatar is required</source>
+  <target>Avatar is verplicht</target>
 </trans-unit>
 <trans-unit id="scb6620fcd5bff04c">
   <source>Advanced settings</source>
+  <target>Geavanceerde instellingen</target>
 </trans-unit>
 <trans-unit id="s87c5c0a9573688c3">
   <source>DNA Properties</source>
+  <target>DNA-eigenschappen</target>
 </trans-unit>
 <trans-unit id="s1e301f6e1224b5ec">
   <source>Custom DNA Properties</source>
+  <target>Aangepaste DNA-eigenschappen</target>
 </trans-unit>
 <trans-unit id="s669b18c6d2d9c95b">
   <source>None</source>
+  <target>Geen</target>
 </trans-unit>
 <trans-unit id="s45ef262cb6badb45">
   <source>Tool info</source>
@@ -2391,9 +2324,11 @@ begint nu</target>
 </trans-unit>
 <trans-unit id="s13f20cb257e12fac">
   <source>This field is required</source>
+  <target>Dit veld is verplicht</target>
 </trans-unit>
 <trans-unit id="s94ec139e88fa8580">
   <source><x id="0" equiv-text="${this.label}"/> is required</source>
+  <target><x id="0" equiv-text="${this.label}"/> is verplicht</target>
 </trans-unit>
 <trans-unit id="sd43e41dadca35537">
   <source>(latest)</source>
@@ -2406,6 +2341,214 @@ begint nu</target>
 <trans-unit id="s0246d749f0d614a1">
   <source>Change Log: <x id="0" equiv-text="${version.changelog}"/></source>
   <target>Wijzigingslogboek: <x id="0" equiv-text="${version.changelog}"/></target>
+</trans-unit>
+<trans-unit id="sa17c38293a901a5e">
+  <source>No permission to edit group home.</source>
+  <target>Geen toestemming om de groepspagina te bewerken.</target>
+</trans-unit>
+<trans-unit id="s6386fa3423a6170a">
+  <source>Failed to save group home.</source>
+  <target>Opslaan van de groepspagina is mislukt.</target>
+</trans-unit>
+<trans-unit id="s0d64c7a168771995">
+  <source>Stop filling height</source>
+  <target>Stop met hoogte vullen</target>
+</trans-unit>
+<trans-unit id="s0e931ae4cb571552">
+  <source>Fill height (only when nothing is below this tile)</source>
+  <target>Hoogte vullen (alleen als er niets onder deze tegel staat)</target>
+</trans-unit>
+<trans-unit id="s2060c1487964a3c3">
+  <source>Fill height</source>
+  <target>Hoogte vullen</target>
+</trans-unit>
+<trans-unit id="s3dc816df0c81e094">
+  <source>Failed to pick asset.</source>
+  <target>Kiezen van asset is mislukt.</target>
+</trans-unit>
+<trans-unit id="s2a29b511708c0737">
+  <source>An image URL is required.</source>
+  <target>Een afbeeldings-URL is vereist.</target>
+</trans-unit>
+<trans-unit id="sd15fe49a4070a7f6">
+  <source>A URL is required.</source>
+  <target>Een URL is vereist.</target>
+</trans-unit>
+<trans-unit id="s173ae992b48b9c1c">
+  <source>Failed to add tile.</source>
+  <target>Toevoegen van tegel is mislukt.</target>
+</trans-unit>
+<trans-unit id="s0b0cd8805629de97">
+  <source>Asset tiles can only be deleted and re-picked.</source>
+  <target>Asset-tegels kunnen alleen verwijderd en opnieuw geselecteerd worden.</target>
+</trans-unit>
+<trans-unit id="sdfaf0b5a53266736">
+  <source>No tiles on this group home yet.</source>
+  <target>Nog geen tegels op deze groepspagina.</target>
+</trans-unit>
+<trans-unit id="s388775fe290b928e">
+  <source>Use the pencil button in the header to add tiles.</source>
+  <target>Gebruik de potloodknop in de kop om tegels toe te voegen.</target>
+</trans-unit>
+<trans-unit id="seb779a76fa43446c">
+  <source>Markdown</source>
+  <target>Markdown</target>
+</trans-unit>
+<trans-unit id="s3d93f9ea0c5a13fa">
+  <source>Image</source>
+  <target>Afbeelding</target>
+</trans-unit>
+<trans-unit id="s8e4e6dccfe5f64fb">
+  <source>Asset</source>
+  <target>Asset</target>
+</trans-unit>
+<trans-unit id="s74aa0119e62b2b51">
+  <source>Web</source>
+  <target>Web</target>
+</trans-unit>
+<trans-unit id="sc8af536e2084ade0">
+  <source>Palette</source>
+  <target>Palet</target>
+</trans-unit>
+<trans-unit id="sf9aee319a006c9b4">
+  <source>Add</source>
+  <target>Toevoegen</target>
+</trans-unit>
+<trans-unit id="sd482f5c7d6ddfc6e">
+  <source>Drag onto the board</source>
+  <target>Sleep op het bord</target>
+</trans-unit>
+<trans-unit id="s463b8c4e92751ba5">
+  <source>Options</source>
+  <target>Opties</target>
+</trans-unit>
+<trans-unit id="s9e25ce9db7de5dbf">
+  <source>Foyer (chat)</source>
+  <target>Foyer (chat)</target>
+</trans-unit>
+<trans-unit id="s8a99b0bc3b99dc00">
+  <source>Cycle background color</source>
+  <target>Achtergrondkleur wisselen</target>
+</trans-unit>
+<trans-unit id="s0ae1b0b2ed81516f">
+  <source>Unlock (allow move/resize)</source>
+  <target>Ontgrendelen (verplaatsen/grootte aanpassen toestaan)</target>
+</trans-unit>
+<trans-unit id="s961ac510ab936918">
+  <source>Lock size &amp; position</source>
+  <target>Grootte &amp; positie vergrendelen</target>
+</trans-unit>
+<trans-unit id="s59f27fef322a1447">
+  <source>Replace asset</source>
+  <target>Asset vervangen</target>
+</trans-unit>
+<trans-unit id="sb601f15d7da66457">
+  <source>Edit tile</source>
+  <target>Tegel bewerken</target>
+</trans-unit>
+<trans-unit id="s2ccf8e3397594ab3">
+  <source>Remove tile</source>
+  <target>Tegel verwijderen</target>
+</trans-unit>
+<trans-unit id="s7425c897f0bc2b1e">
+  <source>Edit Markdown Tile</source>
+  <target>Markdown-tegel bewerken</target>
+</trans-unit>
+<trans-unit id="s12007eb5e6a7dc5c">
+  <source>Edit Image Tile</source>
+  <target>Afbeeldingstegel bewerken</target>
+</trans-unit>
+<trans-unit id="sb32b761fa7b4cc8d">
+  <source>Edit Web Tile</source>
+  <target>Webtegel bewerken</target>
+</trans-unit>
+<trans-unit id="s5c7498c6d14b730b">
+  <source>Add Markdown Tile</source>
+  <target>Markdown-tegel toevoegen</target>
+</trans-unit>
+<trans-unit id="s7218c395cd7b59cf">
+  <source>Add Image Tile</source>
+  <target>Afbeeldingstegel toevoegen</target>
+</trans-unit>
+<trans-unit id="s64ce67f7c67f22aa">
+  <source>Add Web Tile</source>
+  <target>Webtegel toevoegen</target>
+</trans-unit>
+<trans-unit id="se09e3dc382fe557f">
+  <source>Image URL</source>
+  <target>Afbeeldings-URL</target>
+</trans-unit>
+<trans-unit id="s81f150afaf1a4483">
+  <source>Alt text</source>
+  <target>Alt-tekst</target>
+</trans-unit>
+<trans-unit id="s95f19dbe94745e92">
+  <source>Web URL (https://...)</source>
+  <target>Web-URL (https://...)</target>
+</trans-unit>
+<trans-unit id="saecd979590164a69">
+  <source>Error loading group home.</source>
+  <target>Fout bij laden van groepspagina.</target>
+</trans-unit>
+<trans-unit id="s6fc7828c984ad181">
+  <source>Edit group home</source>
+  <target>Groepspagina bewerken</target>
+</trans-unit>
+<trans-unit id="sdb8619a42b0d85a1">
+  <source>Select Asset:</source>
+  <target>Asset selecteren:</target>
+</trans-unit>
+<trans-unit id="sb90e06511930fdae">
+  <source>That URL is not valid.</source>
+  <target>Die URL is niet geldig.</target>
+</trans-unit>
+<trans-unit id="s559201d026136283">
+  <source>Only http:// and https:// URLs are allowed.</source>
+  <target>Alleen http:// en https:// URL's zijn toegestaan.</target>
+</trans-unit>
+<trans-unit id="s5e1ee4411aff9cda">
+  <source>That URL does not point to an image.</source>
+  <target>Die URL verwijst niet naar een afbeelding.</target>
+</trans-unit>
+<trans-unit id="s304bec861deca5b5">
+  <source>That URL does not point to an embeddable web page.</source>
+  <target>Die URL verwijst niet naar een insluitbare webpagina.</target>
+</trans-unit>
+<trans-unit id="s160057b29b6d91be">
+  <source>That site refuses to be embedded in an iframe.</source>
+  <target>Die site weigert in een iframe te worden ingesloten.</target>
+</trans-unit>
+<trans-unit id="s7fcdced34d85971e">
+  <source>Could not reach that URL.</source>
+  <target>Kon die URL niet bereiken.</target>
+</trans-unit>
+<trans-unit id="s3606b9d856cdbafe">
+  <source>Sort by</source>
+  <target>Sorteren op</target>
+</trans-unit>
+<trans-unit id="sba2a0427963d1a25">
+  <source>Newest first</source>
+  <target>Nieuwste eerst</target>
+</trans-unit>
+<trans-unit id="sda134a52656c41b0">
+  <source>Oldest first</source>
+  <target>Oudste eerst</target>
+</trans-unit>
+<trans-unit id="s09fe7f2f425a38bb">
+  <source>Name (A–Z)</source>
+  <target>Naam (A–Z)</target>
+</trans-unit>
+<trans-unit id="sdc5f061efb77eec7">
+  <source>Name (Z–A)</source>
+  <target>Naam (Z–A)</target>
+</trans-unit>
+<trans-unit id="s6ce0cb19e201b153">
+  <source>Tag</source>
+  <target>Tag</target>
+</trans-unit>
+<trans-unit id="s750b854e0b9e8895">
+  <source>All tags</source>
+  <target>Alle tags</target>
 </trans-unit>
 </body>
 </file>
