@@ -20,6 +20,7 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import url from 'url';
+import { assertPublicHost, frameAncestorsBlocks, isDataImageUrl } from './mediaUrlValidation';
 import mime from 'mime';
 import * as childProcess from 'child_process';
 import { createHash } from 'crypto';
@@ -1133,8 +1134,15 @@ if (!RUNNING_WITH_COMMAND) {
      * Probe a URL from the main process (no CORS) and return the content-type
      * so the renderer can decide whether to allow embedding an image or an
      * iframe pointing at it. Returns `{ ok: false, reason }` on any failure
-     * (bad URL, non-http(s), network error, HTTP error, missing/unexpected
-     * content-type, blocked X-Frame-Options for iframe kind).
+     * (bad URL, non-http(s), private/loopback host, network error/timeout,
+     * HTTP error, missing/unexpected content-type, blocked X-Frame-Options or
+     * CSP frame-ancestors for iframe kind).
+     *
+     * This is an advisory UX check only, not an enforcement boundary: a URL
+     * that validates here can serve different content (or become unreachable)
+     * later, and the persisted value is rendered as-is on every load. Its only
+     * job is to give the steward immediate feedback when a URL obviously won't
+     * embed.
      */
     ipcMain.handle(
       'validate-media-url',
@@ -1143,6 +1151,11 @@ if (!RUNNING_WITH_COMMAND) {
         rawUrl: string,
         kind: 'image' | 'iframe',
       ): Promise<{ ok: true; contentType: string } | { ok: false; reason: string }> => {
+        // Inline data: images are inert and need no network probe; allow them
+        // for image tiles (they are sanitized at render). Never for iframes.
+        if (kind === 'image' && isDataImageUrl(rawUrl)) {
+          return { ok: true, contentType: 'image/*' };
+        }
         let parsed: URL;
         try {
           parsed = new URL(rawUrl);
@@ -1152,32 +1165,89 @@ if (!RUNNING_WITH_COMMAND) {
         if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
           return { ok: false, reason: 'unsupported-scheme' };
         }
-        try {
-          // GET with a small read; HEAD is unreliable on many origins, and we
-          // need the response headers for frame-ancestors / X-Frame-Options.
-          const res = await net.fetch(parsed.toString(), {
-            method: 'GET',
-            redirect: 'follow',
-          });
-          if (!res.ok) return { ok: false, reason: `http-${res.status}` };
-          const ct = (res.headers.get('content-type') ?? '').toLowerCase();
-          if (kind === 'image') {
-            if (!ct.startsWith('image/')) return { ok: false, reason: 'not-an-image' };
-          } else {
-            if (!ct.includes('text/html') && !ct.includes('application/xhtml'))
-              return { ok: false, reason: 'not-html' };
-            const xfo = (res.headers.get('x-frame-options') ?? '').toLowerCase();
-            if (xfo === 'deny' || xfo === 'sameorigin') {
-              return { ok: false, reason: 'x-frame-options' };
-            }
-          }
-          // Drain to free the socket; we don't need the body.
+
+        // Bound the probe: a few-second timeout so a slow/hung host can't pin
+        // a main-process socket open indefinitely.
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        // Drain a response body we don't intend to read so the socket is freed.
+        const drain = async (res: Response) => {
           try {
             await res.body?.cancel();
           } catch {}
+        };
+        try {
+          // Follow redirects manually so every hop's host is re-validated —
+          // otherwise a public URL could 30x-redirect to an internal address.
+          let current = parsed;
+          let res: Response | undefined;
+          for (let hop = 0; hop < 5; hop++) {
+            await assertPublicHost(current.hostname);
+            // GET (not HEAD — unreliable on many origins) with redirect:manual
+            // so we control the hop; we only need headers, not the body.
+            res = await net.fetch(current.toString(), {
+              method: 'GET',
+              redirect: 'manual',
+              signal: controller.signal,
+            });
+            if (res.status >= 300 && res.status < 400) {
+              const location = res.headers.get('location');
+              await drain(res);
+              if (!location) return { ok: false, reason: 'redirect-without-location' };
+              let next: URL;
+              try {
+                next = new URL(location, current);
+              } catch {
+                return { ok: false, reason: 'invalid-redirect' };
+              }
+              if (next.protocol !== 'http:' && next.protocol !== 'https:') {
+                return { ok: false, reason: 'unsupported-scheme' };
+              }
+              current = next;
+              continue;
+            }
+            break;
+          }
+          if (!res) return { ok: false, reason: 'too-many-redirects' };
+          if (res.status >= 300 && res.status < 400) {
+            await drain(res);
+            return { ok: false, reason: 'too-many-redirects' };
+          }
+          if (!res.ok) {
+            await drain(res);
+            return { ok: false, reason: `http-${res.status}` };
+          }
+          const ct = (res.headers.get('content-type') ?? '').toLowerCase();
+          if (kind === 'image') {
+            if (!ct.startsWith('image/')) {
+              await drain(res);
+              return { ok: false, reason: 'not-an-image' };
+            }
+          } else {
+            if (!ct.includes('text/html') && !ct.includes('application/xhtml')) {
+              await drain(res);
+              return { ok: false, reason: 'not-html' };
+            }
+            const xfo = (res.headers.get('x-frame-options') ?? '').toLowerCase();
+            if (xfo === 'deny' || xfo === 'sameorigin') {
+              await drain(res);
+              return { ok: false, reason: 'x-frame-options' };
+            }
+            // CSP frame-ancestors supersedes X-Frame-Options on modern sites.
+            if (frameAncestorsBlocks(res.headers.get('content-security-policy'))) {
+              await drain(res);
+              return { ok: false, reason: 'frame-ancestors' };
+            }
+          }
+          await drain(res);
           return { ok: true, contentType: ct };
         } catch (e) {
+          if (controller.signal.aborted) return { ok: false, reason: 'timeout' };
+          if ((e as Error).message === 'private-host')
+            return { ok: false, reason: 'private-host' };
           return { ok: false, reason: `fetch-failed: ${(e as Error).message}` };
+        } finally {
+          clearTimeout(timeout);
         }
       },
     );
