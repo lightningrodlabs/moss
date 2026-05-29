@@ -28,11 +28,7 @@ import gridstackCss from 'gridstack/dist/gridstack.css?inline';
 // @ts-ignore
 import gridstackExtraCss from 'gridstack/dist/gridstack-extra.css?inline';
 
-import {
-  DashboardTile,
-  DashboardTileEntry,
-  GroupDashboard,
-} from '../../../../../shared/group-client/dist/index.js';
+import { DashboardTile, DashboardTileEntry, GroupDashboard } from '@theweave/group-client';
 
 import '@theweave/elements/dist/elements/wal-embed.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -80,7 +76,10 @@ export class GroupDashboardEl extends LitElement {
   /**
    * Render to light DOM so Gridstack's stylesheet and `<wal-embed>` (which
    * relies on global custom-element resolution and host context) work without
-   * extra scoping work.
+   * extra scoping work. This element is itself slotted inside group-home's
+   * shadow root, so "light DOM" here still means *inside that shadow tree* —
+   * which is why document.head stylesheets can't reach it and the gridstack
+   * CSS is injected as a scoped <style> block (see the gridstackCss import).
    */
   protected createRenderRoot() {
     return this;
@@ -107,10 +106,6 @@ export class GroupDashboardEl extends LitElement {
   get editing(): boolean {
     return this._editing;
   }
-  // _saving was a per-button disabled flag for the in-dashboard Save button.
-  // Save is now in group-home's header; group-home doesn't gate the button
-  // on saving state, so the flag is unused. Kept here as a no-op comment in
-  // case we want to surface saving spinner state up later.
   @state() private _draftTiles: DashboardTileEntry[] = [];
   @state() private _newTile: NewTileDraft = { kind: 'markdown', source: '' };
   @state() private _addDialogOpen = false;
@@ -866,12 +861,6 @@ export class GroupDashboardEl extends LitElement {
   }
 
   /**
-   * Toggle the `fixed` flag on a tile. Fixed tiles cannot be moved or resized
-   * — the gridstack `noMove`/`noResize` attributes are set from this flag at
-   * render time, so we tear down + re-init the grid so the new flags take
-   * effect (gridstack reads these attrs on init).
-   */
-  /**
    * Toggle the locked/fixed flag on a tile. Apply the change to gridstack
    * imperatively (grid.update) so listeners stay attached — destroying and
    * re-initing the grid stacks listeners and is the source of the "two tiles
@@ -1047,6 +1036,7 @@ export class GroupDashboardEl extends LitElement {
           case 'not-html':
             return msg('That URL does not point to an embeddable web page.');
           case 'x-frame-options':
+          case 'frame-ancestors':
             return msg('That site refuses to be embedded in an iframe.');
           default:
             return msg('Could not reach that URL.');
@@ -1160,19 +1150,30 @@ export class GroupDashboardEl extends LitElement {
           style="display:block; height:100%; width:100%;"
         ></wal-embed>`;
       case 'markdown':
+        // why: markdownParseSafe runs marked then DOMPurify.sanitize (see
+        // utils.ts), which strips <script>, inline event handlers, and
+        // javascript:/data: URLs. That sanitizer — not unsafeHTML — is what
+        // makes rendering steward-authored markdown safe; don't layer another.
         return html`<div class="markdown-tile">
           ${unsafeHTML(markdownParseSafe(tile.source))}
         </div>`;
       case 'image':
+        // referrerpolicy: don't leak the viewing member's referrer to the
+        // image host. The host still sees the viewer's IP on the request.
         return html`<img
           src=${tile.src}
           alt=${tile.alt ?? ''}
+          referrerpolicy="no-referrer"
           style="width:100%; height:100%; object-fit: contain;"
         />`;
       case 'iframe':
+        // sandbox without allow-same-origin: the framed page runs scripts in an
+        // opaque origin so it can't reach this renderer's origin, storage, or
+        // cookies. referrerpolicy avoids leaking the viewer's referrer.
         return html`<iframe
           src=${tile.src}
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+          sandbox="allow-scripts allow-forms allow-popups"
+          referrerpolicy="no-referrer"
           style="border:0; width:100%; height:100%;"
         ></iframe>`;
     }
