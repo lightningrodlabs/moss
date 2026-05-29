@@ -39,6 +39,7 @@ import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 import '../../ui/moss-dialog.js';
+import './dashboard-tile-dialog.js';
 
 import { GroupStore } from '../group-store.js';
 import { groupStoreContext } from '../context.js';
@@ -46,23 +47,14 @@ import { openViewsContext } from '../../layout/context.js';
 import { AppOpenViews } from '../../layout/types.js';
 import { markdownParseSafe } from '../../utils.js';
 import { editIcon, closeIcon } from '../../ui/icons.js';
-
-/**
- * Draft state for the add-tile dialog. WAL tiles intentionally aren't here:
- * they flow through the standard asset picker (userSelectWal) and never use
- * this dialog.
- */
-type NewTileDraft =
-  | { kind: 'markdown'; source: string }
-  | { kind: 'image'; src: string; alt: string }
-  | { kind: 'iframe'; src: string };
-
-const DEFAULT_LAYOUTS: Record<DashboardTile['kind'], { w: number; h: number }> = {
-  'wal-embed': { w: 6, h: 4 },
-  markdown: { w: 6, h: 3 },
-  image: { w: 4, h: 3 },
-  iframe: { w: 6, h: 4 },
-};
+import {
+  DEFAULT_LAYOUTS,
+  NewTileDraft,
+  canFillHeight,
+  nextTileColor,
+  tileColorStyle,
+  tileKindLabel,
+} from './dashboard-tile-utils.js';
 
 @localized()
 @customElement('group-dashboard')
@@ -107,13 +99,13 @@ export class GroupDashboardEl extends LitElement {
     return this._editing;
   }
   @state() private _draftTiles: DashboardTileEntry[] = [];
-  @state() private _newTile: NewTileDraft = { kind: 'markdown', source: '' };
-  @state() private _addDialogOpen = false;
   /**
-   * When set, the add-tile dialog is in "edit" mode and confirming will
-   * replace the tile with this id instead of appending a new tile.
+   * Draft seeding the add/edit-tile dialog. `null` keeps the dialog closed;
+   * setting a draft opens it. When `_dialogEditingId` is set the dialog is in
+   * "edit" mode and confirming replaces that tile instead of appending.
    */
-  @state() private _editingTileId: string | undefined = undefined;
+  @state() private _dialogDraft: NewTileDraft | null = null;
+  @state() private _dialogEditingId: string | undefined = undefined;
   /** Draft foyer-enabled flag while editing; persisted on save. */
   @state() private _draftFoyerEnabled = true;
   /** Floating palette position (.edit-layout-relative px). Undefined = the
@@ -327,13 +319,13 @@ export class GroupDashboardEl extends LitElement {
       void this._pickWalForTile();
       return;
     }
-    this._newTile =
+    this._dialogEditingId = undefined;
+    this._dialogDraft =
       kind === 'markdown'
         ? { kind: 'markdown', source: '' }
         : kind === 'image'
           ? { kind: 'image', src: '', alt: '' }
           : { kind: 'iframe', src: '' };
-    this._addDialogOpen = true;
   }
 
   private _emitEditingChanged() {
@@ -537,24 +529,6 @@ export class GroupDashboardEl extends LitElement {
   }
 
   /**
-   * Whether a tile is eligible for fill-height: it must be the bottom-most
-   * tile across its column span (nothing extends below its bottom edge in any
-   * overlapping column). Growing a tile that has something below it would just
-   * push those tiles down indefinitely, so we forbid it.
-   */
-  private _canFillHeight(entry: DashboardTileEntry, tiles: DashboardTileEntry[]): boolean {
-    const aL = entry.layout.x;
-    const aR = entry.layout.x + entry.layout.w;
-    const aBottom = entry.layout.y + entry.layout.h;
-    return !tiles.some((u) => {
-      if (u.id === entry.id) return false;
-      const overlapX = u.layout.x < aR && u.layout.x + u.layout.w > aL;
-      if (!overlapX) return false;
-      return u.layout.y + u.layout.h > aBottom; // u extends below entry
-    });
-  }
-
-  /**
    * Apply fillHeight to a single tile: grow it to (nearly) the bottom of the
    * visible dashboard area. Skips if the tile is no longer bottom-most.
    *
@@ -567,7 +541,7 @@ export class GroupDashboardEl extends LitElement {
    * to unknown margins and guarantees no overflow → no flickering scrollbar.
    */
   private _applyFillToTile(grid: GridStack, el: HTMLElement, entry: DashboardTileEntry) {
-    const shouldFill = entry.fillHeight && this._canFillHeight(entry, this._activeTiles());
+    const shouldFill = entry.fillHeight && canFillHeight(entry, this._activeTiles());
     if (!shouldFill) {
       // Not (or no longer) filling: drop any min-height override so gridstack's
       // own row-based height governs the tile again. Safe for non-fill tiles
@@ -889,7 +863,7 @@ export class GroupDashboardEl extends LitElement {
     const target = synced.find((t) => t.id === id);
     if (!target) return;
     // Guard: only toggle on if eligible.
-    if (!target.fillHeight && !this._canFillHeight(target, synced)) return;
+    if (!target.fillHeight && !canFillHeight(target, synced)) return;
     this._draftTiles = synced.map((t) =>
       t.id === id ? { ...t, fillHeight: !t.fillHeight } : t,
     );
@@ -903,62 +877,16 @@ export class GroupDashboardEl extends LitElement {
   }
 
   /**
-   * Cycle of background colors a tile can take. `undefined` = default
-   * (the tile-content's normal white). The keys are stable identifiers
-   * stored in `DashboardTileEntry.color`; the values are the CSS colors
-   * used at render time. To add a swatch, append the key to TILE_COLOR_CYCLE
-   * and add the CSS in TILE_COLOR_CSS.
-   */
-  private static readonly TILE_COLOR_CYCLE: Array<string | undefined> = [
-    undefined,
-    'transparent',
-    'green',
-    'blue',
-    'yellow',
-    'pink',
-    'lavender',
-  ];
-
-  private static readonly TILE_COLOR_CSS: Record<string, string> = {
-    transparent: 'transparent',
-    green: '#e3efd4',
-    blue: '#d5e6f3',
-    yellow: '#fff3c8',
-    pink: '#f9dcdc',
-    lavender: '#e6dcf5',
-  };
-
-  /**
-   * Map a tile's `color` field to the inline style string for its
-   * tile-content. `'transparent'` also drops the visible border so the tile
-   * blends into the dashboard background; other colors keep the default
-   * border defined in CSS.
-   */
-  private static _tileColorStyle(color: string | undefined): string {
-    if (!color) return '';
-    const css = GroupDashboardEl.TILE_COLOR_CSS[color];
-    if (!css) return '';
-    if (color === 'transparent') {
-      return 'background: transparent; border-color: transparent;';
-    }
-    return `background: ${css};`;
-  }
-
-  /**
-   * Cycle the tile's accent color through TILE_COLOR_CYCLE on each click.
+   * Cycle the tile's accent color on each click.
    * why: color is purely a content concern — gridstack doesn't track it, so
    * we DON'T destroy/re-init the grid. Updating _draftTiles in place is
    * enough; Lit re-renders only the affected tile-content element and the
    * grid stays alive (no listener stacking, no flash-of-empty layout).
    */
   private _cycleTileColor(id: string) {
-    this._draftTiles = this._draftTiles.map((t) => {
-      if (t.id !== id) return t;
-      const cycle = GroupDashboardEl.TILE_COLOR_CYCLE;
-      const idx = cycle.indexOf(t.color);
-      const next = cycle[(idx + 1) % cycle.length];
-      return { ...t, color: next };
-    });
+    this._draftTiles = this._draftTiles.map((t) =>
+      t.id === id ? { ...t, color: nextTileColor(t.color) } : t,
+    );
   }
 
   /**
@@ -1013,89 +941,23 @@ export class GroupDashboardEl extends LitElement {
   }
 
   /**
-   * Probe a URL via the main process (no CORS in renderer) and verify the
-   * content-type matches what we'll embed: `image/*` for image tiles,
-   * `text/html` (and no blocking `X-Frame-Options`) for iframe tiles.
-   * Notifies the user on failure and returns the result.
+   * The add/edit dialog confirmed a tile (already validated). Apply it to the
+   * draft — replacing the edited tile or appending a new one — and close.
    */
-  private async _validateMediaUrl(
-    url: string,
-    kind: 'image' | 'iframe',
-  ): Promise<{ ok: true } | { ok: false }> {
-    try {
-      const res = await window.electronAPI.validateMediaUrl(url, kind);
-      if (res.ok) return { ok: true };
-      const reasonMsg = (() => {
-        switch (res.reason) {
-          case 'invalid-url':
-            return msg('That URL is not valid.');
-          case 'unsupported-scheme':
-            return msg('Only http:// and https:// URLs are allowed.');
-          case 'not-an-image':
-            return msg('That URL does not point to an image.');
-          case 'not-html':
-            return msg('That URL does not point to an embeddable web page.');
-          case 'x-frame-options':
-          case 'frame-ancestors':
-            return msg('That site refuses to be embedded in an iframe.');
-          default:
-            return msg('Could not reach that URL.');
-        }
-      })();
-      notifyError(reasonMsg);
-      return { ok: false };
-    } catch (e) {
-      console.error('validateMediaUrl failed:', e);
-      notifyError(msg('Could not reach that URL.'));
-      return { ok: false };
+  private _onTileConfirmed(e: CustomEvent<{ tile: DashboardTile; editingId?: string }>) {
+    const { tile, editingId } = e.detail;
+    this._dialogDraft = null;
+    this._dialogEditingId = undefined;
+    if (editingId !== undefined) {
+      this._replaceTile(editingId, tile);
+    } else {
+      this._addTile(tile);
     }
   }
 
-  private async _confirmAddTile() {
-    try {
-      const draft = this._newTile;
-      let tile: DashboardTile;
-      switch (draft.kind) {
-        case 'markdown':
-          tile = { kind: 'markdown', source: draft.source };
-          break;
-        case 'image': {
-          const src = draft.src.trim();
-          if (!src) {
-            notifyError(msg('An image URL is required.'));
-            return;
-          }
-          const v = await this._validateMediaUrl(src, 'image');
-          if (!v.ok) return; // _validateMediaUrl already notified
-          tile = { kind: 'image', src, alt: draft.alt || undefined };
-          break;
-        }
-        case 'iframe': {
-          const src = draft.src.trim();
-          if (!src) {
-            notifyError(msg('A URL is required.'));
-            return;
-          }
-          const v = await this._validateMediaUrl(src, 'iframe');
-          if (!v.ok) return;
-          tile = { kind: 'iframe', src };
-          break;
-        }
-      }
-      const editingId = this._editingTileId;
-      this._addDialogOpen = false;
-      this._editingTileId = undefined;
-      if (editingId !== undefined) {
-        this._replaceTile(editingId, tile);
-      } else {
-        this._addTile(tile);
-      }
-    } catch (e) {
-      console.error('Failed to add tile:', e);
-      notifyError(msg('Failed to add tile.'));
-      this._addDialogOpen = false;
-      this._editingTileId = undefined;
-    }
+  private _closeTileDialog() {
+    this._dialogDraft = null;
+    this._dialogEditingId = undefined;
   }
 
   /**
@@ -1110,21 +972,20 @@ export class GroupDashboardEl extends LitElement {
     }
     switch (entry.tile.kind) {
       case 'markdown':
-        this._newTile = { kind: 'markdown', source: entry.tile.source };
+        this._dialogDraft = { kind: 'markdown', source: entry.tile.source };
         break;
       case 'image':
-        this._newTile = {
+        this._dialogDraft = {
           kind: 'image',
           src: entry.tile.src,
           alt: entry.tile.alt ?? '',
         };
         break;
       case 'iframe':
-        this._newTile = { kind: 'iframe', src: entry.tile.src };
+        this._dialogDraft = { kind: 'iframe', src: entry.tile.src };
         break;
     }
-    this._editingTileId = entry.id;
-    this._addDialogOpen = true;
+    this._dialogEditingId = entry.id;
   }
 
   /**
@@ -1208,7 +1069,7 @@ export class GroupDashboardEl extends LitElement {
             >
               <div
                 class="grid-stack-item-content tile-content"
-                style=${GroupDashboardEl._tileColorStyle(t.color)}
+                style=${tileColorStyle(t.color)}
               >
                 ${this._renderTileBody(t.tile)}
               </div>
@@ -1219,29 +1080,12 @@ export class GroupDashboardEl extends LitElement {
     `;
   }
 
-  /**
-   * Localized display label for a tile kind. Single source of truth so the
-   * palette chip and the tile-header label always read the same.
-   */
-  private static _tileKindLabel(kind: DashboardTile['kind']): string {
-    switch (kind) {
-      case 'markdown':
-        return msg('Markdown');
-      case 'image':
-        return msg('Image');
-      case 'wal-embed':
-        return msg('Asset');
-      case 'iframe':
-        return msg('Web');
-    }
-  }
-
   private _renderPalette() {
     // why: chips carry gs-w/gs-h so the dropped widget gets a sensible default
     // size, and data-kind so the dropped handler knows what tile to create.
     const chip = (kind: DashboardTile['kind']) => ({
       kind,
-      label: GroupDashboardEl._tileKindLabel(kind),
+      label: tileKindLabel(kind),
       w: DEFAULT_LAYOUTS[kind].w,
       h: DEFAULT_LAYOUTS[kind].h,
     });
@@ -1336,16 +1180,16 @@ export class GroupDashboardEl extends LitElement {
             >
               <div
                 class="grid-stack-item-content tile-content"
-                style=${GroupDashboardEl._tileColorStyle(t.color)}
+                style=${tileColorStyle(t.color)}
               >
                 <div class="dash-grip tile-header ${t.fixed ? '' : 'tile-drag-handle'}">
                   ${t.fixed ? '' : html`<span class="dash-grip-dots">⠿</span>`}
                   <span class="tile-kind-label"
-                    >${GroupDashboardEl._tileKindLabel(t.tile.kind)}</span
+                    >${tileKindLabel(t.tile.kind)}</span
                   >
                   <div class="tile-header-actions">
                     ${(() => {
-          const eligible = t.fillHeight || this._canFillHeight(t, this._draftTiles);
+          const eligible = t.fillHeight || canFillHeight(t, this._draftTiles);
           return html`<button
                         class="tile-header-btn ${t.fillHeight ? 'tile-header-btn-active' : ''}"
                         title=${this._fillButtonTitle(t, eligible)}
@@ -1428,115 +1272,12 @@ export class GroupDashboardEl extends LitElement {
     )}
       </div>
       </div>
-      ${this._renderAddDialog()}
-    `;
-  }
-
-  private _renderAddDialog() {
-    if (!this._addDialogOpen) return nothing;
-    const draft = this._newTile;
-    const isEdit = this._editingTileId !== undefined;
-    const headerLabel = isEdit
-      ? draft.kind === 'markdown'
-        ? msg('Edit Markdown Tile')
-        : draft.kind === 'image'
-          ? msg('Edit Image Tile')
-          : msg('Edit Web Tile')
-      : draft.kind === 'markdown'
-        ? msg('Add Markdown Tile')
-        : draft.kind === 'image'
-          ? msg('Add Image Tile')
-          : msg('Add Web Tile');
-    const confirmLabel = isEdit ? msg('Save') : msg('Add');
-    // why: a plain DOM overlay instead of sl-dialog/moss-dialog. The previous
-    // moss-dialog (sl-dialog underneath) version froze the page on the second
-    // open in the same edit session — its modal-`inert` + backdrop animation
-    // state machine races with the grid teardown that runs after each add and
-    // leaves the page in a non-interactive state. A plain overlay has no such
-    // hidden state.
-    return html`
-      <div
-        class="add-tile-overlay"
-        @click=${(e: Event) => {
-        // backdrop click closes (panel click does not — stopPropagation).
-        if (e.target === e.currentTarget) {
-          this._addDialogOpen = false;
-          this._editingTileId = undefined;
-        }
-      }}
-      >
-        <div class="add-tile-panel" @click=${(e: Event) => e.stopPropagation()}>
-          <button
-            class="add-tile-close"
-            title=${msg('Close')}
-            @click=${() => {
-        this._addDialogOpen = false;
-        this._editingTileId = undefined;
-      }}
-          >
-            ${closeIcon(20)}
-          </button>
-          <div class="add-tile-title">${headerLabel}</div>
-          ${draft.kind === 'markdown'
-        ? html`<sl-textarea
-                class="moss-input"
-                label=${msg('Markdown')}
-                rows="10"
-                .value=${draft.source}
-                @sl-input=${(e: Event) => {
-            this._newTile = {
-              kind: 'markdown',
-              source: (e.target as HTMLTextAreaElement).value,
-            };
-          }}
-              ></sl-textarea>`
-        : draft.kind === 'image'
-          ? html`
-                  <sl-input
-                    class="moss-input"
-                    label=${msg('Image URL')}
-                    .value=${draft.src}
-                    @sl-input=${(e: Event) => {
-              this._newTile = {
-                ...draft,
-                src: (e.target as HTMLInputElement).value,
-              };
-            }}
-                  ></sl-input>
-                  <sl-input
-                    class="moss-input"
-                    label=${msg('Alt text')}
-                    .value=${draft.alt}
-                    @sl-input=${(e: Event) => {
-              this._newTile = {
-                ...draft,
-                alt: (e.target as HTMLInputElement).value,
-              };
-            }}
-                  ></sl-input>
-                `
-          : html`<sl-input
-                  class="moss-input"
-                  label=${msg('Web URL (https://...)')}
-                  .value=${draft.src}
-                  @sl-input=${(e: Event) => {
-              this._newTile = {
-                kind: 'iframe',
-                src: (e.target as HTMLInputElement).value,
-              };
-            }}
-                ></sl-input>`}
-          <div class="row" style="justify-content: center; margin-top: 16px;">
-            <button
-              class="moss-button"
-              style="width: 160px;"
-              @click=${() => this._confirmAddTile()}
-            >
-              ${confirmLabel}
-            </button>
-          </div>
-        </div>
-      </div>
+      <dashboard-tile-dialog
+        .draft=${this._dialogDraft}
+        .editingId=${this._dialogEditingId}
+        @tile-confirmed=${this._onTileConfirmed}
+        @dialog-closed=${this._closeTileDialog}
+      ></dashboard-tile-dialog>
     `;
   }
 
