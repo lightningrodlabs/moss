@@ -21,11 +21,22 @@ import { closeIcon } from './icons.js';
 @localized()
 @customElement('moss-dialog')
 export class MossDialog extends LitElement {
+  /**
+   * Reactive open flag. Prefer this over the imperative show()/hide() pair —
+   * sl-dialog's show/hide are animated and racing them against Lit re-renders
+   * (e.g. reopening a dialog whose content just changed) can leave it in a
+   * half-mounted state where its interior buttons no longer fire @click.
+   */
+  @property({ type: Boolean, reflect: true })
+  open = false;
+
   async show() {
-    this._dialog.show();
+    this.open = true;
+    this._dialog?.show();
   }
   async hide() {
-    this._dialog.hide();
+    this.open = false;
+    this._dialog?.hide();
   }
   @property()
   width = ""
@@ -49,7 +60,19 @@ export class MossDialog extends LitElement {
 
   render() {
     return html`
-      <sl-dialog class="defaults moss-dialog ${this.class}" id="dialog" no-header style="${this.styles ? `${this.styles};` : ``}${this.width ? ` --width: ${this.width};` : ''}"
+      <sl-dialog
+        class="defaults moss-dialog ${this.class}"
+        id="dialog"
+        no-header
+        ?open=${this.open}
+        @sl-after-hide=${(e: CustomEvent) => {
+          // why: keep the host's `open` property in sync when the dialog is
+          // dismissed via the X button, Escape key, or backdrop click —
+          // otherwise the parent's reactive state thinks the dialog is still
+          // open and a subsequent open call doesn't trigger a re-render.
+          if (e.target === this._dialog) this.open = false;
+        }}
+        style="${this.styles ? `${this.styles};` : ``}${this.width ? ` --width: ${this.width};` : ''}"
       >
         <div class="column" style="position: relative">
           <button

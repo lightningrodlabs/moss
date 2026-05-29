@@ -111,6 +111,13 @@ export class ToolLibraryWeb2 extends LitElement {
   @state()
   classification = 'all';
 
+  @state()
+  sortMode: 'releaseDesc' | 'releaseAsc' | 'alphaAsc' | 'alphaDesc' = 'releaseDesc';
+
+  // Empty string means "all tags" (no tag filtering).
+  @state()
+  selectedTag = '';
+
 
   /** */
   async firstUpdated() {
@@ -166,7 +173,7 @@ export class ToolLibraryWeb2 extends LitElement {
 
   renderMainView() {
     const unifiedToolsArray = Array.from(this.unifiedTools.values());
-    const filteredUnifiedTools =
+    const classificationFiltered =
       this.classification === 'all'
         ? unifiedToolsArray
         : this.classification === 'stable'
@@ -182,9 +189,61 @@ export class ToolLibraryWeb2 extends LitElement {
               return primary && primary.curationInfos[0]?.info.visiblity === 'low';
             },
           );
+    // Offer every tag present across the (classification-filtered) tools, so the
+    // tag options track the current classification view.
+    const availableTags = Array.from(
+      new Set(classificationFiltered.flatMap((entry) => entry.tags)),
+    ).sort((a, b) => a.localeCompare(b));
+    // If the selected tag is no longer offered (e.g. classification changed),
+    // fall back to showing all tools rather than an empty list.
+    const activeTag =
+      this.selectedTag && availableTags.includes(this.selectedTag) ? this.selectedTag : '';
+    const filteredUnifiedTools = activeTag
+      ? classificationFiltered.filter((entry) => entry.tags.includes(activeTag))
+      : classificationFiltered;
     return html`
       <div class="column" style="display: flex; margin: 16px; flex: 1;">
-        <div class="row items-center">
+        <div class="row items-center" style="gap: 12px; justify-content: center;">
+          <label class="row items-center sort-control">
+            <span style="margin-right: 6px; opacity: 0.6;">${msg('Sort by')}</span>
+            <select
+              class="sort-select"
+              @change=${(e: Event) => {
+                this.sortMode = (e.target as HTMLSelectElement)
+                  .value as typeof this.sortMode;
+              }}>
+              <option value="releaseDesc" ?selected=${this.sortMode === 'releaseDesc'}>
+                ${msg('Newest first')}
+              </option>
+              <option value="releaseAsc" ?selected=${this.sortMode === 'releaseAsc'}>
+                ${msg('Oldest first')}
+              </option>
+              <option value="alphaAsc" ?selected=${this.sortMode === 'alphaAsc'}>
+                ${msg('Name (A–Z)')}
+              </option>
+              <option value="alphaDesc" ?selected=${this.sortMode === 'alphaDesc'}>
+                ${msg('Name (Z–A)')}
+              </option>
+            </select>
+          </label>
+          ${availableTags.length > 0
+            ? html`
+                <label class="row items-center sort-control">
+                  <span style="margin-right: 6px; opacity: 0.6;">${msg('Tag')}</span>
+                  <select
+                    class="sort-select"
+                    @change=${(e: Event) => {
+                      this.selectedTag = (e.target as HTMLSelectElement).value;
+                    }}>
+                    <option value="" ?selected=${activeTag === ''}>${msg('All tags')}</option>
+                    ${availableTags.map(
+                      (tag) =>
+                        html`<option value=${tag} ?selected=${activeTag === tag}>${tag}</option>`,
+                    )}
+                  </select>
+                </label>
+              `
+            : ''}
           <div class="tool-classification-selector">
             <button
               class="classification-button classification-button-all ${this.classification === 'all'
@@ -217,6 +276,7 @@ export class ToolLibraryWeb2 extends LitElement {
           style="display: flex; flex: 1;"
           .devCollectives=${this.allDeveloperCollectives}
           .unifiedTools=${filteredUnifiedTools}
+          .sortMode=${this.sortMode}
           @install-tool-to-group=${(e) => {
             // Handle both old format (tool) and new format (unifiedTool + versionBranch)
             if (e.detail.unifiedTool) {
@@ -526,7 +586,6 @@ export class ToolLibraryWeb2 extends LitElement {
       .tool-classification-selector {
         border-radius: 8px;
         background-color: color(from var(--moss-hint-green) srgb r g b / 0.1);
-        margin: auto;
         display: flex;
         flex-direction: row;
 
@@ -560,6 +619,21 @@ export class ToolLibraryWeb2 extends LitElement {
       }
       .classification-button-active.classification-button-experimental {
         color: var(--moss-purple);
+      }
+
+      .sort-control {
+        font-size: 13px;
+      }
+      .sort-select {
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid color(from var(--moss-hint-green) srgb r g b / 0.4);
+        background-color: white;
+        color: black;
+        padding: 0 8px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 13px;
       }
     `,
     mossStyles,

@@ -181,7 +181,7 @@ export class OverlayPocket extends LitElement {
         <div style="margin-top: 22vh;">
           ${this.mode === 'select'
             ? html`<div style="font-size: 25px; margin-bottom: 30px;">
-                ${msg('Select Attachment:')}
+                ${msg('Select Asset:')}
               </div>`
             : html``}
 

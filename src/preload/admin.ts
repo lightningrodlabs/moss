@@ -40,6 +40,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getLairBinaryVersion: () => ipcRenderer.invoke('get-lair-binary-version'),
   copyLegacyProfile: (keystorePath: string) => ipcRenderer.invoke('import-legacy-profile', keystorePath),
   launch: () => ipcRenderer.invoke('launch'),
+  validateMediaUrl: (url: string, kind: 'image' | 'iframe') =>
+    ipcRenderer.invoke('validate-media-url', url, kind),
   isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
   appletDevConfig: () => ipcRenderer.invoke('applet-dev-config'),
   getToolCurationOverride: () => ipcRenderer.invoke('get-tool-curation-override'),

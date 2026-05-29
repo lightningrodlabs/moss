@@ -20,6 +20,12 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import url from 'url';
+import {
+  assertPublicHost,
+  frameAncestorsBlocks,
+  imageContentAccepted,
+  isDataImageUrl,
+} from './mediaUrlValidation';
 import mime from 'mime';
 import * as childProcess from 'child_process';
 import { createHash } from 'crypto';
@@ -109,6 +115,59 @@ import { Profile as AgentProfile } from '@holochain-open-dev/profiles';
 import { Jimp } from 'jimp';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
+
+/**
+ * Saves a downloaded happ/webhapp and ensures the resulting file lives at
+ * `{happsDir}/{expectedHappSha256}.happ`. The bytes we-rust-utils writes are
+ * the unpack/repack of the download under the current holochain_types
+ * schema, whose sha256 may differ from the published hash (see
+ * `verifyHappSha256`); subsequent Moss code paths look up the happ file by
+ * the published hash, so we rename to match.
+ */
+async function saveHappAtCanonicalPath(
+  webHappPath: string,
+  happsDir: string,
+  uisDir: string,
+  expectedHappSha256: string,
+): Promise<string> {
+  const { happPath } = await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
+  const canonicalPath = path.join(happsDir, `${expectedHappSha256}.happ`);
+  if (happPath !== canonicalPath) {
+    try {
+      fs.renameSync(happPath, canonicalPath);
+    } catch (e) {
+      fs.copyFileSync(happPath, canonicalPath);
+      try { fs.unlinkSync(happPath); } catch (_) {}
+    }
+  }
+  return canonicalPath;
+}
+
+/**
+ * Verifies that a downloaded happ matches the expected sha256. If the current
+ * unpack/repack hash mismatches, falls back to the "legacy" hash computed
+ * against the holochain_types@0.6.0-dev.28 manifest schema used by Moss 0.15.6
+ * to publish tools — bundles in the existing 0.15 curation list were hashed
+ * under that schema and would otherwise fail verification after the
+ * relay_url / bootstrap_url manifest changes in holochain 0.6.1.
+ */
+async function verifyHappSha256(
+  expected: string,
+  got: string,
+  assetBytes: number[],
+): Promise<void> {
+  if (got === expected) return;
+  const legacy = await rustUtils.legacyHappSha256FromBytes(assetBytes);
+  if (legacy === expected) {
+    console.log(
+      `happ hash matched via legacy (Moss 0.15.x) schema: ${expected}`,
+    );
+    return;
+  }
+  throw new Error(
+    `happ hash mismatch: expected ${expected}, got ${got} (legacy: ${legacy})`,
+  );
+}
 
 let appVersion = app.getVersion();
 console.log('MOSS VERSION: ', appVersion);
@@ -1076,6 +1135,109 @@ if (!RUNNING_WITH_COMMAND) {
     });
     ipcMain.handle('open-logs', async () => WE_FILE_SYSTEM.openLogs());
     ipcMain.handle('export-logs', async () => WE_FILE_SYSTEM.exportLogs());
+    /**
+     * Probe a URL from the main process (no CORS) and return the content-type
+     * so the renderer can decide whether to allow embedding an image or an
+     * iframe pointing at it. Returns `{ ok: false, reason }` on any failure
+     * (bad URL, non-http(s), private/loopback host, network error/timeout,
+     * HTTP error, missing/unexpected content-type, blocked X-Frame-Options or
+     * CSP frame-ancestors for iframe kind).
+     *
+     * This is an advisory UX check only, not an enforcement boundary: a URL
+     * that validates here can serve different content (or become unreachable)
+     * later, and the persisted value is rendered as-is on every load. Its only
+     * job is to give the steward immediate feedback when a URL obviously won't
+     * embed.
+     */
+    ipcMain.handle(
+      'validate-media-url',
+      async (
+        _e,
+        rawUrl: string,
+        kind: 'image' | 'iframe',
+      ): Promise<{ ok: true; contentType: string } | { ok: false; reason: string }> => {
+        // Inline data: images are inert and need no network probe; allow them
+        // for image tiles (they are sanitized at render). Never for iframes.
+        if (kind === 'image' && isDataImageUrl(rawUrl)) {
+          return { ok: true, contentType: 'image/*' };
+        }
+        let parsed: URL;
+        try {
+          parsed = new URL(rawUrl);
+        } catch {
+          return { ok: false, reason: 'invalid-url' };
+        }
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          return { ok: false, reason: 'unsupported-scheme' };
+        }
+
+        // SSRF guard: reject internal/loopback/private hosts up front so a
+        // steward can't aim the probe at the host's own network. We can only
+        // check the URL the user supplied — Electron's net.fetch throws on
+        // redirect:'manual' ("Redirect was cancelled") and leaves res.url empty
+        // on redirect:'follow', so we can't re-validate redirect hops. A public
+        // URL that 30x-redirects to an internal address is therefore still
+        // reachable; the steward learns only ok/fail, not the response.
+        try {
+          await assertPublicHost(parsed.hostname);
+        } catch {
+          return { ok: false, reason: 'private-host' };
+        }
+
+        // Bound the probe: a few-second timeout so a slow/hung host can't pin
+        // a main-process socket open indefinitely.
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        // Drain a response body we don't intend to read so the socket is freed.
+        const drain = async (res: Response) => {
+          try {
+            await res.body?.cancel();
+          } catch {}
+        };
+        try {
+          // GET (not HEAD — unreliable on many origins) following redirects; we
+          // only need the final response headers, not the body.
+          const res = await net.fetch(parsed.toString(), {
+            method: 'GET',
+            redirect: 'follow',
+            signal: controller.signal,
+          });
+          if (!res.ok) {
+            await drain(res);
+            return { ok: false, reason: `http-${res.status}` };
+          }
+          const ct = (res.headers.get('content-type') ?? '').toLowerCase();
+          if (kind === 'image') {
+            if (!imageContentAccepted(ct, parsed.pathname)) {
+              await drain(res);
+              return { ok: false, reason: 'not-an-image' };
+            }
+          } else {
+            if (!ct.includes('text/html') && !ct.includes('application/xhtml')) {
+              await drain(res);
+              return { ok: false, reason: 'not-html' };
+            }
+            const xfo = (res.headers.get('x-frame-options') ?? '').toLowerCase();
+            if (xfo === 'deny' || xfo === 'sameorigin') {
+              await drain(res);
+              return { ok: false, reason: 'x-frame-options' };
+            }
+            // CSP frame-ancestors supersedes X-Frame-Options on modern sites.
+            if (frameAncestorsBlocks(res.headers.get('content-security-policy'))) {
+              await drain(res);
+              return { ok: false, reason: 'frame-ancestors' };
+            }
+          }
+          await drain(res);
+          return { ok: true, contentType: ct };
+        } catch (e) {
+          if (controller.signal.aborted) return { ok: false, reason: 'timeout' };
+          return { ok: false, reason: `fetch-failed: ${(e as Error).message}` };
+        } finally {
+          clearTimeout(timeout);
+        }
+      },
+    );
     ipcMain.handle('factory-reset', async () => {
       const userDecision = await dialog.showMessageBox({
         title: 'Factory Reset',
@@ -2089,8 +2251,7 @@ if (!RUNNING_WITH_COMMAND) {
                     const assetBytes = Array.from(new Uint8Array(buffer));
                     const { happSha256: gotHappSha256, webhappSha256: gotWebhappSha256, uiSha256: gotUiSha256 } =
                       await rustUtils.validateHappOrWebhapp(assetBytes);
-                    if (gotHappSha256 !== sha256Happ)
-                      throw new Error(`happ hash mismatch: expected ${sha256Happ}, got ${gotHappSha256}`);
+                    await verifyHappSha256(sha256Happ, gotHappSha256, assetBytes);
                     if (sha256Webhapp && gotWebhappSha256 && gotWebhappSha256 !== sha256Webhapp)
                       throw new Error(`webhapp hash mismatch: expected ${sha256Webhapp}, got ${gotWebhappSha256}`);
                     if (sha256Ui && gotUiSha256 && gotUiSha256 !== sha256Ui)
@@ -2099,8 +2260,7 @@ if (!RUNNING_WITH_COMMAND) {
                     fs.mkdirSync(tmpImportDir, { recursive: true });
                     const webHappPath = path.join(tmpImportDir, 'applet_to_install.webhapp');
                     fs.writeFileSync(webHappPath, new Uint8Array(buffer));
-                    const { happPath } = await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
-                    happToBeInstalledPath = happPath;
+                    happToBeInstalledPath = await saveHappAtCanonicalPath(webHappPath, happsDir, uisDir, sha256Happ);
                     try { fs.rmSync(tmpImportDir, { recursive: true }); } catch (_) { }
                   }
 
@@ -2410,10 +2570,7 @@ if (!RUNNING_WITH_COMMAND) {
           const { happSha256, webhappSha256, uiSha256 } =
             await rustUtils.validateHappOrWebhapp(assetBytes);
 
-          if (happSha256 !== sha256Happ)
-            throw new Error(
-              `The downloaded resource has an invalid happ hash. The source may be corrupted.\nGot hash '${happSha256}' but expected hash ${sha256Happ}`,
-            );
+          await verifyHappSha256(sha256Happ, happSha256, assetBytes);
           if (webhappSha256 && webhappSha256 !== sha256Webhapp)
             throw new Error(
               `The downloaded resource has an invalid webhapp hash. The source may be corrupted.\nGot hash '${webhappSha256}' but expected hash ${sha256Webhapp}`,
@@ -2432,7 +2589,7 @@ if (!RUNNING_WITH_COMMAND) {
           const uisDir = path.join(WE_FILE_SYSTEM.uisDir);
           const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
           // NOTE: It's possible that an existing happ is being overwritten here. This shouldn't be a problem though.
-          await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
+          await saveHappAtCanonicalPath(webHappPath, happsDir, uisDir, sha256Happ);
           try {
             // clean up
             fs.rmSync(tmpDir, { recursive: true });
@@ -2505,10 +2662,7 @@ if (!RUNNING_WITH_COMMAND) {
           const { happSha256, webhappSha256, uiSha256 } =
             await rustUtils.validateHappOrWebhapp(assetBytes);
 
-          if (happSha256 !== sha256Happ)
-            throw new Error(
-              `The downloaded resource has an invalid happ hash. The source may be corrupted.\nGot hash '${happSha256}' but expected hash ${sha256Happ}`,
-            );
+          await verifyHappSha256(sha256Happ, happSha256, assetBytes);
           if (webhappSha256 && webhappSha256 !== sha256Webhapp)
             throw new Error(
               `The downloaded resource has an invalid webhapp hash. The source may be corrupted.\nGot hash '${webhappSha256}' but expected hash ${sha256Webhapp}`,
@@ -2527,7 +2681,7 @@ if (!RUNNING_WITH_COMMAND) {
           const uisDir = path.join(WE_FILE_SYSTEM.uisDir);
           const happsDir = path.join(WE_FILE_SYSTEM.happsDir);
           // NOTE: It's possible that an existing happ is being overwritten here. This shouldn't be a problem though.
-          await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
+          await saveHappAtCanonicalPath(webHappPath, happsDir, uisDir, sha256Happ);
           try {
             // clean up
             fs.rmSync(tmpDir, { recursive: true });
@@ -2748,10 +2902,7 @@ if (!RUNNING_WITH_COMMAND) {
             RUN_OPTIONS.devInfo && distributionInfo.info.toolListUrl.startsWith('###DEVCONFIG###');
 
           if (!isTrustedToolFromDevConfig) {
-            if (happSha256 !== sha256Happ)
-              throw new Error(
-                `The downloaded resource has an invalid happ hash. The source may be corrupted.\nGot hash '${happSha256}' but expected hash ${sha256Happ}`,
-              );
+            await verifyHappSha256(sha256Happ, happSha256, assetBytes);
             if (webhappSha256 && webhappSha256 !== sha256Webhapp)
               throw new Error(
                 `The downloaded resource has an invalid webhapp hash. The source may be corrupted.\nGot hash '${webhappSha256}' but expected hash ${sha256Webhapp}`,
@@ -2770,10 +2921,8 @@ if (!RUNNING_WITH_COMMAND) {
           fs.writeFileSync(webHappPath, new Uint8Array(buffer));
           // NOTE: It's possible that an existing happ is being overwritten here. This shouldn't be a problem though.
           console.log('Saving webhapp...');
-          const { happPath } = await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, uisDir);
+          happToBeInstalledPath = await saveHappAtCanonicalPath(webHappPath, happsDir, uisDir, sha256Happ);
           console.log('webhapp saved.');
-
-          happToBeInstalledPath = happPath;
           try {
             // clean up
             fs.rmSync(tmpDir, { recursive: true });
