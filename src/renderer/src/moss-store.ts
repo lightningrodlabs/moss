@@ -1959,7 +1959,10 @@ export class MossStore {
     const groupStores = await toPromise(this.groupsForApplet.get(appletHash)!);
     await Promise.all(
       Array.from(groupStores.values()).map(async (gs) => {
-        if (gs) await gs.allMyRunningApplets.reload();
+        if (gs) {
+          await gs.allMyRunningApplets.reload();
+          await gs.allMyDisabledApplets.reload();
+        }
       }),
     );
   }

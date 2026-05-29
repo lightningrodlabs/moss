@@ -5,6 +5,7 @@ import {
   pipe,
   sliceAndJoin,
   StoreSubscriber,
+  toPromise,
 } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
@@ -19,6 +20,8 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import { AppletHash, AppletId, GroupProfile } from '@theweave/api';
+import { Applet } from '@theweave/group-client';
+import { DistributionInfo } from '@theweave/moss-types';
 import { repeat } from 'lit/directives/repeat.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
@@ -30,17 +33,19 @@ import { PersistedStore } from '../../persisted-store.js';
 
 import '../../groups/elements/group-peers-status.js';
 import './applet-sidebar-button.js';
+import '../../applets/elements/applet-logo-raw.js';
 import {
   chevronSingleUpIcon,
   chevronSingleDownIcon,
   chevronDoubleLeftIcon,
   chevronDoubleRightIcon,
   circleHalfIcon,
-  downloadIcon,
   plusIcon,
   closeIcon,
   personPlusIcon,
   questionMarkInfoIcon,
+  activateToolIcon,
+  rebootIcon,
 } from '../../ui/icons.js';
 import { Profile } from '@holochain-open-dev/profiles';
 import { EntryRecord, GetonlyMap } from '@holochain-open-dev/utils';
@@ -208,6 +213,61 @@ export class GroupAppletsSidebar extends LitElement {
     this,
     () => this._groupStore.ignoredApplets(),
     () => [this._groupStore],
+  );
+
+  // Applets I've installed locally but disabled (turned off) — shown as dimmed,
+  // re-enableable entries in the sidebar.
+  private _disabledApplets = new StoreSubscriber(
+    this,
+    () =>
+      this._groupStore
+        ? (pipe(this._groupStore.allMyDisabledApplets, (disabled) =>
+          sliceAndJoin(this._mossStore.appletStores as GetonlyMap<any, any>, disabled),
+        ) as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>)
+        : (undefined as unknown as AsyncReadable<ReadonlyMap<EntryHash, AppletStore>>),
+    () => [this._groupStore],
+  );
+
+  // Applets a peer registered in the group that I haven't joined yet, resolved
+  // to their Applet entry plus a tool icon (from the curation list) — shown as
+  // dimmed, activatable entries in the sidebar.
+  private _activatableTools = new StoreSubscriber(
+    this,
+    () =>
+      pipe(this._groupStore.unjoinedApplets, async (appletsAndKeys) =>
+        Promise.all(
+          Array.from(appletsAndKeys.keys()).map(async (appletHash) => {
+            let applet: Applet | undefined;
+            let iconSrc: string | undefined;
+            try {
+              applet = await toPromise(this._groupStore.applets.get(appletHash)!);
+            } catch (e) {
+              console.warn('@group-area-sidebar: failed to load applet entry: ', e);
+            }
+            if (applet) {
+              try {
+                const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
+                if (distributionInfo.type === 'web2-tool-list') {
+                  const toolInfo = await this._mossStore.toolInfoFromRemote(
+                    distributionInfo.info.toolListUrl,
+                    distributionInfo.info.toolId,
+                    distributionInfo.info.versionBranch,
+                  );
+                  iconSrc = toolInfo?.icon;
+                }
+              } catch (e) {
+                console.warn('@group-area-sidebar: failed to resolve tool icon: ', e);
+              }
+            }
+            return [appletHash, applet, iconSrc] as [
+              AppletHash,
+              Applet | undefined,
+              string | undefined,
+            ];
+          }),
+        ),
+      ),
+    () => [this._groupStore, this._mossStore],
   );
 
   private _collapsed = new StoreSubscriber(
@@ -414,88 +474,64 @@ export class GroupAppletsSidebar extends LitElement {
           tooltip
           .error=${this._groupApplets.value.error}
         ></display-error>`;
-      case 'complete':
-        return this._groupApplets.value.value.size === 0 && this.groupProfileIsKnown()
-          ? html`
-          <div 
-            @click=${() => {
-              // If there are unactivated tools, open inactive tools dialog
-              // Otherwise, open tool library
-              if (this.numUnjoinedTools() && this.numUnjoinedTools()! > 0) {
-                this.dispatchEvent(
-                  new CustomEvent('group-home-selected', {
-                    bubbles: false,
-                    composed: true,
-                  }),
-                );
-                this.dispatchEvent(
-                  new CustomEvent('unjoined-tools-clicked', {
-                    composed: true,
-                  }),
-                );
-              } else if (this.amIPrivileged()) {
-                this.dispatchEvent(
-                  new CustomEvent('add-tool-requested', {
-                    detail: { groupHash: this._groupStore.groupDnaHash },
-                    bubbles: false,
-                    composed: true,
-                  }),
-                );
-              }
-            }}>
-              ${this.collapsed
-              ? !this.numUnjoinedTools() || this.numUnjoinedTools() === 0 ? "" : html`
-                <sl-tooltip
-                  content="${msg('Activate tools peers already use')}"
-                  placement="right"
-                  hoist
-                >
-                <button
-                  class="btn activate-tools-button"
-                >
-                  <div
-                    class="column center-content "
-                    style="height: 35px; width: 35px; position: relative;"
-                  >
-                    <div class="column center-content unjoined-tools-indicator">
-                      ${this.numUnjoinedTools()}
-                    </div>
-                    ${downloadIcon()}
-                  </div>
-                </button>
-                </sl-tooltip>
-              `: html`
-                <div
-                  class="column items-center"
-                  style="background: var(--moss-light-green); border-radius: 12px; padding: 6px;"
-                >
-                  <div style="text-align: center; margin-bottom: 10px;">
-                    ${this.numUnjoinedTools() && this.numUnjoinedTools()! > 0 ? html`
-                      ${this.numUnjoinedTools()} ${this.numUnjoinedTools() === 1 ? msg('tool available.') : msg('tools available.')}
-                    ` : html`
-                        ${msg('No tools yet.')}
-                    `}
-                  </div>
-                  ${(this.numUnjoinedTools() && this.numUnjoinedTools()! > 0) || this.amIPrivileged() ? html`
-                  <button
+      case 'complete': {
+        const noRunning = this._groupApplets.value.value.size === 0;
+        // When nothing is running but there are tools to activate or re-enable,
+        // skip the "No tools yet" pane — the dimmed entries and the "+" button
+        // cover this case.
+        if (noRunning && this.hasInactiveOrDisabledTools()) {
+          return html``;
+        }
+        // Truly no tools in this group yet (uninstalled/activatable don't count).
+        if (noRunning && this.groupProfileIsKnown()) {
+          if (this.collapsed) return html``;
+          return html`
+            <div
+              class="column items-center"
+              style="background: var(--moss-light-green); border-radius: 12px; padding: 6px;"
+              @click=${() => {
+                if (this.amIPrivileged()) {
+                  this.dispatchEvent(
+                    new CustomEvent('add-tool-requested', {
+                      detail: { groupHash: this._groupStore.groupDnaHash },
+                      bubbles: false,
+                      composed: true,
+                    }),
+                  );
+                }
+              }}
+            >
+              <div style="text-align: center; margin-bottom: 10px;">${msg('No tools yet.')}</div>
+              ${this.amIPrivileged()
+                ? html`<button
                     class="moss-button flex flex-1"
                     style="padding-top: 10px; padding-bottom: 10px; border-radius: 10px; width: 120px; font-size: 16px;"
                   >
-                  <div class="flex- flex-1">
-                    + ${this.numUnjoinedTools() && this.numUnjoinedTools()! > 0 ?
-                    this.numUnjoinedTools() == 1 ? msg('activate it') : msg('activate them') :
-                    msg('add a tool')}
-                    </div>
-                  </button>` : html`
-                    <div style="text-align: center; font-size: 14px; opacity: 0.8;">
-                      ${msg('Contact a steward to add tools to this group.')}
-                    </div>
-                  `}
-                </div>
-                  `}
+                    <div class="flex- flex-1">+ ${msg('add a tool')}</div>
+                  </button>`
+                : html`<div style="text-align: center; font-size: 14px; opacity: 0.8;">
+                    ${msg('Contact a steward to add tools to this group.')}
+                  </div>`}
             </div>
-          `: this.renderAppletButtons(this._groupApplets.value.value);
+          `;
+        }
+        return this.renderAppletButtons(this._groupApplets.value.value);
+      }
     }
+  }
+
+  /**
+   * Whether this group has any tools that aren't currently running but could be
+   * surfaced as dimmed sidebar entries — peer-installed tools to activate, or
+   * locally-disabled tools to re-enable.
+   */
+  private hasInactiveOrDisabledTools(): boolean {
+    const activatable = this.numUnjoinedTools() ?? 0;
+    const disabled =
+      this._disabledApplets.value.status === 'complete'
+        ? this._disabledApplets.value.value.size
+        : 0;
+    return activatable > 0 || disabled > 0;
   }
 
   renderHomeNotificationBadge() {
@@ -686,56 +722,124 @@ export class GroupAppletsSidebar extends LitElement {
     }
   }
 
-  renderUnjoinedAppletsButton() {
-    // Don't show this button if there are no unjoined tools
-    if (!this.numUnjoinedTools() || this.numUnjoinedTools() === 0) return html``;
-
-    // Don't show this button if there are no activated tools yet
-    // (in that case, the "No tools yet" pane handles it)
-    if (this._groupApplets.value.status === 'complete' &&
-      this._groupApplets.value.value.size === 0) {
-      return html``;
-    }
-
-    return html`<sl-tooltip
-      content="${msg('Activate tools peers already use')}"
-      placement="right"
-      hoist
-    >
-      <button
-        class="btn activate-tools-button"
-        @click=${() => {
-        this.dispatchEvent(
-          new CustomEvent('group-home-selected', {
-            bubbles: false,
-            composed: true,
-          }),
-        );
-        this.dispatchEvent(
-          new CustomEvent('unjoined-tools-clicked', {
-            composed: true,
-          }),
-        );
+  /**
+   * A dimmed sidebar entry for a tool that is present in the group but not
+   * currently running for me — either activatable (a peer added it, I haven't
+   * joined) or disabled (installed locally but turned off). The badge icon and
+   * action distinguish the two states. Left-click and right-click both run the
+   * same action (open the activate / re-enable affordance).
+   */
+  private renderDimmedTool(opts: {
+    logo: unknown;
+    name: string;
+    badge: unknown;
+    tooltip: string;
+    onClick: () => void;
+  }) {
+    return html`
+      <sl-tooltip content="${opts.tooltip}" placement="right" hoist>
+        <button
+          class="btn dimmed-tool"
+          style="${this.collapsed ? '' : 'width: 100%; box-sizing: border-box;'}"
+          @click=${opts.onClick}
+          @contextmenu=${(e: MouseEvent) => {
+        e.preventDefault();
+        opts.onClick();
       }}
-      >
-        ${this.collapsed
-        ? html`<div
-              class="column center-content "
-              style="height: 35px; width: 35px; position: relative;"
-            >
-              <div class="column center-content unjoined-tools-indicator">
-                ${this.numUnjoinedTools()}
-              </div>
-              ${downloadIcon()}
-            </div>`
-        : html`<div
-              class="column center-content"
-              style="height: 36px; opacity: 0.7; font-size: 13px;"
-            >
-              + ${this.numUnjoinedTools()} ${msg('more used by peers')}
-            </div>`}
-      </button>
-    </sl-tooltip>`;
+        >
+          ${this.collapsed
+        ? html`<div class="row items-center" style="position: relative;">
+                ${opts.logo}
+                <div class="dimmed-badge dimmed-badge-collapsed row center-content">
+                  ${opts.badge}
+                </div>
+              </div>`
+        : html`<div class="row items-center" style="width: 100%;">
+                ${opts.logo}
+                <div class="name" style="margin-left: 4px; flex: 1;">${opts.name}</div>
+                <div class="dimmed-badge dimmed-badge-inline row center-content">${opts.badge}</div>
+              </div>`}
+        </button>
+      </sl-tooltip>
+    `;
+  }
+
+  private renderDimmedLogo(iconSrc: string | undefined, alt: string) {
+    const size = this.collapsed ? '35px' : '28px';
+    if (iconSrc) {
+      return html`<img
+        src=${iconSrc}
+        alt=${alt}
+        style="height: ${size}; width: ${size}; border-radius: 8px;"
+      />`;
+    }
+    return html`<div
+      class="column center-content fallback-logo"
+      style="height: ${size}; width: ${size};"
+    >
+      ?
+    </div>`;
+  }
+
+  renderActivatableTools() {
+    if (this._activatableTools.value.status !== 'complete') return html``;
+    const ignored = this._ignoredApplets.value || [];
+    const entries = this._activatableTools.value.value.filter(
+      ([appletHash, applet]) => !!applet && !ignored.includes(encodeHashToBase64(appletHash)),
+    );
+    if (entries.length === 0) return html``;
+    return html`${entries.map(([appletHash, applet, iconSrc]) =>
+      this.renderDimmedTool({
+        logo: this.renderDimmedLogo(iconSrc, applet!.custom_name),
+        name: applet!.custom_name,
+        badge: activateToolIcon(13),
+        tooltip: msg('Activate this tool'),
+        onClick: () => {
+          this.dispatchEvent(
+            new CustomEvent('open-tool-info', {
+              detail: {
+                kind: 'activate-applet',
+                groupDnaHash: this._groupStore.groupDnaHash,
+                appletHash,
+                applet: applet!,
+              },
+              bubbles: true,
+              composed: true,
+            }),
+          );
+        },
+      }),
+    )}`;
+  }
+
+  renderDisabledTools() {
+    if (this._disabledApplets.value.status !== 'complete') return html``;
+    const entries = Array.from(this._disabledApplets.value.value.entries());
+    if (entries.length === 0) return html``;
+    return html`${entries.map(([appletHash, appletStore]) =>
+      this.renderDimmedTool({
+        logo: html`<applet-logo-raw
+          .toolIdentifier=${{ type: 'instance', appletHash }}
+          style="--size: ${this.collapsed ? '35px' : '28px'}; --border-radius: 8px;"
+        ></applet-logo-raw>`,
+        name: appletStore.applet.custom_name,
+        badge: rebootIcon(12),
+        tooltip: msg('Turned off — click to re-enable'),
+        onClick: () => {
+          this.dispatchEvent(
+            new CustomEvent('open-reenable-tool', {
+              detail: {
+                groupDnaHash: this._groupStore.groupDnaHash,
+                appletHash,
+                applet: appletStore.applet,
+              },
+              bubbles: true,
+              composed: true,
+            }),
+          );
+        },
+      }),
+    )}`;
   }
 
   renderMemberProfile() {
@@ -934,12 +1038,18 @@ export class GroupAppletsSidebar extends LitElement {
         <div class="section-title" style="margin-bottom: 10px;">${msg('Tools')}</div>
         ${this.renderAppletButtonsLoading()}
 
-        <!-- Unjoined Tools Button -->
-        ${this.renderUnjoinedAppletsButton()}
+        <!-- Disabled tools (installed locally but turned off) -->
+        ${this.renderDisabledTools()}
 
-        <!-- Add Tool Button - Hidden if no Tools are installed yet and the sidebar is expanded -->
+        <!-- Activatable tools (peers use them, I haven't joined yet) -->
+        ${this.renderActivatableTools()}
+
+        <!-- Add Tool Button - Hidden only when there are literally no tools yet
+             (the "No tools yet" pane owns the add action in that case) and the
+             sidebar is expanded, or when the user can't add tools. -->
         ${(this._groupApplets.value.status === 'complete' &&
         this._groupApplets.value.value.size === 0 &&
+        !this.hasInactiveOrDisabledTools() &&
         !this.collapsed) ||
         !this.amIPrivileged()
         ? html``
@@ -1084,6 +1194,44 @@ export class GroupAppletsSidebar extends LitElement {
       }
       .activate-tools-button:hover {
         border: solid 1px #89D6AA;
+      }
+
+      .dimmed-tool {
+        opacity: 0.55;
+        border-left: 2px dashed var(--moss-dark-button);
+        border-radius: 0 12px 12px 0;
+        transition: opacity 0.15s ease;
+      }
+      .dimmed-tool:hover {
+        opacity: 1;
+      }
+      .dimmed-tool .name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+      .dimmed-badge {
+        height: 16px;
+        width: 16px;
+        border-radius: 50%;
+        background: var(--moss-purple);
+        color: white;
+        flex: 0 0 auto;
+      }
+      .dimmed-badge-collapsed {
+        position: absolute;
+        bottom: -3px;
+        left: 22px;
+      }
+      .dimmed-badge-inline {
+        margin-left: auto;
+        margin-right: 4px;
+      }
+      .fallback-logo {
+        background: #9d90f7;
+        border-radius: 8px;
+        color: white;
       }
 
       .icon {

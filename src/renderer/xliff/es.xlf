@@ -350,14 +350,6 @@
   <source>my profile image</source>
   <target>mi imagen de perfil</target>
 </trans-unit>
-<trans-unit id="s2ce9c3328e830141">
-  <source>Activate tools peers already use</source>
-  <target>Activar herramientas que los compañeros ya usan</target>
-</trans-unit>
-<trans-unit id="s3be68760fd7935f7">
-  <source>more used by peers</source>
-  <target>más usadas por compañeros</target>
-</trans-unit>
 <trans-unit id="s40ad7672a00dd569">
   <source>click to copy public key</source>
   <target>clic para copiar clave pública</target>
@@ -1924,22 +1916,6 @@ comienza ahora</target>
   <source>Warning: DNA hash mismatch. The UI may not work correctly with the current data.</source>
   <target>Advertencia: Incompatibilidad de hash DNA. La interfaz podría no funcionar correctamente con los datos actuales.</target>
 </trans-unit>
-<trans-unit id="s32b06eec79ceb042">
-  <source>tool available.</source>
-  <target>herramienta disponible.</target>
-</trans-unit>
-<trans-unit id="s4aa1ce16ceb3e5fb">
-  <source>tools available.</source>
-  <target>herramientas disponibles.</target>
-</trans-unit>
-<trans-unit id="sf6175edd3d1e971d">
-  <source>activate it</source>
-  <target>activarla</target>
-</trans-unit>
-<trans-unit id="s59a61f2b6af28c72">
-  <source>activate them</source>
-  <target>activarlas</target>
-</trans-unit>
 <trans-unit id="s2a4c6fb23c866eb1">
   <source>Contact a steward to add tools to this group.</source>
   <target>Contacta con un Cuidador para añadir herramientas a este grupo.</target>
@@ -2549,6 +2525,74 @@ comienza ahora</target>
 <trans-unit id="s750b854e0b9e8895">
   <source>All tags</source>
   <target>Todas las etiquetas</target>
+</trans-unit>
+<trans-unit id="scf0525c547ecb0d6">
+  <source>Activate this tool</source>
+  <target>Activar esta herramienta</target>
+</trans-unit>
+<trans-unit id="se50e0fcbc9b7daa0">
+  <source>Turned off — click to re-enable</source>
+  <target>Desactivada: haz clic para reactivar</target>
+</trans-unit>
+<trans-unit id="see027fb9ee2cb3d7">
+  <source>Activating…</source>
+  <target>Activando…</target>
+</trans-unit>
+<trans-unit id="s5a911d51793753d6">
+  <source>Tool re-enabled.</source>
+  <target>Herramienta reactivada.</target>
+</trans-unit>
+<trans-unit id="s24a8e2d5ebe3bce8">
+  <source>Failed to re-enable tool (See console for details).</source>
+  <target>No se pudo reactivar la herramienta (consulta la consola para más detalles).</target>
+</trans-unit>
+<trans-unit id="s727816ed3061a25d">
+  <source>this tool</source>
+  <target>esta herramienta</target>
+</trans-unit>
+<trans-unit id="s1870ab1840d9f54f">
+  <source>Re-enable <x id="0" equiv-text="${toolName}"/>?</source>
+  <target>¿Reactivar <x id="0" equiv-text="${toolName}"/>?</target>
+</trans-unit>
+<trans-unit id="s665e1fde6a9b4526">
+  <source>This tool is installed but turned off. Re-enable it to use it again.</source>
+  <target>Esta herramienta está instalada pero desactivada. Reactívala para volver a usarla.</target>
+</trans-unit>
+<trans-unit id="s77aea279f4ecbaf7">
+  <source>Re-enabling…</source>
+  <target>Reactivando…</target>
+</trans-unit>
+<trans-unit id="sa55bdb56107d1790">
+  <source>Re-enable</source>
+  <target>Reactivar</target>
+</trans-unit>
+<trans-unit id="s2e944fbec7997461">
+  <source>Tool deactivated.</source>
+  <target>Herramienta desactivada.</target>
+</trans-unit>
+<trans-unit id="s6053fb34ad079b5b">
+  <source>Failed to deactivate tool (See console for details).</source>
+  <target>No se pudo desactivar la herramienta (consulta la consola para más detalles).</target>
+</trans-unit>
+<trans-unit id="s3a6bad983dd40216">
+  <source>Deactivating…</source>
+  <target>Desactivando…</target>
+</trans-unit>
+<trans-unit id="sf56998949bdf6b33">
+  <source>Deactivate</source>
+  <target>Desactivar</target>
+</trans-unit>
+<trans-unit id="sadb2a74df6061e8d">
+  <source>Installed version</source>
+  <target>Versión instalada</target>
+</trans-unit>
+<trans-unit id="sf4122b220926be97">
+  <source>Version</source>
+  <target>Versión</target>
+</trans-unit>
+<trans-unit id="s919ec0f651278ba5">
+  <source>branch</source>
+  <target>rama</target>
 </trans-unit>
 </body>
 </file>
