@@ -62,17 +62,54 @@ async function enterDashboardEditMode(page: Page) {
   const dashboard = page.locator('group-dashboard');
   await expect(dashboard).toBeVisible({ timeout: 60_000 });
 
-  // Edit / Save / Cancel / Add-tile buttons now live in group-home's header
-  // row (next to Invite People / Settings) rather than inside group-dashboard,
-  // so we look for them at the page scope. Buttons are icon-only — accessible
-  // name comes from a native `title` attribute.
+  // Edit / Save / Cancel live in group-home's header row (next to Invite People
+  // / Settings), not inside group-dashboard, so we look for them at page scope.
+  // Buttons are icon-only — accessible name comes from a native `title` attr.
   const editBtn = page.getByRole('button', { name: /Edit group home/i });
   await expect(editBtn).toBeVisible({ timeout: 30_000 });
   await editBtn.click();
 
-  const addTileBtn = page.getByRole('button', { name: /Add tile/i });
-  await expect(addTileBtn).toBeVisible({ timeout: 10_000 });
-  return { dashboard, addTileBtn };
+  // Edit mode is active once the header swaps the pencil for Save/Cancel and
+  // the dashboard renders its floating tile palette. (Tiles are added by
+  // dragging a palette chip onto the board — there is no header "Add tile"
+  // button.)
+  await expect(page.getByRole('button', { name: /^Save$/i })).toBeVisible({ timeout: 10_000 });
+  await expect(dashboard.locator('.dash-palette')).toBeVisible({ timeout: 10_000 });
+  return { dashboard };
+}
+
+/**
+ * Open the add-tile dialog for a kind by invoking the dashboard's public
+ * `requestAddTile` — the same entry point the palette's drag-drop calls once a
+ * chip is dropped on the board.
+ *
+ * why not simulate the chip drag: gridstack's drag-in is HTML5/pointer-drag
+ * based and is flaky to drive headlessly. The coverage that matters here is
+ * identical either way — the add dialog, the `_addTile` next-free-row append
+ * (the path that carried the `y: Number.MAX_SAFE_INTEGER` freeze), the 2-tile
+ * grid re-render, and save/persist. The drag gesture itself is UI plumbing
+ * verified manually.
+ */
+async function openAddTileDialog(page: Page, kind: 'markdown' | 'image' | 'iframe') {
+  await page.evaluate((k) => {
+    function findInDeepDom(root: Document | ShadowRoot, sel: string): Element | null {
+      const direct = root.querySelector(sel);
+      if (direct) return direct;
+      for (const el of Array.from(root.querySelectorAll('*'))) {
+        const sr = (el as Element & { shadowRoot: ShadowRoot | null }).shadowRoot;
+        if (sr) {
+          const found = findInDeepDom(sr, sel);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+    const dash = findInDeepDom(document, 'group-dashboard') as
+      | (Element & { requestAddTile?: (k: string) => void })
+      | null;
+    if (!dash?.requestAddTile) throw new Error('group-dashboard.requestAddTile not found');
+    dash.requestAddTile(k);
+  }, kind);
 }
 
 test('steward can add markdown and image tiles to the group home dashboard', async ({
@@ -80,21 +117,14 @@ test('steward can add markdown and image tiles to the group home dashboard', asy
 }) => {
   await openGroupHome(moss.mainWindow, 'Dashboard Test', 'steward-one');
   const page = moss.mainWindow;
-  const { dashboard, addTileBtn } = await enterDashboardEditMode(page);
+  const { dashboard } = await enterDashboardEditMode(page);
 
-  // The add-tile overlay is a plain DOM element conditionally rendered when
-  // _addDialogOpen is true. Open == "present in DOM".
+  // The add-tile overlay is a plain DOM element conditionally rendered when a
+  // tile draft is open. Open == "present in DOM".
   const addDialog = page.locator('.add-tile-panel');
 
   // ---- Markdown ----
-  await addTileBtn.click();
-  // why: wait for the sl-dropdown to actually open before clicking the
-  // menuitem — the menu mounts on a microtask after the trigger click and a
-  // tight click sequence can outrace it.
-  await expect(page.getByRole('menuitem', { name: /^Markdown$/i })).toBeVisible({
-    timeout: 5_000,
-  });
-  await page.getByRole('menuitem', { name: /^Markdown$/i }).click({ force: true });
+  await openAddTileDialog(page, 'markdown');
   await expect(addDialog).toBeVisible({ timeout: 10_000 });
   // why: sl-textarea's label lives in its shadow DOM, so Playwright's
   // getByLabel can't find it. Target the inner native <textarea> instead —
@@ -110,11 +140,7 @@ test('steward can add markdown and image tiles to the group home dashboard', asy
   // the fix in group-dashboard.ts, the new tile was inserted with
   // `y: Number.MAX_SAFE_INTEGER` (a "place at bottom" sentinel) and the
   // grid's re-init step hung the page.
-  await addTileBtn.click();
-  await expect(page.getByRole('menuitem', { name: /^Image$/i })).toBeVisible({
-    timeout: 5_000,
-  });
-  await page.getByRole('menuitem', { name: /^Image$/i }).click({ force: true });
+  await openAddTileDialog(page, 'image');
   await expect(addDialog).toBeVisible({ timeout: 10_000 });
   const tinyPng =
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
@@ -128,7 +154,10 @@ test('steward can add markdown and image tiles to the group home dashboard', asy
   // ---- Save & verify persistence ----
   // Save lives in group-home's header now, not inside group-dashboard.
   await page.getByRole('button', { name: /^Save$/i }).click();
-  await expect(addTileBtn).toBeHidden({ timeout: 30_000 });
+  // Edit mode exits: the header swaps Save/Cancel back to the edit pencil.
+  await expect(page.getByRole('button', { name: /Edit group home/i })).toBeVisible({
+    timeout: 30_000,
+  });
   await expect(dashboard.locator('.grid-stack-item')).toHaveCount(2, { timeout: 15_000 });
   await expect(
     dashboard.locator('.markdown-tile h1', { hasText: 'Hello dashboard' }),
