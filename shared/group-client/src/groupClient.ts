@@ -18,6 +18,7 @@ import {
   AppletAgent,
   GROUP_APPLETS_META_DATA_NAME,
   GROUP_DASHBOARD_NAME,
+  GROUP_DASHBOARD_SCHEMA_VERSION,
   GROUP_DESCRIPTION_NAME,
   GroupAppletsMetaData,
   GroupDashboard,
@@ -394,18 +395,22 @@ export class GroupClient {
     return this.setGroupMetaData({
       permission_hash: permissionHash,
       name: GROUP_DASHBOARD_NAME,
-      data: JSON.stringify(dashboard),
+      data: JSON.stringify({ ...dashboard, schemaVersion: GROUP_DASHBOARD_SCHEMA_VERSION }),
     });
   }
 
   /**
    * Returns `undefined` if no dashboard has been published yet — callers should
    * fall back to rendering the legacy group description in that case.
+   *
+   * Entries written before schema versioning have no `schemaVersion`; they are
+   * normalized to version 1 here so callers always see a versioned object.
    */
   async getGroupDashboard(local: boolean = true): Promise<GroupDashboard | undefined> {
     const record = await this.getGroupMetaData(GROUP_DASHBOARD_NAME, local);
     if (!record?.entry.data) return undefined;
-    return JSON.parse(record.entry.data) as GroupDashboard;
+    const dashboard = JSON.parse(record.entry.data) as GroupDashboard;
+    return { schemaVersion: GROUP_DASHBOARD_SCHEMA_VERSION, ...dashboard };
   }
 
   async getGroupMetaData(

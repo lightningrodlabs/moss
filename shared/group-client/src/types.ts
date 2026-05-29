@@ -100,7 +100,20 @@ export type DashboardTileEntry = {
   fillHeight?: boolean;
 };
 
+/**
+ * Current on-chain shape version for {@link GroupDashboard}. Bump whenever the
+ * persisted tile/dashboard shape changes in a non-additive way, and migrate in
+ * {@link GroupClient.getGroupDashboard}. Entries written before versioning was
+ * introduced have no `schemaVersion` and are treated as version 1.
+ */
+export const GROUP_DASHBOARD_SCHEMA_VERSION = 1;
+
 export type GroupDashboard = {
+  /**
+   * Shape version of this dashboard entry. Absent on entries written before
+   * versioning existed — readers treat `undefined` as version 1.
+   */
+  schemaVersion?: number;
   tiles: DashboardTileEntry[];
   updatedAt: number;
   /**
