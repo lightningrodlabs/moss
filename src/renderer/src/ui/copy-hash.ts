@@ -21,7 +21,7 @@ export class CopyHash extends LitElement {
   shortened: boolean = false;
 
   @property()
-  styles = "";
+  styles = '';
 
   render() {
     return html` <sl-tooltip content=${this.tooltipText}>
@@ -29,9 +29,9 @@ export class CopyHash extends LitElement {
         class="copy-hash"
         style="${this.styles}"
         @click=${async () => {
-        await navigator.clipboard.writeText(this.hash);
-        notify(msg('Hash copied to clipboard.'));
-      }}
+          await navigator.clipboard.writeText(this.hash);
+          notify(msg('Hash copied to clipboard.'));
+        }}
       >
         ${this.shortened ? `${this.hash.slice(0, 8)}...${this.hash.slice(-8)}` : this.hash}
       </div>

@@ -50,9 +50,7 @@ export class DashboardTileDialog extends LitElement {
   }
 
   private _close() {
-    this.dispatchEvent(
-      new CustomEvent('dialog-closed', { bubbles: true, composed: true }),
-    );
+    this.dispatchEvent(new CustomEvent('dialog-closed', { bubbles: true, composed: true }));
   }
 
   /**

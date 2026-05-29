@@ -36,18 +36,18 @@ Crate versions at this tag:
 
 Each phase ends in a green `yarn typecheck && yarn build:zomes && yarn test` (and where possible, a manual `yarn applet-dev-example` smoke run with two agents). PRs land in order so CI gates regressions phase-by-phase.
 
-### Phase 1 — Rust workspace bump and zome compile *(done)*
+### Phase 1 — Rust workspace bump and zome compile _(done)_
 
 Changed:
 
 - `Cargo.toml` and `example/Cargo.toml`: `hdi = "=0.8.0-dev.10"`, `hdk = "=0.7.0-dev.13"`, `holochain = "=0.7.0-dev.21"` (root only).
 - All other crates inherit via `workspace = true` patterns; no per-crate edits needed.
 
-`yarn build:zomes` succeeded with one harmless `unused_imports` warning at [dnas/group/zomes/coordinator/group/src/lib.rs:8](dnas/group/zomes/coordinator/group/src/lib.rs#L8). The 0.7 changelog items that *might* have broken Moss zomes (`GetOptions` private fields, `get_agent_activity` arity, `block_agent` removal, `Anchor::with_strategy`) all turned out to be no-ops at this revision — Moss zomes use the helper-builder forms that 0.7 still supports.
+`yarn build:zomes` succeeded with one harmless `unused_imports` warning at [dnas/group/zomes/coordinator/group/src/lib.rs:8](dnas/group/zomes/coordinator/group/src/lib.rs#L8). The 0.7 changelog items that _might_ have broken Moss zomes (`GetOptions` private fields, `get_agent_activity` arity, `block_agent` removal, `Anchor::with_strategy`) all turned out to be no-ops at this revision — Moss zomes use the helper-builder forms that 0.7 still supports.
 
 **Outstanding for Phase 1**: the `profiles` zomes pull `holochain-open-dev/profiles#main-0.6` (see [dnas/group/zomes/coordinator/profiles/Cargo.toml:12](dnas/group/zomes/coordinator/profiles/Cargo.toml#L12) and [dnas/group/zomes/integrity/profiles/Cargo.toml:13](dnas/group/zomes/integrity/profiles/Cargo.toml#L13)). They compile today only because Cargo allows the dual hdi/hdk-0.6 + 0.7 build graph; the resulting WASM is 0.6-targeted and would not load in a 0.7 conductor. Switch the git ref to a HOD profiles 0.7 branch when one is published.
 
-### Phase 2 — Conductor binary, config, and startup wiring *(done, with one open decision)*
+### Phase 2 — Conductor binary, config, and startup wiring _(done, with one open decision)_
 
 Done:
 
@@ -71,7 +71,7 @@ Open decision (Phase 6 candidate, not blocking now):
 
 Cleanup follow-up (low priority, not blocking): in dev mode, [src/main/holochainManager.ts:114-119](src/main/holochainManager.ts#L114-L119) writes both `tx5Transport.signalAllowPlainText` and `irohTransport.relayAllowPlainText` into `network.advanced`. With an iroh-only binary the tx5 block is dead config; safe to drop. The conductor config's `advanced` field is `serde_json::Value`, so the unused tx5 block parses fine — it's just noise.
 
-### Phase 3 — JS client, types, and admin/app API surface *(blocked on profiles)*
+### Phase 3 — JS client, types, and admin/app API surface _(blocked on profiles)_
 
 Target versions:
 
@@ -101,7 +101,7 @@ API-surface audit (queued diff is small):
 - **`install_app_with_manifest` test-only** — Moss uses `adminWebsocket.installApp` (~10 sites in `src/main/`), not affected.
 - The unimplemented broker design in [plans/network-metrics-broker.md](plans/network-metrics-broker.md) needs to be re-read against the unified `ApiTransportStats` shape before implementing — particularly the `payload: this._adminNetworkStats!.transport_stats` extraction (debugging-panel.ts:1026) which already does the unwrap correctly.
 
-### Phase 4 — `@holochain-open-dev/*` and `@theweave/*` lib bumps *(partially unblocked)*
+### Phase 4 — `@holochain-open-dev/*` and `@theweave/*` lib bumps _(partially unblocked)_
 
 Available now at `0.700.0-dev.0`: `@holochain-open-dev/elements`, `stores`, `utils`. **Not yet**: `profiles` (still 0.601.3, see Phase 3).
 
@@ -139,14 +139,14 @@ This is the riskiest step for type fallout — render-side components consume th
 - **Group happ network seed change**: cell bootstrap/signal manifest pinning (Phase 2 step 6) will only take effect for newly-created groups; existing 0.16 groups created before that change will use conductor-level config. If the team wants pinning, decide before group.happ ships.
 - **Auth material split**: until the field names are confirmed against 0.7's `holochain_conductor_config` crate, treat the bootstrap/relay split as a stub. Read `crates/holochain_conductor_config/src/lib.rs` from the 0.7 source before writing the rewrite logic.
 - **HOD lib availability**: the upgrade is gated on `@holochain-open-dev/*` publishing 0.7-compatible versions. If they lag, the JS client and zome bumps can land first; Phase 4 follows on a separate PR.
-- **Tx5 vs iroh default**: switching defaults to iroh changes the relay/bootstrap URLs Moss should publish. The user-configurable bootstrap/relay/ICE URLs in Danger Zone settings are agnostic but the *defaults* in `moss.config.json` should match what the chosen transport expects.
+- **Tx5 vs iroh default**: switching defaults to iroh changes the relay/bootstrap URLs Moss should publish. The user-configurable bootstrap/relay/ICE URLs in Danger Zone settings are agnostic but the _defaults_ in `moss.config.json` should match what the chosen transport expects.
 
 ## Suggested PR sequence
 
-1. `chore: bump cargo workspace + fix zome compile for HC 0.7`  *(Phase 1)*
-2. `chore: HC 0.7 conductor config + binary checksums`  *(Phase 2)*
-3. `chore: bump @holochain/client + tryorama, fix dump-stats consumers`  *(Phase 3)*
-4. `chore: bump @holochain-open-dev/* and @theweave/* to 0.7 line`  *(Phase 4)*
-5. `chore: bump Moss to 0.16, update identifiers and docs`  *(Phase 6)*
+1. `chore: bump cargo workspace + fix zome compile for HC 0.7` _(Phase 1)_
+2. `chore: HC 0.7 conductor config + binary checksums` _(Phase 2)_
+3. `chore: bump @holochain/client + tryorama, fix dump-stats consumers` _(Phase 3)_
+4. `chore: bump @holochain-open-dev/* and @theweave/* to 0.7 line` _(Phase 4)_
+5. `chore: bump Moss to 0.16, update identifiers and docs` _(Phase 6)_
 
 Each phase landable independently against `main-0.7`; final merge of `main-0.7` → `main` happens once 0.7.0 stable is pinned and a release candidate has been hand-tested.

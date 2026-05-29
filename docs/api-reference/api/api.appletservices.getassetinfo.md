@@ -9,5 +9,6 @@ Get info about the specified entry of this Applet
 **Signature:**
 
 ```typescript
-getAssetInfo: (appletClient: AppClient, wal: WAL, recordInfo?: RecordInfo) => Promise<AssetInfo | undefined>;
+getAssetInfo: (appletClient: AppClient, wal: WAL, recordInfo?: RecordInfo) =>
+  Promise<AssetInfo | undefined>;
 ```

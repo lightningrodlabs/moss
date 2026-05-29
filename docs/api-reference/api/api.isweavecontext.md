@@ -7,11 +7,11 @@
 **Signature:**
 
 ```typescript
-isWeaveContext: () => true
+isWeaveContext: () => true;
 ```
+
 **Returns:**
 
 true
 
 bool: Returns whether this function is being called in a Weave context.
-

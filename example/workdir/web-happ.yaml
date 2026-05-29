@@ -1,7 +1,7 @@
 ---
-manifest_version: "0"
+manifest_version: '0'
 name: example-applet
 ui:
-  path: "../ui/dist.zip"
+  path: '../ui/dist.zip'
 happ:
-  path: "./example-applet.happ"
+  path: './example-applet.happ'

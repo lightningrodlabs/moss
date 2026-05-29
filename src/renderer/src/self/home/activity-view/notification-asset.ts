@@ -169,7 +169,10 @@ export class NotificationAsset extends LitElement {
     if (this.groupDnaHash) {
       switch (this._groupProfile.value?.status) {
         case 'pending':
-          return html`<sl-skeleton style="height: 16px; width: 16px;" effect="pulse"></sl-skeleton>`;
+          return html`<sl-skeleton
+            style="height: 16px; width: 16px;"
+            effect="pulse"
+          ></sl-skeleton>`;
         case 'complete':
           const profile = this._groupProfile.value.value;
           if (!profile?.icon_src) return html``;
@@ -230,7 +233,7 @@ export class NotificationAsset extends LitElement {
         agentPubKey = decodeHashFromBase64(pubkeyB64);
       } catch (e) {
         console.error('Failed to decode agent pub key from base64:', e);
-        return pubkeyB64.slice(0, 8) + "..."; // Fallback
+        return pubkeyB64.slice(0, 8) + '...'; // Fallback
       }
 
       // For group notifications, use the group store directly
@@ -243,12 +246,12 @@ export class NotificationAsset extends LitElement {
             return profileStore.profile.entry.nickname || pubkeyB64.slice(0, 8);
           }
         }
-        return pubkeyB64.slice(0, 8) + "..."; // Fallback
+        return pubkeyB64.slice(0, 8) + '...'; // Fallback
       }
 
       // For applet notifications, get the group stores for this applet
       if (!this.appletHash) {
-        return pubkeyB64.slice(0, 8) + "..."; // Fallback
+        return pubkeyB64.slice(0, 8) + '...'; // Fallback
       }
 
       const groupStoreMap = await toPromise(this._mossStore.groupsForApplet.get(this.appletHash)!);
@@ -256,7 +259,7 @@ export class NotificationAsset extends LitElement {
       // Try to get the profile from any of the groups and use the first one
       const groupStores = Array.from(groupStoreMap.values());
       if (groupStores.length === 0) {
-        return pubkeyB64.slice(0, 8) + "..."; // Fallback
+        return pubkeyB64.slice(0, 8) + '...'; // Fallback
       }
 
       const firstGroupStore = groupStores[0];
@@ -266,9 +269,9 @@ export class NotificationAsset extends LitElement {
         return profileStore.profile.entry.nickname || pubkeyB64.slice(0, 8);
       }
 
-      return pubkeyB64.slice(0, 8) + "..."; // Fallback
+      return pubkeyB64.slice(0, 8) + '...'; // Fallback
     } catch (error) {
-      return pubkeyB64.slice(0, 8) + "..."; // Fallback
+      return pubkeyB64.slice(0, 8) + '...'; // Fallback
     }
   }
 
@@ -309,8 +312,8 @@ export class NotificationAsset extends LitElement {
         <div>${until(bodyWithNamesPromise, body)}</div>
         <div class="notification-date">
           ${this.notification
-          ? formatDistanceToNow(new Date(this.notification?.timestamp), { addSuffix: true })
-          : 'unknown date'}
+            ? formatDistanceToNow(new Date(this.notification?.timestamp), { addSuffix: true })
+            : 'unknown date'}
         </div>
       </div>`;
     }
@@ -343,8 +346,8 @@ export class NotificationAsset extends LitElement {
           <div>${until(bodyWithNamesPromise, body)}</div>
           <div class="notification-date">
             ${this.notification
-            ? formatDistanceToNow(new Date(this.notification?.timestamp), { addSuffix: true })
-            : 'unknown date'}
+              ? formatDistanceToNow(new Date(this.notification?.timestamp), { addSuffix: true })
+              : 'unknown date'}
           </div>
         </div>`;
 

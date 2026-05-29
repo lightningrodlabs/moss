@@ -3,7 +3,7 @@
 ## Goal
 
 Right-click a tool in the **group tools sidebar** → the same "tool details" dialog
-that the Tool Library shows pops up *in place* over whatever is currently visible
+that the Tool Library shows pops up _in place_ over whatever is currently visible
 (no navigation away). The dialog is **informational only** — install buttons are
 removed.
 
@@ -37,8 +37,8 @@ That changes a few choices in this plan:
 - The dialog input must distinguish **activated-here** vs **available-but-not-activated-here**.
   Keep the discriminator explicit on the input shape so the future state is a new
   variant, not a flag retrofit. See "Dialog input shape" below.
-- The resolver should be able to answer "is this tool activated for *this* agent
-  in *this* group?" — i.e. resolve from `(groupDnaHash, toolCompatibilityId)`, not
+- The resolver should be able to answer "is this tool activated for _this_ agent
+  in _this_ group?" — i.e. resolve from `(groupDnaHash, toolCompatibilityId)`, not
   only from `appletHash`. The `appletHash` form will keep working; the
   `(group, toolId)` form is what the future first-run flow will use.
 - Don't bake "right-click only" into the dialog or resolver. Left-click on a
@@ -48,7 +48,7 @@ That changes a few choices in this plan:
 
 - Dialog body: [src/renderer/src/personal-views/tool-library/elements/library-tool-details.ts](src/renderer/src/personal-views/tool-library/elements/library-tool-details.ts) — takes `unifiedTool: UnifiedToolEntry`, dispatches `install-tool-to-group`. Install buttons rendered unconditionally at lines ~224-260 and inside the Versions tab (~64).
 - Dialog wrapper: [src/renderer/src/personal-views/tool-library/elements/installable-tools-web2.ts:204-205](src/renderer/src/personal-views/tool-library/elements/installable-tools-web2.ts#L204-L205) — `<moss-dialog>` + state lives on the page component.
-- Generic dialog primitive: [src/renderer/src/elements/_new_design/moss-dialog.ts](src/renderer/src/elements/_new_design/moss-dialog.ts).
+- Generic dialog primitive: [src/renderer/src/elements/\_new_design/moss-dialog.ts](src/renderer/src/elements/_new_design/moss-dialog.ts).
 - Unified entry construction: [src/renderer/src/utils.ts:215-263](src/renderer/src/utils.ts#L215-L263) (`groupToolsByBaseId`).
 - Per-applet tool identity: `applet.distribution_info` (JSON) → `toolListUrl`, `toolId`, `versionBranch`. Helper `toolCompatibilityIdFromDistInfoString` exists in `@theweave/utils`.
 - Library data today only lives on the page component [src/renderer/src/personal-views/tool-library/tool-library-web2.ts:105,114,260](src/renderer/src/personal-views/tool-library/tool-library-web2.ts) — not in the store.
@@ -79,11 +79,13 @@ A single mounted instance owns the `<moss-dialog>` + `<library-tool-details info
 - **Dialog input shape** — discriminated union, designed so the future first-run variant slots in:
   ```ts
   type ToolInfoInput =
-    | { kind: 'activated-applet'; appletHash: EntryHash }      // v1 — group sidebar right-click
-    | { kind: 'unified'; tool: UnifiedToolEntry }              // direct, e.g. future library reuse
-    | { kind: 'available-tool';                                // future — first-run flow
+    | { kind: 'activated-applet'; appletHash: EntryHash } // v1 — group sidebar right-click
+    | { kind: 'unified'; tool: UnifiedToolEntry } // direct, e.g. future library reuse
+    | {
+        kind: 'available-tool'; // future — first-run flow
         groupDnaHash: DnaHash;
-        toolCompatibilityId: string };
+        toolCompatibilityId: string;
+      };
   ```
   v1 implements the first two; the third is reserved (resolver supports it, dialog can stub a "not implemented yet" path or simply not be invoked with it).
 - Mount **once** at the app root. Candidate: `src/renderer/src/we-app.ts` or wherever the existing root-level dialogs sit. Pick whichever already hosts the splash/error overlays so z-index and lifecycle match.
@@ -102,8 +104,8 @@ Today the `unifiedTools` map only exists on the tool-library page. We need it gl
     tool: UnifiedToolEntry | { fallback: AppletFallbackInfo };
     activation:
       | { state: 'activated'; appletHash: EntryHash; customName?: string }
-      | { state: 'available'; groupDnaHash: DnaHash }   // future
-      | { state: 'unknown' };                            // unified-only input
+      | { state: 'available'; groupDnaHash: DnaHash } // future
+      | { state: 'unknown' }; // unified-only input
   };
   ```
   The dialog uses `tool` for the body and `activation` to decide the
@@ -130,6 +132,7 @@ spec are intentionally not implemented here; they land together with the
 testing infrastructure on a follow-up branch.
 
 Spec sources to honor when the infra lands:
+
 - Unit test designs: this section (items 1-3 below).
 - E2E #10 design: see the smoke #10 spec on `feat/tool-info-popup`
   (PR #210, file `tests/e2e/smoke/10.tool-info-popup.spec.ts`) — depends on
@@ -185,7 +188,7 @@ Per CLAUDE.md UI rule: type checks ≠ feature works. Before declaring done:
   - No install button visible.
   - "(installed as: …)" line shows when `applet.custom_name` is set.
   - ESC and clicking outside both close it.
-  - Native browser context menu does *not* also appear.
+  - Native browser context menu does _not_ also appear.
 - Test offline path: kill network, right-click an applet whose source isn't in `unifiedToolsStore` → fallback view renders, no error.
 
 ## Out of scope / follow-ups
@@ -194,4 +197,4 @@ Per CLAUDE.md UI rule: type checks ≠ feature works. Before declaring done:
 - The "show all group tools incl. not-yet-activated, first-run dialog on first click" flow — separate plan, but the `ToolInfoInput`/`ResolvedToolInfo` shapes here are designed to absorb it without rework.
 - Caching tool metadata locally so the offline fallback has richer content.
 - Adding "View source", "Report issue" links to the informational view.
-- Right-click menus with other actions (uninstall, rename, etc.) — this plan adds *only* the info-popup. A multi-action context menu is a separate design.
+- Right-click menus with other actions (uninstall, rename, etc.) — this plan adds _only_ the info-popup. A multi-action context menu is a separate design.

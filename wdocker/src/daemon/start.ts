@@ -191,9 +191,7 @@ export async function startConductor(
   conductorConfig.network.webrtc_config = { iceServers: iceUrls.map((url) => ({ urls: [url] })) };
 
   // advanced network settings (sync with main app)
-  const advancedSettings = conductorConfig.network.advanced
-    ? conductorConfig.network.advanced
-    : {};
+  const advancedSettings = conductorConfig.network.advanced ? conductorConfig.network.advanced : {};
   advancedSettings.coreBootstrap = { backoffMaxMs: 30000 };
   advancedSettings.coreSpace = { reSignExpireTimeMs: 30000, reSignFreqMs: 30000 };
   conductorConfig.network.advanced = advancedSettings;

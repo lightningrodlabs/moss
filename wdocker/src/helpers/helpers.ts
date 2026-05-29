@@ -201,5 +201,3 @@ export function cleanTable() {
     style: { 'padding-left': 0, 'padding-right': 10 },
   });
 }
-
-

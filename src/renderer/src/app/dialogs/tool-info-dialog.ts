@@ -303,9 +303,7 @@ export class ToolInfoDialog extends LitElement {
     if (!details.version && !details.happSha256) return '';
     return html`
       <div class="instance-details row">
-        <span class="label"
-          >${details.installed ? msg('Installed version') : msg('Version')}:</span
-        >
+        <span class="label">${details.installed ? msg('Installed version') : msg('Version')}:</span>
         <span class="value">${details.version ?? msg('unknown')}</span>
         ${details.versionBranch
           ? html`<span class="muted">${msg('branch')} ${details.versionBranch}</span>`

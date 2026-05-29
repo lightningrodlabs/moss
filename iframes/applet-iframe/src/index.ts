@@ -14,7 +14,9 @@ import {
   EntryHashMap,
   HoloHashMap,
   decodeHashFromBase64,
-  encodeHashToBase64, TransportStats, DnaHash,
+  encodeHashToBase64,
+  TransportStats,
+  DnaHash,
 } from '@holochain/client';
 import { decode } from '@msgpack/msgpack';
 import { toUint8Array } from 'js-base64';
@@ -84,14 +86,18 @@ declare global {
  * entry is evicted when the last subscriber detaches so a fresh one will be
  * created on the next call.
  */
-const assetStoreCache = new Map<string, ReturnType<typeof readable<AsyncStatus<AssetStoreContent>>>>();
+const assetStoreCache = new Map<
+  string,
+  ReturnType<typeof readable<AsyncStatus<AssetStoreContent>>>
+>();
 
 /** All weaveApi functions shoot an event to parent */
 const weaveApi: WeaveServices = {
-  bootstrapUrls: (groupHash?: DnaHash) => postMessage({
-    type: 'get-bootstrap-urls',
-    groupHash,
-  }),
+  bootstrapUrls: (groupHash?: DnaHash) =>
+    postMessage({
+      type: 'get-bootstrap-urls',
+      groupHash,
+    }),
   assets: {
     assetInfo: (wal: WAL) =>
       postMessage({
@@ -168,39 +174,36 @@ const weaveApi: WeaveServices = {
       const cached = assetStoreCache.get(walKey);
       if (cached) return cached;
 
-      const store = readable<AsyncStatus<AssetStoreContent>>(
-        { status: 'pending' },
-        (set) => {
-          const listener = (
-            e: CustomEvent<{
-              type: 'asset-store-update';
-              walStringified: string;
-              value: AsyncStatus<AssetStoreContent>;
-            }>,
-          ) => {
-            if (walKey === e.detail.walStringified) {
-              set(e.detail.value);
-            }
-          };
-          window.addEventListener('asset-store-update', listener);
+      const store = readable<AsyncStatus<AssetStoreContent>>({ status: 'pending' }, (set) => {
+        const listener = (
+          e: CustomEvent<{
+            type: 'asset-store-update';
+            walStringified: string;
+            value: AsyncStatus<AssetStoreContent>;
+          }>,
+        ) => {
+          if (walKey === e.detail.walStringified) {
+            set(e.detail.value);
+          }
+        };
+        window.addEventListener('asset-store-update', listener);
+        setTimeout(async () => {
+          await postMessage({
+            type: 'subscribe-to-asset-store',
+            wal,
+          });
+        });
+        return () => {
+          window.removeEventListener('asset-store-update', listener);
+          assetStoreCache.delete(walKey);
           setTimeout(async () => {
             await postMessage({
-              type: 'subscribe-to-asset-store',
+              type: 'unsubscribe-from-asset-store',
               wal,
             });
           });
-          return () => {
-            window.removeEventListener('asset-store-update', listener);
-            assetStoreCache.delete(walKey);
-            setTimeout(async () => {
-              await postMessage({
-                type: 'unsubscribe-from-asset-store',
-                wal,
-              });
-            });
-          };
-        },
-      );
+        };
+      });
       assetStoreCache.set(walKey, store);
       return store;
     },
@@ -227,9 +230,9 @@ const weaveApi: WeaveServices = {
   },
 
   onNetworkStatsUpdate: (callback: (payload: TransportStats) => any) => {
-      const listener = (e: CustomEvent<TransportStats>) => callback(e.detail);
-      window.addEventListener('network-stats-update', listener);
-      return () => window.removeEventListener('network-stats-update', listener);
+    const listener = (e: CustomEvent<TransportStats>) => callback(e.detail);
+    window.addEventListener('network-stats-update', listener);
+    return () => window.removeEventListener('network-stats-update', listener);
   },
 
   onBeforeUnload: (callback: () => void) => {
@@ -435,7 +438,7 @@ const weaveApi: WeaveServices = {
       // Send the result if truthy, indicating that the message was actually handled.
       // Otherwise, the `handleParentMessageGeneral` message handler will be ignored.
       if (result && m.ports.length > 0) {
-          m.ports[0].postMessage({ type: 'success', result });
+        m.ports[0].postMessage({ type: 'success', result });
       }
     } catch (e) {
       console.error('postMessage Failed\nError:', e, '\nMessage: ', m);
@@ -592,7 +595,7 @@ const handleParentMessageAppletView = async (message: ParentToAppletMessage) => 
       );
       // return 1 to indicate that the message has been handled.
       return 1;
-      case 'locale-change':
+    case 'locale-change':
       window.__WEAVE_LOCALE__ = message.locale;
       window.dispatchEvent(
         new CustomEvent('locale-change', {
@@ -601,7 +604,7 @@ const handleParentMessageAppletView = async (message: ParentToAppletMessage) => 
       );
       // return 1 to indicate that the message has been handled.
       return 1;
-      default:
+    default:
       // return 0 to indicate that the message has not been handled.
       return 0;
   }
@@ -636,13 +639,13 @@ const handleParentMessageGeneral = async (
         }),
       );
       break;
-      case 'network-stats-update':
-          window.dispatchEvent(
-              new CustomEvent('network-stats-update', {
-                  detail: message.payload,
-              }),
-          );
-          break;
+    case 'network-stats-update':
+      window.dispatchEvent(
+        new CustomEvent('network-stats-update', {
+          detail: message.payload,
+        }),
+      );
+      break;
     case 'asset-store-update':
       window.dispatchEvent(
         new CustomEvent('asset-store-update', {
@@ -671,7 +674,6 @@ const handleParentMessageGeneral = async (
       );
   }
 };
-
 
 /** Send a message to Parent */
 async function postMessage(request: AppletToParentRequest): Promise<any> {
@@ -859,7 +861,7 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
       if (view !== 'applet-view' && view !== 'cross-group-view') {
         throw new Error(`invalid query string: ${s}.`);
       }
-      const wal = hrl? { hrl, context } : undefined;
+      const wal = hrl ? { hrl, context } : undefined;
       return {
         type: view,
         view: {

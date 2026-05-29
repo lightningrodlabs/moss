@@ -16,34 +16,27 @@ export declare function weaveUrlToLocation(url: string): WeaveLocation;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 url
 
-
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 [WeaveLocation](./api.weavelocation.md)
-

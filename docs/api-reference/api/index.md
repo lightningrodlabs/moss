@@ -10,20 +10,16 @@
 
 Package
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [@theweave/api](./api.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>

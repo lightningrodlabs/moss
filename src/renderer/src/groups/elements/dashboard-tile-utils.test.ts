@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { canFillHeight, nextTileColor, tileColorStyle, TILE_COLOR_CYCLE } from './dashboard-tile-utils';
+import {
+  canFillHeight,
+  nextTileColor,
+  tileColorStyle,
+  TILE_COLOR_CYCLE,
+} from './dashboard-tile-utils';
 
 const tile = (id: string, x: number, y: number, w: number, h: number) => ({
   id,
@@ -49,7 +54,9 @@ describe('tileColorStyle', () => {
     expect(tileColorStyle(undefined)).toBe('');
   });
   it('drops background and border for transparent', () => {
-    expect(tileColorStyle('transparent')).toBe('background: transparent; border-color: transparent;');
+    expect(tileColorStyle('transparent')).toBe(
+      'background: transparent; border-color: transparent;',
+    );
   });
   it('sets a background for a named color', () => {
     expect(tileColorStyle('green')).toBe('background: #e3efd4;');

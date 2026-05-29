@@ -51,6 +51,7 @@ These move into a shared utility module (see Phase 1).
 ### Existing `network-stats-update` pipe
 
 Already wired end-to-end:
+
 - [`src/renderer/src/groups/group-store.ts:1663`](../src/renderer/src/groups/group-store.ts#L1663) `emitToGroupApplets()`.
 - [`src/renderer/src/moss-store.ts:1882`](../src/renderer/src/moss-store.ts#L1882) `emitParentToAppletMessage()` — posts to main-window iframes and WAL windows via `window.electronAPI.parentToAppletMessage`.
 - [`libs/api/src/types.ts:298`](../libs/api/src/types.ts#L298) `ParentToAppletMessage` variant `'network-stats-update'`.
@@ -109,11 +110,12 @@ Each group's `profilesStore` already exposes `agentsWithProfile` and per-agent l
 
 ### Key design decisions
 
-**Refcounted poll lifecycle.** The service tracks subscribers keyed by `SubscriberKey = { kind: 'tool', appletId: AppletId } | { kind: 'internal', id: string }`. An `AppletId` is the base64 applet hash, which already uniquely identifies an applet-*in-a-group*: the same tool installed in two groups has two different applet hashes (each is a distinct `InstalledAppId` in the conductor — see [`shared/utils/src/utils.ts:63`](../shared/utils/src/utils.ts#L63) `appIdFromAppletHash`). So "per applet per group" is encoded naturally in the key. The debugging panel subscribes with `kind: 'internal', id: 'debugging-panel'`; each tool subscribes via `subscribe-to-network-metrics` through the iframe bridge (the iframe's `IframeKind` carries `appletHash` and `groupHash`; the bridge uses `appletHash` as the key and remembers `groupHash` for profile resolution). `subscribe()` starts the poll on first subscriber; `unsubscribe()` stops it on last.
+**Refcounted poll lifecycle.** The service tracks subscribers keyed by `SubscriberKey = { kind: 'tool', appletId: AppletId } | { kind: 'internal', id: string }`. An `AppletId` is the base64 applet hash, which already uniquely identifies an applet-_in-a-group_: the same tool installed in two groups has two different applet hashes (each is a distinct `InstalledAppId` in the conductor — see [`shared/utils/src/utils.ts:63`](../shared/utils/src/utils.ts#L63) `appIdFromAppletHash`). So "per applet per group" is encoded naturally in the key. The debugging panel subscribes with `kind: 'internal', id: 'debugging-panel'`; each tool subscribes via `subscribe-to-network-metrics` through the iframe bridge (the iframe's `IframeKind` carries `appletHash` and `groupHash`; the bridge uses `appletHash` as the key and remembers `groupHash` for profile resolution). `subscribe()` starts the poll on first subscriber; `unsubscribe()` stops it on last.
 
 **Per-subscriber options.** Different subscribers may want different things. The service stores `SubscriberSpec { intervalMs?, includeDhtSummary? }` and reconciles them: poll interval = `max(min(all subscribers' intervalMs), 1000)` (hard cap at 1s — a rogue tool cannot set a shorter interval), DHT summary = `any(includeDhtSummary)`. The debugging panel keeps `intervalMs: 2000, includeDhtSummary: true`; tools default to `intervalMs: 5000, includeDhtSummary: false`.
 
 **Single admin call + filtered fan-out.** On each tick:
+
 1. One `adminWebsocket.dumpNetworkStats()` — cheap, returns all transport stats + `blocked_message_counts`.
 2. One `adminWebsocket.dumpNetworkMetrics({ include_dht_summary })` — this uses the admin path that runs `join_all` across all spaces in parallel (see [`actor.rs:2335`](../../holochain/crates/holochain_p2p/src/spawn/actor.rs#L2335)).
 3. For each subscribed app, the service computes the set of DNA hashes for that app from the cached app→DNA map (built once via `getAppClient(appId).appInfo()` on first subscribe) and filters the admin response down to that app's slice before delivering.
@@ -129,11 +131,21 @@ Each group's `profilesStore` already exposes `agentsWithProfile` and per-agent l
 Create [`src/renderer/src/processes/network-metrics/helpers.ts`](../src/renderer/src/processes/network-metrics/helpers.ts):
 
 ```typescript
-export function spaceIdToDnaHash(spaceId: string): DnaHash { /* moved from debugging-panel.ts:908 */ }
-export function kitsuneAgentIdToAgentPubKey(kitsuneAgentId: string): AgentPubKey { /* line 918 */ }
-export function extractTransportKeyFromUrl(peerUrl: string): string | null { /* line 929 */ }
-export function decodeUrlSafeBase64(s: string): Uint8Array { /* line ~890 */ }
-export function transformMetrics(m: DumpNetworkMetricsResponse): DumpNetworkMetricsResponse { /* line 187 */ }
+export function spaceIdToDnaHash(spaceId: string): DnaHash {
+  /* moved from debugging-panel.ts:908 */
+}
+export function kitsuneAgentIdToAgentPubKey(kitsuneAgentId: string): AgentPubKey {
+  /* line 918 */
+}
+export function extractTransportKeyFromUrl(peerUrl: string): string | null {
+  /* line 929 */
+}
+export function decodeUrlSafeBase64(s: string): Uint8Array {
+  /* line ~890 */
+}
+export function transformMetrics(m: DumpNetworkMetricsResponse): DumpNetworkMetricsResponse {
+  /* line 187 */
+}
 ```
 
 The debugging panel imports these instead of defining them as methods.
@@ -145,9 +157,9 @@ The debugging panel imports these instead of defining them as methods.
 ```typescript
 export interface AppNetworkSnapshot {
   transportStats: TransportStats;
-  networkMetrics: DumpNetworkMetricsResponse;     // filtered to this app's DNAs
-  blockedCounts: BlockedMessageCounts;             // filtered to this app's DNAs
-  transportToAgent: Map<string, AgentPubKeyB64>;  // for this app only
+  networkMetrics: DumpNetworkMetricsResponse; // filtered to this app's DNAs
+  blockedCounts: BlockedMessageCounts; // filtered to this app's DNAs
+  transportToAgent: Map<string, AgentPubKeyB64>; // for this app only
   fetchedAt: number;
 }
 
@@ -171,12 +183,12 @@ export interface ConnectedPeer {
   isDirect: boolean;
   lastGossipAt?: number;
   storageArc?: [number, number];
-  profile?: MaybeProfile;                         // resolved via GroupStore.profilesStore when available
+  profile?: MaybeProfile; // resolved via GroupStore.profilesStore when available
 }
 
 export interface SubscriberSpec {
-  intervalMs?: number;           // default 5000
-  includeDhtSummary?: boolean;   // default false
+  intervalMs?: number; // default 5000
+  includeDhtSummary?: boolean; // default false
 }
 
 export class NetworkMetricsService {
@@ -223,7 +235,8 @@ Add to [`libs/api/src/api.ts`](../libs/api/src/api.ts) `WeaveServices`:
 
 ```typescript
 onNetworkMetricsUpdate: (cb: (payload: NetworkMetricsUpdate) => any) => UnsubscribeFunction;
-subscribeToNetworkMetrics: (opts?: { intervalMs?: number; includeDhtSummary?: boolean }) => Promise<void>;
+subscribeToNetworkMetrics: (opts?: { intervalMs?: number; includeDhtSummary?: boolean }) =>
+  Promise<void>;
 unsubscribeFromNetworkMetrics: () => Promise<void>;
 getConnectedPeers: () => Promise<ConnectedPeer[]>;
 ```
@@ -281,7 +294,7 @@ The service is in place but no caller uses it yet.
    - Replace `_refreshInterval` + `pollNetworkStats()` with `mossStore.networkMetrics.subscribe({ kind: 'internal', id: 'debugging-panel' }, { intervalMs: 2000, includeDhtSummary: true })`.
    - Subscribe to `networkMetrics.onUpdate` and write the same `_networkStats` / `_adminNetworkStats` / `_transportToAgentMap` state from snapshots.
    - `disconnectedCallback()` calls `unsubscribe(...)`.
-2. Keep `network-stats-update` emission (the current cross-tool broadcast) but move it *into* the service: after each poll, the service calls `emitToGroupApplets({ type: 'network-stats-update', payload: adminStats.transport_stats })` exactly as today. This is the one place all applets already listen, and it becomes free-rider data once the service is running for any reason.
+2. Keep `network-stats-update` emission (the current cross-tool broadcast) but move it _into_ the service: after each poll, the service calls `emitToGroupApplets({ type: 'network-stats-update', payload: adminStats.transport_stats })` exactly as today. This is the one place all applets already listen, and it becomes free-rider data once the service is running for any reason.
 
 **Test**: open the debugging panel, verify panel renders same data. Close it; verify polling stops (add a debug `console.log` in `pollOnce`).
 
@@ -296,6 +309,7 @@ The service is in place but no caller uses it yet.
 7. Export from `libs/api/src/index.ts`.
 
 **Test**:
+
 - Tryorama test that installs a dev applet, has it call `subscribeToNetworkMetrics`, and verifies `onNetworkMetricsUpdate` callback fires with a filtered payload containing only that applet's DNAs.
 - Verify `unsubscribeFromNetworkMetrics` stops delivery and (when it's the last subscriber and debugging panel isn't open) stops the interval.
 - Manual test in `yarn applet-dev-example`: temporarily wire the example applet to log `getConnectedPeers()` output.
@@ -303,15 +317,16 @@ The service is in place but no caller uses it yet.
 ### Phase 5 — Deprecate duplicated code in the debugging panel
 
 Once Phase 3 is stable:
+
 - Remove `buildTransportToAgentMap` from the debugging panel (now in the service).
 - Remove `pollNetworkStats` body (now a thin subscribe call).
 - Keep the rendering methods untouched — they read from `_networkStats` and `_transportToAgentMap` which are now populated by the service's `onUpdate` callback.
 
 ## Risks and Mitigations
 
-- **Admin-path filtering misses app-specific data.** The admin `dumpNetworkMetrics` returns metrics for all spaces; we filter to the app's DNAs. The filtering is correct *only* if an app's DNAs are deterministic from `appInfo`. They are ([`conductor.rs:2514-2533`](../../holochain/crates/holochain/src/conductor/conductor.rs#L2514) uses the same `role_assignments` walk we'd do from `appInfo`). Add a sanity test that verifies the admin-filtered slice equals the per-app response for a fresh conductor.
+- **Admin-path filtering misses app-specific data.** The admin `dumpNetworkMetrics` returns metrics for all spaces; we filter to the app's DNAs. The filtering is correct _only_ if an app's DNAs are deterministic from `appInfo`. They are ([`conductor.rs:2514-2533`](../../holochain/crates/holochain/src/conductor/conductor.rs#L2514) uses the same `role_assignments` walk we'd do from `appInfo`). Add a sanity test that verifies the admin-filtered slice equals the per-app response for a fresh conductor.
 
-- **Subscriber leak / invisible-iframe polling.** The product requirement is that polling should only happen while *some portion of the applet's UI* is actually active. If a tool subscribes and never unsubscribes (iframe crashes, iframe gets hidden without cleanup), polling continues forever — or worse, keeps polling for an iframe the user isn't even looking at. Mitigations, in order:
+- **Subscriber leak / invisible-iframe polling.** The product requirement is that polling should only happen while _some portion of the applet's UI_ is actually active. If a tool subscribes and never unsubscribes (iframe crashes, iframe gets hidden without cleanup), polling continues forever — or worse, keeps polling for an iframe the user isn't even looking at. Mitigations, in order:
   1. Auto-unsubscribe on iframe unregister. `AppletHost`/iframe registry in `iframeStore` already knows when iframes are unregistered — hook into that to drop tool subscribers for any iframe whose `appletHash` no longer has any registered iframes.
   2. Tools are expected to unsubscribe in their teardown (e.g. on `onBeforeUnload`), and the `WeaveClient` docs should say so.
   3. (Future, optional) We could auto-pause subscriptions for hidden iframes using `document.visibilityState` bridged via the iframe, but this is a v2 concern — the unregister hook covers the common cases (panel closed, tool uninstalled, app closed).
@@ -320,7 +335,7 @@ Once Phase 3 is stable:
 
 - **Profile resolution race.** A peer appearing in metrics may not yet have a profile in `profilesStore`. Return `profile: undefined` in that case; consumers already handle the null case (the debugging panel's current rendering does).
 
-- **DHT summary size.** `include_dht_summary: true` returns large arrays per space. The debugging panel needs it; tools almost never will. Default to `false` and only flip the flag on the admin call when *some* subscriber asked for it — done naturally by the reconciliation logic.
+- **DHT summary size.** `include_dht_summary: true` returns large arrays per space. The debugging panel needs it; tools almost never will. Default to `false` and only flip the flag on the admin call when _some_ subscriber asked for it — done naturally by the reconciliation logic.
 
 ## Resolved Decisions
 

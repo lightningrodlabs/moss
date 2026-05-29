@@ -8,10 +8,10 @@
 
 ```typescript
 export type MossAccountability = {
-    role: MossRole;
-    startDate: number;
-    duration?: number;
+  role: MossRole;
+  startDate: number;
+  duration?: number;
 };
 ```
-**References:** [MossRole](./api.mossrole.md)
 
+**References:** [MossRole](./api.mossrole.md)

@@ -32,7 +32,7 @@ export class AgentPermission extends LitElement {
     console.log('Got accountabilities: ', accs);
     if (accs.length == 0) return html`Member`;
     // Dedup and concat types
-    const str = [...new Set(accs.map(a => a.type))].join(',');
+    const str = [...new Set(accs.map((a) => a.type))].join(',');
     return html`${str}`;
   }
 

@@ -74,7 +74,7 @@ export class PostDetail extends LitElement {
   _post = new StoreSubscriber(
     this,
     () => this.postsStore.posts.get(this.postHash)!,
-    () => [this.postHash]
+    () => [this.postHash],
   );
 
   @state()
@@ -112,7 +112,7 @@ export class PostDetail extends LitElement {
           detail: {
             postHash: this.postHash,
           },
-        })
+        }),
       );
     } catch (e: any) {
       console.error(e);
@@ -140,7 +140,7 @@ export class PostDetail extends LitElement {
             @remove-wal=${() => {
               this.weaveClient.assets.removeAssetRelation(walAndTags.relationHash);
             }}
-          ></asset-element>`
+          ></asset-element>`,
       )}
     </div>`;
   }
@@ -166,8 +166,11 @@ export class PostDetail extends LitElement {
           <div slot="header" style="display: flex; flex-direction: row;">
             <span style="font-size: 18px; flex: 1;">${msg('Post')}</span>
             <wal-to-pocket .wal=${this.WAL}></wal-to-pocket>
-              ${this.WAL? html`
-            <button @click=${() => this.weaveClient.assets.assetToPocket(this.WAL!)}>To Pocket</button>` : `html`}
+            ${this.WAL
+              ? html` <button @click=${() => this.weaveClient.assets.assetToPocket(this.WAL!)}>
+                  To Pocket
+                </button>`
+              : `html`}
             <sl-icon-button
               style="margin-left: 8px"
               .src=${wrapPathInSvg(mdiPencil)}

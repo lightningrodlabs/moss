@@ -131,7 +131,7 @@
     "lit": "3.1.0",
     "new-port-cli": "^1.0.0",
     "octokit": "4.0.2",
-    "prettier": "^3.0.2",
+    "prettier": "3.8.3",
     "rimraf": "5.0.5",
     "run-singleton-cli": "^0.0.7",
     "typescript": "^5.8.3",

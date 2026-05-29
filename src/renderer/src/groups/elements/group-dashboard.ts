@@ -10,12 +10,7 @@ import { ActionHash } from '@holochain/client';
 import { weaveUrlFromWal } from '@theweave/api';
 import { GridStack, GridStackNode, GridStackOptions } from 'gridstack';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
-import {
-  mdiLock,
-  mdiLockOpenOutline,
-  mdiPaletteOutline,
-  mdiArrowExpandVertical,
-} from '@mdi/js';
+import { mdiLock, mdiLockOpenOutline, mdiPaletteOutline, mdiArrowExpandVertical } from '@mdi/js';
 import { DashboardTile, DashboardTileEntry, GroupDashboard } from '@theweave/group-client';
 
 import '@theweave/elements/dist/elements/wal-embed.js';
@@ -470,7 +465,7 @@ export class GroupDashboardEl extends LitElement {
   private _activeTiles(): DashboardTileEntry[] {
     if (this._editing) return this._draftTiles;
     const v = this._dashboard.value;
-    return v.status === 'complete' && v.value ? v.value.tiles ?? [] : [];
+    return v.status === 'complete' && v.value ? (v.value.tiles ?? []) : [];
   }
 
   /**
@@ -546,7 +541,8 @@ export class GroupDashboardEl extends LitElement {
         // block (parent) is the full-height box that the `max-height: 100%`
         // resolves against, so use the parent's bottom as the real fill
         // target. Clamp to the window bottom as a safety net.
-        const box = node.offsetParent instanceof HTMLElement ? node.offsetParent : node.parentElement;
+        const box =
+          node.offsetParent instanceof HTMLElement ? node.offsetParent : node.parentElement;
         const bottom = (box ?? node).getBoundingClientRect().bottom;
         return Math.min(bottom, window.innerHeight) - 4;
       }
@@ -727,10 +723,7 @@ export class GroupDashboardEl extends LitElement {
         updatedAt: Date.now(),
         foyerEnabled: this._draftFoyerEnabled,
       };
-      await this._groupStore.groupClient.setGroupDashboard(
-        this._getMyPermissionHash(),
-        dashboard,
-      );
+      await this._groupStore.groupClient.setGroupDashboard(this._getMyPermissionHash(), dashboard);
       await this._groupStore.groupDashboard.reload();
       this._destroyGrid();
       this._editing = false;
@@ -740,7 +733,6 @@ export class GroupDashboardEl extends LitElement {
       notifyError(msg('Failed to save group home.'));
     }
   }
-
 
   /**
    * Add a new tile. why: we do NOT destroy/re-init the grid. Instead we
@@ -762,11 +754,11 @@ export class GroupDashboardEl extends LitElement {
     const layout = drop
       ? { x: drop.x, y: drop.y, w: drop.w || def.w, h: drop.h || def.h }
       : {
-        x: 0,
-        y: synced.reduce((acc, t) => Math.max(acc, t.layout.y + t.layout.h), 0),
-        w: def.w,
-        h: def.h,
-      };
+          x: 0,
+          y: synced.reduce((acc, t) => Math.max(acc, t.layout.y + t.layout.h), 0),
+          w: def.w,
+          h: def.h,
+        };
     const entry: DashboardTileEntry = {
       id: crypto.randomUUID(),
       layout,
@@ -809,9 +801,7 @@ export class GroupDashboardEl extends LitElement {
     if (!target) return;
     // Guard: only toggle on if eligible.
     if (!target.fillHeight && !canFillHeight(target, synced)) return;
-    this._draftTiles = synced.map((t) =>
-      t.id === id ? { ...t, fillHeight: !t.fillHeight } : t,
-    );
+    this._draftTiles = synced.map((t) => (t.id === id ? { ...t, fillHeight: !t.fillHeight } : t));
     this._applyAllFills();
   }
 
@@ -960,9 +950,7 @@ export class GroupDashboardEl extends LitElement {
         // utils.ts), which strips <script>, inline event handlers, and
         // javascript:/data: URLs. That sanitizer — not unsafeHTML — is what
         // makes rendering steward-authored markdown safe; don't layer another.
-        return html`<div class="markdown-tile">
-          ${unsafeHTML(markdownParseSafe(tile.source))}
-        </div>`;
+        return html`<div class="markdown-tile">${unsafeHTML(markdownParseSafe(tile.source))}</div>`;
       case 'image':
         // referrerpolicy: don't leak the viewing member's referrer to the
         // image host. The host still sees the viewer's IP on the request.
@@ -999,9 +987,9 @@ export class GroupDashboardEl extends LitElement {
     return html`
       <div class="grid-stack" id="grid-root-static">
         ${repeat(
-      tiles,
-      (t) => t.id,
-      (t) => html`
+          tiles,
+          (t) => t.id,
+          (t) => html`
             <div
               class="grid-stack-item"
               gs-id=${t.id}
@@ -1012,15 +1000,12 @@ export class GroupDashboardEl extends LitElement {
               gs-no-resize="true"
               gs-no-move="true"
             >
-              <div
-                class="grid-stack-item-content tile-content"
-                style=${tileColorStyle(t.color)}
-              >
+              <div class="grid-stack-item-content tile-content" style=${tileColorStyle(t.color)}>
                 ${this._renderTileBody(t.tile)}
               </div>
             </div>
           `,
-    )}
+        )}
       </div>
     `;
   }
@@ -1028,118 +1013,117 @@ export class GroupDashboardEl extends LitElement {
   private _renderEditing() {
     return html`
       <div class="edit-layout">
-      <dashboard-palette
-        .foyerEnabled=${this._draftFoyerEnabled}
-        @foyer-toggled=${this._onFoyerToggled}
-      ></dashboard-palette>
-      <div class="grid-stack" id="grid-root">
-        ${repeat(
-      this._draftTiles,
-      (t) => t.id,
-      (t) => html`
-            <div
-              class="grid-stack-item ${t.fixed ? 'tile-fixed' : ''}"
-              gs-id=${t.id}
-              gs-x=${t.layout.x}
-              gs-y=${t.layout.y}
-              gs-w=${t.layout.w}
-              gs-h=${t.layout.h}
-              ?gs-no-move=${!!t.fixed}
-              ?gs-no-resize=${!!t.fixed}
-            >
+        <dashboard-palette
+          .foyerEnabled=${this._draftFoyerEnabled}
+          @foyer-toggled=${this._onFoyerToggled}
+        ></dashboard-palette>
+        <div class="grid-stack" id="grid-root">
+          ${repeat(
+            this._draftTiles,
+            (t) => t.id,
+            (t) => html`
               <div
-                class="grid-stack-item-content tile-content"
-                style=${tileColorStyle(t.color)}
+                class="grid-stack-item ${t.fixed ? 'tile-fixed' : ''}"
+                gs-id=${t.id}
+                gs-x=${t.layout.x}
+                gs-y=${t.layout.y}
+                gs-w=${t.layout.w}
+                gs-h=${t.layout.h}
+                ?gs-no-move=${!!t.fixed}
+                ?gs-no-resize=${!!t.fixed}
               >
-                <div class="dash-grip tile-header ${t.fixed ? '' : 'tile-drag-handle'}">
-                  ${t.fixed ? '' : html`<span class="dash-grip-dots">⠿</span>`}
-                  <span class="tile-kind-label"
-                    >${tileKindLabel(t.tile.kind)}</span
-                  >
-                  <div class="tile-header-actions">
-                    ${(() => {
-          const eligible = t.fillHeight || canFillHeight(t, this._draftTiles);
-          return html`<button
-                        class="tile-header-btn ${t.fillHeight ? 'tile-header-btn-active' : ''}"
-                        title=${this._fillButtonTitle(t, eligible)}
-                        ?disabled=${!eligible}
+                <div class="grid-stack-item-content tile-content" style=${tileColorStyle(t.color)}>
+                  <div class="dash-grip tile-header ${t.fixed ? '' : 'tile-drag-handle'}">
+                    ${t.fixed ? '' : html`<span class="dash-grip-dots">⠿</span>`}
+                    <span class="tile-kind-label">${tileKindLabel(t.tile.kind)}</span>
+                    <div class="tile-header-actions">
+                      ${(() => {
+                        const eligible = t.fillHeight || canFillHeight(t, this._draftTiles);
+                        return html`<button
+                          class="tile-header-btn ${t.fillHeight ? 'tile-header-btn-active' : ''}"
+                          title=${this._fillButtonTitle(t, eligible)}
+                          ?disabled=${!eligible}
+                          @click=${(e: Event) => {
+                            e.stopPropagation();
+                            this._toggleTileFillHeight(t.id);
+                          }}
+                          @pointerdown=${(e: Event) => e.stopPropagation()}
+                        >
+                          <sl-icon
+                            .src=${wrapPathInSvg(mdiArrowExpandVertical)}
+                            style="font-size: 14px;"
+                          ></sl-icon>
+                        </button>`;
+                      })()}
+                      <button
+                        class="tile-header-btn"
+                        title=${msg('Cycle background color')}
                         @click=${(e: Event) => {
-              e.stopPropagation();
-              this._toggleTileFillHeight(t.id);
-            }}
+                          e.stopPropagation();
+                          this._cycleTileColor(t.id);
+                        }}
                         @pointerdown=${(e: Event) => e.stopPropagation()}
                       >
                         <sl-icon
-                          .src=${wrapPathInSvg(mdiArrowExpandVertical)}
+                          .src=${wrapPathInSvg(mdiPaletteOutline)}
                           style="font-size: 14px;"
                         ></sl-icon>
-                      </button>`;
-        })()}
-                    <button
-                      class="tile-header-btn"
-                      title=${msg('Cycle background color')}
-                      @click=${(e: Event) => {
-          e.stopPropagation();
-          this._cycleTileColor(t.id);
-        }}
-                      @pointerdown=${(e: Event) => e.stopPropagation()}
-                    >
-                      <sl-icon
-                        .src=${wrapPathInSvg(mdiPaletteOutline)}
-                        style="font-size: 14px;"
-                      ></sl-icon>
-                    </button>
-                    <button
-                      class="tile-header-btn"
-                      title=${t.fixed ? msg('Unlock (allow move/resize)') : msg('Lock size & position')}
-                      @click=${(e: Event) => {
-          e.stopPropagation();
-          this._toggleTileFixed(t.id);
-        }}
-                      @pointerdown=${(e: Event) => e.stopPropagation()}
-                    >
-                      <sl-icon
-                        .src=${wrapPathInSvg(t.fixed ? mdiLock : mdiLockOpenOutline)}
-                        style="font-size: 14px;"
-                      ></sl-icon>
-                    </button>
-                    <button
-                      class="tile-header-btn"
-                      title=${t.tile.kind === 'wal-embed' ? msg('Replace asset') : msg('Edit tile')}
-                      @click=${(e: Event) => {
-          // why: stop drag-handle pointer event from picking
-          // up this click — clicking the edit button must
-          // open the dialog/picker, not start a drag.
-          e.stopPropagation();
-          if (t.tile.kind === 'wal-embed') {
-            void this._pickWalReplacement(t.id);
-          } else {
-            this._editTile(t);
-          }
-        }}
-                      @pointerdown=${(e: Event) => e.stopPropagation()}
-                    >
-                      ${editIcon(14)}
-                    </button>
-                    <button
-                      class="tile-header-btn"
-                      title=${msg('Remove tile')}
-                      @click=${(e: Event) => {
-          e.stopPropagation();
-          this._removeTile(t.id);
-        }}
-                      @pointerdown=${(e: Event) => e.stopPropagation()}
-                    >
-                      ${closeIcon(14)}
-                    </button>
+                      </button>
+                      <button
+                        class="tile-header-btn"
+                        title=${t.fixed
+                          ? msg('Unlock (allow move/resize)')
+                          : msg('Lock size & position')}
+                        @click=${(e: Event) => {
+                          e.stopPropagation();
+                          this._toggleTileFixed(t.id);
+                        }}
+                        @pointerdown=${(e: Event) => e.stopPropagation()}
+                      >
+                        <sl-icon
+                          .src=${wrapPathInSvg(t.fixed ? mdiLock : mdiLockOpenOutline)}
+                          style="font-size: 14px;"
+                        ></sl-icon>
+                      </button>
+                      <button
+                        class="tile-header-btn"
+                        title=${t.tile.kind === 'wal-embed'
+                          ? msg('Replace asset')
+                          : msg('Edit tile')}
+                        @click=${(e: Event) => {
+                          // why: stop drag-handle pointer event from picking
+                          // up this click — clicking the edit button must
+                          // open the dialog/picker, not start a drag.
+                          e.stopPropagation();
+                          if (t.tile.kind === 'wal-embed') {
+                            void this._pickWalReplacement(t.id);
+                          } else {
+                            this._editTile(t);
+                          }
+                        }}
+                        @pointerdown=${(e: Event) => e.stopPropagation()}
+                      >
+                        ${editIcon(14)}
+                      </button>
+                      <button
+                        class="tile-header-btn"
+                        title=${msg('Remove tile')}
+                        @click=${(e: Event) => {
+                          e.stopPropagation();
+                          this._removeTile(t.id);
+                        }}
+                        @pointerdown=${(e: Event) => e.stopPropagation()}
+                      >
+                        ${closeIcon(14)}
+                      </button>
+                    </div>
                   </div>
+                  <div class="tile-body">${this._renderTileBody(t.tile)}</div>
                 </div>
-                <div class="tile-body">${this._renderTileBody(t.tile)}</div>
               </div>
-            </div>
-          `,
-    )}
-      </div>
+            `,
+          )}
+        </div>
       </div>
       <dashboard-tile-dialog
         .draft=${this._dialogDraft}
@@ -1163,8 +1147,7 @@ export class GroupDashboardEl extends LitElement {
     }
     const tiles = v.value?.tiles ?? [];
     return html`
-      ${dashboardStyles()}
-      ${this._editing ? this._renderEditing() : this._renderReadOnly(tiles)}
+      ${dashboardStyles()} ${this._editing ? this._renderEditing() : this._renderReadOnly(tiles)}
     `;
   }
 }

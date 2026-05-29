@@ -96,7 +96,11 @@ export class MicroMenu extends LitElement {
                 return;
               }
               this.dispatchEvent(
-                new CustomEvent('wal-selected', { detail: maybeWal, bubbles: true, composed: true })
+                new CustomEvent('wal-selected', {
+                  detail: maybeWal,
+                  bubbles: true,
+                  composed: true,
+                }),
               );
             }}
           >
@@ -115,7 +119,11 @@ export class MicroMenu extends LitElement {
                 return;
               }
               this.dispatchEvent(
-                new CustomEvent('wal-selected', { detail: maybeWal, bubbles: true, composed: true })
+                new CustomEvent('wal-selected', {
+                  detail: maybeWal,
+                  bubbles: true,
+                  composed: true,
+                }),
               );
             }}
           >
@@ -134,7 +142,11 @@ export class MicroMenu extends LitElement {
                 return;
               }
               this.dispatchEvent(
-                new CustomEvent('wal-selected', { detail: maybeWal, bubbles: true, composed: true })
+                new CustomEvent('wal-selected', {
+                  detail: maybeWal,
+                  bubbles: true,
+                  composed: true,
+                }),
               );
             }}
           >

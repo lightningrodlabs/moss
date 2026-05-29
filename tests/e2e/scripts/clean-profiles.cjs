@@ -44,9 +44,7 @@ if (fs.existsSync(profilesRoot)) {
 
 // 2. Clean orphan pw-* entries from the user config (one-time migration cleanup).
 if (fs.existsSync(userConfigRoot)) {
-  const orphans = fs
-    .readdirSync(userConfigRoot)
-    .filter((name) => name.startsWith('pw-'));
+  const orphans = fs.readdirSync(userConfigRoot).filter((name) => name.startsWith('pw-'));
   if (orphans.length > 0) {
     console.log(`Removing ${orphans.length} orphan test dir(s) under ${userConfigRoot}:`);
     for (const entry of orphans) {

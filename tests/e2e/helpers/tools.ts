@@ -57,7 +57,10 @@ export async function installToolFromLibrary(page: Page, opts: InstallToolOption
  * Returns a FrameLocator for the iframe contents.
  */
 export async function openToolInGroup(page: Page, toolName: string): Promise<FrameLocator> {
-  await page.getByRole('button', { name: new RegExp(toolName, 'i') }).first().click();
+  await page
+    .getByRole('button', { name: new RegExp(toolName, 'i') })
+    .first()
+    .click();
   // Applet iframe lives inside the main view-frame. Tighten on first run.
   return page.frameLocator('iframe.applet-iframe, iframe[src*="applet"]').first();
 }
@@ -127,9 +130,9 @@ export async function expandPeersPanel(page: Page) {
 export async function expectPeerCount(page: Page, atLeast: number, timeoutMs = 90_000) {
   await expandPeersPanel(page);
   await expect
-    .poll(
-      async () => page.locator('group-peers-status div.row.profile').count(),
-      { timeout: timeoutMs, message: `Expected at least ${atLeast} peers in group peer-list` },
-    )
+    .poll(async () => page.locator('group-peers-status div.row.profile').count(), {
+      timeout: timeoutMs,
+      message: `Expected at least ${atLeast} peers in group peer-list`,
+    })
     .toBeGreaterThanOrEqual(atLeast);
 }

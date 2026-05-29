@@ -52,8 +52,7 @@ export class GroupsForTool extends LitElement {
           if (!appId.startsWith('applet#')) return false;
           if (info.distributionInfo.type !== 'web2-tool-list') return false;
           return (
-            toolCompatibilityIdFromDistInfo(info.distributionInfo) ===
-            this.toolCompatibilityId
+            toolCompatibilityIdFromDistInfo(info.distributionInfo) === this.toolCompatibilityId
           );
         })
         .map(([appId]) => appletHashFromAppId(appId));
@@ -115,9 +114,11 @@ export class GroupsForTool extends LitElement {
    * The groupProfile store may initially resolve with undefined (local cache miss)
    * before polling fetches the real profile from the network.
    */
-  private _awaitGroupProfile(
-    groupStore: { groupProfile: { subscribe: (fn: (value: { status: string; value?: GroupProfile }) => void) => () => void } },
-  ): Promise<GroupProfile | undefined> {
+  private _awaitGroupProfile(groupStore: {
+    groupProfile: {
+      subscribe: (fn: (value: { status: string; value?: GroupProfile }) => void) => () => void;
+    };
+  }): Promise<GroupProfile | undefined> {
     return new Promise((resolve) => {
       const timeout = setTimeout(() => {
         unsubscribe();
@@ -171,9 +172,7 @@ export class GroupsForTool extends LitElement {
               `,
             )}
             ${remainingCount > 0
-              ? html`
-                  <div class="tool-update-more-groups">+${remainingCount}</div>
-                `
+              ? html` <div class="tool-update-more-groups">+${remainingCount}</div> `
               : ''}
           </div>
         `;
@@ -199,8 +198,8 @@ export class GroupsForTool extends LitElement {
           align-items: center;
           gap: 10px;
           border-radius: 8px;
-          background: #F4FED6;
-          color: var(--13, #324D47);
+          background: #f4fed6;
+          color: var(--13, #324d47);
           font-size: 12px;
           font-weight: 500;
         }

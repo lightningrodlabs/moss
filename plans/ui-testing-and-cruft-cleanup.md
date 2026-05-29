@@ -14,12 +14,14 @@ So the plan is **two-phase**: build a minimal but real UI testing harness first,
 ## Goals & non-goals
 
 **Goals**
+
 - Detect renderer-level regressions before merge, especially in the flows the cleanup touches (groups list, group pane, tools inside group pane, settings).
 - Give an LLM-driven dev loop a fast, deterministic feedback signal beyond `typecheck` + `lint`.
 - Establish patterns (locators, fixtures, helpers) that age well as the UI keeps evolving.
 - Enable confident deletion of `_old`-suffixed and pre-`_new_design` components.
 
 **Non-goals**
+
 - Full coverage of every component or branch. We are explicitly not chasing a coverage number.
 - Visual-regression / pixel-diff testing across the whole UI. Maybe a small set later, only on stable views.
 - Replacing tryorama. DNA tests stay where they are.
@@ -43,7 +45,7 @@ Reference: [spaceagetv/electron-playwright-example](https://github.com/spaceaget
 
 Best-practice writing in 2025–2026 has shifted on two points relevant to us:
 
-1. **Kent C. Dodds is publicly reconsidering the testing trophy** — with Playwright + browser-mode runners, E2E execution cost has converged with integration cost, and for apps whose value lives in cross-process seams (which Moss is — renderer ↔ main ↔ conductor ↔ applet), E2E should occupy a *larger* slice than the trophy suggested. ([Call Kent 2025](https://kentcdodds.com/calls/05/02/does-the-testing-trophy-need-updating-for-2025))
+1. **Kent C. Dodds is publicly reconsidering the testing trophy** — with Playwright + browser-mode runners, E2E execution cost has converged with integration cost, and for apps whose value lives in cross-process seams (which Moss is — renderer ↔ main ↔ conductor ↔ applet), E2E should occupy a _larger_ slice than the trophy suggested. ([Call Kent 2025](https://kentcdodds.com/calls/05/02/does-the-testing-trophy-need-updating-for-2025))
 2. **The dominant LLM-test failure mode is tautology**: same agent writes code + tests in one turn, assertions just mirror the implementation, suite is green and the bug ships. ([dev.to postmortem](https://dev.to/jamesdev4123/when-ai-generated-tests-pass-but-miss-the-bug-a-postmortem-on-tautological-unit-tests-2ajp), [Qodo TestGen-LLM](https://www.qodo.ai/blog/we-created-the-first-open-source-implementation-of-metas-testgen-llm/) — only ~1 in 20 LLM-generated tests adds real value.)
 
 That gives us this set of working principles:
@@ -52,7 +54,7 @@ That gives us this set of working principles:
 - **Suggested ratio:** ~20% pure unit (zome logic, `shared/utils` pure fns), ~30% integration (group-client against tryorama, store reducers, IPC handlers), ~50% E2E. Skewed up from the trophy on purpose.
 - **Smoke first, then regression.** Lock a small, fast smoke suite over the 6–8 critical flows. Only add deeper coverage in response to a real bug or a refactor about to land.
 - **Tests document intent.** Every test gets a one-line `// why:` comment when the assertion isn't self-evident — without it the next agent loop deletes the test that was protecting an invariant nobody remembers. ([Huntley on Ralph](https://ghuntley.com/ralph/))
-- **Separate the writer and the reviewer.** When generating tests with an LLM, run a second pass with the explicit prompt *"what could be wrong that these tests wouldn't catch?"*. Otherwise tests will mirror the code they protect.
+- **Separate the writer and the reviewer.** When generating tests with an LLM, run a second pass with the explicit prompt _"what could be wrong that these tests wouldn't catch?"_. Otherwise tests will mirror the code they protect.
 - **Locator priority: `getByRole` → `getByLabel`/`getByText` → `getByTestId` → CSS as last resort.** Role-based survives redesigns; reserve `data-testid` for opaque elements without a semantic role (icons, custom widgets). ([Tkdodo: Test IDs are an a11y smell](https://tkdodo.eu/blog/test-ids-are-an-a11y-smell))
 - **Functional helpers, not a Page Object hierarchy.** A flat `tests/e2e/helpers/` module of small async functions (`joinGroup(page, seed)`, `installApplet(page, name)`) ages better than POM class trees in a UI evolving this fast. ([Page Objects vs Functional Helpers](https://dev.to/muratkeremozcan/page-objects-vs-functional-helpers-2akj))
 - **Don't mock the conductor in E2E.** Moss's value is in the WebSocket path. Mock only HTTP-side concerns where realism doesn't matter (tool library, bootstrap server) using `page.route()`.
@@ -91,7 +93,7 @@ The **9 flows that must work for the build to be viable** (mirrors `MossAppState
 1. **Boot to Running** — fresh profile, no group, lands on initial setup view.
 2. **Create group (steps 1 & 2)** — name + avatar, transitions through `CreatingGroup`, lands in group view with empty tools.
 3. **Join group by invite link** — given a fixture link, lands in the group.
-4. **Install applet via the tool library** — open the tool library from the group pane, pick the example applet (published via the dev config's `toolCurations`), install it, and verify it appears inside the group pane (the new design — *not* the old top-bar).
+4. **Install applet via the tool library** — open the tool library from the group pane, pick the example applet (published via the dev config's `toolCurations`), install it, and verify it appears inside the group pane (the new design — _not_ the old top-bar).
 5. **Open applet → applet iframe loads** — assert the iframe is reachable via `page.frameLocator()` and the WeaveClient handshake completes (look for a known DOM marker the example applet renders post-handshake).
 6. **Switch between two groups** — both visible in `groups-sidebar`, click switches, group pane shows that group's tools.
 7. **Open settings → change language → strings updated** — exercises `_new_design/moss-settings/` and `@lit/localize` runtime path.
@@ -103,15 +105,18 @@ These nine tests are the load-bearing piece. They lock down everything the cruft
 ### Phase 3 — Cleanup with the safety net (~1–2 days)
 
 Now we delete. Confirmed dead from initial scan:
+
 - [`src/renderer/src/elements/navigation/topbar-button-old.ts`](src/renderer/src/elements/navigation/topbar-button-old.ts) — 0 imports
 - [`src/renderer/src/elements/navigation/sidebar-button-old.ts`](src/renderer/src/elements/navigation/sidebar-button-old.ts) — 0 imports
 
 Suspected redundant with new design (verify with grep + run smoke suite after each removal):
+
 - `tool-personal-bar-button.ts` — only one caller, may be obsolete
 - Components in [`src/renderer/src/elements/`](src/renderer/src/elements/) referencing the pre-`_new_design` "tools across the top of the main page" layout
 - Routes / view branches in [`src/renderer/src/elements/main-dashboard.ts`](src/renderer/src/elements/main-dashboard.ts) (72KB — likely the highest-payoff target) that are no longer reachable
 
 Cleanup procedure for each candidate:
+
 1. Grep imports across `src/`, `iframes/`, `libs/`, `shared/`. Zero hits → delete.
 2. Run `yarn typecheck && yarn lint && yarn test:e2e`.
 3. Commit per logical removal — small commits make the bisect easy if the smoke suite catches a regression three deletions later.
@@ -152,6 +157,7 @@ The existing `tests/src/` (tryorama) is untouched. New `tests/e2e/` is a separat
 ## CI
 
 Add a `e2e` job alongside the existing test job:
+
 - Linux runner, nix shell with the same Holochain env that `yarn setup` uses.
 - `yarn build && yarn build:zomes && yarn build:group-happ && yarn build:example-applet`.
 - `yarn test:e2e` with `--reporter=list,html`.

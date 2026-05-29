@@ -72,9 +72,9 @@ export async function enterSpaceIfPrompted(page: Page, nickname: string) {
     // profile screen first so we get the right component.
     const createEl = findInDeepDom(document, 'moss-create-profile');
     if (!createEl) throw new Error('moss-create-profile not found in deep DOM');
-    const editEl = (createEl.shadowRoot
-      ? findInDeepDom(createEl.shadowRoot, 'moss-edit-profile')
-      : null) as
+    const editEl = (
+      createEl.shadowRoot ? findInDeepDom(createEl.shadowRoot, 'moss-edit-profile') : null
+    ) as
       | (HTMLElement & {
           nickname?: string;
           disabled?: boolean;
@@ -138,9 +138,7 @@ export async function createGroupFromMainDashboard(page: Page, opts: CreateGroup
   // before groups-sidebar's reactive store is populated, and Playwright's
   // actionability-retry hits a 30s wall trying to click an element whose
   // shadow ancestor's layout is still settling.
-  const addGroupButton = page
-    .locator('groups-sidebar')
-    .getByRole('button', { name: 'Add Group' });
+  const addGroupButton = page.locator('groups-sidebar').getByRole('button', { name: 'Add Group' });
   await expect(addGroupButton).toBeVisible({ timeout: 30_000 });
   await addGroupButton.click();
 
@@ -200,7 +198,10 @@ export async function joinGroupByInviteLink(page: Page, inviteLink: string) {
   // *inside* the join-group-dialog (form submit), which would match the same
   // role+name once that dialog opens. Playwright's auto-actionability picks
   // the visible/enabled one, but being explicit avoids races on slower hosts.
-  await page.getByRole('button', { name: /join group/i }).first().click();
+  await page
+    .getByRole('button', { name: /join group/i })
+    .first()
+    .click();
 
   const joinDialog = page.locator('join-group-dialog');
   await joinDialog.getByLabel(/invite link/i).fill(inviteLink);

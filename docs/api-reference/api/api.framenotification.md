@@ -8,16 +8,16 @@
 
 ```typescript
 export type FrameNotification = {
-    title: string;
-    body: string;
-    notification_type: string;
-    icon_src: string | undefined;
-    urgency: 'low' | 'medium' | 'high';
-    timestamp: number;
-    aboutWal?: WAL;
-    fromAgent?: AgentPubKey;
-    forAgents?: AgentPubKey[];
+  title: string;
+  body: string;
+  notification_type: string;
+  icon_src: string | undefined;
+  urgency: 'low' | 'medium' | 'high';
+  timestamp: number;
+  aboutWal?: WAL;
+  fromAgent?: AgentPubKey;
+  forAgents?: AgentPubKey[];
 };
 ```
-**References:** [WAL](./api.wal.md)
 
+**References:** [WAL](./api.wal.md)

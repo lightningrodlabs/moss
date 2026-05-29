@@ -21,16 +21,16 @@ let arch;
 let arch_linux;
 let app_image_arch;
 switch (process.arch) {
-    case 'arm64':
-        arch = 'arm64';
-        app_image_arch = 'arm64';
-        arch_linux = 'aarch64';
-        break;
-    case 'x64':
-        arch = 'amd64';
-        app_image_arch = 'x86_64';
-        arch_linux = 'x86_64';
-        break;
+  case 'arm64':
+    arch = 'arm64';
+    app_image_arch = 'arm64';
+    arch_linux = 'aarch64';
+    break;
+  case 'x64':
+    arch = 'amd64';
+    app_image_arch = 'x86_64';
+    arch_linux = 'x86_64';
+    break;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,23 +51,26 @@ console.log('appImage file unpacked.');
 const posinstPath = `${unpackDirectory}/AppRun`;
 const postinstScript = fs.readFileSync(posinstPath, 'utf-8');
 const postinstScriptModified = postinstScript.replace(
-    'exec "$BIN"',
-    `ELECTRON_DISABLE_SANDBOX=1 exec "$BIN"`,
+  'exec "$BIN"',
+  `ELECTRON_DISABLE_SANDBOX=1 exec "$BIN"`,
 );
 fs.writeFileSync(posinstPath, postinstScriptModified);
 console.log('Wrote modified AppRun script:\n', postinstScriptModified);
 // Package modified .AppImage file
 if (!fs.existsSync(`appimagetool-${arch_linux}.AppImage`)) {
-    const stdout42 = child_process.execSync(`wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${arch_linux}.AppImage`);
+  const stdout42 = child_process.execSync(
+    `wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${arch_linux}.AppImage`,
+  );
 }
-const stdout43 = child_process.execSync(`chmod +x appimagetool-${arch_linux}.AppImage`)
+const stdout43 = child_process.execSync(`chmod +x appimagetool-${arch_linux}.AppImage`);
 console.log('Re-packaging modified AppRun file...');
-const stdout2 = child_process.execSync(`./appimagetool-${arch_linux}.AppImage ${unpackDirectory} ${imageFilePath}`);
+const stdout2 = child_process.execSync(
+  `./appimagetool-${arch_linux}.AppImage ${unpackDirectory} ${imageFilePath}`,
+);
 console.log('Modified appImage file packaged.', stdout2.toString());
 
 const fileBytes = fs.readFileSync(imageFilePath);
 const sha512 = crypto.createHash('sha512').update(fileBytes).digest('base64');
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -87,8 +90,8 @@ console.log('.deb file unpacked.');
 const debPosinstPath = `${debUnpackDirectory}/DEBIAN/postinst`;
 const debPostinstScript = fs.readFileSync(debPosinstPath, 'utf-8');
 const debPostinstScriptModified = debPostinstScript.replace(
-    '# SUID chrome-sandbox for Electron 5+',
-    `
+  '# SUID chrome-sandbox for Electron 5+',
+  `
 if [ -e /etc/lsb-release ]; then
 
   while IFS='=' read -r key value
@@ -145,23 +148,22 @@ const debSha512 = crypto.createHash('sha512').update(debFileBytes).digest('base6
 
 // Modify sha512 hashes of latest-linux.yaml
 const latestYaml = yaml.load(
-    fs.readFileSync(`dist/latest-linux${arch === 'arm64' ? '-arm64' : ''}.yml`),
+  fs.readFileSync(`dist/latest-linux${arch === 'arm64' ? '-arm64' : ''}.yml`),
 );
 console.log('latestYaml before modification:\n', latestYaml);
 
-const files = [] //latestYaml.files.filter((file) => file.url !== imageFileName);
+const files = []; //latestYaml.files.filter((file) => file.url !== imageFileName);
 files.push({
-    url: imageFileName,
-    sha512,
-    size: fileBytes.length,
-    //blockMapSize: FIXME: Figure out how to get this value updated,
+  url: imageFileName,
+  sha512,
+  size: fileBytes.length,
+  //blockMapSize: FIXME: Figure out how to get this value updated,
 });
 files.push({
-    url: debFileName,
-    sha512: debSha512,
-    size: debFileBytes.length,
+  url: debFileName,
+  sha512: debSha512,
+  size: debFileBytes.length,
 });
-
 
 latestYaml.files = files;
 latestYaml.sha512 = sha512;
@@ -170,8 +172,8 @@ console.log('\n\nsha512: ', sha512);
 console.log('\n\nlatestYaml after modification:\n', latestYaml);
 
 fs.writeFileSync(
-    `latest-linux${arch === 'arm64' ? '-arm64' : ''}.yml`,
-    yaml.dump(latestYaml, { lineWidth: -1 }),
-    'utf-8',
+  `latest-linux${arch === 'arm64' ? '-arm64' : ''}.yml`,
+  yaml.dump(latestYaml, { lineWidth: -1 }),
+  'utf-8',
 );
 console.log('\n Script update latest yaml DONE\n\n');

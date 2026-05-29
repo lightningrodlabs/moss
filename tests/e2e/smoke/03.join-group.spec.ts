@@ -22,7 +22,7 @@ import {
  * agent 1 creates a group and emits one; agent 2 consumes it. No shared
  * network state is asserted.
  */
-test('agent 2 joins a group from agent 1\'s invite link', async ({ moss, secondAgent }) => {
+test("agent 2 joins a group from agent 1's invite link", async ({ moss, secondAgent }) => {
   // ---- Agent 1: create a group and emit an invite link ----
   await waitForBoot(moss.mainWindow, 90_000);
   await startFreshIfLegacyImport(moss.mainWindow);

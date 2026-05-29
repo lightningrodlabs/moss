@@ -1,7 +1,13 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 // IPC_CHANGE_HERE
-import {ActionHashB64, AgentPubKeyB64, CallZomeRequest, DnaHashB64, RoleSettingsMap} from '@holochain/client';
+import {
+  ActionHashB64,
+  AgentPubKeyB64,
+  CallZomeRequest,
+  DnaHashB64,
+  RoleSettingsMap,
+} from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
 import {
   AppletId,
@@ -38,7 +44,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   lairSetupRequired: () => ipcRenderer.invoke('lair-setup-required'),
   findLegacyProfiles: () => ipcRenderer.invoke('find-legacy-profiles'),
   getLairBinaryVersion: () => ipcRenderer.invoke('get-lair-binary-version'),
-  copyLegacyProfile: (keystorePath: string) => ipcRenderer.invoke('import-legacy-profile', keystorePath),
+  copyLegacyProfile: (keystorePath: string) =>
+    ipcRenderer.invoke('import-legacy-profile', keystorePath),
   launch: () => ipcRenderer.invoke('launch'),
   validateMediaUrl: (url: string, kind: 'image' | 'iframe') =>
     ipcRenderer.invoke('validate-media-url', url, kind),
@@ -79,7 +86,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openApp: (appId: string) => ipcRenderer.invoke('open-app', appId),
   openAppStore: () => ipcRenderer.invoke('open-appstore'),
   openWalWindow: (iframeSrc: string, appletId: AppletId, groupId: DnaHashB64, wal: WAL) => {
-    ipcRenderer.invoke('open-wal-window', iframeSrc, appletId, groupId, wal)
+    ipcRenderer.invoke('open-wal-window', iframeSrc, appletId, groupId, wal);
   },
   getAllAppAssetsInfos: () => ipcRenderer.invoke('get-all-app-assets-infos'),
   getAppletDevPort: (lowerCaseAppletIdB64: string) =>

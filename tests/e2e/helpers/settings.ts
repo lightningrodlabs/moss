@@ -19,7 +19,10 @@ export async function openSettings(page: Page) {
  * with msg() text content, not role="tab" — so we look up by the button name.
  */
 export async function openLanguageTab(page: Page) {
-  await page.locator('moss-settings').getByRole('button', { name: /language|sprache|langue|idioma|dil/i }).click();
+  await page
+    .locator('moss-settings')
+    .getByRole('button', { name: /language|sprache|langue|idioma|dil/i })
+    .click();
 }
 
 /**

@@ -5,11 +5,11 @@ This is a **proposal for discussion**, not a migration that has been run.
 
 ## The problem
 
-`src/renderer/src/elements/` is organized by *nothing*. It accreted a flat set of
+`src/renderer/src/elements/` is organized by _nothing_. It accreted a flat set of
 folders (`navigation/`, `dialogs/`, `pocket/`, `creatables/`, `reusable/`,
 `debugging-panel/`, …) plus a `_new_design/` folder that is organized by **when
 the code was written** rather than **what it is about**. Meanwhile the renderer
-*also* has feature directories at `src/renderer/src/` level (`groups/`,
+_also_ has feature directories at `src/renderer/src/` level (`groups/`,
 `applets/`, `custom-views/`, `personal-views/`, `layout/`), each with its own
 `elements/` subfolder. So a component's location today tells you which migration
 wave wrote it — not which part of Moss it serves.
@@ -27,16 +27,16 @@ redesign, so it is the right spine for the directory tree:
   navigation and dialogs, the agent's runtime preferences (language,
   notifications), dev/debug surfaces. The container everything else runs inside.
 - **Self** — the agent's own domain. The counterpart to a Group: a Group is a
-  *shared* space; the Self is the space you occupy alone, plus your view across
+  _shared_ space; the Self is the space you occupy alone, plus your view across
   the shared ones. It covers four things:
   - **identity** — profile (create, edit, view, the profile prompt), avatar;
   - **runtime preferences** — the agent's Moss settings (language, notifications);
   - **personal home** — the landing surfaces of the non-group pane (welcome,
     activity);
-  - **cross-group** — transverse views that aggregate across *all* the groups
+  - **cross-group** — transverse views that aggregate across _all_ the groups
     the agent belongs to: a unified calendar, all DMs across groups (Vines), the
     cross-group activity feed. These are not about any one Group — they are the
-    Self's view *over* its Groups, so they belong to Self, not Group.
+    Self's view _over_ its Groups, so they belong to Self, not Group.
 - **Group** — a private peer-to-peer network: its profile, its home/foyer, its
   settings, and — within it — **others**: the member roster, permissions,
   stewards.
@@ -48,11 +48,11 @@ redesign, so it is the right spine for the directory tree:
 - **Asset** — a WAL (Weave Asset Locator) and the surfaces that move assets
   around: the pocket, creatables, asset tags, the asset viewer.
 
-Two cross-cutting buckets that are *not* ontology, but are real:
+Two cross-cutting buckets that are _not_ ontology, but are real:
 
 - **UI primitives** — domain-free widgets (a dialog shell, a mini button, an
   avatar picker, a copy-hash chip, a tab group, icon sets). They are about
-  *nothing* in the ontology, so they get their own home.
+  _nothing_ in the ontology, so they get their own home.
 - **Dev/debug** — debugging panel, design-feedback. Internal tooling.
 
 ## Proposed structure
@@ -107,7 +107,7 @@ src/renderer/src/
 Why this serves a future agent browsing the code:
 
 - **The path is the answer.** "Where is group settings UI?" → `groups/elements/settings/`.
-  No need to know it was the *second* design.
+  No need to know it was the _second_ design.
 - **Co-location with state.** `groups/` already holds `group-store.ts` /
   `context.ts`; its UI belongs beside them, not in a distant `elements/_new_design/`.
 - **`ui/` is greppable as the no-domain layer.** A primitive in `ui/` is a signal:
@@ -122,32 +122,32 @@ removed; imports updated, typecheck + smoke #1/#2/#5 green. Commits:
 `54cd15d0` (ui/), `5462c5c0` (self/), `d45ba061` (app/navigation/),
 `2cc6c922` (groups/ + applets/).
 
-| Current (`elements/_new_design/`) | New home |
-|---|---|
-| `navigation/applet-sidebar-button.ts`, `navigation/group-area-sidebar.ts` | `app/navigation/` |
-| `moss-settings/*` (moss-settings, language-, notification-, danger-zone-settings) | `self/settings/` |
-| `profile/*` (moss-create/edit/detail/prompt) | `self/profile/` |
-| `moss-settings/profile-settings.ts` | `self/profile/` |
+| Current (`elements/_new_design/`)                                                                                                                                                                                                | New home                    |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| `navigation/applet-sidebar-button.ts`, `navigation/group-area-sidebar.ts`                                                                                                                                                        | `app/navigation/`           |
+| `moss-settings/*` (moss-settings, language-, notification-, danger-zone-settings)                                                                                                                                                | `self/settings/`            |
+| `profile/*` (moss-create/edit/detail/prompt)                                                                                                                                                                                     | `self/profile/`             |
+| `moss-settings/profile-settings.ts`                                                                                                                                                                                              | `self/profile/`             |
 | `group-settings.ts`, `group-settings/general-settings.ts`, `tools-settings.ts`, `inactive-tools.ts`, `inactive-tools-dialog.ts`, `danger-zone.ts`, `my-profile-settings.ts`, `tool-settings-styles.ts`, `tool-settings-utils.ts` | `groups/elements/settings/` |
-| `group-settings/group-member-list.ts`, `agent-permission-button.ts` | `groups/elements/members/` |
-| `group-settings/applet-settings-card.ts`, `base-applet-settings-card.ts`, `abandoned-applet-settings-card.ts` | `applets/elements/` |
-| `invite-people-dialog.ts`, `select-group.ts` | `groups/elements/invite/` |
-| `moss-dialog.ts`, `moss-mini-button.ts`, `moss-select-avatar.ts`, `moss-select-avatar-fancy.ts`, `copy-hash.ts`, `icons.ts`, `defaultIcons.ts` | `ui/` |
+| `group-settings/group-member-list.ts`, `agent-permission-button.ts`                                                                                                                                                              | `groups/elements/members/`  |
+| `group-settings/applet-settings-card.ts`, `base-applet-settings-card.ts`, `abandoned-applet-settings-card.ts`                                                                                                                    | `applets/elements/`         |
+| `invite-people-dialog.ts`, `select-group.ts`                                                                                                                                                                                     | `groups/elements/invite/`   |
+| `moss-dialog.ts`, `moss-mini-button.ts`, `moss-select-avatar.ts`, `moss-select-avatar-fancy.ts`, `copy-hash.ts`, `icons.ts`, `defaultIcons.ts`                                                                                   | `ui/`                       |
 
 ## `personal-views/` dissolution — file-by-file
 
-`personal-views/` has the same flaw as `_new_design/`: it is named for *where it
-renders* (the non-group pane), not *what it is about*. Its contents belong to
+`personal-views/` has the same flaw as `_new_design/`: it is named for _where it
+renders_ (the non-group pane), not _what it is about_. Its contents belong to
 three different subjects. Dissolve it.
 
-| Current (`personal-views/`) | New home | Why |
-|---|---|---|
-| `welcome-view/*`, `activity-view/*` | `self/home/` | the agent's personal landing — updates, notifications, the cross-group "Activity Currents" feed |
-| `assets-graph/*` | `assets/` | a visualization of Assets, not a "personal view" |
-| `tool-library/*` | `tool-library/` (top level) | about discovering/installing **Tools** |
-| `tool-publishing/*` | `tool-library/publishing/` | developer collectives publishing **Tools** |
+| Current (`personal-views/`)         | New home                    | Why                                                                                             |
+| ----------------------------------- | --------------------------- | ----------------------------------------------------------------------------------------------- |
+| `welcome-view/*`, `activity-view/*` | `self/home/`                | the agent's personal landing — updates, notifications, the cross-group "Activity Currents" feed |
+| `assets-graph/*`                    | `assets/`                   | a visualization of Assets, not a "personal view"                                                |
+| `tool-library/*`                    | `tool-library/` (top level) | about discovering/installing **Tools**                                                          |
+| `tool-publishing/*`                 | `tool-library/publishing/`  | developer collectives publishing **Tools**                                                      |
 
-Note `activity-view` is itself a *cross-group* surface — it aggregates activity
+Note `activity-view` is itself a _cross-group_ surface — it aggregates activity
 over all the agent's groups — which is why `self/` (broad reading) is its home,
 not `groups/`.
 
@@ -164,13 +164,13 @@ The redesign left **superseded old-design twins** still in the tree, imported by
 Each must be confirmed dead the same way as the [dead-code inventory](dead-code-inventory.md)
 (grep + smoke run), then deleted as part of landing its new-design replacement:
 
-| Old (delete, pending verification) | Replaced by |
-|---|---|
-| `groups/elements/group-applets-settings.ts` | `group-settings/tools-settings.ts` |
-| `groups/elements/edit-group-profile.ts` | `group-settings/general-settings.ts` |
-| `groups/elements/your-settings.ts` | `moss-settings/*` |
-| `groups/elements/stewards-settings.ts` | `group-member-list.ts` + general settings |
-| `groups/elements/abandoned-applet-card.ts` | `abandoned-applet-settings-card.ts` |
+| Old (delete, pending verification)          | Replaced by                               |
+| ------------------------------------------- | ----------------------------------------- |
+| `groups/elements/group-applets-settings.ts` | `group-settings/tools-settings.ts`        |
+| `groups/elements/edit-group-profile.ts`     | `group-settings/general-settings.ts`      |
+| `groups/elements/your-settings.ts`          | `moss-settings/*`                         |
+| `groups/elements/stewards-settings.ts`      | `group-member-list.ts` + general settings |
+| `groups/elements/abandoned-applet-card.ts`  | `abandoned-applet-settings-card.ts`       |
 
 Confirmed orphans (zero imports) found in the same sweep, deletable independently:
 `groups/elements/group-title.ts`, `groups/elements/applet-name.ts`,
@@ -178,7 +178,7 @@ Confirmed orphans (zero imports) found in the same sweep, deletable independentl
 
 ## The pre-`_new_design` top-bar — kill-switched, delete the whole subtree
 
-This is the *original* group-tools-listing layout the whole cleanup exists to
+This is the _original_ group-tools-listing layout the whole cleanup exists to
 remove. It is not an orphan — every file has live `import` statements — but it is
 dead by **render path**: the only mount point is gated by a hardcoded `false`
 ([main-dashboard.ts:1705](../src/renderer/src/elements/main-dashboard.ts#L1705),
@@ -188,12 +188,12 @@ sites. Full detail in item #6 of the [dead-code inventory](dead-code-inventory.m
 Four files, 623 lines, all dead — delete together with the `false &&` top-bar
 block (`main-dashboard.ts` 1704–1758):
 
-| File | Why dead |
-|---|---|
-| `navigation/personal-view-sidebar.ts` | only render site is the `false &&` block |
-| `navigation/tool-personal-bar-button.ts` | `<tool-personal-bar-button>` rendered nowhere |
-| `navigation/applet-topbar-button.ts` | `<applet-topbar-button>` rendered nowhere |
-| `navigation/topbar-button.ts` | `<topbar-button>` rendered only by the two above |
+| File                                     | Why dead                                         |
+| ---------------------------------------- | ------------------------------------------------ |
+| `navigation/personal-view-sidebar.ts`    | only render site is the `false &&` block         |
+| `navigation/tool-personal-bar-button.ts` | `<tool-personal-bar-button>` rendered nowhere    |
+| `navigation/applet-topbar-button.ts`     | `<applet-topbar-button>` rendered nowhere        |
+| `navigation/topbar-button.ts`            | `<topbar-button>` rendered only by the two above |
 
 Also drop the now-stale `applet-topbar-button.js` / `topbar-button.js` side-effect
 imports from `group-applets-row.ts` and `group-applets-creatables.ts` (both stay —
@@ -226,7 +226,7 @@ suite.
 5. ✅ **DONE** — **Dissolve `personal-views/`**: welcome + activity views →
    `self/home/`, `assets-graph` → `assets/`, `tool-library` + `tool-publishing`
    promoted to top-level `tool-library/` (publishing under `tool-library/
-   publishing/`); `cross-group-*` views → `self/cross-group/`; `personal-views/`
+publishing/`); `cross-group-*` views → `self/cross-group/`; `personal-views/`
    removed.
 
 All five steps are done. The renderer is organized by ontological subject;

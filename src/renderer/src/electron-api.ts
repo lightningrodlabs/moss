@@ -7,7 +7,8 @@ import {
   InstalledAppId,
   ZomeName,
   FunctionName,
-  DnaHashB64, RoleSettingsMap,
+  DnaHashB64,
+  RoleSettingsMap,
 } from '@holochain/client';
 import {
   AppletId,
@@ -119,7 +120,12 @@ declare global {
       ) => void;
       closeMainWindow: () => Promise<void>;
       openApp: (appId: string) => Promise<void>;
-      openWalWindow: (iframeSrc: string, appletId: AppletId, groupId: DnaHashB64, wal: WAL) => Promise<void>;
+      openWalWindow: (
+        iframeSrc: string,
+        appletId: AppletId,
+        groupId: DnaHashB64,
+        wal: WAL,
+      ) => Promise<void>;
       getAllAppAssetsInfos: () => Promise<
         Record<InstalledAppId, [AppAssetsInfo, ToolWeaveConfig | undefined]>
       >;
@@ -157,7 +163,9 @@ declare global {
       exportGroupsData: () => Promise<void>;
       importGroupsData: () => Promise<GroupImportResult>;
       consumePendingGroupsImport: () => Promise<GroupImportResult | null>;
-      onImportGroupsProgress: (callback: (e: Electron.IpcRendererEvent, payload: ImportGroupsProgress) => void) => void;
+      onImportGroupsProgress: (
+        callback: (e: Electron.IpcRendererEvent, payload: ImportGroupsProgress) => void,
+      ) => void;
       notification: (
         notification: FrameNotification,
         showInSystray: boolean,
@@ -243,9 +251,7 @@ declare global {
         webhappPath: string,
       ) => Promise<{ uiSha256: string; happSha256: string; happHashMatch: boolean }>;
       clearDevUiOverride: (appId: string) => Promise<void>;
-      getDevUiOverride: (
-        appId: string,
-      ) => Promise<{ active: boolean; uiSha256?: string }>;
+      getDevUiOverride: (appId: string) => Promise<{ active: boolean; uiSha256?: string }>;
     };
     __ZOME_CALL_LOGGING_ENABLED__: boolean;
   }

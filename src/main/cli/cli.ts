@@ -24,8 +24,8 @@ export const PRODUCTION_SIGNALING_URLS = [
 ];
 // The first one will be picked by default.
 export const PRODUCTION_RELAY_URLS = [
-  "https://iroh-relay.moss.social./",
-  "https://use1-1.relay.n0.iroh-canary.iroh.link./",
+  'https://iroh-relay.moss.social./',
+  'https://use1-1.relay.n0.iroh-canary.iroh.link./',
 ];
 export const DEFAULT_ICE_URLS = ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'];
 
@@ -167,9 +167,9 @@ export function validateArgs(args: CliOpts): RunOptions {
       config: devConfig,
       tempDir: args.devDataDir
         ? path.join(
-          args.devDataDir,
-          `${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${agentIdx}-${nanoid(8)}`,
-        )
+            args.devDataDir,
+            `${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${agentIdx}-${nanoid(8)}`,
+          )
         : path.join(os.tmpdir(), `${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${agentIdx}-${nanoid(8)}`),
       tempDirRoot: args.devDataDir ? args.devDataDir : os.tmpdir(),
       agentIdx,

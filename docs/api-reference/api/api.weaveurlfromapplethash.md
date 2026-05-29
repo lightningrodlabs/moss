@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-weaveUrlFromAppletHash: (appletHash: AppletHash, webPrefix?: boolean) => string
+weaveUrlFromAppletHash: (appletHash: AppletHash, webPrefix?: boolean) => string;
 ```
 
 ## Parameters
@@ -16,53 +16,42 @@ weaveUrlFromAppletHash: (appletHash: AppletHash, webPrefix?: boolean) => string
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 appletHash
 
-
 </td><td>
 
 [AppletHash](./api.applethash.md)
 
-
 </td><td>
 
 Hash of the applet to generate the link for
-
 
 </td></tr>
 <tr><td>
 
 webPrefix
 
-
 </td><td>
 
 boolean
 
-
 </td><td>
 
 _(Optional)_ Whether to make the link work via web browsers. Default is true.
-
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 string
-
-

@@ -1,6 +1,6 @@
-import {downloadHolochainBinary} from './fetch-fns.mjs';
+import { downloadHolochainBinary } from './fetch-fns.mjs';
 
-downloadHolochainBinary("hc", false);
+downloadHolochainBinary('hc', false);
 
 //import fs from "fs";
 // const mossConfig = JSON.parse(fs.readFileSync('moss.config.json', 'utf-8'));

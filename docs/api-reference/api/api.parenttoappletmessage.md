@@ -7,34 +7,43 @@
 **Signature:**
 
 ```typescript
-export type ParentToAppletMessage = {
-    type: 'get-applet-asset-info';
-    wal: WAL;
-    recordInfo?: RecordInfo;
-} | {
-    type: 'get-block-types';
-} | {
-    type: 'search';
-    filter: string;
-} | {
-    type: 'peer-status-update';
-    payload: PeerStatusUpdate;
-} | {
-    type: 'network-stats-update';
-    payload: TransportStats;
-} | {
-    type: 'on-before-unload';
-} | {
-    type: 'asset-store-update';
-    walStringified: string;
-    value: AsyncStatus<AssetStoreContent>;
-} | {
-    type: 'remote-signal-received';
-    payload: Uint8Array;
-} | {
-    type: 'locale-change';
-    locale: string;
-};
+export type ParentToAppletMessage =
+  | {
+      type: 'get-applet-asset-info';
+      wal: WAL;
+      recordInfo?: RecordInfo;
+    }
+  | {
+      type: 'get-block-types';
+    }
+  | {
+      type: 'search';
+      filter: string;
+    }
+  | {
+      type: 'peer-status-update';
+      payload: PeerStatusUpdate;
+    }
+  | {
+      type: 'network-stats-update';
+      payload: TransportStats;
+    }
+  | {
+      type: 'on-before-unload';
+    }
+  | {
+      type: 'asset-store-update';
+      walStringified: string;
+      value: AsyncStatus<AssetStoreContent>;
+    }
+  | {
+      type: 'remote-signal-received';
+      payload: Uint8Array;
+    }
+  | {
+      type: 'locale-change';
+      locale: string;
+    };
 ```
-**References:** [WAL](./api.wal.md)<!-- -->, [RecordInfo](./api.recordinfo.md)<!-- -->, [PeerStatusUpdate](./api.peerstatusupdate.md)<!-- -->, [AsyncStatus](./api.asyncstatus.md)<!-- -->, [AssetStoreContent](./api.assetstorecontent.md)
 
+**References:** [WAL](./api.wal.md)<!-- -->, [RecordInfo](./api.recordinfo.md)<!-- -->, [PeerStatusUpdate](./api.peerstatusupdate.md)<!-- -->, [AsyncStatus](./api.asyncstatus.md)<!-- -->, [AssetStoreContent](./api.assetstorecontent.md)

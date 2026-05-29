@@ -14,7 +14,11 @@ import {
 } from '@theweave/api';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
-import { appletOrigin, getAppletInfoAndGroupsProfiles, urlFromAppletHash } from '@theweave/elements';
+import {
+  appletOrigin,
+  getAppletInfoAndGroupsProfiles,
+  urlFromAppletHash,
+} from '@theweave/elements';
 import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { DnaHash } from '@holochain/client';
 import { mdiOpenInNew } from '@mdi/js';
@@ -76,7 +80,7 @@ export class WalEmbed extends LitElement {
       if (assetInfo) {
         const { appletInfo, groupProfiles } = await getAppletInfoAndGroupsProfiles(
           this.weaveClient,
-          assetInfo?.appletHash
+          assetInfo?.appletHash,
         );
         this.appletInfo = appletInfo;
         this.groupProfiles = groupProfiles;
@@ -189,7 +193,7 @@ export class WalEmbed extends LitElement {
                           style="height: 26px; width: 26px; border-radius: 50%; margin-right: 2px;"
                         />
                       </sl-tooltip>
-                    `
+                    `,
                   )}
                 </div>`
               : html``

@@ -34,7 +34,7 @@ export class AllPosts extends LitElement {
   _allPosts = new StoreSubscriber(
     this,
     () => this.postsStore.allPosts,
-    () => []
+    () => [],
   );
 
   renderList(records: Array<EntryRecord<Post>>) {
@@ -59,11 +59,11 @@ export class AllPosts extends LitElement {
                     new CustomEvent('notification', {
                       detail: e.detail,
                       bubbles: true,
-                    })
+                    }),
                   )}
                 .postHash=${record.actionHash}
                 style="margin: 0 16px 16px 0; width: 300px; height: 200px;"
-              ></post-summary>`
+              ></post-summary>`,
           )}
       </div>
     `;

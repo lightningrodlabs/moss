@@ -8,7 +8,7 @@
 
 ```typescript
 export type ProfilesLocation = {
-    authenticationToken: AppAuthenticationToken;
-    profilesRoleName: string;
+  authenticationToken: AppAuthenticationToken;
+  profilesRoleName: string;
 };
 ```

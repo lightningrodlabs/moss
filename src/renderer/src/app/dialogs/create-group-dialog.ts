@@ -19,7 +19,6 @@ import '../../ui/moss-dialog.js';
 import { MossDialog } from '../../ui/moss-dialog.js';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 
-
 /**
  * @element create-group-dialog
  */
@@ -96,14 +95,14 @@ export class CreateGroupDialog extends LitElement {
         width="700px"
         headerAlign="center"
         @sl-initial-focus=${(e: { preventDefault: () => void }) => {
-        e.preventDefault();
-        this._groupNameField.focus();
-      }}
-        @sl-request-close=${(e) => {
-        if (this.committing) {
           e.preventDefault();
-        }
-      }}
+          this._groupNameField.focus();
+        }}
+        @sl-request-close=${(e) => {
+          if (this.committing) {
+            e.preventDefault();
+          }
+        }}
       >
         <span slot="header">${msg('Create New Group')}</span>
         <form slot="content" class="column" ${onSubmit((f) => this.createGroup(f))}>
@@ -130,7 +129,9 @@ export class CreateGroupDialog extends LitElement {
             <sl-radio-group label="🔑${msg(' Group Type:')}" value="1">
               <sl-radio style="margin-top: 5px;" value="1"
                 ><b>${msg('Stewarded')}</b><br /><span style="opacity: 0.8; font-size: 0.9rem;"
-                  >${msg('The group creator is the initial Steward. Only Stewards can edit the group profile, add and remove Tools and add additional Stewards.')}</span
+                  >${msg(
+                    'The group creator is the initial Steward. Only Stewards can edit the group profile, add and remove Tools and add additional Stewards.',
+                  )}</span
                 ></sl-radio
               >
               <sl-radio style="margin-top: 5px;" value="0"
@@ -147,10 +148,10 @@ export class CreateGroupDialog extends LitElement {
               type="submit"
             >
               ${this.committing
-        ? html`<div class="column center-content">
+                ? html`<div class="column center-content">
                     <div class="dot-carousel" style="margin: 5px 0;"></div>
                   </div>`
-        : html`${msg('Create Group')}`}
+                : html`${msg('Create Group')}`}
             </button>
           </div>
         </form>

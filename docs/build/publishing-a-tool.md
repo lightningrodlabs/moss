@@ -16,7 +16,7 @@ import { defineDevCollectiveToolList } from '@theweave/moss-types';
 
 export default defineDevCollectiveToolList({
   developerCollective: {
-    id: 'my-collective',          // MUST NOT change once published
+    id: 'my-collective', // MUST NOT change once published
     name: 'My Developer Collective',
     description: '...',
     contact: { website: '...', email: '...' },
@@ -24,7 +24,7 @@ export default defineDevCollectiveToolList({
   },
   tools: [
     {
-      id: 'my-tool',              // MUST NOT change once published
+      id: 'my-tool', // MUST NOT change once published
       title: 'My Tool',
       subtitle: '...',
       description: '...',

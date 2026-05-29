@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export declare class AppletServices 
+export declare class AppletServices
 ```
 
 ## Constructors
@@ -16,30 +16,24 @@ export declare class AppletServices
 
 Constructor
 
-
 </th><th>
 
 Modifiers
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [(constructor)()](./api.appletservices._constructor_.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Constructs a new instance of the `AppletServices` class
-
 
 </td></tr>
 </tbody></table>
@@ -50,97 +44,77 @@ Constructs a new instance of the `AppletServices` class
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [blockTypes](./api.appletservices.blocktypes.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Record&lt;[BlockName](./api.blockname.md)<!-- -->, [BlockType](./api.blocktype.md)<!-- -->&gt;
 
-
 </td><td>
 
 Render block types that this Applet offers
-
 
 </td></tr>
 <tr><td>
 
 [creatables](./api.appletservices.creatables.md)
 
-
 </td><td>
-
 
 </td><td>
 
 Record&lt;[CreatableName](./api.creatablename.md)<!-- -->, [CreatableType](./api.creatabletype.md)<!-- -->&gt;
 
-
 </td><td>
 
 Creatables that this Applet offers to be created from a We dialog
-
 
 </td></tr>
 <tr><td>
 
 [getAssetInfo](./api.appletservices.getassetinfo.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (appletClient: AppClient, wal: [WAL](./api.wal.md)<!-- -->, recordInfo?: [RecordInfo](./api.recordinfo.md)<!-- -->) =&gt; Promise&lt;[AssetInfo](./api.assetinfo.md) \| undefined&gt;
 
-
 </td><td>
 
 Get info about the specified entry of this Applet
-
 
 </td></tr>
 <tr><td>
 
 [search](./api.appletservices.search.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (appletClient: AppClient, appletHash: [AppletHash](./api.applethash.md)<!-- -->, weaveServices: [WeaveServices](./api.weaveservices.md)<!-- -->, searchFilter: string) =&gt; Promise&lt;Array&lt;[WAL](./api.wal.md)<!-- -->&gt;&gt;
 
-
 </td><td>
 
 Search in this Applet
-
 
 </td></tr>
 </tbody></table>
