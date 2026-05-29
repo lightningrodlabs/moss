@@ -404,13 +404,16 @@ export class GroupClient {
    * fall back to rendering the legacy group description in that case.
    *
    * Entries written before schema versioning have no `schemaVersion`; they are
-   * normalized to version 1 here so callers always see a versioned object.
+   * normalized to literal version 1 (NOT the current constant) so that when
+   * the constant is later bumped to drive a migration, a `schemaVersion < N`
+   * check still catches these legacy entries instead of seeing them stamped
+   * with the newest version on read.
    */
   async getGroupDashboard(local: boolean = true): Promise<GroupDashboard | undefined> {
     const record = await this.getGroupMetaData(GROUP_DASHBOARD_NAME, local);
     if (!record?.entry.data) return undefined;
     const dashboard = JSON.parse(record.entry.data) as GroupDashboard;
-    return { schemaVersion: GROUP_DASHBOARD_SCHEMA_VERSION, ...dashboard };
+    return { ...dashboard, schemaVersion: dashboard.schemaVersion ?? 1 };
   }
 
   async getGroupMetaData(
