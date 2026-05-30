@@ -78,6 +78,34 @@ export function isPrivateIp(ip: string): boolean {
 }
 
 /**
+ * Resolve `hostname` to a single public IP that a caller can connect to,
+ * validating that every address it resolves to is public first. Returns the
+ * address + family so the caller can PIN the connection to exactly the IP that
+ * was checked — closing the DNS-rebind / dual-resolver gap where a second,
+ * independent resolution inside the network stack could connect to a different
+ * (internal) address than the one validated. Literal IPs are classified
+ * directly. Throws `Error('private-host')` when the host is not safe to probe.
+ */
+export async function resolvePublicIp(
+  hostname: string,
+): Promise<{ address: string; family: number }> {
+  const host = hostname.replace(/^\[|\]$/g, ''); // strip IPv6 brackets
+  if (host === 'localhost' || host.endsWith('.localhost')) {
+    throw new Error('private-host');
+  }
+  const literalFamily = isIP(host);
+  if (literalFamily) {
+    if (isPrivateIp(host)) throw new Error('private-host');
+    return { address: host, family: literalFamily };
+  }
+  const records = await dns.lookup(host, { all: true });
+  if (records.length === 0 || records.some((r) => isPrivateIp(r.address))) {
+    throw new Error('private-host');
+  }
+  return { address: records[0].address, family: records[0].family };
+}
+
+/**
  * Reject a host that points at this machine or a private network. Literal IPs
  * are classified directly; hostnames are resolved and every returned address
  * is checked, so a public name that resolves to a loopback/RFC1918 address
@@ -85,18 +113,7 @@ export function isPrivateIp(ip: string): boolean {
  * the host is not safe to probe.
  */
 export async function assertPublicHost(hostname: string): Promise<void> {
-  const host = hostname.replace(/^\[|\]$/g, ''); // strip IPv6 brackets
-  if (host === 'localhost' || host.endsWith('.localhost')) {
-    throw new Error('private-host');
-  }
-  if (isIP(host)) {
-    if (isPrivateIp(host)) throw new Error('private-host');
-    return;
-  }
-  const records = await dns.lookup(host, { all: true });
-  if (records.length === 0 || records.some((r) => isPrivateIp(r.address))) {
-    throw new Error('private-host');
-  }
+  await resolvePublicIp(hostname);
 }
 
 /**

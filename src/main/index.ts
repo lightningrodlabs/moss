@@ -20,12 +20,7 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import url from 'url';
-import {
-  assertPublicHost,
-  frameAncestorsBlocks,
-  imageContentAccepted,
-  isDataImageUrl,
-} from './mediaUrlValidation';
+import { validateMediaUrl, MediaUrlResult } from './mediaUrlProbe';
 import mime from 'mime';
 import * as childProcess from 'child_process';
 import { createHash } from 'crypto';
@@ -225,54 +220,6 @@ function forkImportedSeed(seed: string | undefined, fork: string | undefined): s
   }
   console.log(`Forking imported seed "${redactSeed(seed)}" with fork "${fork}"`);
   return `${seed}${fork}`;
-}
-
-/** Upper bound on redirect hops the media-url probe will re-validate and follow. */
-const MAX_MEDIA_URL_REDIRECTS = 5;
-
-type MediaProbeResult =
-  | { type: 'response'; status: number; headers: Record<string, string | string[]> }
-  | { type: 'redirect'; location: string }
-  | { type: 'error'; message: string };
-
-/**
- * Issue a single GET to `url` in manual-redirect mode, resolving with either the
- * final response's status+headers or the redirect target — never following the
- * redirect itself. Electron requires `followRedirect()` to be called
- * synchronously, but the SSRF host check is async, so we stop at each hop and
- * let the caller validate the next host before re-issuing. Aborts the socket as
- * soon as the headers (all we need) are in hand, so no body is read.
- */
-function probeMediaUrlOnce(url: string, signal: AbortSignal): Promise<MediaProbeResult> {
-  return new Promise((resolve) => {
-    let settled = false;
-    const done = (result: MediaProbeResult) => {
-      if (settled) return;
-      settled = true;
-      resolve(result);
-    };
-    const request = net.request({ method: 'GET', url, redirect: 'manual' });
-    signal.addEventListener('abort', () => request.abort(), { once: true });
-    request.on('redirect', (_status, _method, redirectUrl) => {
-      request.abort();
-      done({ type: 'redirect', location: redirectUrl });
-    });
-    request.on('response', (response) => {
-      const { statusCode, headers } = response;
-      request.abort();
-      done({ type: 'response', status: statusCode, headers });
-    });
-    request.on('error', (error: Error) => done({ type: 'error', message: error.message }));
-    request.on('abort', () => done({ type: 'error', message: 'aborted' }));
-    request.end();
-  });
-}
-
-/** Read a single response header, lowercased, joining any duplicate values. */
-function mediaHeader(headers: Record<string, string | string[]>, name: string): string {
-  const value = headers[name];
-  if (value === undefined) return '';
-  return (Array.isArray(value) ? value.join(', ') : value).toLowerCase();
 }
 
 // CLI command to compute the sha256 of a webhapp
@@ -1207,96 +1154,8 @@ if (!RUNNING_WITH_COMMAND) {
      */
     ipcMain.handle(
       'validate-media-url',
-      async (
-        _e,
-        rawUrl: string,
-        kind: 'image' | 'iframe',
-      ): Promise<{ ok: true; contentType: string } | { ok: false; reason: string }> => {
-        // Inline data: images are inert and need no network probe; allow them
-        // for image tiles (they are sanitized at render). Never for iframes.
-        if (kind === 'image' && isDataImageUrl(rawUrl)) {
-          return { ok: true, contentType: 'image/*' };
-        }
-        let parsed: URL;
-        try {
-          parsed = new URL(rawUrl);
-        } catch {
-          return { ok: false, reason: 'invalid-url' };
-        }
-        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-          return { ok: false, reason: 'unsupported-scheme' };
-        }
-
-        // Bound the whole probe — across every redirect hop — so a slow/hung
-        // host or a long redirect chain can't pin a main-process socket open
-        // indefinitely.
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
-        try {
-          // Follow redirects one hop at a time, re-running the SSRF guard on
-          // every hop's host. A public URL must not be able to 30x-redirect the
-          // probe onto the host's own/internal network (loopback, link-local,
-          // cloud-metadata, RFC1918); checking only the user-supplied host would
-          // leave that path open.
-          let current = parsed;
-          for (let hop = 0; ; hop++) {
-            if (hop > MAX_MEDIA_URL_REDIRECTS) {
-              return { ok: false, reason: 'too-many-redirects' };
-            }
-            try {
-              await assertPublicHost(current.hostname);
-            } catch {
-              return { ok: false, reason: 'private-host' };
-            }
-            const result = await probeMediaUrlOnce(current.toString(), controller.signal);
-            if (result.type === 'error') {
-              if (controller.signal.aborted) return { ok: false, reason: 'timeout' };
-              return { ok: false, reason: `fetch-failed: ${result.message}` };
-            }
-            if (result.type === 'redirect') {
-              let next: URL;
-              try {
-                next = new URL(result.location, current);
-              } catch {
-                return { ok: false, reason: 'invalid-redirect' };
-              }
-              if (next.protocol !== 'http:' && next.protocol !== 'https:') {
-                return { ok: false, reason: 'unsupported-scheme' };
-              }
-              current = next;
-              continue;
-            }
-            if (result.status < 200 || result.status >= 300) {
-              return { ok: false, reason: `http-${result.status}` };
-            }
-            const ct = mediaHeader(result.headers, 'content-type');
-            if (kind === 'image') {
-              // Match the image-extension heuristic against the URL the steward
-              // entered: redirect-backed download endpoints (e.g. GitHub release
-              // assets) carry the `.png` in the original path, not the signed
-              // target they redirect to.
-              if (!imageContentAccepted(ct, parsed.pathname)) {
-                return { ok: false, reason: 'not-an-image' };
-              }
-            } else {
-              if (!ct.includes('text/html') && !ct.includes('application/xhtml')) {
-                return { ok: false, reason: 'not-html' };
-              }
-              const xfo = mediaHeader(result.headers, 'x-frame-options');
-              if (xfo === 'deny' || xfo === 'sameorigin') {
-                return { ok: false, reason: 'x-frame-options' };
-              }
-              // CSP frame-ancestors supersedes X-Frame-Options on modern sites.
-              if (frameAncestorsBlocks(mediaHeader(result.headers, 'content-security-policy'))) {
-                return { ok: false, reason: 'frame-ancestors' };
-              }
-            }
-            return { ok: true, contentType: ct };
-          }
-        } finally {
-          clearTimeout(timeout);
-        }
-      },
+      async (_e, rawUrl: string, kind: 'image' | 'iframe'): Promise<MediaUrlResult> =>
+        validateMediaUrl(rawUrl, kind),
     );
     (ipcMain.handle('factory-reset', async () => {
       const userDecision = await dialog.showMessageBox({

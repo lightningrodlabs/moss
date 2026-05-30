@@ -6,6 +6,7 @@ import {
   imageContentAccepted,
   isDataImageUrl,
   isPrivateIp,
+  resolvePublicIp,
 } from './mediaUrlValidation';
 
 describe('isDataImageUrl', () => {
@@ -65,6 +66,25 @@ describe('assertPublicHost (no-DNS branches)', () => {
   it('accepts literal public IPs without touching DNS', async () => {
     await expect(assertPublicHost('8.8.8.8')).resolves.toBeUndefined();
     await expect(assertPublicHost('[2606:4700:4700::1111]')).resolves.toBeUndefined();
+  });
+});
+
+describe('resolvePublicIp (no-DNS branches)', () => {
+  it('rejects localhost and *.localhost', async () => {
+    await expect(resolvePublicIp('localhost')).rejects.toThrow('private-host');
+    await expect(resolvePublicIp('app.localhost')).rejects.toThrow('private-host');
+  });
+  it('rejects literal private IPs (incl. bracketed IPv6)', async () => {
+    await expect(resolvePublicIp('127.0.0.1')).rejects.toThrow('private-host');
+    await expect(resolvePublicIp('169.254.169.254')).rejects.toThrow('private-host');
+    await expect(resolvePublicIp('[::1]')).rejects.toThrow('private-host');
+  });
+  it('returns the validated literal public IP and family without touching DNS', async () => {
+    await expect(resolvePublicIp('8.8.8.8')).resolves.toEqual({ address: '8.8.8.8', family: 4 });
+    await expect(resolvePublicIp('[2606:4700:4700::1111]')).resolves.toEqual({
+      address: '2606:4700:4700::1111',
+      family: 6,
+    });
   });
 });
 
