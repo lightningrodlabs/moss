@@ -75,6 +75,17 @@ export class GroupDashboardEl extends LitElement {
     () => [this._groupStore],
   );
 
+  /**
+   * The pre-dashboard group description (markdown). Subscribed so a group that
+   * predates the dashboard can render its old description as a transitional
+   * tile until a steward saves a real dashboard. See _legacyDescriptionTiles.
+   */
+  private _groupDescription = new StoreSubscriber(
+    this,
+    () => this._groupStore.groupDescription,
+    () => [this._groupStore],
+  );
+
   @state() private _editing = false;
   /**
    * Read-only public view of the edit state. group-home reads this to decide
@@ -107,6 +118,16 @@ export class GroupDashboardEl extends LitElement {
   private _grid: GridStack | undefined;
   private _staticGrid: GridStack | undefined;
   /**
+   * Observes the read-mode grid's height-constraining ancestor so the
+   * fill-height pass re-runs once the dashboard actually has layout. On first
+   * load the group home can be initialized while its panel is still
+   * display:none / zero-height (every rect measures 0), so the initial fill
+   * collapses the tile; this fires when the panel gains real size and corrects
+   * it. The observed box is window/layout-driven, not grown by the tile's own
+   * min-height, so there is no measure→grow→measure feedback loop.
+   */
+  private _staticResizeObserver: ResizeObserver | undefined;
+  /**
    * Ids of tiles currently registered with the editable grid. Used to diff
    * against _draftTiles after each Lit render so we can call grid.makeWidget
    * for new tiles without destroying/re-initing the whole grid. See
@@ -120,6 +141,13 @@ export class GroupDashboardEl extends LitElement {
   private static readonly GRID_COLUMNS = 12;
   private static readonly CELL_HEIGHT = 60;
   private static readonly GRID_MARGIN = 12;
+
+  /**
+   * Stable id for the tile synthesized from a pre-dashboard group's legacy
+   * markdown description. Shared between the read-time render and the edit-mode
+   * draft seed so both reference the same tile across renders.
+   */
+  private static readonly LEGACY_DESCRIPTION_TILE_ID = 'legacy-description';
 
   /** Guards _applyAllFills against re-entrant calls. */
   private _applyingFills = false;
@@ -253,8 +281,14 @@ export class GroupDashboardEl extends LitElement {
     if (this._editing) return;
     this._destroyStaticGrid();
     const current = this._currentDashboard();
+    const savedTiles = current && Array.isArray(current.tiles) ? current.tiles : [];
+    // Seed the draft from the saved dashboard, or — for a group that has no
+    // dashboard yet but had a legacy description — from the synthesized legacy
+    // tile so the steward starts editing the description they already see.
+    // This materializes only into the draft; it is persisted on save (and left
+    // virtual on cancel), so viewing never writes to the DHT.
     this._draftTiles =
-      current && Array.isArray(current.tiles) ? structuredClone(current.tiles) : [];
+      savedTiles.length > 0 ? structuredClone(savedTiles) : this._legacyDescriptionTiles();
     this._draftFoyerEnabled = current ? current.foyerEnabled !== false : true;
     this._editing = true;
     this._emitEditingChanged();
@@ -453,7 +487,30 @@ export class GroupDashboardEl extends LitElement {
       this._staticGridEl,
     );
     this._observeContainerResize();
+    this._observeStaticFillBox();
     this._applyAllFills();
+  }
+
+  /**
+   * Re-run the read-mode fill whenever the grid's height-constraining ancestor
+   * changes size — most importantly the 0 → real-height transition when the
+   * group home becomes visible after first mount. Debounced through the shared
+   * resize rAF so a burst of layout changes coalesces into one settled measure.
+   */
+  private _observeStaticFillBox() {
+    this._staticResizeObserver?.disconnect();
+    this._staticResizeObserver = undefined;
+    const box = this._fillContainerBox(this._staticGridEl);
+    if (!box) return;
+    this._staticResizeObserver = new ResizeObserver(() => {
+      if (this._editing || !this._staticGrid) return;
+      if (this._resizeRaf) cancelAnimationFrame(this._resizeRaf);
+      this._resizeRaf = requestAnimationFrame(() => {
+        this._resizeRaf = 0;
+        if (!this._editing && this._staticGrid) this._applyAllFills();
+      });
+    });
+    this._staticResizeObserver.observe(box);
   }
 
   /** The grid instance for whichever mode is active. */
@@ -464,8 +521,52 @@ export class GroupDashboardEl extends LitElement {
   /** The tiles backing whichever mode is active. */
   private _activeTiles(): DashboardTileEntry[] {
     if (this._editing) return this._draftTiles;
+    return this._readTiles();
+  }
+
+  /**
+   * Tiles to show in read mode: the saved dashboard's tiles, or — for a group
+   * that has none yet but carried a pre-dashboard markdown description — the
+   * synthesized legacy tile.
+   */
+  private _readTiles(): DashboardTileEntry[] {
     const v = this._dashboard.value;
-    return v.status === 'complete' && v.value ? (v.value.tiles ?? []) : [];
+    const saved = v.status === 'complete' && v.value ? (v.value.tiles ?? []) : [];
+    if (saved.length > 0) return saved;
+    return this._legacyDescriptionTiles();
+  }
+
+  /**
+   * The group's legacy markdown description if one was set before the dashboard
+   * feature existed. Whitespace-only content counts as absent.
+   */
+  private _legacyDescription(): string | undefined {
+    const v = this._groupDescription.value;
+    const text = v.status === 'complete' ? v.value?.data : undefined;
+    return text && text.trim().length > 0 ? text : undefined;
+  }
+
+  /**
+   * Transitional tile list for a group that predates the dashboard: a single
+   * full-width, vertical-stretch markdown tile carrying the old description,
+   * with no accent background. Returns [] when there is no legacy description.
+   *
+   * This is a pure read/seed-time fallback — it is computed from the shared
+   * description entry so every member renders it identically, and nothing is
+   * committed to the DHT on mere viewing. It only becomes a real tile when a
+   * steward enters edit (which seeds it into the draft) and saves.
+   */
+  private _legacyDescriptionTiles(): DashboardTileEntry[] {
+    const description = this._legacyDescription();
+    if (!description) return [];
+    return [
+      {
+        id: GroupDashboardEl.LEGACY_DESCRIPTION_TILE_ID,
+        layout: { x: 0, y: 0, w: GroupDashboardEl.GRID_COLUMNS, h: DEFAULT_LAYOUTS.markdown.h },
+        tile: { kind: 'markdown', source: description },
+        fillHeight: true,
+      },
+    ];
   }
 
   /**
@@ -549,6 +650,28 @@ export class GroupDashboardEl extends LitElement {
       node = node.parentElement;
     }
     return window.innerHeight - 4;
+  }
+
+  /**
+   * The height-constraining box that {@link _fillBottomLimit} measures against:
+   * the containing block of the nearest scrolling ancestor (the full-height box
+   * the scroller's `max-height: 100%` resolves against). Used as the
+   * ResizeObserver target so the fill re-runs when this box gains/changes size.
+   * Resolved via computed `overflowY` so it works even while the subtree is
+   * still display:none (offsetParent is null then, so fall back to parent).
+   */
+  private _fillContainerBox(fromEl: HTMLElement): HTMLElement | undefined {
+    let node: HTMLElement | null = fromEl.parentElement;
+    while (node) {
+      const oy = getComputedStyle(node).overflowY;
+      if (oy === 'auto' || oy === 'scroll') {
+        const box =
+          node.offsetParent instanceof HTMLElement ? node.offsetParent : node.parentElement;
+        return box ?? node;
+      }
+      node = node.parentElement;
+    }
+    return undefined;
   }
 
   /** The nearest scrolling ancestor of the grid (the element that scrolls). */
@@ -677,6 +800,8 @@ export class GroupDashboardEl extends LitElement {
   }
 
   private _destroyStaticGrid() {
+    this._staticResizeObserver?.disconnect();
+    this._staticResizeObserver = undefined;
     if (this._staticGrid) {
       this._staticGrid.destroy(false);
       this._staticGrid = undefined;
@@ -1145,9 +1270,9 @@ export class GroupDashboardEl extends LitElement {
         ${msg('Error loading group home.')}
       </div>`;
     }
-    const tiles = v.value?.tiles ?? [];
     return html`
-      ${dashboardStyles()} ${this._editing ? this._renderEditing() : this._renderReadOnly(tiles)}
+      ${dashboardStyles()}
+      ${this._editing ? this._renderEditing() : this._renderReadOnly(this._readTiles())}
     `;
   }
 }
