@@ -128,7 +128,7 @@ export class WalEmbed extends LitElement {
           title="TODO"
           src="${iframeSrc}"
           style="flex: 1; display: block; padding: 5px; margin: 0; resize: both;"
-          allow="clipboard-write;"
+          allow="camera *; microphone *; clipboard-write *;"
           @load=${() => {
             console.log('iframe loaded.');
             setTimeout(() => this.resizeIFrameToFitContent(), 1000);
