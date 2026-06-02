@@ -1,9 +1,35 @@
 import { GroupProfile } from '@theweave/api';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 import { ToolInfoAndLatestVersion } from '../../../types.js';
+import { MossUpdateInfo } from '../../../electron-api.js';
 
 // Set to true to test welcome-view UI with mock data
 export const WELCOME_DEV_MODE = false;
+
+export function createMockMossUpdate(): MossUpdateInfo {
+  return {
+    version: '0.15.8',
+    releaseDate: new Date().toISOString(),
+    releaseNotes: `## Features
+
+- **Tile-based group dashboard.** Group home is now a customizable dashboard with markdown, image, iframe, and asset tiles.
+- **Tool library sort & tag filtering.** Browse the library by tag and sort to find tools faster.
+- **Activatable & disabled tools in the sidebar.** Tools that are installed but inactive or disabled now surface as sidebar entries so they're discoverable.
+- **Tool-info popup.** Right-click a tool icon to open a details dialog with curator info, a clickable curator URL, and markdown-rendered descriptions.
+- **Customizable curation lists.** The sources of tools shown in the Tool Library can now be customized beyond the default Lightningrod Labs list.
+- **Updated to Holochain 0.6.1 (final).**
+
+## Bug fixes
+
+- Camera and microphone now work for tools embedded as dashboard tiles and assets.
+- Recover from \`@holochain/client\` WebSocket reconnect wedge.
+- Activating and enabling/disabling tools no longer resets the whole UI.
+- Faster startup with lower memory use.
+- Force \`target=_blank\` on markdown anchors so user-authored links cannot replace the Moss main window.
+
+See the [full release notes](https://github.com/lightningrodlabs/moss/releases) on GitHub.`,
+  };
+}
 
 export function getMockGroupProfiles(toolCompatibilityId: ToolCompatibilityId): GroupProfile[] {
   const groupsData = createMockGroupsData();

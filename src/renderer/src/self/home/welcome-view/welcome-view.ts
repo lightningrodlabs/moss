@@ -3,7 +3,12 @@ import { customElement, property, query, state } from 'lit/decorators.js';
 import { localized, msg, str } from '@lit/localize';
 import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mossStyles } from '../../../shared-styles.js';
-import { createMockToolUpdates, createMockAppletsData, WELCOME_DEV_MODE } from './mock-data.js';
+import {
+  createMockToolUpdates,
+  createMockAppletsData,
+  createMockMossUpdate,
+  WELCOME_DEV_MODE,
+} from './mock-data.js';
 import { mossStoreContext } from '../../../context.js';
 import { consume } from '@lit/context';
 import { MossStore } from '../../../moss-store.js';
@@ -270,18 +275,7 @@ export class WelcomeView extends LitElement {
       this._mockToolUpdates = createMockToolUpdates();
       this._mockAppletsData = createMockAppletsData();
       // Mock Moss update for UI testing
-      this.availableMossUpdate = {
-        version: '0.15.6',
-        releaseDate: new Date().toISOString(),
-        releaseNotes: `Test update to version 0.15.6
-
-This is a mock update for UI development.
-
-Changes:
-- New feature A
-- Bug fix B
-- Improvement C`,
-      };
+      this.availableMossUpdate = createMockMossUpdate();
     } else {
       const availableMossUpdate = await window.electronAPI.mossUpdateAvailable();
       console.log('Available Moss update: ', availableMossUpdate);
@@ -1110,15 +1104,6 @@ Changes:
     `;
   }
 
-  getFirstLineOfReleaseNotes(): string {
-    if (!this.availableMossUpdate?.releaseNotes) {
-      return msg('A new release of Moss with exciting features and improvements.');
-    }
-    // Get first non-empty line
-    const lines = this.availableMossUpdate.releaseNotes.split('\n').filter((line) => line.trim());
-    return lines[0] || msg('A new release of Moss with exciting features and improvements.');
-  }
-
   renderMossUpdateCard() {
     return html`
       <div class="moss-update-available-container">
@@ -1133,7 +1118,18 @@ Changes:
                   : ''}
               </div>
             </div>
-            <div class="moss-update-release-notes">${this.getFirstLineOfReleaseNotes()}</div>
+            <div
+              class="moss-update-release-notes-preview"
+              @click=${() => this.showChangelog()}
+              title=${msg("What's new?")}
+            >
+              <div class="moss-update-release-notes">
+                ${this.availableMossUpdate?.releaseNotes
+                  ? unsafeHTML(markdownParseSafe(this.availableMossUpdate.releaseNotes))
+                  : msg('A new release of Moss with exciting features and improvements.')}
+              </div>
+              <div class="moss-update-release-notes-more">…</div>
+            </div>
             <div class="moss-update-buttons">
               ${this.mossUpdatePercentage
                 ? html` <div class="column" style="align-items: center;">
@@ -2094,6 +2090,12 @@ Changes:
         letter-spacing: -0.4px;
       }
 
+      .moss-update-release-notes-preview {
+        position: relative;
+        cursor: pointer;
+        margin-bottom: 4px;
+      }
+
       .moss-update-release-notes {
         color: #000;
         font-size: 14px;
@@ -2101,6 +2103,45 @@ Changes:
         font-weight: 400;
         line-height: 20px;
         opacity: 0.6;
+        max-height: 76px;
+        overflow: hidden;
+        -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
+        mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
+      }
+
+      .moss-update-release-notes :first-child {
+        margin-top: 0;
+      }
+
+      .moss-update-release-notes h1,
+      .moss-update-release-notes h2,
+      .moss-update-release-notes h3,
+      .moss-update-release-notes h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0 0 4px;
+      }
+
+      .moss-update-release-notes p {
+        margin: 0 0 4px;
+      }
+
+      .moss-update-release-notes ul,
+      .moss-update-release-notes ol {
+        padding-left: 18px;
+        margin: 0 0 4px;
+      }
+
+      .moss-update-release-notes-more {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        color: #000;
+        opacity: 0.6;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 12px;
+        pointer-events: none;
       }
 
       .tool-updates-container {
