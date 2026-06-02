@@ -302,7 +302,7 @@ export class WalEmbed extends LitElement {
             ? 'flex: 1; display: block; margin: 0; padding: 0; border: none; width: 100%; height: 100%;'
             : 'flex: 1; display: block; padding: 5px; margin: 0; width: calc(100% - 10px);'}
           src="${iframeSrc}"
-          allow="clipboard-write;"
+          allow="camera *; microphone *; clipboard-write *;"
           @load=${() => {
             setTimeout(() => this.resizeIFrameToFitContent(), 1000);
           }}
