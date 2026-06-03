@@ -28,6 +28,7 @@ export class AppletMain extends LitElement {
       .appletHash=${this.appletHash}
       .groupHash=${this.groupHash}
       .reloading=${this.reloading}
+      .location=${'main'}
       style="flex: 1"
     ></applet-view>`;
   }

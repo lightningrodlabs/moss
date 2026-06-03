@@ -86,6 +86,7 @@ export class AssetView extends LitElement {
         .appletHash=${dnaLocation.appletHash}
         .groupHash=${groupHash}
         .hostColor=${'#dde7ff'}
+        .location=${'side'}
         .view=${{
           type: 'asset',
           wal: this.wal,
