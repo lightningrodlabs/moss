@@ -6,11 +6,12 @@ import {
   AgentPubKey,
   EntryHash,
   encodeHashToBase64,
+  HoloHashMap,
   YamlProperties,
 } from '@holochain/client';
 import { localized, msg } from '@lit/localize';
 import { ref } from 'lit/directives/ref.js';
-import { joinAsyncMap, pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
+import { completed, joinAsyncMap, pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { notify, notifyError, onSubmit } from '@holochain-open-dev/elements';
 import { GetonlyMap, slice } from '@holochain-open-dev/utils';
@@ -62,9 +63,11 @@ export class InstallToolDialogWeb2 extends LitElement {
   _registeredApplets = new StoreSubscriber(
     this,
     () =>
-      pipe(this.groupStore.allAdvertisedApplets, (allAppletsHashes) =>
-        joinAsyncMap(slice(this.groupStore.applets as GetonlyMap<any, any>, allAppletsHashes)),
-      ),
+      this.groupStore
+        ? pipe(this.groupStore.allAdvertisedApplets, (allAppletsHashes) =>
+            joinAsyncMap(slice(this.groupStore.applets as GetonlyMap<any, any>, allAppletsHashes)),
+          )
+        : completed(new HoloHashMap()),
     () => [this.groupStore],
   );
 
@@ -112,7 +115,7 @@ export class InstallToolDialogWeb2 extends LitElement {
 
   groupProfile = new StoreSubscriber(
     this,
-    () => this.groupStore.groupProfile,
+    () => this.groupStore?.groupProfile,
     () => [this.groupStore],
   );
   // _unlisten: UnlistenFn | undefined;
@@ -566,6 +569,7 @@ export class InstallToolDialogWeb2 extends LitElement {
   }
 
   renderGroup() {
+    if (!this.groupProfile.value) return html``;
     switch (this.groupProfile.value.status) {
       case 'pending':
         return html`loading...`;
