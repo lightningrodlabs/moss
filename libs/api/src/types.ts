@@ -245,6 +245,18 @@ export type BlockType = {
 
 export type BlockName = string;
 
+/**
+ * Indicates where/how an applet view is being rendered by Moss. Lets an applet
+ * adapt its behavior to the surface it is shown on — e.g. avoid eagerly joining
+ * a room when merely embedded inline in a dashboard.
+ *
+ * - 'main':     the applet's main view (full applet UI)
+ * - 'embedded': an asset embedded inline (e.g. a dashboard tile / attachment)
+ * - 'side':     the side-panel asset viewer
+ * - 'window':   a dedicated standalone window
+ */
+export type RenderLocation = 'main' | 'embedded' | 'side' | 'window';
+
 export type RenderInfo =
   | {
       type: 'applet-view';
@@ -261,6 +273,11 @@ export type RenderInfo =
        */
       groupProfiles: GroupProfile[];
       groupHash: DnaHash | null;
+      /**
+       * Where/how this view is being rendered by Moss, if known. Undefined when
+       * the Moss host predates the Weave protocol version that introduced it.
+       */
+      renderLocation?: RenderLocation;
     }
   | {
       type: 'cross-group-view';

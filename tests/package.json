@@ -19,7 +19,7 @@
     "@holochain-open-dev/tryorama": "^0.19.2",
     "@holochain-open-dev/utils": "^0.601.1",
     "@theweave/group-client": "^0.5.4",
-    "@theweave/api": "^0.6.7",
+    "@theweave/api": "^0.6.8",
     "typescript": "^5.8.3",
     "vitest": "^0.28.4"
   },

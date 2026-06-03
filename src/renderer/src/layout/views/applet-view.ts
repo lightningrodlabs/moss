@@ -6,7 +6,7 @@ import { customElement, property } from 'lit/decorators.js';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
-import { AppletView, IframeKind, RenderView } from '@theweave/api';
+import { AppletView, IframeKind, RenderLocation, RenderView } from '@theweave/api';
 
 import { mossStyles } from '../../shared-styles.js';
 import './view-frame.js';
@@ -27,6 +27,10 @@ export class AppletViewEl extends LitElement {
 
   @property()
   reloading = false;
+
+  /** Where this view is being rendered, forwarded to the applet as renderInfo.renderLocation. */
+  @property()
+  location: RenderLocation | undefined;
 
   hostStyle() {
     if (this.hostColor) {
@@ -58,6 +62,7 @@ export class AppletViewEl extends LitElement {
         .renderView=${renderView}
         .iframeKind=${iframeKind}
         .reloading=${this.reloading}
+        .location=${this.location}
         class="elevated"
         style="flex: 1;"
       ></view-frame>

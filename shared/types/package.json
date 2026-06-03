@@ -18,7 +18,7 @@
   "type": "module",
   "dependencies": {
     "@holochain/client": "=0.20.4",
-    "@theweave/api": "^0.6.7",
+    "@theweave/api": "^0.6.8",
     "@sinclair/typebox": "0.33.12"
   },
   "devDependencies": {

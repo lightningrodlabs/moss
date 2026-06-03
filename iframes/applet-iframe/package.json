@@ -9,7 +9,7 @@
     "@holochain-open-dev/utils": "^0.601.1",
     "@holochain-open-dev/stores": "^0.601.1",
     "@holochain/client": "=0.20.4",
-    "@theweave/api": "^0.6.7",
+    "@theweave/api": "^0.6.8",
     "@theweave/utils": "^0.5.4",
     "inline-module": "^0.6.1"
   },

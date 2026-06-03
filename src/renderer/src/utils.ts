@@ -17,6 +17,7 @@ import {
   Hrl,
   WAL,
   RenderView,
+  RenderLocation,
   FrameNotification,
   AppletHash,
   AppletId,
@@ -624,6 +625,7 @@ export function renderViewToQueryString(
   renderView:
     | RenderView
     | { type: 'applet-view'; view: { type: 'creatable'; creatableName: string; dialogId: string } },
+  location?: RenderLocation,
 ): string {
   let base = `view=${renderView.type}`;
 
@@ -659,6 +661,13 @@ export function renderViewToQueryString(
       const dialogId = renderView.view.dialogId;
       base = `${base}&creatable=${creatableName}&id=${dialogId}`;
     }
+  }
+
+  // Stamp the render location so the applet can tell where it is being shown.
+  // Appended last and read key-based on the iframe side, so it never shifts the
+  // positionally-parsed params above.
+  if (location) {
+    base = `${base}&view-location=${location}`;
   }
 
   return base;
@@ -1087,6 +1096,7 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
       };
       const iframeSrc = `http://localhost:${appletDevPort}?${renderViewToQueryString(
         renderView,
+        'window',
       )}#${fromUint8Array(encode(iframeKind))}`;
       return window.electronAPI.openWalWindow(
         iframeSrc,
@@ -1096,7 +1106,7 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
       );
     }
   }
-  const iframeSrc = `${iframeOrigin({ type: 'applet', appletHash, groupHash, subType: 'asset' })}?${renderViewToQueryString(renderView)}`;
+  const iframeSrc = `${iframeOrigin({ type: 'applet', appletHash, groupHash, subType: 'asset' })}?${renderViewToQueryString(renderView, 'window')}`;
   return window.electronAPI.openWalWindow(iframeSrc, appletId, encodeHashToBase64(groupHash), wal);
 }
 

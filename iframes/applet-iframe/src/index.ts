@@ -28,6 +28,7 @@ import {
   FrameNotification,
   RenderView,
   RenderInfo,
+  RenderLocation,
   AppletToParentMessage,
   ParentToAppletMessage,
   AppletHash,
@@ -521,6 +522,7 @@ const weaveApi: WeaveServices = {
       appletHash,
       groupProfiles: iframeConfig.groupProfiles,
       groupHash: iframeConfig.groupHash,
+      renderLocation: getRenderLocation(),
     };
 
     window.addEventListener('weave-client-connected', async () => {
@@ -821,6 +823,19 @@ async function getRenderView(): Promise<RenderView | undefined> {
   if (window.location.search.length === 0) return undefined;
   const queryString = window.location.search.slice(1);
   return queryStringToRenderView(queryString);
+}
+
+/**
+ * Read the render location stamped into the query string by Moss. Parsed
+ * key-based (not positionally) so it is robust to the order of other params.
+ * Returns undefined if absent or not a recognized value.
+ */
+function getRenderLocation(): RenderLocation | undefined {
+  const value = new URLSearchParams(window.location.search).get('view-location');
+  if (value === 'main' || value === 'embedded' || value === 'side' || value === 'window') {
+    return value;
+  }
+  return undefined;
 }
 
 async function queryStringToRenderView(s: string): Promise<RenderView> {

@@ -270,7 +270,7 @@ export class WalEmbed extends LitElement {
       case 'success':
         const queryString = `view=applet-view&view-type=asset&hrl=${stringifyHrl(this.wal!.hrl)}${
           this.wal!.context ? `&context=${encodeContext(this.wal!.context)}` : ''
-        }`;
+        }&view-location=embedded`;
         // why: firstUpdated sets assetStatus='success' before awaiting the
         // appletInfo fetch, so Lit can re-render between the two and reach
         // here with appletInfo still undefined. Show the spinner during that

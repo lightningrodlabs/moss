@@ -2,7 +2,7 @@ import { css, html, LitElement, PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { encodeHashToBase64 } from '@holochain/client';
 import { consume } from '@lit/context';
-import { IframeKind, RenderView } from '@theweave/api';
+import { IframeKind, RenderLocation, RenderView } from '@theweave/api';
 
 import { mossStyles } from '../../shared-styles.js';
 import { iframeOrigin, renderViewToQueryString } from '../../utils.js';
@@ -29,6 +29,10 @@ export class ViewFrame extends LitElement {
 
   @property()
   reloading = false;
+
+  /** Where this frame is being rendered, surfaced to the applet as renderInfo.renderLocation. */
+  @property()
+  location: RenderLocation | undefined;
 
   @state()
   appletDevPort: number | undefined;
@@ -105,7 +109,7 @@ export class ViewFrame extends LitElement {
 
   renderProductionFrame() {
     // Add groupHash to query string if available
-    const queryString = renderViewToQueryString(this.renderView);
+    const queryString = renderViewToQueryString(this.renderView, this.location);
     const groupHashParam =
       this.iframeKind.type === 'applet' && this.iframeKind.groupHash
         ? `&group-hash=${encodeHashToBase64(this.iframeKind.groupHash)}`
@@ -139,6 +143,7 @@ export class ViewFrame extends LitElement {
         }
         const iframeSrc = `http://localhost:${this.appletDevPort}?${renderViewToQueryString(
           this.renderView,
+          this.location,
         )}#${fromUint8Array(encode(this.iframeKind))}`;
         return html`<iframe
             frameborder="0"
