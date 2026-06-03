@@ -24,6 +24,18 @@ jobs:
         run: |
           RUSTFLAGS='--cfg getrandom_backend="'"custom"'"' cargo build --release --target-dir target --target wasm32-unknown-unknown --workspace
 
+      - name: Install wasm-opt
+        run: |
+          BIN_VER=119
+          curl -sL -o /tmp/binaryen.tar.gz \
+            https://github.com/WebAssembly/binaryen/releases/download/version_${BIN_VER}/binaryen-version_${BIN_VER}-x86_64-linux.tar.gz
+          tar -xzf /tmp/binaryen.tar.gz -C /tmp
+          echo "/tmp/binaryen-version_${BIN_VER}/bin" >> $GITHUB_PATH
+
+      - name: Optimize all wasms
+        run: |
+          node ./scripts/wasm-opt-all.mjs
+
       - name: Pack
         run: |
           ./resources/bins/hc app pack ./workdir --recursive
