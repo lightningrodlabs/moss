@@ -9,8 +9,7 @@
     /* eslint-disable @typescript-eslint/no-explicit-any */
 
     export const templates = {
-      'h9ba913e545f30f9a': html`<a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">Araç yayınlama</a> ve kendi küratörlük listenizi oluşturma hakkında daha fazla bilgi edinin.`,
-'s0015d648b3decb5a': `İzin türü kontrol ediliyor...`,
+      's0015d648b3decb5a': `İzin türü kontrol ediliyor...`,
 's007a5e0a003f5515': `Cebinizde:`,
 's016f5be842987ba5': `Katılımcılar `,
 's020d96334aaddfa3': `Ses Ekle`,
@@ -198,6 +197,7 @@ güzel insan!`,
 's417a0b7eadfddf0e': `Geri Bildirim Geçmişi`,
 's417b25879ae9b5a0': `Davet Bağlantısı`,
 's41cffddcfb0e86cb': `Sınırlı bilgi mevcut — bu araç aktif bir küratörlü listede değil.`,
+'s41d8d8662cbdae33': `Henüz diğer eşlerden senkronize edilmemiş olabilir.`,
 's43417e56f957ff34': `Rehber rolü ata`,
 's43bda70697c53bfb': `Uyarı: DNA hash uyuşmazlığı. Arayüz mevcut verilerle doğru çalışmayabilir.`,
 's4404b38d84707655': `Profil oluşturma zaman aşımına uğradı. Lütfen tekrar deneyin.`,
@@ -246,6 +246,7 @@ güzel insan!`,
 's5359ae748cb89c2c': `işlemi geri alamayacağımı anlıyorum.`,
 's53f341e0b248049c': `Özel ses silindi`,
 's540ee2c491d959c0': `Sesi çal`,
+'s541c7757ea3f5450': `Bu varlık, onu oluşturan Aracın etkinleştirilmesine kadar yüklenemez.`,
 's550b6572499ea8bd': `URL panoya kopyalandı.`,
 's55797f0c2b3b37a0': `Bu grubun blokları alınırken hata`,
 's559201d026136283': `Yalnızca http:// ve https:// URL'lerine izin verilir.`,
@@ -659,5 +660,10 @@ erken kalkan kuş!`,
 'sff498a3bad06a8e4': `Grup klonlanıyor…`,
 'sff553f4a093c366f': `Katıldı (profil henüz eşitlenmedi)`,
 'sff696c02c0929f45': `Holochain başlatılamadı :(`,
+'h195e3d05d7fbb8c8': html`Learn more about
+              <a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">publishing a Tool</a>
+              and how to create your own curation list.`,
+'s81eaaa52fa445197': `Could not find the Tool to activate.`,
+'sa063e5108554c361': `Could not open the activate dialog.`,
     };
   

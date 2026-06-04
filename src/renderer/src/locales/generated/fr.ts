@@ -9,8 +9,7 @@
     /* eslint-disable @typescript-eslint/no-explicit-any */
 
     export const templates = {
-      'h9ba913e545f30f9a': html`Apprenez-en plus sur <a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">la publication d'un outil</a> et comment créer votre propre liste de curation.`,
-'s0015d648b3decb5a': `Vérification du type d'autorisation...`,
+      's0015d648b3decb5a': `Vérification du type d'autorisation...`,
 's007a5e0a003f5515': `Dans votre Poche :`,
 's016f5be842987ba5': `Participants `,
 's020d96334aaddfa3': `Ajouter un son`,
@@ -198,6 +197,7 @@ commence maintenant`,
 's417a0b7eadfddf0e': `Historique des feedbacks`,
 's417b25879ae9b5a0': `Lien d'invitation`,
 's41cffddcfb0e86cb': `Informations limitées — cet outil ne figure dans aucune liste de curation active.`,
+'s41d8d8662cbdae33': `Il n'a peut-être pas encore été synchronisé depuis les autres pairs.`,
 's43417e56f957ff34': `attribuer le rôle de Référent`,
 's43bda70697c53bfb': `Attention : Incompatibilité du hash DNA. L'interface pourrait ne pas fonctionner correctement avec les données actuelles.`,
 's4404b38d84707655': `La creation du profil a expiré. Veuillez réessayer.`,
@@ -246,6 +246,7 @@ commence maintenant`,
 's5359ae748cb89c2c': `je ne peux pas annuler cette action.`,
 's53f341e0b248049c': `Son personnalisé supprimé`,
 's540ee2c491d959c0': `Jouer le son`,
+'s541c7757ea3f5450': `Cet asset ne peut pas être chargé tant que l'outil qui l'a créé n'est pas activé.`,
 's550b6572499ea8bd': `URL copiée dans le presse-papiers.`,
 's55797f0c2b3b37a0': `Erreur lors de la récuperation des blocs pour ce groupe`,
 's559201d026136283': `Seules les URL http:// et https:// sont autorisées.`,
@@ -659,5 +660,10 @@ lève-tôt !`,
 'sff498a3bad06a8e4': `Clonage du groupe…`,
 'sff553f4a093c366f': `Rejoint (profil non encore synchronisé)`,
 'sff696c02c0929f45': `Holochain n'a pas pu démarrer :(`,
+'h195e3d05d7fbb8c8': html`Learn more about
+              <a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">publishing a Tool</a>
+              and how to create your own curation list.`,
+'s81eaaa52fa445197': `Could not find the Tool to activate.`,
+'sa063e5108554c361': `Could not open the activate dialog.`,
     };
   

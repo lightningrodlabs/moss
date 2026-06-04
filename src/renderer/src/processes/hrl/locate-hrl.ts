@@ -58,6 +58,12 @@ export async function locateHrl(
     });
   }
 
+  // The zome returns null when the entry can't be found in the local cell —
+  // typical right after a fresh Tool activation, before DHT gossip has filled
+  // in the referenced entry. Surface as undefined so callers fall back to
+  // "Asset not found" (and the embed's Retry can pick it up later).
+  if (!location) return undefined;
+
   const integrity_zome = location.integrity_zome;
   const entryDefIndex = location.entry_def_index;
 

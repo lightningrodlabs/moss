@@ -63,7 +63,25 @@ export const GROUP_DASHBOARD_NAME = 'dashboard';
  * lets stewards mix live WAL embeds with simple content blocks.
  */
 export type DashboardTile =
-  | { kind: 'wal-embed'; wal: string }
+  | {
+      kind: 'wal-embed';
+      wal: string;
+      /**
+       * Base64-encoded EntryHash of the applet that owns the WAL's asset, captured
+       * at tile-creation time. Lets the embed render a "Tool not activated" message
+       * with a working Activate button when the local agent has not yet joined the
+       * owning applet — otherwise the bare WAL lookup fails and the tile shows a
+       * generic "Asset not found" string. Optional for backwards compatibility with
+       * tiles created before this field existed.
+       */
+      srcAppletHash?: string;
+      /**
+       * Base64-encoded DnaHash of the group whose registry holds the source applet.
+       * Combined with `srcAppletHash`, identifies the exact activate target for the
+       * embed's Activate button. Optional for backwards compatibility.
+       */
+      srcGroupDnaHash?: string;
+    }
   | { kind: 'markdown'; source: string }
   | { kind: 'image'; src: string; alt?: string }
   | { kind: 'iframe'; src: string };
@@ -106,7 +124,7 @@ export type DashboardTileEntry = {
  * {@link GroupClient.getGroupDashboard}. Entries written before versioning was
  * introduced have no `schemaVersion` and are treated as version 1.
  */
-export const GROUP_DASHBOARD_SCHEMA_VERSION = 1;
+export const GROUP_DASHBOARD_SCHEMA_VERSION = 2;
 
 export type GroupDashboard = {
   /**

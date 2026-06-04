@@ -9,8 +9,7 @@
     /* eslint-disable @typescript-eslint/no-explicit-any */
 
     export const templates = {
-      'h9ba913e545f30f9a': html`<a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">ツールの公開方法</a>と独自のキュレーションリストの作成方法について詳しく学ぶ。`,
-'s0015d648b3decb5a': `権限タイプを確認中...`,
+      's0015d648b3decb5a': `権限タイプを確認中...`,
 's007a5e0a003f5515': `ポケット内:`,
 's016f5be842987ba5': `参加者 `,
 's020d96334aaddfa3': `サウンドを追加`,
@@ -198,6 +197,7 @@
 's417a0b7eadfddf0e': `フィードバック履歴`,
 's417b25879ae9b5a0': `招待リンク`,
 's41cffddcfb0e86cb': `限定的な情報のみ — このツールはアクティブなキュレーションリストに含まれていません。`,
+'s41d8d8662cbdae33': `他のピアからまだ同期されていない可能性があります。`,
 's43417e56f957ff34': `世話人ロールを割り当て`,
 's43bda70697c53bfb': `警告：DNAハッシュが一致しません。現在のデータでUIが正しく動作しない可能性があります。`,
 's4404b38d84707655': `プロフィール作成がタイムアウトしました。もう一度お試しください。`,
@@ -246,6 +246,7 @@
 's5359ae748cb89c2c': `この操作を元に戻せないことを理解しています。`,
 's53f341e0b248049c': `カスタムサウンドを削除しました`,
 's540ee2c491d959c0': `音を再生`,
+'s541c7757ea3f5450': `このアセットは、作成したツールがアクティブ化されるまで読み込めません。`,
 's550b6572499ea8bd': `URLがクリップボードにコピーされました。`,
 's55797f0c2b3b37a0': `このグループのブロックの取得中にエラーが発生しました`,
 's559201d026136283': `http:// および https:// の URL のみが許可されています。`,
@@ -659,5 +660,10 @@ P2Pの世界！`,
 'sff498a3bad06a8e4': `グループを複製中…`,
 'sff553f4a093c366f': `参加済み (プロファイル未同期)`,
 'sff696c02c0929f45': `Holochainの起動に失敗しました :(`,
+'h195e3d05d7fbb8c8': html`Learn more about
+              <a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">publishing a Tool</a>
+              and how to create your own curation list.`,
+'s81eaaa52fa445197': `Could not find the Tool to activate.`,
+'sa063e5108554c361': `Could not open the activate dialog.`,
     };
   
