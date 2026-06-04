@@ -9,8 +9,7 @@
     /* eslint-disable @typescript-eslint/no-explicit-any */
 
     export const templates = {
-      'h9ba913e545f30f9a': html`Erfahren Sie mehr über <a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">das Veröffentlichen eines Tools</a> und wie Sie Ihre eigene Kuratierungsliste erstellen.`,
-'s0015d648b3decb5a': `Berechtigungstyp wird überprüft...`,
+      's0015d648b3decb5a': `Berechtigungstyp wird überprüft...`,
 's007a5e0a003f5515': `In Ihrer Tasche:`,
 's016f5be842987ba5': `Teilnehmer `,
 's020d96334aaddfa3': `Sound hinzufügen`,
@@ -198,6 +197,7 @@ beginnt jetzt`,
 's417a0b7eadfddf0e': `Feedback-Verlauf`,
 's417b25879ae9b5a0': `Einladungslink`,
 's41cffddcfb0e86cb': `Eingeschränkte Informationen verfügbar – dieses Tool ist in keiner aktiven Kurationsliste enthalten.`,
+'s41d8d8662cbdae33': `Es wurde möglicherweise noch nicht von anderen Peers synchronisiert.`,
 's43417e56f957ff34': `Verwalterrolle zuweisen`,
 's43bda70697c53bfb': `Warnung: DNA-Hash stimmt nicht überein. Die Benutzeroberfläche funktioniert möglicherweise nicht korrekt mit den aktuellen Daten.`,
 's4404b38d84707655': `Zeituberschreitung bei der Profilerstellung. Bitte versuchen Sie es erneut.`,
@@ -246,6 +246,7 @@ beginnt jetzt`,
 's5359ae748cb89c2c': `ich die Aktion nicht ruckgangig machen kann.`,
 's53f341e0b248049c': `Benutzerdefinierter Sound gelöscht`,
 's540ee2c491d959c0': `Sound abspielen`,
+'s541c7757ea3f5450': `Dieses Asset kann erst geladen werden, wenn das Tool, mit dem es erstellt wurde, aktiviert ist.`,
 's550b6572499ea8bd': `URL in die Zwischenablage kopiert.`,
 's55797f0c2b3b37a0': `Fehler beim Abrufen der Blocke fürdiese Gruppe`,
 's559201d026136283': `Nur http:// und https:// URLs sind erlaubt.`,
@@ -659,5 +660,10 @@ du Frühaufsteher!`,
 'sff498a3bad06a8e4': `Gruppe wird geklont…`,
 'sff553f4a093c366f': `Beigetreten (Profil noch nicht synchronisiert)`,
 'sff696c02c0929f45': `Holochain konnte nicht gestartet werden :(`,
+'h195e3d05d7fbb8c8': html`Learn more about
+              <a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">publishing a Tool</a>
+              and how to create your own curation list.`,
+'s81eaaa52fa445197': `Could not find the Tool to activate.`,
+'sa063e5108554c361': `Could not open the activate dialog.`,
     };
   

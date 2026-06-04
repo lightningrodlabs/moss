@@ -9,8 +9,7 @@
     /* eslint-disable @typescript-eslint/no-explicit-any */
 
     export const templates = {
-      'h9ba913e545f30f9a': html`Aprenda más sobre <a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">cómo publicar una herramienta</a> y cómo crear su propia lista de curación.`,
-'s0015d648b3decb5a': `Comprobando tipo de permiso...`,
+      's0015d648b3decb5a': `Comprobando tipo de permiso...`,
 's007a5e0a003f5515': `En tu bolsillo:`,
 's016f5be842987ba5': `Participantes `,
 's020d96334aaddfa3': `Añadir sonido`,
@@ -198,6 +197,7 @@ comienza ahora`,
 's417a0b7eadfddf0e': `Historial de comentarios`,
 's417b25879ae9b5a0': `Enlace de invitación`,
 's41cffddcfb0e86cb': `Información limitada — esta herramienta no figura en ninguna lista de curación activa.`,
+'s41d8d8662cbdae33': `Es posible que aún no se haya sincronizado desde otros pares.`,
 's43417e56f957ff34': `asignar rol de Cuidador`,
 's43bda70697c53bfb': `Advertencia: Incompatibilidad de hash DNA. La interfaz podría no funcionar correctamente con los datos actuales.`,
 's4404b38d84707655': `La creación del perfil expiró. Por favor, inténtalo de nuevo.`,
@@ -246,6 +246,7 @@ comienza ahora`,
 's5359ae748cb89c2c': `No puedo deshacer la acción.`,
 's53f341e0b248049c': `Sonido personalizado eliminado`,
 's540ee2c491d959c0': `Reproducir sonido`,
+'s541c7757ea3f5450': `Este recurso no se puede cargar hasta que se active la herramienta que lo creó.`,
 's550b6572499ea8bd': `URL copiada al portapapeles.`,
 's55797f0c2b3b37a0': `Error al obtener los bloques de este grupo`,
 's559201d026136283': `Solo se permiten URLs http:// y https://.`,
@@ -659,5 +660,10 @@ madrugador!`,
 'sff498a3bad06a8e4': `Clonando grupo…`,
 'sff553f4a093c366f': `Unido (perfil aún no sincronizado)`,
 'sff696c02c0929f45': `Holochain no pudo iniciarse :(`,
+'h195e3d05d7fbb8c8': html`Learn more about
+              <a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">publishing a Tool</a>
+              and how to create your own curation list.`,
+'s81eaaa52fa445197': `Could not find the Tool to activate.`,
+'sa063e5108554c361': `Could not open the activate dialog.`,
     };
   

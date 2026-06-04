@@ -2100,12 +2100,6 @@ inizia ora</target>
   <source>Invalid invite link: <x id="0" equiv-text="${e}"/></source>
   <target>Link di invito non valido: <x id="0" equiv-text="${e}"/></target>
 </trans-unit>
-<trans-unit id="h9ba913e545f30f9a">
-  <source>Learn more about
-            <x id="0" equiv-text="&lt;a href=&quot;https://dev.theweave.social/build/publishing-a-tool.html&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>publishing a Tool<x id="1" equiv-text="&lt;/a&gt;"/>
-            and how to create your own curation list.</source>
-  <target>Scopri di più su <x id="0" equiv-text="&lt;a href=&quot;https://dev.theweave.social/build/publishing-a-tool.html&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>come pubblicare uno strumento<x id="1" equiv-text="&lt;/a&gt;"/> e come creare la tua lista di curatela.</target>
-</trans-unit>
 <trans-unit id="sd947928196d52aa4">
   <source>Add List</source>
   <target>Aggiungi lista</target>
@@ -2594,6 +2588,25 @@ inizia ora</target>
   <source>branch</source>
   <target>ramo</target>
 </trans-unit>
+<trans-unit id="h195e3d05d7fbb8c8">
+  <source>Learn more about
+              <x id="0" equiv-text="&lt;a href=&quot;https://dev.theweave.social/build/publishing-a-tool.html&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>publishing a Tool<x id="1" equiv-text="&lt;/a&gt;"/>
+              and how to create your own curation list.</source>
+</trans-unit>
+<trans-unit id="s81eaaa52fa445197">
+  <source>Could not find the Tool to activate.</source>
+</trans-unit>
+<trans-unit id="sa063e5108554c361">
+  <source>Could not open the activate dialog.</source>
+</trans-unit>
+<trans-unit id="s41d8d8662cbdae33">
+  <source>It may not yet have been synchronized from other peers.</source>
+        <target>Potrebbe non essere ancora stato sincronizzato dagli altri peer.</target>
+      </trans-unit>
+<trans-unit id="s541c7757ea3f5450">
+  <source>This asset cannot be loaded until the Tool that created it is activated.</source>
+        <target>Questa risorsa non può essere caricata finché lo Strumento che l'ha creata non viene attivato.</target>
+      </trans-unit>
 </body>
 </file>
 </xliff>

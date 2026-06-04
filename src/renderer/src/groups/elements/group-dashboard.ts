@@ -3,11 +3,12 @@ import { customElement, query, state } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
-import { StoreSubscriber } from '@holochain-open-dev/stores';
+import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { notifyError } from '@holochain-open-dev/elements';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import { ActionHash } from '@holochain/client';
-import { weaveUrlFromWal } from '@theweave/api';
+import { ActionHash, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
+import { WAL, weaveUrlFromWal } from '@theweave/api';
+import { DnaLocation } from '../../processes/hrl/locate-hrl.js';
 import { GridStack, GridStackNode, GridStackOptions } from 'gridstack';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiLock, mdiLockOpenOutline, mdiPaletteOutline, mdiArrowExpandVertical } from '@mdi/js';
@@ -184,8 +185,52 @@ export class GroupDashboardEl extends LitElement {
     });
   };
 
+  /**
+   * Forward a wal-embed's "user clicked Activate" event into the existing
+   * `open-tool-info` flow that the sidebar already uses. We decode the
+   * base64 hash hints carried by the library element and pull the full
+   * Applet entry from the group DNA so the dialog has everything it needs
+   * (title, subtitle, distribution_info, raw hash bytes).
+   */
+  private _onRequestToolActivation = async (
+    e: Event,
+  ): Promise<void> => {
+    const detail = (e as CustomEvent<{ appletHash: string; groupDnaHash: string }>).detail;
+    if (!detail) return;
+    try {
+      const appletHashBytes = decodeHashFromBase64(detail.appletHash);
+      const groupDnaHashBytes = decodeHashFromBase64(detail.groupDnaHash);
+      const applet = await this._groupStore.groupClient.getApplet(appletHashBytes);
+      if (!applet) {
+        notifyError(msg('Could not find the Tool to activate.'));
+        return;
+      }
+      this.dispatchEvent(
+        new CustomEvent('open-tool-info', {
+          detail: {
+            kind: 'activate-applet',
+            groupDnaHash: groupDnaHashBytes,
+            appletHash: appletHashBytes,
+            applet,
+          },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    } catch (err) {
+      console.error('[group-dashboard] failed to handle request-tool-activation:', err);
+      notifyError(msg('Could not open the activate dialog.'));
+    }
+  };
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.addEventListener('request-tool-activation', this._onRequestToolActivation);
+  }
+
   disconnectedCallback() {
     super.disconnectedCallback();
+    this.removeEventListener('request-tool-activation', this._onRequestToolActivation);
     this._destroyGrid();
     this._destroyStaticGrid();
     window.removeEventListener('resize', this._onWindowResize);
@@ -963,6 +1008,30 @@ export class GroupDashboardEl extends LitElement {
     this._draftTiles = synced.filter((t) => t.id !== id);
   }
 
+  /**
+   * Best-effort resolution of the applet/group that owns `wal`, used to stamp
+   * a wal-embed tile so a viewer who hasn't activated the owning Tool sees a
+   * friendly "Activate to load" UI instead of a generic "Asset not found".
+   * Returns `undefined` if the WAL's DNA isn't installed locally (which would
+   * be unusual here — the user just picked the asset from their own pocket).
+   */
+  private async _resolveWalSourceHints(
+    wal: WAL,
+  ): Promise<{ srcAppletHash: string; srcGroupDnaHash: string } | undefined> {
+    try {
+      const location = (await toPromise(
+        this._groupStore.mossStore.dnaLocations.get(wal.hrl[0])!,
+      )) as DnaLocation;
+      return {
+        srcAppletHash: encodeHashToBase64(location.appletHash),
+        srcGroupDnaHash: encodeHashToBase64(this._groupStore.groupDnaHash),
+      };
+    } catch (e) {
+      console.warn('[group-dashboard] could not resolve source applet for WAL:', e);
+      return undefined;
+    }
+  }
+
   private async _pickWalForTile() {
     try {
       const wal = await this._openViews.userSelectWal('pocket');
@@ -975,7 +1044,8 @@ export class GroupDashboardEl extends LitElement {
       // before we mutate the layout below.
       await Promise.resolve();
       await new Promise<void>((r) => requestAnimationFrame(() => r()));
-      this._addTile({ kind: 'wal-embed', wal: weaveUrlFromWal(wal) });
+      const hints = await this._resolveWalSourceHints(wal);
+      this._addTile({ kind: 'wal-embed', wal: weaveUrlFromWal(wal), ...hints });
     } catch (e) {
       console.error('Failed to pick WAL:', e);
       notifyError(msg('Failed to pick asset.'));
@@ -993,7 +1063,8 @@ export class GroupDashboardEl extends LitElement {
       if (!wal) return;
       await Promise.resolve();
       await new Promise<void>((r) => requestAnimationFrame(() => r()));
-      this._replaceTile(id, { kind: 'wal-embed', wal: weaveUrlFromWal(wal) });
+      const hints = await this._resolveWalSourceHints(wal);
+      this._replaceTile(id, { kind: 'wal-embed', wal: weaveUrlFromWal(wal), ...hints });
     } catch (e) {
       console.error('Failed to pick WAL replacement:', e);
       notifyError(msg('Failed to pick asset.'));
@@ -1067,6 +1138,8 @@ export class GroupDashboardEl extends LitElement {
         // that fights with gridstack's cell sizing.
         return html`<wal-embed
           .src=${tile.wal}
+          .srcAppletHash=${tile.srcAppletHash}
+          .srcGroupDnaHash=${tile.srcGroupDnaHash}
           bare
           style="display:block; height:100%; width:100%;"
         ></wal-embed>`;

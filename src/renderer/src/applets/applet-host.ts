@@ -148,7 +148,10 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     bootstrapUrls(_groupHash?: DnaHash) {
       return mossStore.conductorInfo.network_info.bootstrap_urls;
     },
-    assets: {
+    // why: cast lets us add `isAppletInstalled` here without bloating the
+    // public AssetServices type in @theweave/api. `<wal-embed>` reaches it
+    // via optional chaining on `window.__WEAVE_API__.assets`.
+    assets: ({
       assetInfo: async (wal: WAL): Promise<AssetLocationAndInfo | undefined> => {
         const maybeCachedInfo = mossStore.mossCache.assetInfo.value(wal);
         if (maybeCachedInfo) {
@@ -205,6 +208,24 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
           return undefined;
         }
       },
+      /**
+       * Non-WeaveServices extension used by `<wal-embed>` to disambiguate between
+       * "asset lookup failed because the owning Tool isn't installed locally" and
+       * "asset lookup failed because the entry hasn't gossiped in yet". The embed
+       * needs this to suppress the Activate-this-Tool prompt right after the user
+       * activates a Tool: the applet is now installed but DHT sync may not have
+       * caught up, so the embed should fall back to the generic "Asset not found"
+       * message instead of looping the user back to the Activate flow.
+       */
+      isAppletInstalled: async (appletHashB64: string): Promise<boolean> => {
+        try {
+          const appletHash = decodeHashFromBase64(appletHashB64);
+          return await toPromise(mossStore.isInstalled.get(appletHash)!);
+        } catch (e) {
+          console.warn('[isAppletInstalled] lookup failed:', e);
+          return false;
+        }
+      },
       userSelectAsset: () => {
         throw new Error('userSelectWal is not supported in headless WeaveServices.');
       },
@@ -241,7 +262,7 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
       assetStore: (_wal: WAL) => {
         throw new Error('assetStore is not supported in headless WeaveServices.');
       },
-    },
+    } as any),
     async requestClose() {
       throw new Error('Close request is not supported in the headless WeaveClient.');
     },
