@@ -1,6 +1,6 @@
 {
   "name": "@theweave/elements",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
@@ -27,7 +27,7 @@
     "@holochain-open-dev/profiles": "^0.601.4",
     "@holochain-open-dev/stores": "^0.601.1",
     "@holochain-open-dev/utils": "^0.601.1",
-    "@theweave/api": "^0.6.8",
+    "@theweave/api": "^0.6.9",
     "@lit/context": "^1.0.1",
     "@lit/localize": "^0.12.0",
     "@mdi/js": "^7.2.0",

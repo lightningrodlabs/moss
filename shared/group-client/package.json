@@ -19,7 +19,7 @@
   "dependencies": {
     "@holochain/client": "=0.20.4",
     "@holochain-open-dev/utils": "^0.601.1",
-    "@theweave/api": "^0.6.8",
+    "@theweave/api": "^0.6.9",
     "@msgpack/msgpack": "^2.7.2"
   },
   "devDependencies": {
