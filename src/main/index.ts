@@ -2506,8 +2506,17 @@ if (!RUNNING_WITH_COMMAND) {
         }
         fs.renameSync(originalUiDir, devUiDir);
 
-        // Check if happ hashes match
-        const happHashMatch = currentInfo.happ.sha256 === happSha256;
+        // Check if happ hashes match. Tools published under the Moss 0.15.x
+        // manifest schema store a legacy-schema hash in AppAssetsInfo, so a
+        // plain strict comparison would spuriously flag a "DNA changed" even
+        // for bit-identical webhapps. Mirror the legacy-fallback used by
+        // verifyHappSha256 on the install path.
+        let happHashMatch = currentInfo.happ.sha256 === happSha256;
+        if (!happHashMatch) {
+          const assetBytes = Array.from(new Uint8Array(fs.readFileSync(webhappPath)));
+          const legacy = await rustUtils.legacyHappSha256FromBytes(assetBytes);
+          happHashMatch = legacy === currentInfo.happ.sha256;
+        }
 
         // Update AppAssetsInfo to point at the dev UI
         const updatedInfo = { ...currentInfo };
