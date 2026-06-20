@@ -179,7 +179,7 @@ version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fde0e0ec90c9dfb3b4b1a0891a7dcd0e2bffde2f7efed5fe7c9bb00e5bfb915e"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys",
 ]
 
 [[package]]
@@ -387,7 +387,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cea14ef9355e3beab063703aa9dab15afd25f0667c341310c1e5274bb1d0da18"
 dependencies = [
  "libc",
- "windows-sys 0.59.0",
+ "windows-sys",
 ]
 
 [[package]]
@@ -570,9 +570,9 @@ checksum = "84b26c544d002229e640969970a2e74021aadf6e2f96372b9c58eff97de08eb3"
 
 [[package]]
 name = "hdi"
-version = "0.8.0-dev.12"
+version = "0.8.0-dev.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e2877d1f0210d3b2c39d829cfc066e9aae22e30b00c6c028192cc550af6d94b"
+checksum = "8fb158d01bc3e633c33d269e01037fc2a81e6f73bcf34372746ebd0264e70837"
 dependencies = [
  "getrandom 0.3.3",
  "hdk_derive",
@@ -590,9 +590,9 @@ dependencies = [
 
 [[package]]
 name = "hdk"
-version = "0.7.0-dev.17"
+version = "0.7.0-dev.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7784ef035e18ea4df728ec7fa3c7ee73a27943c246e4b56d833bf72511b75e8b"
+checksum = "4ee3677264a5697c6428d8415bc75707ab358f5d5adc5d45dd3b14041aa63604"
 dependencies = [
  "getrandom 0.3.3",
  "hdi",
@@ -608,9 +608,9 @@ dependencies = [
 
 [[package]]
 name = "hdk_derive"
-version = "0.7.0-dev.12"
+version = "0.7.0-dev.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44b5ecae8bd4d601210a1d4e3798360251c52bb65cf50d1357abfe3770f9c390"
+checksum = "35f66bb9c48a0b8b43f0e9f705e1199961397ba2da2f9c2c998e4ad024307f9d"
 dependencies = [
  "darling 0.21.3",
  "heck",
@@ -654,9 +654,9 @@ dependencies = [
 
 [[package]]
 name = "holochain_integrity_types"
-version = "0.7.0-dev.12"
+version = "0.7.0-dev.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3ba7aa06156044c7fbf05374586f4fd22cf2184e888560b4e64b3c022cc6719"
+checksum = "dc79ca491a0ca749b5da7bd539f00f3a337445193cae18bf90e8e3e0ec7d03da"
 dependencies = [
  "derive_builder",
  "holo_hash",
@@ -774,9 +774,9 @@ dependencies = [
 
 [[package]]
 name = "holochain_zome_types"
-version = "0.7.0-dev.16"
+version = "0.7.0-dev.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5472fa9d252babf44a880f3c36dfe9c36b0415d11bb0e99cc2ccbc848b902fe1"
+checksum = "1716ad7a9f1c559671a67c2138ecd9e9da3be68c6a3aab2c2058eb5f1ac8737e"
 dependencies = [
  "derive_builder",
  "derive_more",
@@ -921,7 +921,7 @@ checksum = "2886843bf800fba2e3377cff24abf6379b4c4d5c6681eaf9ea5b0d15090450bd"
 dependencies = [
  "libc",
  "wasi 0.11.0+wasi-snapshot-preview1",
- "windows-sys 0.52.0",
+ "windows-sys",
 ]
 
 [[package]]
@@ -1256,7 +1256,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.59.0",
+ "windows-sys",
 ]
 
 [[package]]
@@ -1447,7 +1447,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4f5fd57c80058a56cf5c777ab8a126398ece8e442983605d280a44ce79d0edef"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys",
 ]
 
 [[package]]
@@ -1521,7 +1521,7 @@ dependencies = [
  "getrandom 0.3.3",
  "once_cell",
  "rustix",
- "windows-sys 0.59.0",
+ "windows-sys",
 ]
 
 [[package]]
@@ -1559,7 +1559,7 @@ dependencies = [
  "signal-hook-registry",
  "socket2",
  "tokio-macros",
- "windows-sys 0.52.0",
+ "windows-sys",
 ]
 
 [[package]]
@@ -1808,15 +1808,6 @@ name = "windows-sys"
 version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "282be5f36a8ce781fad8c8ae18fa3f9beff57ec1b52cb3de0789201425d9a33d"
-dependencies = [
- "windows-targets",
-]
-
-[[package]]
-name = "windows-sys"
-version = "0.59.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e38bc4d79ed67fd075bcc251a1c39b32a1776bbe92e5bef1f0bf1f8c531853b"
 dependencies = [
  "windows-targets",
 ]

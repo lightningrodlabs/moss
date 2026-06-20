@@ -1,7 +1,7 @@
 {
-  "holochain": "0.7.0-dev.25",
+  "holochain": "0.7.0-dev.28",
   "groupHapp": {
-    "version": "0.16.0-dev.0",
+    "version": "0.16.0-dev.1",
     "sha256": "4931c7303ed9f69186f663df7ace90fe6e0ea068f5ce77fcecce47526148bb80"
   },
   "binariesAppendix": "moss-0.16",
