@@ -570,9 +570,9 @@ checksum = "84b26c544d002229e640969970a2e74021aadf6e2f96372b9c58eff97de08eb3"
 
 [[package]]
 name = "hdi"
-version = "0.8.0-dev.13"
+version = "0.8.0-dev.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fb158d01bc3e633c33d269e01037fc2a81e6f73bcf34372746ebd0264e70837"
+checksum = "c587a7e298f20fea6186bda496795a5db66b3d2711a4e99338afd0968e45f240"
 dependencies = [
  "getrandom 0.3.3",
  "hdk_derive",
@@ -590,9 +590,9 @@ dependencies = [
 
 [[package]]
 name = "hdk"
-version = "0.7.0-dev.19"
+version = "0.7.0-dev.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ee3677264a5697c6428d8415bc75707ab358f5d5adc5d45dd3b14041aa63604"
+checksum = "21564c6c5a6b93f48764afa19b83147152fe5cab361620b4642b329da88d59d2"
 dependencies = [
  "getrandom 0.3.3",
  "hdi",
@@ -608,9 +608,9 @@ dependencies = [
 
 [[package]]
 name = "hdk_derive"
-version = "0.7.0-dev.13"
+version = "0.7.0-dev.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35f66bb9c48a0b8b43f0e9f705e1199961397ba2da2f9c2c998e4ad024307f9d"
+checksum = "d8b0429003e7ffa9c5e07fff6a8111ddc031a8d19fb458df7ac88c71991adb2d"
 dependencies = [
  "darling 0.21.3",
  "heck",
@@ -630,9 +630,9 @@ checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
 name = "holo_hash"
-version = "0.7.0-dev.9"
+version = "0.7.0-dev.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e124a9e6d1fb4a335a92fe973234e64f3eff3c40fc795d28c5ba697ce7d24c1c"
+checksum = "df554802de8be5fc2986420c1ac4af0386db0417aa27cfcbb0764148f7ecaacd"
 dependencies = [
  "base64",
  "blake2b_simd",
@@ -654,9 +654,9 @@ dependencies = [
 
 [[package]]
 name = "holochain_integrity_types"
-version = "0.7.0-dev.13"
+version = "0.7.0-dev.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc79ca491a0ca749b5da7bd539f00f3a337445193cae18bf90e8e3e0ec7d03da"
+checksum = "814f3056930d752d2640b7e5aaad3ec762ce9ef8e1057f2718e85ca64752c1b0"
 dependencies = [
  "derive_builder",
  "holo_hash",
@@ -774,9 +774,9 @@ dependencies = [
 
 [[package]]
 name = "holochain_zome_types"
-version = "0.7.0-dev.18"
+version = "0.7.0-dev.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1716ad7a9f1c559671a67c2138ecd9e9da3be68c6a3aab2c2058eb5f1ac8737e"
+checksum = "8410abc186d8e5eeb8f5384c98f0d0a3d2f352a4cfa337ba0dfe2ed36a40c005"
 dependencies = [
  "derive_builder",
  "derive_more",
