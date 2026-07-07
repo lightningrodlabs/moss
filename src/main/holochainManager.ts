@@ -123,6 +123,18 @@ export class HolochainManager {
       : {};
     advancedSettings.coreBootstrap = { backoffMaxMs: 30000 };
     advancedSettings.coreSpace = { reSignExpireTimeMs: 30000, reSignFreqMs: 30000 };
+    // Enable mDNS LAN discovery (runs alongside the bootstrap server).
+    // Only honored by the mdns-enabled holochain build (holochain-lrl
+    // feat/mdns-bootstrap-0.6.1, kitsune2_bootstrap_mdns); a stock binary
+    // ignores this module config key.
+    advancedSettings.mdnsBootstrap = { enabled: true };
+    // mdnsBootstrap only exchanges agent infos; for two LAN nodes to actually
+    // CONNECT without a reachable relay, iroh's own LAN discovery must be on
+    // too (dial-by-NodeId over the local network).
+    advancedSettings.irohTransport = {
+      ...(advancedSettings.irohTransport ?? {}),
+      enableLanDiscovery: true,
+    };
     conductorConfig.network.advanced = advancedSettings;
 
     console.log('Writing conductor-config.yaml...', configPath, conductorConfig);
