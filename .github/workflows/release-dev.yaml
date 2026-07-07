@@ -142,8 +142,15 @@ jobs:
         # -p never: same onTagOrDraft gotcha as the mac step — the
         # create-release tag at HEAD flips electron-builder into publish
         # mode inside a tokenless step; the upload step publishes.
+        #
+        # update-linux-latest-yaml.mjs is the same post-processing the
+        # standard release runs: it patches the AppImage AppRun to disable
+        # SUID sandboxing and the deb postinst to add an AppArmor profile —
+        # without it the AppImage aborts on Ubuntu 24.04
+        # (kernel.apparmor_restrict_unprivileged_userns=1, electron#41066).
         run: |
           yarn check:binaries && yarn build && yarn electron-builder --linux -p never --config
+          node ./scripts/update-linux-latest-yaml.mjs
 
       - name: build (Ubuntu 22.04 aarch64)
         if: matrix.platform == 'ubuntu-22.04-arm'
