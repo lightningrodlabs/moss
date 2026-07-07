@@ -67,6 +67,12 @@ export function downloadFile(url, targetPath, expectedSha256Hex, chmod = false) 
   });
 }
 
+// mdns dev build: the holochain binary (ONLY) comes from the mdns-enabled
+// fork release instead of the stock holochain/holochain release. lair-keystore,
+// hc and kitsune2-bootstrap-srv stay stock (the fork doesn't touch them).
+// Assets on that release use the same `holochain-<targetEnding>` naming.
+const MDNS_FORK = { repo: 'lightningrodlabs/holochain', tag: 'holochain-0.6.1-mdns' };
+
 export function downloadHolochainBinary(filename, withVersion = true, versionOverride = null) {
   const version = versionOverride ?? HOLOCHAIN_CHECKSUMS.version;
   let completeBinaryFilename = `${filename}-${targetEnding}${process.platform === 'win32' ? '.exe' : ''}`;
@@ -77,6 +83,9 @@ export function downloadHolochainBinary(filename, withVersion = true, versionOve
       ? binaryFilenameWithVersion
       : `${filename}${process.platform === 'win32' ? '.exe' : ''}`,
   );
-  const holochainBinaryUrl = `https://github.com/holochain/holochain/releases/download/holochain-${version}/${completeBinaryFilename}`;
+  const holochainBinaryUrl =
+    filename === 'holochain'
+      ? `https://github.com/${MDNS_FORK.repo}/releases/download/${MDNS_FORK.tag}/${completeBinaryFilename}`
+      : `https://github.com/holochain/holochain/releases/download/holochain-${version}/${completeBinaryFilename}`;
   downloadFile(holochainBinaryUrl, targetPath, HOLOCHAIN_CHECKSUMS[filename][targetEnding], true);
 }

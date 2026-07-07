@@ -56,7 +56,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [windows-2022, macos-15-intel, macos-latest, ubuntu-22.04, ubuntu-22.04-arm]
+        # mdns dev build: trimmed to the demo platforms (matches the targets
+        # published on the holochain-0.6.1-mdns fork release).
+        # TODO(windows): reinstate windows-2022 once the fork's windows
+        # holochain build is fixed (openssl-sys vendored build needs perl).
+        platform: [macos-latest, ubuntu-22.04]
     env:
       MACOSX_DEPLOYMENT_TARGET: 10.15
 
