@@ -56,11 +56,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # mdns dev build: trimmed to the demo platforms (matches the targets
-        # published on the holochain-0.6.1-mdns fork release).
+        # mdns dev build: mac-arm only for now — that's the machine the demo
+        # test needs; linux runs Moss from the checkout. Add ubuntu-22.04 back
+        # when a linux installer is wanted.
         # TODO(windows): reinstate windows-2022 once the fork's windows
         # holochain build is fixed (openssl-sys vendored build needs perl).
-        platform: [macos-latest, ubuntu-22.04]
+        platform: [macos-latest]
     env:
       MACOSX_DEPLOYMENT_TARGET: 10.15
 
