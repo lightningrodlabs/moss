@@ -56,12 +56,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # mdns dev build: mac-arm only for now — that's the machine the demo
-        # test needs; linux runs Moss from the checkout. Add ubuntu-22.04 back
-        # when a linux installer is wanted.
+        # mdns dev build: mac-arm + linux x64 (zomes must be CI-built, so the
+        # linux installer comes from here too).
         # TODO(windows): reinstate windows-2022 once the fork's windows
         # holochain build is fixed (openssl-sys vendored build needs perl).
-        platform: [macos-latest]
+        platform: [macos-latest, ubuntu-22.04]
     env:
       MACOSX_DEPLOYMENT_TARGET: 10.15
 
@@ -140,8 +139,11 @@ jobs:
 
       - name: build (Ubuntu 22.04)
         if: matrix.platform == 'ubuntu-22.04'
+        # -p never: same onTagOrDraft gotcha as the mac step — the
+        # create-release tag at HEAD flips electron-builder into publish
+        # mode inside a tokenless step; the upload step publishes.
         run: |
-          yarn build:linux
+          yarn check:binaries && yarn build && yarn electron-builder --linux -p never --config
 
       - name: build (Ubuntu 22.04 aarch64)
         if: matrix.platform == 'ubuntu-22.04-arm'
