@@ -8,11 +8,8 @@
     "x86_64-unknown-linux-gnu": "c17892252db3abd8a6e095cd46ed15a42fc0cc7a40a55d4dc72e9d135fb4fce8"
   },
   "holochain": {
-    "aarch64-apple-darwin": "cfff436e181b7afb1e86cd12bb5a337954493328229c79c1dc9db5a1519c7851",
-    "aarch64-unknown-linux-gnu": "263be8307257a08c46a1b7d547c26cd213a7ab986602498c15eccb2618107246",
-    "x86_64-apple-darwin": "12e6424578899d5fa8847b0e4be709848370277587b552e7520eebfb03f9b7d8",
-    "x86_64-pc-windows-msvc.exe": "8bf0355d5ff203a91d981c210676300ac12e3aa2669a0f002e6e6ae3747fe747",
-    "x86_64-unknown-linux-gnu": "423f1111773c83c4c4f07e0bb338289d9bf0c5fa53dd31414b05b0dc8119ada7"
+    "aarch64-apple-darwin": "a90b403b8e14b988fb96f8ce30e3dcb75e24e5c2362533336e589ad26be21916",
+    "x86_64-unknown-linux-gnu": "e8065449388197514efc95c9a42fd0ef705fe3b94e99644720162645e4890d73"
   },
   "kitsune2-bootstrap-srv": {
     "aarch64-apple-darwin": "9c6451338a24057f30f758c9edac3ddc231c445b0c92c7a14870e5530628b921",
