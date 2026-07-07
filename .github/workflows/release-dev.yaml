@@ -113,8 +113,11 @@ jobs:
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           DEBUG: electron-osx-sign*,electron-notarize*
+        # -p never: the create-release job tags HEAD before this builds, which
+        # flips electron-builder's default onTagOrDraft publish mode on; the
+        # dedicated "upload installers" step below does the publishing.
         run: |
-          yarn build:mac-arm64
+          yarn check:binaries && yarn build && yarn electron-builder --mac --arm64 -p never --config
           ls dist
 
       - name: build the app (macOS x86)
