@@ -9,10 +9,10 @@ import yaml from 'js-yaml';
 import * as childProcess from 'child_process';
 import { fileURLToPath } from 'url';
 import winston, { createLogger, transports, format } from 'winston';
-import { password as passwordInput } from '@inquirer/prompts';
 
 import { ConductorRunningInfo, RunningSecretInfo, WDockerFilesystem } from '../filesystem.js';
 import { AdminWebsocket } from '@holochain/client';
+import { getInitPassword, getPassword } from '../helpers/helpers.js';
 import {
   CONDUCTOR_CONFIG_TEMPLATE,
   DEFAULT_ICE_URLS,
@@ -82,16 +82,14 @@ export async function startDaemon(id: string, init: boolean, detached: boolean):
     return;
   }
 
-  let pw;
+  let pw: string | null;
   if (init) {
-    pw = await passwordInput({ message: 'Choose password:' });
-    const pwConfirm = await passwordInput({ message: 'Confirm password:' });
-    if (pw !== pwConfirm) {
-      console.log("Passwords don't match.");
-      return;
-    }
+    pw = await getInitPassword();
   } else {
-    pw = await passwordInput({ message: 'conductor password:' });
+    pw = await getPassword();
+  }
+  if (!pw) {
+    return;
   }
 
   // https://stackoverflow.com/questions/35357853/how-to-close-the-stdio-pipes-of-child-processes-in-node-js

@@ -22,7 +22,25 @@ import { downloadFile, signZomeCall } from '../utils.js';
 import { decode } from '@msgpack/msgpack';
 
 export async function getPassword(): Promise<string> {
+  const envPassword = process.env.WDOCKER_PASSWORD;
+  if (envPassword) {
+    return envPassword;
+  }
   return passwordInput({ message: 'conductor password:' });
+}
+
+export async function getInitPassword(): Promise<string | null> {
+  const envPassword = process.env.WDOCKER_PASSWORD;
+  if (envPassword) {
+    return envPassword;
+  }
+  const pw = await passwordInput({ message: 'Choose password:' });
+  const pwConfirm = await passwordInput({ message: 'Confirm password:' });
+  if (pw !== pwConfirm) {
+    console.log("Passwords don't match.");
+    return null;
+  }
+  return pw;
 }
 
 export async function getAdminWs(id: string, password: string): Promise<AdminWebsocket> {
