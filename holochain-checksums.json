@@ -8,8 +8,8 @@
     "x86_64-unknown-linux-gnu": "c17892252db3abd8a6e095cd46ed15a42fc0cc7a40a55d4dc72e9d135fb4fce8"
   },
   "holochain": {
-    "aarch64-apple-darwin": "a90b403b8e14b988fb96f8ce30e3dcb75e24e5c2362533336e589ad26be21916",
-    "x86_64-unknown-linux-gnu": "e8065449388197514efc95c9a42fd0ef705fe3b94e99644720162645e4890d73"
+    "aarch64-apple-darwin": "5d62309aec2ffc3a98ce4b014094edbb0745c77a15153700102740d474132b29",
+    "x86_64-unknown-linux-gnu": "d0436a0aa255293f970897655e19fef58aa0819f31720355bf16631832c885ff"
   },
   "kitsune2-bootstrap-srv": {
     "aarch64-apple-darwin": "9c6451338a24057f30f758c9edac3ddc231c445b0c92c7a14870e5530628b921",
