@@ -21,8 +21,23 @@ import { GROUP_HAPP_URL, MOSS_CONFIG } from '../const.js';
 import { downloadFile, signZomeCall } from '../utils.js';
 import { decode } from '@msgpack/msgpack';
 
-export async function getPassword(): Promise<string> {
+function consumePasswordFromEnv(): string | undefined {
   const envPassword = process.env.WDOCKER_PASSWORD;
+  if (envPassword === undefined) {
+    return undefined;
+  }
+
+  if (envPassword.trim() === '') {
+    delete process.env.WDOCKER_PASSWORD;
+    throw new Error('WDOCKER_PASSWORD must be a non-empty value when provided.');
+  }
+
+  delete process.env.WDOCKER_PASSWORD;
+  return envPassword;
+}
+
+export async function getPassword(): Promise<string> {
+  const envPassword = consumePasswordFromEnv();
   if (envPassword) {
     return envPassword;
   }
@@ -30,7 +45,7 @@ export async function getPassword(): Promise<string> {
 }
 
 export async function getInitPassword(): Promise<string | null> {
-  const envPassword = process.env.WDOCKER_PASSWORD;
+  const envPassword = consumePasswordFromEnv();
   if (envPassword) {
     return envPassword;
   }
