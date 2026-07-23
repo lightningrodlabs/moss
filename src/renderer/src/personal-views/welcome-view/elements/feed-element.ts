@@ -42,7 +42,7 @@ export class FeedElement extends LitElement {
   async firstUpdated() {
     try {
       const groupsForApplet = await toPromise(
-        this._mossStore.groupsForApplet.get(decodeHashFromBase64(this.notification.appletId))!
+        this._mossStore.groupsForApplet.get(decodeHashFromBase64(this.notification.appletId))!,
       );
       const groupHashes = Array.from(groupsForApplet.keys());
       if (groupHashes.length > 0) {

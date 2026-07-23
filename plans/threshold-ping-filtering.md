@@ -14,6 +14,7 @@ Currently, `pingAgents()` pings ALL agents discovered via `agentInfo()`. While t
 **File**: `src/renderer/src/groups/group-store.ts`
 
 ### Ping Flow (lines 953-967)
+
 ```typescript
 async pingAgents(): Promise<void> {
   const knownAgentsB64 = Array.from(get(this._knownAgents));
@@ -27,6 +28,7 @@ async pingAgents(): Promise<void> {
 ```
 
 ### Orphaned Code (lines 975-984)
+
 ```typescript
 private needsPinging(agent: AgentPubKey): boolean {
   // 50% probability algorithm using pubkey sum comparison
@@ -59,6 +61,7 @@ private needsPinging(agent: AgentPubKey): boolean {
 ### Implementation Strategy
 
 **Option A: Simple Threshold (Recommended)**
+
 ```typescript
 async pingAgents(): Promise<void> {
   const knownAgentsB64 = Array.from(get(this._knownAgents));
@@ -76,6 +79,7 @@ async pingAgents(): Promise<void> {
 ```
 
 **Option B: Graduated Filtering (More Complex)**
+
 - 0-50 agents: Ping 100%
 - 51-100 agents: Ping 75% (modify needsPinging to 75% probability)
 - 101+ agents: Ping 50%
@@ -85,6 +89,7 @@ async pingAgents(): Promise<void> {
 ## Implementation Details
 
 ### Constants to Add (around line 88)
+
 ```typescript
 const PING_FILTERING_THRESHOLD = 50; // Apply needsPinging filter above this count
 ```
@@ -92,6 +97,7 @@ const PING_FILTERING_THRESHOLD = 50; // Apply needsPinging filter above this cou
 ### Modify `pingAgents()` (lines 953-967)
 
 **Before:**
+
 ```typescript
 const knownAgents = knownAgentsB64.map((b64) => decodeHashFromBase64(b64));
 
@@ -101,12 +107,13 @@ return knownAgents.length > 0
 ```
 
 **After:**
+
 ```typescript
 let knownAgents = knownAgentsB64.map((b64) => decodeHashFromBase64(b64));
 
 // Apply 50% probability filtering for large groups to prevent N² ping explosion
 if (knownAgents.length > PING_FILTERING_THRESHOLD) {
-  knownAgents = knownAgents.filter(agent => this.needsPinging(agent));
+  knownAgents = knownAgents.filter((agent) => this.needsPinging(agent));
 }
 
 return knownAgents.length > 0
@@ -115,15 +122,17 @@ return knownAgents.length > 0
 ```
 
 ### Keep `needsPinging()` (lines 975-984)
+
 - Already exists, no changes needed
 - Add comment explaining it's used for large groups only
 - Update JSDoc to clarify when it's called
 
 ### Optional: Add Logging
+
 ```typescript
 if (knownAgents.length > PING_FILTERING_THRESHOLD) {
   console.log(
-    `[PeerStatus] Large group (${knownAgentsB64.length} agents) - applying ping filtering. Pinging ${knownAgents.length} agents.`
+    `[PeerStatus] Large group (${knownAgentsB64.length} agents) - applying ping filtering. Pinging ${knownAgents.length} agents.`,
   );
 }
 ```
@@ -131,6 +140,7 @@ if (knownAgents.length > PING_FILTERING_THRESHOLD) {
 ## Trade-offs
 
 ### Pros
+
 ✅ Prevents N² network congestion in large groups
 ✅ Minimal code change (reuse existing needsPinging)
 ✅ No impact on small-medium groups (current behavior preserved)
@@ -138,6 +148,7 @@ if (knownAgents.length > PING_FILTERING_THRESHOLD) {
 ✅ Self-adjusts: automatically enables filtering as group grows
 
 ### Cons
+
 ❌ Slightly slower offline detection in large groups (16s avg vs 8s)
 ❌ Need to choose threshold (50 is proposed but could be tuned)
 ❌ Adds conditional complexity to ping logic
@@ -145,20 +156,24 @@ if (knownAgents.length > PING_FILTERING_THRESHOLD) {
 ### Alternatives Considered
 
 **1. Don't implement filtering**
+
 - Pro: Simpler code
 - Con: Large groups could cause network issues
 
 **2. Always use filtering**
+
 - Pro: Simpler logic (no threshold)
 - Con: Slower in small groups where it's unnecessary
 
 **3. Adaptive filtering based on network conditions**
+
 - Pro: Most optimal
 - Con: Much more complex, harder to reason about
 
 ## Testing Strategy
 
 ### Manual Testing
+
 1. **Small group (3 agents)**: Verify all agents ping each other (no filtering)
 2. **Large group (60+ agents)**:
    - Add logging to verify filtering activates
@@ -166,6 +181,7 @@ if (knownAgents.length > PING_FILTERING_THRESHOLD) {
    - Verify no network congestion
 
 ### Edge Cases
+
 - Group with exactly 50 agents (boundary)
 - Group that grows from 49 to 51 agents (transition)
 - Offline detection still works with filtering

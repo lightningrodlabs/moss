@@ -8,10 +8,10 @@
 
 ```typescript
 export type AssetLocationAndInfo = {
-    appletHash: AppletHash;
-    assetInfo: AssetInfo;
-    appletDevPort?: number;
+  appletHash: AppletHash;
+  assetInfo: AssetInfo;
+  appletDevPort?: number;
 };
 ```
-**References:** [AppletHash](./api.applethash.md)<!-- -->, [AssetInfo](./api.assetinfo.md)
 
+**References:** [AppletHash](./api.applethash.md)<!-- -->, [AssetInfo](./api.assetinfo.md)

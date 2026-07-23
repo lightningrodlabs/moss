@@ -8,7 +8,7 @@
 
 ```typescript
 export type AppletClients = {
-    appletClient: AppClient;
-    profilesClient: ProfilesClient;
+  appletClient: AppClient;
+  profilesClient: ProfilesClient;
 };
 ```

@@ -1,12 +1,18 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
-import { ActionHash, ActionHashB64, AgentPubKey, EntryHash, encodeHashToBase64 } from '@holochain/client';
+import {
+  ActionHash,
+  ActionHashB64,
+  AgentPubKey,
+  EntryHash,
+  encodeHashToBase64,
+} from '@holochain/client';
 import { localized, msg } from '@lit/localize';
 import { ref } from 'lit/directives/ref.js';
 import { joinAsyncMap, pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { notify, notifyError, onSubmit } from '@holochain-open-dev/elements';
-import {GetonlyMap, slice} from '@holochain-open-dev/utils';
+import { GetonlyMap, slice } from '@holochain-open-dev/utils';
 
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -24,7 +30,7 @@ import { MossStore } from '../../../moss-store.js';
 import { ToolAndCurationInfo } from '../../../types.js';
 import { MossDialog } from '../../../elements/_new_design/moss-dialog.js';
 import '../../../elements/_new_design/moss-dialog.js';
-import {Applet, AppletAgent} from "@theweave/group-client";
+import { Applet, AppletAgent } from '@theweave/group-client';
 import { toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
 import { DistributionInfo, TDistributionInfo, ToolInfoAndVersions } from '@theweave/moss-types';
 import { Value } from '@sinclair/typebox/value';
@@ -53,7 +59,7 @@ export class InstallToolDialogWeb2 extends LitElement {
     this,
     () =>
       pipe(this.groupStore.allAdvertisedApplets, (allAppletsHashes) =>
-            joinAsyncMap(slice(this.groupStore.applets as GetonlyMap<any, any>, allAppletsHashes)),
+        joinAsyncMap(slice(this.groupStore.applets as GetonlyMap<any, any>, allAppletsHashes)),
       ),
     () => [this.groupStore],
   );
@@ -288,7 +294,7 @@ export class InstallToolDialogWeb2 extends LitElement {
         this._tool,
         fields.custom_name,
         fields.network_seed ? fields.network_seed : undefined,
-        permission_hash
+        permission_hash,
       );
 
       // Add a timeout here to try to fix case where error "Applet not installed in any of the groups" occurs
@@ -336,7 +342,7 @@ export class InstallToolDialogWeb2 extends LitElement {
                 ? html`<sl-tooltip content="${info.toolInfoAndVersions.description}">
                     <img
                       src=${info.toolInfoAndVersions.icon}
-                      alt=${msg("Tool logo")}
+                      alt=${msg('Tool logo')}
                       style="height: 64px; width:64px; margin-right: 10px; border-radius:16px;"
                     />
                   </sl-tooltip>`
@@ -355,9 +361,7 @@ export class InstallToolDialogWeb2 extends LitElement {
                 .agentPubKey=${info.installerKey}
               ></agent-avatar>
               <span>${msg('installed this tool to the group space ')}</span>
-              <div style="margin-left:5px;">
-                ${timeAgo.format(new Date(info.timestamp / 1000))}
-              </div>
+              <div style="margin-left:5px;">${timeAgo.format(new Date(info.timestamp / 1000))}</div>
             </div>
             ${info.joinedMembers.length > 0
               ? html`<div class="participants row">
@@ -422,40 +426,40 @@ export class InstallToolDialogWeb2 extends LitElement {
               style="margin-bottom: 16px"
               required
               ${ref((input) => {
-          if (!input) return;
-          setTimeout(() => {
-            if (
-              this._tool &&
-              allAppletsNames.includes(this._tool.toolInfoAndVersions.title)
-            ) {
-              (input as HTMLInputElement).setCustomValidity('Name already exists');
-            } else {
-              (input as HTMLInputElement).setCustomValidity('');
-            }
-          });
-        })}
+                if (!input) return;
+                setTimeout(() => {
+                  if (
+                    this._tool &&
+                    allAppletsNames.includes(this._tool.toolInfoAndVersions.title)
+                  ) {
+                    (input as HTMLInputElement).setCustomValidity('Name already exists');
+                  } else {
+                    (input as HTMLInputElement).setCustomValidity('');
+                  }
+                });
+              })}
               @input=${(e) => {
-            if (allAppletsNames.includes(e.target.value)) {
-              e.target.setCustomValidity('Name already exists');
-            } else if (e.target.value === '') {
-              e.target.setCustomValidity('You need to choose a name for the Tool instance.');
-            } else {
-              e.target.setCustomValidity('');
-            }
-          }}
+                if (allAppletsNames.includes(e.target.value)) {
+                  e.target.setCustomValidity('Name already exists');
+                } else if (e.target.value === '') {
+                  e.target.setCustomValidity('You need to choose a name for the Tool instance.');
+                } else {
+                  e.target.setCustomValidity('');
+                }
+              }}
               .defaultValue=${this._tool.toolInfoAndVersions.title}
             ></sl-input>
 
             <span
               style="text-decoration: underline; cursor: pointer; margin-bottom: 10px;"
               @click=${() => {
-            this._showAdvanced = !this._showAdvanced;
-          }}
+                this._showAdvanced = !this._showAdvanced;
+              }}
               >${this._showAdvanced ? 'Hide' : 'Show'} Advanced
             </span>
 
             ${this._showAdvanced
-            ? html`
+              ? html`
                   <sl-input
                     name="network_seed"
                     id="network-seed-field"
@@ -463,7 +467,7 @@ export class InstallToolDialogWeb2 extends LitElement {
                     style="margin-bottom: 16px"
                   ></sl-input>
                 `
-            : html``}
+              : html``}
 
             <div
               style="margin:0 20px 20px -120px; width: 673px; height:1px; flex-shrink: 0;background-color: var(--moss-grey-light)"
@@ -510,17 +514,17 @@ export class InstallToolDialogWeb2 extends LitElement {
         id="applet-dialog"
         width="674px"
         @sl-request-close=${(e) => {
-        if (this._installing || this._activatingExisting) {
-          e.preventDefault();
-        } else {
-          this.dispatchEvent(
-            new CustomEvent('install-tool-dialog-closed', {
-              composed: true,
-              bubbles: true,
-            }),
-          );
-        }
-      }}
+          if (this._installing || this._activatingExisting) {
+            e.preventDefault();
+          } else {
+            this.dispatchEvent(
+              new CustomEvent('install-tool-dialog-closed', {
+                composed: true,
+                bubbles: true,
+              }),
+            );
+          }
+        }}
       >
 
       <div slot="header">
@@ -528,37 +532,45 @@ export class InstallToolDialogWeb2 extends LitElement {
           >${msg('Installing to:')} ${this.renderGroup()}</span
         >
 
-        ${this._showDuplicateWarning
-          ? html`<span>${msg('Tool already exists')}</span>`
-          : html`
-            <span>${msg('Heads-up!')}</span>
-            <span>${msg('Give this app a custom name.')}</span>
-          `}
+        ${
+          this._showDuplicateWarning
+            ? html`<span>${msg('Tool already exists')}</span>`
+            : html`
+                <span>${msg('Heads-up!')}</span>
+                <span>${msg('Give this app a custom name.')}</span>
+              `
+        }
       </div>
 
         <div slot="content">
-          ${this._showDuplicateWarning
-            ? this.renderDuplicateWarning()
-            : html`
-              <div class="form-text" style="margin-top: -20px; margin-bottom: 30px;">
-                <span style="text-decoration: underline; font-weight: bold;">${msg('Note: ')}</span
-                >${msg('Adding a new Tool to a group ')}<b>${msg(
-                  'creates a new unique instance ',
-                )}</b>${msg(
-                  "of that Tool which other group members may join directly from the group's main page.",
-                )}
-                <sl-tooltip
-                  content=${msg(
-                    `Each time you add a Tool to a group via the Tool Library, you create a new unique peer-to-peer network specifically for that instance of the Tool. Other group members can only join the same network, if they join it from the group main page where it will show up for them in the "Joinable Tools" section. If two members each add the same Tool from the Tool Library, they create two independent peer-to-peer networks. In that way a group can have many independent instances of the same Tool.`,
-                  )}
-                >
-                  <span style="margin-left: 3px; text-decoration: underline; color: blue; cursor: help;"
-                    >${msg('Details')}</span
-                  ></sl-tooltip
-                >
-              </div>
-              <form class="column" ${onSubmit((f) => this.installApplet(f))}>${this.renderForm()}</form>
-            `}
+          ${
+            this._showDuplicateWarning
+              ? this.renderDuplicateWarning()
+              : html`
+                  <div class="form-text" style="margin-top: -20px; margin-bottom: 30px;">
+                    <span style="text-decoration: underline; font-weight: bold;"
+                      >${msg('Note: ')}</span
+                    >${msg('Adding a new Tool to a group ')}<b>${msg(
+                      'creates a new unique instance ',
+                    )}</b>${msg(
+                      "of that Tool which other group members may join directly from the group's main page.",
+                    )}
+                    <sl-tooltip
+                      content=${msg(
+                        `Each time you add a Tool to a group via the Tool Library, you create a new unique peer-to-peer network specifically for that instance of the Tool. Other group members can only join the same network, if they join it from the group main page where it will show up for them in the "Joinable Tools" section. If two members each add the same Tool from the Tool Library, they create two independent peer-to-peer networks. In that way a group can have many independent instances of the same Tool.`,
+                      )}
+                    >
+                      <span
+                        style="margin-left: 3px; text-decoration: underline; color: blue; cursor: help;"
+                        >${msg('Details')}</span
+                      ></sl-tooltip
+                    >
+                  </div>
+                  <form class="column" ${onSubmit((f) => this.installApplet(f))}>
+                    ${this.renderForm()}
+                  </form>
+                `
+          }
         <div>
         </moss-dialog>
     `;
@@ -598,7 +610,6 @@ export class InstallToolDialogWeb2 extends LitElement {
       .install-form {
         margin-bottom: 10px;
       }
-
     `,
   ];
 }

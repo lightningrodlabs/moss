@@ -17,7 +17,7 @@ Moss instances won't migrate to or from them.
 1. Go to the repo → **Actions** tab → **publish-dev** workflow.
 2. Click **Run workflow**. Optionally edit the release-notes string.
 3. The workflow creates a GitHub release tagged
-   `v<package.json-version>-test.<run-number>` marked as *prerelease*.
+   `v<package.json-version>-test.<run-number>` marked as _prerelease_.
 4. When the matrix finishes, downloadable installers appear on that
    release page:
    - Windows: `moss-...-setup.exe`

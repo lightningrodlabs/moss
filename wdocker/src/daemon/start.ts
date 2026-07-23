@@ -49,7 +49,7 @@ export async function isConductorRunning(
         wsClientOptions: { origin: runningInfo.allowedOrigin },
       });
       return runningInfo;
-    } catch (e) { }
+    } catch (e) {}
   }
   return undefined;
 }
@@ -192,9 +192,7 @@ export async function startConductor(
   conductorConfig.network.webrtc_config = { iceServers: iceUrls.map((url) => ({ urls: [url] })) };
 
   // advanced network settings (sync with main app)
-  const advancedSettings = conductorConfig.network.advanced
-    ? conductorConfig.network.advanced
-    : {};
+  const advancedSettings = conductorConfig.network.advanced ? conductorConfig.network.advanced : {};
   advancedSettings.coreBootstrap = { backoffMaxMs: 30000 };
   advancedSettings.coreSpace = { reSignExpireTimeMs: 30000, reSignFreqMs: 30000 };
   conductorConfig.network.advanced = advancedSettings;
@@ -212,12 +210,12 @@ export async function startConductor(
         RUST_LOG: rustLog
           ? rustLog
           : 'warn,' +
-          // this thrashes on startup
-          'wasmer_compiler_cranelift=error,' +
-          // this gives a bunch of warnings about how long db accesses are taking, tmi
-          'holochain_sqlite::db::access=error,' +
-          // this gives a lot of "search_and_discover_peer_connect: no peers found, retrying after delay" messages on INFO
-          'kitsune_p2p::spawn::actor::discover=error',
+            // this thrashes on startup
+            'wasmer_compiler_cranelift=error,' +
+            // this gives a bunch of warnings about how long db accesses are taking, tmi
+            'holochain_sqlite::db::access=error,' +
+            // this gives a lot of "search_and_discover_peer_connect: no peers found, retrying after delay" messages on INFO
+            'kitsune_p2p::spawn::actor::discover=error',
         WASM_LOG: wasmLog ? wasmLog : 'warn',
         NO_COLOR: '1',
       },

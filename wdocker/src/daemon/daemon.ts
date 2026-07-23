@@ -14,11 +14,7 @@ import fs from 'fs';
 
 import { startConductor } from './start.js';
 import { WDockerFilesystem } from '../filesystem.js';
-import {
-  getAdminWsAndAppPort,
-  getAppWs,
-  getWeRustHandler,
-} from '../helpers/helpers.js';
+import { getAdminWsAndAppPort, getAppWs, getWeRustHandler } from '../helpers/helpers.js';
 import {
   ALWAYS_ONLINE_TAG,
   GroupClient,
@@ -455,7 +451,7 @@ async function fetchAndStoreHappIfNecessary(
   await rustUtils.saveHappOrWebhapp(webHappPath, happsDir, undefined);
   try {
     fs.rmSync(tmpDir, { recursive: true });
-  } catch (e) { }
+  } catch (e) {}
 }
 
 function needsPinging(agent: AgentPubKey, myPubkeySum: number): boolean {

@@ -7,16 +7,18 @@
 **Signature:**
 
 ```typescript
-export type IframeKind = {
-    type: 'applet';
-    appletHash: AppletHash;
-    groupHash: DnaHash | null;
-    subType: string;
-} | {
-    type: 'cross-group';
-    toolCompatibilityId: string;
-    subType: string;
-};
+export type IframeKind =
+  | {
+      type: 'applet';
+      appletHash: AppletHash;
+      groupHash: DnaHash | null;
+      subType: string;
+    }
+  | {
+      type: 'cross-group';
+      toolCompatibilityId: string;
+      subType: string;
+    };
 ```
-**References:** [AppletHash](./api.applethash.md)
 
+**References:** [AppletHash](./api.applethash.md)

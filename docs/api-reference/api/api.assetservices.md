@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface AssetServices 
+export interface AssetServices
 ```
 
 ## Properties
@@ -16,268 +16,212 @@ export interface AssetServices
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [addAssetRelation](./api.assetservices.addassetrelation.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (srcWal: [WAL](./api.wal.md)<!-- -->, dstWal: [WAL](./api.wal.md)<!-- -->, tags?: string\[\]) =&gt; Promise&lt;void&gt;
 
-
 </td><td>
 
 Adds a new asset relation. This function deliberately returns no value because Tool frontends should subscribe to the AssetStore(s) to update their frontend state.
-
 
 </td></tr>
 <tr><td>
 
 [addTagsToAsset](./api.assetservices.addtagstoasset.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (wal: [WAL](./api.wal.md)<!-- -->, tags: string\[\]) =&gt; Promise&lt;void&gt;
 
-
 </td><td>
 
 Adds new tags to an asset
-
 
 </td></tr>
 <tr><td>
 
 [addTagsToAssetRelation](./api.assetservices.addtagstoassetrelation.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (relationHash: EntryHash, tags: string\[\]) =&gt; Promise&lt;void&gt;
 
-
 </td><td>
 
 Adds new tags to an existing asset relation
-
 
 </td></tr>
 <tr><td>
 
 [assetInfo](./api.assetservices.assetinfo.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (wal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;[AssetLocationAndInfo](./api.assetlocationandinfo.md) \| undefined&gt;
 
-
 </td><td>
 
 Gets information about an entry in any other Applet in We
-
 
 </td></tr>
 <tr><td>
 
 [assetStore](./api.assetservices.assetstore.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (wal: [WAL](./api.wal.md)<!-- -->) =&gt; [AssetStore](./api.assetstore.md)
 
-
 </td><td>
 
 Returns a Svelte readable store that can be subscribed to in order to get updated about the latest information about this asset (tags and other related assets)
-
 
 </td></tr>
 <tr><td>
 
 [assetToPocket](./api.assetservices.assettopocket.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (wal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;
 
-
 </td><td>
 
 Adds the specified HRL to the We-internal clipboard
-
 
 </td></tr>
 <tr><td>
 
 [dragAsset](./api.assetservices.dragasset.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (wal: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;
 
-
 </td><td>
 
 Communicate that an asset is being dragged
-
 
 </td></tr>
 <tr><td>
 
 [getAllAssetRelationTags](./api.assetservices.getallassetrelationtags.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (crossGroup?: boolean) =&gt; Promise&lt;string\[\]&gt;
 
-
 </td><td>
 
 Get all asset relation tags that have been used so far in the group. Useful for example to display in a tag selection UI element.
-
 
 </td></tr>
 <tr><td>
 
 [removeAssetRelation](./api.assetservices.removeassetrelation.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (relationHash: EntryHash) =&gt; Promise&lt;void&gt;
 
-
 </td><td>
 
 Removes an asset relation and all its tags. This function deliberately returns no value because Tool frontends should subscribe to the AssetStore(s) to update their frontend state.
-
 
 </td></tr>
 <tr><td>
 
 [removeTagsFromAsset](./api.assetservices.removetagsfromasset.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (wal: [WAL](./api.wal.md)<!-- -->, tags: string\[\]) =&gt; Promise&lt;void&gt;
 
-
 </td><td>
 
 Removes the given tags from an asset.
-
 
 </td></tr>
 <tr><td>
 
 [removeTagsFromAssetRelation](./api.assetservices.removetagsfromassetrelation.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (relationHash: EntryHash, tags: string\[\]) =&gt; Promise&lt;void&gt;
 
-
 </td><td>
 
 Removes the specified tags from an asset relation
-
 
 </td></tr>
 <tr><td>
 
 [userSelectAsset](./api.assetservices.userselectasset.md)
 
-
 </td><td>
-
 
 </td><td>
 
 (from?: 'search' \| 'pocket' \| 'create' \| 'pocket-no-create') =&gt; Promise&lt;[WAL](./api.wal.md) \| undefined&gt;
 
-
 </td><td>
 
 Prompts the user to select an Asset and returns the associated WAL as soon as the user has selected an asset or returns undefined if the user cancels the selection process. By default it will let the user select the Asset from the pocket but other means of selecting the asset can be specified optionally with the "from" argument.
-
 
 </td></tr>
 <tr><td>
 
 [userSelectAssetRelationTag](./api.assetservices.userselectassetrelationtag.md)
 
-
 </td><td>
-
 
 </td><td>
 
 () =&gt; Promise&lt;string \| undefined&gt;
 
-
 </td><td>
 
 Prompts the user with a dialog to select an asset relation tag. Returns the associated tag as a string as soon as the user has selected a tag or undefined it the user cancels the selection process.
-
 
 </td></tr>
 </tbody></table>

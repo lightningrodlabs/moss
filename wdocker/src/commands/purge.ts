@@ -16,9 +16,7 @@ export async function purgeConductor(conductorId: string) {
     if (envPurgeConfirm === 'true') {
       confirmed = true;
     } else {
-      console.log(
-        "Purge aborted: set WDOCKER_PURGE_CONFIRM=true to confirm non-interactively.",
-      );
+      console.log('Purge aborted: set WDOCKER_PURGE_CONFIRM=true to confirm non-interactively.');
       return;
     }
   } else {

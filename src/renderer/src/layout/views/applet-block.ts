@@ -1,5 +1,5 @@
 import { hashProperty } from '@holochain-open-dev/elements';
-import {DnaHash, EntryHash} from '@holochain/client';
+import { DnaHash, EntryHash } from '@holochain/client';
 import { localized } from '@lit/localize';
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';

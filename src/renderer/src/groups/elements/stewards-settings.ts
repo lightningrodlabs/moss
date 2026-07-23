@@ -62,8 +62,7 @@ export class StewardsSettings extends LitElement {
   // TODO: Use MossPrivilege instead
   canIGrantAccontabilities(accs: Accountability[]): boolean {
     for (const acc of accs) {
-      if (acc.type === 'Progenitor'
-        || (acc.type  === 'Steward' && !acc.content.permission.expiry)) {
+      if (acc.type === 'Progenitor' || (acc.type === 'Steward' && !acc.content.permission.expiry)) {
         return true;
       }
     }

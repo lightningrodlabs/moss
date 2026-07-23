@@ -211,7 +211,10 @@ export class AssetsClient extends ZomeClient<SignalPayloadAssets> {
    * @param local Whether to use `GetStrategy::Local` or not
    * @returns
    */
-  async getIncomingAssetRelations(srcWal: WAL, local: boolean = true): Promise<AssetRelationAndHash[]> {
+  async getIncomingAssetRelations(
+    srcWal: WAL,
+    local: boolean = true,
+  ): Promise<AssetRelationAndHash[]> {
     const assetRelations = await this.callZome('get_incoming_asset_relations', {
       input: walEncodeContext(srcWal),
       local,
@@ -368,16 +371,16 @@ export function decodeAssetRelationWALs(
 ): AssetRelationWithTags | AssetRelationAndHash {
   return 'tags' in relationWithTags
     ? {
-      src_wal: walDecodeContext(relationWithTags.src_wal),
-      dst_wal: walDecodeContext(relationWithTags.dst_wal),
-      tags: relationWithTags.tags,
-      relation_hash: relationWithTags.relation_hash,
-      created_at: relationWithTags.created_at,
-    }
+        src_wal: walDecodeContext(relationWithTags.src_wal),
+        dst_wal: walDecodeContext(relationWithTags.dst_wal),
+        tags: relationWithTags.tags,
+        relation_hash: relationWithTags.relation_hash,
+        created_at: relationWithTags.created_at,
+      }
     : {
-      src_wal: walDecodeContext(relationWithTags.src_wal),
-      dst_wal: walDecodeContext(relationWithTags.dst_wal),
-      relation_hash: relationWithTags.relation_hash,
-      created_at: relationWithTags.created_at,
-    };
+        src_wal: walDecodeContext(relationWithTags.src_wal),
+        dst_wal: walDecodeContext(relationWithTags.dst_wal),
+        relation_hash: relationWithTags.relation_hash,
+        created_at: relationWithTags.created_at,
+      };
 }

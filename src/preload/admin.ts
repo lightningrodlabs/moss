@@ -38,7 +38,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   lairSetupRequired: () => ipcRenderer.invoke('lair-setup-required'),
   findLegacyProfiles: () => ipcRenderer.invoke('find-legacy-profiles'),
   getLairBinaryVersion: () => ipcRenderer.invoke('get-lair-binary-version'),
-  copyLegacyProfile: (keystorePath: string) => ipcRenderer.invoke('import-legacy-profile', keystorePath),
+  copyLegacyProfile: (keystorePath: string) =>
+    ipcRenderer.invoke('import-legacy-profile', keystorePath),
   launch: () => ipcRenderer.invoke('launch'),
   isAppletDev: () => ipcRenderer.invoke('is-applet-dev'),
   appletDevConfig: () => ipcRenderer.invoke('applet-dev-config'),
@@ -76,7 +77,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openApp: (appId: string) => ipcRenderer.invoke('open-app', appId),
   openAppStore: () => ipcRenderer.invoke('open-appstore'),
   openWalWindow: (iframeSrc: string, appletId: AppletId, groupId: DnaHashB64, wal: WAL) => {
-    ipcRenderer.invoke('open-wal-window', iframeSrc, appletId, groupId, wal)
+    ipcRenderer.invoke('open-wal-window', iframeSrc, appletId, groupId, wal);
   },
   getAllAppAssetsInfos: () => ipcRenderer.invoke('get-all-app-assets-infos'),
   getAppletDevPort: (lowerCaseAppletIdB64: string) =>

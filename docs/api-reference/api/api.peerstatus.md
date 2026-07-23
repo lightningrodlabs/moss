@@ -8,8 +8,8 @@
 
 ```typescript
 export type PeerStatus = {
-    lastSeen: number;
-    status: string;
-    tzUtcOffset?: number;
+  lastSeen: number;
+  status: string;
+  tzUtcOffset?: number;
 };
 ```

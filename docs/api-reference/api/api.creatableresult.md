@@ -7,15 +7,18 @@
 **Signature:**
 
 ```typescript
-export type CreatableResult = {
-    type: 'success';
-    wal: WAL;
-} | {
-    type: 'cancel';
-} | {
-    type: 'error';
-    error: any;
-};
+export type CreatableResult =
+  | {
+      type: 'success';
+      wal: WAL;
+    }
+  | {
+      type: 'cancel';
+    }
+  | {
+      type: 'error';
+      error: any;
+    };
 ```
-**References:** [WAL](./api.wal.md)
 
+**References:** [WAL](./api.wal.md)

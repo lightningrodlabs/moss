@@ -44,7 +44,10 @@ export class GroupApplets extends LitElement {
     () =>
       joinAsync([
         pipe(this._groupStore.customViewsStore.allCustomViews, (allCustomViews) =>
-          sliceAndJoin(this._groupStore.customViewsStore.customViews as GetonlyMap<any, any>, allCustomViews),
+          sliceAndJoin(
+            this._groupStore.customViewsStore.customViews as GetonlyMap<any, any>,
+            allCustomViews,
+          ),
         ),
         pipe(this._groupStore.allMyRunningApplets, (myRunningApplets) =>
           sliceAndJoin(this.mossStore.appletStores as GetonlyMap<any, any>, myRunningApplets),

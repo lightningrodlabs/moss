@@ -76,7 +76,9 @@ export class MossLanguageSettings extends LitElement {
         </div>
 
         <div class="ai-notice" style="margin-top: 24px;">
-          ${msg('Please note that the language translations here were made by AI. If you find any mistakes please send us feedback. You can activate the in-app screenshot/feedback tool in the Feedback dialog accessible from the Feedback button on the home page.')}
+          ${msg(
+            'Please note that the language translations here were made by AI. If you find any mistakes please send us feedback. You can activate the in-app screenshot/feedback tool in the Feedback dialog accessible from the Feedback button on the home page.',
+          )}
         </div>
       </div>
     `;
