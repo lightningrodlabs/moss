@@ -48,8 +48,8 @@ export class AssetView extends LitElement {
       this.dispatchEvent(
         new CustomEvent('jump-to-applet', {
           detail: {
-              applet: this.location.value.value.dnaLocation.appletHash,
-              wal: this.wal,
+            applet: this.location.value.value.dnaLocation.appletHash,
+            wal: this.wal,
           },
           bubbles: true,
           composed: true,
@@ -80,7 +80,6 @@ export class AssetView extends LitElement {
       (cellInfo) => cellInfo.type === CellType.Provisioned,
     );
     const groupHash = groupCell?.value.cell_id[0];
-
 
     return html`<applet-view
         style="flex: 1"

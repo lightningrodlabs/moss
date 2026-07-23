@@ -8,8 +8,8 @@
 
 ```typescript
 export type RecordInfo = {
-    roleName: string;
-    integrityZomeName: string;
-    entryType: string;
+  roleName: string;
+  integrityZomeName: string;
+  entryType: string;
 };
 ```

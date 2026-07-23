@@ -114,12 +114,8 @@ export class FeedbackAreaSelector extends LitElement {
                 class="action-buttons row"
                 style="left: ${x + width / 2}px; top: ${y + height + 12}px;"
               >
-                <button class="capture-btn" @click=${this._confirm}>
-                  ${msg('Capture')}
-                </button>
-                <button class="cancel-btn" @click=${this._cancel}>
-                  ${msg('Cancel')}
-                </button>
+                <button class="capture-btn" @click=${this._confirm}>${msg('Capture')}</button>
+                <button class="cancel-btn" @click=${this._cancel}>${msg('Cancel')}</button>
               </div>
             `
           : html`

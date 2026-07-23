@@ -6,7 +6,13 @@ import {
   pipe,
   retryUntilSuccess,
 } from '@holochain-open-dev/stores';
-import { ActionHash, LazyHoloHashMap, DnaHash, encodeHashToBase64, ProvisionedCell } from '@holochain/client';
+import {
+  ActionHash,
+  LazyHoloHashMap,
+  DnaHash,
+  encodeHashToBase64,
+  ProvisionedCell,
+} from '@holochain/client';
 import { ConductorInfo } from '../../electron-api.js';
 import { Tool, UpdateableEntity, ToolsLibraryClient } from '@theweave/tool-library-client';
 

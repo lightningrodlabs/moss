@@ -1,8 +1,4 @@
-import {
-  cleanTable,
-  getAdminWs,
-  getPassword,
-} from '../../helpers/helpers.js';
+import { cleanTable, getAdminWs, getPassword } from '../../helpers/helpers.js';
 import { WDockerFilesystem } from '../../filesystem.js';
 import { encodeHashToBase64 } from '@holochain/client';
 import { getAppStatus, getCellId } from '@theweave/utils';

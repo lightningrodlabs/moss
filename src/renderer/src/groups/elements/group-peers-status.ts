@@ -124,9 +124,11 @@ export class GroupPeersStatus extends LitElement {
 
     // Convert all members to B64 once upfront to avoid repeated encoding
     type MemberEntry = [Uint8Array, AgentPubKeyB64, MaybeProfile];
-    const allMembers: MemberEntry[] = Array.from(members.entries()).map(
-      ([pubKey, profile]) => [pubKey, encodeHashToBase64(pubKey), profile],
-    );
+    const allMembers: MemberEntry[] = Array.from(members.entries()).map(([pubKey, profile]) => [
+      pubKey,
+      encodeHashToBase64(pubKey),
+      profile,
+    ]);
 
     const headlessNodes = allMembers.filter(
       ([, , maybeProfile]) =>

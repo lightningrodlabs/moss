@@ -43,15 +43,12 @@ switch (process.platform) {
     throw new Error(`Got unexpected OS platform: ${process.platform}`);
 }
 
-
 function downloadFile(binaryName, versionOverride = null) {
   const chmod = true;
   const expectedSha256Hex = HOLOCHAIN_CHECKSUMS[binaryName][targetEnding];
   const version = versionOverride ?? mossConfig.holochain;
 
-  const binaryFilename = `${binaryName}-v${version}${
-    process.platform === 'win32' ? '.exe' : ''
-  }`;
+  const binaryFilename = `${binaryName}-v${version}${process.platform === 'win32' ? '.exe' : ''}`;
   const targetPath = path.join(binariesDir, binaryFilename);
   const binaryRemoteFilename = `${binaryName}-${targetEnding}`;
   const url = `https://github.com/holochain/holochain/releases/download/holochain-${version}/${binaryRemoteFilename}`;

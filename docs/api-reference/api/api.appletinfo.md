@@ -8,9 +8,9 @@
 
 ```typescript
 export type AppletInfo = {
-    appletBundleId: string;
-    appletName: string;
-    appletIcon: string;
-    groupsHashes: Array<DnaHash>;
+  appletBundleId: string;
+  appletName: string;
+  appletIcon: string;
+  groupsHashes: Array<DnaHash>;
 };
 ```

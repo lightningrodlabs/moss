@@ -16,34 +16,27 @@ openWal(wal: WAL): void;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 wal
 
-
 </td><td>
 
 [WAL](./api.wal.md)
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 void
-

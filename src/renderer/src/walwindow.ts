@@ -13,10 +13,12 @@ import {
   WAL,
 } from '@theweave/api';
 import {
-    CallZomeRequest,
-    CallZomeRequestSigned,
-    decodeHashFromBase64, DnaHash, DnaHashB64,
-    encodeHashToBase64,
+  CallZomeRequest,
+  CallZomeRequestSigned,
+  decodeHashFromBase64,
+  DnaHash,
+  DnaHashB64,
+  encodeHashToBase64,
 } from '@holochain/client';
 import { localized, msg } from '@lit/localize';
 
@@ -46,7 +48,7 @@ declare global {
         | {
             iframeSrc: string;
             appletId: AppletId;
-            groupId: DnaHashB64,
+            groupId: DnaHashB64;
             wal: WAL;
           }
         | undefined
@@ -233,14 +235,11 @@ export class WalWindow extends LitElement {
               const iframeKind = getIframeKind(message, this.isAppletDev);
               if (!iframeKind) return;
               if (iframeKind.type === 'cross-group') {
-                this.iframeStore.registerCrossGroupIframe(
-                  iframeKind.toolCompatibilityId,
-                  {
-                    id: request.request.id,
-                    subType: request.request.subType,
-                    source: message.source,
-                  }
-                );
+                this.iframeStore.registerCrossGroupIframe(iframeKind.toolCompatibilityId, {
+                  id: request.request.id,
+                  subType: request.request.subType,
+                  source: message.source,
+                });
                 return walWindow.electronAPI.appletMessageToParent({
                   request: request.request,
                   source: {
@@ -251,12 +250,11 @@ export class WalWindow extends LitElement {
                 });
               } else {
                 const appletId = encodeHashToBase64(iframeKind.appletHash);
-                this.iframeStore.registerAppletIframe(
-                  appletId,
-                  {id: request.request.id,
+                this.iframeStore.registerAppletIframe(appletId, {
+                  id: request.request.id,
                   subType: request.request.subType,
-                  source: message.source,}
-                );
+                  source: message.source,
+                });
                 // Use the child iframe's applet identity, not the parent window's
                 return walWindow.electronAPI.appletMessageToParent({
                   request: request.request,

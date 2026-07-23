@@ -53,12 +53,18 @@ export class MossSettings extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this._designFeedbackMode = this._persistedStore.designFeedbackMode.value();
-    window.addEventListener('design-feedback-mode-changed', this._onDesignFeedbackModeChanged as EventListener);
+    window.addEventListener(
+      'design-feedback-mode-changed',
+      this._onDesignFeedbackModeChanged as EventListener,
+    );
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    window.removeEventListener('design-feedback-mode-changed', this._onDesignFeedbackModeChanged as EventListener);
+    window.removeEventListener(
+      'design-feedback-mode-changed',
+      this._onDesignFeedbackModeChanged as EventListener,
+    );
   }
 
   private _onDesignFeedbackModeChanged = (e: CustomEvent<boolean>) => {
@@ -115,7 +121,9 @@ export class MossSettings extends LitElement {
       <div class="column" style="padding: 0 20px; gap: 16px;">
         <h3 style="margin: 0;">${msg('Design Feedback')}</h3>
         <p style="margin: 0; opacity: 0.8;">
-          ${msg('Enable Design Feedback Mode to show a feedback button in the top-left corner. Click it to capture a screenshot of any area and submit feedback.')}
+          ${msg(
+            'Enable Design Feedback Mode to show a feedback button in the top-left corner. Click it to capture a screenshot of any area and submit feedback.',
+          )}
         </p>
         <sl-switch
           ?checked=${this._designFeedbackMode}
@@ -142,16 +150,16 @@ export class MossSettings extends LitElement {
             </p>`
           : html``}
         ${this._loadingHistory
-          ? html`<p style="margin: 0; opacity: 0.6; font-size: 14px;">
-              ${msg('loading...')}
-            </p>`
+          ? html`<p style="margin: 0; opacity: 0.6; font-size: 14px;">${msg('loading...')}</p>`
           : html``}
         <div class="column" style="gap: 8px;">
           ${this._feedbackHistory.map(
             (item) => html`
               <div class="feedback-item row" style="gap: 12px; align-items: center;">
                 <div class="column" style="flex: 1; min-width: 0;">
-                  <span class="feedback-text">${item.text.length > 80 ? item.text.substring(0, 77) + '...' : item.text}</span>
+                  <span class="feedback-text"
+                    >${item.text.length > 80 ? item.text.substring(0, 77) + '...' : item.text}</span
+                  >
                   <span class="feedback-date">${this._formatDate(item.timestamp)}</span>
                 </div>
                 ${item.issueUrl

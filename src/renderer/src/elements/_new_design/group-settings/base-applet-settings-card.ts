@@ -120,8 +120,10 @@ export abstract class BaseAppletSettingsCard extends LitElement {
   // TODO: Use MossPrivilege instead
   canIArchive() {
     // added by me
-    if (!!this.addedBy
-      && encodeHashToBase64(this.addedBy) === encodeHashToBase64(this.groupStore.groupClient.myPubKey)) {
+    if (
+      !!this.addedBy &&
+      encodeHashToBase64(this.addedBy) === encodeHashToBase64(this.groupStore.groupClient.myPubKey)
+    ) {
       return true;
     }
     // progenitor
@@ -164,11 +166,11 @@ export abstract class BaseAppletSettingsCard extends LitElement {
     return html`
       <div class="installer row">
         ${this.addedBy
-        ? html`<agent-avatar
-                    style="margin-right: 5px;"
-                    .agentPubKey=${this.addedBy}
-                  ></agent-avatar>`
-        : html`${msg('unknown')}`}
+          ? html`<agent-avatar
+              style="margin-right: 5px;"
+              .agentPubKey=${this.addedBy}
+            ></agent-avatar>`
+          : html`${msg('unknown')}`}
         <span>${msg('installed this tool to the group space ')}</span>
       </div>
     `;
@@ -189,15 +191,15 @@ export abstract class BaseAppletSettingsCard extends LitElement {
           <div class="participants row">
             <span>${msg('In use by: ')}</span>
             ${this._joinedMembers.value.value.length === 0
-            ? html`<span>Nobody activated this tool or everyone abandoned it.</span>`
-            : this._joinedMembers.value.value.map(
-              (appletAgent) => html`
+              ? html`<span>Nobody activated this tool or everyone abandoned it.</span>`
+              : this._joinedMembers.value.value.map(
+                  (appletAgent) => html`
                     <agent-avatar
                       style="margin-left: 5px;"
                       .agentPubKey=${appletAgent.group_pubkey}
                     ></agent-avatar>
                   `,
-            )}
+                )}
           </div>
         `;
     }
@@ -219,13 +221,13 @@ export abstract class BaseAppletSettingsCard extends LitElement {
           <div class="row items-center" style="margin-top: 4px;">
             <span>${msg('Uninstalled by:')} </span>
             ${this._abandonedMembers.value.value.map(
-          (appletAgent) => html`
+              (appletAgent) => html`
                 <agent-avatar
                   style="margin-left: 5px;"
                   .agentPubKey=${appletAgent.group_pubkey}
                 ></agent-avatar>
               `,
-        )}
+            )}
           </div>
         `;
     }
@@ -238,8 +240,8 @@ export abstract class BaseAppletSettingsCard extends LitElement {
         return html`
           <sl-tooltip
             content=${msg(
-          'Deprecating will hide this tool from new members for activation; existing members will see it as deprecated.',
-        )}
+              'Deprecating will hide this tool from new members for activation; existing members will see it as deprecated.',
+            )}
           >
             <moss-mini-button
               variant="secondary"
@@ -247,10 +249,10 @@ export abstract class BaseAppletSettingsCard extends LitElement {
               style="margin-right: 5px;"
               @click=${() => deprecateTool(this.groupStore, this.appletHash)}
               @keypress=${async (e: KeyboardEvent) => {
-            if (e.key === 'Enter') {
-              deprecateTool(this.groupStore, this.appletHash);
-            }
-          }}
+                if (e.key === 'Enter') {
+                  deprecateTool(this.groupStore, this.appletHash);
+                }
+              }}
             >
               <div class="row center-content">
                 ${deprecateIcon(18)}
@@ -267,10 +269,10 @@ export abstract class BaseAppletSettingsCard extends LitElement {
               style="margin-right: 5px;"
               @click=${() => undeprecateTool(this.groupStore, this.appletHash)}
               @keypress=${async (e: KeyboardEvent) => {
-            if (e.key === 'Enter') {
-              undeprecateTool(this.groupStore, this.appletHash);
-            }
-          }}
+                if (e.key === 'Enter') {
+                  undeprecateTool(this.groupStore, this.appletHash);
+                }
+              }}
             >
               <div class="row center-content">
                 <sl-icon
@@ -293,9 +295,9 @@ export abstract class BaseAppletSettingsCard extends LitElement {
         class="moss-button"
         style="height:18px;border-radius:8px; padding: 8px 10px;border: 1px solid #89D6AA; color: #89D6AA"
         @click=${(e: MouseEvent) => {
-        e.stopPropagation();
-        this.showAdvanced = !this.showAdvanced;
-      }}
+          e.stopPropagation();
+          this.showAdvanced = !this.showAdvanced;
+        }}
       >
         <div class="row items-center">
           ${devIcon(16)}
@@ -312,22 +314,24 @@ export abstract class BaseAppletSettingsCard extends LitElement {
         class="column tool flex-1 ${this.showDetails ? 'tool-expanded' : ''}"
         style="position: relative; ${this.deprecateState() === 'archived' ? 'opacity: 0.6' : ''}"
         @click=${(e) => {
-        e.stopPropagation();
-        this.showDetails = !this.showDetails;
-      }}
+          e.stopPropagation();
+          this.showDetails = !this.showDetails;
+        }}
         @keypress=${(e) => {
-        e.stopPropagation();
-      }}
+          e.stopPropagation();
+        }}
       >
         ${this.deprecateState() === 'archived'
-        ? html`<span class="tool-deprecated" style="position: absolute; top: 2px; right: 2px;"
+          ? html`<span class="tool-deprecated" style="position: absolute; top: 2px; right: 2px;"
               >${msg('Deprecated')}</span
             > `
-        : html``}
+          : html``}
 
-        <div class="column ${this.getInnerContainerClass()}" style="${this.getInnerContainerStyle()}">
-          ${this.renderTitleBar()}
-          ${this.renderDetailsContainer()}
+        <div
+          class="column ${this.getInnerContainerClass()}"
+          style="${this.getInnerContainerStyle()}"
+        >
+          ${this.renderTitleBar()} ${this.renderDetailsContainer()}
         </div>
       </div>
     `;
@@ -356,15 +360,15 @@ export abstract class BaseAppletSettingsCard extends LitElement {
         class="row title-bar flex-1 items-center"
         tabindex="0"
         @click=${(e) => {
-        e.stopPropagation();
-        this.showDetails = !this.showDetails;
-      }}
-        @keypress=${(e: KeyboardEvent) => {
-        if (e.key === 'Enter' || e.key === ' ') {
           e.stopPropagation();
           this.showDetails = !this.showDetails;
-        }
-      }}
+        }}
+        @keypress=${(e: KeyboardEvent) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.stopPropagation();
+            this.showDetails = !this.showDetails;
+          }
+        }}
       >
         ${this.renderTitleBarContent()}
       </div>
@@ -382,35 +386,35 @@ export abstract class BaseAppletSettingsCard extends LitElement {
   protected renderDetailsContainer() {
     return html`
       <div class="column details-container" style="${this.showDetails ? '' : 'display: none;'}">
-        ${this.renderInstallerRow()}
+        ${this.renderInstallerRow()} ${this.renderJoinedMembers()} ${this.renderAbandonedMembers()}
 
-        ${this.renderJoinedMembers()} ${this.renderAbandonedMembers()}
-
-        <div 
-          class="row" 
-          style="${this.showAdvanced ? "display:none; " : ""} padding-top: 12px; border-top: 1px solid var(--moss-grey-light); align-items: flex-end; justify-content:space-between; "
+        <div
+          class="row"
+          style="${this.showAdvanced
+            ? 'display:none; '
+            : ''} padding-top: 12px; border-top: 1px solid var(--moss-grey-light); align-items: flex-end; justify-content:space-between; "
           @click=${(e: MouseEvent) => {
-        e.stopPropagation();
-      }}
+            e.stopPropagation();
+          }}
         >
           ${this.renderDetailsActions()}
         </div>
         ${this.showAdvanced
-        ? html`
-            <div 
-              @click=${(e: MouseEvent) => {
-            e.stopPropagation();
-            // Allow clicking the header to toggle advanced section
-            const target = e.target as HTMLElement;
-            if (target.closest('.meta-settings')) {
-              this.showAdvanced = !this.showAdvanced;
-            }
-          }}
-            >
-              ${this.renderAdvancedSection()}
-            </div>
-          `
-        : html``}
+          ? html`
+              <div
+                @click=${(e: MouseEvent) => {
+                  e.stopPropagation();
+                  // Allow clicking the header to toggle advanced section
+                  const target = e.target as HTMLElement;
+                  if (target.closest('.meta-settings')) {
+                    this.showAdvanced = !this.showAdvanced;
+                  }
+                }}
+              >
+                ${this.renderAdvancedSection()}
+              </div>
+            `
+          : html``}
       </div>
     `;
   }
@@ -431,9 +435,14 @@ export abstract class BaseAppletSettingsCard extends LitElement {
         <div style="color:#89D6AA">${devIcon(16)} ${msg('Advanced Settings')}</div>
         <div class="row items-center">
           <div class="row items-center">
-            <span style="margin-left:8px; margin-bottom: 4px; margin-top: 4px;">${msg('tool hash')}:</span>
+            <span style="margin-left:8px; margin-bottom: 4px; margin-top: 4px;"
+              >${msg('tool hash')}:</span
+            >
             <div class="row">
-              <copy-hash styles="color:#E7EEC4" .hash=${encodeHashToBase64(this.appletHash)}></copy-hash>
+              <copy-hash
+                styles="color:#E7EEC4"
+                .hash=${encodeHashToBase64(this.appletHash)}
+              ></copy-hash>
             </div>
           </div>
         </div>
@@ -462,7 +471,7 @@ export abstract class BaseAppletSettingsCard extends LitElement {
 
       .meta-settings {
         color: var(--moss-grey-light);
-        background-color: #151A11;
+        background-color: #151a11;
         border-radius: 8px;
         padding: 10px;
         margin: 15px 0 10px 0;
@@ -471,4 +480,3 @@ export abstract class BaseAppletSettingsCard extends LitElement {
     `,
   ];
 }
-

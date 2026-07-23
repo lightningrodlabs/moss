@@ -2,7 +2,7 @@ import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import {localized, msg} from '@lit/localize';
+import { localized, msg } from '@lit/localize';
 import {
   AppClient,
   CellId,
@@ -40,12 +40,16 @@ import { MossStore, ZomeCallCounts } from '../../moss-store.js';
 import { mossStyles } from '../../shared-styles.js';
 import { AppletStore } from '../../applets/applet-store.js';
 import { AppletId } from '@theweave/api';
-import { getCellName, groupModifiersToAppId, safeSetInterval, SafeIntervalHandle } from '../../utils.js';
+import {
+  getCellName,
+  groupModifiersToAppId,
+  safeSetInterval,
+  SafeIntervalHandle,
+} from '../../utils.js';
 import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiBug } from '@mdi/js';
 import { appIdFromAppletHash, getCellId } from '@theweave/utils';
-import {fromUint8Array, toUint8Array} from "js-base64";
-
+import { fromUint8Array, toUint8Array } from 'js-base64';
 
 /** Call bootstrap server and get the list of known peers */
 export async function getBootstrapPeers(bootstrapUrl: string, dnaB64: DnaHashB64): Promise<any> {
@@ -58,7 +62,7 @@ export async function getBootstrapPeers(bootstrapUrl: string, dnaB64: DnaHashB64
   const k2 = fromUint8Array(slicedBytes, true); // 'true' enables URL-safe mode
   //console.log(`getBootstrapPeers() k2`, k2);
   /* Query the boostrap server */
-  const response = await fetch(bootstrap + "/bootstrap/" + k2);
+  const response = await fetch(bootstrap + '/bootstrap/' + k2);
   console.log(`getBootstrapPeers() response`, response);
   if (!response.ok) {
     return Promise.reject(`HTTP error during getBootstrapPeers(): ${response.status}`);
@@ -66,8 +70,10 @@ export async function getBootstrapPeers(bootstrapUrl: string, dnaB64: DnaHashB64
   return response.json();
 }
 
-
-async function pingServer(url: string, timeoutMs = 5000): Promise<{
+async function pingServer(
+  url: string,
+  timeoutMs = 5000,
+): Promise<{
   online: boolean;
   latencyMs?: number;
   status?: number;
@@ -104,9 +110,9 @@ function formatBytes(bytes: number): string {
 type LookbackWindow = 2 | 10 | 30 | 60 | 'all';
 
 // Rolling points per tier
-const HIGH_RES_POINTS = 300;  // 300 × 2s  = 10 min
-const MED_RES_POINTS  =  60;  //  60 × 60s  =  1 h
-const LOW_RES_POINTS  = 144;  // 144 × 600s = 24 h
+const HIGH_RES_POINTS = 300; // 300 × 2s  = 10 min
+const MED_RES_POINTS = 60; //  60 × 60s  =  1 h
+const LOW_RES_POINTS = 144; // 144 × 600s = 24 h
 
 interface ChartWindow {
   data: number[];
@@ -123,11 +129,11 @@ interface ChartWindow {
  */
 class TieredHistory {
   readonly high: number[] = [];
-  readonly med: number[]  = [];
-  readonly low: number[]  = [];
+  readonly med: number[] = [];
+  readonly low: number[] = [];
 
   private _highAccum: number[] = [];
-  private _medAccum: number[]  = [];
+  private _medAccum: number[] = [];
 
   push(value: number): void {
     this.high.push(value);
@@ -152,10 +158,14 @@ class TieredHistory {
 
   forWindow(w: LookbackWindow): ChartWindow {
     switch (w) {
-      case 2:     return { data: this.high.slice(-60),  intervalSecs: 2,   maxPoints: 60  };
-      case 10:    return { data: [...this.high],         intervalSecs: 2,   maxPoints: 300 };
-      case 30:    return { data: this.med.slice(-30),    intervalSecs: 60,  maxPoints: 30  };
-      case 60:    return { data: [...this.med],          intervalSecs: 60,  maxPoints: 60  };
+      case 2:
+        return { data: this.high.slice(-60), intervalSecs: 2, maxPoints: 60 };
+      case 10:
+        return { data: [...this.high], intervalSecs: 2, maxPoints: 300 };
+      case 30:
+        return { data: this.med.slice(-30), intervalSecs: 60, maxPoints: 30 };
+      case 60:
+        return { data: [...this.med], intervalSecs: 60, maxPoints: 60 };
       case 'all': {
         // Stitch tiers together: low (oldest) → med → high (newest).
         // Each tier covers a time range not yet downsampled into the next,
@@ -163,10 +173,14 @@ class TieredHistory {
         const data = [...this.low, ...this.med, ...this.high];
         // Weighted average interval: approximate since tiers have different rates,
         // but for the X-axis label we just need total elapsed seconds.
-        const totalSecs =
-          this.low.length * 600 + this.med.length * 60 + this.high.length * 2;
+        const totalSecs = this.low.length * 600 + this.med.length * 60 + this.high.length * 2;
         const avgInterval = data.length > 0 ? totalSecs / data.length : 2;
-        return { data, intervalSecs: avgInterval, maxPoints: Math.max(data.length, 2), fillWidth: true };
+        return {
+          data,
+          intervalSecs: avgInterval,
+          maxPoints: Math.max(data.length, 2),
+          fillWidth: true,
+        };
       }
     }
   }
@@ -177,10 +191,10 @@ class TieredHistory {
 
   clear(): void {
     this.high.length = 0;
-    this.med.length  = 0;
-    this.low.length  = 0;
-    this._highAccum  = [];
-    this._medAccum   = [];
+    this.med.length = 0;
+    this.low.length = 0;
+    this._highAccum = [];
+    this._medAccum = [];
   }
 }
 
@@ -220,9 +234,8 @@ const transformMetrics = (metrics: DumpNetworkMetricsResponse) => {
         }
         // Convert ring_top_hashes array to base64
         if (segment.ring_top_hashes) {
-          segment.ring_top_hashes = segment.ring_top_hashes.map(
-            (h: Uint8Array | string) =>
-              typeof h === 'string' ? h : h.length > 0 ? encodeHashToBase64(h) : '',
+          segment.ring_top_hashes = segment.ring_top_hashes.map((h: Uint8Array | string) =>
+            typeof h === 'string' ? h : h.length > 0 ? encodeHashToBase64(h) : '',
           );
         }
       }
@@ -312,7 +325,13 @@ export class DebuggingPanel extends LitElement {
   _rendererMemory: { residentSetKB: number; privateKB: number; sharedKB: number } | null = null;
 
   @state()
-  _mainProcessMemory: { rss: number; heapTotal: number; heapUsed: number; external: number; arrayBuffers: number } | null = null;
+  _mainProcessMemory: {
+    rss: number;
+    heapTotal: number;
+    heapUsed: number;
+    external: number;
+    arrayBuffers: number;
+  } | null = null;
 
   @state()
   _storagePolling = false;
@@ -328,14 +347,14 @@ export class DebuggingPanel extends LitElement {
   _lookback: LookbackWindow = 10;
 
   // Tiered history for memory metrics (non-reactive; re-render triggered by ticks below).
-  private _rendererRss     = new TieredHistory();
+  private _rendererRss = new TieredHistory();
   private _rendererPrivate = new TieredHistory();
-  private _rendererShared  = new TieredHistory();
-  private _mainRss         = new TieredHistory();
-  private _mainHeap        = new TieredHistory();
-  private _mainExternal    = new TieredHistory();
-  private _mainArrayBufs   = new TieredHistory();
-  private _conductorRss    = new TieredHistory();
+  private _rendererShared = new TieredHistory();
+  private _mainRss = new TieredHistory();
+  private _mainHeap = new TieredHistory();
+  private _mainExternal = new TieredHistory();
+  private _mainArrayBufs = new TieredHistory();
+  private _conductorRss = new TieredHistory();
   private _conductorVmSize = new TieredHistory();
 
   // Bumped after each memory poll to trigger Lit re-render.
@@ -617,38 +636,64 @@ export class DebuggingPanel extends LitElement {
     const historyData = this._storageHistory[appId] || [];
     return html`
       <div style="margin-left: 60px; margin-bottom: 4px; font-size: 12px; color: #555;">
-        ${dnas.map((dna) => html`
-          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-            ${dna.dnaName ? html`<span style="font-weight: bold; min-width: 80px;">${dna.dnaName}</span>` : html``}
-            <span>Authored: ${formatBytes(dna.authored_data_size)} (disk: ${formatBytes(dna.authored_data_size_on_disk)})</span>
-            <span>DHT: ${formatBytes(dna.dht_data_size)} (disk: ${formatBytes(dna.dht_data_size_on_disk)})</span>
-            <span>Cache: ${formatBytes(dna.cache_data_size)} (disk: ${formatBytes(dna.cache_data_size_on_disk)})</span>
-          </div>
-        `)}
-        ${historyData.length > 1 ? html`
-          <memory-chart
-            title="Total Storage"
-            .series=${[{ label: 'Total', color: '#9C27B0', data: historyData }]}
-            .height=${100}
-            .width=${300}
-            style="margin-top: 4px;"
-          ></memory-chart>
-        ` : html``}
+        ${dnas.map(
+          (dna) => html`
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              ${dna.dnaName
+                ? html`<span style="font-weight: bold; min-width: 80px;">${dna.dnaName}</span>`
+                : html``}
+              <span
+                >Authored: ${formatBytes(dna.authored_data_size)} (disk:
+                ${formatBytes(dna.authored_data_size_on_disk)})</span
+              >
+              <span
+                >DHT: ${formatBytes(dna.dht_data_size)} (disk:
+                ${formatBytes(dna.dht_data_size_on_disk)})</span
+              >
+              <span
+                >Cache: ${formatBytes(dna.cache_data_size)} (disk:
+                ${formatBytes(dna.cache_data_size_on_disk)})</span
+              >
+            </div>
+          `,
+        )}
+        ${historyData.length > 1
+          ? html`
+              <memory-chart
+                title="Total Storage"
+                .series=${[{ label: 'Total', color: '#9C27B0', data: historyData }]}
+                .height=${100}
+                .width=${300}
+                style="margin-top: 4px;"
+              ></memory-chart>
+            `
+          : html``}
       </div>
     `;
   }
 
   renderLookbackSelector() {
-    const options: [LookbackWindow, string][] = [[2, '2m'], [10, '10m'], [30, '30m'], [60, '1h'], ['all', 'all']];
+    const options: [LookbackWindow, string][] = [
+      [2, '2m'],
+      [10, '10m'],
+      [30, '30m'],
+      [60, '1h'],
+      ['all', 'all'],
+    ];
     return html`
       <div class="row" style="gap: 4px; margin-left: 12px;">
-        ${options.map(([w, label]) => html`
-          <sl-button
-            size="small"
-            variant=${this._lookback === w ? 'primary' : 'default'}
-            @click=${() => { this._lookback = w; }}
-          >${label}</sl-button>
-        `)}
+        ${options.map(
+          ([w, label]) => html`
+            <sl-button
+              size="small"
+              variant=${this._lookback === w ? 'primary' : 'default'}
+              @click=${() => {
+                this._lookback = w;
+              }}
+              >${label}</sl-button
+            >
+          `,
+        )}
       </div>
     `;
   }
@@ -662,79 +707,87 @@ export class DebuggingPanel extends LitElement {
             size="small"
             style="margin-left: 12px;"
             @click=${() => this.toggleMemoryPolling()}
-          >${this._memoryPolling ? 'Stop Polling' : 'Start Polling'}</sl-button>
+            >${this._memoryPolling ? 'Stop Polling' : 'Start Polling'}</sl-button
+          >
         </div>
 
-        ${this._rendererMemory ? html`
-          <div style="margin-bottom: 8px;">
-            <b>Renderer Process</b>
-            <div>RSS: ${formatBytes(this._rendererMemory.residentSetKB * 1024)}</div>
-            <div>Private: ${formatBytes(this._rendererMemory.privateKB * 1024)}</div>
-            <div>Shared: ${formatBytes(this._rendererMemory.sharedKB * 1024)}</div>
-          </div>
-        ` : html``}
-
-        ${this._mainProcessMemory ? html`
-          <div style="margin-bottom: 8px;">
-            <b>Main Process</b>
-            <div>RSS: ${formatBytes(this._mainProcessMemory.rss)}</div>
-            <div>Heap: ${formatBytes(this._mainProcessMemory.heapUsed)} / ${formatBytes(this._mainProcessMemory.heapTotal)}</div>
-            <div>External: ${formatBytes(this._mainProcessMemory.external)}</div>
-            <div>ArrayBuffers: ${formatBytes(this._mainProcessMemory.arrayBuffers)}</div>
-          </div>
-        ` : html``}
-
+        ${this._rendererMemory
+          ? html`
+              <div style="margin-bottom: 8px;">
+                <b>Renderer Process</b>
+                <div>RSS: ${formatBytes(this._rendererMemory.residentSetKB * 1024)}</div>
+                <div>Private: ${formatBytes(this._rendererMemory.privateKB * 1024)}</div>
+                <div>Shared: ${formatBytes(this._rendererMemory.sharedKB * 1024)}</div>
+              </div>
+            `
+          : html``}
+        ${this._mainProcessMemory
+          ? html`
+              <div style="margin-bottom: 8px;">
+                <b>Main Process</b>
+                <div>RSS: ${formatBytes(this._mainProcessMemory.rss)}</div>
+                <div>
+                  Heap: ${formatBytes(this._mainProcessMemory.heapUsed)} /
+                  ${formatBytes(this._mainProcessMemory.heapTotal)}
+                </div>
+                <div>External: ${formatBytes(this._mainProcessMemory.external)}</div>
+                <div>ArrayBuffers: ${formatBytes(this._mainProcessMemory.arrayBuffers)}</div>
+              </div>
+            `
+          : html``}
         ${this._memoryPolling ? this.renderLookbackSelector() : html``}
-
-        ${this._rendererRss.hasData || this._mainRss.hasData ? html`${(() => {
-          const rssWin      = this._rendererRss.forWindow(this._lookback);
-          const mainRssWin  = this._mainRss.forWindow(this._lookback);
-          const heapWin     = this._mainHeap.forWindow(this._lookback);
-          const extWin      = this._mainExternal.forWindow(this._lookback);
-          const abWin       = this._mainArrayBufs.forWindow(this._lookback);
-          const privWin     = this._rendererPrivate.forWindow(this._lookback);
-          const sharedWin   = this._rendererShared.forWindow(this._lookback);
-          const fw = !!rssWin.fillWidth;
-          return html`
-            <memory-chart
-              title="RSS Comparison"
-              .series=${[
-                { label: 'Renderer', color: '#2196F3', data: rssWin.data },
-                { label: 'Main', color: '#FF9800', data: mainRssWin.data },
-              ]}
-              .maxPoints=${rssWin.maxPoints}
-              .intervalSecs=${rssWin.intervalSecs}
-              .fillWidth=${fw}
-            ></memory-chart>
-            <memory-chart
-              title="Main Process Breakdown"
-              .series=${[
-                { label: 'Heap', color: '#4CAF50', data: heapWin.data },
-                { label: 'External', color: '#FF5722', data: extWin.data },
-                { label: 'ArrayBuf', color: '#9C27B0', data: abWin.data },
-              ]}
-              .maxPoints=${heapWin.maxPoints}
-              .intervalSecs=${heapWin.intervalSecs}
-              .fillWidth=${fw}
-              style="margin-top: 8px;"
-            ></memory-chart>
-            <memory-chart
-              title="Renderer Breakdown"
-              .series=${[
-                { label: 'Private', color: '#E91E63', data: privWin.data },
-                { label: 'Shared', color: '#00BCD4', data: sharedWin.data },
-              ]}
-              .maxPoints=${privWin.maxPoints}
-              .intervalSecs=${privWin.intervalSecs}
-              .fillWidth=${fw}
-              style="margin-top: 8px;"
-            ></memory-chart>
-          `;
-        })()} ` : html``}
-
-        ${!this._memoryPolling && !this._rendererMemory ? html`
-          <div style="color: #666;">Click "Start Polling" to begin memory monitoring.</div>
-        ` : html``}
+        ${this._rendererRss.hasData || this._mainRss.hasData
+          ? html`${(() => {
+              const rssWin = this._rendererRss.forWindow(this._lookback);
+              const mainRssWin = this._mainRss.forWindow(this._lookback);
+              const heapWin = this._mainHeap.forWindow(this._lookback);
+              const extWin = this._mainExternal.forWindow(this._lookback);
+              const abWin = this._mainArrayBufs.forWindow(this._lookback);
+              const privWin = this._rendererPrivate.forWindow(this._lookback);
+              const sharedWin = this._rendererShared.forWindow(this._lookback);
+              const fw = !!rssWin.fillWidth;
+              return html`
+                <memory-chart
+                  title="RSS Comparison"
+                  .series=${[
+                    { label: 'Renderer', color: '#2196F3', data: rssWin.data },
+                    { label: 'Main', color: '#FF9800', data: mainRssWin.data },
+                  ]}
+                  .maxPoints=${rssWin.maxPoints}
+                  .intervalSecs=${rssWin.intervalSecs}
+                  .fillWidth=${fw}
+                ></memory-chart>
+                <memory-chart
+                  title="Main Process Breakdown"
+                  .series=${[
+                    { label: 'Heap', color: '#4CAF50', data: heapWin.data },
+                    { label: 'External', color: '#FF5722', data: extWin.data },
+                    { label: 'ArrayBuf', color: '#9C27B0', data: abWin.data },
+                  ]}
+                  .maxPoints=${heapWin.maxPoints}
+                  .intervalSecs=${heapWin.intervalSecs}
+                  .fillWidth=${fw}
+                  style="margin-top: 8px;"
+                ></memory-chart>
+                <memory-chart
+                  title="Renderer Breakdown"
+                  .series=${[
+                    { label: 'Private', color: '#E91E63', data: privWin.data },
+                    { label: 'Shared', color: '#00BCD4', data: sharedWin.data },
+                  ]}
+                  .maxPoints=${privWin.maxPoints}
+                  .intervalSecs=${privWin.intervalSecs}
+                  .fillWidth=${fw}
+                  style="margin-top: 8px;"
+                ></memory-chart>
+              `;
+            })()} `
+          : html``}
+        ${!this._memoryPolling && !this._rendererMemory
+          ? html`
+              <div style="color: #666;">Click "Start Polling" to begin memory monitoring.</div>
+            `
+          : html``}
       </div>
     `;
   }
@@ -748,45 +801,52 @@ export class DebuggingPanel extends LitElement {
             size="small"
             style="margin-left: 12px;"
             @click=${() => this.toggleConductorMemoryPolling()}
-          >${this._conductorMemoryPolling ? 'Stop Polling' : 'Start Polling'}</sl-button>
+            >${this._conductorMemoryPolling ? 'Stop Polling' : 'Start Polling'}</sl-button
+          >
         </div>
 
-        ${this._conductorMemory ? html`
-          <div style="margin-bottom: 8px;">
-            <div>PID: ${this._conductorMemory.pid}</div>
-            <div>RSS: ${formatBytes(this._conductorMemory.rssBytes)}</div>
-            <div>Virtual: ${formatBytes(this._conductorMemory.vmSizeBytes)}</div>
-          </div>
-        ` : html``}
-
+        ${this._conductorMemory
+          ? html`
+              <div style="margin-bottom: 8px;">
+                <div>PID: ${this._conductorMemory.pid}</div>
+                <div>RSS: ${formatBytes(this._conductorMemory.rssBytes)}</div>
+                <div>Virtual: ${formatBytes(this._conductorMemory.vmSizeBytes)}</div>
+              </div>
+            `
+          : html``}
         ${this._conductorMemoryPolling ? this.renderLookbackSelector() : html``}
-
-        ${this._conductorRss.hasData ? html`${(() => {
-          const rssWin = this._conductorRss.forWindow(this._lookback);
-          const vmWin  = this._conductorVmSize.forWindow(this._lookback);
-          const fw = !!rssWin.fillWidth;
-          return html`
-            <memory-chart
-              title="Conductor RSS"
-              .series=${[{ label: 'RSS', color: '#F44336', data: rssWin.data }]}
-              .maxPoints=${rssWin.maxPoints}
-              .intervalSecs=${rssWin.intervalSecs}
-              .fillWidth=${fw}
-            ></memory-chart>
-            <memory-chart
-              title="Conductor Virtual"
-              .series=${[{ label: 'Virtual', color: '#FF9800', data: vmWin.data }]}
-              .maxPoints=${vmWin.maxPoints}
-              .intervalSecs=${vmWin.intervalSecs}
-              .fillWidth=${fw}
-              style="margin-top: 8px;"
-            ></memory-chart>
-          `;
-        })()} ` : html``}
-
-        ${!this._conductorMemoryPolling && !this._conductorMemory ? html`
-          <div style="color: #666;">Click "Start Polling" to monitor the Holochain conductor subprocess memory (Linux only).</div>
-        ` : html``}
+        ${this._conductorRss.hasData
+          ? html`${(() => {
+              const rssWin = this._conductorRss.forWindow(this._lookback);
+              const vmWin = this._conductorVmSize.forWindow(this._lookback);
+              const fw = !!rssWin.fillWidth;
+              return html`
+                <memory-chart
+                  title="Conductor RSS"
+                  .series=${[{ label: 'RSS', color: '#F44336', data: rssWin.data }]}
+                  .maxPoints=${rssWin.maxPoints}
+                  .intervalSecs=${rssWin.intervalSecs}
+                  .fillWidth=${fw}
+                ></memory-chart>
+                <memory-chart
+                  title="Conductor Virtual"
+                  .series=${[{ label: 'Virtual', color: '#FF9800', data: vmWin.data }]}
+                  .maxPoints=${vmWin.maxPoints}
+                  .intervalSecs=${vmWin.intervalSecs}
+                  .fillWidth=${fw}
+                  style="margin-top: 8px;"
+                ></memory-chart>
+              `;
+            })()} `
+          : html``}
+        ${!this._conductorMemoryPolling && !this._conductorMemory
+          ? html`
+              <div style="color: #666;">
+                Click "Start Polling" to monitor the Holochain conductor subprocess memory (Linux
+                only).
+              </div>
+            `
+          : html``}
       </div>
     `;
   }
@@ -818,19 +878,21 @@ export class DebuggingPanel extends LitElement {
     if (!summary) return html``;
 
     const elapsedMin = (Date.now() - summary.firstCall) / (1000 * 60);
-    const elapsedStr = elapsedMin < 1
-      ? `${Math.round(elapsedMin * 60)}s`
-      : elapsedMin < 60
-        ? `${Math.round(elapsedMin)}m`
-        : `${Math.floor(elapsedMin / 60)}h ${Math.round(elapsedMin % 60)}m`;
+    const elapsedStr =
+      elapsedMin < 1
+        ? `${Math.round(elapsedMin * 60)}s`
+        : elapsedMin < 60
+          ? `${Math.round(elapsedMin)}m`
+          : `${Math.floor(elapsedMin / 60)}h ${Math.round(elapsedMin % 60)}m`;
 
     return html`
-      <div style="margin-bottom: 12px; padding: 8px; background: #9fb0ff; border: 2px solid #03004c; border-radius: 4px;">
+      <div
+        style="margin-bottom: 12px; padding: 8px; background: #9fb0ff; border: 2px solid #03004c; border-radius: 4px;"
+      >
         <b>Zome Call Summary</b> (tracking for ${elapsedStr})
         <div style="margin-top: 4px;">
-          Total calls: <b>${summary.totalCalls}</b>
-          &nbsp;&bull;&nbsp;
-          Avg: <b>${summary.avgCallsPerMin}</b> calls/min
+          Total calls: <b>${summary.totalCalls}</b> &nbsp;&bull;&nbsp; Avg:
+          <b>${summary.avgCallsPerMin}</b> calls/min
         </div>
       </div>
     `;
@@ -966,7 +1028,10 @@ export class DebuggingPanel extends LitElement {
    * AgentInfo returns both the kitsune agent ID and the peer URL, allowing us to
    * map the transport key (from URL) to the actual AgentPubKey.
    */
-  async buildTransportToAgentMap(appId: InstalledAppId, networkMetrics: DumpNetworkMetricsResponse): Promise<Map<string, string>> {
+  async buildTransportToAgentMap(
+    appId: InstalledAppId,
+    networkMetrics: DumpNetworkMetricsResponse,
+  ): Promise<Map<string, string>> {
     const map = new Map<string, string>();
     try {
       const client = await this._mossStore.getAppClient(appId);
@@ -1026,19 +1091,19 @@ export class DebuggingPanel extends LitElement {
       this._adminNetworkStats = await this._mossStore.adminWebsocket.dumpNetworkStats();
       // Send network stats to applets
       if (this._adminNetworkStats) {
-          //console.debug('Fetched admin network stats:', this._adminNetworkStats);
-          const groupDnaHashes = await toPromise(this._mossStore.groupsDnaHashes);
-          await Promise.all(
-              groupDnaHashes.map(async (groupDnaHash) => {
-                  const groupStore = await this._mossStore.groupStore(groupDnaHash);
-                  if (!groupStore) return;
-                  //console.debug('Emitting network stats update for group:', groupDnaHash);
-                  await groupStore.emitToGroupApplets({
-                      type: 'network-stats-update',
-                      payload: this._adminNetworkStats!.transport_stats,
-                  });
-              })
-          );
+        //console.debug('Fetched admin network stats:', this._adminNetworkStats);
+        const groupDnaHashes = await toPromise(this._mossStore.groupsDnaHashes);
+        await Promise.all(
+          groupDnaHashes.map(async (groupDnaHash) => {
+            const groupStore = await this._mossStore.groupStore(groupDnaHash);
+            if (!groupStore) return;
+            //console.debug('Emitting network stats update for group:', groupDnaHash);
+            await groupStore.emitToGroupApplets({
+              type: 'network-stats-update',
+              payload: this._adminNetworkStats!.transport_stats,
+            });
+          }),
+        );
       }
     } catch (e) {
       console.error('Failed to fetch admin network stats:', e);
@@ -1161,10 +1226,9 @@ export class DebuggingPanel extends LitElement {
       return html`<div class="stats-item">
         <em>No blocked messages for this app</em>
         <div style="font-size: 10px; color: #666; margin-top: 4px;">
-          (Global: ${totalBlockedPeers} peers, ${allSpaceIds.size} spaces |
-          App DNAs: ${appDnaHashesB64.size} |
-          Matched spaces: ${spaceIdToDnaHashB64.size} |
-          Connected peers: ${connectedPubKeys.size})
+          (Global: ${totalBlockedPeers} peers, ${allSpaceIds.size} spaces | App DNAs:
+          ${appDnaHashesB64.size} | Matched spaces: ${spaceIdToDnaHashB64.size} | Connected peers:
+          ${connectedPubKeys.size})
         </div>
       </div>`;
     }
@@ -1172,7 +1236,8 @@ export class DebuggingPanel extends LitElement {
     return html`
       <div class="stats-item">
         <div><b>Total blocked:</b> incoming: ${totalIncoming}, outgoing: ${totalOutgoing}</div>
-        <div><b>Blocked peers:</b> ${filteredPeerUrls.length}
+        <div>
+          <b>Blocked peers:</b> ${filteredPeerUrls.length}
           <span style="font-size: 10px; color: #666;">
             (of ${totalBlockedPeers} global, ${connectedPubKeys.size} connected)
           </span>
@@ -1251,7 +1316,9 @@ export class DebuggingPanel extends LitElement {
         </div>
         <div style="margin-bottom: 12px;">
           <b>Our Peer URL:</b>
-          <div style="font-size: 11px; margin-top: 4px;">${networkStats.peer_urls[0] || 'none'}</div>
+          <div style="font-size: 11px; margin-top: 4px;">
+            ${networkStats.peer_urls[0] || 'none'}
+          </div>
         </div>
 
         <h4>Connections: ${networkStats.connections.length}</h4>
@@ -1259,23 +1326,23 @@ export class DebuggingPanel extends LitElement {
           (Agent mappings from agentInfo: ${this._transportToAgentMap[appId]?.size || 0})
         </div>
         ${networkStats.connections.map((connection) => {
-      // Look up agent key from transport pub_key
-      const transportMap = this._transportToAgentMap[appId];
-      const agentKeyB64 = transportMap?.get(connection.pub_key);
-      const formattedAgentKey = agentKeyB64
-        ? agentKeyB64.length > 16
-          ? `${agentKeyB64.slice(0, 8)}...${agentKeyB64.slice(-6)}`
-          : agentKeyB64
-        : null;
+          // Look up agent key from transport pub_key
+          const transportMap = this._transportToAgentMap[appId];
+          const agentKeyB64 = transportMap?.get(connection.pub_key);
+          const formattedAgentKey = agentKeyB64
+            ? agentKeyB64.length > 16
+              ? `${agentKeyB64.slice(0, 8)}...${agentKeyB64.slice(-6)}`
+              : agentKeyB64
+            : null;
 
-      return html`
+          return html`
             <div class="stats-item">
               <div>Direct: ${connection.is_direct}</div>
               <div>
                 <b>agent:</b>
                 ${formattedAgentKey
-          ? html`<span title="${agentKeyB64}">${formattedAgentKey}</span>`
-          : html`<span style="color: #999;">(no mapping)</span>`}
+                  ? html`<span title="${agentKeyB64}">${formattedAgentKey}</span>`
+                  : html`<span style="color: #999;">(no mapping)</span>`}
               </div>
               <div style="font-size: 11px; color: #666;">pub_key: ${connection.pub_key}</div>
               <div>
@@ -1291,7 +1358,7 @@ export class DebuggingPanel extends LitElement {
               </div>
             </div>
           `;
-    })}
+        })}
 
         <h4>Blocked Messages:</h4>
         ${this.renderBlockedStats(appId)}
@@ -1300,16 +1367,23 @@ export class DebuggingPanel extends LitElement {
           style="cursor: pointer; user-select: none;"
           @click=${() => this.toggleMetricsExpanded(appId)}
         >
-          <span style="display: inline-block; transition: transform 0.2s; transform: rotate(${this._appsWithMetricsExpanded.includes(appId) ? '90deg' : '0deg'});">&#9654;</span>
+          <span
+            style="display: inline-block; transition: transform 0.2s; transform: rotate(${this._appsWithMetricsExpanded.includes(
+              appId,
+            )
+              ? '90deg'
+              : '0deg'});"
+            >&#9654;</span
+          >
           Metrics
         </h4>
         ${this._appsWithMetricsExpanded.includes(appId)
-        ? html`
+          ? html`
               <div class="stats-item">
                 <pre>${JSON.stringify(transformMetrics(networkMetrics), null, 4)}</pre>
               </div>
             `
-        : html``}
+          : html``}
       </div>
     `;
   }
@@ -1326,25 +1400,25 @@ export class DebuggingPanel extends LitElement {
           </div>
           <div class="item-count item-count-detail">
             ${zomeCallCount
-          ? Math.round(
-            zomeCallCount.functionCalls[fn_name].length /
-            ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
-          )
-          : ''}
+              ? Math.round(
+                  zomeCallCount.functionCalls[fn_name].length /
+                    ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
+                )
+              : ''}
           </div>
           <div class="item-count item-count-detail">
             ${zomeCallCount.functionCalls[fn_name][zomeCallCount.functionCalls[fn_name].length - 1]
-          .durationMs}ms
+              .durationMs}ms
           </div>
           <div class="item-count item-count-detail">
             ${zomeCallCount.functionCalls[fn_name].length
-          ? Math.round(
-            zomeCallCount.functionCalls[fn_name].reduce(
-              (sum, item) => sum + item.durationMs,
-              0,
-            ) / zomeCallCount.functionCalls[fn_name].length,
-          )
-          : 'NaN'}ms
+              ? Math.round(
+                  zomeCallCount.functionCalls[fn_name].reduce(
+                    (sum, item) => sum + item.durationMs,
+                    0,
+                  ) / zomeCallCount.functionCalls[fn_name].length,
+                )
+              : 'NaN'}ms
           </div>
         </div>
       `,
@@ -1353,21 +1427,15 @@ export class DebuggingPanel extends LitElement {
 
   renderCountsHeader() {
     return html`
-    <div class="row item-row" style="">
-          <div class="item-title">&nbsp;</div>
-          <div class="item-count-title">total zome calls</div>
-          <div class="item-count-title">
-            avg. zome calls per minute
-          </div>
-          <div class="item-count-title">
-            duration of last zome call (ms)
-          </div>
-          <div class="item-count-title">
-            avg. zome call duration
-          </div>
-          <div class="item-extra"></div>
-        </div>
-    `
+      <div class="row item-row" style="">
+        <div class="item-title">&nbsp;</div>
+        <div class="item-count-title">total zome calls</div>
+        <div class="item-count-title">avg. zome calls per minute</div>
+        <div class="item-count-title">duration of last zome call (ms)</div>
+        <div class="item-count-title">avg. zome call duration</div>
+        <div class="item-extra"></div>
+      </div>
+    `;
   }
 
   renderGroups(groups: DnaHash[]) {
@@ -1375,28 +1443,28 @@ export class DebuggingPanel extends LitElement {
       <div class="column" style="align-items: flex-start;">
         ${this.renderCountsHeader()}
         ${groups
-        .sort((hash_a, hash_b) => {
-          const id_a = this._groupAppIds[encodeHashToBase64(hash_a)];
-          const id_b = this._groupAppIds[encodeHashToBase64(hash_b)];
-          const zomeCallCount_a = this._mossStore.zomeCallLogs[id_a]?.totalCounts;
-          const zomeCallCount_b = this._mossStore.zomeCallLogs[id_b]?.totalCounts;
-          if (zomeCallCount_a && !zomeCallCount_b) return -1;
-          if (!zomeCallCount_a && zomeCallCount_b) return 1;
-          if (zomeCallCount_a && zomeCallCount_b) return zomeCallCount_b - zomeCallCount_a;
-          return 0;
-        })
-        .map((groupDnaHash) => {
-          const groupId = encodeHashToBase64(groupDnaHash);
-          const appId = this._groupAppIds[groupId];
-          const zomeCallCount = this._mossStore.zomeCallLogs[appId];
-          const showDetails = this._groupsWithDetails.includes(groupId);
-          const groupAppId = this._groupAppIds[groupId];
-          const showDebug = this._appsWithDebug.includes(groupAppId);
-          const hasStats = this._appsToPollNetworkStats.includes(groupAppId);
-          return html`
+          .sort((hash_a, hash_b) => {
+            const id_a = this._groupAppIds[encodeHashToBase64(hash_a)];
+            const id_b = this._groupAppIds[encodeHashToBase64(hash_b)];
+            const zomeCallCount_a = this._mossStore.zomeCallLogs[id_a]?.totalCounts;
+            const zomeCallCount_b = this._mossStore.zomeCallLogs[id_b]?.totalCounts;
+            if (zomeCallCount_a && !zomeCallCount_b) return -1;
+            if (!zomeCallCount_a && zomeCallCount_b) return 1;
+            if (zomeCallCount_a && zomeCallCount_b) return zomeCallCount_b - zomeCallCount_a;
+            return 0;
+          })
+          .map((groupDnaHash) => {
+            const groupId = encodeHashToBase64(groupDnaHash);
+            const appId = this._groupAppIds[groupId];
+            const zomeCallCount = this._mossStore.zomeCallLogs[appId];
+            const showDetails = this._groupsWithDetails.includes(groupId);
+            const groupAppId = this._groupAppIds[groupId];
+            const showDebug = this._appsWithDebug.includes(groupAppId);
+            const hasStats = this._appsToPollNetworkStats.includes(groupAppId);
+            return html`
               <div class="column">
                 <div class="row" style="align-items: center; flex: 1;">
-                  <div class="row item-title" >
+                  <div class="row item-title">
                     <sl-icon-button
                       @click=${async () => this.toggleDebug(groupAppId)}
                       .src=${wrapPathInSvg(mdiBug)}
@@ -1411,73 +1479,80 @@ export class DebuggingPanel extends LitElement {
                     <div style="display:flex; flex-direction:row; gap:3px; align-items:center;">
                       peers:
                       <span id="peer-count-${groupId}">unknown</span>
-                      <sl-button size="small"  @click=${async () => {
-                          const elem = this.shadowRoot?.getElementById(`peer-count-${groupId}`) as HTMLElement;
-                          if (!elem) return;
-                        try {
-                            const peers = await getBootstrapPeers(this._mossStore.conductorInfo.network_info.bootstrap_urls[0], encodeHashToBase64(groupDnaHash));
-                            elem.innerText = `${peers.length}`;
-                        } catch(e) {
-                            elem.innerText = "error";
-                        }
-                        }}>Query</sl-button>
-                  </div>
-                  <div style="display: flex; flex: 1;"></div>
-                  <div class="item-count">
-                    ${zomeCallCount ? zomeCallCount.totalCounts : ''}
-                  </div>
-                  <div class="item-count">
-                    ${zomeCallCount
-              ? Math.round(
-                zomeCallCount.totalCounts /
-                ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
-              )
-              : ''}
-                  </div>
-                  <div
-                    class="item-count"
-                  ></div>
-                  <div
-                    class="item-count"
-                  ></div>
-                  <div class="item-extra">
-                    ${window.__ZOME_CALL_LOGGING_ENABLED__
-              ? html`<span
-                          style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
-                          @click=${() => this.toggleGroupDetails(groupId)}
-                          >${showDetails ? 'Hide' : 'Details'}</span
-                        >`
-              : html`<span style="min-width: 60px;"></span>`}
-                  </div>
-                </div>
-                ${showDetails ? this.renderZomeCallDetails(zomeCallCount) : html``}
-                ${this._storagePolling ? this.renderStorageForApp(groupAppId) : html``}
-              </div>
-              ${showDebug
-              ? html`
-                    <div class="column">
-                      <app-debugging-details .appId=${groupAppId} .networkMetrics=${this._networkStats[groupAppId]?.[1] ?? null}></app-debugging-details>
                       <sl-button
-                        @click=${() => {
-                  if (this._appsToPollNetworkStats.includes(groupAppId)) {
-                    this._appsToPollNetworkStats = this._appsToPollNetworkStats.filter(
-                      (appId) => appId !== groupAppId,
-                    );
-                  } else {
-                    this._appsToPollNetworkStats = [
-                      ...this._appsToPollNetworkStats,
-                      groupAppId,
-                    ];
-                  }
-                }}
-                        >${hasStats ? 'Stop' : 'Start'} Polling Network Stats</sl-button
+                        size="small"
+                        @click=${async () => {
+                          const elem = this.shadowRoot?.getElementById(
+                            `peer-count-${groupId}`,
+                          ) as HTMLElement;
+                          if (!elem) return;
+                          try {
+                            const peers = await getBootstrapPeers(
+                              this._mossStore.conductorInfo.network_info.bootstrap_urls[0],
+                              encodeHashToBase64(groupDnaHash),
+                            );
+                            elem.innerText = `${peers.length}`;
+                          } catch (e) {
+                            elem.innerText = 'error';
+                          }
+                        }}
+                        >Query</sl-button
                       >
-                      ${hasStats ? this.renderAppNetworkStats(groupAppId) : html``}
                     </div>
-                  `
-              : html``}
+                    <div style="display: flex; flex: 1;"></div>
+                    <div class="item-count">${zomeCallCount ? zomeCallCount.totalCounts : ''}</div>
+                    <div class="item-count">
+                      ${zomeCallCount
+                        ? Math.round(
+                            zomeCallCount.totalCounts /
+                              ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
+                          )
+                        : ''}
+                    </div>
+                    <div class="item-count"></div>
+                    <div class="item-count"></div>
+                    <div class="item-extra">
+                      ${window.__ZOME_CALL_LOGGING_ENABLED__
+                        ? html`<span
+                            style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
+                            @click=${() => this.toggleGroupDetails(groupId)}
+                            >${showDetails ? 'Hide' : 'Details'}</span
+                          >`
+                        : html`<span style="min-width: 60px;"></span>`}
+                    </div>
+                  </div>
+                  ${showDetails ? this.renderZomeCallDetails(zomeCallCount) : html``}
+                  ${this._storagePolling ? this.renderStorageForApp(groupAppId) : html``}
+                </div>
+                ${showDebug
+                  ? html`
+                      <div class="column">
+                        <app-debugging-details
+                          .appId=${groupAppId}
+                          .networkMetrics=${this._networkStats[groupAppId]?.[1] ?? null}
+                        ></app-debugging-details>
+                        <sl-button
+                          @click=${() => {
+                            if (this._appsToPollNetworkStats.includes(groupAppId)) {
+                              this._appsToPollNetworkStats = this._appsToPollNetworkStats.filter(
+                                (appId) => appId !== groupAppId,
+                              );
+                            } else {
+                              this._appsToPollNetworkStats = [
+                                ...this._appsToPollNetworkStats,
+                                groupAppId,
+                              ];
+                            }
+                          }}
+                          >${hasStats ? 'Stop' : 'Start'} Polling Network Stats</sl-button
+                        >
+                        ${hasStats ? this.renderAppNetworkStats(groupAppId) : html``}
+                      </div>
+                    `
+                  : html``}
+              </div>
             `;
-        })}
+          })}
       </div>
     `;
   }
@@ -1486,34 +1561,33 @@ export class DebuggingPanel extends LitElement {
     return html`
       <div class="column" style="align-items: flex-start;">
         ${this.renderCountsHeader()}
-
         ${Array.from(applets.entries())
-        .sort(([hash_a, _a], [hash_b, _b]) => {
-          const id_a = appIdFromAppletHash(hash_a);
-          const id_b = appIdFromAppletHash(hash_b);
-          const zomeCallCount_a = this._mossStore.zomeCallLogs[id_a]?.totalCounts;
-          const zomeCallCount_b = this._mossStore.zomeCallLogs[id_b]?.totalCounts;
-          if (zomeCallCount_a && !zomeCallCount_b) return -1;
-          if (!zomeCallCount_a && zomeCallCount_b) return 1;
-          if (zomeCallCount_a && zomeCallCount_b) return zomeCallCount_b - zomeCallCount_a;
-          return 0;
-        })
-        .map(([appletHash, appletStore]) => {
-          const appletId = encodeHashToBase64(appletHash);
-          const appId = appIdFromAppletHash(appletHash);
-          const zomeCallCount = this._mossStore.zomeCallLogs[appId];
-          const showDetails = this._appletsWithDetails.includes(appletId);
-          const showDebug = this._appsWithDebug.includes(appId);
-          const iframeCounts = this._mossStore.iframeStore.appletIframesCounts(appletId);
-          const hasStats = this._appsToPollNetworkStats.includes(appId);
-          return html`
+          .sort(([hash_a, _a], [hash_b, _b]) => {
+            const id_a = appIdFromAppletHash(hash_a);
+            const id_b = appIdFromAppletHash(hash_b);
+            const zomeCallCount_a = this._mossStore.zomeCallLogs[id_a]?.totalCounts;
+            const zomeCallCount_b = this._mossStore.zomeCallLogs[id_b]?.totalCounts;
+            if (zomeCallCount_a && !zomeCallCount_b) return -1;
+            if (!zomeCallCount_a && zomeCallCount_b) return 1;
+            if (zomeCallCount_a && zomeCallCount_b) return zomeCallCount_b - zomeCallCount_a;
+            return 0;
+          })
+          .map(([appletHash, appletStore]) => {
+            const appletId = encodeHashToBase64(appletHash);
+            const appId = appIdFromAppletHash(appletHash);
+            const zomeCallCount = this._mossStore.zomeCallLogs[appId];
+            const showDetails = this._appletsWithDetails.includes(appletId);
+            const showDebug = this._appsWithDebug.includes(appId);
+            const iframeCounts = this._mossStore.iframeStore.appletIframesCounts(appletId);
+            const hasStats = this._appsToPollNetworkStats.includes(appId);
+            return html`
               <div class="column">
                 <div class="row" style="align-items: center; flex: 1;">
                   <div class="row item-title">
                     <sl-icon-button
                       @click=${async () => {
-              this.toggleDebug(appId);
-            }}
+                        this.toggleDebug(appId);
+                      }}
                       .src=${wrapPathInSvg(mdiBug)}
                     >
                     </sl-icon-button>
@@ -1528,39 +1602,33 @@ export class DebuggingPanel extends LitElement {
                       <div>
                         <b>iframes:</b>
                         ${iframeCounts
-              ? Object.entries(iframeCounts).map(
-                ([viewType, count]) => html`${viewType} (${count}) `,
-              )
-              : html``}
+                          ? Object.entries(iframeCounts).map(
+                              ([viewType, count]) => html`${viewType} (${count}) `,
+                            )
+                          : html``}
                       </div>
                     </div>
                   </div>
                   <div style="display: flex; flex: 1;"></div>
-                  <div class="item-count">
-                    ${zomeCallCount ? zomeCallCount.totalCounts : ''}
-                  </div>
+                  <div class="item-count">${zomeCallCount ? zomeCallCount.totalCounts : ''}</div>
                   <div class="item-count">
                     ${zomeCallCount
-              ? Math.round(
-                zomeCallCount.totalCounts /
-                ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
-              )
-              : ''}
+                      ? Math.round(
+                          zomeCallCount.totalCounts /
+                            ((Date.now() - zomeCallCount.firstCall) / (1000 * 60)),
+                        )
+                      : ''}
                   </div>
-                  <div
-                    class="item-count"
-                  ></div>
-                  <div
-                    class="item-count"
-                  ></div>
+                  <div class="item-count"></div>
+                  <div class="item-count"></div>
                   <div class="item-extra">
                     ${window.__ZOME_CALL_LOGGING_ENABLED__
-              ? html` <span
+                      ? html` <span
                           style="cursor: pointer; text-decoration: underline; color: blue; margin-left: 20px; min-width: 60px;"
                           @click=${() => this.toggleAppletDetails(appletId)}
                           >${showDetails ? 'Hide' : 'Details'}</span
                         >`
-              : html`<span style="min-width: 60px;"></span>`}
+                      : html`<span style="min-width: 60px;"></span>`}
                     <groups-for-applet
                       style="margin-left: 10px;"
                       .appletHash=${appletHash}
@@ -1571,27 +1639,30 @@ export class DebuggingPanel extends LitElement {
                 ${this._storagePolling ? this.renderStorageForApp(appId) : html``}
               </div>
               ${showDebug
-              ? html`
+                ? html`
                     <div class="column">
-                      <app-debugging-details .appId=${appId} .networkMetrics=${this._networkStats[appId]?.[1] ?? null}></app-debugging-details>
+                      <app-debugging-details
+                        .appId=${appId}
+                        .networkMetrics=${this._networkStats[appId]?.[1] ?? null}
+                      ></app-debugging-details>
                       <sl-button
                         @click=${() => {
-                  if (this._appsToPollNetworkStats.includes(appId)) {
-                    this._appsToPollNetworkStats = this._appsToPollNetworkStats.filter(
-                      (appId) => appId !== appId,
-                    );
-                  } else {
-                    this._appsToPollNetworkStats = [...this._appsToPollNetworkStats, appId];
-                  }
-                }}
+                          if (this._appsToPollNetworkStats.includes(appId)) {
+                            this._appsToPollNetworkStats = this._appsToPollNetworkStats.filter(
+                              (appId) => appId !== appId,
+                            );
+                          } else {
+                            this._appsToPollNetworkStats = [...this._appsToPollNetworkStats, appId];
+                          }
+                        }}
                         >${hasStats ? 'Stop' : 'Start'} Polling Network Stats</sl-button
                       >
                       ${hasStats ? this.renderAppNetworkStats(appId) : html``}
                     </div>
                   `
-              : html``}
+                : html``}
             `;
-        })}
+          })}
       </div>
     `;
   }
@@ -1637,20 +1708,20 @@ export class DebuggingPanel extends LitElement {
           <div class="row items-center">
             <div>
               ${window.__ZOME_CALL_LOGGING_ENABLED__
-        ? 'Disable zome call logging (will reload Moss)'
-        : 'Enable zome call logging (will reload Moss)'}
+                ? 'Disable zome call logging (will reload Moss)'
+                : 'Enable zome call logging (will reload Moss)'}
             </div>
             <sl-switch
               style="margin-bottom: 5px; margin-left: 12px;"
               .checked=${window.__ZOME_CALL_LOGGING_ENABLED__}
               @sl-change=${() => {
-        if (window.__ZOME_CALL_LOGGING_ENABLED__) {
-          window.sessionStorage.removeItem('__ZOME_CALL_LOGGING_ENABLED__');
-        } else {
-          window.sessionStorage.setItem('__ZOME_CALL_LOGGING_ENABLED__', 'true');
-        }
-        window.location.reload();
-      }}
+                if (window.__ZOME_CALL_LOGGING_ENABLED__) {
+                  window.sessionStorage.removeItem('__ZOME_CALL_LOGGING_ENABLED__');
+                } else {
+                  window.sessionStorage.setItem('__ZOME_CALL_LOGGING_ENABLED__', 'true');
+                }
+                window.location.reload();
+              }}
             ></sl-switch>
           </div>
           <div class="row items-center" style="margin-top: 8px;">
@@ -1659,12 +1730,12 @@ export class DebuggingPanel extends LitElement {
               style="margin-bottom: 5px; margin-left: 12px;"
               .checked=${!!window.sessionStorage.getItem('__ONLINE_DEBUG_LOGGING__')}
               @sl-change=${() => {
-        if (window.sessionStorage.getItem('__ONLINE_DEBUG_LOGGING__')) {
-          window.sessionStorage.removeItem('__ONLINE_DEBUG_LOGGING__');
-        } else {
-          window.sessionStorage.setItem('__ONLINE_DEBUG_LOGGING__', 'true');
-        }
-      }}
+                if (window.sessionStorage.getItem('__ONLINE_DEBUG_LOGGING__')) {
+                  window.sessionStorage.removeItem('__ONLINE_DEBUG_LOGGING__');
+                } else {
+                  window.sessionStorage.setItem('__ONLINE_DEBUG_LOGGING__', 'true');
+                }
+              }}
             ></sl-switch>
           </div>
         </div>
@@ -1678,77 +1749,102 @@ export class DebuggingPanel extends LitElement {
             <b>${this._mossStore.iframeStore.crossGroupIframesTotalCount()}</b>
           </div>
         </div>
-        <div class="row" style="margin-bottom: 10px; display: flex; flex-direction: column; gap:2px;">
+        <div
+          class="row"
+          style="margin-bottom: 10px; display: flex; flex-direction: column; gap:2px;"
+        >
           <h3 style="margin-bottom: 5px;">Network</h3>
-            <dl class="kv-list">
-                <dt>Bootstrap</dt>
-                <dd>
-                    ${this._mossStore.conductorInfo.network_info.bootstrap_urls.length
-                    ? this._mossStore.conductorInfo.network_info.bootstrap_urls[0]
-                    : "None"}
-                    <sl-button size="small" 
-                               @click=${async (_e) => {
-                      const res = await pingServer(  this._mossStore.conductorInfo.network_info.bootstrap_urls[0]);
-                      const elem = this.shadowRoot?.getElementById("bootstrap-result") as HTMLElement;
-                      if (!elem) return;
-                      elem.style.display = "inline";
-                      elem.style.color = res.online ? "green" : "red";
-                      elem.innerHTML = res.online ? `online - ${res.latencyMs} ms` : "offline";
-                      this.requestUpdate();
-                    }}>Ping</sl-button>
-                    <div id="bootstrap-result" style="display:none; margin-left:5px;"></div>
-                </dd>
-                <dt>Signal</dt>
-                <dd>
-                    ${this._mossStore.conductorInfo.network_info.signal_urls.length
-                    ? this._mossStore.conductorInfo.network_info.signal_urls[0]
-                    : "None"}
-                  <sl-button size="small" @click=${async (_e) => {
-                      const res = await pingServer(this._mossStore.conductorInfo.network_info.signal_urls[0]);
-                      const elem = this.shadowRoot?.getElementById("signal-result") as HTMLElement;
-                      if (!elem) return;
-                      elem.style.display = "inline";
-                      elem.style.color = res.online ? "green" : "red";
-                      elem.innerHTML = res.online ? `online - ${res.latencyMs} ms` : "offline";
-                      this.requestUpdate();
-                  }}>Ping</sl-button>
-                  <div id="signal-result" style="display:none; margin-left:5px;"></div>               
-                </dd>
-                <dt>Relay</dt>
-                <dd>
-                    ${this._mossStore.conductorInfo.network_info.relay_urls.length
-                    ? this._mossStore.conductorInfo.network_info.relay_urls[0]
-                    : "None"}
-                    <sl-button size="small" @click=${async (_e) => {
-                        const res = await pingServer(this._mossStore.conductorInfo.network_info.relay_urls[0]);
-                        const elem = this.shadowRoot?.getElementById("relay-result") as HTMLElement;
-                        if (!elem) return;
-                        elem.style.display = "inline";
-                        elem.style.color = res.online ? "green" : "red";
-                        elem.innerHTML = res.online ? `online - ${res.latencyMs} ms` : "offline";
-                        this.requestUpdate();
-                      }}>Ping</sl-button>
-                    <div id="relay-result" style="display:none; margin-left:5px;"></div>
-                </dd>
-            </dl>
+          <dl class="kv-list">
+            <dt>Bootstrap</dt>
+            <dd>
+              ${this._mossStore.conductorInfo.network_info.bootstrap_urls.length
+                ? this._mossStore.conductorInfo.network_info.bootstrap_urls[0]
+                : 'None'}
+              <sl-button
+                size="small"
+                @click=${async (_e) => {
+                  const res = await pingServer(
+                    this._mossStore.conductorInfo.network_info.bootstrap_urls[0],
+                  );
+                  const elem = this.shadowRoot?.getElementById('bootstrap-result') as HTMLElement;
+                  if (!elem) return;
+                  elem.style.display = 'inline';
+                  elem.style.color = res.online ? 'green' : 'red';
+                  elem.innerHTML = res.online ? `online - ${res.latencyMs} ms` : 'offline';
+                  this.requestUpdate();
+                }}
+                >Ping</sl-button
+              >
+              <div id="bootstrap-result" style="display:none; margin-left:5px;"></div>
+            </dd>
+            <dt>Signal</dt>
+            <dd>
+              ${this._mossStore.conductorInfo.network_info.signal_urls.length
+                ? this._mossStore.conductorInfo.network_info.signal_urls[0]
+                : 'None'}
+              <sl-button
+                size="small"
+                @click=${async (_e) => {
+                  const res = await pingServer(
+                    this._mossStore.conductorInfo.network_info.signal_urls[0],
+                  );
+                  const elem = this.shadowRoot?.getElementById('signal-result') as HTMLElement;
+                  if (!elem) return;
+                  elem.style.display = 'inline';
+                  elem.style.color = res.online ? 'green' : 'red';
+                  elem.innerHTML = res.online ? `online - ${res.latencyMs} ms` : 'offline';
+                  this.requestUpdate();
+                }}
+                >Ping</sl-button
+              >
+              <div id="signal-result" style="display:none; margin-left:5px;"></div>
+            </dd>
+            <dt>Relay</dt>
+            <dd>
+              ${this._mossStore.conductorInfo.network_info.relay_urls.length
+                ? this._mossStore.conductorInfo.network_info.relay_urls[0]
+                : 'None'}
+              <sl-button
+                size="small"
+                @click=${async (_e) => {
+                  const res = await pingServer(
+                    this._mossStore.conductorInfo.network_info.relay_urls[0],
+                  );
+                  const elem = this.shadowRoot?.getElementById('relay-result') as HTMLElement;
+                  if (!elem) return;
+                  elem.style.display = 'inline';
+                  elem.style.color = res.online ? 'green' : 'red';
+                  elem.innerHTML = res.online ? `online - ${res.latencyMs} ms` : 'offline';
+                  this.requestUpdate();
+                }}
+                >Ping</sl-button
+              >
+              <div id="relay-result" style="display:none; margin-left:5px;"></div>
+            </dd>
+          </dl>
         </div>
-        ${this.renderMemorySection()}
-        ${this.renderConductorMemorySection()}
+        ${this.renderMemorySection()} ${this.renderConductorMemorySection()}
         <div class="row items-center" style="margin-bottom: 10px;">
           <h3 style="margin: 0;">DNA Storage Polling</h3>
           <sl-button
             size="small"
             style="margin-left: 12px;"
             @click=${() => this.toggleStoragePolling()}
-          >${this._storagePolling ? 'Stop Polling' : 'Start Polling'}</sl-button>
+            >${this._storagePolling ? 'Stop Polling' : 'Start Polling'}</sl-button
+          >
         </div>
         <h2 style="text-align: center;">Global Apps</h2>
         <div class="center-content" style="text-align: center;">No global apps installed.</div>
         <sl-button
           @click=${async () => {
-        await window.electronAPI.dumpNetworkStats();
-        notify(msg('Stats saved to logs folder (Help > Open Logs)'), undefined, undefined, 7000);
-      }}
+            await window.electronAPI.dumpNetworkStats();
+            notify(
+              msg('Stats saved to logs folder (Help > Open Logs)'),
+              undefined,
+              undefined,
+              7000,
+            );
+          }}
           style="margin-top: 20px;"
         >
           Dump Network Stats
@@ -1794,17 +1890,24 @@ export class DebuggingPanel extends LitElement {
         align-items: center;
       }
       .item-title {
-        width:300px;
+        width: 300px;
         align-items: center;
       }
       .item-title-sub {
-        font-weight: bold; width: 260px; padding-left: 40px;
+        font-weight: bold;
+        width: 260px;
+        padding-left: 40px;
       }
       .item-count-title {
-        font-weight: bold; text-align: right; width: 80px;
+        font-weight: bold;
+        text-align: right;
+        width: 80px;
       }
       .item-count {
-        font-weight: bold; text-align: right; width: 80px; font-size: 18px;
+        font-weight: bold;
+        text-align: right;
+        width: 80px;
+        font-size: 18px;
       }
       .item-count-detail {
         color: blue;
@@ -1813,28 +1916,28 @@ export class DebuggingPanel extends LitElement {
         width: 90px;
       }
 
-        .kv-list {
-            margin-top: 5px;
-            display: grid;
-            grid-template-columns: max-content auto;
-            gap: 4px 0;
-        }
-        .kv-list dt {
-            text-align: right;
-            height: 30px;
-            align-content: center;
-        }
-        .kv-list dd {
-            margin-left: 10px;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap:5px;
-        }
-        .kv-list dt::after {
-            content: ":";
-            margin-right: 1px;
-        }
+      .kv-list {
+        margin-top: 5px;
+        display: grid;
+        grid-template-columns: max-content auto;
+        gap: 4px 0;
+      }
+      .kv-list dt {
+        text-align: right;
+        height: 30px;
+        align-content: center;
+      }
+      .kv-list dd {
+        margin-left: 10px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 5px;
+      }
+      .kv-list dt::after {
+        content: ':';
+        margin-right: 1px;
+      }
     `,
   ];
 }

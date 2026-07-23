@@ -7,11 +7,15 @@ import {
   ToolVersionInfo,
 } from '@theweave/moss-types';
 import {
-  AgentPubKey, AppInfo, CellId, CellInfo, CellType,
+  AgentPubKey,
+  AppInfo,
+  CellId,
+  CellInfo,
+  CellType,
   decodeHashFromBase64,
   encodeHashToBase64,
   HoloHashB64,
-  ListAppsResponse
+  ListAppsResponse,
 } from '@holochain/client';
 import { AppletId, AppletHash } from '@theweave/api';
 import { Value } from '@sinclair/typebox/value';
@@ -130,7 +134,6 @@ export function getLatestVersionFromToolInfo(
     )
     .sort((version_a, version_b) => compareVersions(version_b.version, version_a.version))[0];
 }
-
 
 export function getAppStatus(app: AppInfo): string {
   if (isAppRunning(app)) {

@@ -9,5 +9,5 @@
 ```typescript
 export type PeerStatusUpdate = Record<AgentPubKeyB64, PeerStatus>;
 ```
-**References:** [PeerStatus](./api.peerstatus.md)
 
+**References:** [PeerStatus](./api.peerstatus.md)

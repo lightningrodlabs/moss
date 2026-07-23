@@ -6,7 +6,11 @@ import { EntryRecord, ZomeClient, getCellIdFromRoleName } from '@holochain-open-
 import { PostsSignal } from './types.js';
 
 export class PostsClient extends ZomeClient<PostsSignal> {
-  constructor(public client: AppClient, public roleName: string, public zomeName = 'posts') {
+  constructor(
+    public client: AppClient,
+    public roleName: string,
+    public zomeName = 'posts',
+  ) {
     super(client, roleName, zomeName);
   }
 
@@ -39,7 +43,7 @@ export class PostsClient extends ZomeClient<PostsSignal> {
   async updatePost(
     originalPostHash: ActionHash,
     previousPostHash: ActionHash,
-    updatedPost: Post
+    updatedPost: Post,
   ): Promise<EntryRecord<Post>> {
     const record: Record = await this.callZome('update_post', {
       original_post_hash: originalPostHash,

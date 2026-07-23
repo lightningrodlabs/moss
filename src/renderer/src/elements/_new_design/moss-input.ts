@@ -15,7 +15,6 @@ import { mossStyles } from '../../shared-styles.js';
 @localized()
 @customElement('moss-input')
 export class MossInput extends LitElement {
-
   render() {
     return html`
       <sl-input class="moss-input">

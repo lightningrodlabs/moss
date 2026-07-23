@@ -78,7 +78,9 @@ export class SelectGroup extends LitElement {
             id="group-selector"
             .placeholder=${msg('Select Group')}
             name="groupDnaHash"
-            style="margin-top: 16px; margin-bottom: 20px;${this.buttonWidth === 'fixed' ? 'width:263px' : ''}"
+            style="margin-top: 16px; margin-bottom: 20px;${this.buttonWidth === 'fixed'
+              ? 'width:263px'
+              : ''}"
             @click=${(e) => e.stopPropagation()}
             @sl-select=${(e: CustomEvent) => {
               this._selectedGroupDnaHash = e.detail.item.value;
@@ -94,10 +96,16 @@ export class SelectGroup extends LitElement {
             hoist
             required
           >
-            <button slot="trigger" class="install-button moss-button" style="width:${this.buttonWidth === 'auto' ? 'auto' : '100%'}">
+            <button
+              slot="trigger"
+              class="install-button moss-button"
+              style="width:${this.buttonWidth === 'auto' ? 'auto' : '100%'}"
+            >
               <div class="row center-content">
                 ${installToolIcon(20)}
-                <div style="margin-left: 10px;">${this.buttonText || msg('Install to a group space')}</div>
+                <div style="margin-left: 10px;">
+                  ${this.buttonText || msg('Install to a group space')}
+                </div>
               </div>
             </button>
             <sl-menu>

@@ -240,7 +240,9 @@ export class OverlayPocket extends LitElement {
                           ></wal-created-element>
                         `,
                       )
-                    : html`${msg('Nothing in your pocket. Watch out for pocket icons to add things to your pocket.')}`}
+                    : html`${msg(
+                        'Nothing in your pocket. Watch out for pocket icons to add things to your pocket.',
+                      )}`}
                 </div>
               `
             : html``}
@@ -310,7 +312,9 @@ export class OverlayPocket extends LitElement {
                     `,
                   )
                 : html`<div style="font-size: 20px; ${this.hoverArea ? 'display: none;' : ''}">
-                    ${msg('Nothing in your pocket. Watch out for pocket icons to add assets to your pocket.')}
+                    ${msg(
+                      'Nothing in your pocket. Watch out for pocket icons to add assets to your pocket.',
+                    )}
                   </div>`}
             </div>
           </div>

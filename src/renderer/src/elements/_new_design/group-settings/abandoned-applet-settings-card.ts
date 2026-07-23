@@ -14,7 +14,6 @@ import { BaseAppletSettingsCard } from './base-applet-settings-card.js';
 @localized()
 @customElement('abandoned-applet-settings-card')
 export class AbandonedAppletSettingsCard extends BaseAppletSettingsCard {
-
   protected renderTitleBarContent() {
     return html`
       <applet-logo
@@ -34,9 +33,7 @@ export class AbandonedAppletSettingsCard extends BaseAppletSettingsCard {
     return html`
       ${this.renderAdvancedSettingsToggle()}
       <span class="flex flex-1"></span>
-      <div class="row">
-        ${this.renderDeprecateButton()}
-      </div>
+      <div class="row">${this.renderDeprecateButton()}</div>
     `;
   }
 
@@ -44,7 +41,5 @@ export class AbandonedAppletSettingsCard extends BaseAppletSettingsCard {
     return html``;
   }
 
-  static styles = [
-    ...BaseAppletSettingsCard.styles,
-  ];
+  static styles = [...BaseAppletSettingsCard.styles];
 }

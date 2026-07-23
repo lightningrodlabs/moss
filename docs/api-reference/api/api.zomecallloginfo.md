@@ -8,8 +8,8 @@
 
 ```typescript
 export type ZomeCallLogInfo = {
-    fnName: string;
-    installedAppId: InstalledAppId;
-    durationMs: number;
+  fnName: string;
+  installedAppId: InstalledAppId;
+  durationMs: number;
 };
 ```
