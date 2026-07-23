@@ -29,12 +29,7 @@ import { Base64, fromUint8Array, toUint8Array } from 'js-base64';
 import isEqual from 'lodash-es/isEqual.js';
 
 import { AppletNotificationSettings, NotificationSettings } from './applets/types.js';
-import {
-  MessageContentPart,
-  ToolAndCurationInfo,
-  UnifiedToolEntry,
-  VersionBranchInfo,
-} from './types.js';
+import { MessageContentPart, ToolAndCurationInfo, UnifiedToolEntry, VersionBranchInfo } from './types.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { PersistedStore } from './persisted-store.js';
 import {
@@ -51,17 +46,11 @@ import { getAppletDevPort } from './electron-api.js';
 import {
   appIdFromAppletId,
   appletIdFromAppId,
-  deriveToolCompatibilityId,
-  getCellId,
+  deriveToolCompatibilityId, getCellId,
   toLowerCaseB64,
-  toOriginalCaseB64,
+  toOriginalCaseB64
 } from '@theweave/utils';
-import {
-  DeveloperCollective,
-  ToolCompatibilityId,
-  ToolVersionInfo,
-  WeaveDevConfig,
-} from '@theweave/moss-types';
+import { DeveloperCollective, ToolCompatibilityId, ToolVersionInfo, WeaveDevConfig } from '@theweave/moss-types';
 import { compareVersions, validate as validateSemver } from 'compare-versions';
 import { Md5 } from 'ts-md5';
 
@@ -69,10 +58,7 @@ import { Md5 } from 'ts-md5';
  * Custom comparison for pre-release identifiers
  * "rc" is considered later than "dev"
  */
-function comparePreReleaseIdentifiers(
-  prereleaseA: string | null,
-  prereleaseB: string | null,
-): number {
+function comparePreReleaseIdentifiers(prereleaseA: string | null, prereleaseB: string | null): number {
   if (!prereleaseA && !prereleaseB) return 0;
   if (!prereleaseA) return 1; // No prerelease is later
   if (!prereleaseB) return -1; // No prerelease is later
@@ -132,7 +118,10 @@ export function sortVersionsDescending(versions: ToolVersionInfo[]): ToolVersion
     const vB = version_b.version;
 
     // First compare the main version parts (without prerelease)
-    const mainCompare = compareVersions(vB.split('-')[0], vA.split('-')[0]);
+    const mainCompare = compareVersions(
+      vB.split('-')[0],
+      vA.split('-')[0]
+    );
 
     if (mainCompare !== 0) {
       return mainCompare;
@@ -285,7 +274,9 @@ export function getPrimaryVersionBranch(
   const branches = Array.from(unifiedEntry.versionBranches.values());
 
   // Filter out deprecated branches
-  const nonDeprecated = branches.filter((branch) => !branch.toolInfoAndVersions.deprecation);
+  const nonDeprecated = branches.filter(
+    (branch) => !branch.toolInfoAndVersions.deprecation,
+  );
 
   const candidates = nonDeprecated.length > 0 ? nonDeprecated : branches;
 
@@ -492,9 +483,7 @@ export function storeAppletNotifications(
     const existingStrings = notificationsOfSameDate.map((n) => encodeAndStringify(n));
     const newString = encodeAndStringify(notification);
     const dedupedStrings = [...new Set([...existingStrings, newString])];
-    const dedupedNotifications = dedupedStrings.map((s) =>
-      destringifyAndDecode<FrameNotification>(s),
-    );
+    const dedupedNotifications = dedupedStrings.map((s) => destringifyAndDecode<FrameNotification>(s));
     persistedStore.appletNotifications.set(dedupedNotifications, appletId, daysSinceEpoch);
   });
 
@@ -630,15 +619,11 @@ export function renderViewToQueryString(
 
   if (renderView.view) {
     base = `view=${renderView.type}&view-type=${renderView.view.type}`;
-    if (
-      renderView.type === 'applet-view' &&
-      renderView.view.type === 'main' &&
-      renderView.view.wal
-    ) {
+    if (renderView.type === 'applet-view' && renderView.view.type === 'main' && renderView.view.wal) {
       base = `${base}&hrl=${stringifyHrl(renderView.view.wal.hrl)}`;
       if (renderView.view.wal.context) {
-        const b64context = fromUint8Array(encode(renderView.view.wal.context), true);
-        base = `${base}&context=${b64context}`;
+         const b64context = fromUint8Array(encode(renderView.view.wal.context), true);
+         base = `${base}&context=${b64context}`;
       }
     }
     if (renderView.view.type === 'block') {
@@ -668,6 +653,7 @@ export function renderViewToQueryString(
 export function stringifyHrl(hrl: Hrl): string {
   return `hrl://${encodeHashToBase64(hrl[0])}/${encodeHashToBase64(hrl[1])}`;
 }
+
 
 /**
  * Fetches an image, crops it to 300x300px, compresses it to max 200KB and
@@ -1055,10 +1041,10 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
       wal,
       recordInfo: location.entryDefLocation
         ? {
-            roleName: location.dnaLocation.roleName,
-            integrityZomeName: location.entryDefLocation.integrity_zome,
-            entryType: location.entryDefLocation.entry_def,
-          }
+          roleName: location.dnaLocation.roleName,
+          integrityZomeName: location.entryDefLocation.integrity_zome,
+          entryType: location.entryDefLocation.entry_def,
+        }
         : undefined,
     },
   };
@@ -1082,12 +1068,7 @@ export async function openWalInWindow(wal: WAL, mossStore: MossStore) {
       const iframeSrc = `http://localhost:${appletDevPort}?${renderViewToQueryString(
         renderView,
       )}#${fromUint8Array(encode(iframeKind))}`;
-      return window.electronAPI.openWalWindow(
-        iframeSrc,
-        appletId,
-        encodeHashToBase64(groupHash),
-        wal,
-      );
+      return window.electronAPI.openWalWindow(iframeSrc, appletId, encodeHashToBase64(groupHash), wal);
     }
   }
   const iframeSrc = `${iframeOrigin({ type: 'applet', appletHash, groupHash, subType: 'asset' })}?${renderViewToQueryString(renderView)}`;

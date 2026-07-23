@@ -70,7 +70,10 @@ export function applyStickyAuthToken(appWs: AppWebsocket): void {
  * Centralizes the previously-duplicated logging wrappers in moss-store
  * and the applet iframe.
  */
-export function instrumentZomeCallLogging(appWs: AppWebsocket, logger: ZomeCallLogger): void {
+export function instrumentZomeCallLogging(
+  appWs: AppWebsocket,
+  logger: ZomeCallLogger,
+): void {
   const callZomePure = AppWebsocket.prototype.callZome;
   appWs.callZome = async <ReturnType>(
     request: CallZomeRequest | RoleNameCallZomeRequest,

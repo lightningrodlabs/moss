@@ -16,27 +16,34 @@ openCrossGroupMain(appletBundleId: string): void;
 
 Parameter
 
+
 </th><th>
 
 Type
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 appletBundleId
 
+
 </td><td>
 
 string
 
+
 </td><td>
+
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 void
+

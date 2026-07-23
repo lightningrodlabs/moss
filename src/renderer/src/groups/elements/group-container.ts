@@ -92,36 +92,32 @@ export class GroupContainer extends LitElement {
             width="670px"
             id="my-profile-dialog"
             @sl-hide=${() => {
-              this._myProfileSettings?.resetProfile();
-            }}
+          this._myProfileSettings?.resetProfile();
+        }}
           >
-            <span slot="header">${msg('My Profile')}</span>
-            <my-profile-settings
-              slot="content"
-              id="my-profile-settings"
-              show-group-profile
-            ></my-profile-settings>
+              <span slot="header">${msg('My Profile')}</span>
+            <my-profile-settings slot="content" id="my-profile-settings" show-group-profile></my-profile-settings>
           </moss-dialog>
           <div class="row flex-1">
             <group-area-sidebar
               class="flex"
               .selectedAppletHash=${this.selectedAppletHash()}
               @unjoined-tools-clicked=${() => {
-                if (this._groupHome) {
-                  this._groupHome.openInactiveTools();
-                  // this.dispatchEvent(
-                  //   new CustomEvent('group-selected', {
-                  //     detail: { groupDnaHash: this.groupDnaHash },
-                  //     composed: true,
-                  //   }),
-                  // );
+          if (this._groupHome) {
+            this._groupHome.openInactiveTools();
+            // this.dispatchEvent(
+            //   new CustomEvent('group-selected', {
+            //     detail: { groupDnaHash: this.groupDnaHash },
+            //     composed: true,
+            //   }),
+            // );
 
-                  // this._groupHome.selectTab('unjoined tools');
-                }
-              }}
+            // this._groupHome.selectTab('unjoined tools');
+          }
+        }}
               @my-profile-clicked=${() => {
-                this._myProfileDialog?.show();
-              }}
+          this._myProfileDialog?.show();
+        }}
             ></group-area-sidebar>
             <applet-main-views
               class="flex flex-1"
@@ -131,8 +127,8 @@ export class GroupContainer extends LitElement {
               id="group-home"
               class="group-home"
               style="flex: 1; position: relative; ${this.selectedAppletHash()
-                ? 'display: none;'
-                : ''}"
+          ? 'display: none;'
+          : ''}"
             ></group-home>
           </div>
         </moss-profile-prompt>

@@ -7,23 +7,19 @@
 **Signature:**
 
 ```typescript
-export type WeaveLocation =
-  | {
-      type: 'group';
-      dnaHash: DnaHash;
-    }
-  | {
-      type: 'applet';
-      appletHash: AppletHash;
-    }
-  | {
-      type: 'asset';
-      wal: WAL;
-    }
-  | {
-      type: 'invitation';
-      secret: string;
-    };
+export type WeaveLocation = {
+    type: 'group';
+    dnaHash: DnaHash;
+} | {
+    type: 'applet';
+    appletHash: AppletHash;
+} | {
+    type: 'asset';
+    wal: WAL;
+} | {
+    type: 'invitation';
+    secret: string;
+};
 ```
-
 **References:** [AppletHash](./api.applethash.md)<!-- -->, [WAL](./api.wal.md)
+

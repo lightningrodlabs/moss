@@ -7,13 +7,11 @@
 **Signature:**
 
 ```typescript
-export type CrossGroupView =
-  | {
-      type: 'main';
-    }
-  | {
-      type: 'block';
-      block: string;
-      context: any;
-    };
+export type CrossGroupView = {
+    type: 'main';
+} | {
+    type: 'block';
+    block: string;
+    context: any;
+};
 ```

@@ -14,16 +14,9 @@ import {
   type PeerStatusUpdate,
   type IframeKind,
   type AppletToParentMessage,
-  MossAccountability,
-  MossRole,
+  MossAccountability, MossRole,
 } from '@theweave/api';
-import {
-  AgentPubKey,
-  decodeHashFromBase64,
-  DnaHash,
-  encodeHashToBase64,
-  EntryHash,
-} from '@holochain/client';
+import { AgentPubKey, decodeHashFromBase64, DnaHash, encodeHashToBase64, EntryHash } from '@holochain/client';
 
 import { AppOpenViews } from '../layout/types.js';
 import {
@@ -136,7 +129,7 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
       return () => undefined;
     },
     onNetworkStatsUpdate(_) {
-      return () => undefined;
+        return () => undefined;
     },
     onBeforeUnload(_) {
       return () => undefined;
@@ -219,26 +212,19 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     async requestClose() {
       throw new Error('Close request is not supported in the headless WeaveClient.');
     },
-    async toolInstaller(
-      appletHash: AppletHash,
-      groupHash?: DnaHash,
-    ): Promise<AgentPubKey | undefined> {
+    async toolInstaller(appletHash: AppletHash, groupHash?: DnaHash): Promise<AgentPubKey | undefined> {
       if (!groupHash) {
-        console.warn('tool installer: missing groupHash argument');
+        console.warn("tool installer: missing groupHash argument");
         return undefined;
       }
       const groupStore = await mossStore.groupStore(groupHash);
       if (!groupStore) {
-        console.warn(
-          'tool installer: Failed to find groupStore for ' + encodeHashToBase64(groupHash),
-        );
+        console.warn("tool installer: Failed to find groupStore for " + encodeHashToBase64(groupHash))
         return undefined;
       }
       const appletRecord = await groupStore.groupClient.getPublicApplet(appletHash);
       if (!appletRecord) {
-        console.warn(
-          'tool installer: Failed to find appletRecord for ' + encodeHashToBase64(appletHash),
-        );
+        console.warn("tool installer: Failed to find appletRecord for " + encodeHashToBase64(appletHash))
         return undefined;
       }
       return appletRecord.action.author;
@@ -353,11 +339,14 @@ export async function handleAppletIframeMessage(
           applets,
           zomeCallLogging: window.__ZOME_CALL_LOGGING_ENABLED__,
         };
-        mossStore.iframeStore.registerCrossGroupIframe(source.toolCompatibilityId, {
-          id: message.id,
-          subType: message.subType,
-          source: eventSource,
-        });
+        mossStore.iframeStore.registerCrossGroupIframe(
+          source.toolCompatibilityId,
+          {
+            id: message.id,
+            subType: message.subType,
+            source: eventSource,
+          }
+        );
         return config;
       } else {
         const appletHash = source.appletHash;
@@ -381,6 +370,7 @@ export async function handleAppletIframeMessage(
           (profile) => !!profile,
         ) as GroupProfile[];
 
+
         // TODO: change this when personas and profiles is integrated
         const groupStore = Array.from(groupsStores.values())[0];
         const config: IframeConfig = {
@@ -401,11 +391,12 @@ export async function handleAppletIframeMessage(
           zomeCallLogging: window.__ZOME_CALL_LOGGING_ENABLED__,
         };
 
-        mossStore.iframeStore.registerAppletIframe(encodeHashToBase64(source.appletHash), {
-          id: message.id,
+        mossStore.iframeStore.registerAppletIframe(
+          encodeHashToBase64(source.appletHash),
+          {id: message.id,
           subType: message.subType,
-          source: eventSource,
-        });
+          source: eventSource,}
+        );
 
         return config;
       }
@@ -500,14 +491,18 @@ export async function handleAppletIframeMessage(
       validateNotifications(notifications);
 
       // Use the unified notification handler
-      await mossStore.handleNotification({ type: 'applet', appletId, appletHash }, notifications, {
-        persist: true,
-        showInFeed: true,
-        updateUnreadCount: !ignoreNotification,
-        sendOSNotification: !mainWindowFocused,
-        playSound: !ignoreNotification,
-        sourceName: appletStore?.applet.custom_name,
-      });
+      await mossStore.handleNotification(
+        { type: 'applet', appletId, appletHash },
+        notifications,
+        {
+          persist: true,
+          showInFeed: true,
+          updateUnreadCount: !ignoreNotification,
+          sendOSNotification: !mainWindowFocused,
+          playSound: !ignoreNotification,
+          sourceName: appletStore?.applet.custom_name,
+        },
+      );
       return;
     }
     case 'get-applet-info': {
@@ -519,9 +514,7 @@ export async function handleAppletIframeMessage(
           try {
             const callerStore = await toPromise(mossStore.appletStores.get(source.appletHash)!);
             callerName = `"${callerStore.applet.custom_name}" (${callerName})`;
-          } catch (_) {
-            /* use hash only */
-          }
+          } catch (_) { /* use hash only */ }
           callerDesc = callerName;
         } else {
           let toolName = source.toolCompatibilityId;
@@ -536,9 +529,7 @@ export async function handleAppletIframeMessage(
                 break;
               }
             }
-          } catch (_) {
-            /* use id only */
-          }
+          } catch (_) { /* use id only */ }
           callerDesc = `cross-group view ${toolName}`;
         }
         console.warn(
@@ -555,20 +546,15 @@ export async function handleAppletIframeMessage(
         throw new Error('Tool installer not defined for cross-group views.');
       }
       console.debug('get-tool-installer: ', message, source);
-      const groupHash = message.groupHash ? message.groupHash : source.groupHash;
+      const groupHash = message.groupHash? message.groupHash : source.groupHash;
       if (!groupHash) throw new Error('No groupHash provided for get-tool-installer.');
       const groupStores = await toPromise(mossStore.groupsForApplet.get(message.appletHash)!);
-      if (groupStores.size === 0)
-        throw new Error('No group store found for applet (get-tool-installer).');
+      if (groupStores.size === 0) throw new Error('No group store found for applet (get-tool-installer).');
       const groupStore = groupStores.get(groupHash);
-      if (!groupStore)
-        throw new Error('Requested group store not found for applet (get-tool-installer).');
+      if (!groupStore) throw new Error('Requested group store not found for applet (get-tool-installer).');
       const appletRecord = await groupStore.groupClient.getPublicApplet(message.appletHash);
       if (!appletRecord) {
-        console.warn(
-          'get-tool-installer: Failed to find appletRecord for ' +
-            encodeHashToBase64(message.appletHash),
-        );
+        console.warn("get-tool-installer: Failed to find appletRecord for " + encodeHashToBase64(message.appletHash))
         return undefined;
       }
       return appletRecord.action.author;
@@ -598,12 +584,9 @@ export async function handleAppletIframeMessage(
           const mossAccountabilities = accs.map((acc: Accountability) => {
             // Convert 'Accountability' (Zome-defined) to 'MossAccountability' (UI-defined)
             switch (acc.type) {
-              case 'Member':
-                return { role: MossRole.Member, startDate: 0 };
-              case 'Progenitor':
-                return { role: MossRole.Progenitor, startDate: 0 };
-              case 'Steward':
-                return { role: MossRole.Steward, startDate: 0 };
+              case 'Member': return { role: MossRole.Member, startDate: 0 };
+              case 'Progenitor': return { role: MossRole.Progenitor, startDate: 0 };
+              case 'Steward': return { role: MossRole.Steward, startDate: 0 };
             }
           });
           accountabilitiesPerGroup.push([store!.groupDnaHash, mossAccountabilities]);
@@ -942,9 +925,7 @@ export async function handleAppletIframeMessage(
         groupStores = Array.from(groupStoresMap.values());
       } else {
         const groupStoresMap = await toPromise(mossStore.groupsForApplet.get(source.appletHash)!);
-        groupStores = Array.from(groupStoresMap.values()).filter(
-          (store): store is GroupStore => store !== undefined,
-        );
+        groupStores = Array.from(groupStoresMap.values()).filter((store): store is GroupStore => store !== undefined);
         if (groupStores.length === 0) {
           throw new Error('No associated group found for the provided WAL.');
         }

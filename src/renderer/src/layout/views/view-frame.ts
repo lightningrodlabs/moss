@@ -106,10 +106,9 @@ export class ViewFrame extends LitElement {
   renderProductionFrame() {
     // Add groupHash to query string if available
     const queryString = renderViewToQueryString(this.renderView);
-    const groupHashParam =
-      this.iframeKind.type === 'applet' && this.iframeKind.groupHash
-        ? `&group-hash=${encodeHashToBase64(this.iframeKind.groupHash)}`
-        : '';
+    const groupHashParam = this.iframeKind.type === 'applet' && this.iframeKind.groupHash
+      ? `&group-hash=${encodeHashToBase64(this.iframeKind.groupHash)}`
+      : '';
 
     return html`<iframe
         frameborder="0"

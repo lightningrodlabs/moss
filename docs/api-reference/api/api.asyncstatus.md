@@ -7,16 +7,13 @@
 **Signature:**
 
 ```typescript
-export type AsyncStatus<T> =
-  | {
-      status: 'pending';
-    }
-  | {
-      status: 'complete';
-      value: T;
-    }
-  | {
-      status: 'error';
-      error: any;
-    };
+export type AsyncStatus<T> = {
+    status: 'pending';
+} | {
+    status: 'complete';
+    value: T;
+} | {
+    status: 'error';
+    error: any;
+};
 ```

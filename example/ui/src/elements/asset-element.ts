@@ -44,7 +44,7 @@ export class AssetElement extends LitElement {
         detail: {
           wal: this.walRelationAndTags.wal,
         },
-      }),
+      })
     );
   }
 
@@ -61,7 +61,7 @@ export class AssetElement extends LitElement {
     return html`<div
         class="column element"
         title=${`weave-0.15://hrl/${encodeHashToBase64(
-          this.walRelationAndTags.wal.hrl[0],
+          this.walRelationAndTags.wal.hrl[0]
         )}/${encodeHashToBase64(this.walRelationAndTags.wal.hrl[1])}${
           this.walRelationAndTags.wal.context
             ? `?context=${encodeContext(this.walRelationAndTags.wal.context)}`
@@ -100,7 +100,7 @@ export class AssetElement extends LitElement {
                 if (selectedTag)
                   await this.weaveClient.assets.addTagsToAssetRelation(
                     this.walRelationAndTags.relationHash,
-                    [selectedTag],
+                    [selectedTag]
                   );
               }}
               @keypress=${async (e: KeyboardEvent) => {
@@ -109,7 +109,7 @@ export class AssetElement extends LitElement {
                   if (selectedTag)
                     await this.weaveClient.assets.addTagsToAssetRelation(
                       this.walRelationAndTags.relationHash,
-                      [selectedTag],
+                      [selectedTag]
                     );
                 }
               }}
@@ -148,7 +148,7 @@ export class AssetElement extends LitElement {
                   new CustomEvent('remove-wal', {
                     bubbles: true,
                     composed: true,
-                  }),
+                  })
                 );
               }}
               @keypress=${async (e: KeyboardEvent) => {
@@ -157,7 +157,7 @@ export class AssetElement extends LitElement {
                     new CustomEvent('remove-wal', {
                       bubbles: true,
                       composed: true,
-                    }),
+                    })
                   );
                 }
               }}
@@ -177,7 +177,7 @@ export class AssetElement extends LitElement {
                       <button class="btn tag-remove-btn" @click=${() => this.removeTag(tag)}>
                         x
                       </button>
-                    </div>`,
+                    </div>`
                 )}
               </div>`
             : html``

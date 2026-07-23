@@ -6,7 +6,13 @@ import {
   RoleName,
   RoleSettingsMap,
 } from '@holochain/client';
-import { AgentApp, dhtSync, enableAndGetAgentApp, PlayerApp, Scenario } from '@holochain/tryorama';
+import {
+  AgentApp,
+  dhtSync,
+  enableAndGetAgentApp,
+  PlayerApp,
+  Scenario,
+} from '@holochain/tryorama';
 import { Accountability, StewardPermission } from '@theweave/group-client';
 import { getCellByRoleName } from '../../shared.js';
 

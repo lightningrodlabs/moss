@@ -8,14 +8,15 @@
  */
 
 import { execSync } from 'child_process';
-import { readFileSync, writeFileSync } from 'fs';
+import {readFileSync, writeFileSync} from 'fs';
+
 
 /** get assets data as json */
 async function fetchRelease(repo, tag) {
   console.log(`Fetching release ${tag} from ${repo}...`);
   try {
     const output = execSync(`gh release view ${tag} -R ${repo} --json tagName,assets`, {
-      encoding: 'utf-8',
+      encoding: 'utf-8'
     });
     return JSON.parse(output);
   } catch (error) {
@@ -26,7 +27,7 @@ async function fetchRelease(repo, tag) {
 /** */
 function parseChecksumFile(content) {
   const checksums = new Map();
-  const lines = content.split('\n').filter((line) => line.trim());
+  const lines = content.split('\n').filter(line => line.trim());
 
   for (const line of lines) {
     // Support multiple checksum formats:
@@ -55,7 +56,12 @@ function parseChecksumFile(content) {
   return checksums;
 }
 
-const binaryNameList = ['hc', 'holochain', 'lair-keystore', 'kitsune2-bootstrap-srv'];
+const binaryNameList = [
+  "hc",
+  "holochain",
+  "lair-keystore",
+  "kitsune2-bootstrap-srv",
+]
 
 function extractTargetFromFilename(filename) {
   // Common patterns for target extraction
@@ -86,6 +92,7 @@ function extractTargetFromFilename(filename) {
   return filename;
 }
 
+
 function extractBinaryName(filename, target) {
   // Remove the target and extension from filename to get the binary name
   let name = filename.replace(new RegExp(`-${target.replace('.exe', '')}.*$`), '');
@@ -95,6 +102,7 @@ function extractBinaryName(filename, target) {
 
   return name || 'unknown';
 }
+
 
 /** */
 async function main() {
@@ -131,14 +139,14 @@ async function main() {
   if (bootstrapSrvTag && bootstrapSrvTag !== tag) {
     console.log(`\nFetching kitsune2-bootstrap-srv from separate release: ${bootstrapSrvTag}`);
     const bootstrapRelease = await fetchRelease(repoArg, bootstrapSrvTag);
-    const bootstrapAssets = bootstrapRelease.assets.filter((asset) =>
-      asset.name.startsWith('kitsune2-bootstrap-srv-'),
+    const bootstrapAssets = bootstrapRelease.assets.filter(asset =>
+      asset.name.startsWith('kitsune2-bootstrap-srv-')
     );
     assets = assets.concat(bootstrapAssets);
   }
 
   const allChecksums = new Map();
-  const binaryAssets = assets.filter((asset) => {
+  const binaryAssets = assets.filter(asset => {
     for (const name of binaryNameList) {
       //console.log(`Checking for ${name} in ${asset.name}: ${asset.name.startsWith(name)}`);
       const target = extractTargetFromFilename(asset.name);
@@ -155,6 +163,7 @@ async function main() {
   const binaries = { version };
 
   for (const asset of binaryAssets) {
+
     const target = extractTargetFromFilename(asset.name);
     const binaryName = extractBinaryName(asset.name, target);
 
@@ -171,7 +180,7 @@ async function main() {
     }
 
     if (!binaries[binaryName]) {
-      binaries[binaryName] = {};
+      binaries[binaryName] = {}
       //   version: version,
       //   sha256: {}
       // };
@@ -181,19 +190,19 @@ async function main() {
   }
   const binCount = Object.keys(binaries).length - 1; // dont count version key
 
+
   const output = JSON.stringify(binaries, null, 2);
   //const repo = repoArg.split('/')[1];
   const outputFile = `holochain-checksums.json`;
 
   writeFileSync(outputFile, output);
   console.log(`\n✓ Generated ${outputFile}`);
-  console.log(
-    `\nFound ${binCount} distinct binaries for a total of ${binaryAssets.length} assets.\n`,
-  );
+  console.log(`\nFound ${binCount} distinct binaries for a total of ${binaryAssets.length} assets.\n`);
 }
 
+
 /** */
-main().catch((error) => {
+main().catch(error => {
   console.error('Error:', error.message);
   process.exit(1);
 });

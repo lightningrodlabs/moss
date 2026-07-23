@@ -24,6 +24,7 @@ export const toolSettingsStyles = [
       margin-top: 12px;
       padding-top: 12px;
       margin-left: 74px;
+      
     }
 
     .tool-name {

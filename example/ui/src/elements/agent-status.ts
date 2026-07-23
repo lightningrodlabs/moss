@@ -27,7 +27,7 @@ export class AgentStatus extends LitElement {
   peerStatuses = new StoreSubscriber(
     this,
     () => this.peerStatusStore,
-    () => [this.peerStatusStore],
+    () => [this.peerStatusStore]
   );
 
   getMyStatus() {

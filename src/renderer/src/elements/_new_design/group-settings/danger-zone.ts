@@ -231,9 +231,7 @@ export class DangerTone extends LitElement {
         <span slot="header">${msg('Clone Group')}</span>
         <div slot="content">
           <div style="margin-bottom: 16px;">
-            ${msg(
-              'Enter a name for the new group. It will be created with the same tools but the data will not be copied over.',
-            )}
+            ${msg('Enter a name for the new group. It will be created with the same tools but the data will not be copied over.')}
           </div>
           <sl-input
             autofocus
@@ -335,13 +333,13 @@ export class DangerTone extends LitElement {
           <div>
             <b
               >${msg(
-                'This will delete all your data related to this group and the Tools you joined therein from your computer.',
-              )}</b
+        'This will delete all your data related to this group and the Tools you joined therein from your computer.',
+      )}</b
             >
             <span
               >${msg(
-                'Other members of the group can keep using the group and any Tools they joined themselves.',
-              )}</span
+        'Other members of the group can keep using the group and any Tools they joined themselves.',
+      )}</span
             >
           </div>
         </div>
@@ -361,21 +359,22 @@ export class DangerTone extends LitElement {
 
   render() {
     return html`
-      ${this.renderCloneNameDialog()} ${this.renderLeaveGroupDialog()}
+      ${this.renderCloneNameDialog()}
+      ${this.renderLeaveGroupDialog()}
       <div class="column" style="margin-top: 40px;">
         <div class="row items-center" style="margin-bottom: 20px;">
           <button
             class="moss-button"
             style="min-height: 22px; min-width: 160px; padding: 8px 12px; text-align: center;"
             @click=${async () => {
-              this.dispatchEvent(
-                new CustomEvent('disable-group', {
-                  detail: this._groupStore.groupDnaHash,
-                  bubbles: true,
-                  composed: true,
-                }),
-              );
-            }}
+        this.dispatchEvent(
+          new CustomEvent('disable-group', {
+            detail: this._groupStore.groupDnaHash,
+            bubbles: true,
+            composed: true,
+          }),
+        );
+      }}
           >
             <div class="column center-content">
               <sl-icon
@@ -415,9 +414,7 @@ export class DangerTone extends LitElement {
           >
             <div class="column center-content">
               <div>${cloneIcon(20)}</div>
-              <div style="margin-top: 4px;">
-                ${this.cloning ? msg('Cloning...') : msg('Clone Group')}
-              </div>
+              <div style="margin-top: 4px;">${this.cloning ? msg('Cloning...') : msg('Clone Group')}</div>
             </div>
           </button>
           <div style="margin-left: 40px;">
@@ -457,8 +454,8 @@ export class DangerTone extends LitElement {
       }
       button.moss-button {
         min-height: 22px;
-        min-width: 160px;
-        padding: 8px 12px;
+        min-width: 160px; 
+        padding: 8px 12px; 
         text-align: center;
       }
       button.leave-group-button {

@@ -62,7 +62,7 @@ export class CreatePost extends LitElement {
           detail: {
             postHash: record.actionHash,
           },
-        }),
+        })
       );
 
       this.form.reset();

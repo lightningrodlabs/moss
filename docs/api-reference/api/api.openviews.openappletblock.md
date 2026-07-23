@@ -16,49 +16,62 @@ openAppletBlock(appletHash: EntryHash, block: string, context: any): void;
 
 Parameter
 
+
 </th><th>
 
 Type
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 appletHash
 
+
 </td><td>
 
 EntryHash
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 block
 
+
 </td><td>
 
 string
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 context
 
+
 </td><td>
 
 any
 
+
 </td><td>
+
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 void
+

@@ -10,23 +10,29 @@
 
 Class
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [AppletServices](./api.appletservices.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [WeaveClient](./api.weaveclient.md)
 
+
 </td><td>
+
 
 </td></tr>
 </tbody></table>
@@ -37,16 +43,20 @@ Description
 
 Enumeration
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [MossPrivilege](./api.mossprivilege.md)
 
+
 </td><td>
+
 
 </td></tr>
 </tbody></table>
@@ -57,86 +67,110 @@ Description
 
 Function
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [decodeContext(contextStringified)](./api.decodecontext.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [deStringifyWal(walStringified)](./api.destringifywal.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [encodeContext(context)](./api.encodecontext.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [initializeHotReload()](./api.initializehotreload.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [isWeaveContext()](./api.isweavecontext.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [stringifyHrl(hrl)](./api.stringifyhrl.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [stringifyWal(wal)](./api.stringifywal.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [weaveUrlFromAppletHash(appletHash, webPrefix)](./api.weaveurlfromapplethash.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [weaveUrlFromWal(wal, webPrefix)](./api.weaveurlfromwal.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [weaveUrlToLocation(url)](./api.weaveurltolocation.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [weaveUrlToWAL(url)](./api.weaveurltowal.md)
 
+
 </td><td>
+
 
 </td></tr>
 </tbody></table>
@@ -147,30 +181,38 @@ Description
 
 Interface
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [AssetServices](./api.assetservices.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [OpenViews](./api.openviews.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [WeaveServices](./api.weaveservices.md)
 
+
 </td><td>
+
 
 </td></tr>
 </tbody></table>
@@ -181,27 +223,33 @@ Description
 
 Variable
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [MossRole](./api.mossrole.md)
 
+
 </td><td>
 
 MossRole is a typed Enum of GroupRoles
 
+
 </td></tr>
 <tr><td>
 
-[NULL_HASH](./api.null_hash.md)
+[NULL\_HASH](./api.null_hash.md)
+
 
 </td><td>
 
 The null hash is used in case a WAL is to address a DNA only, not specific DHT content. It starts with the prefix of an EntryHash, followed by zeroes
+
 
 </td></tr>
 </tbody></table>
@@ -212,339 +260,433 @@ The null hash is used in case a WAL is to address a DNA only, not specific DHT c
 
 Type Alias
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [AppletClients](./api.appletclients.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [AppletHash](./api.applethash.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [AppletId](./api.appletid.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [AppletInfo](./api.appletinfo.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [AppletToParentMessage](./api.applettoparentmessage.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [AppletToParentRequest](./api.applettoparentrequest.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [AppletView](./api.appletview.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [AssetInfo](./api.assetinfo.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [AssetLocationAndInfo](./api.assetlocationandinfo.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [AssetStore](./api.assetstore.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [AssetStoreContent](./api.assetstorecontent.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [AsyncStatus](./api.asyncstatus.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [BlockName](./api.blockname.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [BlockType](./api.blocktype.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [CreatableName](./api.creatablename.md)
 
+
 </td><td>
 
 The name that's being used in RenderInfo to tell which creatable should be rendered
+
 
 </td></tr>
 <tr><td>
 
 [CreatableResult](./api.creatableresult.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [CreatableType](./api.creatabletype.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [CrossGroupView](./api.crossgroupview.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [FrameNotification](./api.framenotification.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [GroupProfile](./api.groupprofile.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [GroupRole](./api.grouprole.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [Hrl](./api.hrl.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [HrlB64](./api.hrlb64.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [IframeConfig](./api.iframeconfig.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [IframeKind](./api.iframekind.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [MossAccountability](./api.mossaccountability.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [MossRole](./api.mossrole.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [NotificationCount](./api.notificationcount.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [NotificationId](./api.notificationid.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [NullHash](./api.nullhash.md)
 
+
 </td><td>
 
 Hash of HoloHash length but all zeroes
+
 
 </td></tr>
 <tr><td>
 
 [OpenAssetMode](./api.openassetmode.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [OpenViewRequest](./api.openviewrequest.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [ParentToAppletMessage](./api.parenttoappletmessage.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [PeerStatus](./api.peerstatus.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [PeerStatusUpdate](./api.peerstatusupdate.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [ProfilesLocation](./api.profileslocation.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [ReadonlyPeerStatusStore](./api.readonlypeerstatusstore.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [RecordInfo](./api.recordinfo.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [RenderInfo](./api.renderinfo.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [RenderView](./api.renderview.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [UnsubscribeFunction](./api.unsubscribefunction.md)
 
+
 </td><td>
 
 Events
+
 
 </td></tr>
 <tr><td>
 
 [WAL](./api.wal.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [WalRelationAndTags](./api.walrelationandtags.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [WeaveLocation](./api.weavelocation.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [WeaveUrl](./api.weaveurl.md)
 
+
 </td><td>
 
 String of the format weave-0.15://
+
 
 </td></tr>
 <tr><td>
 
 [ZomeCallLogInfo](./api.zomecallloginfo.md)
 
+
 </td><td>
+
 
 </td></tr>
 </tbody></table>

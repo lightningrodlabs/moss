@@ -16,7 +16,7 @@ import {
   Writable,
   writable,
 } from '@holochain-open-dev/stores';
-import { GetonlyMap, pickBy, slice } from '@holochain-open-dev/utils';
+import { GetonlyMap, pickBy, slice, } from '@holochain-open-dev/utils';
 import {
   ActionHash,
   AdminWebsocket,
@@ -101,7 +101,7 @@ import {
   isAppDisabled,
   isAppRunning,
   toolCompatibilityIdFromDistInfo,
-  toolCompatibilityIdFromDistInfoString,
+  toolCompatibilityIdFromDistInfoString
 } from '@theweave/utils';
 import { Value } from '@sinclair/typebox/value';
 import {
@@ -127,7 +127,7 @@ import { notificationAudio } from './services/notification-audio.js';
 export class LazyMap<K, V> implements GetonlyMap<K, V> {
   map = new Map<K, V>();
 
-  constructor(protected newValue: (hash: K) => V) {}
+  constructor(protected newValue: (hash: K) => V) { }
 
   get(hash: K): V {
     if (!this.map.has(hash)) {
@@ -214,8 +214,7 @@ export class MossStore {
     if (iframeKind.type === 'applet') {
       appletId = encodeHashToBase64(iframeKind.appletHash);
     } else {
-      const applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]> =
-        await toPromise(this.appletsForToolId.get(iframeKind.toolCompatibilityId));
+      const applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]> = await toPromise(this.appletsForToolId.get(iframeKind.toolCompatibilityId));
       const appletIds = Object.keys(applets);
       if (appletIds.length === 0)
         throw new Error(
@@ -678,8 +677,7 @@ export class MossStore {
       allNotificationsFlattened
         .sort(
           (appletNotification_a, appletNotification_b) =>
-            appletNotification_b.notification.timestamp -
-            appletNotification_a.notification.timestamp,
+            appletNotification_b.notification.timestamp - appletNotification_a.notification.timestamp,
         )
         .slice(0, maxNotifications),
     );
@@ -713,9 +711,7 @@ export class MossStore {
           if (appletStoreReadable) {
             try {
               const appletStore = await toPromise(appletStoreReadable);
-              const unreadNotifications = this.persistedStore.appletNotificationsUnread.value(
-                source.appletId,
-              );
+              const unreadNotifications = this.persistedStore.appletNotificationsUnread.value(source.appletId);
               appletStore.setUnreadNotifications(getNotificationState(unreadNotifications));
             } catch (e) {
               console.warn('Failed to update applet notification count:', e);
@@ -734,11 +730,7 @@ export class MossStore {
       // 3. Add to activity feed
       if (options.showInFeed) {
         this._notificationFeed.update((feed) => {
-          const newNotification: MossNotification = {
-            source,
-            notification,
-            sourceName: options.sourceName,
-          };
+          const newNotification: MossNotification = { source, notification, sourceName: options.sourceName };
           return [newNotification, ...feed].sort(
             (a, b) => b.notification.timestamp - a.notification.timestamp,
           );
@@ -771,6 +763,7 @@ export class MossStore {
         notificationAudio.playForUrgency(notification.urgency, soundSettings);
       }
     }
+
   }
 
   /**
@@ -1109,9 +1102,9 @@ export class MossStore {
       const groupProfile = await toPromise(groupStore.groupProfile);
       const groupProfilePartial: GroupProfilePartial | undefined = groupProfile
         ? {
-            name: groupProfile?.name,
-            icon_src: groupProfile?.icon_src,
-          }
+          name: groupProfile?.name,
+          icon_src: groupProfile?.icon_src,
+        }
         : undefined;
       if (groupProfilePartial)
         storeGroupProfile(encodeHashToBase64(groupDnaHash), groupProfilePartial);
@@ -1193,6 +1186,7 @@ export class MossStore {
     }
   }
 
+
   /** -- Stores -- */
 
   private _previousGroupStores: DnaHashMap<GroupStore> | undefined;
@@ -1201,13 +1195,9 @@ export class MossStore {
     // Clean up old GroupStore instances (intervals + signal handlers) before creating new ones
     if (this._previousGroupStores) {
       const oldCount = Array.from(this._previousGroupStores.entries()).length;
-      console.log(
-        `[OnlineDebug] groupStores.reload(): cleaning up ${oldCount} old GroupStore instances`,
-      );
+      console.log(`[OnlineDebug] groupStores.reload(): cleaning up ${oldCount} old GroupStore instances`);
       for (const [hash, store] of this._previousGroupStores.entries()) {
-        console.log(
-          `[OnlineDebug]   - cleanup group ${encodeHashToBase64(hash).slice(0, 8)} (instance=${store._instanceId})`,
-        );
+        console.log(`[OnlineDebug]   - cleanup group ${encodeHashToBase64(hash).slice(0, 8)} (instance=${store._instanceId})`);
         store.cleanup();
       }
     } else {
@@ -1231,9 +1221,7 @@ export class MossStore {
         );
       }),
     );
-    console.log(
-      `[OnlineDebug] groupStores.reload(): created ${Array.from(groupStores.entries()).length} new GroupStore instances`,
-    );
+    console.log(`[OnlineDebug] groupStores.reload(): created ${Array.from(groupStores.entries()).length} new GroupStore instances`);
     this._previousGroupStores = groupStores;
     return groupStores;
   });
@@ -1343,19 +1331,19 @@ export class MossStore {
         appHashes =
           toolConfig.source.type === 'localhost'
             ? {
-                type: 'happ',
-                sha256: '###DEVCONFIG###',
-              }
+              type: 'happ',
+              sha256: '###DEVCONFIG###',
+            }
             : {
-                type: 'webhapp',
+              type: 'webhapp',
+              sha256: '###DEVCONFIG###',
+              happ: {
                 sha256: '###DEVCONFIG###',
-                happ: {
-                  sha256: '###DEVCONFIG###',
-                },
-                ui: {
-                  sha256: '###DEVCONFIG###',
-                },
-              };
+              },
+              ui: {
+                sha256: '###DEVCONFIG###',
+              },
+            };
 
         const uiPortString = distributionInfo.info.toolListUrl.replace('###DEVCONFIG###', '');
         if (uiPortString) {
@@ -1367,11 +1355,7 @@ export class MossStore {
         const toolList: DeveloperCollectiveToolList = await resp.json();
 
         // take all apps and add them to the list of all apps
-        const toolInfo = toolList.tools.find(
-          (tool) =>
-            tool.id === distributionInfo.info.toolId &&
-            tool.versionBranch == distributionInfo.info.versionBranch,
-        );
+        const toolInfo = toolList.tools.find((tool) => tool.id === distributionInfo.info.toolId && tool.versionBranch == distributionInfo.info.versionBranch);
         if (!toolInfo) throw new Error('No tool info found in developer collective.');
         // Filter by versions that have a valid semver version and the same sha256 as stored in the Applet entry
         const latestVersion = getLatestVersionFromToolInfo(toolInfo, applet.sha256_happ);
@@ -1598,7 +1582,7 @@ export class MossStore {
         const appletId = encodeHashToBase64(appletHash);
         const groupDnaHashes = Array.from(appletsByGroup.entries())
           .filter(([_groupDnaHash, appletsHashes]) =>
-            appletsHashes.find((hash) => encodeHashToBase64(hash) === appletId),
+            appletsHashes.find((hash) => encodeHashToBase64(hash) === appletId)
           )
           .map(([groupDnaHash, _]) => groupDnaHash);
         const groupStores = await toPromise(this.groupStores);
@@ -1628,7 +1612,7 @@ export class MossStore {
       }),
     );
     return groupsWithApplet;
-  }
+  };
 
   /**
    * --------------------------------------------------------------------------
@@ -1751,24 +1735,24 @@ export class MossStore {
     return pipe(this.hrlLocations.get(wal.hrl[0])!.get(wal.hrl[1])!, (location) =>
       location
         ? pipe(
-            this.appletStores.get(location.dnaLocation.appletHash)!,
-            (appletStore) => appletStore!.host,
-            (host) =>
-              lazyLoad(() =>
-                host
-                  ? host.getAppletAssetInfo(
-                      wal,
-                      location.entryDefLocation
-                        ? {
-                            roleName: location.dnaLocation.roleName,
-                            integrityZomeName: location.entryDefLocation.integrity_zome,
-                            entryType: location.entryDefLocation.entry_def,
-                          }
-                        : undefined,
-                    )
-                  : Promise.resolve(undefined),
-              ),
-          )
+          this.appletStores.get(location.dnaLocation.appletHash)!,
+          (appletStore) => appletStore!.host,
+          (host) =>
+            lazyLoad(() =>
+              host
+                ? host.getAppletAssetInfo(
+                  wal,
+                  location.entryDefLocation
+                    ? {
+                      roleName: location.dnaLocation.roleName,
+                      integrityZomeName: location.entryDefLocation.integrity_zome,
+                      entryType: location.entryDefLocation.entry_def,
+                    }
+                    : undefined,
+                )
+                : Promise.resolve(undefined),
+            ),
+        )
         : completed(undefined),
     );
   });
@@ -1898,10 +1882,7 @@ export class MossStore {
    */
 
   async reloadManualStores() {
-    onlineDebugLog(
-      '[OnlineDebug] reloadManualStores() called',
-      new Error().stack?.split('\n').slice(1, 4).join(' <- '),
-    );
+    onlineDebugLog('[OnlineDebug] reloadManualStores() called', new Error().stack?.split('\n').slice(1, 4).join(' <- '));
     await this.disabledGroups.reload();
     await this.groupStores.reload();
     // const groupStores = await toPromise(this.groupStores);

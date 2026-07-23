@@ -7,169 +7,131 @@
 **Signature:**
 
 ```typescript
-export type AppletToParentRequest =
-  | {
-      type: 'ready';
-    }
-  | {
-      type: 'get-iframe-config';
-      id: string;
-      subType: 'main' | 'asset' | 'block' | 'creatable';
-    }
-  | {
-      type: 'unregister-iframe';
-      id: string;
-    }
-  | {
-      type: 'get-record-info';
-      hrl: Hrl;
-    }
-  | {
-      type: 'sign-zome-call';
-      request: CallZomeRequest;
-    }
-  | {
-      type: 'log-zome-call';
-      info: ZomeCallLogInfo;
-    }
-  | {
-      type: 'open-view';
-      request: OpenViewRequest;
-    }
-  | {
-      type: 'search';
-      filter: string;
-    }
-  | {
-      type: 'notify-frame';
-      notifications: Array<FrameNotification>;
-    }
-  | {
-      type: 'get-applet-info';
-      appletHash: AppletHash;
-    }
-  | {
-      type: 'get-tool-installer';
-      appletHash: AppletHash;
-      groupHash: DnaHash | undefined;
-    }
-  | {
-      type: 'get-bootstrap-urls';
-      groupHash: DnaHash | undefined;
-    }
-  | {
-      type: 'get-group-profile';
-      groupHash: DnaHash;
-    }
-  | {
-      type: 'my-accountabilities-per-group';
-    }
-  | {
-      type: 'applet-participants';
-    }
-  | {
-      type: 'user-select-screen';
-    }
-  | {
-      type: 'toggle-pocket';
-    }
-  | {
-      type: 'update-creatable-types';
-      value: Record<CreatableName, CreatableType>;
-    }
-  | {
-      type: 'creatable-result';
-      result: CreatableResult;
-      dialogId: string;
-    }
-  | {
-      type: 'get-applet-iframe-script';
-    }
-  | {
-      type: 'request-close';
-    }
-  | {
-      type: 'send-remote-signal';
-      payload: Uint8Array;
-      toAgents?: AgentPubKey[];
-    }
-  | {
-      type: 'create-clone-cell';
-      req: CreateCloneCellRequest;
-      publicToGroupMembers: boolean;
-    }
-  | {
-      type: 'disable-clone-cell';
-      req: DisableCloneCellRequest;
-    }
-  | {
-      type: 'enable-clone-cell';
-      req: EnableCloneCellRequest;
-    }
-  /**
-   * Asset related requests
-   */
-  | {
-      type: 'asset-to-pocket';
-      wal: WAL;
-    }
-  | {
-      type: 'user-select-asset';
-      from?: 'search' | 'pocket' | 'create' | 'pocket-no-create';
-    }
-  | {
-      type: 'user-select-asset-relation-tag';
-    }
-  | {
-      type: 'get-global-asset-info';
-      wal: WAL;
-    }
-  | {
-      type: 'drag-asset';
-      wal: WAL;
-    }
-  | {
-      type: 'add-tags-to-asset';
-      wal: WAL;
-      tags: string[];
-    }
-  | {
-      type: 'remove-tags-from-asset';
-      wal: WAL;
-      tags: string[];
-    }
-  | {
-      type: 'add-asset-relation';
-      srcWal: WAL;
-      dstWal: WAL;
-      tags?: string[];
-    }
-  | {
-      type: 'remove-asset-relation';
-      relationHash: EntryHash;
-    }
-  | {
-      type: 'add-tags-to-asset-relation';
-      relationHash: EntryHash;
-      tags: string[];
-    }
-  | {
-      type: 'remove-tags-from-asset-relation';
-      relationHash: EntryHash;
-      tags: string[];
-    }
-  | {
-      type: 'get-all-asset-relation-tags';
-      crossGroup?: boolean;
-    }
-  | {
-      type: 'subscribe-to-asset-store';
-      wal: WAL;
-    }
-  | {
-      type: 'unsubscribe-from-asset-store';
-      wal: WAL;
-    };
+export type AppletToParentRequest = {
+    type: 'ready';
+} | {
+    type: 'get-iframe-config';
+    id: string;
+    subType: 'main' | 'asset' | 'block' | 'creatable';
+} | {
+    type: 'unregister-iframe';
+    id: string;
+} | {
+    type: 'get-record-info';
+    hrl: Hrl;
+} | {
+    type: 'sign-zome-call';
+    request: CallZomeRequest;
+} | {
+    type: 'log-zome-call';
+    info: ZomeCallLogInfo;
+} | {
+    type: 'open-view';
+    request: OpenViewRequest;
+} | {
+    type: 'search';
+    filter: string;
+} | {
+    type: 'notify-frame';
+    notifications: Array<FrameNotification>;
+} | {
+    type: 'get-applet-info';
+    appletHash: AppletHash;
+} | {
+    type: 'get-tool-installer';
+    appletHash: AppletHash;
+    groupHash: DnaHash | undefined;
+} | {
+    type: 'get-bootstrap-urls';
+    groupHash: DnaHash | undefined;
+} | {
+    type: 'get-group-profile';
+    groupHash: DnaHash;
+} | {
+    type: 'my-accountabilities-per-group';
+} | {
+    type: 'applet-participants';
+} | {
+    type: 'user-select-screen';
+} | {
+    type: 'toggle-pocket';
+} | {
+    type: 'update-creatable-types';
+    value: Record<CreatableName, CreatableType>;
+} | {
+    type: 'creatable-result';
+    result: CreatableResult;
+    dialogId: string;
+} | {
+    type: 'get-applet-iframe-script';
+} | {
+    type: 'request-close';
+} | {
+    type: 'send-remote-signal';
+    payload: Uint8Array;
+    toAgents?: AgentPubKey[];
+} | {
+    type: 'create-clone-cell';
+    req: CreateCloneCellRequest;
+    publicToGroupMembers: boolean;
+} | {
+    type: 'disable-clone-cell';
+    req: DisableCloneCellRequest;
+} | {
+    type: 'enable-clone-cell';
+    req: EnableCloneCellRequest;
+}
+/**
+ * Asset related requests
+ */
+ | {
+    type: 'asset-to-pocket';
+    wal: WAL;
+} | {
+    type: 'user-select-asset';
+    from?: 'search' | 'pocket' | 'create' | 'pocket-no-create';
+} | {
+    type: 'user-select-asset-relation-tag';
+} | {
+    type: 'get-global-asset-info';
+    wal: WAL;
+} | {
+    type: 'drag-asset';
+    wal: WAL;
+} | {
+    type: 'add-tags-to-asset';
+    wal: WAL;
+    tags: string[];
+} | {
+    type: 'remove-tags-from-asset';
+    wal: WAL;
+    tags: string[];
+} | {
+    type: 'add-asset-relation';
+    srcWal: WAL;
+    dstWal: WAL;
+    tags?: string[];
+} | {
+    type: 'remove-asset-relation';
+    relationHash: EntryHash;
+} | {
+    type: 'add-tags-to-asset-relation';
+    relationHash: EntryHash;
+    tags: string[];
+} | {
+    type: 'remove-tags-from-asset-relation';
+    relationHash: EntryHash;
+    tags: string[];
+} | {
+    type: 'get-all-asset-relation-tags';
+    crossGroup?: boolean;
+} | {
+    type: 'subscribe-to-asset-store';
+    wal: WAL;
+} | {
+    type: 'unsubscribe-from-asset-store';
+    wal: WAL;
+};
 ```
-
 **References:** [Hrl](./api.hrl.md)<!-- -->, [ZomeCallLogInfo](./api.zomecallloginfo.md)<!-- -->, [OpenViewRequest](./api.openviewrequest.md)<!-- -->, [FrameNotification](./api.framenotification.md)<!-- -->, [AppletHash](./api.applethash.md)<!-- -->, [CreatableName](./api.creatablename.md)<!-- -->, [CreatableType](./api.creatabletype.md)<!-- -->, [CreatableResult](./api.creatableresult.md)<!-- -->, [WAL](./api.wal.md)
+

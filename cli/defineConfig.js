@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 // Note: This file is also being used by the dev cli
-Object.defineProperty(exports, '__esModule', { value: true });
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.defineConfig = defineConfig;
 /**
  * Define a configuration file to run We in development modes with groups
@@ -10,5 +10,5 @@ exports.defineConfig = defineConfig;
  * @returns
  */
 function defineConfig(config) {
-  return config;
+    return config;
 }

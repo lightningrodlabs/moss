@@ -9,5 +9,5 @@
 ```typescript
 export type AssetStore = Readable<AsyncStatus<AssetStoreContent>>;
 ```
-
 **References:** [AsyncStatus](./api.asyncstatus.md)<!-- -->, [AssetStoreContent](./api.assetstorecontent.md)
+

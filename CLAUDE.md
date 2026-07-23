@@ -10,12 +10,12 @@ Moss is a Holochain-based runtime for composable peer-to-peer collaboration tool
 
 ## Requirements, Tradeoffs & Dev Instructions
 
-0. When reporting on status, or asking questions don't add the emotional tags at the beginning and end of phrases, (you can tell you are doing this if there's an exclamation point at the end of the phrase/sentence). Just code related information.
+0. When reporting on status, or asking questions don't add the emotional tags at the beginning and end of phrases, (you can tell you are doing this if there's an exclamation point at the end of the phrase/sentence).  Just code related information.
 1. Each step of the process must be built using test-driven development practices such that CI can confirm no regressions before merging a PR
 2. Perfect is the enemy of the good. This plan should not be implemented to the highest possible standard of efficiency or robustness, but rather in a way that allows for reaching the functionality goals in reasonable time, and iterating on quality goals over time.
 3. Don't add claude co-authored/generated messages in commit descriptions
 4. **Strong typing**: when possible allways use strong typing in typescript.
-5. **Holochain reference sources**: We are using Holochain 0.6. The source for this is local and lives at the same level as this repo. DO NOT USE .cargo files or web searches to research holochain, just look locally.
+5. **Holochain reference sources**: We are using Holochain 0.6.  The source for this is local and lives at the same level as this repo. DO NOT USE .cargo files or web searches to research holochain, just look locally.
 
 ## Development Commands
 
@@ -52,7 +52,6 @@ yarn applet-dev         # uses weave.dev.config.ts
 ```
 
 Development mode starts:
-
 - Two `@theweave/api` and `@theweave/elements` watchers for hot-reload
 - Vite dev server for example applet UI on port 8888
 - Multiple Electron instances (one per agent) with dev config
@@ -108,7 +107,6 @@ Moss uses `@lit/localize` for internationalization. UI strings are marked with `
 **Supported languages**: English (source), German (de), French (fr), Spanish (es), Turkish (tr)
 
 **Key files**:
-
 - `src/renderer/lit-localize.json` - Configuration for lit-localize
 - `src/renderer/src/locales/localization.ts` - Runtime locale management
 - `src/renderer/src/locales/generated/` - Generated translation modules (do not edit directly)
@@ -117,7 +115,6 @@ Moss uses `@lit/localize` for internationalization. UI strings are marked with `
 #### Adding/Changing/Deleting Strings
 
 1. **Mark strings for translation** in your component:
-
    ```typescript
    import { msg } from '@lit/localize';
    import { localized } from '@lit/localize';
@@ -132,11 +129,9 @@ Moss uses `@lit/localize` for internationalization. UI strings are marked with `
    ```
 
 2. **Extract strings** to XLIFF files:
-
    ```bash
    cd src/renderer && npx lit-localize extract
    ```
-
    This scans all source files for `msg()` calls and updates the XLIFF files with new/changed strings.
 
 3. **Add translations** to each XLIFF file (`src/renderer/xliff/*.xlf`):
@@ -151,11 +146,9 @@ Moss uses `@lit/localize` for internationalization. UI strings are marked with `
      ```
 
 4. **Build translations** to generate TypeScript modules:
-
    ```bash
    cd src/renderer && npx lit-localize build
    ```
-
    This generates/updates files in `src/renderer/src/locales/generated/`.
 
 5. **Verify** the build succeeds:
@@ -188,7 +181,6 @@ yarn link:libs
 ### Electron Application Structure
 
 **Main Process** (`src/main/`):
-
 - `filesystem.ts` - Manages profile directories, app storage, UI/happ assets
 - `holochainManager.ts` - Controls Holochain conductor subprocess lifecycle
 - `lairManager.ts` - Manages lair-keystore subprocess for cryptographic signing
@@ -196,21 +188,18 @@ yarn link:libs
 - Uses `@lightningrodlabs/we-rust-utils` for native functionality
 
 **Renderer Process** (`src/renderer/src/`):
-
 - `moss-store.ts` - Central reactive store (groups, applets, tool library)
 - `layout/` - View components (group containers, applet frames)
 - `applets/applet-host.ts` - Applet iframe lifecycle management
 - Built with LitElement and @holochain-open-dev/stores
 
 **Iframes** (`iframes/`):
-
 - `applet-iframe/` - Entry point injected into all applets, creates WeaveClient instance
 - `happ-iframe/` - Minimal iframe for happ-only tools (no UI)
 
 ### Holochain Integration
 
 **DNAs** (`dnas/`):
-
 - `group/` - Core group management DNA with coordinator/integrity zomes
   - Manages applet registry, agent permissions, custom views
   - Each group has unique network seed (private p2p network)
@@ -218,7 +207,6 @@ yarn link:libs
 - Each DNA cell is identified by `applet#<sha256(networkSeed)>#<hash>`
 
 **Connections**:
-
 - Admin WebSocket: Port 65432 (conductor management)
 - App WebSocket: Port 65433 (zome calls)
 - Conductor config stored per profile in `~/.config/Moss/profiles/[profile]/`
@@ -228,25 +216,21 @@ yarn link:libs
 The repository is a yarn monorepo with workspaces:
 
 **`libs/`** - Core TypeScript libraries:
-
 - `api/` - `@theweave/api` - Applet API (WeaveClient, types, messaging)
 - `elements/` - `@theweave/elements` - Reusable web components
 - `grapesjs/` - Visual editor integration
 
 **`shared/`** - Holochain client libraries:
-
 - `group-client/` - `@theweave/group-client` - Group DNA client
 - `tool-library-client/` - Tool discovery/installation
 - `types/` - `@theweave/moss-types` - Shared TypeScript types
 - `utils/` - `@theweave/utils` - Utility functions
 
 **`crates/`** - Rust utilities (not zomes):
-
 - `moss_helpers/` - Helper functions
 - `hrl_locator/` - HRL (Holochain Resource Locator) utilities
 
 **`example/`** - Development test applet:
-
 - `dnas/` - Example forum DNA with posts
 - `ui/` - Example applet UI using @theweave/api
 
@@ -292,7 +276,6 @@ defineConfig({
 ```
 
 **Types of sources**:
-
 - `filesystem` - Load from `.webhapp` file
 - `localhost` - Hot-reload mode (separate .happ file + dev server port)
 - `https` - Remote URL
@@ -315,13 +298,11 @@ logs/                         # Application logs
 ## Build System
 
 **electron-vite** configuration (`electron.vite.config.ts`):
-
 - Main process: Bundles with external deps excluded (except specific packages)
 - Preload: Multiple entry points (admin, splashscreen, walwindow, selectmediasource)
 - Renderer: Multiple HTML entry points with Shoelace assets copied
 
 **Rust compilation**:
-
 ```bash
 RUSTFLAGS="--cfg getrandom_backend=\"custom\"" \
   cargo build --release --target wasm32-unknown-unknown --workspace
@@ -332,28 +313,23 @@ Zomes are compiled to WASM32 target and packaged into `.happ` files using the `h
 ## Key Files to Understand
 
 ### Entry Points
-
 - `src/main/index.ts` - Main process entry, IPC handlers
 - `src/renderer/src/index.ts` - Renderer entry
 - `iframes/applet-iframe/src/index.ts` - Applet iframe entry, WeaveClient initialization
 
 ### Core State Management
-
 - `src/renderer/src/moss-store.ts` - Central application state
 - `libs/api/src/api.ts` - WeaveClient API (what applets use)
 
 ### Lifecycle and Views
-
 - `src/renderer/src/layout/views/view-frame.ts` - Applet lifecycle state machine
 - `src/renderer/src/applets/applet-host.ts` - Applet iframe hosting
 
 ### Holochain Integration
-
 - `src/main/holochainManager.ts` - Conductor management
 - `shared/group-client/src/group-client.ts` - Group DNA client
 
 ### Configuration
-
 - `cli/defineConfig.ts` - Dev config schema
 - `moss.config.json` - Runtime configuration (ports, bootstrap URLs)
 
@@ -362,7 +338,6 @@ Zomes are compiled to WASM32 target and packaged into `.happ` files using the `h
 Documentation for building Moss tools: https://dev.theweave.social/build/overview.html
 
 **Key requirements**:
-
 - `weave.config.json` - Applet metadata file
 - Implement `@theweave/api` interface
 - Use `WeaveClient` for Moss integration
@@ -375,33 +350,27 @@ The project fetches specific Holochain and lair-keystore binaries from https://g
 ## Common Patterns
 
 ### IPC Communication
-
 Main process exposes handlers via `window.electronAPI` in preload scripts. Renderer calls handlers like:
-
 ```typescript
 window.electronAPI.installAppletBundle(...)
 window.electronAPI.signZomeCall(...)
 ```
 
 ### Reactive Stores
-
 Uses `@holochain-open-dev/stores` pattern:
-
 ```typescript
 const store = new LazyStore(async () => {
   // async initialization
   return data;
 });
 
-subscribe(store, (value) => {
+subscribe(store, value => {
   // react to changes
 });
 ```
 
 ### Applet Communication
-
 Applets use message passing via `WeaveClient`:
-
 ```typescript
 const client = await WeaveClient.connect();
 client.on('message', (message) => {

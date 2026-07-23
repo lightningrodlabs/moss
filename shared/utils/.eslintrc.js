@@ -22,6 +22,6 @@ module.exports = {
     'import/named': 'off',
     'import/no-unresolved': 'off',
     'import/extensions': 'off',
-    'prefer-const': 'off',
+    'prefer-const': 'off'
   },
 };

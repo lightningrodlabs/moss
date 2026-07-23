@@ -21,7 +21,11 @@ import { ALWAYS_ONLINE_TAG } from '@theweave/group-client';
 
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { appIdFromAppletHash, isAppRunning } from '@theweave/utils';
-import { dnaHashForCell, getCellNetworkSeed, getProvisionedCells } from '../../../utils.js';
+import {
+  dnaHashForCell,
+  getCellNetworkSeed,
+  getProvisionedCells,
+} from '../../../utils.js';
 import { chevronSingleDownIcon, chevronSingleUpIcon } from '../icons.js';
 import { BaseAppletSettingsCard } from './base-applet-settings-card.js';
 import {
@@ -72,9 +76,7 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
       const appId = appIdFromAppletHash(this.appletHash);
       const result = await setDevUiOverride(appId, webhappPath);
       if (!result.happHashMatch) {
-        notify(
-          msg('Warning: DNA hash mismatch. The UI may not work correctly with the current data.'),
-        );
+        notify(msg('Warning: DNA hash mismatch. The UI may not work correctly with the current data.'));
       }
       this._hasDevOverride = true;
       notify(msg('Dev UI override applied. Reload the tool to see the new UI.'));
@@ -164,114 +166,95 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
     }
   }
 
+
+
   renderMetaSettings() {
     if (this.groupAppletsMetaData.value.status === 'error') {
       console.log('Failed to get group applets metadata: ', this.groupAppletsMetaData.value.error);
     }
     const isSteward = this.groupAppletsMetaData.value.status === 'complete' && this.amIPrivileged();
-    const alwaysOnlineEnabled =
-      this.groupAppletsMetaData.value.status === 'complete'
-        ? this.alwaysOnlineNodesShouldInstall(this.groupAppletsMetaData.value.value)
-        : false;
+    const alwaysOnlineEnabled = this.groupAppletsMetaData.value.status === 'complete'
+      ? this.alwaysOnlineNodesShouldInstall(this.groupAppletsMetaData.value.value)
+      : false;
 
     return html`
       <!-- Cells -->
-      <div style="margin-top: 5px; margin-bottom: 3px; color:#89D6AA">// Cells:</div>
+      <div style="margin-top: 5px; margin-bottom: 3px; color:#89D6AA">
+        // Cells:
+      </div>
       <div>
         ${this.appInfo
-          ? getProvisionedCells(this.appInfo).map(
-              ([roleName, cellInfo]) => html`
-                <div class="column cell-card">
-                  <div class="row" style="justify-content: flex-start;">
-                    <span><b>${roleName} </b></span><br />
+        ? getProvisionedCells(this.appInfo).map(
+          ([roleName, cellInfo]) => html`
+                  <div class="column cell-card">
+                    <div class="row" style="justify-content: flex-start;">
+                      <span><b>${roleName} </b></span><br />
+                    </div>
+                    <div class="row  items-center" style="margin-bottom: 3px;">
+                      DNA hash: <copy-hash styles="color:#E7EEC4;font-size:12px;" .hash=${dnaHashForCell(cellInfo)}></copy-hash>
+                    </div>
+                    <div class="row items-center" style="margin-bottom: 4px;">
+                      network seed: <copy-hash styles="color:#E7EEC4;font-size:12px;" .hash=${getCellNetworkSeed(cellInfo)}></copy-hash>
+                    </div>
                   </div>
-                  <div class="row  items-center" style="margin-bottom: 3px;">
-                    DNA hash:
-                    <copy-hash
-                      styles="color:#E7EEC4;font-size:12px;"
-                      .hash=${dnaHashForCell(cellInfo)}
-                    ></copy-hash>
-                  </div>
-                  <div class="row items-center" style="margin-bottom: 4px;">
-                    network seed:
-                    <copy-hash
-                      styles="color:#E7EEC4;font-size:12px;"
-                      .hash=${getCellNetworkSeed(cellInfo)}
-                    ></copy-hash>
-                  </div>
-                </div>
-              `,
-            )
-          : html``}
+                `,
+        )
+        : html``}
 
-        <div class="row items-center">
-          ${isSteward
-            ? html`
-                <sl-switch
-                  style="--sl-color-primary-600: #89D6AA; margin-bottom: 5px;"
-                  size="large"
-                  ?checked=${alwaysOnlineEnabled}
-                  @sl-change=${async () => this.toggleAlwaysOnlineNodesSetting()}
-                >
-                </sl-switch>
-                <span>${msg('Allways-online nodes should install this tool by default')}</span>
-              `
-            : html`
-                <span style="margin-right: 5px;"
-                  >${alwaysOnlineEnabled ? msg('Enabled') : msg('Disabled')}:</span
-                >
-                <span>${msg('Allways-online nodes should install this tool by default')}</span>
-              `}
-        </div>
+          <div class="row items-center">
+            ${isSteward
+        ? html`
+                  <sl-switch
+                    style="--sl-color-primary-600: #89D6AA; margin-bottom: 5px;"
+                    size="large"
+                    ?checked=${alwaysOnlineEnabled}
+                    @sl-change=${async () => this.toggleAlwaysOnlineNodesSetting()}
+                  >
+                  </sl-switch>
+                  <span>${msg('Allways-online nodes should install this tool by default')}</span>
+                `
+        : html`
+                  <span style="margin-right: 5px;">${alwaysOnlineEnabled ? msg('Enabled') : msg('Disabled')}:</span>
+                  <span>${msg('Allways-online nodes should install this tool by default')}</span>
+                `}
+          </div>
 
-        ${isSteward
-          ? html`
-              <div class="row items-center" style="margin-top: 8px;">
-                <span>${msg('Dev UI Override')}</span>
-                <span style="flex: 1;"></span>
-                ${this._devOverrideLoading
-                  ? html`<sl-spinner style="margin-right: 8px;"></sl-spinner>`
-                  : this._hasDevOverride
-                    ? html`
-                        <span class="dev-override-badge">${msg('DEV')}</span>
-                        <sl-button
-                          variant="warning"
-                          size="small"
-                          style="margin-left: 8px;"
-                          @click=${(e: MouseEvent) => {
-                            e.stopPropagation();
-                            this.applyDevUiOverride();
-                          }}
-                          >${msg('Replace')}</sl-button
-                        >
-                        <sl-button
-                          variant="neutral"
-                          size="small"
-                          style="margin-left: 8px;"
-                          @click=${(e: MouseEvent) => {
-                            e.stopPropagation();
-                            this.removeDevUiOverride();
-                          }}
-                          >${msg('Clear Override')}</sl-button
-                        >
-                      `
-                    : html`
-                        <sl-button
-                          variant="neutral"
-                          size="small"
-                          @click=${(e: MouseEvent) => {
-                            e.stopPropagation();
-                            this.applyDevUiOverride();
-                          }}
-                          >${msg('Override from .webhapp')}</sl-button
-                        >
-                      `}
-              </div>
-            `
-          : html``}
+          ${isSteward ? html`
+            <div class="row items-center" style="margin-top: 8px;">
+              <span>${msg('Dev UI Override')}</span>
+              <span style="flex: 1;"></span>
+              ${this._devOverrideLoading
+                ? html`<sl-spinner style="margin-right: 8px;"></sl-spinner>`
+                : this._hasDevOverride
+                  ? html`
+                      <span class="dev-override-badge">${msg('DEV')}</span>
+                      <sl-button
+                        variant="warning"
+                        size="small"
+                        style="margin-left: 8px;"
+                        @click=${(e: MouseEvent) => { e.stopPropagation(); this.applyDevUiOverride(); }}
+                      >${msg('Replace')}</sl-button>
+                      <sl-button
+                        variant="neutral"
+                        size="small"
+                        style="margin-left: 8px;"
+                        @click=${(e: MouseEvent) => { e.stopPropagation(); this.removeDevUiOverride(); }}
+                      >${msg('Clear Override')}</sl-button>
+                    `
+                  : html`
+                      <sl-button
+                        variant="neutral"
+                        size="small"
+                        @click=${(e: MouseEvent) => { e.stopPropagation(); this.applyDevUiOverride(); }}
+                      >${msg('Override from .webhapp')}</sl-button>
+                    `
+              }
+            </div>
+          ` : html``}
       </div>
     `;
   }
+
 
   render() {
     if (!this.appInfo) return html``;
@@ -301,8 +284,8 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
       </span>
       <sl-tooltip
         .content=${this.appInfo && isAppRunning(this.appInfo)
-          ? msg('Disable the app for yourself')
-          : msg('Enable')}
+        ? msg('Disable the app for yourself')
+        : msg('Enable')}
       >
         <sl-switch
           style="--sl-color-primary-600: #35bf20; margin-bottom: 5px;"
@@ -310,21 +293,21 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
           ?checked=${this.appInfo && isAppRunning(this.appInfo)}
           ?disabled=${!this.appInfo}
           @sl-change=${async () => {
-            if (this.appInfo && isAppRunning(this.appInfo)) {
-              await this.mossStore.disableApplet(this.appletHash);
-              this.dispatchEvent(
-                new CustomEvent('applets-disabled', {
-                  detail: [this.appletHash],
-                  bubbles: true,
-                  composed: true,
-                }),
-              );
-              notify(msg('Tool disabled.'));
-            } else if (this.appInfo && !isAppRunning(this.appInfo)) {
-              await this.mossStore.enableApplet(this.appletHash);
-              notify(msg('Tool enabled.'));
-            }
-          }}
+        if (this.appInfo && isAppRunning(this.appInfo)) {
+          await this.mossStore.disableApplet(this.appletHash);
+          this.dispatchEvent(
+            new CustomEvent('applets-disabled', {
+              detail: [this.appletHash],
+              bubbles: true,
+              composed: true,
+            }),
+          );
+          notify(msg('Tool disabled.'));
+        } else if (this.appInfo && !isAppRunning(this.appInfo)) {
+          await this.mossStore.enableApplet(this.appletHash);
+          notify(msg('Tool enabled.'));
+        }
+      }}
         >
         </sl-switch>
       </sl-tooltip>
@@ -347,10 +330,10 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
             style=" margin-right:8px;"
             @click=${() => this.uninstallApplet()}
             @keypress=${(e: KeyboardEvent) => {
-              if (e.key === 'Enter') {
-                this.uninstallApplet();
-              }
-            }}
+        if (e.key === 'Enter') {
+          this.uninstallApplet();
+        }
+      }}
           >
             <div class="row center-content">
               <sl-icon
@@ -369,7 +352,9 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
 
   protected renderAdvancedSectionContent() {
     if (!this.appInfo) return html``;
-    return html` ${this.renderMetaSettings()} `;
+    return html`
+      ${this.renderMetaSettings()}
+    `;
   }
 
   static styles = [

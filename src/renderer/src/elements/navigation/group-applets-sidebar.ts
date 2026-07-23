@@ -1,11 +1,4 @@
-import {
-  AsyncReadable,
-  pipe,
-  Readable,
-  sliceAndJoin,
-  StoreSubscriber,
-  writable,
-} from '@holochain-open-dev/stores';
+import { AsyncReadable, pipe, Readable, sliceAndJoin, StoreSubscriber, writable } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
@@ -32,7 +25,7 @@ import { mdiHome } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { repeat } from 'lit/directives/repeat.js';
 import { PersistedStore } from '../../persisted-store.js';
-import { GetonlyMap } from '@holochain-open-dev/utils';
+import {GetonlyMap} from "@holochain-open-dev/utils";
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -59,8 +52,7 @@ export class GroupAppletsSidebar extends LitElement {
 
   _groupNotifications = new StoreSubscriber(
     this,
-    () =>
-      this._groupStore?.unreadGroupNotifications() ?? GroupAppletsSidebar._emptyGroupNotifications,
+    () => this._groupStore?.unreadGroupNotifications() ?? GroupAppletsSidebar._emptyGroupNotifications,
     () => [this._groupStore],
   );
 
@@ -273,9 +265,7 @@ export class GroupAppletsSidebar extends LitElement {
       >
         <div class="moss-item-button" style="position: relative;">
           ${badgeUrgency && badgeUrgency !== 'low' && badgeCount
-            ? html`<div class="home-notification-badge ${badgeCount > 9 ? 'padded' : ''}">
-                ${badgeCount}
-              </div>`
+            ? html`<div class="home-notification-badge ${badgeCount > 9 ? 'padded' : ''}">${badgeCount}</div>`
             : html``}
           <sl-icon .src=${wrapPathInSvg(mdiHome)} style="font-size: 40px;"></sl-icon>
         </div>

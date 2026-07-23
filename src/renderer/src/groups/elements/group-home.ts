@@ -61,7 +61,11 @@ import { GroupStore } from '../group-store.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { mossStyles } from '../../shared-styles.js';
-import { DistributionInfo, TDistributionInfo, ToolInfoAndVersions } from '@theweave/moss-types';
+import {
+  DistributionInfo,
+  TDistributionInfo,
+  ToolInfoAndVersions,
+} from '@theweave/moss-types';
 import { Applet, AppletAgent } from '../../../../../shared/group-client/dist/index.js';
 import { markdownParseSafe } from '../../utils.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
@@ -72,13 +76,13 @@ import { editIcon, closeIcon, saveIcon, personPlusIcon } from '../../elements/_n
 
 type View =
   | {
-      view: 'main';
-    }
+    view: 'main';
+  }
   | { view: 'create-custom-view' }
   | {
-      view: 'edit-custom-view';
-      customViewHash: ActionHash;
-    };
+    view: 'edit-custom-view';
+    customViewHash: ActionHash;
+  };
 
 @localized()
 @customElement('group-home')
@@ -178,47 +182,51 @@ export class GroupHome extends LitElement {
     () =>
       pipe(this._groupStore.unjoinedApplets, async (appletsAndKeys) =>
         Promise.all(
-          Array.from(appletsAndKeys.entries()).map(async ([appletHash, [agentKey, timestamp]]) => {
-            let appletEntry: Applet | undefined;
-            try {
-              appletEntry = await toPromise(this._groupStore.applets.get(appletHash)!);
-            } catch (e) {
-              console.warn('@group-home @unjoined-applets: Failed to get appletEntry: ', e);
-            }
-            let toolInfoAndVersions: ToolInfoAndVersions | undefined;
-            if (appletEntry) {
-              const distributionInfo: DistributionInfo = JSON.parse(appletEntry.distribution_info);
-              Value.Assert(TDistributionInfo, distributionInfo);
-              if (distributionInfo.type === 'web2-tool-list') {
-                toolInfoAndVersions = await this.mossStore.toolInfoFromRemote(
-                  distributionInfo.info.toolListUrl,
-                  distributionInfo.info.toolId,
-                  distributionInfo.info.versionBranch,
-                );
+          Array.from(appletsAndKeys.entries()).map(
+            async ([appletHash, [agentKey, timestamp]]) => {
+              let appletEntry: Applet | undefined;
+              try {
+                appletEntry = await toPromise(this._groupStore.applets.get(appletHash)!);
+              } catch (e) {
+                console.warn('@group-home @unjoined-applets: Failed to get appletEntry: ', e);
               }
-            }
-            let joinedMembers: AppletAgent[] = [];
-            try {
-              joinedMembers = await toPromise(this._groupStore.joinedAppletAgents.get(appletHash)!);
-            } catch (e) {
-              console.warn('@group-home: Failed to get joined members: ', e);
-            }
-            return [
-              appletHash,
-              appletEntry,
-              toolInfoAndVersions,
-              agentKey,
-              timestamp,
-              joinedMembers,
-            ] as [
-              AppletHash,
-              Applet | undefined,
-              ToolInfoAndVersions | undefined,
-              AgentPubKey,
-              number,
-              AppletAgent[],
-            ];
-          }),
+              let toolInfoAndVersions: ToolInfoAndVersions | undefined;
+              if (appletEntry) {
+                const distributionInfo: DistributionInfo = JSON.parse(
+                  appletEntry.distribution_info,
+                );
+                Value.Assert(TDistributionInfo, distributionInfo);
+                if (distributionInfo.type === 'web2-tool-list') {
+                  toolInfoAndVersions = await this.mossStore.toolInfoFromRemote(
+                    distributionInfo.info.toolListUrl,
+                    distributionInfo.info.toolId,
+                    distributionInfo.info.versionBranch,
+                  );
+                }
+              }
+              let joinedMembers: AppletAgent[] = [];
+              try {
+                joinedMembers = await toPromise(this._groupStore.joinedAppletAgents.get(appletHash)!);
+              } catch (e) {
+                console.warn('@group-home: Failed to get joined members: ', e);
+              }
+              return [
+                appletHash,
+                appletEntry,
+                toolInfoAndVersions,
+                agentKey,
+                timestamp,
+                joinedMembers,
+              ] as [
+                  AppletHash,
+                  Applet | undefined,
+                  ToolInfoAndVersions | undefined,
+                  AgentPubKey,
+                  number,
+                  AppletAgent[],
+                ];
+            },
+          ),
         ),
       ),
     () => [this._groupStore, this.mossStore],
@@ -353,10 +361,10 @@ export class GroupHome extends LitElement {
         width="490px"
         headerAlign="center"
         @sl-request-close=${(e) => {
-          if (this._uninstalling) {
-            e.preventDefault();
-          }
-        }}
+        if (this._uninstalling) {
+          e.preventDefault();
+        }
+      }}
       >
         <span slot="header"
           >${msg('Uninstalling')} ${this._appletToUninstall.name}
@@ -369,8 +377,8 @@ export class GroupHome extends LitElement {
 
           <div style="font-size: 14px; color: #C35C1D; margin-bottom: 15px; max-width: 400px;">
             ${msg(
-              'You will not be able to use this app anymore, but your group will keep using it until a Steward deprecates it for everyone.',
-            )}
+        'You will not be able to use this app anymore, but your group will keep using it until a Steward deprecates it for everyone.',
+      )}
           </div>
 
           <div style="font-size: 16px; margin-bottom: 30px;">
@@ -550,16 +558,26 @@ export class GroupHome extends LitElement {
 
     // Process and cache
     const filteredApplets = this._unjoinedApplets.value.value
-      .filter(([appletHash, _]) => !this._recentlyJoined.includes(encodeHashToBase64(appletHash)))
+      .filter(
+        ([appletHash, _]) => !this._recentlyJoined.includes(encodeHashToBase64(appletHash)),
+      )
       .map(
-        ([appletHash, appletEntry, toolInfoAndVersions, agentKey, timestamp, joinedMembers]) => ({
+        ([
           appletHash,
           appletEntry,
           toolInfoAndVersions,
           agentKey,
           timestamp,
           joinedMembers,
-          isIgnored: !!ignoredApplets && ignoredApplets.includes(encodeHashToBase64(appletHash)),
+        ]) => ({
+          appletHash,
+          appletEntry,
+          toolInfoAndVersions,
+          agentKey,
+          timestamp,
+          joinedMembers,
+          isIgnored:
+            !!ignoredApplets && ignoredApplets.includes(encodeHashToBase64(appletHash)),
         }),
       )
       .filter((info) => (info.isIgnored ? this._showIgnoredApplets : true))
@@ -621,12 +639,9 @@ export class GroupHome extends LitElement {
                 </div>
               `
             : html`
-                <div
-                  class="row"
-                  style="flex-wrap: wrap; max-height: calc(100vh - 207px); overflow-y: auto;"
-                >
+                <div class="row" style="flex-wrap: wrap; max-height: calc(100vh - 207px); overflow-y: auto;">
                   ${filteredApplets.map(
-                    (info) => html`
+              (info) => html`
                       <sl-card class="applet-card">
                         <div class="column" style="flex: 1;">
                           <div class="card-header">
@@ -639,12 +654,12 @@ export class GroupHome extends LitElement {
                               <span>${msg('added an instance of ')}</span>
                               <span
                                 style="margin-left: 5px; font-weight: bold; ${info
-                                  .toolInfoAndVersions?.title
-                                  ? ''
-                                  : 'opacity: 0.6;'}"
+                  .toolInfoAndVersions?.title
+                  ? ''
+                  : 'opacity: 0.6;'}"
                                 >${info.toolInfoAndVersions
-                                  ? info.toolInfoAndVersions.title
-                                  : 'unknown'}&nbsp;
+                  ? info.toolInfoAndVersions.title
+                  : 'unknown'}&nbsp;
                               </span>
                             </div>
                             <div
@@ -659,12 +674,12 @@ export class GroupHome extends LitElement {
                               content="${info.toolInfoAndVersions?.subtitle}"
                             >
                               ${info.toolInfoAndVersions?.icon
-                                ? html`<img
+                  ? html`<img
                                     src=${info.toolInfoAndVersions.icon}
                                     alt="Applet logo"
                                     style="height: 80px; margin-right: 10px;"
                                   />`
-                                : html``}
+                  : html``}
                             </sl-tooltip>
                             <span style="font-weight: bold; font-size: 24px;"
                               >${info.appletEntry ? info.appletEntry.custom_name : 'unknown'}</span
@@ -673,26 +688,26 @@ export class GroupHome extends LitElement {
                           <div class="card-footer" style="align-items: center; margin-top: 20px;">
                             <span style="margin-right: 5px;"><b>${msg('Participants ')}</b></span>
                             ${info.joinedMembers.map(
-                              (appletAgent) => html`
+                    (appletAgent) => html`
                                 <agent-avatar
                                   style="margin-left: 5px;"
                                   .agentPubKey=${appletAgent.group_pubkey}
                                 ></agent-avatar>
                               `,
-                            )}
+                  )}
                             <span style="display: flex; flex: 1;"></span>
                             <sl-button
                               style="margin-left: 20px;"
                               .loading=${this._joiningNewApplet ===
-                              encodeHashToBase64(info.appletHash)}
+                encodeHashToBase64(info.appletHash)}
                               .disabled=${!!this._joiningNewApplet}
                               variant="success"
                               @click=${() => this.joinNewApplet(info.appletHash)}
                               >${msg('Activate')}</sl-button
                             >
                             ${info.isIgnored
-                              ? html``
-                              : html`
+                  ? html``
+                  : html`
                                   <sl-button
                                     style="margin-left: 5px;"
                                     variant="warning"
@@ -704,13 +719,14 @@ export class GroupHome extends LitElement {
                         </div>
                       </sl-card>
                     `,
-                  )}
+            )}
                 </div>
               `}`;
       default:
         return html``;
     }
   }
+
 
   // TODO: use MossPrivilege instead
   getMyPermissionHash(): ActionHash | undefined {
@@ -758,12 +774,10 @@ export class GroupHome extends LitElement {
                   class="moss-button"
                   style="margin-right: 8px; padding: 8px; border-radius: 6px;"
                   @click=${() => {
-                    this._editGroupDescription = false;
-                  }}
+              this._editGroupDescription = false;
+            }}
                 >
-                  <div class="column center-content" style="padding-top: 2px;">
-                    ${closeIcon(18)}
-                  </div>
+                  <div class="column center-content" style="padding-top: 2px;">${closeIcon(18)}</div>
                 </button>
               </sl-tooltip>
               <sl-tooltip content="Save">
@@ -771,28 +785,28 @@ export class GroupHome extends LitElement {
                   class="moss-button"
                   style="padding: 8px; border-radius: 6px;"
                   @click=${async () => {
-                    const descriptionInput = this.shadowRoot!.getElementById(
-                      'group-description-input',
-                    ) as HTMLTextAreaElement;
-                    // TODO: use MossPrivilege instead
-                    if (!this.amIPrivileged()) {
-                      this._editGroupDescription = false;
-                      notifyError('No permission to edit group profile.');
-                      return;
-                    } else {
-                      console.log('Saving description...');
-                      console.log('Value: ', descriptionInput.value);
-                      const result = await this._groupStore.groupClient.setGroupDescription(
-                        this.getMyPermissionHash(),
-                        descriptionInput.value,
-                      );
+              const descriptionInput = this.shadowRoot!.getElementById(
+                'group-description-input',
+              ) as HTMLTextAreaElement;
+              // TODO: use MossPrivilege instead
+              if (!this.amIPrivileged()) {
+                this._editGroupDescription = false;
+                notifyError('No permission to edit group profile.');
+                return;
+              } else {
+                console.log('Saving description...');
+                console.log('Value: ', descriptionInput.value);
+                const result = await this._groupStore.groupClient.setGroupDescription(
+                  this.getMyPermissionHash(),
+                  descriptionInput.value,
+                );
 
-                      console.log('description saved: ', result.entry);
+                console.log('description saved: ', result.entry);
 
-                      await this._groupStore.groupDescription.reload();
-                      this._editGroupDescription = false;
-                    }
-                  }}
+                await this._groupStore.groupDescription.reload();
+                this._editGroupDescription = false;
+              }
+            }}
                 >
                   <div class="column center-content" style="padding-top: 2px;">${saveIcon(18)}</div>
                 </button>
@@ -807,21 +821,18 @@ export class GroupHome extends LitElement {
             ></sl-textarea>
           `;
         }
-        if (
-          !this._groupDescription.value.value ||
-          !this._groupDescription.value.value.data?.trim()
-        ) {
+        if (!this._groupDescription.value.value || !this._groupDescription.value.value.data?.trim()) {
           return html`
             <div class="column center-content" style="flex: 1; padding: 40px 0;">
               ${msg('No group description.')}
               <button
                 class="moss-button"
                 style="margin-top: 30px; padding-top: 10px; padding-bottom: 10px;${this.amIPrivileged()
-                  ? ''
-                  : 'display: none;'}"
+              ? ''
+              : 'display: none;'}"
                 @click=${() => {
-                  this._editGroupDescription = true;
-                }}
+              this._editGroupDescription = true;
+            }}
               >
                 ${msg('+ Add Description')}
               </button>
@@ -833,20 +844,18 @@ export class GroupHome extends LitElement {
               <sl-tooltip content=${msg('Edit Description')}>
                 <button
                   class="moss-button"
-                  style="${this.amIPrivileged()
-                    ? ''
-                    : 'display: none;'} position: absolute; top: 0; right: 0; padding: 8px; border-radius: 6px; z-index: 10;"
+                  style="${this.amIPrivileged() ? '' : 'display: none;'} position: absolute; top: 0; right: 0; padding: 8px; border-radius: 6px; z-index: 10;"
                   @click=${async () => {
-                    this._loadingDescription = true;
-                    // Reload group description in case another Steward has edited it in the meantime
-                    try {
-                      await this._groupStore.groupDescription.reload();
-                    } catch (e) {
-                      console.warn('Failed to load description: ', e);
-                    }
-                    this._loadingDescription = false;
-                    this._editGroupDescription = true;
-                  }}
+              this._loadingDescription = true;
+              // Reload group description in case another Steward has edited it in the meantime
+              try {
+                await this._groupStore.groupDescription.reload();
+              } catch (e) {
+                console.warn('Failed to load description: ', e);
+              }
+              this._loadingDescription = false;
+              this._editGroupDescription = true;
+            }}
                   ?disabled=${this._loadingDescription}
                 >
                   <div class="column center-content" style="padding-top: 2px;">
@@ -905,9 +914,9 @@ export class GroupHome extends LitElement {
     return html`
       <span
         @click=${async () => {
-          await navigator.clipboard.writeText(hashB64);
-          notify(msg('Hash copied to clipboard.'));
-        }}
+        await navigator.clipboard.writeText(hashB64);
+        notify(msg('Hash copied to clipboard.'));
+      }}
         title=${hashB64}
         class="copyable-hash"
         >${text}: ${hashText}</span
@@ -922,19 +931,18 @@ export class GroupHome extends LitElement {
         .modifiers=${modifiers}
       ></invite-people-dialog>
 
-      <moss-dialog
-        id="group-settings-dialog"
+      <moss-dialog id="group-settings-dialog"
         @sl-after-hide=${() => {
-          this._settingsDialogOpen = false;
-          this._showingInactiveTools = false;
-        }}
+        this._settingsDialogOpen = false;
+        this._showingInactiveTools = false;
+      }}
       >
         <span slot="header"> ${msg('Group Settings')}</span>
-        <group-settings
-          slot="content"
-          id="group-settings"
-          @uninstall-applet=${async (e) => this.uninstallApplet(e)}
+        <group-settings slot="content"
+            id="group-settings"
+            @uninstall-applet=${async (e) => this.uninstallApplet(e)}
         ></group-settings>
+
       </moss-dialog>
 
       ${this.renderUninstallConfirmDialog()}
@@ -950,10 +958,7 @@ export class GroupHome extends LitElement {
 
           <!-- Top Row -->
 
-          <div
-            class="row"
-            style="align-items: center;padding-bottom: 6px; border-bottom: solid 1px var(--moss-main-green);"
-          >
+          <div class="row" style="align-items: center;padding-bottom: 6px; border-bottom: solid 1px var(--moss-main-green);">
             <div class="row" style="align-items: center; flex: 1;">
               <div
                 style="background: linear-gradient(rgb(178, 200, 90) 0%, rgb(102, 157, 90) 62.38%, rgb(127, 111, 82) 92.41%); width: 64px; height: 64px; border-radius: 50%; margin-right: 20px;"
@@ -969,36 +974,31 @@ export class GroupHome extends LitElement {
 
             <div class="row items-center" style="gap: 8px;">
               ${this.amIPrivileged()
-                ? html`
+        ? html`
                     <button
                       class="moss-button"
                       style="padding: 10px 16px;"
                       @click=${() => {
-                        this.inviteMemberDialog?.show();
-                      }}
+            this.inviteMemberDialog?.show();
+          }}
                     >
                       <div class="row center-content items-center;">
                         <div class="column" style="color: white;">${personPlusIcon(20)}</div>
-                        <div style="font-size: 16px; margin-left: 8px;">
-                          ${msg('Invite People')}
-                        </div>
+                        <div style="font-size: 16px; margin-left: 8px;">${msg('Invite People')}</div>
                       </div>
                     </button>
                   `
-                : html``}
+        : html``}
               <button
                 class="moss-button"
                 style="padding: 10px 16px;"
                 @click=${() => {
-                  this._settingsDialogOpen = true;
-                  this.groupSettingsDialog?.show();
-                }}
+        this._settingsDialogOpen = true;
+        this.groupSettingsDialog?.show();
+      }}
               >
                 <div class="row center-content items-center;">
-                  <sl-icon
-                    .src=${wrapPathInSvg(mdiCog)}
-                    style="font-size: 20px; color: white;"
-                  ></sl-icon>
+                  <sl-icon .src=${wrapPathInSvg(mdiCog)} style="font-size: 20px; color: white;"></sl-icon>
                   <div style="font-size: 16px; margin-left: 8px;">${msg('Settings')}</div>
                 </div>
               </button>
@@ -1011,11 +1011,11 @@ export class GroupHome extends LitElement {
               tabindex="0"
               class="tab ${this._selectedTab === 'home' ? 'tab-selected' : ''}"
               @click=${() => {
-                this._selectedTab = 'home';
-              }}
+        this._selectedTab = 'home';
+      }}
               @keypress=${(e: KeyboardEvent) => {
-                if (e.key === 'Enter' || e.key === ' ') this._selectedTab = 'home';
-              }}
+        if (e.key === 'Enter' || e.key === ' ') this._selectedTab = 'home';
+      }}
             >
               <sl-icon
                 style="margin-left: -10px; font-size: 1.8rem;"
@@ -1028,21 +1028,21 @@ export class GroupHome extends LitElement {
               class="row tab ${this._selectedTab === 'unjoined tools' ? 'tab-selected' : ''}"
               style="position: relative;"
               @click=${() => {
-                this._selectedTab = 'unjoined tools';
-              }}
+        this._selectedTab = 'unjoined tools';
+      }}
               @keypress=${(e: KeyboardEvent) => {
-                if (e.key === 'Enter' || e.key === ' ') this._selectedTab = 'unjoined tools';
-              }}
+        if (e.key === 'Enter' || e.key === ' ') this._selectedTab = 'unjoined tools';
+      }}
             >
               ${this.newAppletsAvailable()
-                ? html`<div
+        ? html`<div
                     class="row center-content indicator ${this.newAppletsAvailable() > 9
-                      ? 'padded'
-                      : ''}"
+            ? 'padded'
+            : ''}"
                   >
                     ${this.newAppletsAvailable()}
                   </div>`
-                : html``}
+        : html``}
               ${msg('Unactivated Tools')}
             </div>
           </div>
@@ -1057,11 +1057,11 @@ export class GroupHome extends LitElement {
       <create-custom-group-view
         style="flex: 1"
         @create-cancelled=${() => {
-          this.view = { view: 'main' };
-        }}
+        this.view = { view: 'main' };
+      }}
         @custom-view-created=${() => {
-          this.view = { view: 'main' };
-        }}
+        this.view = { view: 'main' };
+      }}
       ></create-custom-group-view>
     </div>`;
   }
@@ -1072,11 +1072,11 @@ export class GroupHome extends LitElement {
         .customViewHash=${customViewHash}
         style="flex: 1"
         @edit-cancelled=${() => {
-          this.view = { view: 'main' };
-        }}
+        this.view = { view: 'main' };
+      }}
         @custom-view-updated=${() => {
-          this.view = { view: 'main' };
-        }}
+        this.view = { view: 'main' };
+      }}
       ></edit-custom-group-view>
     </div>`;
   }

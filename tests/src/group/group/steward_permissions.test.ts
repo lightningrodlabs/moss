@@ -18,12 +18,11 @@ import { fail } from 'assert';
 
 // Helper: pull the Steward variant out of a `Vec<Accountability>` response and
 // fail loudly if there isn't exactly one.
-function expectStewardAccountability(
-  accs: Accountability[],
-): Extract<Accountability, { type: 'Steward' }> {
-  const steward = accs.find(
-    (a): a is Extract<Accountability, { type: 'Steward' }> => a.type === 'Steward',
-  );
+function expectStewardAccountability(accs: Accountability[]): Extract<
+  Accountability,
+  { type: 'Steward' }
+> {
+  const steward = accs.find((a): a is Extract<Accountability, { type: 'Steward' }> => a.type === 'Steward');
   if (!steward) {
     fail(`Expected a Steward accountability, got: ${JSON.stringify(accs)}`);
   }
@@ -112,6 +111,7 @@ test('Create unlimited steward permission and retrieve it in different ways', as
   });
 });
 
+
 test('Create expiring steward permission and retrieve it in different ways', async () => {
   await runScenario(async (scenario) => {
     const appBundleSource: AppBundleSource = {
@@ -197,6 +197,7 @@ test('Create expiring steward permission and retrieve it in different ways', asy
     );
   });
 });
+
 
 test("get_my_accountabilities returns the correct result after querying another agent's accountabilities", async () => {
   // Regression test for the privilege-escalation bug fixed in commit 48211967.
@@ -358,7 +359,9 @@ test('Steward can NOT nominate additional stewards if their steward permission i
           .toString()
           .includes('Only non-expiring StewardPermissions are allowed to take this action')
       ) {
-        fail(`Expected validation rejection about expiring StewardPermissions, got: ${e}`);
+        fail(
+          `Expected validation rejection about expiring StewardPermissions, got: ${e}`,
+        );
       }
     }
   });
@@ -397,7 +400,9 @@ test('Steward can NOT nominate additional stewards without providing a valid per
       if (
         !e.toString().includes('No valid permission hash provided and agent is not the progenitor')
       ) {
-        fail(`Expected validation rejection about missing permission hash, got: ${e}`);
+        fail(
+          `Expected validation rejection about missing permission hash, got: ${e}`,
+        );
       }
     }
   });

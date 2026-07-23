@@ -24,9 +24,8 @@ const tag = `v${version}`;
 
 let releaseNotes;
 try {
-  const releaseJson = child_process.execSync(`gh release view ${tag} --json body`, {
-    encoding: 'utf-8',
-  });
+  const releaseJson = child_process
+    .execSync(`gh release view ${tag} --json body`, { encoding: 'utf-8' });
   releaseNotes = JSON.parse(releaseJson).body.trim();
 } catch (e) {
   console.error(`ERROR: Could not fetch release notes for ${tag}: ${e.message}`);

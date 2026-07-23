@@ -9,5 +9,5 @@
 ```typescript
 export type ReadonlyPeerStatusStore = Readable<Record<AgentPubKeyB64, PeerStatus>>;
 ```
-
 **References:** [PeerStatus](./api.peerstatus.md)
+

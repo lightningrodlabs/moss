@@ -121,8 +121,8 @@ export class HolochainManager {
     const advancedSettings = conductorConfig.network.advanced
       ? conductorConfig.network.advanced
       : {};
-    advancedSettings.coreBootstrap = { backoffMaxMs: 30000 };
-    advancedSettings.coreSpace = { reSignExpireTimeMs: 30000, reSignFreqMs: 30000 };
+    advancedSettings.coreBootstrap = { backoffMaxMs: 30000 }
+    advancedSettings.coreSpace = { reSignExpireTimeMs: 30000, reSignFreqMs: 30000 }
     conductorConfig.network.advanced = advancedSettings;
 
     console.log('Writing conductor-config.yaml...', configPath, conductorConfig);
@@ -133,12 +133,12 @@ export class HolochainManager {
       RUST_LOG: rustLog
         ? rustLog
         : 'warn,' +
-          // this thrashes on startup
-          'wasmer_compiler_cranelift=error,' +
-          // this gives a bunch of warnings about how long db accesses are taking, tmi
-          'holochain_sqlite::db::access=error,' +
-          // this gives a lot of "search_and_discover_peer_connect: no peers found, retrying after delay" messages on INFO
-          'kitsune_p2p::spawn::actor::discover=error',
+        // this thrashes on startup
+        'wasmer_compiler_cranelift=error,' +
+        // this gives a bunch of warnings about how long db accesses are taking, tmi
+        'holochain_sqlite::db::access=error,' +
+        // this gives a lot of "search_and_discover_peer_connect: no peers found, retrying after delay" messages on INFO
+        'kitsune_p2p::spawn::actor::discover=error',
       WASM_LOG: wasmLog ? wasmLog : 'warn',
       NO_COLOR: '1',
     };
@@ -173,9 +173,7 @@ export class HolochainManager {
           );
         }
         if (line.includes('Conductor ready.')) {
-          console.log(
-            `[MOSS] Detected 'Conductor ready.' on stdout. Connecting to admin port ${adminPort}...`,
-          );
+          console.log(`[MOSS] Detected 'Conductor ready.' on stdout. Connecting to admin port ${adminPort}...`);
           try {
             const adminWebsocket = await AdminWebsocket.connect({
               url: new URL(`ws://127.0.0.1:${adminPort}`),

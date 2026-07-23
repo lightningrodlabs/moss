@@ -1,13 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { exec } from 'child_process';
+import {exec} from 'child_process';
 import crypto from 'crypto';
 
 const configJSON = fs.readFileSync('holochain-checksums.json');
 const HOLOCHAIN_CHECKSUMS = JSON.parse(configJSON);
 
 const binariesDir = path.join('resources', 'bins');
-fs.mkdirSync(binariesDir, { recursive: true });
+fs.mkdirSync(binariesDir, {recursive: true});
 
 let targetEnding;
 switch (process.platform) {
@@ -40,6 +40,7 @@ switch (process.platform) {
     throw new Error(`Got unexpected OS platform: ${process.platform}`);
 }
 
+
 export function downloadFile(url, targetPath, expectedSha256Hex, chmod = false) {
   console.log('Downloading from', url);
   exec(`curl -f -L --output ${targetPath} ${url}`, (error, stdout, stderr) => {
@@ -67,16 +68,17 @@ export function downloadFile(url, targetPath, expectedSha256Hex, chmod = false) 
   });
 }
 
+
 export function downloadHolochainBinary(filename, withVersion = true, versionOverride = null) {
   const version = versionOverride ?? HOLOCHAIN_CHECKSUMS.version;
-  let completeBinaryFilename = `${filename}-${targetEnding}${process.platform === 'win32' ? '.exe' : ''}`;
-  let binaryFilenameWithVersion = `${filename}-v${version}${process.platform === 'win32' ? '.exe' : ''}`;
-  const targetPath = path.join(
-    binariesDir,
-    withVersion
-      ? binaryFilenameWithVersion
-      : `${filename}${process.platform === 'win32' ? '.exe' : ''}`,
-  );
+  let completeBinaryFilename = `${filename}-${targetEnding}${process.platform === 'win32' ? '.exe' : ''}`
+  let binaryFilenameWithVersion = `${filename}-v${version}${process.platform === 'win32' ? '.exe' : ''}`
+  const targetPath = path.join(binariesDir, withVersion ? binaryFilenameWithVersion : `${filename}${process.platform === 'win32' ? '.exe' : ''}`);
   const holochainBinaryUrl = `https://github.com/holochain/holochain/releases/download/holochain-${version}/${completeBinaryFilename}`;
-  downloadFile(holochainBinaryUrl, targetPath, HOLOCHAIN_CHECKSUMS[filename][targetEnding], true);
+  downloadFile(
+    holochainBinaryUrl,
+    targetPath,
+    HOLOCHAIN_CHECKSUMS[filename][targetEnding],
+    true,
+  );
 }

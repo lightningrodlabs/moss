@@ -118,22 +118,21 @@ export class JoinGroupDialog extends LitElement {
         width="670px"
         headerAlign="center"
         @sl-initial-focus=${(e: { preventDefault: () => void }) => {
-          e.preventDefault();
-          this._inviteLinkField?.focus();
-        }}
+        e.preventDefault();
+        this._inviteLinkField?.focus();
+      }}
 
         @sl-request-close=${(e) => {
-          if (this.joining) {
-            e.preventDefault();
-          }
-        }}
+        if (this.joining) {
+          e.preventDefault();
+        }
+      }}
       >
         <span slot="header">${msg('Join Group')}</span>
         <form slot="content" ${onSubmit((f) => this.joinGroup(f))}>
           <div class="column items-center">
-          ${
-            this._joinByPaste
-              ? html`
+          ${this._joinByPaste
+        ? html`
                   <sl-input
                     name="link"
                     id="invite-link-field"
@@ -144,8 +143,8 @@ export class JoinGroupDialog extends LitElement {
                     required
                   ></sl-input>
                 `
-              : html`<span>${msg('You have been invited to join a group.')}</span>`
-          }
+        : html`<span>${msg('You have been invited to join a group.')}</span>`
+      }
 
           <button
             class="moss-button"
@@ -153,13 +152,12 @@ export class JoinGroupDialog extends LitElement {
             type="submit"
             .loading=${this.joining}
           >
-            ${
-              this.joining
-                ? html`<div class="column center-content">
+            ${this.joining
+        ? html`<div class="column center-content">
                     <div class="dot-carousel" style="margin: 5px 0;"></div>
                   </div>`
-                : html`${msg('Join Group')}`
-            }
+        : html`${msg('Join Group')}`
+      }
           </button>
           <div>
         </form>

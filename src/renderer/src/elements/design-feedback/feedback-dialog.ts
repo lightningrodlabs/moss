@@ -147,19 +147,17 @@ export class FeedbackDialog extends LitElement {
             }}
           ></sl-textarea>
           <div class="disclaimer">
-            ${msg(
-              'This screenshot and text, along with Moss version and OS info, will be added as a public GitHub issue to the',
-            )}
+            ${msg('This screenshot and text, along with Moss version and OS info, will be added as a public GitHub issue to the')}
             <a href="https://github.com/lightningrodlabs/moss" target="_blank"
               >${msg('Moss GitHub repo')}</a
             >.
-            ${msg(
-              'If you want to send it privately, press "Copy" to copy the feedback to your clipboard and email it to moss.0.15.feedback@theweave.social.',
-            )}
+            ${msg('If you want to send it privately, press "Copy" to copy the feedback to your clipboard and email it to moss.0.15.feedback@theweave.social.')}
           </div>
         </div>
         <div slot="footer" class="row" style="gap: 8px; justify-content: flex-end;">
-          <sl-button variant="default" @click=${this._cancel}> ${msg('Cancel')} </sl-button>
+          <sl-button variant="default" @click=${this._cancel}>
+            ${msg('Cancel')}
+          </sl-button>
           <sl-button
             variant="default"
             ?disabled=${!this._feedbackText.trim()}

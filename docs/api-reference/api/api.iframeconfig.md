@@ -7,35 +7,32 @@
 **Signature:**
 
 ```typescript
-export type IframeConfig =
-  | {
-      type: 'applet';
-      appPort: number;
-      mainUiOrigin: string;
-      appletHash: EntryHash;
-      authenticationToken: AppAuthenticationToken;
-      weaveProtocolVersion: string;
-      mossVersion: string;
-      locale: string;
-      profilesLocation: ProfilesLocation;
-      groupProfiles: GroupProfile[];
-      groupHash: DnaHash | null;
-      zomeCallLogging: boolean;
-    }
-  | {
-      type: 'cross-group';
-      appPort: number;
-      mainUiOrigin: string;
-      weaveProtocolVersion: string;
-      mossVersion: string;
-      locale: string;
-      applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>;
-      zomeCallLogging: boolean;
-    }
-  | {
-      type: 'not-installed';
-      appletName: string;
-    };
+export type IframeConfig = {
+    type: 'applet';
+    appPort: number;
+    mainUiOrigin: string;
+    appletHash: EntryHash;
+    authenticationToken: AppAuthenticationToken;
+    weaveProtocolVersion: string;
+    mossVersion: string;
+    locale: string;
+    profilesLocation: ProfilesLocation;
+    groupProfiles: GroupProfile[];
+    groupHash: DnaHash | null;
+    zomeCallLogging: boolean;
+} | {
+    type: 'cross-group';
+    appPort: number;
+    mainUiOrigin: string;
+    weaveProtocolVersion: string;
+    mossVersion: string;
+    locale: string;
+    applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>;
+    zomeCallLogging: boolean;
+} | {
+    type: 'not-installed';
+    appletName: string;
+};
 ```
-
 **References:** [ProfilesLocation](./api.profileslocation.md)<!-- -->, [GroupProfile](./api.groupprofile.md)
+

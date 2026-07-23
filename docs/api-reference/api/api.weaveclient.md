@@ -7,9 +7,8 @@
 **Signature:**
 
 ```typescript
-export declare class WeaveClient implements WeaveServices
+export declare class WeaveClient implements WeaveServices 
 ```
-
 **Implements:** [WeaveServices](./api.weaveservices.md)
 
 ## Properties
@@ -18,370 +17,482 @@ export declare class WeaveClient implements WeaveServices
 
 Property
 
+
 </th><th>
 
 Modifiers
+
 
 </th><th>
 
 Type
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [appletInfo](./api.weaveclient.appletinfo.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (appletHash: [AppletHash](./api.applethash.md)<!-- -->) =&gt; Promise&lt;[AppletInfo](./api.appletinfo.md) \| undefined&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [appletParticipants](./api.weaveclient.appletparticipants.md)
 
+
 </td><td>
+
 
 </td><td>
 
 () =&gt; Promise&lt;import("@holochain/client").HoloHash\[\]&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [assets](./api.weaveclient.assets.md)
 
+
 </td><td>
+
 
 </td><td>
 
 [AssetServices](./api.assetservices.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [bootstrapUrls](./api.weaveclient.bootstrapurls.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (groupHash?: DnaHash) =&gt; string\[\]
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [createCloneCell](./api.weaveclient.createclonecell.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (req: CreateCloneCellRequest, publicToGroupMembers: boolean) =&gt; Promise&lt;import("@holochain/client").ClonedCell&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [disableCloneCell](./api.weaveclient.disableclonecell.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (req: DisableCloneCellRequest) =&gt; Promise&lt;void&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [enableCloneCell](./api.weaveclient.enableclonecell.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (req: EnableCloneCellRequest) =&gt; Promise&lt;import("@holochain/client").ClonedCell&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [getLocale](./api.weaveclient.getlocale.md)
 
+
 </td><td>
+
 
 </td><td>
 
 () =&gt; string
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [groupProfile](./api.weaveclient.groupprofile.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (groupHash: DnaHash) =&gt; Promise&lt;any&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [mossVersion](./api.weaveclient.mossversion.md)
 
+
 </td><td>
+
 
 </td><td>
 
 () =&gt; string
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [myAccountabilitiesPerGroup](./api.weaveclient.myaccountabilitiespergroup.md)
 
+
 </td><td>
+
 
 </td><td>
 
 () =&gt; Promise&lt;\[import("@holochain/client").HoloHash, [MossAccountability](./api.mossaccountability.md)<!-- -->\[\]\]\[\]&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [notifyFrame](./api.weaveclient.notifyframe.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (notifications: Array&lt;[FrameNotification](./api.framenotification.md)<!-- -->&gt;) =&gt; Promise&lt;any&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [onBeforeUnload](./api.weaveclient.onbeforeunload.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (callback: () =&gt; any) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [onLocaleChange](./api.weaveclient.onlocalechange.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (callback: (locale: string) =&gt; any) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [onNetworkStatsUpdate](./api.weaveclient.onnetworkstatsupdate.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (callback: (payload: TransportStats) =&gt; any) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [onPeerStatusUpdate](./api.weaveclient.onpeerstatusupdate.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (callback: (payload: [PeerStatusUpdate](./api.peerstatusupdate.md)<!-- -->) =&gt; any) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [onRemoteSignal](./api.weaveclient.onremotesignal.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (callback: (payload: Uint8Array) =&gt; any) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [openAppletBlock](./api.weaveclient.openappletblock.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (appletHash: any, block: string, context: any) =&gt; Promise&lt;void&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [openAppletMain](./api.weaveclient.openappletmain.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (appletHash: EntryHash, wal?: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [openAsset](./api.weaveclient.openasset.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (wal: [WAL](./api.wal.md)<!-- -->, mode?: [OpenAssetMode](./api.openassetmode.md)<!-- -->) =&gt; Promise&lt;void&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [openCrossGroupBlock](./api.weaveclient.opencrossgroupblock.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (appletBundleId: string, block: string, context: any) =&gt; Promise&lt;void&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [openCrossGroupMain](./api.weaveclient.opencrossgroupmain.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (appletBundleId: string) =&gt; Promise&lt;void&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [renderInfo](./api.weaveclient.renderinfo.md)
 
+
 </td><td>
 
 `readonly`
+
 
 </td><td>
 
 [RenderInfo](./api.renderinfo.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [requestClose](./api.weaveclient.requestclose.md)
 
+
 </td><td>
+
 
 </td><td>
 
 () =&gt; Promise&lt;void&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [sendRemoteSignal](./api.weaveclient.sendremotesignal.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (payload: Uint8Array, toAgents?: AgentPubKey\[\]) =&gt; Promise&lt;void&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [toolInstaller](./api.weaveclient.toolinstaller.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (appletHash: [AppletHash](./api.applethash.md)<!-- -->, groupHash?: DnaHash) =&gt; Promise&lt;import("@holochain/client").HoloHash \| undefined&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [userSelectScreen](./api.weaveclient.userselectscreen.md)
 
+
 </td><td>
+
 
 </td><td>
 
 () =&gt; Promise&lt;string&gt;
 
+
 </td><td>
+
 
 </td></tr>
 </tbody></table>
@@ -392,24 +503,30 @@ Description
 
 Method
 
+
 </th><th>
 
 Modifiers
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [connect(appletServices)](./api.weaveclient.connect.md)
 
+
 </td><td>
 
 `static`
 
+
 </td><td>
+
 
 </td></tr>
 </tbody></table>

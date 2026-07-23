@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-appletParticipants: () => Promise<import('@holochain/client').HoloHash[]>;
+appletParticipants: () => Promise<import("@holochain/client").HoloHash[]>;
 ```

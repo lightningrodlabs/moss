@@ -1,24 +1,23 @@
 import { ProfilesClient } from '@holochain-open-dev/profiles';
 import { Readable } from '@holochain-open-dev/stores';
 import {
-  AppClient,
-  ActionHash,
-  EntryHash,
-  DnaHash,
-  EntryHashB64,
-  ActionHashB64,
-  DnaHashB64,
-  CallZomeRequest,
-  AppAuthenticationToken,
-  AgentPubKeyB64,
-  AgentPubKey,
-  CreateCloneCellRequest,
-  DisableCloneCellRequest,
-  EnableCloneCellRequest,
-  InstalledAppId,
-  TransportStats,
+    AppClient,
+    ActionHash,
+    EntryHash,
+    DnaHash,
+    EntryHashB64,
+    ActionHashB64,
+    DnaHashB64,
+    CallZomeRequest,
+    AppAuthenticationToken,
+    AgentPubKeyB64,
+    AgentPubKey,
+    CreateCloneCellRequest,
+    DisableCloneCellRequest,
+    EnableCloneCellRequest,
+    InstalledAppId, TransportStats,
 } from '@holochain/client';
-import { Type } from '@sinclair/typebox';
+import {Type} from "@sinclair/typebox";
 
 export type AppletHash = EntryHash;
 export type AppletId = EntryHashB64;
@@ -167,7 +166,7 @@ export type AppletClients = {
 };
 
 export type AppletView =
-  | { type: 'main'; wal?: WAL }
+  | { type: 'main' ; wal?: WAL; }
   | { type: 'block'; block: string; context: any }
   | {
       type: 'asset';
@@ -296,9 +295,9 @@ export type ParentToAppletMessage =
       payload: PeerStatusUpdate;
     }
   | {
-      type: 'network-stats-update';
-      payload: TransportStats;
-    }
+    type: 'network-stats-update';
+    payload: TransportStats;
+  }
   | {
       type: 'on-before-unload';
     }
@@ -390,15 +389,15 @@ export type AppletToParentRequest =
       type: 'get-applet-info';
       appletHash: AppletHash;
     }
-  | {
-      type: 'get-tool-installer';
-      appletHash: AppletHash;
-      groupHash: DnaHash | undefined;
-    }
-  | {
-      type: 'get-bootstrap-urls';
-      groupHash: DnaHash | undefined;
-    }
+    | {
+    type: 'get-tool-installer';
+    appletHash: AppletHash;
+    groupHash: DnaHash | undefined;
+  }
+    | {
+    type: 'get-bootstrap-urls';
+    groupHash: DnaHash | undefined;
+  }
   | {
       type: 'get-group-profile';
       groupHash: DnaHash;
@@ -633,42 +632,25 @@ export enum MossPrivilege {
 }
 
 export type GroupRole = {
-  name: string;
+  name: string,
   defaultMandateDuration: number; // in ms since Unix epoch time ; 0 == forever
   privileges: MossPrivilege[];
-};
+}
 
 /** MossRole is a typed Enum of GroupRoles */
 export const MossRole = {
   Member: { name: 'Member', mandateDuration: 0, privileges: [] },
-  Steward: {
-    name: 'Steward',
-    mandateDuration: 0,
-    privileges: [
-      MossPrivilege.AddTool,
-      MossPrivilege.ChangeGroupProperties,
-      MossPrivilege.MakeSteward,
-    ],
-  },
-  Progenitor: {
-    name: 'Progenitor',
-    mandateDuration: 0,
-    privileges: [
-      MossPrivilege.AddTool,
-      MossPrivilege.ChangeGroupProperties,
-      MossPrivilege.ArchiveTool,
-      MossPrivilege.MakeSteward,
-    ],
-  },
+  Steward: { name: 'Steward', mandateDuration: 0, privileges: [MossPrivilege.AddTool, MossPrivilege.ChangeGroupProperties, MossPrivilege.MakeSteward] },
+  Progenitor: { name: 'Progenitor', mandateDuration: 0, privileges: [MossPrivilege.AddTool, MossPrivilege.ChangeGroupProperties, MossPrivilege.ArchiveTool, MossPrivilege.MakeSteward]},
 } as const;
-export type MossRole = (typeof MossRole)[keyof typeof MossRole];
+export type MossRole = typeof MossRole[keyof typeof MossRole];
 
 export type MossAccountability = {
-  role: MossRole;
-  startDate: number; // in ms since Unix epoch time
-  duration?: number; // use role's defaultMandateDuration if not specified
+  role: MossRole,
+  startDate: number, // in ms since Unix epoch time
+  duration?: number, // use role's defaultMandateDuration if not specified
   // expiry() // = startDate + mandateDuration
-};
+}
 
 export type WalRelationAndTags = {
   relationHash: EntryHash;

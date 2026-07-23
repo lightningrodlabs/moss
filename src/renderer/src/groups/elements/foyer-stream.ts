@@ -21,12 +21,7 @@ import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { Message, Payload, Stream } from '../stream.js';
 import { get, StoreSubscriber } from '@holochain-open-dev/stores';
-import {
-  AgentPubKey,
-  HoloHashMap,
-  decodeHashFromBase64,
-  encodeHashToBase64,
-} from '@holochain/client';
+import { AgentPubKey, HoloHashMap, decodeHashFromBase64, encodeHashToBase64 } from '@holochain/client';
 import { mdiChat, mdiMessageCog, mdiSofa } from '@mdi/js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { mossStyles } from '../../shared-styles.js';
@@ -62,7 +57,7 @@ export class FoyerStream extends LitElement {
   private _conversationContainer!: HTMLElement;
 
   async firstUpdated() {
-    console.log('this.groupStore.foyerStore', this.groupStore.foyerStore);
+    console.log("this.groupStore.foyerStore", this.groupStore.foyerStore)
     // Load notification settings
     this._notificationSettings = this.groupStore.getFoyerNotificationSettingsValue();
 
@@ -211,20 +206,20 @@ export class FoyerStream extends LitElement {
       <div
         class="column msg-recipients"
         @mouseleave=${() => {
-          console.log('Got mouseout event');
-          this._showRecipients = 0;
-        }}
+        console.log('Got mouseout event');
+        this._showRecipients = 0;
+      }}
       >
         <div class="msg-recipients-title" style="margin-bottom: 2px;">${msg('received by:')}</div>
         <div class="row" style="flex-wrap: wrap;">
           ${agents.map(
-            (agent) =>
-              html`<agent-avatar
+        (agent) =>
+          html`<agent-avatar
                 style="margin-left: 2px; margin-bottom: 2px;"
                 .size=${18}
                 .agentPubKey=${agent}
               ></agent-avatar>`,
-          )}
+      )}
         </div>
       </div>
     `;
@@ -249,15 +244,9 @@ export class FoyerStream extends LitElement {
           <span style="margin-left: 5px;">${msg('Foyer')}</span>
         </div>
         <div style="margin-top: 20px; font-size: 20px;">
+          <p>${msg('The Foyer is a space for sending ephemeral messages to other members of the group.')}</p>
           <p>
-            ${msg(
-              'The Foyer is a space for sending ephemeral messages to other members of the group.',
-            )}
-          </p>
-          <p>
-            ${msg(
-              "None of these messages are ever stored, and they only go to other members who show as online in the group's member list.",
-            )}
+            ${msg('None of these messages are ever stored, and they only go to other members who show as online in the group\'s member list.')}
           </p>
         </div>
       </div>
@@ -293,7 +282,7 @@ export class FoyerStream extends LitElement {
         <div class="row" style="position: relative;">
           ${isMyMessage ? html`<span style="flex: 1;"></span>` : html``}
           ${!isMyMessage
-            ? html`
+          ? html`
                 <agent-avatar
                   style="margin-right:5px"
                   disable-copy=${true}
@@ -301,11 +290,11 @@ export class FoyerStream extends LitElement {
                   agent-pub-key=${encodeHashToBase64(msg.from)}
                 ></agent-avatar>
               `
-            : ''}
+          : ''}
           <div class=${isMyMessage ? 'my-msg msg' : 'msg'}>
             <div class="msg-content">
               ${msg.payload.type === 'Msg'
-                ? html`
+          ? html`
                     ${unsafeHTML(msgText)}
                     <div class="msg-meta">
                       <span
@@ -315,49 +304,49 @@ export class FoyerStream extends LitElement {
                       >
                       <div class="column">
                         ${isMyMessage
-                          ? html`
+              ? html`
                               ${ackCount > 0
-                                ? html`
+                  ? html`
                                     <div
                                       tabindex="0"
                                       style="margin-top: 1px;"
                                       @mouseover=${() => {
-                                        console.log('mouseover');
-                                        if (this._showRecipients !== msg.payload.created) {
-                                          this._showRecipients = msg.payload.created;
-                                        }
-                                      }}
+                      console.log('mouseover');
+                      if (this._showRecipients !== msg.payload.created) {
+                        this._showRecipients = msg.payload.created;
+                      }
+                    }}
                                       @keypress=${(e: KeyboardEvent) => {
-                                        if (e.key === 'Enter' || e.key === ' ') {
-                                          if (this._showRecipients === msg.payload.created) {
-                                            this._showRecipients = 0;
-                                          } else {
-                                            this._showRecipients = msg.payload.created;
-                                          }
-                                        }
-                                      }}
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        if (this._showRecipients === msg.payload.created) {
+                          this._showRecipients = 0;
+                        } else {
+                          this._showRecipients = msg.payload.created;
+                        }
+                      }
+                    }}
                                       class="ack-count row center-content ${ackCount > 9
-                                        ? 'padded'
-                                        : ''}"
+                      ? 'padded'
+                      : ''}"
                                     >
                                       ${ackCount}
                                     </div>
                                   `
-                                : '...'}
+                  : '...'}
                             `
-                          : ''}
+              : ''}
                         <span style="flex: 1;"></span>
                       </div>
                     </div>
                   `
-                : ''}
+          : ''}
             </div>
             ${this._acks &&
-            isMyMessage &&
-            ackCount > 0 &&
-            this._showRecipients === msg.payload.created
-              ? this.renderRecipients(Array.from(this._acks.value[msg.payload.created].keys()))
-              : ''}
+          isMyMessage &&
+          ackCount > 0 &&
+          this._showRecipients === msg.payload.created
+          ? this.renderRecipients(Array.from(this._acks.value[msg.payload.created].keys()))
+          : ''}
           </div>
           ${isMyMessage ? html`` : html`<span style="flex: 1;"></span>`}
         </div>
@@ -374,18 +363,16 @@ export class FoyerStream extends LitElement {
             <div
               @click=${() => this._foyerInfoDialog.show()}
               @keypress=${(e: KeyboardEvent) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  this._foyerInfoDialog.show();
-                }
-              }}
+        if (e.key === 'Enter' || e.key === ' ') {
+          this._foyerInfoDialog.show();
+        }
+      }}
               class="row info"
               style="align-items: center; font-size: 1.5rem; cursor: help;"
             >
               <sl-icon .src=${wrapPathInSvg(mdiSofa)}></sl-icon>
             </div>
-            <span
-              >${msg('Foyer Messages:')} ${this._messages ? this._messages.value.length : '0'}</span
-            >
+            <span>${msg('Foyer Messages:')} ${this._messages ? this._messages.value.length : '0'}</span>
           </div>
           <div style="display:flex; align-items: center; margin-right: 8px; position: relative;">
             <sl-icon
@@ -401,118 +388,76 @@ export class FoyerStream extends LitElement {
               }}
               tabindex="0"
             ></sl-icon>
-            ${this._showNotificationSettings
-              ? html`
-                  <div class="notification-settings-panel">
-                    <div class="notification-settings-header">${msg('Notification Settings')}</div>
-                    <div class="notification-settings-row">
-                      <span class="notification-settings-label">${msg('Mentions')}</span>
-                      <select
-                        class="notification-settings-select"
-                        .value=${this._notificationSettings.mentions}
-                        @change=${this.handleMentionsUrgencyChange}
-                      >
-                        <option
-                          value="high"
-                          ?selected=${this._notificationSettings.mentions === 'high'}
-                        >
-                          ${msg('High')}
-                        </option>
-                        <option
-                          value="medium"
-                          ?selected=${this._notificationSettings.mentions === 'medium'}
-                        >
-                          ${msg('Medium')}
-                        </option>
-                        <option
-                          value="low"
-                          ?selected=${this._notificationSettings.mentions === 'low'}
-                        >
-                          ${msg('Low')}
-                        </option>
-                        <option
-                          value="none"
-                          ?selected=${this._notificationSettings.mentions === 'none'}
-                        >
-                          ${msg('Off')}
-                        </option>
-                      </select>
-                    </div>
-                    <div class="notification-settings-row">
-                      <span class="notification-settings-label">${msg('All messages')}</span>
-                      <select
-                        class="notification-settings-select"
-                        .value=${this._notificationSettings.allMessages}
-                        @change=${this.handleAllMessagesUrgencyChange}
-                      >
-                        <option
-                          value="high"
-                          ?selected=${this._notificationSettings.allMessages === 'high'}
-                        >
-                          ${msg('High')}
-                        </option>
-                        <option
-                          value="medium"
-                          ?selected=${this._notificationSettings.allMessages === 'medium'}
-                        >
-                          ${msg('Medium')}
-                        </option>
-                        <option
-                          value="low"
-                          ?selected=${this._notificationSettings.allMessages === 'low'}
-                        >
-                          ${msg('Low')}
-                        </option>
-                        <option
-                          value="none"
-                          ?selected=${this._notificationSettings.allMessages === 'none'}
-                        >
-                          ${msg('Off')}
-                        </option>
-                      </select>
-                    </div>
-                    <div class="notification-settings-hint">
-                      ${msg('High = OS notification, Medium = systray, Low = feed only')}
-                    </div>
-                  </div>
-                `
-              : ''}
+            ${this._showNotificationSettings ? html`
+              <div class="notification-settings-panel">
+                <div class="notification-settings-header">${msg('Notification Settings')}</div>
+                <div class="notification-settings-row">
+                  <span class="notification-settings-label">${msg('Mentions')}</span>
+                  <select
+                    class="notification-settings-select"
+                    .value=${this._notificationSettings.mentions}
+                    @change=${this.handleMentionsUrgencyChange}
+                  >
+                    <option value="high" ?selected=${this._notificationSettings.mentions === 'high'}>${msg('High')}</option>
+                    <option value="medium" ?selected=${this._notificationSettings.mentions === 'medium'}>${msg('Medium')}</option>
+                    <option value="low" ?selected=${this._notificationSettings.mentions === 'low'}>${msg('Low')}</option>
+                    <option value="none" ?selected=${this._notificationSettings.mentions === 'none'}>${msg('Off')}</option>
+                  </select>
+                </div>
+                <div class="notification-settings-row">
+                  <span class="notification-settings-label">${msg('All messages')}</span>
+                  <select
+                    class="notification-settings-select"
+                    .value=${this._notificationSettings.allMessages}
+                    @change=${this.handleAllMessagesUrgencyChange}
+                  >
+                    <option value="high" ?selected=${this._notificationSettings.allMessages === 'high'}>${msg('High')}</option>
+                    <option value="medium" ?selected=${this._notificationSettings.allMessages === 'medium'}>${msg('Medium')}</option>
+                    <option value="low" ?selected=${this._notificationSettings.allMessages === 'low'}>${msg('Low')}</option>
+                    <option value="none" ?selected=${this._notificationSettings.allMessages === 'none'}>${msg('Off')}</option>
+                  </select>
+                </div>
+                <div class="notification-settings-hint">
+                  ${msg('High = OS notification, Medium = systray, Low = feed only')}
+                </div>
+              </div>
+            ` : ''}
           </div>
         </div>
         <div id="stream" class="stream">${this.renderStream()}</div>
         ${this._messages && this.newMessages
-          ? html`<div
+        ? html`<div
               tabindex="0"
               class="new-message-indicator"
               @click=${() => {
-                this._conversationContainer.scrollTop = this._conversationContainer.scrollHeight;
-                this.newMessages = 0;
-                this.previousMessageCount = this._messages!.value.length;
-              }}
+            this._conversationContainer.scrollTop = this._conversationContainer.scrollHeight;
+            this.newMessages = 0;
+            this.previousMessageCount = this._messages!.value.length;
+          }}
               @keypress=${(e: KeyboardEvent) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  this._conversationContainer.scrollTop = this._conversationContainer.scrollHeight;
-                  this.newMessages = 0;
-                  this.previousMessageCount = this._messages!.value.length;
-                }
-              }}
+            if (e.key === 'Enter' || e.key === ' ') {
+              this._conversationContainer.scrollTop = this._conversationContainer.scrollHeight;
+              this.newMessages = 0;
+              this.previousMessageCount = this._messages!.value.length;
+            }
+          }}
             >
               ${this.newMessages} new message(s)
             </div>`
-          : html``}
+        : html``}
         <div class="send-controls">
           <sl-input
             id="msg-input"
             style="flex: 1;"
             @sl-input=${() => {
-              this.disabled = !this._msgInput?.value;
-            }}
+        this.disabled = !this._msgInput?.value;
+      }}
             @keydown=${(e: KeyboardEvent) => {
-              if (e.key === 'Enter') {
-                this.sendMessage();
-                e.stopPropagation();
-              }
-            }}
+        if (e.key === 'Enter') {
+          this.sendMessage();
+          e.stopPropagation();
+        }
+      }}
             placeholder=${msg('my message')}
           ></sl-input>
           <button

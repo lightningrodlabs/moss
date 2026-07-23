@@ -8,8 +8,8 @@
 
 ```typescript
 export type NotificationCount = {
-  low: number;
-  medium: number;
-  high: number;
+    low: number;
+    medium: number;
+    high: number;
 };
 ```

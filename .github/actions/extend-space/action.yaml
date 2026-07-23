@@ -1,13 +1,14 @@
 # Extends disk space on github hosted runners
 
-name: 'Extend space'
-description: 'Teases out as much free space as possible'
+
+name: "Extend space"
+description: "Teases out as much free space as possible"
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Create mountpoint for extended space
-      shell: 'bash'
+      shell: "bash"
       run: sudo mkdir /mnt/extended
 
     - name: Maximize build space
@@ -29,7 +30,7 @@ runs:
     # directories (such as $HOME and /tmp), we use an overlay to preserve access
     # to the existing files, while redirecting changes to the extended space.
     - name: Use extended space for /nix, /tmp, /var/tmp, and $HOME
-      shell: 'bash'
+      shell: "bash"
       run: |
         export EXTENDED_PATH=/mnt/extended
         sudo mkdir $EXTENDED_PATH/{tmp,nix,home}

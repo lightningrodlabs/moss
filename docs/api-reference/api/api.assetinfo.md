@@ -8,7 +8,7 @@
 
 ```typescript
 export type AssetInfo = {
-  name: string;
-  icon_src: string;
+    name: string;
+    icon_src: string;
 };
 ```

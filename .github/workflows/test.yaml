@@ -1,9 +1,9 @@
 name: test-workflow
 on:
   push:
-    branches: [main, main-*, develop]
+    branches: [ main, main-*, develop ]
   pull_request:
-    branches: [main, main-*, develop]
+    branches: [ main, main-*, develop ]
 
 jobs:
   build-moss:
@@ -12,7 +12,7 @@ jobs:
       matrix:
         # platform: [windows-2022]
         # platform: [ubuntu-22.04]
-        platform: [windows-2022, macos-15-intel, macos-latest, ubuntu-22.04, ubuntu-22.04-arm]
+        platform: [ windows-2022, macos-15-intel, macos-latest, ubuntu-22.04, ubuntu-22.04-arm ]
         # platform: [ubuntu-22.04-arm]
         # platform: [windows-2022, ubuntu-22.04]
     env:
@@ -58,7 +58,7 @@ jobs:
           yarn install
 
       - name: Build environment 1/2
-        run: |
+        run: |          
           yarn build:libs
           yarn build:iframes
           yarn prepare:default-apps
@@ -103,11 +103,11 @@ jobs:
         run: |
           nix develop --command yarn test
 
-      #      - name: Run tryorama tests
-      #        if: matrix.platform == 'ubuntu-22.04'
-      #        run: |
-      #          export PATH="$PATH:$GITHUB_WORKSPACE/resources/bins"
-      #          yarn test
+#      - name: Run tryorama tests
+#        if: matrix.platform == 'ubuntu-22.04'
+#        run: |
+#          export PATH="$PATH:$GITHUB_WORKSPACE/resources/bins"
+#          yarn test
 
       - name: Build cli
         if: matrix.platform == 'ubuntu-22.04'
@@ -119,32 +119,32 @@ jobs:
         run: |
           yarn workspace @theweave/wdocker build
 
-      # Skip Mac because it will try to notarize and fail with error "already exists on GitHub"
-      #      - name: Build app (macOS arm64)
-      #        if: matrix.platform == 'macos-latest'
-      #        env:
-      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #          APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
-      #          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
-      #          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-      #          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      #          DEBUG: electron-osx-sign*,electron-notarize*
-      #        run: |
-      #          yarn build:mac-arm64
-      #          ls dist
-      #
-      #      - name: Build app (macOS x86)
-      #        if: matrix.platform == 'macos-15-intel'
-      #        env:
-      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #          APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
-      #          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
-      #          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-      #          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      #          DEBUG: electron-osx-sign*,electron-notarize*
-      #        run: |
-      #          yarn build:mac-x64
-      #          ls dist
+# Skip Mac because it will try to notarize and fail with error "already exists on GitHub"
+#      - name: Build app (macOS arm64)
+#        if: matrix.platform == 'macos-latest'
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
+#          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
+#          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+#          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+#          DEBUG: electron-osx-sign*,electron-notarize*
+#        run: |
+#          yarn build:mac-arm64
+#          ls dist
+#
+#      - name: Build app (macOS x86)
+#        if: matrix.platform == 'macos-15-intel'
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
+#          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
+#          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+#          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+#          DEBUG: electron-osx-sign*,electron-notarize*
+#        run: |
+#          yarn build:mac-x64
+#          ls dist
 
       - name: Build app (Ubuntu 22.04)
         if: matrix.platform == 'ubuntu-22.04'

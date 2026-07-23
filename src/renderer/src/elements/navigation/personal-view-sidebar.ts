@@ -24,6 +24,7 @@ import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiGraph, mdiHome } from '@mdi/js';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 
+
 // Sidebar for the applet instances of a group
 @localized()
 @customElement('personal-view-sidebar')
@@ -181,7 +182,9 @@ export class PersonalViewSidebar extends LitElement {
 
   render() {
     return html`
-      <div class="row" style="flex: 1; align-items: center;">${this.renderMossButtons()}</div>
+      <div class="row" style="flex: 1; align-items: center;">
+        ${this.renderMossButtons()}
+      </div>
     `;
   }
 

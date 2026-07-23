@@ -294,12 +294,12 @@ export class ActivityView extends LitElement {
             <select
               class="time-select"
               @change=${(e) => {
-                // By default, notifications 1 week back should already be loaded
-                if (this.lookBackString1 === 'month') {
-                  this._mossStore.loadNotificationFeed(30);
-                }
-                this.lookBackString1 = e.target.value;
-              }}
+        // By default, notifications 1 week back should already be loaded
+        if (this.lookBackString1 === 'month') {
+          this._mossStore.loadNotificationFeed(30);
+        }
+        this.lookBackString1 = e.target.value;
+      }}
               .value=${this.lookBackString1 || 'day'}
             >
               <option value="minute">Last minute</option>
@@ -313,38 +313,38 @@ export class ActivityView extends LitElement {
           </div>
           <div style="overflow-y: auto;">
             ${sortedNotifications.length === 0
-              ? html`
+        ? html`
                   <div
                     style="background: white; border-radius: 10px; background: transparent; color: var(--moss-light-green);"
                   >
                     Your activity will appear here
                   </div>
                 `
-              : sortedNotifications.map((aboutWal) => {
-                  const notifications = combinedNotifications[aboutWal].notifications;
-                  const source = combinedNotifications[aboutWal].source;
-                  // Combined notifications are only from applets (group notifications don't have WALs)
-                  if (source.type !== 'applet') return html``;
-                  const appletHash: AppletHash = appletHashFromAppId(
-                    appIdFromAppletId(source.appletId),
-                  );
-                  return html`
+        : sortedNotifications.map((aboutWal) => {
+          const notifications = combinedNotifications[aboutWal].notifications;
+          const source = combinedNotifications[aboutWal].source;
+          // Combined notifications are only from applets (group notifications don't have WALs)
+          if (source.type !== 'applet') return html``;
+          const appletHash: AppletHash = appletHashFromAppId(
+            appIdFromAppletId(source.appletId),
+          );
+          return html`
                     <activity-asset
                       @open-wal=${async (e) => {
-                        this.dispatchEvent(
-                          new CustomEvent('open-wal', {
-                            detail: e.detail,
-                            bubbles: true,
-                            composed: true,
-                          }),
-                        );
-                      }}
+              this.dispatchEvent(
+                new CustomEvent('open-wal', {
+                  detail: e.detail,
+                  bubbles: true,
+                  composed: true,
+                }),
+              );
+            }}
                       .notifications=${notifications}
                       .wal=${aboutWal}
                       .appletHash=${appletHash}
                     ></activity-asset>
                   `;
-                })}
+        })}
           </div>
         </div>
         <div class="column feed">
@@ -356,8 +356,8 @@ export class ActivityView extends LitElement {
               @click=${() => (this.sortMethod2 = 'high')}
               class="sort-button"
               style=${this.sortMethod2 === 'high'
-                ? 'background-color: var(--moss-medium-green); color: #000'
-                : 'background-color: var(--moss-dark-green); color: #fff'}
+        ? 'background-color: var(--moss-medium-green); color: #000'
+        : 'background-color: var(--moss-dark-green); color: #fff'}
               title="Show high urgency notifications only"
             >
               High
@@ -366,8 +366,8 @@ export class ActivityView extends LitElement {
               @click=${() => (this.sortMethod2 = 'medium')}
               class="sort-button"
               style=${this.sortMethod2 === 'medium'
-                ? 'background-color: var(--moss-medium-green); color: #000'
-                : 'background-color: var(--moss-dark-green); color: #fff'}
+        ? 'background-color: var(--moss-medium-green); color: #000'
+        : 'background-color: var(--moss-dark-green); color: #fff'}
               title="Show medium urgency notifications only"
             >
               Medium
@@ -376,8 +376,8 @@ export class ActivityView extends LitElement {
               @click=${() => (this.sortMethod2 = 'low')}
               class="sort-button"
               style=${this.sortMethod2 === 'low'
-                ? 'background-color: var(--moss-medium-green); color: #000'
-                : 'background-color: var(--moss-dark-green); color: #fff'}
+        ? 'background-color: var(--moss-medium-green); color: #000'
+        : 'background-color: var(--moss-dark-green); color: #fff'}
               title="Show low urgency notifications only"
             >
               Low
@@ -385,12 +385,12 @@ export class ActivityView extends LitElement {
             <select
               class="time-select"
               @change=${(e) => {
-                // By default, notifications 1 week back should already be loaded
-                if (this.lookBackString2 === 'month') {
-                  this._mossStore.loadNotificationFeed(30);
-                }
-                this.lookBackString2 = e.target.value;
-              }}
+        // By default, notifications 1 week back should already be loaded
+        if (this.lookBackString2 === 'month') {
+          this._mossStore.loadNotificationFeed(30);
+        }
+        this.lookBackString2 = e.target.value;
+      }}
               .value=${this.lookBackString2 || 'day'}
             >
               <option value="minute">Last minute</option>
@@ -404,81 +404,75 @@ export class ActivityView extends LitElement {
           </div>
           <div class="column" style="overflow-y: auto;">
             ${filteredIndividualNotifications.length === 0
-              ? html`
+        ? html`
                   <div
                     style="background: white; border-radius: 10px; background: transparent; color: var(--moss-light-green);"
                   >
                     Your notifications will appear here
                   </div>
                 `
-              : filteredIndividualNotifications
-                  .slice(0, this.maxNumShownNotifications)
-                  .map((notification) => {
-                    if (notification.source.type === 'applet') {
-                      const appletHash = appletHashFromAppId(
-                        appIdFromAppletId(notification.source.appletId),
-                      );
-                      return html`
-                        <notification-asset
-                          style="display: flex; flex: 1;"
-                          .notification=${notification.notification}
-                          .appletHash=${appletHash}
-                          .sourceName=${notification.sourceName}
-                          @open-applet-main=${(e) => {
-                            console.log('notification clicked', e.detail);
-                            this.dispatchEvent(
-                              new CustomEvent('open-applet-main', {
-                                detail: {
-                                  applet: appletHash,
-                                  wal: e.detail.wal,
-                                },
-                                bubbles: true,
-                                composed: true,
-                              }),
-                            );
-                          }}
-                        ></notification-asset>
-                      `;
-                    } else {
-                      // Group notification (e.g., foyer message)
-                      return html`
-                        <notification-asset
-                          style="display: flex; flex: 1;"
-                          .notification=${notification.notification}
-                          .groupDnaHash=${notification.source.groupDnaHash}
-                          .sourceName=${notification.sourceName}
-                          @open-applet-main=${() => {
-                            // Navigate to group foyer
-                            if (notification.source.type === 'group') {
-                              this.dispatchEvent(
-                                new CustomEvent('open-group', {
-                                  detail: {
-                                    groupDnaHash: decodeHashFromBase64(
-                                      notification.source.groupDnaHash,
-                                    ),
-                                  },
-                                  bubbles: true,
-                                  composed: true,
-                                }),
-                              );
-                            }
-                          }}
-                        ></notification-asset>
-                      `;
-                    }
-                  })}
+        : filteredIndividualNotifications.slice(0, this.maxNumShownNotifications).map(
+          (notification) => {
+            if (notification.source.type === 'applet') {
+              const appletHash = appletHashFromAppId(appIdFromAppletId(notification.source.appletId));
+              return html`
+                <notification-asset
+                  style="display: flex; flex: 1;"
+                  .notification=${notification.notification}
+                  .appletHash=${appletHash}
+                  .sourceName=${notification.sourceName}
+                  @open-applet-main=${(e) => {
+                  console.log('notification clicked', e.detail);
+                  this.dispatchEvent(
+                    new CustomEvent('open-applet-main', {
+                      detail: {
+                        applet: appletHash,
+                        wal: e.detail.wal,
+                      },
+                      bubbles: true,
+                      composed: true,
+                    }),
+                  );
+                }}
+                ></notification-asset>
+              `;
+            } else {
+              // Group notification (e.g., foyer message)
+              return html`
+                <notification-asset
+                  style="display: flex; flex: 1;"
+                  .notification=${notification.notification}
+                  .groupDnaHash=${notification.source.groupDnaHash}
+                  .sourceName=${notification.sourceName}
+                  @open-applet-main=${() => {
+                  // Navigate to group foyer
+                  if (notification.source.type === 'group') {
+                    this.dispatchEvent(
+                      new CustomEvent('open-group', {
+                        detail: { groupDnaHash: decodeHashFromBase64(notification.source.groupDnaHash) },
+                        bubbles: true,
+                        composed: true,
+                      }),
+                    );
+                  }
+                }}
+                ></notification-asset>
+              `;
+            }
+          },
+        )}
             ${displayShowMoreButton
-              ? html`<div class="row" style="justify-content: center;">
+        ? html`<div class="row" style="justify-content: center;">
                   <button
                     @click=${() => {
-                      this.maxNumShownNotifications += 50;
-                    }}
+            this.maxNumShownNotifications += 50;
+          }}
                     style="margin-top: 20px; with: 80px;"
                   >
                     Show More
                   </button>
                 </div>`
-              : html``}
+        : html``}
           </div>
         </div>
       </div>
@@ -489,7 +483,7 @@ export class ActivityView extends LitElement {
     css`
       :host {
         border-radius: 10px;
-        background: rgb(0, 0, 0, 0.2);
+        background: rgb(0,0,0,.2);
       }
       .feed {
         padding: 30px;

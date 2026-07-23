@@ -7,6 +7,5 @@
 **Signature:**
 
 ```typescript
-createCloneCell: (req: CreateCloneCellRequest, publicToGroupMembers: boolean) =>
-  Promise<import('@holochain/client').ClonedCell>;
+createCloneCell: (req: CreateCloneCellRequest, publicToGroupMembers: boolean) => Promise<import("@holochain/client").ClonedCell>;
 ```

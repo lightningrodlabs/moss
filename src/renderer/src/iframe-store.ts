@@ -1,6 +1,7 @@
 import { AppletId, ParentToAppletMessage } from '@theweave/api';
 import { ToolCompatibilityId } from '@theweave/moss-types';
 
+
 export type IframeInfo = {
   id: string; // RNG
   subType: string;
@@ -17,7 +18,10 @@ export class IframeStore {
   appletIframes: Record<AppletId, Array<IframeInfo>> = {};
   crossGroupIframes: Record<ToolCompatibilityId, Array<IframeInfo>> = {};
 
-  registerAppletIframe(appletId: AppletId, iframeInfo: IframeInfo): void {
+  registerAppletIframe(
+    appletId: AppletId,
+    iframeInfo: IframeInfo,
+  ): void {
     // TODO: Check if iframeInfo.id is already in use
     let iframes = this.appletIframes[appletId];
     if (!iframes) iframes = [];
@@ -30,7 +34,10 @@ export class IframeStore {
     this.appletIframes[appletId] = iframes.filter(({ id }) => id !== idToRemove);
   }
 
-  registerCrossGroupIframe(toolCompatibilityId: ToolCompatibilityId, iframeInfo: IframeInfo): void {
+  registerCrossGroupIframe(
+    toolCompatibilityId: ToolCompatibilityId,
+    iframeInfo: IframeInfo,
+  ): void {
     // TODO: Check if iframeInfo.id is already in use
     let iframes = this.crossGroupIframes[toolCompatibilityId];
     if (!iframes) iframes = [];

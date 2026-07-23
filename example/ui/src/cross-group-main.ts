@@ -24,10 +24,10 @@ export class CrossGroupMain extends LitElement {
       lazyLoad(async () =>
         getAppletsInfosAndGroupsProfiles(
           this.weaveClient as WeaveClient,
-          Array.from(this.applets.keys()),
-        ),
+          Array.from(this.applets.keys())
+        )
       ),
-    () => [],
+    () => []
   );
 
   render() {

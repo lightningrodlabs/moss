@@ -7,6 +7,5 @@
 **Signature:**
 
 ```typescript
-myAccountabilitiesPerGroup: () =>
-  Promise<[import('@holochain/client').HoloHash, MossAccountability[]][]>;
+myAccountabilitiesPerGroup: () => Promise<[import("@holochain/client").HoloHash, MossAccountability[]][]>;
 ```

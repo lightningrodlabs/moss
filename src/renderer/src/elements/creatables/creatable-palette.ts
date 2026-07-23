@@ -1,7 +1,7 @@
 import { customElement, state, query } from 'lit/decorators.js';
 import { css, html, LitElement } from 'lit';
 import { consume } from '@lit/context';
-import { localized, msg, str } from '@lit/localize';
+import {localized, msg, str} from '@lit/localize';
 import { notify, notifyError, sharedStyles } from '@holochain-open-dev/elements';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -170,8 +170,8 @@ export class CreatablePalette extends LitElement {
       >
         <group-applets-creatables
           @creatable-selected=${(e: { detail: CreatableInfo }) => {
-            this.handleCreatableSelected(e.detail);
-          }}
+        this.handleCreatableSelected(e.detail);
+      }}
         ></group-applets-creatables>
       </group-context>
     `;
@@ -197,21 +197,20 @@ export class CreatablePalette extends LitElement {
             <span style="display: flex; flex: 1;"></span>
             <group-selector .groupDnaHashB64=${this.groupDnaHash ? encodeHashToBase64(this.groupDnaHash) : undefined}
               @group-selected=${(e) => {
-                this.groupDnaHash = decodeHashFromBase64(e.detail);
-              }}
+        this.groupDnaHash = decodeHashFromBase64(e.detail);
+      }}
             ></group-selector>
           </div>
           ${this.renderCreatables()}
-          ${
-            this._showCreatableView
-              ? html`
+          ${this._showCreatableView
+        ? html`
                   <sl-dialog
                     id="creatable-view-dialog"
                     style="${this.creatableWidth(this._showCreatableView.creatable.width)}"
                     label="${msg('Create New')} ${this._showCreatableView.creatable.label}"
                     @sl-hide=${() => {
-                      this._showCreatableView = undefined;
-                    }}
+            this._showCreatableView = undefined;
+          }}
                   >
                     <creatable-view
                       style="${this.creatableHeight(this._showCreatableView.creatable.height)}"
@@ -222,17 +221,16 @@ export class CreatablePalette extends LitElement {
                     ></creatable-view>
                   </sl-dialog>
                 `
-              : html``
-          }
-          ${
-            this._showCreatablesSelection
-              ? html`
+        : html``
+      }
+          ${this._showCreatablesSelection
+        ? html`
                   <sl-dialog
                     id="creatable-selection-dialog"
                     label="${msg('What do you want to create?')}"
                     @sl-hide=${() => {
-                      this._showCreatablesSelection = undefined;
-                    }}
+            this._showCreatablesSelection = undefined;
+          }}
                   >
                     <div class="row" style="justify-content: flex-end; margin-top: -20px;">
                       <applet-title
@@ -241,8 +239,8 @@ export class CreatablePalette extends LitElement {
                     </div>
                   </sl-dialog>
                 `
-              : html``
-          }
+        : html``
+      }
       </moss-dialog>
     `;
   }

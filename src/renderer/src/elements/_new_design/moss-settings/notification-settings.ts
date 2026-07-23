@@ -209,10 +209,7 @@ export class MossNotificationSoundSettings extends LitElement {
             )}
           </select>
           <button
-            class="moss-mini-button-primary play-button ${!urgencySettings.enabled ||
-            urgencySettings.soundId === 'none'
-              ? 'moss-mini-button-disabled'
-              : ''}"
+            class="moss-mini-button-primary play-button ${!urgencySettings.enabled || urgencySettings.soundId === 'none' ? 'moss-mini-button-disabled' : ''}"
             title=${msg('Play sound')}
             ?disabled=${!urgencySettings.enabled || urgencySettings.soundId === 'none'}
             @click=${() => this.previewSound(urgencySettings.soundId)}
@@ -273,19 +270,14 @@ export class MossNotificationSoundSettings extends LitElement {
     return html`
       <div class="column flex-1">
         <div style="margin-bottom: 24px; opacity: 0.8;">
-          ${msg(
-            'Configure sounds for notifications. Sounds only play when the window is not focused.',
-          )}
+          ${msg('Configure sounds for notifications. Sounds only play when the window is not focused.')}
         </div>
 
         <div class="section master-row">
           <sl-switch ?checked=${this.settings.masterEnabled} @sl-change=${this.handleMasterToggle}>
             ${msg('Enable notification sounds')}
           </sl-switch>
-          <div
-            class="volume-row"
-            style="${!this.settings.masterEnabled ? 'opacity: 0.5; pointer-events: none;' : ''}"
-          >
+          <div class="volume-row" style="${!this.settings.masterEnabled ? 'opacity: 0.5; pointer-events: none;' : ''}">
             <label>${msg('Volume')}</label>
             <sl-range
               min="0"
@@ -297,12 +289,10 @@ export class MossNotificationSoundSettings extends LitElement {
           </div>
         </div>
 
-        <div
-          class="section"
-          style="${!this.settings.masterEnabled ? 'opacity: 0.5; pointer-events: none;' : ''}"
-        >
+        <div class="section" style="${!this.settings.masterEnabled ? 'opacity: 0.5; pointer-events: none;' : ''}">
           <h4>${msg('Sound per urgency level')}</h4>
-          ${this.renderUrgencyRow('high')} ${this.renderUrgencyRow('medium')}
+          ${this.renderUrgencyRow('high')}
+          ${this.renderUrgencyRow('medium')}
           ${this.renderUrgencyRow('low')}
         </div>
 

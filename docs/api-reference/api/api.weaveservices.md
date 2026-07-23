@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface WeaveServices
+export interface WeaveServices 
 ```
 
 ## Properties
@@ -16,198 +16,253 @@ export interface WeaveServices
 
 Property
 
+
 </th><th>
 
 Modifiers
+
 
 </th><th>
 
 Type
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [appletInfo](./api.weaveservices.appletinfo.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (appletHash: [AppletHash](./api.applethash.md)<!-- -->) =&gt; Promise&lt;[AppletInfo](./api.appletinfo.md) \| undefined&gt;
 
+
 </td><td>
 
 Returns Applet info of the specified Applet
+
 
 </td></tr>
 <tr><td>
 
 [appletParticipants](./api.weaveservices.appletparticipants.md)
 
+
 </td><td>
+
 
 </td><td>
 
 () =&gt; Promise&lt;AgentPubKey\[\]&gt;
 
+
 </td><td>
 
 Gets all the agents that joined the Tool instance of the Tool calling this function
+
 
 </td></tr>
 <tr><td>
 
 [assets](./api.weaveservices.assets.md)
 
+
 </td><td>
+
 
 </td><td>
 
 [AssetServices](./api.assetservices.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [bootstrapUrls](./api.weaveservices.bootstrapurls.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (groupHash?: DnaHash) =&gt; string\[\]
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [createCloneCell](./api.weaveservices.createclonecell.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (req: CreateCloneCellRequest, publicToGroupMembers: boolean) =&gt; Promise&lt;CreateCloneCellResponse&gt;
 
+
 </td><td>
 
 Create a cloned cell and optionally have it be registered in the group DNA for other group members or always-online nodes to be able to automatically join it too.
+
 
 </td></tr>
 <tr><td>
 
 [disableCloneCell](./api.weaveservices.disableclonecell.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (req: DisableCloneCellRequest) =&gt; Promise&lt;void&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [enableCloneCell](./api.weaveservices.enableclonecell.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (req: EnableCloneCellRequest) =&gt; Promise&lt;CreateCloneCellResponse&gt;
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [getLocale](./api.weaveservices.getlocale.md)
 
+
 </td><td>
+
 
 </td><td>
 
 () =&gt; string
 
+
 </td><td>
 
 Get the current UI locale (e.g. 'en', 'de', 'fr', 'es')
+
 
 </td></tr>
 <tr><td>
 
 [groupProfile](./api.weaveservices.groupprofile.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (groupHash: DnaHash) =&gt; Promise&lt;any&gt;
 
+
 </td><td>
 
 Get the group profile of the specified group
+
 
 </td></tr>
 <tr><td>
 
 [mossVersion](./api.weaveservices.mossversion.md)
 
+
 </td><td>
+
 
 </td><td>
 
 () =&gt; string
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [myAccountabilitiesPerGroup](./api.weaveservices.myaccountabilitiespergroup.md)
 
+
 </td><td>
+
 
 </td><td>
 
 () =&gt; Promise&lt;\[DnaHash, [MossAccountability](./api.mossaccountability.md)<!-- -->\[\]\]\[\]&gt;
 
+
 </td><td>
 
 Gets the agent's accountabilities for this applet. May be used to restrict certain actions in the UI.
+
 
 </td></tr>
 <tr><td>
 
 [notifyFrame](./api.weaveservices.notifyframe.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (notifications: Array&lt;[FrameNotification](./api.framenotification.md)<!-- -->&gt;) =&gt; Promise&lt;any&gt;
 
+
 </td><td>
 
 Sends notifications to We and depending on user settings and urgency level further to the operating system.
+
 
 </td></tr>
 <tr><td>
 
 [onBeforeUnload](./api.weaveservices.onbeforeunload.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (callback: () =&gt; void) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
+
 
 </td><td>
 
@@ -215,200 +270,253 @@ Event listener allowing to register a callback that will get executed before the
 
 If this callback takes too long, users may be offered to force reload, thereby ignoring/cancelling the pending callback.
 
+
 </td></tr>
 <tr><td>
 
 [onLocaleChange](./api.weaveservices.onlocalechange.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (callback: (locale: string) =&gt; any) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
 
+
 </td><td>
 
 Register a callback to be called when the UI locale changes
+
 
 </td></tr>
 <tr><td>
 
 [onNetworkStatsUpdate](./api.weaveservices.onnetworkstatsupdate.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (callback: (payload: TransportStats) =&gt; any) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
 
+
 </td><td>
 
 Event handler for network stats updates.
+
 
 </td></tr>
 <tr><td>
 
 [onPeerStatusUpdate](./api.weaveservices.onpeerstatusupdate.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (callback: (payload: [PeerStatusUpdate](./api.peerstatusupdate.md)<!-- -->) =&gt; any) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
 
+
 </td><td>
 
 Event handler for peer status updates.
+
 
 </td></tr>
 <tr><td>
 
 [onRemoteSignal](./api.weaveservices.onremotesignal.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (callback: (payload: Uint8Array) =&gt; any) =&gt; [UnsubscribeFunction](./api.unsubscribefunction.md)
 
+
 </td><td>
 
 Event listener allowing to register a callback that will get executed if a remote signal that had been sent with `WeaveClient.sendRemoteSignal()` arrives.
+
 
 </td></tr>
 <tr><td>
 
 [openAppletBlock](./api.weaveservices.openappletblock.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (appletHash: any, block: string, context: any) =&gt; Promise&lt;void&gt;
 
+
 </td><td>
 
 Open the specified block view of the specified Applet
+
 
 </td></tr>
 <tr><td>
 
 [openAppletMain](./api.weaveservices.openappletmain.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (appletHash: EntryHash, wal?: [WAL](./api.wal.md)<!-- -->) =&gt; Promise&lt;void&gt;
 
+
 </td><td>
 
 Open the main view of the specified Applet
+
 
 </td></tr>
 <tr><td>
 
 [openAsset](./api.weaveservices.openasset.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (wal: [WAL](./api.wal.md)<!-- -->, mode?: [OpenAssetMode](./api.openassetmode.md)<!-- -->) =&gt; Promise&lt;void&gt;
 
+
 </td><td>
 
 Open the asset associated to the specified WAL
+
 
 </td></tr>
 <tr><td>
 
 [openCrossGroupBlock](./api.weaveservices.opencrossgroupblock.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (appletBundleId: string, block: string, context: any) =&gt; Promise&lt;void&gt;
 
+
 </td><td>
 
 Open the specified block view of the specified Applet Type
+
 
 </td></tr>
 <tr><td>
 
 [openCrossGroupMain](./api.weaveservices.opencrossgroupmain.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (appletBundleId: string) =&gt; Promise&lt;void&gt;
 
+
 </td><td>
 
 Open the cross-group main view of the specified Applet Type.
+
 
 </td></tr>
 <tr><td>
 
 [requestClose](./api.weaveservices.requestclose.md)
 
+
 </td><td>
+
 
 </td><td>
 
 () =&gt; Promise&lt;void&gt;
 
+
 </td><td>
 
 Requests to close the containing window. Will only work if the applet is being run in its own window
+
 
 </td></tr>
 <tr><td>
 
 [sendRemoteSignal](./api.weaveservices.sendremotesignal.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (payload: Uint8Array, toAgents?: AgentPubKey\[\]) =&gt; Promise&lt;void&gt;
 
+
 </td><td>
 
 Allows to send small sized "fire-and-forget" signals to all group participants that are currently online.
+
 
 </td></tr>
 <tr><td>
 
 [toolInstaller](./api.weaveservices.toolinstaller.md)
 
+
 </td><td>
+
 
 </td><td>
 
 (appletHash: [AppletHash](./api.applethash.md)<!-- -->, groupHash?: DnaHash) =&gt; Promise&lt;AgentPubKey \| undefined&gt;
 
+
 </td><td>
 
 Get the AgentPubKey of the installer of a tool for the specified group
+
 
 </td></tr>
 <tr><td>
 
 [userSelectScreen](./api.weaveservices.userselectscreen.md)
 
+
 </td><td>
+
 
 </td><td>
 
 () =&gt; Promise&lt;string&gt;
 
+
 </td><td>
 
 Let's the user select a Screen or Window and returns the selected id. Useful for screen sharing applications.
+
 
 </td></tr>
 </tbody></table>

@@ -16,27 +16,34 @@ export declare function encodeContext(context: any): string;
 
 Parameter
 
+
 </th><th>
 
 Type
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 context
 
+
 </td><td>
 
 any
 
+
 </td><td>
+
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 string
+

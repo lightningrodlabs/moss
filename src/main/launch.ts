@@ -27,9 +27,7 @@ export async function launch(
   console.log('LAIR BINARY PATH: ', LAIR_BINARY);
   //console.log('runOptions: ', JSON.stringify(runOptions, null, 2));
   if (!runOptions.relayUrl && (!runOptions.bootstrapUrl || !runOptions.signalingUrl)) {
-    throw new Error(
-      `Failed to launch HolochainManager: bootstrapUrl, relayUrl or signalingUrl is not set in runOptions.`,
-    );
+      throw new Error(`Failed to launch HolochainManager: bootstrapUrl, relayUrl or signalingUrl is not set in runOptions.`);
   }
   // Initialize lair if necessary
   const lairHandleTemp = childProcess.spawnSync(LAIR_BINARY, ['--version']);

@@ -18,7 +18,7 @@ export default defineConfig({
       creatingAgent: {
         agentIdx: 1,
         agentProfile: {
-          nickname: 'Gaston',
+          nickname: 'Gaston'
         },
       },
       joiningAgents: [

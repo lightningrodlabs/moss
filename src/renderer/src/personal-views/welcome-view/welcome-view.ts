@@ -35,26 +35,27 @@ import '../../applets/elements/applet-logo.js';
 import '../../applets/elements/applet-logo-raw.js';
 import '../../applets/elements/applet-title.js';
 import '../../elements/dialogs/loading-dialog.js';
-import './elements/notification-card.js';
+import './elements/notification-card.js'
 import '../../elements/reusable/groups-for-tool.js';
+
 
 type UpdateFeedMessageGeneric =
   | {
-      type: 'Moss';
+    type: 'Moss';
+    timestamp: number;
+    content: {
+      type: string;
       timestamp: number;
-      content: {
-        type: string;
-        timestamp: number;
-        message: string;
-      };
-    }
-  | {
-      type: 'Tool';
-      timestamp: number;
-      content: {
-        tool: ToolInfoAndLatestVersion;
-      };
+      message: string;
     };
+  }
+  | {
+    type: 'Tool';
+    timestamp: number;
+    content: {
+      tool: ToolInfoAndLatestVersion;
+    };
+  };
 
 enum WelcomePageView {
   Main,
@@ -127,10 +128,7 @@ export class WelcomeView extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this._designFeedbackMode = this._persistedStore.designFeedbackMode.value();
-    window.addEventListener(
-      'design-feedback-mode-changed',
-      this._onDesignFeedbackModeChanged as EventListener,
-    );
+    window.addEventListener('design-feedback-mode-changed', this._onDesignFeedbackModeChanged as EventListener);
     document.addEventListener('click', this._clickOutsideHandler, true);
 
     // Initialize collapsed sections based on read state
@@ -139,10 +137,7 @@ export class WelcomeView extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    window.removeEventListener(
-      'design-feedback-mode-changed',
-      this._onDesignFeedbackModeChanged as EventListener,
-    );
+    window.removeEventListener('design-feedback-mode-changed', this._onDesignFeedbackModeChanged as EventListener);
     document.removeEventListener('click', this._clickOutsideHandler, true);
 
     // Record current section view on unmount if viewing a section
@@ -227,6 +222,8 @@ export class WelcomeView extends LitElement {
   // Mock applets data for development
   _mockAppletsData: Record<string, Map<any, any>> = {};
 
+
+
   // Memoization cache for notificationTypes
   private _lastNotifications: Array<any> | null = null;
   private _cachedNotificationTypes: Record<string, number> = {};
@@ -243,7 +240,7 @@ export class WelcomeView extends LitElement {
     // Recalculate when notifications change
     const types: Record<string, number> = {};
     notifications.forEach((item) => {
-      const notificationType = item.notification.notification_type || 'default';
+      const notificationType = item.notification.notification_type || "default";
       if (!types[notificationType]) {
         types[notificationType] = 1;
       } else {
@@ -306,8 +303,8 @@ Changes:
         const fadeStartPoint = scrollContainer.clientHeight / 3;
         const maxScroll = scrollContainer.clientHeight * 0.4;
         const adjustedScroll = Math.max(0, scrollY - fadeStartPoint);
-        const welcomeOpacity = Math.max(1 - adjustedScroll / maxScroll, 0);
-        const quoteOpacity = Math.max(1.4 - adjustedScroll / maxScroll, 0);
+        const welcomeOpacity = Math.max(1 - (adjustedScroll / maxScroll), 0);
+        const quoteOpacity = Math.max(1.4 - (adjustedScroll / maxScroll), 0);
 
         // Update CSS variables instead of state
         this.style.setProperty('--welcome-opacity', welcomeOpacity.toString());
@@ -350,7 +347,7 @@ Changes:
           }
 
           // Add all notification types
-          Object.keys(this.notificationTypes).forEach((type) => {
+          Object.keys(this.notificationTypes).forEach(type => {
             validSections.add(type);
           });
 
@@ -401,7 +398,7 @@ Changes:
 
     if (sectionsToExpand.length > 0) {
       this._collapsedSections = new Set(
-        [...this._collapsedSections].filter((s) => !sectionsToExpand.includes(s)),
+        [...this._collapsedSections].filter((s) => !sectionsToExpand.includes(s))
       );
     }
   }
@@ -525,8 +522,8 @@ Changes:
   getLocalizedNotificationTypeLabel(type: string, count: number): string {
     // Map of known notification types to their localized singular/plural forms
     const knownTypes: Record<string, { singular: string; plural: string }> = {
-      message: { singular: msg('Message'), plural: msg('Messages') },
-      mention: { singular: msg('Mention'), plural: msg('Mentions') },
+      'message': { singular: msg('Message'), plural: msg('Messages') },
+      'mention': { singular: msg('Mention'), plural: msg('Mentions') },
     };
 
     if (knownTypes[type]) {
@@ -583,7 +580,9 @@ Changes:
    * Expand a collapsed section (just removes from collapsed set)
    */
   expandSection(section: string) {
-    this._collapsedSections = new Set([...this._collapsedSections].filter((s) => s !== section));
+    this._collapsedSections = new Set(
+      [...this._collapsedSections].filter(s => s !== section)
+    );
   }
 
   /**
@@ -600,7 +599,9 @@ Changes:
    */
   markSectionAsUnread(section: string) {
     this._mossStore.markSectionAsUnread(section);
-    this._collapsedSections = new Set([...this._collapsedSections].filter((s) => s !== section));
+    this._collapsedSections = new Set(
+      [...this._collapsedSections].filter(s => s !== section)
+    );
     // Select this section so the nav list moves to the left
     this.notificationSection = section;
     this.updateNavigationClasses();
@@ -630,9 +631,9 @@ Changes:
         <button
           class="mark-unread-button"
           @click=${(e: Event) => {
-            e.stopPropagation();
-            this.markSectionAsUnread(section);
-          }}
+        e.stopPropagation();
+        this.markSectionAsUnread(section);
+      }}
         >
           ${msg('Mark as unread')}
         </button>
@@ -651,21 +652,12 @@ Changes:
           <button
             class="mark-read-button"
             @click=${(e: Event) => {
-              e.stopPropagation();
-              this.markSectionAsRead(section);
-            }}
+        e.stopPropagation();
+        this.markSectionAsRead(section);
+      }}
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M8 1C4.13401 1 1 4.13401 1 8C1 11.866 4.13401 15 8 15C11.866 15 15 11.866 15 8C15 4.13401 11.866 1 8 1ZM11.7071 6.70711L7.70711 10.7071C7.31658 11.0976 6.68342 11.0976 6.29289 10.7071L4.29289 8.70711C3.90237 8.31658 3.90237 7.68342 4.29289 7.29289C4.68342 6.90237 5.31658 6.90237 5.70711 7.29289L7 8.58579L10.2929 5.29289C10.6834 4.90237 11.3166 4.90237 11.7071 5.29289C12.0976 5.68342 12.0976 6.31658 11.7071 6.70711Z"
-                fill="currentColor"
-              />
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 1C4.13401 1 1 4.13401 1 8C1 11.866 4.13401 15 8 15C11.866 15 15 11.866 15 8C15 4.13401 11.866 1 8 1ZM11.7071 6.70711L7.70711 10.7071C7.31658 11.0976 6.68342 11.0976 6.29289 10.7071L4.29289 8.70711C3.90237 8.31658 3.90237 7.68342 4.29289 7.29289C4.68342 6.90237 5.31658 6.90237 5.70711 7.29289L7 8.58579L10.2929 5.29289C10.6834 4.90237 11.3166 4.90237 11.7071 5.29289C12.0976 5.68342 12.0976 6.31658 11.7071 6.70711Z" fill="currentColor"/>
             </svg>
           </button>
         </sl-tooltip>
@@ -741,7 +733,7 @@ Changes:
   toggleShowAllItems(section: string) {
     if (this._showAllItemsSections.has(section)) {
       this._showAllItemsSections = new Set(
-        [...this._showAllItemsSections].filter((s) => s !== section),
+        [...this._showAllItemsSections].filter(s => s !== section)
       );
     } else {
       this._showAllItemsSections = new Set([...this._showAllItemsSections, section]);
@@ -760,41 +752,36 @@ Changes:
    * Shows unread notifications first, then optionally shows read ones with a toggle.
    */
   renderSectionNotifications(section: string) {
-    const allNotifications =
-      this._notificationFeed.value?.filter(
-        (item) => (item.notification.notification_type || 'default') === section,
-      ) ?? [];
+    const allNotifications = this._notificationFeed.value
+      ?.filter((item) => (item.notification.notification_type || "default") === section) ?? [];
 
     if (allNotifications.length === 0) {
       return html`<div>${msg('No notifications yet...')}</div>`;
     }
 
-    const unreadNotifications = allNotifications.filter(
-      (n) => !this.isNotificationRead(n, section),
-    );
-    const readNotifications = allNotifications.filter((n) => this.isNotificationRead(n, section));
+    const unreadNotifications = allNotifications.filter(n => !this.isNotificationRead(n, section));
+    const readNotifications = allNotifications.filter(n => this.isNotificationRead(n, section));
     const readCount = readNotifications.length;
     const showingAll = this.isShowingAllItems(section);
 
     return html`
       ${unreadNotifications.length > 0
         ? unreadNotifications.map((notification) => this.renderNotification(notification))
-        : readCount === 0
-          ? html`<div>${msg('No notifications yet...')}</div>`
-          : ''}
-      ${readCount > 0
-        ? html`
-            <button class="show-read-button" @click=${() => this.toggleShowAllItems(section)}>
-              ${showingAll ? msg('Hide previously read') : msg('Show previously read')}
-              (${readCount})
-            </button>
-            <div class="read-notifications-wrapper ${showingAll ? 'expanded' : 'collapsed'}">
-              <div class="read-notifications-content">
-                ${readNotifications.map((notification) => this.renderNotification(notification))}
-              </div>
-            </div>
-          `
-        : ''}
+        : readCount === 0 ? html`<div>${msg('No notifications yet...')}</div>` : ''
+      }
+      ${readCount > 0 ? html`
+        <button
+          class="show-read-button"
+          @click=${() => this.toggleShowAllItems(section)}
+        >
+          ${showingAll ? msg('Hide previously read') : msg('Show previously read')} (${readCount})
+        </button>
+        <div class="read-notifications-wrapper ${showingAll ? 'expanded' : 'collapsed'}">
+          <div class="read-notifications-content">
+            ${readNotifications.map((notification) => this.renderNotification(notification))}
+          </div>
+        </div>
+      ` : ''}
     `;
   }
 
@@ -860,7 +847,7 @@ Changes:
 
           // Calculate the position to place section top at middle of viewport
           const sectionTop = sectionRect.top - containerRect.top + currentScrollTop;
-          const targetScrollTop = sectionTop - containerRect.height * 0.4;
+          const targetScrollTop = sectionTop - (containerRect.height * 0.4);
 
           scrollContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
           // Re-enable scroll listener after animation completes
@@ -872,11 +859,7 @@ Changes:
     }
   }
 
-  private _selectExperimentalView(detail: {
-    type: string;
-    name?: string;
-    toolCompatibilityId?: string;
-  }) {
+  private _selectExperimentalView(detail: { type: string; name?: string; toolCompatibilityId?: string }) {
     this._experimentalMenuOpen = false;
     this.dispatchEvent(
       new CustomEvent('personal-view-selected', {
@@ -895,17 +878,17 @@ Changes:
         <button
           class="home-menu-item"
           @click=${() => {
-            this._selectExperimentalView({
-              type: 'tool',
-              toolCompatibilityId,
-            });
-          }}
+          this._selectExperimentalView({
+            type: 'tool',
+            toolCompatibilityId,
+          });
+        }}
         >
           <applet-logo-raw
             .toolIdentifier=${{
-              type: 'class' as const,
-              toolCompatibilityId,
-            }}
+          type: 'class' as const,
+          toolCompatibilityId,
+        }}
             style="--size: 32px; --border-radius: 6px;"
           ></applet-logo-raw>
           <span class="exp-menu-item-label">${info.toolName} cross-group</span>
@@ -927,8 +910,8 @@ Changes:
         <button
           class="home-menu-item"
           @click=${() => {
-            this._selectExperimentalView({ type: 'moss', name: 'activity-view' });
-          }}
+        this._selectExperimentalView({ type: 'moss', name: 'activity-view' });
+      }}
         >
           <img src="mountain_stream.svg" style="height: 32px; width: 32px;" />
           <span class="exp-menu-item-label">${msg('All streams')}</span>
@@ -937,10 +920,13 @@ Changes:
         <button
           class="home-menu-item"
           @click=${() => {
-            this._selectExperimentalView({ type: 'moss', name: 'assets-graph' });
-          }}
+        this._selectExperimentalView({ type: 'moss', name: 'assets-graph' });
+      }}
         >
-          <sl-icon .src=${wrapPathInSvg(mdiGraph)} style="font-size: 32px; color: white;"></sl-icon>
+          <sl-icon
+            .src=${wrapPathInSvg(mdiGraph)}
+            style="font-size: 32px; color: white;"
+          ></sl-icon>
           <span class="exp-menu-item-label">${msg('Artefacts graph')}</span>
         </button>
 
@@ -954,34 +940,18 @@ Changes:
       <div class="experimental-anchor ${this._experimentalMenuOpen ? 'anchor-open' : ''}">
         <div class="experimental-glow"></div>
         ${this.renderExperimentalMenu()}
-        <sl-tooltip
-          .content="${msg('Experimental features')}"
-          placement="top"
-          hoist
-          style="--max-width: 120px;"
-        >
+        <sl-tooltip .content="${msg('Experimental features')}" placement="top" hoist style="--max-width: 120px;">
           <button
             class="experimental-button"
             @click=${() => {
-              this._experimentalMenuOpen = !this._experimentalMenuOpen;
-            }}
+        this._experimentalMenuOpen = !this._experimentalMenuOpen;
+      }}
           >
             ${this._experimentalMenuOpen
-              ? html`<svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M18 6L6 18M6 6l12 12"
-                    stroke="white"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                  />
+        ? html`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="white" stroke-width="2" stroke-linecap="round"/>
                 </svg>`
-              : html`<img src="clover.svg" style="height: 40px; width: 40px;" />`}
+        : html`<img src="clover.svg" style="height: 40px; width: 40px;" />`}
           </button>
         </sl-tooltip>
       </div>
@@ -1043,10 +1013,9 @@ Changes:
   }
 
   renderGroupsUsingTool(toolInfo: ToolInfoAndLatestVersion) {
-    const toolCompatibilityId =
-      toolInfo.distributionInfo.type === 'web2-tool-list'
-        ? toolInfo.distributionInfo.info.toolCompatibilityId
-        : undefined;
+    const toolCompatibilityId = toolInfo.distributionInfo.type === 'web2-tool-list'
+      ? toolInfo.distributionInfo.info.toolCompatibilityId
+      : undefined;
 
     if (!toolCompatibilityId) return html``;
 
@@ -1093,12 +1062,14 @@ Changes:
             />
           </div>
           <div class="tool-update-center">
-            <div class="tool-update-title">${toolInfo.toolInfo.title}</div>
-            <div class="tool-update-version">${toolInfo.latestVersion.version}</div>
+            <div class="tool-update-title">
+              ${toolInfo.toolInfo.title}
+            </div>
+            <div class="tool-update-version">
+              ${toolInfo.latestVersion.version}
+            </div>
             <div class="tool-update-tags">
-              ${toolInfo.toolInfo.tags
-                .slice(0, 2)
-                .map((tag) => html`<span class="tool-update-tag">${tag}</span>`)}
+              ${toolInfo.toolInfo.tags.slice(0, 2).map((tag) => html`<span class="tool-update-tag">${tag}</span>`)}
             </div>
           </div>
         </div>
@@ -1115,7 +1086,7 @@ Changes:
       return msg('A new release of Moss with exciting features and improvements.');
     }
     // Get first non-empty line
-    const lines = this.availableMossUpdate.releaseNotes.split('\n').filter((line) => line.trim());
+    const lines = this.availableMossUpdate.releaseNotes.split('\n').filter(line => line.trim());
     return lines[0] || msg('A new release of Moss with exciting features and improvements.');
   }
 
@@ -1126,33 +1097,39 @@ Changes:
           <img src="moss-update.png" class="moss-icon" />
           <div class="moss-update-content">
             <div class="moss-update-title-row">
-              <div class="moss-update-title">${msg('New Moss Sprouted!')}</div>
+              <div class="moss-update-title">
+                ${msg('New Moss Sprouted!')}
+              </div>
               <div class="update-date">
                 ${this.availableMossUpdate?.releaseDate
-                  ? this.timeAgo.format(new Date(this.availableMossUpdate.releaseDate))
-                  : ''}
+        ? this.timeAgo.format(new Date(this.availableMossUpdate.releaseDate))
+        : ''}
               </div>
             </div>
-            <div class="moss-update-release-notes">${this.getFirstLineOfReleaseNotes()}</div>
+            <div class="moss-update-release-notes">
+              ${this.getFirstLineOfReleaseNotes()}
+            </div>
             <div class="moss-update-buttons">
               ${this.mossUpdatePercentage
-                ? html` <div class="column" style="align-items: center;">
-                    <div>${msg('Installing...')}</div>
-                    <sl-progress-bar
-                      value="${this.mossUpdatePercentage}"
-                      style="width: 200px; --height: 15px;"
-                    ></sl-progress-bar>
-                  </div>`
-                : html`
+        ? html`
+                    <div class="column" style="align-items: center;">
+                      <div>${msg('Installing...')}</div>
+                      <sl-progress-bar
+                        value="${this.mossUpdatePercentage}"
+                        style="width: 200px; --height: 15px;"
+                      ></sl-progress-bar>
+                    </div>`
+        : html`
                     <div
                       class="install-moss-update-button"
                       @click=${() => this.installMossUpdate()}
+                      >${msg('Update now')}</div
                     >
-                      ${msg('Update now')}
-                    </div>
-                    <div class="whats-new-button" @click=${() => this.showChangelog()}>
-                      ${msg("What's new?")}
-                    </div>
+                    <div
+                      class="whats-new-button"
+                      @click=${() => this.showChangelog()}
+                      >${msg("What's new?")}</div
+                    >
                   `}
             </div>
           </div>
@@ -1165,15 +1142,15 @@ Changes:
     const toolUpdatesSource = this.getToolUpdatesSource();
     const updateCount = Object.keys(toolUpdatesSource).length;
 
-    const toolUpdates: UpdateFeedMessageGeneric[] = Object.values(toolUpdatesSource).map(
-      (toolInfo) => ({
-        type: 'Tool',
-        timestamp: toolInfo.latestVersion.releasedAt,
-        content: {
-          tool: toolInfo,
-        },
-      }),
-    );
+    const toolUpdates: UpdateFeedMessageGeneric[] = Object.values(
+      toolUpdatesSource,
+    ).map((toolInfo) => ({
+      type: 'Tool',
+      timestamp: toolInfo.latestVersion.releasedAt,
+      content: {
+        tool: toolInfo,
+      },
+    }));
 
     const sortedToolUpdates = toolUpdates.sort((a, b) => b.timestamp - a.timestamp);
     const anyUpdateInFlight = this.updatingToolId !== undefined || this.updatingAll;
@@ -1181,7 +1158,7 @@ Changes:
     return html`
       <div class="tool-updates-container column">
         ${updateCount > 1
-          ? html`
+        ? html`
               <div class="update-all-row">
                 <sl-button
                   class="update-all-button"
@@ -1192,14 +1169,14 @@ Changes:
                 >
               </div>
             `
-          : ''}
+        : ''}
         ${sortedToolUpdates.length === 0
-          ? html`${msg('No Tool updates available.')}`
-          : sortedToolUpdates.map(
-              (message) => html`
-                ${message.type === 'Tool' ? this.renderToolUpdate(message.content.tool) : html``}
-              `,
-            )}
+        ? html`${msg('No Tool updates available.')}`
+        : sortedToolUpdates.map(
+          (message) => html`
+            ${message.type === 'Tool' ? this.renderToolUpdate(message.content.tool) : html``}
+          `,
+        )}
       </div>
     `;
   }
@@ -1210,14 +1187,16 @@ Changes:
 
     return html`
       <div class="quote-of-the-day-container" style="opacity: var(--quote-opacity, 1)">
-        <div class="quote-of-the-day">
+        <div
+          class="quote-of-the-day"
+        >
           <p>"${currentQuote.text}"</p>
-          ${currentQuote.source != '' ? html`<div>(${currentQuote.source})</div>` : ''}
+            ${currentQuote.source != '' ? html`<div>(${currentQuote.source})</div>` : ''}
         </div>
 
         <div class="quote-buttons">
           <!-- <sl-tooltip content="Collect to your pocket." placement="bottom">
-            <button variant="white" @click=${() => {}}>
+            <button variant="white" @click=${() => { }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M3.79912 3.0098C3.8801 2.91388 4.00719 2.85742 4.14216 2.85742H11.8604C11.9954 2.85742 12.1226 2.91396 12.2036 3.00999L14.7558 6.0373C14.8833 6.17828 14.8894 6.38044 14.7648 6.52803L8.3443 14.1336C8.26332 14.2295 8.13623 14.286 8.00127 14.286C7.8663 14.286 7.73921 14.2295 7.65823 14.1336L1.22638 6.51456C1.11204 6.37911 1.11204 6.19287 1.22638 6.05742L3.79912 3.0098ZM13.5635 5.89393L12.0147 4.05683L11.3493 5.89598L13.5635 5.89393ZM10.4482 5.89682L11.2722 3.61933H4.73038L5.55599 5.90135L10.4482 5.89682ZM5.83155 6.663L8.00127 12.6601L10.1724 6.65898L5.83155 6.663ZM4.6555 5.90218L3.98767 4.05629L2.42767 5.90425L4.6555 5.90218ZM2.42632 6.66615L6.81108 11.8603L4.93106 6.66383L2.42632 6.66615ZM9.19145 11.8603L13.5849 6.65581L11.0735 6.65814L9.19145 11.8603Z" fill="#151A11"/>
               </svg>
@@ -1226,27 +1205,10 @@ Changes:
           </sl-tooltip> -->
           <sl-tooltip content=${msg('More life wisdom.')} placement="bottom">
             <button variant="white" @click=${() => this.getRandomQuote()}>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M11.5317 7H15.4642C15.6762 7 15.792 7.24721 15.6563 7.41005L13.69 9.76953C13.5901 9.88947 13.4059 9.88947 13.3059 9.76953L11.3397 7.41005C11.204 7.24721 11.3198 7 11.5317 7Z"
-                  fill="black"
-                />
-                <path
-                  d="M0.531728 9H4.46421C4.67617 9 4.79196 8.75279 4.65626 8.58995L2.69002 6.23047C2.59007 6.11053 2.40586 6.11053 2.30591 6.23047L0.339672 8.58995C0.203979 8.75279 0.319769 9 0.531728 9Z"
-                  fill="black"
-                />
-                <path
-                  fill-rule="evenodd"
-                  clip-rule="evenodd"
-                  d="M7.99797 3C6.44548 3 5.05853 3.70697 4.14065 4.81839C3.96481 5.03131 3.64966 5.06137 3.43674 4.88552C3.22382 4.70968 3.19376 4.39453 3.36961 4.18161C4.46931 2.85003 6.13459 2 7.99797 2C10.9397 2 13.386 4.1165 13.8991 6.90967C13.9046 6.9397 13.9099 6.96981 13.9149 7H12.898C12.435 4.71778 10.4166 3 7.99797 3ZM3.09789 9C3.5609 11.2822 5.57934 13 7.99797 13C9.55046 13 10.9374 12.293 11.8553 11.1816C12.0311 10.9687 12.3463 10.9386 12.5592 11.1145C12.7721 11.2903 12.8022 11.6055 12.6263 11.8184C11.5266 13.15 9.86135 14 7.99797 14C5.05626 14 2.60995 11.8835 2.09688 9.09033C2.09137 9.0603 2.08607 9.03019 2.08101 9H3.09789Z"
-                  fill="black"
-                />
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11.5317 7H15.4642C15.6762 7 15.792 7.24721 15.6563 7.41005L13.69 9.76953C13.5901 9.88947 13.4059 9.88947 13.3059 9.76953L11.3397 7.41005C11.204 7.24721 11.3198 7 11.5317 7Z" fill="black"/>
+                <path d="M0.531728 9H4.46421C4.67617 9 4.79196 8.75279 4.65626 8.58995L2.69002 6.23047C2.59007 6.11053 2.40586 6.11053 2.30591 6.23047L0.339672 8.58995C0.203979 8.75279 0.319769 9 0.531728 9Z" fill="black"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M7.99797 3C6.44548 3 5.05853 3.70697 4.14065 4.81839C3.96481 5.03131 3.64966 5.06137 3.43674 4.88552C3.22382 4.70968 3.19376 4.39453 3.36961 4.18161C4.46931 2.85003 6.13459 2 7.99797 2C10.9397 2 13.386 4.1165 13.8991 6.90967C13.9046 6.9397 13.9099 6.96981 13.9149 7H12.898C12.435 4.71778 10.4166 3 7.99797 3ZM3.09789 9C3.5609 11.2822 5.57934 13 7.99797 13C9.55046 13 10.9374 12.293 11.8553 11.1816C12.0311 10.9687 12.3463 10.9386 12.5592 11.1145C12.7721 11.2903 12.8022 11.6055 12.6263 11.8184C11.5266 13.15 9.86135 14 7.99797 14C5.05626 14 2.60995 11.8835 2.09688 9.09033C2.09137 9.0603 2.08607 9.03019 2.08101 9H3.09789Z" fill="black"/>
               </svg>
             </button>
           </sl-tooltip>
@@ -1259,10 +1221,12 @@ Changes:
     const notifications = this._notificationFeed.value ?? [];
     // console.log('Rendering notifications: ', notifications);
     return html`
-      <div class="notifications-column column">
+      <div
+        class="notifications-column column"
+      >
         ${notifications.length === 0
-          ? html`<div>${msg('No notifications yet...')}</div>`
-          : notifications.map((notification) => this.renderNotification(notification))}
+        ? html`<div>${msg('No notifications yet...')}</div>`
+        : notifications.map((notification) => this.renderNotification(notification))}
       </div>
     `;
   }
@@ -1276,27 +1240,27 @@ Changes:
           .notification=${notification.notification}
           .appletHash=${appletHash}
           @open-applet-main=${(e: CustomEvent) => {
-            console.log('notification clicked', e.detail);
-            this.dispatchEvent(
-              new CustomEvent('open-applet-main', {
-                detail: {
-                  applet: appletHash,
-                  wal: e.detail.wal,
-                },
-                bubbles: true,
-                composed: true,
-              }),
-            );
-          }}
-          @open-wal=${async (e: CustomEvent) => {
-            this.dispatchEvent(
-              new CustomEvent('open-wal', {
-                detail: e.detail,
-                bubbles: true,
-                composed: true,
-              }),
-            );
-          }}
+          console.log('notification clicked', e.detail);
+          this.dispatchEvent(
+            new CustomEvent('open-applet-main', {
+              detail: {
+                applet: appletHash,
+                wal: e.detail.wal,
+              },
+              bubbles: true,
+              composed: true,
+            }),
+          );
+        }}
+        @open-wal=${async (e: CustomEvent) => {
+          this.dispatchEvent(
+            new CustomEvent('open-wal', {
+              detail: e.detail,
+              bubbles: true,
+              composed: true,
+            }),
+          );
+        }}
         ></notification-card>
       `;
     }
@@ -1355,47 +1319,30 @@ Changes:
             ${this.timeAgo.format(new Date(frameNotification.timestamp), 'twitter')}
           </div>
           <div class="notification-buttons">
-            ${aboutWal
-              ? html`
-                  <sl-tooltip content=${msg('Open asset in sidebar')} placement="left">
-                    <button
-                      class="open-wal-button"
-                      @click=${(e: Event) => {
-                        e.stopPropagation();
-                        this.dispatchEvent(
-                          new CustomEvent('open-wal', {
-                            detail: aboutWal,
-                            bubbles: true,
-                            composed: true,
-                          }),
-                        );
-                      }}
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M16 8C16 8 13 2.5 8 2.5C3 2.5 0 8 0 8C0 8 3 13.5 8 13.5C13 13.5 16 8 16 8ZM1.1727 8C1.22963 7.91321 1.29454 7.81677 1.36727 7.71242C1.70216 7.23193 2.19631 6.5929 2.83211 5.95711C4.12103 4.66818 5.88062 3.5 8 3.5C10.1194 3.5 11.879 4.66818 13.1679 5.95711C13.8037 6.5929 14.2978 7.23193 14.6327 7.71242C14.7055 7.81677 14.7704 7.91321 14.8273 8C14.7704 8.08679 14.7055 8.18323 14.6327 8.28758C14.2978 8.76807 13.8037 9.4071 13.1679 10.0429C11.879 11.3318 10.1194 12.5 8 12.5C5.88062 12.5 4.12103 11.3318 2.83211 10.0429C2.19631 9.4071 1.70216 8.76807 1.36727 8.28758C1.29454 8.18323 1.22963 8.08679 1.1727 8Z"
-                          fill="#151A11"
-                        />
-                        <path
-                          d="M8 5.5C6.61929 5.5 5.5 6.61929 5.5 8C5.5 9.38071 6.61929 10.5 8 10.5C9.38071 10.5 10.5 9.38071 10.5 8C10.5 6.61929 9.38071 5.5 8 5.5ZM4.5 8C4.5 6.067 6.067 4.5 8 4.5C9.933 4.5 11.5 6.067 11.5 8C11.5 9.933 9.933 11.5 8 11.5C6.067 11.5 4.5 9.933 4.5 8Z"
-                          fill="#151A11"
-                        />
-                      </svg>
-                    </button>
-                  </sl-tooltip>
-                `
-              : html``}
+            ${aboutWal ? html`
+              <sl-tooltip content=${msg('Open asset in sidebar')} placement="left">
+                <button
+                  class="open-wal-button"
+                  @click=${(e: Event) => {
+          e.stopPropagation();
+          this.dispatchEvent(
+            new CustomEvent('open-wal', {
+              detail: aboutWal,
+              bubbles: true,
+              composed: true,
+            }),
+          );
+        }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 8C16 8 13 2.5 8 2.5C3 2.5 0 8 0 8C0 8 3 13.5 8 13.5C13 13.5 16 8 16 8ZM1.1727 8C1.22963 7.91321 1.29454 7.81677 1.36727 7.71242C1.70216 7.23193 2.19631 6.5929 2.83211 5.95711C4.12103 4.66818 5.88062 3.5 8 3.5C10.1194 3.5 11.879 4.66818 13.1679 5.95711C13.8037 6.5929 14.2978 7.23193 14.6327 7.71242C14.7055 7.81677 14.7704 7.91321 14.8273 8C14.7704 8.08679 14.7055 8.18323 14.6327 8.28758C14.2978 8.76807 13.8037 9.4071 13.1679 10.0429C11.879 11.3318 10.1194 12.5 8 12.5C5.88062 12.5 4.12103 11.3318 2.83211 10.0429C2.19631 9.4071 1.70216 8.76807 1.36727 8.28758C1.29454 8.18323 1.22963 8.08679 1.1727 8Z" fill="#151A11"/>
+                    <path d="M8 5.5C6.61929 5.5 5.5 6.61929 5.5 8C5.5 9.38071 6.61929 10.5 8 10.5C9.38071 10.5 10.5 9.38071 10.5 8C10.5 6.61929 9.38071 5.5 8 5.5ZM4.5 8C4.5 6.067 6.067 4.5 8 4.5C9.933 4.5 11.5 6.067 11.5 8C11.5 9.933 9.933 11.5 8 11.5C6.067 11.5 4.5 9.933 4.5 8Z" fill="#151A11"/>
+                  </svg>
+                </button>
+              </sl-tooltip>
+            ` : html``}
             <button class="open-group-button" @click=${openGroup}>
-              ${until(
-                groupNamePromise.then((name) => msg(str`Open in ${name} ↗`)),
-                msg('Open in Group ↗'),
-              )}
+              ${until(groupNamePromise.then((name) => msg(str`Open in ${name} ↗`)), msg('Open in Group ↗'))}
             </button>
           </div>
         </div>
@@ -1417,11 +1364,7 @@ Changes:
     return html`
       <a href="${url}" target="_blank" rel="noopener noreferrer" class="link-preview-card">
         <div class="link-preview-favicon">
-          <img
-            src="${favicon}"
-            alt=""
-            @error=${(e: Event) => ((e.target as HTMLImageElement).style.display = 'none')}
-          />
+          <img src="${favicon}" alt="" @error=${(e: Event) => (e.target as HTMLImageElement).style.display = 'none'} />
         </div>
         <div class="link-preview-content">
           <div class="link-preview-domain">${domain}</div>
@@ -1438,16 +1381,11 @@ Changes:
     return html`
       <div class="moss-news-card">
         <div class="moss-news-header">
-          <span class="moss-news-date"
-            >${this.timeAgo.format(date)} ·
-            ${date.toLocaleDateString(undefined, {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            })}</span
-          >
+          <span class="moss-news-date">${this.timeAgo.format(date)} · ${date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
         </div>
-        <div class="moss-news-body">${unsafeHTML(markdownParseSafe(newsItem.message))}</div>
+        <div class="moss-news-body">
+          ${unsafeHTML(markdownParseSafe(newsItem.message))}
+        </div>
         ${firstUrl ? this.renderLinkPreview(firstUrl) : ''}
       </div>
     `;
@@ -1455,34 +1393,17 @@ Changes:
 
   renderEllipse() {
     return html`
-      <svg
-        class="ellipse"
-        width="556"
-        height="160"
-        viewBox="0 0 556 160"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M278 160C431.535 160 556 88.3656 556 0H0C0 88.3656 124.465 160 278 160Z"
-          fill="url(#paint0_radial_3151_9586)"
-        />
-        <defs>
-          <radialGradient
-            id="paint0_radial_3151_9586"
-            cx="0"
-            cy="0"
-            r="1"
-            gradientUnits="userSpaceOnUse"
-            gradientTransform="translate(278 8.96593e-06) rotate(90) scale(149.565 259.87)"
-          >
-            <stop offset="0.25" stop-color="#E7EEC4" />
-            <stop offset="0.586538" stop-color="#E1EED2" stop-opacity="0.31" />
-            <stop offset="0.807692" stop-color="#E1EED4" stop-opacity="0.0745343" />
-            <stop offset="0.962953" stop-color="#E0EED5" stop-opacity="0" />
-          </radialGradient>
-        </defs>
-      </svg>
+    <svg class="ellipse" width="556" height="160" viewBox="0 0 556 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M278 160C431.535 160 556 88.3656 556 0H0C0 88.3656 124.465 160 278 160Z" fill="url(#paint0_radial_3151_9586)"/>
+      <defs>
+        <radialGradient id="paint0_radial_3151_9586" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(278 8.96593e-06) rotate(90) scale(149.565 259.87)">
+          <stop offset="0.25" stop-color="#E7EEC4"/>
+          <stop offset="0.586538" stop-color="#E1EED2" stop-opacity="0.31"/>
+          <stop offset="0.807692" stop-color="#E1EED4" stop-opacity="0.0745343"/>
+          <stop offset="0.962953" stop-color="#E0EED5" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+    </svg>
     `;
   }
 
@@ -1490,111 +1411,71 @@ Changes:
     switch (this.view) {
       case WelcomePageView.Main:
         return html`
-          <loading-dialog
-            id="loading-dialog"
-            loadingText=${msg('Updating Tool...')}
-          ></loading-dialog>
+          <loading-dialog id="loading-dialog" loadingText=${msg("Updating Tool...")}></loading-dialog>
           <div class="row" style="flex: 1; height: 100%;">
             <div class="update-nav-list">
               ${(Object.keys(this.getToolUpdatesSource()).length > 0 || this.availableMossUpdate) &&
-              !this.shouldSectionBeCollapsed('software-updates')
-                ? html`
-                    <div
-                      data-section="software-updates"
-                      @click=${() => {
-                        this.selectNotificationSection('software-updates');
-                      }}
-                      class="notification-filter-header"
-                    >
-                      <span>${msg('Software updates')}</span>
-                      <span>${this.getUnreadCount('software-updates')}</span>
-                    </div>
-                  `
-                : ''}
-              ${Object.keys(this.notificationTypes).map((type) =>
-                type != 'default'
-                  ? html`
-                      ${!this.shouldSectionBeCollapsed(type)
-                        ? html`
-                            <div
-                              data-section="${type}"
-                              @click=${() => {
-                                this.selectNotificationSection(type);
-                              }}
-                              class="notification-filter-header"
-                            >
-                              <span
-                                >${this.getLocalizedNotificationTypeLabel(
-                                  type,
-                                  this.getUnreadCount(type),
-                                )}</span
-                              >
-                              <span>${this.getUnreadCount(type)}</span>
-                            </div>
-                          `
-                        : ''}
-                    `
-                  : '',
-              )}
-              ${this.notificationTypes['default'] && !this.shouldSectionBeCollapsed('default')
-                ? html`
-                    <div
-                      data-section="default"
-                      @click=${() => {
-                        this.selectNotificationSection('default');
-                      }}
-                      class="notification-filter-header"
-                    >
-                      <span>${msg('General notifications')}</span>
-                      <span>${this.getUnreadCount('default')}</span>
-                    </div>
-                  `
-                : html``}
-              ${this.updateFeed &&
-              this.updateFeed.length > 0 &&
-              !this.shouldSectionBeCollapsed('moss-news')
-                ? html`
-                    <div
-                      data-section="moss-news"
-                      @click=${() => {
-                        this.selectNotificationSection('moss-news');
-                      }}
-                      class="notification-filter-header"
-                    >
-                      <span>${msg('Moss news')}</span>
-                      <span>${this.getUnreadCount('moss-news')}</span>
-                    </div>
-                  `
-                : html``}
-            </div>
-            ${(this._notificationFeed.value?.length ?? 0) > 0
-              ? html`
+            !this.shouldSectionBeCollapsed('software-updates') ? html`
+                <div
+                  data-section="software-updates"
+                  @click=${() => { this.selectNotificationSection('software-updates'); }}
+                  class="notification-filter-header">
+                  <span>${msg('Software updates')}</span>
+                  <span>${this.getUnreadCount('software-updates')}</span>
+                </div>
+              `: ''}
+              ${Object.keys(this.notificationTypes).map((type) => type != "default" ? html`
+                ${!this.shouldSectionBeCollapsed(type) ? html`
                   <div
-                    class="all-streams-button fixed ${this.notificationSection !== null
-                      ? 'left'
-                      : ''}"
-                    @click=${() => {
-                      this.dispatchEvent(
-                        new CustomEvent('personal-view-selected', {
-                          detail: { type: 'moss', name: 'activity-view' },
-                          bubbles: true,
-                          composed: true,
-                        }),
-                      );
-                    }}
-                  >
-                    ${msg('All streams')} ${this._notificationFeed.value?.length ?? 0}
+                    data-section="${type}"
+                    @click=${() => { this.selectNotificationSection(type); }}
+                    class="notification-filter-header">
+                    <span>${this.getLocalizedNotificationTypeLabel(type, this.getUnreadCount(type))}</span>
+                    <span>${this.getUnreadCount(type)}</span>
                   </div>
-                `
-              : ''}
+                ` : ''}
+              ` : '')}
+              ${this.notificationTypes['default'] &&
+            !this.shouldSectionBeCollapsed('default') ? html`
+                <div
+                  data-section="default"
+                  @click=${() => { this.selectNotificationSection('default'); }}
+                  class="notification-filter-header">
+                  <span>${msg('General notifications')}</span>
+                  <span>${this.getUnreadCount('default')}</span>
+                </div>
+              ` : html``}
+              ${this.updateFeed && this.updateFeed.length > 0 &&
+            !this.shouldSectionBeCollapsed('moss-news') ? html`
+                <div
+                  data-section="moss-news"
+                  @click=${() => { this.selectNotificationSection('moss-news'); }}
+                  class="notification-filter-header">
+                  <span>${msg('Moss news')}</span>
+                  <span>${this.getUnreadCount('moss-news')}</span>
+                </div>
+              ` : html``}
+            </div>
+            ${(this._notificationFeed.value?.length ?? 0) > 0 ? html`
+              <div
+                class="all-streams-button fixed ${this.notificationSection !== null ? 'left' : ''}"
+                @click=${() => {
+              this.dispatchEvent(new CustomEvent('personal-view-selected', {
+                detail: { type: 'moss', name: 'activity-view' },
+                bubbles: true,
+                composed: true,
+              }));
+            }}
+              >
+                ${msg('All streams')} ${this._notificationFeed.value?.length ?? 0}
+              </div>
+            ` : ''}
             <div class="flex-scrollable-container">
               <div class="fixed-section">
                 <div class="column" style="align-items: center;">
                   ${this.renderQuoteOfTheDay()}
-                  <div
-                    class="welcome-message-highlight"
-                    style="opacity: calc(var(--welcome-opacity, 1) * 0.5)"
-                  ></div>
+                  <div class="welcome-message-highlight" style="opacity: calc(var(--welcome-opacity, 1) * 0.5)">
+                  </div>
                   <div class="welcome-message" style="opacity: var(--welcome-opacity, 1)">
                     <div style="white-space: pre-line">${this.getTimeOfDayGreeting()}</div>
                   </div>
@@ -1602,127 +1483,95 @@ Changes:
               </div>
 
               <div class="scrollable-sections-container">
-                ${WELCOME_DEV_MODE ||
-                this.availableMossUpdate ||
-                Object.keys(this.getToolUpdatesSource()).length > 0
-                  ? html`
-                      ${this.shouldSectionBeCollapsed('software-updates')
-                        ? this.renderCollapsedSectionHeader(
-                            'software-updates',
-                            this.getSectionCount('software-updates'),
-                          )
-                        : html`
-                            <div class="scroll-section" id="software-updates">
-                              ${this.renderEllipse()}
-                              ${this.renderSectionHeader(
-                                'software-updates',
-                                msg('Software updates'),
-                              )}
-                              <div class="software-updates-content">
-                                ${this.availableMossUpdate ? this.renderMossUpdateCard() : html``}
-                                ${Object.keys(this.getToolUpdatesSource()).length > 0
-                                  ? this.renderToolUpdateFeed()
-                                  : html``}
-                              </div>
-                            </div>
-                          `}
-                    `
-                  : html``}
-                ${this.notificationTypes && Object.keys(this.notificationTypes).length > 0
-                  ? html`
-                      ${Object.keys(this.notificationTypes).map((type) =>
-                        type != 'default'
-                          ? html`
-                              ${this.shouldSectionBeCollapsed(type)
-                                ? this.renderCollapsedSectionHeader(
-                                    type,
-                                    this.notificationTypes[type],
-                                  )
-                                : html`
-                                    <div class="scroll-section" id="${type}">
-                                      ${this.renderEllipse()}
-                                      ${this.renderSectionHeader(
-                                        type,
-                                        this.getLocalizedNotificationTypeLabel(
-                                          type,
-                                          this.notificationTypes[type],
-                                        ),
-                                      )}
+                ${(WELCOME_DEV_MODE || this.availableMossUpdate || Object.keys(this.getToolUpdatesSource()).length > 0) ? html`
+                  ${this.shouldSectionBeCollapsed('software-updates')
+              ? this.renderCollapsedSectionHeader('software-updates', this.getSectionCount('software-updates'))
+              : html`
+                      <div class="scroll-section" id="software-updates">
+                        ${this.renderEllipse()}
+                        ${this.renderSectionHeader('software-updates', msg('Software updates'))}
+                        <div class="software-updates-content">
+                          ${this.availableMossUpdate ? this.renderMossUpdateCard() : html``}
+                          ${Object.keys(this.getToolUpdatesSource()).length > 0 ? this.renderToolUpdateFeed() : html``}
+                        </div>
+                      </div>
+                    `}
+                ` : html``}
 
-                                      <div class="notifications-column column">
-                                        ${this.renderSectionNotifications(type)}
-                                      </div>
-                                    </div>
-                                  `}
-                            `
-                          : '',
-                      )}
-                      ${this.notificationTypes['default']
-                        ? html`
-                            ${this.shouldSectionBeCollapsed('default')
-                              ? this.renderCollapsedSectionHeader(
-                                  'default',
-                                  this.notificationTypes['default'],
-                                )
-                              : html`
-                                  <div class="scroll-section" id="default">
-                                    ${this.renderEllipse()}
-                                    ${this.renderSectionHeader(
-                                      'default',
-                                      msg('General notifications'),
-                                    )}
-                                    <div class="notifications-column column">
-                                      ${this.renderSectionNotifications('default')}
-                                    </div>
-                                  </div>
-                                `}
-                          `
-                        : ''}
-                    `
-                  : html``}
-                ${this.updateFeed && this.updateFeed.length > 0
-                  ? html`
-                      ${this.shouldSectionBeCollapsed('moss-news')
-                        ? this.renderCollapsedSectionHeader(
-                            'moss-news',
-                            this.getSectionCount('moss-news'),
-                          )
-                        : html`
-                            <div class="scroll-section" id="moss-news">
-                              ${this.renderEllipse()}
-                              ${this.renderSectionHeader('moss-news', msg('Moss news'))}
-                              <div class="moss-news-column column">
-                                ${this.updateFeed.map((newsItem) =>
-                                  this.renderMossNewsItem(newsItem),
-                                )}
-                              </div>
-                            </div>
-                          `}
-                    `
-                  : html``}
+                ${this.notificationTypes && Object.keys(this.notificationTypes).length > 0 ? html`
+
+                  ${Object.keys(this.notificationTypes).map((type) => type != "default" ? html`
+                    ${this.shouldSectionBeCollapsed(type)
+                  ? this.renderCollapsedSectionHeader(type, this.notificationTypes[type])
+                  : html`
+                        <div class="scroll-section" id="${type}">
+                          ${this.renderEllipse()}
+                          ${this.renderSectionHeader(type, this.getLocalizedNotificationTypeLabel(type, this.notificationTypes[type]))}
+
+                          <div class="notifications-column column">
+                            ${this.renderSectionNotifications(type)}
+                          </div>
+                        </div>
+                      `}
+                  ` : '')}
+
+                  ${this.notificationTypes['default'] ? html`
+                    ${this.shouldSectionBeCollapsed('default')
+                ? this.renderCollapsedSectionHeader('default', this.notificationTypes['default'])
+                : html`
+                        <div class="scroll-section" id="default">
+                          ${this.renderEllipse()}
+                          ${this.renderSectionHeader('default', msg('General notifications'))}
+                          <div class="notifications-column column">
+                            ${this.renderSectionNotifications('default')}
+                          </div>
+                        </div>
+                      `}
+                  ` : ''}
+
+                ` : html``}
+
+                ${this.updateFeed && this.updateFeed.length > 0 ? html`
+                  ${this.shouldSectionBeCollapsed('moss-news')
+              ? this.renderCollapsedSectionHeader('moss-news', this.getSectionCount('moss-news'))
+              : html`
+                      <div class="scroll-section" id="moss-news">
+                        ${this.renderEllipse()}
+                        ${this.renderSectionHeader('moss-news', msg('Moss news'))}
+                        <div class="moss-news-column column">
+                          ${this.updateFeed.map((newsItem) => this.renderMossNewsItem(newsItem))}
+                        </div>
+                      </div>
+                    `}
+                ` : html``}
+
               </div>
             </div>
           </div>
           ${this.renderExperimentalButton()}
-          ${!this._designFeedbackMode
-            ? html`
-                <button class="feedback-btn" @click=${() => this._feedbackDialog.show()}>
-                  <div class="row items-center" style="font-size: 20px; justify-content: center;">
-                    <span style="margin-bottom: -2px;">${commentHeartIconFilled(20)}</span>
-                    <span style="margin-left: 5px;">${msg('Feedback')}</span>
-                  </div>
-                </button>
-              `
-            : nothing}
+          ${!this._designFeedbackMode ? html`
+            <button
+              class="feedback-btn"
+              @click=${() => this._feedbackDialog.show()}
+            >
+              <div class="row items-center" style="font-size: 20px; justify-content: center;">
+                <span style="margin-bottom: -2px;">${commentHeartIconFilled(20)}</span>
+                <span style="margin-left: 5px;">${msg('Feedback')}</span>
+              </div>
+            </button>
+          ` : nothing}
           ${this.renderFeedbackDialog()}
-          <moss-dialog id="changelog-dialog" width="600px">
+          <moss-dialog
+            id="changelog-dialog"
+            width="600px"
+          >
             <div class="row" slot="header">
               <span>${msg("What's new in")} V${this.availableMossUpdate?.version}</span>
             </div>
             <div slot="content" class="changelog-content">
               ${this.availableMossUpdate?.releaseNotes
-                ? unsafeHTML(markdownParseSafe(this.availableMossUpdate.releaseNotes))
-                : msg('A new release of Moss with exciting features and improvements.')}
+            ? unsafeHTML(markdownParseSafe(this.availableMossUpdate.releaseNotes))
+            : msg('A new release of Moss with exciting features and improvements.')}
             </div>
           </moss-dialog>
         `;
@@ -1758,9 +1607,7 @@ Changes:
         position: absolute;
         left: 50%;
         transform: translateX(-50%);
-        transition:
-          left 0.16s ease,
-          transform 0.3s ease;
+        transition: left 0.16s ease, transform 0.3s ease;
       }
 
       .update-nav-list.left {
@@ -1775,14 +1622,13 @@ Changes:
         width: fit-content;
         gap: 20px;
         border-radius: 16px;
-        background: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.80);
         transition: background 0.3s ease;
         pointer-events: auto;
         cursor: pointer;
       }
 
-      .notification-filter-header:hover,
-      .notification-filter-header.selected {
+      .notification-filter-header:hover, .notification-filter-header.selected {
         background: #fff;
       }
 
@@ -1793,7 +1639,7 @@ Changes:
         justify-content: space-between;
         padding: 12px 20px;
         border-radius: 16px;
-        background: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.50);
         cursor: pointer;
         transition: background 0.2s ease;
         width: 510px;
@@ -1803,7 +1649,7 @@ Changes:
       }
 
       .collapsed-section-header:hover {
-        background: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.80);
       }
 
       .collapsed-section-info {
@@ -1826,7 +1672,7 @@ Changes:
         padding: 8px 12px;
         border-radius: 8px;
         border: none;
-        background: rgba(21, 26, 17, 0.1);
+        background: rgba(21, 26, 17, 0.10);
         color: var(--moss-dark-button);
         cursor: pointer;
         font-size: 12px;
@@ -1836,7 +1682,7 @@ Changes:
       }
 
       .mark-unread-button:hover {
-        background: rgba(21, 26, 17, 0.2);
+        background: rgba(21, 26, 17, 0.20);
       }
 
       .section-header {
@@ -1863,10 +1709,7 @@ Changes:
         display: flex;
         align-items: center;
         justify-content: center;
-        transition:
-          background 0.2s ease,
-          color 0.2s ease,
-          opacity 0.2s ease;
+        transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
         opacity: 0;
         z-index: 3;
         pointer-events: auto;
@@ -1893,10 +1736,7 @@ Changes:
         color: rgba(21, 26, 17, 0.6);
         font-size: 14px;
         cursor: pointer;
-        transition:
-          background 0.2s ease,
-          border-color 0.2s ease,
-          color 0.2s ease;
+        transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
         width: 100%;
         position: relative;
         z-index: 5;
@@ -1910,9 +1750,7 @@ Changes:
 
       .read-notifications-wrapper {
         display: grid;
-        transition:
-          grid-template-rows 0.3s ease-out,
-          opacity 0.3s ease-out;
+        transition: grid-template-rows 0.3s ease-out, opacity 0.3s ease-out;
       }
 
       .read-notifications-wrapper.collapsed {
@@ -1976,19 +1814,13 @@ Changes:
         transition: all 0.3s ease;
         border-radius: 28px;
         width: 556px;
-        background: rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.30);
         backdrop-filter: blur(12px);
       }
-
+      
       .scroll-section .ellipse {
         position: absolute;
-        fill: radial-gradient(
-          46.74% 93.48% at 50% 0%,
-          var(--09, #e7eec4) 25%,
-          rgba(225, 238, 210, 0.31) 58.65%,
-          rgba(225, 238, 212, 0.07) 80.77%,
-          rgba(224, 238, 213, 0) 96.3%
-        );
+        fill: radial-gradient(46.74% 93.48% at 50% 0%, var(--09, #E7EEC4) 25%, rgba(225, 238, 210, 0.31) 58.65%, rgba(225, 238, 212, 0.07) 80.77%, rgba(224, 238, 213, 0.00) 96.3%);
       }
 
       .scroll-section .mini-button {
@@ -2015,8 +1847,8 @@ Changes:
         padding: 16px;
         width: 540px;
         box-sizing: border-box;
-        border: 1px solid #fff;
-        background: linear-gradient(180deg, var(--Moss-main-green, #e0eed5) 18.05%, #f5f5f3 99.92%);
+        border: 1px solid #FFF;
+        background: linear-gradient(180deg, var(--Moss-main-green, #E0EED5) 18.05%, #F5F5F3 99.92%);
       }
 
       .moss-update-header {
@@ -2055,8 +1887,8 @@ Changes:
         padding: 8px 10px;
         justify-content: center;
         border-radius: 8px;
-        background: #151a11;
-        color: #fff;
+        background: #151A11;
+        color: #FFF;
         font-size: 12px;
         font-style: normal;
         font-weight: 500;
@@ -2064,7 +1896,7 @@ Changes:
       }
 
       .install-moss-update-button:hover {
-        background: color-mix(in srgb, #151a11 80%, #fff 20%);
+        background: color-mix(in srgb, #151A11 80%, #FFF 20%);
       }
 
       .whats-new-button {
@@ -2073,8 +1905,8 @@ Changes:
         padding: 8px 10px;
         justify-content: center;
         border-radius: 8px;
-        background: rgba(50, 77, 71, 0.1);
-        color: var(--moss-dark-button, #151a11);
+        background: rgba(50, 77, 71, 0.10);
+        color: var(--moss-dark-button, #151A11);
         font-size: 12px;
         font-style: normal;
         font-weight: 500;
@@ -2082,7 +1914,7 @@ Changes:
       }
 
       .whats-new-button:hover {
-        background: rgba(50, 77, 71, 0.2);
+        background: rgba(50, 77, 71, 0.20);
       }
 
       .moss-update-title {
@@ -2127,7 +1959,7 @@ Changes:
         padding: 8px;
         width: 524px;
         border-radius: 20px;
-        background: #fff;
+        background: #FFF;
       }
 
       .install-tool-overlay {
@@ -2153,20 +1985,20 @@ Changes:
       }
 
       .install-tool-overlay > sl-button::part(base) {
-        background: var(--moss-purple, #7461eb);
-        border-color: var(--moss-purple, #7461eb);
-        color: #fff;
+        background: var(--moss-purple, #7461EB);
+        border-color: var(--moss-purple, #7461EB);
+        color: #FFF;
       }
 
       .install-tool-overlay > sl-button::part(base):hover {
-        background: color-mix(in srgb, var(--moss-purple, #7461eb) 80%, #fff 20%);
-        border-color: color-mix(in srgb, var(--moss-purple, #7461eb) 80%, #fff 20%);
-        color: #fff;
+        background: color-mix(in srgb, var(--moss-purple, #7461EB) 80%, #FFF 20%);
+        border-color: color-mix(in srgb, var(--moss-purple, #7461EB) 80%, #FFF 20%);
+        color: #FFF;
       }
 
       .tool-update-outer:not(.suppressed):hover .install-tool-overlay,
       .tool-update-outer.updating .install-tool-overlay {
-        background: color-mix(in srgb, var(--moss-purple, #7461eb) 40%, transparent);
+        background: color-mix(in srgb, var(--moss-purple, #7461EB) 40%, transparent);
         z-index: 1;
       }
 
@@ -2182,15 +2014,15 @@ Changes:
       }
 
       .update-all-button::part(base) {
-        background: var(--moss-purple, #7461eb);
-        border-color: var(--moss-purple, #7461eb);
-        color: #fff;
+        background: var(--moss-purple, #7461EB);
+        border-color: var(--moss-purple, #7461EB);
+        color: #FFF;
       }
 
       .update-all-button::part(base):hover {
-        background: color-mix(in srgb, var(--moss-purple, #7461eb) 80%, #fff 20%);
-        border-color: color-mix(in srgb, var(--moss-purple, #7461eb) 80%, #fff 20%);
-        color: #fff;
+        background: color-mix(in srgb, var(--moss-purple, #7461EB) 80%, #FFF 20%);
+        border-color: color-mix(in srgb, var(--moss-purple, #7461EB) 80%, #FFF 20%);
+        color: #FFF;
       }
 
       .tool-update-left-center {
@@ -2219,7 +2051,7 @@ Changes:
       }
 
       .tool-update-version {
-        color: rgba(0, 0, 0, 0.4);
+        color: rgba(0, 0, 0, 0.40);
         font-size: 12px;
         font-style: normal;
         font-weight: 500;
@@ -2237,11 +2069,11 @@ Changes:
         align-items: center;
         gap: 4px;
         border-radius: 3px;
-        background: rgba(194, 253, 86, 0.3);
+        background: rgba(194, 253, 86, 0.30);
       }
 
       .tool-update-tags > span:nth-child(1) {
-        background: rgba(137, 214, 188, 0.3);
+        background: rgba(137, 214, 188, 0.30);
       }
 
       .tool-update-right {
@@ -2253,13 +2085,13 @@ Changes:
 
       .tool-update-right > span {
         color: #000;
-        font-family: 'Inter Variable';
+        font-family: "Inter Variable";
         font-size: 16px;
         font-style: normal;
         font-weight: 600;
         line-height: 24px; /* 150% */
       }
-
+       
       .tool-update-more-groups {
         display: flex;
         width: 32px;
@@ -2268,8 +2100,8 @@ Changes:
         align-items: center;
         gap: 10px;
         border-radius: 8px;
-        background: #f4fed6;
-        color: var(--13, #324d47);
+        background: #F4FED6;
+        color: var(--13, #324D47);
         font-size: 12px;
         font-weight: 500;
       }
@@ -2289,7 +2121,7 @@ Changes:
         align-items: center;
         gap: 8px;
         border-radius: 16px;
-        background: rgba(255, 255, 255, 0.7);
+        background: rgba(255, 255, 255, 0.70);
         transition: background 0.3s ease;
       }
 
@@ -2300,7 +2132,7 @@ Changes:
       .quote-of-the-day-container:hover > .quote-of-the-day {
         background: #fff;
       }
-
+      
       .quote-buttons {
         margin-top: 4px;
         display: flex;
@@ -2317,7 +2149,7 @@ Changes:
         align-items: center;
         gap: 4px;
         border-radius: 8px;
-        background: #fff;
+        background: #FFF;
         border: 0;
         cursor: pointer;
         transition: background 0.3s ease;
@@ -2325,7 +2157,7 @@ Changes:
       }
 
       .quote-buttons > sl-tooltip > button:hover {
-        background: var(--moss-purple, #7461eb);
+        background: var(--moss-purple, #7461EB);
       }
 
       .quote-of-the-day-container:hover > .quote-buttons {
@@ -2333,7 +2165,7 @@ Changes:
       }
 
       .quote-of-the-day > p {
-        color: var(--Moss-dark-button, #151a11);
+        color: var(--Moss-dark-button, #151A11);
         text-align: center;
         font-family: 'Mossville-v2';
         font-size: 18px;
@@ -2345,9 +2177,9 @@ Changes:
       }
 
       .quote-of-the-day > div {
-        color: var(--Moss-dark-button, #151a11);
+        color: var(--Moss-dark-button, #151A11);
         text-align: center;
-        font-family: 'Libre Baskerville';
+        font-family: "Libre Baskerville";
         font-size: 14px;
         font-style: italic;
         font-weight: 400;
@@ -2361,14 +2193,14 @@ Changes:
         height: 348px;
         border-radius: 100%;
         opacity: 0.5;
-        background: #fff;
+        background: #FFF;
         filter: blur(100px);
       }
 
       .welcome-message {
         position: absolute;
         top: calc(25vh - 60px);
-        color: var(--Moss-dark-button, #151a11);
+        color: var(--Moss-dark-button, #151A11);
         text-align: center;
         font-family: Mossville-v2;
         font-size: 48px;
@@ -2571,8 +2403,8 @@ Changes:
         width: 540px;
         min-height: 64px;
         border-radius: 20px;
-        background: #fff;
-        color: var(--moss-dark-button, #151a11);
+        background: #FFF;
+        color: var(--moss-dark-button, #151A11);
         position: relative;
         cursor: pointer;
       }
@@ -2590,7 +2422,7 @@ Changes:
         max-width: 330px;
         overflow: hidden;
         text-overflow: ellipsis;
-        color: var(--moss-dark-button, #151a11);
+        color: var(--moss-dark-button, #151A11);
         font-size: 14px;
         line-height: 20px;
       }
@@ -2614,11 +2446,7 @@ Changes:
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(
-          90deg,
-          rgba(255, 255, 255, 0) 0%,
-          var(--moss-main-green, #e0eed5) 46.63%
-        );
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.00) 0%, var(--moss-main-green, #E0EED5) 46.63%);
         opacity: 0;
         transition: opacity 0.2s ease;
       }
@@ -2655,9 +2483,7 @@ Changes:
         gap: 10px;
         border-radius: 8px;
         border: none;
-        transition:
-          background 0.1s ease,
-          color 0.1s ease;
+        transition: background 0.1s ease, color 0.1s ease;
       }
 
       .notification-buttons button:hover {
@@ -2694,7 +2520,7 @@ Changes:
         margin-bottom: -2px;
         margin-right: 3px;
         border-radius: 8px;
-        background: var(--moss-main-green, #e0eed5);
+        background: var(--moss-main-green, #E0EED5);
       }
 
       .all-streams-button {
@@ -2702,7 +2528,7 @@ Changes:
         padding: 16px 20px;
         gap: 20px;
         border-radius: 16px;
-        background: rgba(21, 26, 17, 0.5);
+        background: rgba(21, 26, 17, 0.50);
         color: white;
         cursor: pointer;
         font-weight: 500;
@@ -2710,7 +2536,7 @@ Changes:
       }
 
       .all-streams-button:hover {
-        background: rgba(21, 26, 17, 0.7);
+        background: rgba(21, 26, 17, 0.70);
       }
 
       .moss-news-column {
@@ -2725,8 +2551,8 @@ Changes:
         flex-direction: column;
         width: 540px;
         border-radius: 20px;
-        background: #fff;
-        color: var(--moss-dark-button, #151a11);
+        background: #FFF;
+        color: var(--moss-dark-button, #151A11);
         padding: 16px;
         gap: 12px;
         box-sizing: border-box;
@@ -2764,15 +2590,15 @@ Changes:
         gap: 12px;
         padding: 12px;
         border-radius: 12px;
-        background: var(--moss-main-green, #e0eed5);
+        background: var(--moss-main-green, #E0EED5);
         text-decoration: none;
-        color: var(--moss-dark-button, #151a11);
+        color: var(--moss-dark-button, #151A11);
         transition: background 0.2s ease;
         margin-top: 8px;
       }
 
       .link-preview-card:hover {
-        background: color-mix(in srgb, var(--moss-main-green, #e0eed5) 80%, #000 10%);
+        background: color-mix(in srgb, var(--moss-main-green, #E0EED5) 80%, #000 10%);
       }
 
       .link-preview-favicon {
@@ -2803,7 +2629,7 @@ Changes:
       .link-preview-domain {
         font-size: 12px;
         font-weight: 500;
-        color: var(--moss-dark-button, #151a11);
+        color: var(--moss-dark-button, #151A11);
       }
 
       .link-preview-url {
@@ -2821,9 +2647,7 @@ Changes:
         transform: translateX(-50%);
         margin-top: 0;
         z-index: 10;
-        transition:
-          left 0.16s ease,
-          transform 0.3s ease;
+        transition: left 0.16s ease, transform 0.3s ease;
       }
 
       .all-streams-button.fixed.left {
@@ -2852,7 +2676,7 @@ Changes:
         width: 72px;
         height: 72px;
         border-radius: 16px;
-        background: var(--moss-dark-button, #151a11);
+        background: var(--moss-dark-button, #151A11);
         color: white;
         cursor: pointer;
         display: flex;
@@ -2872,14 +2696,11 @@ Changes:
         width: 264px;
         height: 264px;
         border-radius: 264px;
-        background: radial-gradient(50% 50% at 50% 50%, #7461eb 0%, rgba(116, 97, 235, 0) 100%);
+        background: radial-gradient(50% 50% at 50% 50%, #7461EB 0%, rgba(116, 97, 235, 0.00) 100%);
         opacity: 0;
         z-index: 1;
         pointer-events: none;
-        transition:
-          opacity 0.2s ease,
-          height 0.2s ease,
-          bottom 0.2s ease;
+        transition: opacity 0.2s ease, height 0.2s ease, bottom 0.2s ease;
       }
 
       .experimental-anchor:hover > .experimental-glow {
@@ -2907,7 +2728,7 @@ Changes:
         gap: 16px;
         padding: 16px 20px;
         border-radius: 16px;
-        background: rgba(21, 26, 17, 0.5);
+        background: rgba(21, 26, 17, 0.50);
         backdrop-filter: blur(10px);
         color: white;
         cursor: pointer;
@@ -2915,7 +2736,7 @@ Changes:
       }
 
       .home-menu-item:hover {
-        background: rgba(21, 26, 17, 0.7);
+        background: rgba(21, 26, 17, 0.70);
       }
 
       .home-menu-item:focus-visible {

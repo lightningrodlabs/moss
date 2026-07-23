@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export declare enum MossPrivilege
+export declare enum MossPrivilege 
 ```
 
 ## Enumeration Members
@@ -16,57 +16,72 @@ export declare enum MossPrivilege
 
 Member
 
+
 </th><th>
 
 Value
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 AddTool
 
+
 </td><td>
 
 `1`
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 ArchiveTool
 
+
 </td><td>
 
 `0`
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 ChangeGroupProperties
 
+
 </td><td>
 
 `3`
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 MakeSteward
 
+
 </td><td>
 
 `2`
 
+
 </td><td>
+
 
 </td></tr>
 </tbody></table>

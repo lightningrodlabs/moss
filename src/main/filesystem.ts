@@ -227,9 +227,7 @@ export class MossFileSystem {
     try {
       fs.copyFileSync(currentPath, originalPath);
     } catch (e) {
-      throw new Error(
-        `Failed to backup original app assets info for app Id '${installedAppId}': ${e}`,
-      );
+      throw new Error(`Failed to backup original app assets info for app Id '${installedAppId}': ${e}`);
     }
   }
 
@@ -243,9 +241,7 @@ export class MossFileSystem {
       fs.copyFileSync(originalPath, currentPath);
       fs.rmSync(originalPath);
     } catch (e) {
-      throw new Error(
-        `Failed to restore original app assets info for app Id '${installedAppId}': ${e}`,
-      );
+      throw new Error(`Failed to restore original app assets info for app Id '${installedAppId}': ${e}`);
     }
   }
 
@@ -790,13 +786,8 @@ export function importLegacyProfileData(
     if (fs.existsSync(mossFileSystem.keystoreDir)) {
       fs.rmSync(mossFileSystem.keystoreDir, { recursive: true });
     }
-    fs.cpSync(legacyKeystorePath, mossFileSystem.keystoreDir, {
-      recursive: true,
-      filter: skipSockets,
-    });
-    console.log(
-      `Copied legacy keystore from ${legacyKeystorePath} to ${mossFileSystem.keystoreDir}`,
-    );
+    fs.cpSync(legacyKeystorePath, mossFileSystem.keystoreDir, { recursive: true, filter: skipSockets });
+    console.log(`Copied legacy keystore from ${legacyKeystorePath} to ${mossFileSystem.keystoreDir}`);
 
     // Fix the copied lair-keystore-config.yaml paths and normalize line continuations.
     normalizeLairKeystoreConfig(mossFileSystem.keystoreDir);
@@ -816,7 +807,7 @@ export function importLegacyProfileData(
   } else {
     console.warn(
       `No .pw file found in legacy profile at ${legacyPwPath}; skipping keystore copy.` +
-        ` A fresh agent identity will be generated. Groups data will still be imported if available.`,
+      ` A fresh agent identity will be generated. Groups data will still be imported if available.`,
     );
   }
 
@@ -973,25 +964,13 @@ export function findLegacyProfiles(app: Electron.App): LegacyProfileInfo[] {
         }
         const keystorePath = path.join(versionDir, profileName, 'data', 'keystore');
         const lairConfig = path.join(keystorePath, 'lair-keystore-config.yaml');
-        const pwFile = path.join(
-          versionDir,
-          profileName,
-          'data',
-          'keystore',
-          'moss-agent-pubkey.txt',
-        );
+        const pwFile = path.join(versionDir, profileName, 'data', 'keystore', 'moss-agent-pubkey.txt');
         if (fs.existsSync(lairConfig) && fs.existsSync(pwFile)) {
           const lairVersionFile = path.join(keystorePath, 'moss-lair-version.txt');
           const lairVersion = fs.existsSync(lairVersionFile)
             ? fs.readFileSync(lairVersionFile, 'utf-8').trim()
             : undefined;
-          results.push({
-            appName: appFolderName,
-            versionString,
-            profileName,
-            keystorePath,
-            lairVersion,
-          });
+          results.push({ appName: appFolderName, versionString, profileName, keystorePath, lairVersion });
         }
       }
     }

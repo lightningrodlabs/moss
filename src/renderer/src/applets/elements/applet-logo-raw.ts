@@ -16,13 +16,13 @@ import { ToolCompatibilityId } from '@theweave/moss-types';
 
 type ToolIdentifier =
   | {
-      type: 'instance';
-      appletHash: AppletHash;
-    }
+    type: 'instance';
+    appletHash: AppletHash;
+  }
   | {
-      type: 'class';
-      toolCompatibilityId: ToolCompatibilityId;
-    };
+    type: 'class';
+    toolCompatibilityId: ToolCompatibilityId;
+  };
 
 @customElement('applet-logo-raw')
 export class AppletLogo extends LitElement {
@@ -65,18 +65,18 @@ export class AppletLogo extends LitElement {
           class="row center-content notification-dot
             ${this.notificationUrgency === 'high' ? 'urgent' : ''}
             ${this.notificationUrgency === 'high' &&
-          this.notificationCount &&
-          this.notificationCount > 9
-            ? 'padded'
-            : ''}
+        this.notificationCount &&
+        this.notificationCount > 9
+        ? 'padded'
+        : ''}
           "
           style="${!this.notificationUrgency || this.notificationUrgency === 'low'
-            ? 'display: none'
-            : ''}"
+        ? 'display: none'
+        : ''}"
         >
           ${this.notificationCount && this.notificationUrgency === 'high'
-            ? this.notificationCount
-            : undefined}
+        ? this.notificationCount
+        : undefined}
         </div>
         <img
           class="icon"

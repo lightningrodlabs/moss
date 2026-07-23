@@ -39,9 +39,7 @@ export class GroupContext extends LitElement {
     if (changedValues.has('groupDnaHash')) {
       if (this.unsubscribe) this.unsubscribe();
 
-      const groupHashShort = this.groupDnaHash
-        ? encodeHashToBase64(this.groupDnaHash).slice(0, 8)
-        : '??';
+      const groupHashShort = this.groupDnaHash ? encodeHashToBase64(this.groupDnaHash).slice(0, 8) : '??';
 
       this.unsubscribe = this.mossStore.groupStores.subscribe((stores) => {
         if (stores.status === 'complete') {
@@ -50,9 +48,7 @@ export class GroupContext extends LitElement {
             const oldInstance = this.groupStore?._instanceId;
             const newInstance = groupStore._instanceId;
             if (oldInstance !== newInstance) {
-              onlineDebugLog(
-                `[OnlineDebug][${groupHashShort}] group-context: GroupStore changed from instance=${oldInstance ?? 'none'} to instance=${newInstance}`,
-              );
+              onlineDebugLog(`[OnlineDebug][${groupHashShort}] group-context: GroupStore changed from instance=${oldInstance ?? 'none'} to instance=${newInstance}`);
             }
             this.groupStore = groupStore;
             this.profilesStore = groupStore.profilesStore;

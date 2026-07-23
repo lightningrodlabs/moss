@@ -79,8 +79,8 @@ export class AppletSidebarButton extends LitElement {
           style="--color: #9d90f7; height: var(--size, ${this.collapsed
             ? '35px'
             : '28px'}); width: var(--size, ${this.collapsed
-            ? '35px'
-            : '28px'}); --border-radius: 8px"
+              ? '35px'
+              : '28px'}); --border-radius: 8px"
           effect="pulse"
         ></sl-skeleton> `;
       case 'complete':
@@ -113,27 +113,23 @@ export class AppletSidebarButton extends LitElement {
           <div class="row items-center">
             <div class="row items-center">${this.renderLogo()}</div>
             ${this.collapsed
-              ? html``
-              : html` <div class="name" style="margin-left: 4px;">
+        ? html``
+        : html` <div class="name" style="margin-left: 4px;">
                   ${this.appletStore.applet.custom_name}
                 </div>`}
           </div>
         </button>
         ${this.notificationUrgency() === 'low' || !this.notificationUrgency()
-          ? html``
-          : html`
+        ? html``
+        : html`
               <div
-                class="row center-content notification-dot ${this.collapsed
-                  ? 'notification-dot-collapsed'
-                  : ''} ${this.notificationUrgency() === 'high' ||
-                (this.notificationUrgency() === 'medium' && this.notificationCount())
-                  ? 'urgent'
-                  : ''}"
+                class="row center-content notification-dot ${this.collapsed ? 'notification-dot-collapsed' : ''} ${this.notificationUrgency() === 'high' || (this.notificationUrgency() === 'medium' && this.notificationCount())
+            ? 'urgent'
+            : ''}"
               >
-                ${this.notificationCount() &&
-                (this.notificationUrgency() === 'high' || this.notificationUrgency() === 'medium')
-                  ? this.notificationCount()
-                  : ''}
+                ${this.notificationCount() && (this.notificationUrgency() === 'high' || this.notificationUrgency() === 'medium')
+            ? this.notificationCount()
+            : ''}
               </div>
             `}
       </div>
