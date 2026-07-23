@@ -1,5 +1,4 @@
-import { password as passwordInput } from '@inquirer/prompts';
-
+import { getPassword } from '../helpers/helpers.js';
 import { WDockerFilesystem } from '../filesystem.js';
 import { AdminWebsocket } from '@holochain/client';
 
@@ -14,7 +13,7 @@ export async function info(id: string) {
     return;
   }
 
-  const pw = await passwordInput({ message: 'conductor password:' });
+  const pw = await getPassword();
   const runningSecretInfo = wDockerFs.readRunningSecretFile(pw);
   if (!runningSecretInfo) {
     console.log('Failed to connect to conductor. No port file found.');
