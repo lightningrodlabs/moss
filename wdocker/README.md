@@ -4,6 +4,24 @@ CLI to run Moss always-online nodes.
 
 ⚠️ wdocker is not supported on Windows
 
+## Headless / non-interactive usage
+
+wdocker also supports a few environment variables for automation, CI, and container-based setups:
+
+- `WDOCKER_PASSWORD`: supplies the conductor password without prompting. If this variable is set, wdocker will use it for password prompts and initial password creation. The value must be non-empty; whitespace-only values are rejected.
+- `WDOCKER_PROFILE_NAME`: overrides the profile name used when joining a group.
+- `WDOCKER_NODE_DESCRIPTION`: overrides the node description used when joining a group.
+- `WDOCKER_PURGE_CONFIRM`: controls purge confirmation in non-interactive mode. Set it to `true` to skip the confirmation prompt and proceed with purge. Any other value aborts the purge.
+
+Example:
+
+```bash
+WDOCKER_PASSWORD='secret' \
+WDOCKER_PROFILE_NAME='my-node' \
+WDOCKER_NODE_DESCRIPTION='Runs in CI' \
+wdocker join-group my-conductor "[group invite link]"
+```
+
 ## Instructions
 
 0. Install the `wdocker` CLI globally:

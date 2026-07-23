@@ -21,14 +21,20 @@ export async function joinGroup(conductorId: string, inviteLink: string): Promis
   wDockerFs.setConductorId(conductorId);
   const password = await getPassword();
   const config = wDockerFs.wdockerConductorConfig;
-  const profileName = await input({
-    message: 'How do you want this node to be named inside the group?',
-    default: config.defaultProfileName,
-  });
-  const wdockerNodeDescription = await input({
-    message: 'Choose a description for this node',
-    default: config.defaultNodeDescription,
-  });
+  const envProfileName = process.env.WDOCKER_PROFILE_NAME;
+  const profileName = envProfileName
+    ? envProfileName
+    : await input({
+        message: 'How do you want this node to be named inside the group?',
+        default: config.defaultProfileName,
+      });
+  const envNodeDescription = process.env.WDOCKER_NODE_DESCRIPTION;
+  const wdockerNodeDescription = envNodeDescription
+    ? envNodeDescription
+    : await input({
+        message: 'Choose a description for this node',
+        default: config.defaultNodeDescription,
+      });
   wDockerFs.setWdockerConductorConfig({
     ...config,
     defaultNodeDescription: wdockerNodeDescription,
