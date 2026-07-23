@@ -288,7 +288,7 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
         );
         return undefined;
       }
-      return appletRecord.action.author;
+      return appletRecord.action.header.author;
     },
     async groupProfile(groupHash: DnaHash): Promise<GroupProfile | undefined> {
       const groupStore = await mossStore.groupStore(groupHash);
@@ -618,7 +618,7 @@ export async function handleAppletIframeMessage(
         );
         return undefined;
       }
-      return appletRecord.action.author;
+      return appletRecord.action.header.author;
     }
     case 'get-group-profile':
       return weaveServices.groupProfile(message.groupHash);

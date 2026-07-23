@@ -12,12 +12,7 @@ admin_interfaces:
       allowed_origins: '###DEFINED_AT_RUNTIME###'
 network:
   bootstrap_url: '###DEFINED_AT_RUNTIME###'
-  signal_url: '###DEFINED_AT_RUNTIME###'
   relay_url: '###DEFINED_AT_RUNTIME###'
-  webrtc_config:
-    iceServers:
-      - urls:
-          - '###DEFINED_AT_RUNTIME###'
   target_arc_factor: 1
   report: none
   advanced:
@@ -27,6 +22,6 @@ network:
       reSignExpireTimeMs: 10000
       reSignFreqMs: 10000
   request_timeout_s: 60
-db_sync_strategy: Resilient
+db_sync_level: Normal
 tuning_params: ~
 tracing_scope: ~

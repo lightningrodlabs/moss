@@ -1,37 +1,30 @@
-import {
-  SignedActionHashed,
-  Create,
-  Update,
-  Delete,
-  CreateLink,
-  DeleteLink,
-} from '@holochain/client';
+import { SignedActionHashed } from '@holochain/client';
 
 export type PostsSignal =
   | {
       type: 'EntryCreated';
-      action: SignedActionHashed<Create>;
+      action: SignedActionHashed;
       app_entry: EntryTypes;
     }
   | {
       type: 'EntryUpdated';
-      action: SignedActionHashed<Update>;
+      action: SignedActionHashed;
       app_entry: EntryTypes;
       original_app_entry: EntryTypes;
     }
   | {
       type: 'EntryDeleted';
-      action: SignedActionHashed<Delete>;
+      action: SignedActionHashed;
       original_app_entry: EntryTypes;
     }
   | {
       type: 'LinkCreated';
-      action: SignedActionHashed<CreateLink>;
+      action: SignedActionHashed;
       link_type: string;
     }
   | {
       type: 'LinkDeleted';
-      action: SignedActionHashed<DeleteLink>;
+      action: SignedActionHashed;
       link_type: string;
     };
 

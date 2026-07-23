@@ -5,22 +5,22 @@ pub struct Thing {
     pub content: String,
 }
 pub fn validate_create_thing(
-    _action: EntryCreationAction,
+    _action: Action,
     _thing: Thing,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_update_thing(
-    _action: Update,
+    _action: Action,
     _thing: Thing,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Valid)
 }
-pub fn validate_delete_thing(_action: Delete) -> ExternResult<ValidateCallbackResult> {
+pub fn validate_delete_thing(_action: Action) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_create_link_thing_updates(
-    _action: CreateLink,
+    _action: Action,
     base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     _tag: LinkTag,
@@ -46,8 +46,8 @@ pub fn validate_create_link_thing_updates(
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_delete_link_thing_updates(
-    _action: DeleteLink,
-    _original_action: CreateLink,
+    _action: Action,
+    _original_action: Action,
     _base: AnyLinkableHash,
     _target: AnyLinkableHash,
     _tag: LinkTag,
@@ -57,7 +57,7 @@ pub fn validate_delete_link_thing_updates(
     )))
 }
 pub fn validate_create_link_all_things(
-    _action: CreateLink,
+    _action: Action,
     _base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     _tag: LinkTag,
@@ -76,8 +76,8 @@ pub fn validate_create_link_all_things(
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_delete_link_all_things(
-    _action: DeleteLink,
-    _original_action: CreateLink,
+    _action: Action,
+    _original_action: Action,
     _base: AnyLinkableHash,
     _target: AnyLinkableHash,
     _tag: LinkTag,

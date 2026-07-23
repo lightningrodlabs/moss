@@ -98,9 +98,7 @@ export async function launch(
       mossFileSystem.conductorConfigPath,
       lairUrl,
       runOptions.bootstrapUrl!,
-      runOptions.signalingUrl!,
       runOptions.relayUrl!,
-      runOptions.iceUrls,
       runOptions.holochainRustLog,
       runOptions.holochainWasmLog,
     );

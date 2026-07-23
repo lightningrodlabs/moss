@@ -67,107 +67,82 @@ pub fn validate_agent_joining(
 #[hdk_extern]
 pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
     match op.flattened::<EntryTypes, LinkTypes>()? {
-        FlatOp::StoreEntry(store_entry) => match store_entry {
+        FlatOp::CreateEntry(store_entry) => match store_entry {
             OpEntry::CreateEntry { app_entry, action } => match app_entry {
                 EntryTypes::StewardPermission(steward_permission) => {
-                    validate_create_steward_permission(
-                        EntryCreationAction::Create(action),
-                        steward_permission,
-                    )
+                    validate_create_steward_permission(action.into(), steward_permission)
                 }
-                EntryTypes::Applet(applet) => {
-                    validate_create_applet(EntryCreationAction::Create(action), applet)
+                EntryTypes::Applet(applet) => validate_create_applet(action.into(), applet),
+                EntryTypes::AppletPrivate(applet_private) => {
+                    validate_create_applet_private(action.into(), applet_private)
                 }
-                EntryTypes::AppletPrivate(applet_private) => validate_create_applet_private(
-                    EntryCreationAction::Create(action),
-                    applet_private,
-                ),
                 EntryTypes::AppletClonedCell(applet_cloned_cell) => {
-                    validate_create_applet_cloned_cell(
-                        EntryCreationAction::Create(action),
-                        applet_cloned_cell,
-                    )
+                    validate_create_applet_cloned_cell(action.into(), applet_cloned_cell)
                 }
                 EntryTypes::AppletClonedCellPrivate(applet_cloned_cell_private) => {
                     validate_create_applet_cloned_cell_private(
-                        EntryCreationAction::Create(action),
+                        action.into(),
                         applet_cloned_cell_private,
                     )
                 }
-                EntryTypes::GroupProfile(group_profile) => validate_create_group_profile(
-                    EntryCreationAction::Create(action),
-                    group_profile,
-                ),
-                EntryTypes::GroupMetaData(group_meta_data) => validate_create_group_meta_data(
-                    EntryCreationAction::Create(action),
-                    group_meta_data,
-                ),
+                EntryTypes::GroupProfile(group_profile) => {
+                    validate_create_group_profile(action.into(), group_profile)
+                }
+                EntryTypes::GroupMetaData(group_meta_data) => {
+                    validate_create_group_meta_data(action.into(), group_meta_data)
+                }
                 EntryTypes::StewardPermissionClaim(claim) => {
-                    validate_create_steward_permission_claim(
-                        EntryCreationAction::Create(action),
-                        claim,
-                    )
+                    validate_create_steward_permission_claim(action.into(), claim)
                 }
             },
             OpEntry::UpdateEntry {
                 app_entry, action, ..
             } => match app_entry {
                 EntryTypes::StewardPermission(steward_permission) => {
-                    validate_create_steward_permission(
-                        EntryCreationAction::Update(action),
-                        steward_permission,
-                    )
+                    validate_create_steward_permission(action.into(), steward_permission)
                 }
-                EntryTypes::Applet(applet) => {
-                    validate_create_applet(EntryCreationAction::Update(action), applet)
+                EntryTypes::Applet(applet) => validate_create_applet(action.into(), applet),
+                EntryTypes::AppletPrivate(applet_private) => {
+                    validate_create_applet_private(action.into(), applet_private)
                 }
-                EntryTypes::AppletPrivate(applet_private) => validate_create_applet_private(
-                    EntryCreationAction::Update(action),
-                    applet_private,
-                ),
                 EntryTypes::AppletClonedCell(entry) => {
-                    validate_create_applet_cloned_cell(EntryCreationAction::Update(action), entry)
+                    validate_create_applet_cloned_cell(action.into(), entry)
                 }
                 EntryTypes::AppletClonedCellPrivate(entry) => {
-                    validate_create_applet_cloned_cell_private(
-                        EntryCreationAction::Update(action),
-                        entry,
-                    )
+                    validate_create_applet_cloned_cell_private(action.into(), entry)
                 }
-                EntryTypes::GroupProfile(group_profile) => validate_create_group_profile(
-                    EntryCreationAction::Update(action),
-                    group_profile,
-                ),
-                EntryTypes::GroupMetaData(group_meta_data) => validate_create_group_meta_data(
-                    EntryCreationAction::Update(action),
-                    group_meta_data,
-                ),
+                EntryTypes::GroupProfile(group_profile) => {
+                    validate_create_group_profile(action.into(), group_profile)
+                }
+                EntryTypes::GroupMetaData(group_meta_data) => {
+                    validate_create_group_meta_data(action.into(), group_meta_data)
+                }
                 EntryTypes::StewardPermissionClaim(claim) => {
-                    validate_create_steward_permission_claim(
-                        EntryCreationAction::Update(action),
-                        claim,
-                    )
+                    validate_create_steward_permission_claim(action.into(), claim)
                 }
             },
             _ => Ok(ValidateCallbackResult::Valid),
         },
-        FlatOp::RegisterUpdate(update_entry) => match update_entry {
+        FlatOp::Update(update_entry) => match update_entry {
             OpUpdate::Entry { app_entry, action } => {
-                let original_action = must_get_action(action.clone().original_action_address)?
+                let original_action_address = action.data.original_action_address.clone();
+                let action: Action = action.into();
+                let original_create_action = must_get_action(original_action_address.clone())?
                     .action()
                     .to_owned();
-                let original_create_action = match EntryCreationAction::try_from(original_action) {
-                    Ok(action) => action,
-                    Err(e) => {
-                        return Ok(ValidateCallbackResult::Invalid(format!(
-                            "Expected to get EntryCreationAction from Action: {e:?}"
-                        )));
-                    }
-                };
+                if !matches!(
+                    original_create_action.data,
+                    ActionData::Create(_) | ActionData::Update(_)
+                ) {
+                    return Ok(ValidateCallbackResult::Invalid(
+                        "Original action for an update must be a Create or Update action"
+                            .to_string(),
+                    ));
+                }
                 match app_entry {
                     EntryTypes::GroupProfile(group_profile) => {
                         let original_app_entry =
-                            must_get_valid_record(action.clone().original_action_address)?;
+                            must_get_valid_record(original_action_address.clone())?;
                         let original_group_profile =
                             match GroupProfile::try_from(original_app_entry) {
                                 Ok(entry) => entry,
@@ -186,7 +161,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     }
                     EntryTypes::GroupMetaData(group_meta_data) => {
                         let original_app_entry =
-                            must_get_valid_record(action.clone().original_action_address)?;
+                            must_get_valid_record(original_action_address.clone())?;
                         let original_group_meta_data =
                             match GroupMetaData::try_from(original_app_entry) {
                                 Ok(entry) => entry,
@@ -205,7 +180,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     }
                     EntryTypes::Applet(applet) => {
                         let original_app_entry =
-                            must_get_valid_record(action.clone().original_action_address)?;
+                            must_get_valid_record(original_action_address.clone())?;
                         let original_applet = match Applet::try_from(original_app_entry) {
                             Ok(entry) => entry,
                             Err(e) => {
@@ -223,7 +198,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     }
                     EntryTypes::AppletClonedCell(applet_cloned_cell) => {
                         let original_app_entry =
-                            must_get_valid_record(action.clone().original_action_address)?;
+                            must_get_valid_record(original_action_address.clone())?;
                         let original_applet_cloned_cell =
                             match AppletClonedCell::try_from(original_app_entry) {
                                 Ok(entry) => entry,
@@ -242,7 +217,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     }
                     EntryTypes::StewardPermission(steward_permission) => {
                         let original_app_entry =
-                            must_get_valid_record(action.clone().original_action_address)?;
+                            must_get_valid_record(original_action_address.clone())?;
                         let original_steward_permission =
                             match StewardPermission::try_from(original_app_entry) {
                                 Ok(entry) => entry,
@@ -272,20 +247,21 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             }
             _ => Ok(ValidateCallbackResult::Valid),
         },
-        FlatOp::RegisterDelete(delete_entry) => {
-            let original_action_hash = delete_entry.clone().action.deletes_address;
+        FlatOp::Delete(delete_entry) => {
+            let original_action_hash = delete_entry.action.data.deletes_address.clone();
+            let delete_action: Action = delete_entry.action.into();
             let original_record = must_get_valid_record(original_action_hash)?;
-            let original_record_action = original_record.action().clone();
-            let original_action = match EntryCreationAction::try_from(original_record_action) {
-                Ok(action) => action,
-                Err(e) => {
-                    return Ok(ValidateCallbackResult::Invalid(format!(
-                        "Expected to get EntryCreationAction from Action: {e:?}"
-                    )));
-                }
-            };
+            let original_action = original_record.action().clone();
+            if !matches!(
+                original_action.data,
+                ActionData::Create(_) | ActionData::Update(_)
+            ) {
+                return Ok(ValidateCallbackResult::Invalid(
+                    "Original action for a delete must be a Create or Update action".to_string(),
+                ));
+            }
             let app_entry_type = match original_action.entry_type() {
-                EntryType::App(app_entry_type) => app_entry_type,
+                Some(EntryType::App(app_entry_type)) => app_entry_type,
                 _ => {
                     return Ok(ValidateCallbackResult::Valid);
                 }
@@ -293,7 +269,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             match original_record.entry() {
                 RecordEntry::Hidden => {
                     // Private entries can be deleted by the author of the record
-                    if original_record.action().author() == &delete_entry.action.author {
+                    if original_record.action().author() == delete_action.author() {
                         return Ok(ValidateCallbackResult::Valid);
                     }
                 }
@@ -322,18 +298,16 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             };
             match original_app_entry {
                 EntryTypes::GroupProfile(original_group_profile) => validate_delete_group_profile(
-                    delete_entry.clone().action,
+                    delete_action.clone(),
                     original_action,
                     original_group_profile,
                 ),
-                EntryTypes::Applet(original_applet) => validate_delete_applet(
-                    delete_entry.clone().action,
-                    original_action,
-                    original_applet,
-                ),
+                EntryTypes::Applet(original_applet) => {
+                    validate_delete_applet(delete_action.clone(), original_action, original_applet)
+                }
                 EntryTypes::StewardPermission(original_steward_permission) => {
                     validate_delete_steward_permission(
-                        delete_entry.clone().action,
+                        delete_action.clone(),
                         original_action,
                         original_steward_permission,
                     )
@@ -344,184 +318,173 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 )),
             }
         }
-        FlatOp::RegisterCreateLink {
-            link_type,
-            base_address,
-            target_address,
-            tag,
-            action,
-        } => match link_type {
-            LinkTypes::AgentToStewardPermissions => {
-                validate_create_link_agent_to_steward_permissions(
+        FlatOp::Link(OpLink::CreateLink { link_type, action }) => {
+            let base_address = action.data.base_address.clone();
+            let target_address = action.data.target_address.clone();
+            let tag = action.data.tag.clone();
+            let action: Action = action.into();
+            match link_type {
+                LinkTypes::AgentToStewardPermissions => {
+                    validate_create_link_agent_to_steward_permissions(
+                        action,
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
+                LinkTypes::AllStewardPermissions => validate_create_link_all_steward_permissions(
                     action,
                     base_address,
                     target_address,
                     tag,
-                )
-            }
-            LinkTypes::AllStewardPermissions => validate_create_link_all_steward_permissions(
-                action,
-                base_address,
-                target_address,
-                tag,
-            ),
-            LinkTypes::AllApplets => {
-                validate_create_link_all_applets(action, base_address, target_address, tag)
-            }
-            LinkTypes::AppletToAppletClonedCell => {
-                validate_create_link_applet_to_applet_cloned_cell(
+                ),
+                LinkTypes::AllApplets => {
+                    validate_create_link_all_applets(action, base_address, target_address, tag)
+                }
+                LinkTypes::AppletToAppletClonedCell => {
+                    validate_create_link_applet_to_applet_cloned_cell(
+                        action,
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
+                LinkTypes::AllGroupProfiles => validate_create_link_all_group_profiles(
                     action,
                     base_address,
                     target_address,
                     tag,
-                )
+                ),
+                LinkTypes::AppletToJoinedAgent => {
+                    validate_create_link_joined_agent(action, base_address, target_address, tag)
+                }
+                LinkTypes::AppletToAbandonedAgent => {
+                    validate_create_link_abandoned_agent(action, base_address, target_address, tag)
+                }
+                LinkTypes::GroupMetaDataToAnchor => validate_create_link_group_meta_data_to_anchor(
+                    action,
+                    base_address,
+                    target_address,
+                    tag,
+                ),
             }
-            LinkTypes::AllGroupProfiles => {
-                validate_create_link_all_group_profiles(action, base_address, target_address, tag)
-            }
-            LinkTypes::AppletToJoinedAgent => {
-                validate_create_link_joined_agent(action, base_address, target_address, tag)
-            }
-            LinkTypes::AppletToAbandonedAgent => {
-                validate_create_link_abandoned_agent(action, base_address, target_address, tag)
-            }
-            LinkTypes::GroupMetaDataToAnchor => validate_create_link_group_meta_data_to_anchor(
-                action,
-                base_address,
-                target_address,
-                tag,
-            ),
-        },
-        FlatOp::RegisterDeleteLink {
+        }
+        FlatOp::Link(OpLink::DeleteLink {
             link_type,
-            base_address,
-            target_address,
-            tag,
             original_action,
             action,
-        } => match link_type {
-            LinkTypes::AgentToStewardPermissions => {
-                validate_delete_link_agent_to_steward_permissions(
+        }) => {
+            let base_address = action.data.base_address.clone();
+            let target_address = original_action.data.target_address.clone();
+            let tag = original_action.data.tag.clone();
+            let action: Action = action.into();
+            let original_action: Action = original_action.into();
+            match link_type {
+                LinkTypes::AgentToStewardPermissions => {
+                    validate_delete_link_agent_to_steward_permissions(
+                        action,
+                        original_action,
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
+                LinkTypes::AllStewardPermissions => validate_delete_link_all_steward_permissions(
                     action,
                     original_action,
                     base_address,
                     target_address,
                     tag,
-                )
-            }
-            LinkTypes::AllStewardPermissions => validate_delete_link_all_steward_permissions(
-                action,
-                original_action,
-                base_address,
-                target_address,
-                tag,
-            ),
-            LinkTypes::AllApplets => validate_delete_link_all_applets(
-                action,
-                original_action,
-                base_address,
-                target_address,
-                tag,
-            ),
-            LinkTypes::AppletToAppletClonedCell => {
-                validate_delete_link_applet_to_applet_cloned_cell(
+                ),
+                LinkTypes::AllApplets => validate_delete_link_all_applets(
                     action,
                     original_action,
                     base_address,
                     target_address,
                     tag,
-                )
+                ),
+                LinkTypes::AppletToAppletClonedCell => {
+                    validate_delete_link_applet_to_applet_cloned_cell(
+                        action,
+                        original_action,
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
+                LinkTypes::AllGroupProfiles => validate_delete_link_all_group_profiles(
+                    action,
+                    original_action,
+                    base_address,
+                    target_address,
+                    tag,
+                ),
+                LinkTypes::AppletToJoinedAgent => validate_delete_link_joined_agent(
+                    action,
+                    original_action,
+                    base_address,
+                    target_address,
+                    tag,
+                ),
+                LinkTypes::AppletToAbandonedAgent => validate_delete_link_abandoned_agent(
+                    action,
+                    original_action,
+                    base_address,
+                    target_address,
+                    tag,
+                ),
+                LinkTypes::GroupMetaDataToAnchor => validate_delete_link_group_meta_data_to_anchor(
+                    action,
+                    original_action,
+                    base_address,
+                    target_address,
+                    tag,
+                ),
             }
-            LinkTypes::AllGroupProfiles => validate_delete_link_all_group_profiles(
-                action,
-                original_action,
-                base_address,
-                target_address,
-                tag,
-            ),
-            LinkTypes::AppletToJoinedAgent => validate_delete_link_joined_agent(
-                action,
-                original_action,
-                base_address,
-                target_address,
-                tag,
-            ),
-            LinkTypes::AppletToAbandonedAgent => validate_delete_link_abandoned_agent(
-                action,
-                original_action,
-                base_address,
-                target_address,
-                tag,
-            ),
-            LinkTypes::GroupMetaDataToAnchor => validate_delete_link_group_meta_data_to_anchor(
-                action,
-                original_action,
-                base_address,
-                target_address,
-                tag,
-            ),
-        },
-        FlatOp::StoreRecord(store_record) => match store_record {
+        }
+        FlatOp::CreateRecord(store_record) => match store_record {
             OpRecord::CreateEntry { app_entry, action } => match app_entry {
                 EntryTypes::StewardPermission(steward_permission) => {
-                    validate_create_steward_permission(
-                        EntryCreationAction::Create(action),
-                        steward_permission,
-                    )
+                    validate_create_steward_permission(action.into(), steward_permission)
                 }
-                EntryTypes::Applet(applet) => {
-                    validate_create_applet(EntryCreationAction::Create(action), applet)
+                EntryTypes::Applet(applet) => validate_create_applet(action.into(), applet),
+                EntryTypes::AppletPrivate(applet_private) => {
+                    validate_create_applet_private(action.into(), applet_private)
                 }
-                EntryTypes::AppletPrivate(applet_private) => validate_create_applet_private(
-                    EntryCreationAction::Create(action),
-                    applet_private,
-                ),
                 EntryTypes::AppletClonedCell(entry) => {
-                    validate_create_applet_cloned_cell(EntryCreationAction::Create(action), entry)
+                    validate_create_applet_cloned_cell(action.into(), entry)
                 }
                 EntryTypes::AppletClonedCellPrivate(entry) => {
-                    validate_create_applet_cloned_cell_private(
-                        EntryCreationAction::Create(action),
-                        entry,
-                    )
+                    validate_create_applet_cloned_cell_private(action.into(), entry)
                 }
-                EntryTypes::GroupProfile(group_profile) => validate_create_group_profile(
-                    EntryCreationAction::Create(action),
-                    group_profile,
-                ),
-                EntryTypes::GroupMetaData(group_meta_data) => validate_create_group_meta_data(
-                    EntryCreationAction::Create(action),
-                    group_meta_data,
-                ),
+                EntryTypes::GroupProfile(group_profile) => {
+                    validate_create_group_profile(action.into(), group_profile)
+                }
+                EntryTypes::GroupMetaData(group_meta_data) => {
+                    validate_create_group_meta_data(action.into(), group_meta_data)
+                }
                 EntryTypes::StewardPermissionClaim(claim) => {
-                    validate_create_steward_permission_claim(
-                        EntryCreationAction::Create(action),
-                        claim,
-                    )
+                    validate_create_steward_permission_claim(action.into(), claim)
                 }
             },
-            OpRecord::UpdateEntry {
-                original_action_hash,
-                app_entry,
-                action,
-                ..
-            } => {
+            OpRecord::UpdateEntry { app_entry, action } => {
+                let original_action_hash = action.data.original_action_address.clone();
+                let action: Action = action.into();
                 let original_record = must_get_valid_record(original_action_hash)?;
                 let original_action = original_record.action().clone();
-                let original_action = match original_action {
-                    Action::Create(create) => EntryCreationAction::Create(create),
-                    Action::Update(update) => EntryCreationAction::Update(update),
-                    _ => {
-                        return Ok(ValidateCallbackResult::Invalid(
-                            "Original action for an update must be a Create or Update action"
-                                .to_string(),
-                        ));
-                    }
-                };
+                if !matches!(
+                    original_action.data,
+                    ActionData::Create(_) | ActionData::Update(_)
+                ) {
+                    return Ok(ValidateCallbackResult::Invalid(
+                        "Original action for an update must be a Create or Update action"
+                            .to_string(),
+                    ));
+                }
                 match app_entry {
                     EntryTypes::StewardPermission(steward_permission) => {
                         let result = validate_create_steward_permission(
-                            EntryCreationAction::Update(action.clone()),
+                            action.clone(),
                             steward_permission.clone(),
                         )?;
                         if let ValidateCallbackResult::Valid = result {
@@ -552,10 +515,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                         }
                     }
                     EntryTypes::Applet(applet) => {
-                        let result = validate_create_applet(
-                            EntryCreationAction::Update(action.clone()),
-                            applet.clone(),
-                        )?;
+                        let result = validate_create_applet(action.clone(), applet.clone())?;
                         if let ValidateCallbackResult::Valid = result {
                             let original_applet: Option<Applet> = original_record
                                 .entry()
@@ -579,7 +539,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     }
                     EntryTypes::AppletClonedCell(applet_cloned_cell) => {
                         let result = validate_create_applet_cloned_cell(
-                            EntryCreationAction::Update(action.clone()),
+                            action.clone(),
                             applet_cloned_cell.clone(),
                         )?;
                         if let ValidateCallbackResult::Valid = result {
@@ -610,10 +570,8 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                         }
                     }
                     EntryTypes::GroupProfile(group_profile) => {
-                        let result = validate_create_group_profile(
-                            EntryCreationAction::Update(action.clone()),
-                            group_profile.clone(),
-                        )?;
+                        let result =
+                            validate_create_group_profile(action.clone(), group_profile.clone())?;
                         if let ValidateCallbackResult::Valid = result {
                             let original_group_profile: Option<GroupProfile> = original_record
                                 .entry()
@@ -642,7 +600,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     }
                     EntryTypes::GroupMetaData(group_meta_data) => {
                         let result = validate_create_group_meta_data(
-                            EntryCreationAction::Update(action.clone()),
+                            action.clone(),
                             group_meta_data.clone(),
                         )?;
                         if let ValidateCallbackResult::Valid = result {
@@ -682,25 +640,22 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     )),
                 }
             }
-            OpRecord::DeleteEntry {
-                original_action_hash,
-                action,
-                ..
-            } => {
+            OpRecord::DeleteEntry { action } => {
+                let original_action_hash = action.data.deletes_address.clone();
+                let action: Action = action.into();
                 let original_record = must_get_valid_record(original_action_hash)?;
                 let original_action = original_record.action().clone();
-                let original_action = match original_action {
-                    Action::Create(create) => EntryCreationAction::Create(create),
-                    Action::Update(update) => EntryCreationAction::Update(update),
-                    _ => {
-                        return Ok(ValidateCallbackResult::Invalid(
-                            "Original action for a delete must be a Create or Update action"
-                                .to_string(),
-                        ));
-                    }
-                };
+                if !matches!(
+                    original_action.data,
+                    ActionData::Create(_) | ActionData::Update(_)
+                ) {
+                    return Ok(ValidateCallbackResult::Invalid(
+                        "Original action for a delete must be a Create or Update action"
+                            .to_string(),
+                    ));
+                }
                 let app_entry_type = match original_action.entry_type() {
-                    EntryType::App(app_entry_type) => app_entry_type,
+                    Some(EntryType::App(app_entry_type)) => app_entry_type,
                     _ => {
                         return Ok(ValidateCallbackResult::Valid);
                     }
@@ -708,7 +663,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 match original_record.entry() {
                     RecordEntry::Hidden => {
                         // Private entries can be deleted by the author of the record
-                        if original_record.action().author() == &action.author {
+                        if original_record.action().author() == action.author() {
                             return Ok(ValidateCallbackResult::Valid);
                         }
                     }
@@ -761,65 +716,72 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     )),
                 }
             }
-            OpRecord::CreateLink {
-                base_address,
-                target_address,
-                tag,
-                link_type,
-                action,
-            } => match link_type {
-                LinkTypes::AgentToStewardPermissions => {
-                    validate_create_link_agent_to_steward_permissions(
+            OpRecord::CreateLink { link_type, action } => {
+                let base_address = action.data.base_address.clone();
+                let target_address = action.data.target_address.clone();
+                let tag = action.data.tag.clone();
+                let action: Action = action.into();
+                match link_type {
+                    LinkTypes::AgentToStewardPermissions => {
+                        validate_create_link_agent_to_steward_permissions(
+                            action,
+                            base_address,
+                            target_address,
+                            tag,
+                        )
+                    }
+                    LinkTypes::AllStewardPermissions => {
+                        validate_create_link_all_steward_permissions(
+                            action,
+                            base_address,
+                            target_address,
+                            tag,
+                        )
+                    }
+                    LinkTypes::AllApplets => {
+                        validate_create_link_all_applets(action, base_address, target_address, tag)
+                    }
+                    LinkTypes::AppletToAppletClonedCell => {
+                        validate_create_link_applet_to_applet_cloned_cell(
+                            action,
+                            base_address,
+                            target_address,
+                            tag,
+                        )
+                    }
+                    LinkTypes::AllGroupProfiles => validate_create_link_all_group_profiles(
                         action,
                         base_address,
                         target_address,
                         tag,
-                    )
-                }
-                LinkTypes::AllStewardPermissions => validate_create_link_all_steward_permissions(
-                    action,
-                    base_address,
-                    target_address,
-                    tag,
-                ),
-                LinkTypes::AllApplets => {
-                    validate_create_link_all_applets(action, base_address, target_address, tag)
-                }
-                LinkTypes::AppletToAppletClonedCell => {
-                    validate_create_link_applet_to_applet_cloned_cell(
+                    ),
+                    LinkTypes::AppletToJoinedAgent => {
+                        validate_create_link_joined_agent(action, base_address, target_address, tag)
+                    }
+                    LinkTypes::AppletToAbandonedAgent => validate_create_link_abandoned_agent(
                         action,
                         base_address,
                         target_address,
                         tag,
-                    )
+                    ),
+                    LinkTypes::GroupMetaDataToAnchor => {
+                        validate_create_link_group_meta_data_to_anchor(
+                            action,
+                            base_address,
+                            target_address,
+                            tag,
+                        )
+                    }
                 }
-                LinkTypes::AllGroupProfiles => validate_create_link_all_group_profiles(
-                    action,
-                    base_address,
-                    target_address,
-                    tag,
-                ),
-                LinkTypes::AppletToJoinedAgent => {
-                    validate_create_link_joined_agent(action, base_address, target_address, tag)
-                }
-                LinkTypes::AppletToAbandonedAgent => {
-                    validate_create_link_abandoned_agent(action, base_address, target_address, tag)
-                }
-                LinkTypes::GroupMetaDataToAnchor => validate_create_link_group_meta_data_to_anchor(
-                    action,
-                    base_address,
-                    target_address,
-                    tag,
-                ),
-            },
-            OpRecord::DeleteLink {
-                original_action_hash,
-                base_address,
-                action,
-            } => {
+            }
+            OpRecord::DeleteLink { action } => {
+                let original_action_hash = action.data.link_add_address.clone();
+                let base_address = action.data.base_address.clone();
+                let action: Action = action.into();
                 let record = must_get_valid_record(original_action_hash)?;
-                let create_link = match record.action() {
-                    Action::CreateLink(create_link) => create_link.clone(),
+                let original_action = record.action().clone();
+                let create_link = match &original_action.data {
+                    ActionData::CreateLink(create_link) => create_link.clone(),
                     _ => {
                         return Ok(ValidateCallbackResult::Invalid(
                             "The action that a DeleteLink deletes must be a CreateLink".to_string(),
@@ -837,7 +799,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     LinkTypes::AgentToStewardPermissions => {
                         validate_delete_link_agent_to_steward_permissions(
                             action,
-                            create_link.clone(),
+                            original_action.clone(),
                             base_address,
                             create_link.target_address,
                             create_link.tag,
@@ -846,7 +808,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     LinkTypes::AllStewardPermissions => {
                         validate_delete_link_all_steward_permissions(
                             action,
-                            create_link.clone(),
+                            original_action.clone(),
                             base_address,
                             create_link.target_address,
                             create_link.tag,
@@ -854,7 +816,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     }
                     LinkTypes::AllApplets => validate_delete_link_all_applets(
                         action,
-                        create_link.clone(),
+                        original_action.clone(),
                         base_address,
                         create_link.target_address,
                         create_link.tag,
@@ -862,7 +824,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     LinkTypes::AppletToAppletClonedCell => {
                         validate_delete_link_applet_to_applet_cloned_cell(
                             action,
-                            create_link.clone(),
+                            original_action.clone(),
                             base_address,
                             create_link.target_address,
                             create_link.tag,
@@ -870,21 +832,21 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     }
                     LinkTypes::AllGroupProfiles => validate_delete_link_all_group_profiles(
                         action,
-                        create_link.clone(),
+                        original_action.clone(),
                         base_address,
                         create_link.target_address,
                         create_link.tag,
                     ),
                     LinkTypes::AppletToJoinedAgent => validate_delete_link_joined_agent(
                         action,
-                        create_link.clone(),
+                        original_action.clone(),
                         base_address,
                         create_link.target_address,
                         create_link.tag,
                     ),
                     LinkTypes::AppletToAbandonedAgent => validate_delete_link_abandoned_agent(
                         action,
-                        create_link.clone(),
+                        original_action.clone(),
                         base_address,
                         create_link.target_address,
                         create_link.tag,
@@ -892,7 +854,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     LinkTypes::GroupMetaDataToAnchor => {
                         validate_delete_link_group_meta_data_to_anchor(
                             action,
-                            create_link.clone(),
+                            original_action.clone(),
                             base_address,
                             create_link.target_address,
                             create_link.tag,
@@ -914,12 +876,20 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             OpRecord::InitZomesComplete { .. } => Ok(ValidateCallbackResult::Valid),
             _ => Ok(ValidateCallbackResult::Valid),
         },
-        FlatOp::RegisterAgentActivity(agent_activity) => match agent_activity {
-            OpActivity::CreateAgent { agent, action } => {
-                let previous_action = must_get_action(action.prev_action)?;
-                match previous_action.action() {
-                        Action::AgentValidationPkg(
-                            AgentValidationPkg { membrane_proof, .. },
+        FlatOp::AgentActivity(agent_activity) => match agent_activity {
+            OpActivity::CreateAgent { action } => {
+                let agent: AgentPubKey = action.data.entry_hash.clone().into();
+                let prev_action_hash =
+                    action
+                        .prev_action()
+                        .cloned()
+                        .ok_or(wasm_error!(WasmErrorInner::Guest(
+                            "CreateAgent action must have a previous action".into()
+                        )))?;
+                let previous_action = must_get_action(prev_action_hash)?;
+                match &previous_action.action().data {
+                        ActionData::AgentValidationPkg(
+                            AgentValidationPkgData { membrane_proof },
                         ) => validate_agent_joining(agent, membrane_proof),
                         _ => {
                             Ok(

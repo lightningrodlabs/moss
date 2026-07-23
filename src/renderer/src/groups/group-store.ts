@@ -39,7 +39,7 @@ import {
   YamlProperties,
 } from '@holochain/client';
 import { v4 as uuidv4 } from 'uuid';
-import { DnaModifiers } from '@holochain/client';
+import { DnaModifiers, SignedActionHashed } from '@holochain/client';
 import {
   AppletHash,
   AppletId,
@@ -973,7 +973,7 @@ export class GroupStore {
               entry: encode(signal.app_entry),
             },
           },
-          signed_action: signal.action,
+          signed_action: signal.action as unknown as SignedActionHashed,
         });
         set({ type: 'profile', profile: record });
       });

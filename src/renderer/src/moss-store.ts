@@ -38,6 +38,7 @@ import {
   ProvisionedCell,
   RoleSettings,
   RoleSettingsMap,
+  WsClient,
 } from '@holochain/client';
 import {
   AppletHash,
@@ -1899,7 +1900,7 @@ export class MossStore {
     const client = this._appClients[appId];
     if (client) {
       try {
-        await client[0].client.close();
+        await (client[0].client as WsClient).close();
       } catch (e) {
         console.warn(`Failed to close WebSocket for ${appId}:`, e);
       }

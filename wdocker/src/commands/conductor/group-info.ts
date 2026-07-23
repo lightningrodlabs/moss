@@ -1,4 +1,4 @@
-import { DnaHashB64, encodeHashToBase64 } from '@holochain/client';
+import { DnaHashB64, encodeHashToBase64, WsClient } from '@holochain/client';
 import {
   getAdminWsAndAppPort,
   getAppWs,
@@ -54,5 +54,5 @@ export async function groupInfo(
   const unjoinedTools = await groupClient.getUnjoinedApplets();
   console.log(`\n${unjoinedTools.length} Unactivated Tools.`);
   /*await*/ adminWs.client.close();
-  /*await*/ groupAppWs.client.close();
+  /*await*/ (groupAppWs.client as WsClient).close();
 }

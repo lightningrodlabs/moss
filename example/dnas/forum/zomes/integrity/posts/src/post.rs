@@ -7,28 +7,28 @@ pub struct Post {
     pub content: String,
 }
 pub fn validate_create_post(
-    _action: EntryCreationAction,
+    _action: Action,
     _post: Post,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_update_post(
-    _action: Update,
+    _action: Action,
     _post: Post,
-    _original_action: EntryCreationAction,
+    _original_action: Action,
     _original_post: Post,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_delete_post(
-    _action: Delete,
-    _original_action: EntryCreationAction,
+    _action: Action,
+    _original_action: Action,
     _original_post: Post,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_create_link_post_updates(
-    _action: CreateLink,
+    _action: Action,
     base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     _tag: LinkTag,
@@ -58,8 +58,8 @@ pub fn validate_create_link_post_updates(
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_delete_link_post_updates(
-    _action: DeleteLink,
-    _original_action: CreateLink,
+    _action: Action,
+    _original_action: Action,
     _base: AnyLinkableHash,
     _target: AnyLinkableHash,
     _tag: LinkTag,
@@ -69,8 +69,8 @@ pub fn validate_delete_link_post_updates(
     )))
 }
 pub fn validate_delete_link_peer_subscription(
-    _action: DeleteLink,
-    _original_action: CreateLink,
+    _action: Action,
+    _original_action: Action,
     _base: AnyLinkableHash,
     _target: AnyLinkableHash,
     _tag: LinkTag,
@@ -80,7 +80,7 @@ pub fn validate_delete_link_peer_subscription(
     )))
 }
 pub fn validate_create_link_all_posts(
-    _action: CreateLink,
+    _action: Action,
     _base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     _tag: LinkTag,
@@ -101,8 +101,8 @@ pub fn validate_create_link_all_posts(
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_delete_link_all_posts(
-    _action: DeleteLink,
-    _original_action: CreateLink,
+    _action: Action,
+    _original_action: Action,
     _base: AnyLinkableHash,
     _target: AnyLinkableHash,
     _tag: LinkTag,
@@ -112,7 +112,7 @@ pub fn validate_delete_link_all_posts(
     )))
 }
 pub fn validate_create_link_peer_subscription(
-    _action: CreateLink,
+    _action: Action,
     _base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     _tag: LinkTag,

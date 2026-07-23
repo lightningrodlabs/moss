@@ -50,7 +50,7 @@ export class AllPosts extends LitElement {
     return html`
       <div style="display: flex; flex-direction: row; flex: 1; flex-wrap: wrap;">
         ${records
-          .sort((a, b) => b.action.timestamp - a.action.timestamp)
+          .sort((a, b) => b.action.header.timestamp - a.action.header.timestamp)
           .map(
             (record) =>
               html`<post-summary

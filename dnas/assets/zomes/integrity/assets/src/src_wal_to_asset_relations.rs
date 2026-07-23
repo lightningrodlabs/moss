@@ -1,7 +1,7 @@
 use hdi::prelude::*;
 
 pub fn validate_create_link_src_wal_to_asset_relations(
-    _action: CreateLink,
+    _action: Action,
     _base_address: AnyLinkableHash,
     _target_address: AnyLinkableHash,
     _tag: LinkTag,
@@ -10,8 +10,8 @@ pub fn validate_create_link_src_wal_to_asset_relations(
 }
 
 pub fn validate_delete_link_src_wal_to_asset_relations(
-    _action: DeleteLink,
-    _original_action: CreateLink,
+    _action: Action,
+    _original_action: Action,
     _base: AnyLinkableHash,
     _target: AnyLinkableHash,
     _tag: LinkTag,

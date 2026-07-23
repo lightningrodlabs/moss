@@ -8,20 +8,20 @@ pub struct GroupMetaData {
     pub data: String,
 }
 pub fn validate_create_group_meta_data(
-    action: EntryCreationAction,
+    action: Action,
     group_meta_data: GroupMetaData,
 ) -> ExternResult<ValidateCallbackResult> {
     validate_steward_permission(
         action.author(),
         group_meta_data.permission_hash,
-        action.timestamp(),
+        &action.timestamp(),
         true,
     )
 }
 pub fn validate_update_group_meta_data(
-    _action: Update,
+    _action: Action,
     _group_meta_data: GroupMetaData,
-    _original_action: EntryCreationAction,
+    _original_action: Action,
     _original_group_meta_data: GroupMetaData,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Invalid(String::from(
@@ -29,8 +29,8 @@ pub fn validate_update_group_meta_data(
     )))
 }
 pub fn validate_delete_group_meta_data(
-    _action: Delete,
-    _original_action: EntryCreationAction,
+    _action: Action,
+    _original_action: Action,
     _original_group_meta_data: GroupMetaData,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Invalid(String::from(
@@ -43,7 +43,7 @@ pub fn validate_delete_group_meta_data(
 /// 2. Link must point to a valid GroupMetaData entry
 /// 3. The creator of the link must be the one that created the GroupMetaData entry
 pub fn validate_create_link_group_meta_data_to_anchor(
-    action: CreateLink,
+    action: Action,
     base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     _tag: LinkTag,
@@ -78,14 +78,14 @@ pub fn validate_create_link_group_meta_data_to_anchor(
         ));
     }
 
-    if record.action().author() != &action.author {
+    if record.action().author() != action.author() {
         return Ok(ValidateCallbackResult::Invalid("Only the creator of a GroupMetaData entry can create a link from the GroupMetaData its corresponding anchor".into()));
     }
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_delete_link_group_meta_data_to_anchor(
-    _action: DeleteLink,
-    _original_action: CreateLink,
+    _action: Action,
+    _original_action: Action,
     _base: AnyLinkableHash,
     _target: AnyLinkableHash,
     _tag: LinkTag,

@@ -9,7 +9,7 @@ pub struct GroupProfile {
     pub meta_data: Option<String>,
 }
 pub fn validate_create_group_profile(
-    action: EntryCreationAction,
+    action: Action,
     group_profile: GroupProfile,
 ) -> ExternResult<ValidateCallbackResult> {
     if group_profile.icon_src.chars().count() > 300000 {
@@ -21,14 +21,14 @@ pub fn validate_create_group_profile(
     validate_steward_permission(
         action.author(),
         group_profile.permission_hash,
-        action.timestamp(),
+        &action.timestamp(),
         true,
     )
 }
 pub fn validate_update_group_profile(
-    _action: Update,
+    _action: Action,
     _group_profile: GroupProfile,
-    _original_action: EntryCreationAction,
+    _original_action: Action,
     _original_group_profile: GroupProfile,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Invalid(String::from(
@@ -36,8 +36,8 @@ pub fn validate_update_group_profile(
     )))
 }
 pub fn validate_delete_group_profile(
-    _action: Delete,
-    _original_action: EntryCreationAction,
+    _action: Action,
+    _original_action: Action,
     _original_group_profile: GroupProfile,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Invalid(String::from(
@@ -50,7 +50,7 @@ pub fn validate_delete_group_profile(
 /// 2. Link must point to a valid GroupProfile entry
 /// 3. The creator of the link must be the one that created the GroupProfile entry
 pub fn validate_create_link_all_group_profiles(
-    action: CreateLink,
+    action: Action,
     base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     _tag: LinkTag,
@@ -84,14 +84,14 @@ pub fn validate_create_link_all_group_profiles(
             "Linked action must reference an entry".to_string()
         )))?;
 
-    if record.action().author() != &action.author {
+    if record.action().author() != action.author() {
         return Ok(ValidateCallbackResult::Invalid("Only the creator of a GroupProfile entry can create a link from the GroupProfile to the all_group_profiles anchor".into()));
     }
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_delete_link_all_group_profiles(
-    _action: DeleteLink,
-    _original_action: CreateLink,
+    _action: Action,
+    _original_action: Action,
     _base: AnyLinkableHash,
     _target: AnyLinkableHash,
     _tag: LinkTag,

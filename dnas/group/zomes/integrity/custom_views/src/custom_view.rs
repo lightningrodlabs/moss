@@ -9,28 +9,28 @@ pub struct CustomView {
     pub css: String,
 }
 pub fn validate_create_custom_view(
-    _action: EntryCreationAction,
+    _action: Action,
     _custom_view: CustomView,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_update_custom_view(
-    _action: Update,
+    _action: Action,
     _custom_view: CustomView,
-    _original_action: EntryCreationAction,
+    _original_action: Action,
     _original_custom_view: CustomView,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_delete_custom_view(
-    _action: Delete,
-    _original_action: EntryCreationAction,
+    _action: Action,
+    _original_action: Action,
     _original_custom_view: CustomView,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_create_link_all_custom_views(
-    _action: CreateLink,
+    _action: Action,
     _base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     _tag: LinkTag,
@@ -51,8 +51,8 @@ pub fn validate_create_link_all_custom_views(
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_delete_link_all_custom_views(
-    _action: DeleteLink,
-    _original_action: CreateLink,
+    _action: Action,
+    _original_action: Action,
     _base: AnyLinkableHash,
     _target: AnyLinkableHash,
     _tag: LinkTag,

@@ -4,7 +4,7 @@ use hdi::prelude::*;
 /// 1. Link base must be an entry hash
 /// 2. Link target must be the agent public key of the link creator
 pub fn validate_create_link_joined_agent(
-    action: CreateLink,
+    action: Action,
     base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     _tag: LinkTag,
@@ -25,7 +25,7 @@ pub fn validate_create_link_joined_agent(
         Err(e) => return Ok(ValidateCallbackResult::Invalid(e.into())),
     };
 
-    if agent != action.author {
+    if &agent != action.author() {
         return Ok(ValidateCallbackResult::Invalid(
             "AppletToJoinedAgent links must point to the creator of the link.".into(),
         ));
@@ -37,13 +37,13 @@ pub fn validate_create_link_joined_agent(
 /// Rules
 /// 1. Only the creator of the link can delete the link.
 pub fn validate_delete_link_joined_agent(
-    action: DeleteLink,
-    original_action: CreateLink,
+    action: Action,
+    original_action: Action,
     _base: AnyLinkableHash,
     _target: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
-    if action.author != original_action.author {
+    if action.author() != original_action.author() {
         return Ok(ValidateCallbackResult::Invalid(
             "Only the creator of an AppletToJoinedAgent link can delete that link.".into(),
         ));

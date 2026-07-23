@@ -1541,13 +1541,13 @@
   resolved "https://registry.yarnpkg.com/@holo-host/identicon/-/identicon-0.1.0.tgz#126f176d07f2992677f017863aeaeeed5b325c5f"
   integrity sha512-Dn5pTV/m3XaK1Zvq3liw/vQUt7goM7Y84x2zUyH8cb9CNMs4kPCNHs3kalbJZ/ymzFvwcdiLwwNW8AKk+WWN5A==
 
-"@holochain-open-dev/elements@^0.700.0-dev.0":
-  version "0.700.0-dev.0"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/elements/-/elements-0.700.0-dev.0.tgz#2497fcebff503bedb6046d2b15c58721d2fdd9a7"
-  integrity sha512-atnF6HjHlyAai1kjxFShUxNzChB4G0OOG+VLOEGUURQ6/NbINIC7T/Gr4/BSJmJl3U6LIgTyHdGNRhWeOusBaQ==
+"@holochain-open-dev/elements@^0.700.0-rc.0":
+  version "0.700.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/elements/-/elements-0.700.0-rc.0.tgz#be3e72bf8144309115c10ea0c56839e19a1c9a82"
+  integrity sha512-pb3c9IK1f9qSTuY25Mv7qSU4aWixfuLnOWvzcrw49XuIDxFOYUy+6xps0WrY4ho8bRGnW8rLYY3YSs/BwQTe2w==
   dependencies:
     "@holo-host/identicon" "^0.1.0"
-    "@holochain/client" "=0.21.0-dev.2"
+    "@holochain/client" "=0.21.0-rc.1"
     "@lit/localize" "^0.12.2"
     "@mdi/js" "^7.4.47"
     "@shoelace-style/shoelace" "^2.20.1"
@@ -1557,41 +1557,41 @@
     prosemirror-state "^1.4.3"
     prosemirror-view "^1.31.3"
 
-"@holochain-open-dev/profiles@^0.700.0-dev.0":
-  version "0.700.0-dev.0"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/profiles/-/profiles-0.700.0-dev.0.tgz#df176fd0dbde707d9c79c5b1a5d18e4c8060e904"
-  integrity sha512-/8idvXsOkYKldV8Bv9XE73muq/t+o6LbWPGq3dlhqUrn76UUccR3weXmT3Rbw1aSbmh9i5kNwZ8ROO8VicYpSg==
+"@holochain-open-dev/profiles@^0.700.0-rc.0":
+  version "0.700.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/profiles/-/profiles-0.700.0-rc.0.tgz#37de3630e5b6881cda049ff127926387c3caf09f"
+  integrity sha512-dXd5wE7iOB/CFiQ0K33ckXwhSEBLzYnG5Zy3ROdkzh0Bx3RrM1vYyv5Tsrrxz/NuJnviMDVt0OoGeLOBIX7wKA==
   dependencies:
-    "@holochain-open-dev/elements" "^0.700.0-dev.0"
-    "@holochain-open-dev/stores" "^0.700.0-dev.0"
-    "@holochain-open-dev/utils" "^0.700.0-dev.0"
-    "@holochain/client" "^0.21.0-dev.2"
+    "@holochain-open-dev/elements" "^0.700.0-rc.0"
+    "@holochain-open-dev/stores" "^0.700.0-rc.0"
+    "@holochain-open-dev/utils" "^0.700.0-rc.0"
+    "@holochain/client" "=0.21.0-rc.1"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.1.96"
     "@shoelace-style/shoelace" "^2.11.0"
     lit "^3.0.2"
 
-"@holochain-open-dev/stores@^0.700.0-dev.0":
-  version "0.700.0-dev.0"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/stores/-/stores-0.700.0-dev.0.tgz#a2889b5d5929b4eeb19cb91c8c1fdcb562ad2c24"
-  integrity sha512-qX45+RYN8gqli17cgDHLJgL8KfULinnDTfNjiIQr81eKCCFDLYtnUrVzsqbz2roslVM1LDT5cRxrcV9g9TthjA==
+"@holochain-open-dev/stores@^0.700.0-rc.0":
+  version "0.700.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/stores/-/stores-0.700.0-rc.0.tgz#d05085c62311a577a84a631389921825ef837cf8"
+  integrity sha512-Dr2+wvxSmlgwHBc0XQKUKVPeOIs8I/PdKEdclJ4Lrdbt/ey9x7t1zWK0P1mROngDKQN7VTzWGQFzr6teRb6WMA==
   dependencies:
     "@alenaksu/json-viewer" "^2.1.2"
-    "@holochain-open-dev/utils" "^0.700.0-dev.0"
-    "@holochain/client" "=0.21.0-dev.2"
+    "@holochain-open-dev/utils" "^0.700.0-rc.0"
+    "@holochain/client" "=0.21.0-rc.1"
     "@scoped-elements/cytoscape" "^0.2.7"
     "@shoelace-style/shoelace" "^2.20.1"
     lit "^3.0.2"
     lit-svelte-stores "^0.3.3"
     svelte "^3.53.1"
 
-"@holochain-open-dev/tryorama@^0.20.0-dev.0":
-  version "0.20.0-dev.0"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/tryorama/-/tryorama-0.20.0-dev.0.tgz#16cee7d0217e866f57b1158092a5d98b532c2fcb"
-  integrity sha512-TFLyi+NufyZAMXeGk5u3D1cCqRo9yTlt21NV2CUuWQqhdwaqTkLHA/CXiYStvKjbexD/VshSRaUhaejg9ZVNVA==
+"@holochain-open-dev/tryorama@^0.20.0-rc.0":
+  version "0.20.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/tryorama/-/tryorama-0.20.0-rc.0.tgz#9e875e9d74a0f7ff54a8c236892d6e69140706f5"
+  integrity sha512-UennYHQNNRgjijJAczm4a3UBaVPNUs6o3OfIQDNZ/WDkJXV7qDsoxzLkBKzmraJaRmBjTgA6QPxTXVVb3gO71w==
   dependencies:
-    "@holochain/client" "^0.21.0-dev.2"
+    "@holochain/client" "^0.21.0-rc.1"
     get-port "^7.0.0"
     js-yaml "^4.1.0"
     lodash "^4.17.21"
@@ -1599,12 +1599,12 @@
     winston "^3.8.2"
     ws "^8.11.0"
 
-"@holochain-open-dev/utils@^0.700.0-dev.0":
-  version "0.700.0-dev.0"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/utils/-/utils-0.700.0-dev.0.tgz#c50a091c34c7a7b5490d408e10929dc635c6daea"
-  integrity sha512-GLWEj7PUnueoc5JUrwXRqz3fDBhKITY44vbFXRvKKa+X5GNc7OluWsp3FjR6l8skBgRjwg/ENOA1nPJTDw+Pug==
+"@holochain-open-dev/utils@^0.700.0-rc.0":
+  version "0.700.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/utils/-/utils-0.700.0-rc.0.tgz#7b57fc09699083f941b080952a3aafd6832edc9b"
+  integrity sha512-CdbET/DPtWC7kvAh4FDXRP1VgRScny3oKRYgIGA5F3Sp48QuD94rML23enLh2Ytfqldo/rJqpBA3CmcubhuEbw==
   dependencies:
-    "@holochain/client" "=0.21.0-dev.2"
+    "@holochain/client" "=0.21.0-rc.1"
     "@msgpack/msgpack" "^3.1.3"
     blakejs "^1.2.1"
     emittery "^1.2.0"
@@ -1616,10 +1616,10 @@
   resolved "https://registry.yarnpkg.com/@holochain-playground/cli/-/cli-0.1.1.tgz#a5deb207dd3362cf7ab45070f0bc3cb8f12d9602"
   integrity sha512-JbapAe+uBaec52rTePjdlP0mq3zQhJG/hrdbCd+eecZLA3cXWEGgISR5YwLtx6udN+0ghCDH4U6KILjPiwWZMg==
 
-"@holochain/client@=0.21.0-dev.2", "@holochain/client@^0.21.0-dev.2":
-  version "0.21.0-dev.2"
-  resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.21.0-dev.2.tgz#6f3e08ab71e350f95b8696ab13ef30b3765a7e48"
-  integrity sha512-fAAO4OJw4UChsEjZOwWZfTLRb1IoL/4rwzJXNfHyYk0U8w3I0Dp/Jx0GLHZAgjbXsQ0VMPwcUS3sTMVVlH0NCQ==
+"@holochain/client@=0.21.0-rc.1", "@holochain/client@^0.21.0-rc.1":
+  version "0.21.0-rc.1"
+  resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.21.0-rc.1.tgz#2d2d7bec6fb89c6326310e5e5262acf2f0503618"
+  integrity sha512-tOd1QQ/BaM8bxwwQ1DJE/jegWWDaSI+b/z8jRWOpNO2CUVwBQeaeJeoLvtqrWVy8RZLEPd1UymDUpElINqHEkw==
   dependencies:
     "@bitgo/blake2b" "^3.2.4"
     "@msgpack/msgpack" "^3.1.2"
@@ -3117,19 +3117,19 @@
 "@theweave/api@file:libs/api":
   version "0.7.0-dev.0"
   dependencies:
-    "@holochain-open-dev/profiles" "^0.700.0-dev.0"
-    "@holochain/client" "=0.21.0-dev.2"
+    "@holochain-open-dev/profiles" "^0.700.0-rc.0"
+    "@holochain/client" "=0.21.0-rc.1"
     "@msgpack/msgpack" "^2.8.0"
     js-base64 "^3.7.2"
 
 "@theweave/elements@file:libs/elements":
   version "0.7.0-dev.0"
   dependencies:
-    "@holochain-open-dev/elements" "^0.700.0-dev.0"
-    "@holochain-open-dev/profiles" "^0.700.0-dev.0"
-    "@holochain-open-dev/stores" "^0.700.0-dev.0"
-    "@holochain-open-dev/utils" "^0.700.0-dev.0"
-    "@holochain/client" "=0.21.0-dev.2"
+    "@holochain-open-dev/elements" "^0.700.0-rc.0"
+    "@holochain-open-dev/profiles" "^0.700.0-rc.0"
+    "@holochain-open-dev/stores" "^0.700.0-rc.0"
+    "@holochain-open-dev/utils" "^0.700.0-rc.0"
+    "@holochain/client" "=0.21.0-rc.1"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
@@ -3141,15 +3141,15 @@
 "@theweave/group-client@file:shared/group-client":
   version "0.7.0-dev.0"
   dependencies:
-    "@holochain-open-dev/utils" "^0.700.0-dev.0"
-    "@holochain/client" "=0.21.0-dev.2"
+    "@holochain-open-dev/utils" "^0.700.0-rc.0"
+    "@holochain/client" "=0.21.0-rc.1"
     "@msgpack/msgpack" "^2.7.2"
     "@theweave/api" "^0.7.0-dev.0"
 
 "@theweave/utils@file:shared/utils":
   version "0.7.0-dev.0"
   dependencies:
-    "@holochain/client" "=0.21.0-dev.2"
+    "@holochain/client" "=0.21.0-rc.1"
     "@msgpack/msgpack" "^2.7.2"
     "@theweave/api" "^0.7.0-dev.0"
     "@theweave/moss-types" "^0.7.0-dev.0"

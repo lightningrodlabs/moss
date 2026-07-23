@@ -165,7 +165,7 @@ export class AppletDetailCard extends LitElement {
     this.appInfo = await appletClient.appInfo();
     const appletRecord = await this.groupStore.groupClient.getPublicApplet(this.appletHash);
     if (appletRecord) {
-      this.addedBy = appletRecord.action.author;
+      this.addedBy = appletRecord.action.header.author;
     }
     try {
       const result = await getDevUiOverride(appId);

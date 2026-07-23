@@ -55,13 +55,13 @@ export class PostSummary extends LitElement {
     if (!knownPosts.includes(actionHashB64)) {
       const notification: FrameNotification = {
         title: 'New Post',
-        body: `Heyho: ${encodeHashToBase64(entryRecord.action.author)} created a new Post: "${
+        body: `Heyho: ${encodeHashToBase64(entryRecord.action.header.author)} created a new Post: "${
           entryRecord.entry.title
         }"`,
         notification_type: 'new post',
         icon_src: 'https://static-00.iconduck.com/assets.00/duckduckgo-icon-512x512-zp12dd1l.png',
         urgency: 'high',
-        timestamp: entryRecord.action.timestamp,
+        timestamp: entryRecord.action.header.timestamp,
       };
       this.dispatchEvent(
         new CustomEvent('notification', {

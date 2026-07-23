@@ -69,40 +69,39 @@ pub fn validate_agent_joining(
 #[hdk_extern]
 pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
     match op.flattened::<EntryTypes, LinkTypes>()? {
-        FlatOp::StoreEntry(store_entry) => match store_entry {
+        FlatOp::CreateEntry(store_entry) => match store_entry {
             OpEntry::CreateEntry { app_entry, action } => match app_entry {
-                EntryTypes::AssetRelation(asset_relation) => validate_create_asset_relation(
-                    EntryCreationAction::Create(action),
-                    asset_relation,
-                ),
+                EntryTypes::AssetRelation(asset_relation) => {
+                    validate_create_asset_relation(action.into(), asset_relation)
+                }
             },
             OpEntry::UpdateEntry {
                 app_entry, action, ..
             } => match app_entry {
-                EntryTypes::AssetRelation(asset_relation) => validate_create_asset_relation(
-                    EntryCreationAction::Update(action),
-                    asset_relation,
-                ),
+                EntryTypes::AssetRelation(asset_relation) => {
+                    validate_create_asset_relation(action.into(), asset_relation)
+                }
             },
             _ => Ok(ValidateCallbackResult::Valid),
         },
-        FlatOp::RegisterUpdate(update_entry) => match update_entry {
+        FlatOp::Update(update_entry) => match update_entry {
             OpUpdate::Entry { app_entry, action } => {
-                let original_action = must_get_action(action.clone().original_action_address)?
+                let original_action_address = action.data.original_action_address.clone();
+                let original_action = must_get_action(original_action_address.clone())?
                     .action()
                     .to_owned();
-                let original_create_action = match EntryCreationAction::try_from(original_action) {
-                    Ok(action) => action,
-                    Err(e) => {
-                        return Ok(ValidateCallbackResult::Invalid(format!(
-                            "Expected to get EntryCreationAction from Action: {e:?}"
-                        )));
-                    }
-                };
+                if !matches!(
+                    original_action.data,
+                    ActionData::Create(_) | ActionData::Update(_)
+                ) {
+                    return Ok(ValidateCallbackResult::Invalid(
+                        "Original action for an update must be a Create or Update action"
+                            .to_string(),
+                    ));
+                }
                 match app_entry {
                     EntryTypes::AssetRelation(asset_relation) => {
-                        let original_app_entry =
-                            must_get_valid_record(action.clone().original_action_address)?;
+                        let original_app_entry = must_get_valid_record(original_action_address)?;
                         let original_asset_relation =
                             match AssetRelation::try_from(original_app_entry) {
                                 Ok(entry) => entry,
@@ -113,9 +112,9 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                                 }
                             };
                         validate_update_asset_relation(
-                            action,
+                            action.into(),
                             asset_relation,
-                            original_create_action,
+                            original_action,
                             original_asset_relation,
                         )
                     }
@@ -123,20 +122,21 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             }
             _ => Ok(ValidateCallbackResult::Valid),
         },
-        FlatOp::RegisterDelete(delete_entry) => {
-            let original_action_hash = delete_entry.clone().action.deletes_address;
+        FlatOp::Delete(delete_entry) => {
+            let action = delete_entry.action;
+            let original_action_hash = action.data.deletes_address.clone();
             let original_record = must_get_valid_record(original_action_hash)?;
-            let original_record_action = original_record.action().clone();
-            let original_action = match EntryCreationAction::try_from(original_record_action) {
-                Ok(action) => action,
-                Err(e) => {
-                    return Ok(ValidateCallbackResult::Invalid(format!(
-                        "Expected to get EntryCreationAction from Action: {e:?}"
-                    )));
-                }
-            };
+            let original_action = original_record.action().clone();
+            if !matches!(
+                original_action.data,
+                ActionData::Create(_) | ActionData::Update(_)
+            ) {
+                return Ok(ValidateCallbackResult::Invalid(
+                    "Original action for a delete must be a Create or Update action".to_string(),
+                ));
+            }
             let app_entry_type = match original_action.entry_type() {
-                EntryType::App(app_entry_type) => app_entry_type,
+                Some(EntryType::App(app_entry_type)) => app_entry_type,
                 _ => {
                     return Ok(ValidateCallbackResult::Valid);
                 }
@@ -163,164 +163,168 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 }
             };
             match original_app_entry {
-                EntryTypes::AssetRelation(original_asset_relation) => {
-                    validate_delete_asset_relation(
-                        delete_entry.clone().action,
-                        original_action,
-                        original_asset_relation,
-                    )
-                }
+                EntryTypes::AssetRelation(original_asset_relation) => validate_delete_asset_relation(
+                    action.into(),
+                    original_action,
+                    original_asset_relation,
+                ),
             }
         }
-        FlatOp::RegisterCreateLink {
-            link_type,
-            base_address,
-            target_address,
-            tag,
-            action,
-        } => match link_type {
-            LinkTypes::AssetRelationToRelationshipTags => {
-                validate_create_link_asset_relation_to_relationship_tags(
-                    action,
+        FlatOp::Link(OpLink::CreateLink { link_type, action }) => {
+            let base_address = action.data.base_address.clone();
+            let target_address = action.data.target_address.clone();
+            let tag = action.data.tag.clone();
+            match link_type {
+                LinkTypes::AssetRelationToRelationshipTags => {
+                    validate_create_link_asset_relation_to_relationship_tags(
+                        action.into(),
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
+                LinkTypes::RelationshipTagToAssetRelation => {
+                    validate_create_link_relationship_tag_to_asset_relation(
+                        action.into(),
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
+                LinkTypes::SrcWalToAssetRelations => {
+                    validate_create_link_src_wal_to_asset_relations(
+                        action.into(),
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
+                LinkTypes::DstWalToAssetRelations => {
+                    validate_create_link_dst_wal_to_asset_relations(
+                        action.into(),
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
+                LinkTypes::WalToAssociationTags => validate_create_link_wal_to_association_tags(
+                    action.into(),
                     base_address,
                     target_address,
                     tag,
-                )
-            }
-            LinkTypes::RelationshipTagToAssetRelation => {
-                validate_create_link_relationship_tag_to_asset_relation(
-                    action,
+                ),
+                LinkTypes::AssociationTagToWals => validate_create_link_association_tag_to_wals(
+                    action.into(),
                     base_address,
                     target_address,
                     tag,
-                )
+                ),
+                LinkTypes::AllAssetRelations => validate_create_link_all_asset_relations(
+                    action.into(),
+                    base_address,
+                    target_address,
+                    tag,
+                ),
             }
-            LinkTypes::SrcWalToAssetRelations => validate_create_link_src_wal_to_asset_relations(
-                action,
-                base_address,
-                target_address,
-                tag,
-            ),
-            LinkTypes::DstWalToAssetRelations => validate_create_link_dst_wal_to_asset_relations(
-                action,
-                base_address,
-                target_address,
-                tag,
-            ),
-            LinkTypes::WalToAssociationTags => validate_create_link_wal_to_association_tags(
-                action,
-                base_address,
-                target_address,
-                tag,
-            ),
-            LinkTypes::AssociationTagToWals => validate_create_link_association_tag_to_wals(
-                action,
-                base_address,
-                target_address,
-                tag,
-            ),
-            LinkTypes::AllAssetRelations => {
-                validate_create_link_all_asset_relations(action, base_address, target_address, tag)
-            }
-        },
-        FlatOp::RegisterDeleteLink {
+        }
+        FlatOp::Link(OpLink::DeleteLink {
             link_type,
-            base_address,
-            target_address,
-            tag,
             original_action,
             action,
-        } => match link_type {
-            LinkTypes::AssetRelationToRelationshipTags => {
-                validate_delete_link_asset_relation_to_relationship_tags(
-                    action,
-                    original_action,
+        }) => {
+            let base_address = action.data.base_address.clone();
+            let target_address = original_action.data.target_address.clone();
+            let tag = original_action.data.tag.clone();
+            match link_type {
+                LinkTypes::AssetRelationToRelationshipTags => {
+                    validate_delete_link_asset_relation_to_relationship_tags(
+                        action.into(),
+                        original_action.into(),
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
+                LinkTypes::RelationshipTagToAssetRelation => {
+                    validate_delete_link_relationship_tag_to_asset_relation(
+                        action.into(),
+                        original_action.into(),
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
+                LinkTypes::SrcWalToAssetRelations => {
+                    validate_delete_link_src_wal_to_asset_relations(
+                        action.into(),
+                        original_action.into(),
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
+                LinkTypes::DstWalToAssetRelations => {
+                    validate_delete_link_dst_wal_to_asset_relations(
+                        action.into(),
+                        original_action.into(),
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
+                LinkTypes::WalToAssociationTags => validate_delete_link_wal_to_association_tags(
+                    action.into(),
+                    original_action.into(),
                     base_address,
                     target_address,
                     tag,
-                )
-            }
-            LinkTypes::RelationshipTagToAssetRelation => {
-                validate_delete_link_relationship_tag_to_asset_relation(
-                    action,
-                    original_action,
+                ),
+                LinkTypes::AssociationTagToWals => validate_delete_link_association_tag_to_wals(
+                    action.into(),
+                    original_action.into(),
                     base_address,
                     target_address,
                     tag,
-                )
+                ),
+                LinkTypes::AllAssetRelations => validate_delete_link_all_asset_relations(
+                    action.into(),
+                    original_action.into(),
+                    base_address,
+                    target_address,
+                    tag,
+                ),
             }
-            LinkTypes::SrcWalToAssetRelations => validate_delete_link_src_wal_to_asset_relations(
-                action,
-                original_action,
-                base_address,
-                target_address,
-                tag,
-            ),
-            LinkTypes::DstWalToAssetRelations => validate_delete_link_dst_wal_to_asset_relations(
-                action,
-                original_action,
-                base_address,
-                target_address,
-                tag,
-            ),
-            LinkTypes::WalToAssociationTags => validate_delete_link_wal_to_association_tags(
-                action,
-                original_action,
-                base_address,
-                target_address,
-                tag,
-            ),
-            LinkTypes::AssociationTagToWals => validate_delete_link_association_tag_to_wals(
-                action,
-                original_action,
-                base_address,
-                target_address,
-                tag,
-            ),
-            LinkTypes::AllAssetRelations => validate_delete_link_all_asset_relations(
-                action,
-                original_action,
-                base_address,
-                target_address,
-                tag,
-            ),
-        },
-        FlatOp::StoreRecord(store_record) => {
+        }
+        FlatOp::CreateRecord(store_record) => {
             match store_record {
-                // Complementary validation to the `StoreEntry` Op, in which the record itself is validated
-                // If you want to optimize performance, you can remove the validation for an entry type here and keep it in `StoreEntry`
-                // Notice that doing so will cause `must_get_valid_record` for this record to return a valid record even if the `StoreEntry` validation failed
+                // Complementary validation to the `CreateEntry` Op, in which the record itself is validated
+                // If you want to optimize performance, you can remove the validation for an entry type here and keep it in `CreateEntry`
+                // Notice that doing so will cause `must_get_valid_record` for this record to return a valid record even if the `CreateEntry` validation failed
                 OpRecord::CreateEntry { app_entry, action } => match app_entry {
-                    EntryTypes::AssetRelation(asset_relation) => validate_create_asset_relation(
-                        EntryCreationAction::Create(action),
-                        asset_relation,
-                    ),
+                    EntryTypes::AssetRelation(asset_relation) => {
+                        validate_create_asset_relation(action.into(), asset_relation)
+                    }
                 },
-                // Complementary validation to the `RegisterUpdate` Op, in which the record itself is validated
-                // If you want to optimize performance, you can remove the validation for an entry type here and keep it in `StoreEntry` and in `RegisterUpdate`
+                // Complementary validation to the `Update` Op, in which the record itself is validated
+                // If you want to optimize performance, you can remove the validation for an entry type here and keep it in `CreateEntry` and in `Update`
                 // Notice that doing so will cause `must_get_valid_record` for this record to return a valid record even if the other validations failed
-                OpRecord::UpdateEntry {
-                    original_action_hash,
-                    app_entry,
-                    action,
-                    ..
-                } => {
-                    let original_record = must_get_valid_record(original_action_hash)?;
+                OpRecord::UpdateEntry { app_entry, action } => {
+                    let original_record =
+                        must_get_valid_record(action.data.original_action_address.clone())?;
                     let original_action = original_record.action().clone();
-                    let original_action = match original_action {
-                        Action::Create(create) => EntryCreationAction::Create(create),
-                        Action::Update(update) => EntryCreationAction::Update(update),
-                        _ => {
-                            return Ok(ValidateCallbackResult::Invalid(
-                                "Original action for an update must be a Create or Update action"
-                                    .to_string(),
-                            ));
-                        }
-                    };
+                    if !matches!(
+                        original_action.data,
+                        ActionData::Create(_) | ActionData::Update(_)
+                    ) {
+                        return Ok(ValidateCallbackResult::Invalid(
+                            "Original action for an update must be a Create or Update action"
+                                .to_string(),
+                        ));
+                    }
                     match app_entry {
                         EntryTypes::AssetRelation(asset_relation) => {
                             let result = validate_create_asset_relation(
-                                EntryCreationAction::Update(action.clone()),
+                                action.clone().into(),
                                 asset_relation.clone(),
                             )?;
                             if let ValidateCallbackResult::Valid = result {
@@ -341,7 +345,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                                     }
                                 };
                                 validate_update_asset_relation(
-                                    action,
+                                    action.into(),
                                     asset_relation,
                                     original_action,
                                     original_asset_relation,
@@ -352,28 +356,24 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                         }
                     }
                 }
-                // Complementary validation to the `RegisterDelete` Op, in which the record itself is validated
-                // If you want to optimize performance, you can remove the validation for an entry type here and keep it in `RegisterDelete`
-                // Notice that doing so will cause `must_get_valid_record` for this record to return a valid record even if the `RegisterDelete` validation failed
-                OpRecord::DeleteEntry {
-                    original_action_hash,
-                    action,
-                    ..
-                } => {
-                    let original_record = must_get_valid_record(original_action_hash)?;
+                // Complementary validation to the `Delete` Op, in which the record itself is validated
+                // If you want to optimize performance, you can remove the validation for an entry type here and keep it in `Delete`
+                // Notice that doing so will cause `must_get_valid_record` for this record to return a valid record even if the `Delete` validation failed
+                OpRecord::DeleteEntry { action } => {
+                    let original_record =
+                        must_get_valid_record(action.data.deletes_address.clone())?;
                     let original_action = original_record.action().clone();
-                    let original_action = match original_action {
-                        Action::Create(create) => EntryCreationAction::Create(create),
-                        Action::Update(update) => EntryCreationAction::Update(update),
-                        _ => {
-                            return Ok(ValidateCallbackResult::Invalid(
-                                "Original action for a delete must be a Create or Update action"
-                                    .to_string(),
-                            ));
-                        }
-                    };
+                    if !matches!(
+                        original_action.data,
+                        ActionData::Create(_) | ActionData::Update(_)
+                    ) {
+                        return Ok(ValidateCallbackResult::Invalid(
+                            "Original action for a delete must be a Create or Update action"
+                                .to_string(),
+                        ));
+                    }
                     let app_entry_type = match original_action.entry_type() {
-                        EntryType::App(app_entry_type) => app_entry_type,
+                        Some(EntryType::App(app_entry_type)) => app_entry_type,
                         _ => {
                             return Ok(ValidateCallbackResult::Valid);
                         }
@@ -404,89 +404,86 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     match original_app_entry {
                         EntryTypes::AssetRelation(original_asset_relation) => {
                             validate_delete_asset_relation(
-                                action,
+                                action.into(),
                                 original_action,
                                 original_asset_relation,
                             )
                         }
                     }
                 }
-                // Complementary validation to the `RegisterCreateLink` Op, in which the record itself is validated
-                // If you want to optimize performance, you can remove the validation for an entry type here and keep it in `RegisterCreateLink`
-                // Notice that doing so will cause `must_get_valid_record` for this record to return a valid record even if the `RegisterCreateLink` validation failed
-                OpRecord::CreateLink {
-                    base_address,
-                    target_address,
-                    tag,
-                    link_type,
-                    action,
-                } => match link_type {
-                    LinkTypes::AssetRelationToRelationshipTags => {
-                        validate_create_link_asset_relation_to_relationship_tags(
-                            action,
+                // Complementary validation to the CreateLink `Link` Op, in which the record itself is validated
+                // If you want to optimize performance, you can remove the validation for an entry type here and keep it in the CreateLink `Link` Op
+                // Notice that doing so will cause `must_get_valid_record` for this record to return a valid record even if the CreateLink `Link` validation failed
+                OpRecord::CreateLink { link_type, action } => {
+                    let base_address = action.data.base_address.clone();
+                    let target_address = action.data.target_address.clone();
+                    let tag = action.data.tag.clone();
+                    match link_type {
+                        LinkTypes::AssetRelationToRelationshipTags => {
+                            validate_create_link_asset_relation_to_relationship_tags(
+                                action.into(),
+                                base_address,
+                                target_address,
+                                tag,
+                            )
+                        }
+                        LinkTypes::RelationshipTagToAssetRelation => {
+                            validate_create_link_relationship_tag_to_asset_relation(
+                                action.into(),
+                                base_address,
+                                target_address,
+                                tag,
+                            )
+                        }
+                        LinkTypes::SrcWalToAssetRelations => {
+                            validate_create_link_src_wal_to_asset_relations(
+                                action.into(),
+                                base_address,
+                                target_address,
+                                tag,
+                            )
+                        }
+                        LinkTypes::DstWalToAssetRelations => {
+                            validate_create_link_dst_wal_to_asset_relations(
+                                action.into(),
+                                base_address,
+                                target_address,
+                                tag,
+                            )
+                        }
+                        LinkTypes::WalToAssociationTags => {
+                            validate_create_link_wal_to_association_tags(
+                                action.into(),
+                                base_address,
+                                target_address,
+                                tag,
+                            )
+                        }
+                        LinkTypes::AssociationTagToWals => {
+                            validate_create_link_association_tag_to_wals(
+                                action.into(),
+                                base_address,
+                                target_address,
+                                tag,
+                            )
+                        }
+                        LinkTypes::AllAssetRelations => validate_create_link_all_asset_relations(
+                            action.into(),
                             base_address,
                             target_address,
                             tag,
-                        )
+                        ),
                     }
-                    LinkTypes::RelationshipTagToAssetRelation => {
-                        validate_create_link_relationship_tag_to_asset_relation(
-                            action,
-                            base_address,
-                            target_address,
-                            tag,
-                        )
-                    }
-                    LinkTypes::SrcWalToAssetRelations => {
-                        validate_create_link_src_wal_to_asset_relations(
-                            action,
-                            base_address,
-                            target_address,
-                            tag,
-                        )
-                    }
-                    LinkTypes::DstWalToAssetRelations => {
-                        validate_create_link_dst_wal_to_asset_relations(
-                            action,
-                            base_address,
-                            target_address,
-                            tag,
-                        )
-                    }
-                    LinkTypes::WalToAssociationTags => {
-                        validate_create_link_wal_to_association_tags(
-                            action,
-                            base_address,
-                            target_address,
-                            tag,
-                        )
-                    }
-                    LinkTypes::AssociationTagToWals => {
-                        validate_create_link_association_tag_to_wals(
-                            action,
-                            base_address,
-                            target_address,
-                            tag,
-                        )
-                    }
-                    LinkTypes::AllAssetRelations => validate_create_link_all_asset_relations(
-                        action,
-                        base_address,
-                        target_address,
-                        tag,
-                    ),
-                },
-                // Complementary validation to the `RegisterDeleteLink` Op, in which the record itself is validated
-                // If you want to optimize performance, you can remove the validation for an entry type here and keep it in `RegisterDeleteLink`
-                // Notice that doing so will cause `must_get_valid_record` for this record to return a valid record even if the `RegisterDeleteLink` validation failed
-                OpRecord::DeleteLink {
-                    original_action_hash,
-                    base_address,
-                    action,
-                } => {
-                    let record = must_get_valid_record(original_action_hash)?;
-                    let create_link = match record.action() {
-                        Action::CreateLink(create_link) => create_link.clone(),
+                }
+                // Complementary validation to the DeleteLink `Link` Op, in which the record itself is validated
+                // If you want to optimize performance, you can remove the validation for an entry type here and keep it in the DeleteLink `Link` Op
+                // Notice that doing so will cause `must_get_valid_record` for this record to return a valid record even if the DeleteLink `Link` validation failed
+                OpRecord::DeleteLink { action } => {
+                    let base_address = action.data.base_address.clone();
+                    let record = must_get_valid_record(action.data.link_add_address.clone())?;
+                    let original_action = record.action().clone();
+                    let create_link = match &original_action.data {
+                        ActionData::CreateLink(create_link) => create_link.clone(),
                         _ => {
                             return Ok(ValidateCallbackResult::Invalid(
                                 "The action that a DeleteLink deletes must be a CreateLink"
@@ -506,8 +503,8 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     match link_type {
                         LinkTypes::AssetRelationToRelationshipTags => {
                             validate_delete_link_asset_relation_to_relationship_tags(
-                                action,
-                                create_link.clone(),
+                                action.into(),
+                                original_action,
                                 base_address,
                                 create_link.target_address,
                                 create_link.tag,
@@ -515,8 +512,8 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                         }
                         LinkTypes::RelationshipTagToAssetRelation => {
                             validate_delete_link_relationship_tag_to_asset_relation(
-                                action,
-                                create_link.clone(),
+                                action.into(),
+                                original_action,
                                 base_address,
                                 create_link.target_address,
                                 create_link.tag,
@@ -524,8 +521,8 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                         }
                         LinkTypes::SrcWalToAssetRelations => {
                             validate_delete_link_src_wal_to_asset_relations(
-                                action,
-                                create_link.clone(),
+                                action.into(),
+                                original_action,
                                 base_address,
                                 create_link.target_address,
                                 create_link.tag,
@@ -533,8 +530,8 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                         }
                         LinkTypes::DstWalToAssetRelations => {
                             validate_delete_link_dst_wal_to_asset_relations(
-                                action,
-                                create_link.clone(),
+                                action.into(),
+                                original_action,
                                 base_address,
                                 create_link.target_address,
                                 create_link.tag,
@@ -542,8 +539,8 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                         }
                         LinkTypes::WalToAssociationTags => {
                             validate_delete_link_wal_to_association_tags(
-                                action,
-                                create_link.clone(),
+                                action.into(),
+                                original_action,
                                 base_address,
                                 create_link.target_address,
                                 create_link.tag,
@@ -551,16 +548,16 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                         }
                         LinkTypes::AssociationTagToWals => {
                             validate_delete_link_association_tag_to_wals(
-                                action,
-                                create_link.clone(),
+                                action.into(),
+                                original_action,
                                 base_address,
                                 create_link.target_address,
                                 create_link.tag,
                             )
                         }
                         LinkTypes::AllAssetRelations => validate_delete_link_all_asset_relations(
-                            action,
-                            create_link.clone(),
+                            action.into(),
+                            original_action,
                             base_address,
                             create_link.target_address,
                             create_link.tag,
@@ -580,12 +577,18 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 _ => Ok(ValidateCallbackResult::Valid),
             }
         }
-        FlatOp::RegisterAgentActivity(agent_activity) => match agent_activity {
-            OpActivity::CreateAgent { agent, action } => {
-                let previous_action = must_get_action(action.prev_action)?;
-                match previous_action.action() {
-                        Action::AgentValidationPkg(
-                            AgentValidationPkg { membrane_proof, .. },
+        FlatOp::AgentActivity(agent_activity) => match agent_activity {
+            OpActivity::CreateAgent { action } => {
+                let agent: AgentPubKey = action.data.entry_hash.clone().into();
+                let prev_action_hash = action.prev_action().cloned().ok_or(wasm_error!(
+                    WasmErrorInner::Guest(
+                        "CreateAgent action must have a previous action".to_string()
+                    )
+                ))?;
+                let previous_action = must_get_action(prev_action_hash)?;
+                match &previous_action.action().data {
+                        ActionData::AgentValidationPkg(
+                            AgentValidationPkgData { membrane_proof },
                         ) => validate_agent_joining(agent, membrane_proof),
                         _ => {
                             Ok(

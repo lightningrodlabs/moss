@@ -18,20 +18,20 @@ pub struct Applet {
     pub properties: BTreeMap<String, SerializedBytes>,
 }
 pub fn validate_create_applet(
-    action: EntryCreationAction,
+    action: Action,
     applet: Applet,
 ) -> ExternResult<ValidateCallbackResult> {
     validate_steward_permission(
         action.author(),
         applet.permission_hash,
-        action.timestamp(),
+        &action.timestamp(),
         true,
     )
 }
 pub fn validate_update_applet(
-    _action: Update,
+    _action: Action,
     _applet: Applet,
-    _original_action: EntryCreationAction,
+    _original_action: Action,
     _original_applet: Applet,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Invalid(String::from(
@@ -39,8 +39,8 @@ pub fn validate_update_applet(
     )))
 }
 pub fn validate_delete_applet(
-    _action: Delete,
-    _original_action: EntryCreationAction,
+    _action: Action,
+    _original_action: Action,
     _original_applet: Applet,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Invalid(String::from(
@@ -51,7 +51,7 @@ pub fn validate_delete_applet(
 /// 1. Link must point away from the all_applets anchor
 /// 2. Link must point to an entry hash
 pub fn validate_create_link_all_applets(
-    _action: CreateLink,
+    _action: Action,
     base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     _tag: LinkTag,
@@ -85,8 +85,8 @@ pub fn validate_create_link_all_applets(
 ///    or the group's progenitor. This is due to a lack of the ability to pass
 ///    a permission hash along with a delete link action.
 pub fn validate_delete_link_all_applets(
-    action: DeleteLink,
-    _original_action: CreateLink,
+    action: Action,
+    _original_action: Action,
     _base: AnyLinkableHash,
     target: AnyLinkableHash,
     _tag: LinkTag,
@@ -101,7 +101,7 @@ pub fn validate_delete_link_all_applets(
     match dna_properties.progenitor {
         Some(progenitor_b64) => {
             let progenitor = AgentPubKey::from(progenitor_b64);
-            if progenitor == action.author {
+            if &progenitor == action.author() {
                 return Ok(ValidateCallbackResult::Valid);
             }
         }
@@ -124,9 +124,9 @@ pub fn validate_delete_link_all_applets(
         )))?;
 
     validate_steward_permission(
-        &action.author,
+        action.author(),
         applet.permission_hash,
-        &action.timestamp,
+        &action.timestamp(),
         true,
     )
 }

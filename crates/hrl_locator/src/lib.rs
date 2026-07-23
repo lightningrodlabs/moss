@@ -12,10 +12,9 @@ pub fn locate_hrl(hash: AnyDhtHash) -> ExternResult<Option<HrlLocation>> {
         return Ok(None);
     };
 
-    match record.signed_action.action().clone() {
-        Action::Create(create) => locate(create.entry_type),
-        Action::Update(update) => locate(update.entry_type),
-        _ => Err(wasm_error!(WasmErrorInner::Guest(
+    match record.signed_action.action().clone().into_entry_data() {
+        Some((_, entry_type)) => locate(entry_type),
+        None => Err(wasm_error!(WasmErrorInner::Guest(
             "Given hash does not correspond ".to_string()
         ))),
     }

@@ -17,14 +17,14 @@ pub struct AppletEntryPrivate {
     pub membrane_proofs: Option<BTreeMap<String, SerializedBytes>>,
 }
 pub fn validate_create_applet_private(
-    _action: EntryCreationAction,
+    _action: Action,
     _applet_private: AppletEntryPrivate,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_delete_private_applet(
-    _action: Delete,
-    _original_action: EntryCreationAction,
+    _action: Action,
+    _original_action: Action,
     _original_applet_private: AppletEntryPrivate,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Invalid(String::from(

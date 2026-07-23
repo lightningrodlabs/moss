@@ -11,6 +11,7 @@ import {
   Entry,
   FullStateDump,
   HoloHash,
+  SignedAction,
   SourceChainJsonRecord,
   WarrantOp,
 } from '@holochain/client';
@@ -63,25 +64,28 @@ export class StateDump extends LitElement {
       const opContent: ChainOp = op[opType];
       const opName = Object.keys(opContent)[0];
       const opValue = Object.values(opContent)[0];
-      const action: Action = opValue[1];
+      // Most ChainOp variants carry a SignedAction first; CreateEntry carries only a signature.
+      const first = opValue[0];
+      const action: Action | undefined =
+        first && typeof first === 'object' && 'data' in first
+          ? (first as SignedAction).data
+          : undefined;
 
       let entry: Entry | undefined;
-      if (opName == 'StoreEntry') {
-        entry = opValue[2];
-      } else if (opName == 'StoreRecord' && action.type == 'Create') {
-        if (opValue[2]['Present']) {
-          entry = opValue[2]['Present'];
-        }
+      const opEntry = opValue[1];
+      if (opEntry && typeof opEntry === 'object' && 'Present' in opEntry) {
+        entry = opEntry['Present'];
       }
 
       return html`
         <div class="dht-op">
-          ${opName}: ${action.type}
-          <span class="date">${dateStr(action.timestamp)}</span>
-          ${action.author ? html`by ${this.renderHash(action.author)}` : ''}
-          ${action.type == 'CreateLink' ? this.renderCreateLink(action) : ''}
+          ${opName}: ${action ? action.data.type : ''}
+          <span class="date">${action ? dateStr(action.header.timestamp) : ''}</span>
+          ${action ? html`by ${this.renderHash(action.header.author)}` : ''}
+          ${action && action.data.type == 'CreateLink'
+            ? this.renderCreateLink(action.data as CreateLink)
+            : ''}
           ${entry ? this.renderEntry(entry) : ''}
-          ${opName == 'RegisterAddLink' ? this.renderCreateLink(action as CreateLink) : ''}
         </div>
       `;
     } else {
@@ -89,7 +93,7 @@ export class StateDump extends LitElement {
       return html`
         <div class="warrant-op column">
           <span style="font-weight: bold;">WARRANT</span>
-          <span class="date">${dateStr(opContent.timestamp)}</span>
+          <span class="date">${dateStr(opContent.data.timestamp)}</span>
         </div>
       `;
     }
@@ -165,11 +169,13 @@ export class StateDump extends LitElement {
   renderRecord(record: SourceChainJsonRecord) {
     return html`
       <span class="record">
-        <span class="action-type">${record.action.type}</span>
+        <span class="action-type">${record.action.data.type}</span>
         ${this.renderHash(record.action_address)}
-        <span class="date">${dateStr(record.action.timestamp)}</span>
+        <span class="date">${dateStr(record.action.header.timestamp)}</span>
         ${record.entry ? this.renderEntry(record.entry) : ''}
-        ${record.action.type == 'CreateLink' ? this.renderCreateLink(record.action) : ''}
+        ${record.action.data.type == 'CreateLink'
+          ? this.renderCreateLink(record.action.data as CreateLink)
+          : ''}
       </span>
     `;
   }

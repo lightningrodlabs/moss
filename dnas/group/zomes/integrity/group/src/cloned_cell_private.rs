@@ -9,15 +9,15 @@ pub struct AppletClonedCellPrivate {
     pub applet_cloned_cell: AppletClonedCell,
 }
 pub fn validate_create_applet_cloned_cell_private(
-    _action: EntryCreationAction,
+    _action: Action,
     _applet_cloned_cell_private: AppletClonedCellPrivate,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_update_applet_cloned_cell_private(
-    _action: Update,
+    _action: Action,
     _applet_cloned_cell_private: AppletClonedCell,
-    _original_action: EntryCreationAction,
+    _original_action: Action,
     _original_applet_cloned_cell_private: AppletClonedCellPrivate,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Invalid(String::from(
@@ -25,8 +25,8 @@ pub fn validate_update_applet_cloned_cell_private(
     )))
 }
 pub fn validate_delete_applet_cloned_cell_private(
-    _action: Delete,
-    _original_action: EntryCreationAction,
+    _action: Action,
+    _original_action: Action,
     _original_applet_cloned_cell_private: AppletClonedCellPrivate,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Invalid(String::from(

@@ -11,7 +11,7 @@ pub struct LinkTagContent {
 }
 
 pub fn validate_create_link_asset_relation_to_relationship_tags(
-    _action: CreateLink,
+    _action: Action,
     _base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     tag: LinkTag,
@@ -47,8 +47,8 @@ pub fn validate_create_link_asset_relation_to_relationship_tags(
 }
 
 pub fn validate_delete_link_asset_relation_to_relationship_tags(
-    _action: DeleteLink,
-    _original_action: CreateLink,
+    _action: Action,
+    _original_action: Action,
     _base: AnyLinkableHash,
     _target: AnyLinkableHash,
     _tag: LinkTag,

@@ -51,38 +51,35 @@ pub fn validate_agent_joining(
 #[hdk_extern]
 pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
     match op.flattened::<EntryTypes, LinkTypes>()? {
-        FlatOp::StoreEntry(store_entry) => match store_entry {
+        FlatOp::CreateEntry(store_entry) => match store_entry {
             OpEntry::CreateEntry { app_entry, action } => match app_entry {
-                EntryTypes::Post(post) => {
-                    validate_create_post(EntryCreationAction::Create(action), post)
-                }
+                EntryTypes::Post(post) => validate_create_post(action.into(), post),
             },
             OpEntry::UpdateEntry {
                 app_entry, action, ..
             } => match app_entry {
-                EntryTypes::Post(post) => {
-                    validate_create_post(EntryCreationAction::Update(action), post)
-                }
+                EntryTypes::Post(post) => validate_create_post(action.into(), post),
             },
             _ => Ok(ValidateCallbackResult::Valid),
         },
-        FlatOp::RegisterUpdate(update_entry) => match update_entry {
+        FlatOp::Update(update_entry) => match update_entry {
             OpUpdate::Entry { app_entry, action } => {
-                let original_action = must_get_action(action.clone().original_action_address)?
+                let original_action_address = action.data.original_action_address.clone();
+                let original_action = must_get_action(original_action_address.clone())?
                     .action()
                     .to_owned();
-                let original_create_action = match EntryCreationAction::try_from(original_action) {
-                    Ok(action) => action,
-                    Err(e) => {
-                        return Ok(ValidateCallbackResult::Invalid(format!(
-                            "Expected to get EntryCreationAction from Action: {e:?}"
-                        )));
-                    }
-                };
+                if !matches!(
+                    original_action.data,
+                    ActionData::Create(_) | ActionData::Update(_)
+                ) {
+                    return Ok(ValidateCallbackResult::Invalid(
+                        "Original action for an update must be a Create or Update action"
+                            .to_string(),
+                    ));
+                }
                 match app_entry {
                     EntryTypes::Post(post) => {
-                        let original_app_entry =
-                            must_get_valid_record(action.clone().original_action_address)?;
+                        let original_app_entry = must_get_valid_record(original_action_address)?;
                         let original_post = match Post::try_from(original_app_entry) {
                             Ok(entry) => entry,
                             Err(e) => {
@@ -91,26 +88,26 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                                 )));
                             }
                         };
-                        validate_update_post(action, post, original_create_action, original_post)
+                        validate_update_post(action.into(), post, original_action, original_post)
                     }
                 }
             }
             _ => Ok(ValidateCallbackResult::Valid),
         },
-        FlatOp::RegisterDelete(delete_entry) => {
-            let original_action_hash = delete_entry.clone().action.deletes_address;
+        FlatOp::Delete(delete_entry) => {
+            let original_action_hash = delete_entry.action.data.deletes_address.clone();
             let original_record = must_get_valid_record(original_action_hash)?;
-            let original_record_action = original_record.action().clone();
-            let original_action = match EntryCreationAction::try_from(original_record_action) {
-                Ok(action) => action,
-                Err(e) => {
-                    return Ok(ValidateCallbackResult::Invalid(format!(
-                        "Expected to get EntryCreationAction from Action: {e:?}"
-                    )));
-                }
-            };
+            let original_action = original_record.action().clone();
+            if !matches!(
+                original_action.data,
+                ActionData::Create(_) | ActionData::Update(_)
+            ) {
+                return Ok(ValidateCallbackResult::Invalid(
+                    "Original action for a delete must be a Create or Update action".to_string(),
+                ));
+            }
             let app_entry_type = match original_action.entry_type() {
-                EntryType::App(app_entry_type) => app_entry_type,
+                Some(EntryType::App(app_entry_type)) => app_entry_type.clone(),
                 _ => {
                     return Ok(ValidateCallbackResult::Valid);
                 }
@@ -138,87 +135,84 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             };
             match original_app_entry {
                 EntryTypes::Post(post) => {
-                    validate_delete_post(delete_entry.action, original_action, post)
+                    validate_delete_post(delete_entry.action.into(), original_action, post)
                 }
             }
         }
-        FlatOp::RegisterCreateLink {
-            link_type,
-            base_address,
-            target_address,
-            tag,
-            action,
-        } => match link_type {
-            LinkTypes::PostUpdates => {
-                validate_create_link_post_updates(action, base_address, target_address, tag)
-            }
-            LinkTypes::AllPosts => {
-                validate_create_link_all_posts(action, base_address, target_address, tag)
-            }
-            LinkTypes::PeerSubscription => {
-                validate_create_link_peer_subscription(action, base_address, target_address, tag)
-            }
-        },
-        FlatOp::RegisterDeleteLink {
-            link_type,
-            base_address,
-            target_address,
-            tag,
-            original_action,
-            action,
-        } => match link_type {
-            LinkTypes::PostUpdates => validate_delete_link_post_updates(
-                action,
-                original_action,
-                base_address,
-                target_address,
-                tag,
-            ),
-            LinkTypes::AllPosts => validate_delete_link_all_posts(
-                action,
-                original_action,
-                base_address,
-                target_address,
-                tag,
-            ),
-            LinkTypes::PeerSubscription => validate_delete_link_peer_subscription(
-                action,
-                original_action,
-                base_address,
-                target_address,
-                tag,
-            ),
-        },
-        FlatOp::StoreRecord(store_record) => match store_record {
-            OpRecord::CreateEntry { app_entry, action } => match app_entry {
-                EntryTypes::Post(post) => {
-                    validate_create_post(EntryCreationAction::Create(action), post)
+        FlatOp::Link(OpLink::CreateLink { link_type, action }) => {
+            let base_address = action.data.base_address.clone();
+            let target_address = action.data.target_address.clone();
+            let tag = action.data.tag.clone();
+            match link_type {
+                LinkTypes::PostUpdates => validate_create_link_post_updates(
+                    action.into(),
+                    base_address,
+                    target_address,
+                    tag,
+                ),
+                LinkTypes::AllPosts => {
+                    validate_create_link_all_posts(action.into(), base_address, target_address, tag)
                 }
+                LinkTypes::PeerSubscription => validate_create_link_peer_subscription(
+                    action.into(),
+                    base_address,
+                    target_address,
+                    tag,
+                ),
+            }
+        }
+        FlatOp::Link(OpLink::DeleteLink {
+            original_action,
+            link_type,
+            action,
+        }) => {
+            let base_address = action.data.base_address.clone();
+            let target_address = original_action.data.target_address.clone();
+            let tag = original_action.data.tag.clone();
+            match link_type {
+                LinkTypes::PostUpdates => validate_delete_link_post_updates(
+                    action.into(),
+                    original_action.into(),
+                    base_address,
+                    target_address,
+                    tag,
+                ),
+                LinkTypes::AllPosts => validate_delete_link_all_posts(
+                    action.into(),
+                    original_action.into(),
+                    base_address,
+                    target_address,
+                    tag,
+                ),
+                LinkTypes::PeerSubscription => validate_delete_link_peer_subscription(
+                    action.into(),
+                    original_action.into(),
+                    base_address,
+                    target_address,
+                    tag,
+                ),
+            }
+        }
+        FlatOp::CreateRecord(store_record) => match store_record {
+            OpRecord::CreateEntry { app_entry, action } => match app_entry {
+                EntryTypes::Post(post) => validate_create_post(action.into(), post),
             },
-            OpRecord::UpdateEntry {
-                original_action_hash,
-                app_entry,
-                action,
-                ..
-            } => {
+            OpRecord::UpdateEntry { app_entry, action } => {
+                let original_action_hash = action.data.original_action_address.clone();
                 let original_record = must_get_valid_record(original_action_hash)?;
                 let original_action = original_record.action().clone();
-                let original_action = match original_action {
-                    Action::Create(create) => EntryCreationAction::Create(create),
-                    Action::Update(update) => EntryCreationAction::Update(update),
-                    _ => {
-                        return Ok(ValidateCallbackResult::Invalid(
-                            "Original action for an update must be a Create or Update action"
-                                .to_string(),
-                        ));
-                    }
-                };
+                if !matches!(
+                    original_action.data,
+                    ActionData::Create(_) | ActionData::Update(_)
+                ) {
+                    return Ok(ValidateCallbackResult::Invalid(
+                        "Original action for an update must be a Create or Update action"
+                            .to_string(),
+                    ));
+                }
                 match app_entry {
                     EntryTypes::Post(post) => {
-                        let result = validate_create_post(
-                            EntryCreationAction::Update(action.clone()),
-                            post.clone(),
-                        )?;
+                        let result = validate_create_post(action.clone().into(), post.clone())?;
                         if let ValidateCallbackResult::Valid = result {
                             let original_post: Option<Post> = original_record
                                 .entry()
@@ -235,32 +229,28 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                                         );
                                 }
                             };
-                            validate_update_post(action, post, original_action, original_post)
+                            validate_update_post(action.into(), post, original_action, original_post)
                         } else {
                             Ok(result)
                         }
                     }
                 }
             }
-            OpRecord::DeleteEntry {
-                original_action_hash,
-                action,
-                ..
-            } => {
+            OpRecord::DeleteEntry { action } => {
+                let original_action_hash = action.data.deletes_address.clone();
                 let original_record = must_get_valid_record(original_action_hash)?;
                 let original_action = original_record.action().clone();
-                let original_action = match original_action {
-                    Action::Create(create) => EntryCreationAction::Create(create),
-                    Action::Update(update) => EntryCreationAction::Update(update),
-                    _ => {
-                        return Ok(ValidateCallbackResult::Invalid(
-                            "Original action for a delete must be a Create or Update action"
-                                .to_string(),
-                        ));
-                    }
-                };
+                if !matches!(
+                    original_action.data,
+                    ActionData::Create(_) | ActionData::Update(_)
+                ) {
+                    return Ok(ValidateCallbackResult::Invalid(
+                        "Original action for a delete must be a Create or Update action"
+                            .to_string(),
+                    ));
+                }
                 let app_entry_type = match original_action.entry_type() {
-                    EntryType::App(app_entry_type) => app_entry_type,
+                    Some(EntryType::App(app_entry_type)) => app_entry_type.clone(),
                     _ => {
                         return Ok(ValidateCallbackResult::Valid);
                     }
@@ -268,7 +258,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 let entry = match original_record.entry().as_option() {
                     Some(entry) => entry,
                     None => {
-                        if original_action.entry_type().visibility().is_public() {
+                        if app_entry_type.visibility.is_public() {
                             return Ok(
                                     ValidateCallbackResult::Invalid(
                                         "Original record for a delete of a public entry must contain an entry"
@@ -297,38 +287,42 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 };
                 match original_app_entry {
                     EntryTypes::Post(original_post) => {
-                        validate_delete_post(action, original_action, original_post)
+                        validate_delete_post(action.into(), original_action, original_post)
                     }
                 }
             }
-            OpRecord::CreateLink {
-                base_address,
-                target_address,
-                tag,
-                link_type,
-                action,
-            } => match link_type {
-                LinkTypes::PostUpdates => {
-                    validate_create_link_post_updates(action, base_address, target_address, tag)
+            OpRecord::CreateLink { link_type, action } => {
+                let base_address = action.data.base_address.clone();
+                let target_address = action.data.target_address.clone();
+                let tag = action.data.tag.clone();
+                match link_type {
+                    LinkTypes::PostUpdates => validate_create_link_post_updates(
+                        action.into(),
+                        base_address,
+                        target_address,
+                        tag,
+                    ),
+                    LinkTypes::AllPosts => validate_create_link_all_posts(
+                        action.into(),
+                        base_address,
+                        target_address,
+                        tag,
+                    ),
+                    LinkTypes::PeerSubscription => validate_create_link_peer_subscription(
+                        action.into(),
+                        base_address,
+                        target_address,
+                        tag,
+                    ),
                 }
-                LinkTypes::AllPosts => {
-                    validate_create_link_all_posts(action, base_address, target_address, tag)
-                }
-                LinkTypes::PeerSubscription => validate_create_link_peer_subscription(
-                    action,
-                    base_address,
-                    target_address,
-                    tag,
-                ),
-            },
-            OpRecord::DeleteLink {
-                original_action_hash,
-                base_address,
-                action,
-            } => {
+            }
+            OpRecord::DeleteLink { action } => {
+                let original_action_hash = action.data.link_add_address.clone();
+                let base_address = action.data.base_address.clone();
                 let record = must_get_valid_record(original_action_hash)?;
-                let create_link = match record.action() {
-                    Action::CreateLink(create_link) => create_link.clone(),
+                let original_action = record.action().clone();
+                let create_link = match &original_action.data {
+                    ActionData::CreateLink(create_link) => create_link.clone(),
                     _ => {
                         return Ok(ValidateCallbackResult::Invalid(
                             "The action that a DeleteLink deletes must be a CreateLink".to_string(),
@@ -346,22 +340,22 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 };
                 match link_type {
                     LinkTypes::PostUpdates => validate_delete_link_post_updates(
-                        action,
-                        create_link.clone(),
+                        action.into(),
+                        original_action,
                         base_address,
                         create_link.target_address,
                         create_link.tag,
                     ),
                     LinkTypes::AllPosts => validate_delete_link_all_posts(
-                        action,
-                        create_link.clone(),
+                        action.into(),
+                        original_action,
                         base_address,
                         create_link.target_address,
                         create_link.tag,
                     ),
                     LinkTypes::PeerSubscription => validate_delete_link_peer_subscription(
-                        action,
-                        create_link.clone(),
+                        action.into(),
+                        original_action,
                         base_address,
                         create_link.target_address,
                         create_link.tag,
@@ -380,12 +374,18 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             OpRecord::InitZomesComplete { .. } => Ok(ValidateCallbackResult::Valid),
             _ => Ok(ValidateCallbackResult::Valid),
         },
-        FlatOp::RegisterAgentActivity(agent_activity) => match agent_activity {
-            OpActivity::CreateAgent { agent, action } => {
-                let previous_action = must_get_action(action.prev_action)?;
-                match previous_action.action() {
-                        Action::AgentValidationPkg(
-                            AgentValidationPkg { membrane_proof, .. },
+        FlatOp::AgentActivity(agent_activity) => match agent_activity {
+            OpActivity::CreateAgent { action } => {
+                let agent: AgentPubKey = action.data.entry_hash.clone().into();
+                let prev_action_hash = action.prev_action().cloned().ok_or(wasm_error!(
+                    WasmErrorInner::Guest(
+                        "CreateAgent action must have a previous action".into()
+                    )
+                ))?;
+                let previous_action = must_get_action(prev_action_hash)?;
+                match &previous_action.action().data {
+                        ActionData::AgentValidationPkg(
+                            AgentValidationPkgData { membrane_proof },
                         ) => validate_agent_joining(agent, membrane_proof),
                         _ => {
                             Ok(

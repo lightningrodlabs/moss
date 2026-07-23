@@ -1,7 +1,7 @@
 use hdi::prelude::*;
 
 pub fn validate_create_link_wal_to_association_tags(
-    _action: CreateLink,
+    _action: Action,
     _base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     tag: LinkTag,
@@ -35,8 +35,8 @@ pub fn validate_create_link_wal_to_association_tags(
 }
 
 pub fn validate_delete_link_wal_to_association_tags(
-    _action: DeleteLink,
-    _original_action: CreateLink,
+    _action: Action,
+    _original_action: Action,
     _base: AnyLinkableHash,
     _target: AnyLinkableHash,
     _tag: LinkTag,
@@ -45,7 +45,7 @@ pub fn validate_delete_link_wal_to_association_tags(
 }
 
 pub fn validate_create_link_association_tag_to_wals(
-    _action: CreateLink,
+    _action: Action,
     _base_address: AnyLinkableHash,
     _target_address: AnyLinkableHash,
     _tag: LinkTag,
@@ -54,8 +54,8 @@ pub fn validate_create_link_association_tag_to_wals(
 }
 
 pub fn validate_delete_link_association_tag_to_wals(
-    _action: DeleteLink,
-    _original_action: CreateLink,
+    _action: Action,
+    _original_action: Action,
     _base: AnyLinkableHash,
     _target: AnyLinkableHash,
     _tag: LinkTag,

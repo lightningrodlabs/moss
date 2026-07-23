@@ -14,7 +14,7 @@ pub struct StewardPermission {
 /// 2. StewardPermissions cannot be created for oneself
 /// 3. The progenitor cannot create a StewardPermission for themselves since they already have maximum permissions
 pub fn validate_create_steward_permission(
-    action: EntryCreationAction,
+    action: Action,
     steward_permission: StewardPermission,
 ) -> ExternResult<ValidateCallbackResult> {
     let dna_properties =
@@ -40,14 +40,14 @@ pub fn validate_create_steward_permission(
     validate_steward_permission(
         action.author(),
         steward_permission.permission_hash,
-        action.timestamp(),
+        &action.timestamp(),
         false,
     )
 }
 pub fn validate_update_steward_permission(
-    _action: Update,
+    _action: Action,
     _steward_permission: StewardPermission,
-    _original_action: EntryCreationAction,
+    _original_action: Action,
     _original_steward_permission: StewardPermission,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Invalid(String::from(
@@ -55,8 +55,8 @@ pub fn validate_update_steward_permission(
     )))
 }
 pub fn validate_delete_steward_permission(
-    _action: Delete,
-    _original_action: EntryCreationAction,
+    _action: Action,
+    _original_action: Action,
     _original_steward_permission: StewardPermission,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Invalid(String::from(
@@ -69,7 +69,7 @@ pub fn validate_delete_steward_permission(
 ///    agent key for which the StewardPermission is issued
 /// 3. The agent creating the link must have StewardPermission
 pub fn validate_create_link_agent_to_steward_permissions(
-    action: CreateLink,
+    action: Action,
     base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     _tag: LinkTag,
@@ -108,15 +108,15 @@ pub fn validate_create_link_agent_to_steward_permissions(
     }
 
     validate_steward_permission(
-        &action.author,
+        action.author(),
         steward_permission.permission_hash,
-        &action.timestamp,
+        &action.timestamp(),
         false,
     )
 }
 pub fn validate_delete_link_agent_to_steward_permissions(
-    _action: DeleteLink,
-    _original_action: CreateLink,
+    _action: Action,
+    _original_action: Action,
     _base: AnyLinkableHash,
     _target: AnyLinkableHash,
     _tag: LinkTag,
@@ -132,7 +132,7 @@ pub fn validate_delete_link_agent_to_steward_permissions(
 /// 4. The link must point away from the all_steward_permissions anchor
 /// 5. The link tag must contain the agent public key for which the permission is
 pub fn validate_create_link_all_steward_permissions(
-    action: CreateLink,
+    action: Action,
     base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     tag: LinkTag,
@@ -181,15 +181,15 @@ pub fn validate_create_link_all_steward_permissions(
     }
 
     validate_steward_permission(
-        &action.author,
+        action.author(),
         steward_permission.permission_hash,
-        &action.timestamp,
+        &action.timestamp(),
         false,
     )
 }
 pub fn validate_delete_link_all_steward_permissions(
-    _action: DeleteLink,
-    _original_action: CreateLink,
+    _action: Action,
+    _original_action: Action,
     _base: AnyLinkableHash,
     _target: AnyLinkableHash,
     _tag: LinkTag,

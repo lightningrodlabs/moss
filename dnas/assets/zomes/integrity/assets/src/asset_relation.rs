@@ -20,7 +20,7 @@ pub struct AssetRelation {
 
 /// Anyone can create an asset relation
 pub fn validate_create_asset_relation(
-    _action: EntryCreationAction,
+    _action: Action,
     _asset_relation: AssetRelation,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Valid)
@@ -28,9 +28,9 @@ pub fn validate_create_asset_relation(
 
 /// Updating asset relation is meaningless and therefore not allowed
 pub fn validate_update_asset_relation(
-    _action: Update,
+    _action: Action,
     _asset_relation: AssetRelation,
-    _original_action: EntryCreationAction,
+    _original_action: Action,
     _original_asset_relation: AssetRelation,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Invalid(
@@ -40,15 +40,15 @@ pub fn validate_update_asset_relation(
 
 /// Anyone can delete an asset relation. Restrictions would need to be enorced at the UI level
 pub fn validate_delete_asset_relation(
-    _action: Delete,
-    _original_action: EntryCreationAction,
+    _action: Action,
+    _original_action: Action,
     _original_asset_relation: AssetRelation,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Valid)
 }
 
 pub fn validate_create_link_all_asset_relations(
-    _action: CreateLink,
+    _action: Action,
     base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     _tag: LinkTag,
@@ -77,8 +77,8 @@ pub fn validate_create_link_all_asset_relations(
 }
 
 pub fn validate_delete_link_all_asset_relations(
-    _action: DeleteLink,
-    _original_action: CreateLink,
+    _action: Action,
+    _original_action: Action,
     _base: AnyLinkableHash,
     _target: AnyLinkableHash,
     _tag: LinkTag,

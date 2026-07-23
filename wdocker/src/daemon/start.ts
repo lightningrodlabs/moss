@@ -15,9 +15,7 @@ import { ConductorRunningInfo, RunningSecretInfo, WDockerFilesystem } from '../f
 import { AdminWebsocket } from '@holochain/client';
 import {
   CONDUCTOR_CONFIG_TEMPLATE,
-  DEFAULT_ICE_URLS,
   PRODUCTION_BOOTSTRAP_URLS,
-  PRODUCTION_SIGNALING_URLS,
   PRODUCTION_RELAY_URLS,
 } from '../const.js';
 import { nanoid } from 'nanoid';
@@ -148,9 +146,7 @@ export async function startConductor(
   const allowedOrigin = nanoid(20);
 
   const bootstrapUrl = PRODUCTION_BOOTSTRAP_URLS[0];
-  const signalUrl = PRODUCTION_SIGNALING_URLS[0];
   const relayUrl = PRODUCTION_RELAY_URLS[0];
-  const iceUrls = DEFAULT_ICE_URLS;
   const rustLog = wDockerFs.wdockerConductorConfig.rustLog;
   const wasmLog = wDockerFs.wdockerConductorConfig.wasmLog;
 
@@ -165,6 +161,14 @@ export async function startConductor(
     delete conductorConfig.device_seed_lair_tag;
     delete conductorConfig.danger_generate_throwaway_device_seed;
     delete conductorConfig.dpki;
+    if (conductorConfig.db_sync_strategy) {
+      delete conductorConfig.db_sync_strategy;
+      conductorConfig.db_sync_level = 'Normal';
+    }
+    if (conductorConfig.network) {
+      delete conductorConfig.network.signal_url;
+      delete conductorConfig.network.webrtc_config;
+    }
   } catch (e) {
     console.warn(
       'Failed to read existing conductor-config.yaml file. Overwriting it with a default one.',
@@ -186,9 +190,7 @@ export async function startConductor(
 
   // network parameters
   conductorConfig.network.bootstrap_url = bootstrapUrl;
-  conductorConfig.network.signal_url = signalUrl;
   conductorConfig.network.relay_url = relayUrl;
-  conductorConfig.network.webrtc_config = { iceServers: iceUrls.map((url) => ({ urls: [url] })) };
 
   // advanced network settings (sync with main app)
   const advancedSettings = conductorConfig.network.advanced ? conductorConfig.network.advanced : {};

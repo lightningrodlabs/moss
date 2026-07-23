@@ -13,15 +13,15 @@ pub struct AppletClonedCell {
     // too in case it is not bound to an agent.
 }
 pub fn validate_create_applet_cloned_cell(
-    _action: EntryCreationAction,
+    _action: Action,
     _applet_cloned_cell: AppletClonedCell,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_update_applet_cloned_cell(
-    _action: Update,
+    _action: Action,
     _applet_cloned_cell: AppletClonedCell,
-    _original_action: EntryCreationAction,
+    _original_action: Action,
     _original_applet_cloned_cell: AppletClonedCell,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Invalid(String::from(
@@ -29,8 +29,8 @@ pub fn validate_update_applet_cloned_cell(
     )))
 }
 pub fn validate_delete_applet_cloned_cell(
-    _action: Delete,
-    _original_action: EntryCreationAction,
+    _action: Action,
+    _original_action: Action,
     _original_applet_cloned_cell: AppletClonedCell,
 ) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Invalid(String::from(
@@ -42,7 +42,7 @@ pub fn validate_delete_applet_cloned_cell(
 /// 1. Link must point away from an Applet entry (by entry hash)
 /// 2. Link must point to an AppletClonedCell entry (by entry hash)
 pub fn validate_create_link_applet_to_applet_cloned_cell(
-    _action: CreateLink,
+    _action: Action,
     base_address: AnyLinkableHash,
     target_address: AnyLinkableHash,
     _tag: LinkTag,
@@ -63,8 +63,8 @@ pub fn validate_create_link_applet_to_applet_cloned_cell(
 /// Rules
 /// Allowed
 pub fn validate_delete_link_applet_to_applet_cloned_cell(
-    _action: DeleteLink,
-    _original_action: CreateLink,
+    _action: Action,
+    _original_action: Action,
     _base: AnyLinkableHash,
     _target: AnyLinkableHash,
     _tag: LinkTag,

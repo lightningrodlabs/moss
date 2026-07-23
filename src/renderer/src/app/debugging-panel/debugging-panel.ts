@@ -1116,7 +1116,7 @@ export class DebuggingPanel extends LitElement {
         const networkMetrics = await client[0].dumpNetworkMetrics({
           include_dht_summary: true,
         });
-        this._networkStats[appId] = [networkStats, networkMetrics];
+        this._networkStats[appId] = [networkStats.transport_stats, networkMetrics];
 
         // Build transport to agent map from agentInfo
         const transportMap = await this.buildTransportToAgentMap(appId, networkMetrics);

@@ -96,7 +96,7 @@ export abstract class BaseAppletSettingsCard extends LitElement {
   async firstUpdated() {
     const appletRecord = await this.groupStore.groupClient.getPublicApplet(this.appletHash);
     if (appletRecord) {
-      this.addedBy = appletRecord.action.author;
+      this.addedBy = appletRecord.action.header.author;
     }
     await this.onAfterFirstUpdated();
   }

@@ -57,9 +57,7 @@ export class HolochainManager {
     configPath: string,
     lairUrl: string,
     bootstrapUrl: string,
-    signalUrl: string,
     relayUrl: string,
-    iceUrls: Array<string>,
     rustLog?: string,
     wasmLog?: string,
   ): Promise<HolochainManager> {
@@ -81,9 +79,15 @@ export class HolochainManager {
       delete conductorConfig.danger_generate_throwaway_device_seed;
       delete conductorConfig.dpki;
       delete conductorConfig.request_timeout_s;
+      if (conductorConfig.db_sync_strategy) {
+        delete conductorConfig.db_sync_strategy;
+        conductorConfig.db_sync_level = 'Normal';
+      }
       if (conductorConfig.network) {
         delete conductorConfig.network.type;
         delete conductorConfig.network.base64_auth_material;
+        delete conductorConfig.network.signal_url;
+        delete conductorConfig.network.webrtc_config;
       }
     } catch (e) {
       console.warn(
@@ -102,21 +106,17 @@ export class HolochainManager {
 
     // network parameters
     conductorConfig.network.bootstrap_url = bootstrapUrl;
-    conductorConfig.network.signal_url = signalUrl;
     conductorConfig.network.relay_url = relayUrl;
-    conductorConfig.network.webrtc_config = { iceServers: iceUrls.map((url) => ({ urls: [url] })) };
 
-    // In dev mode, we have to allow ws:// signal type urls
+    // In dev mode, we have to allow http:// relay type urls
     if (!app.isPackaged) {
       const advancedSettings = conductorConfig.network.advanced
         ? conductorConfig.network.advanced
         : {};
-      advancedSettings['tx5Transport'] = {
-        signalAllowPlainText: true,
-      };
       advancedSettings['irohTransport'] = {
         relayAllowPlainText: true,
       };
+      conductorConfig.network.advanced = advancedSettings;
     }
     const advancedSettings = conductorConfig.network.advanced
       ? conductorConfig.network.advanced

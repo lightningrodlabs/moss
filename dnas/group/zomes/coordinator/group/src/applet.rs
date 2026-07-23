@@ -272,11 +272,11 @@ fn get_archived_applets(input: ZomeFnInput<()>) -> ExternResult<Vec<EntryHash>> 
 
     let mut links_details_by_target: HashMap<
         EntryHash,
-        Vec<(CreateLink, Vec<SignedActionHashed>)>,
+        Vec<(CreateLinkData, Vec<SignedActionHashed>)>,
     > = HashMap::new();
 
     for (create_link, deletes) in links_details.into_inner() {
-        if let Action::CreateLink(create_link) = create_link.action() {
+        if let ActionData::CreateLink(create_link) = &create_link.action().data {
             if let Some(target) = create_link.target_address.clone().into_entry_hash() {
                 links_details_by_target
                     .entry(target)
