@@ -249,8 +249,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             _ => Ok(ValidateCallbackResult::Valid),
         },
         FlatOp::AgentActivity(agent_activity) => match agent_activity {
-            OpActivity::CreateAgent { action } => {
-                let agent: AgentPubKey = action.data.entry_hash.clone().into();
+            OpActivity::CreateAgent { action, agent } => {
                 let prev_action_hash = action.prev_action().cloned().ok_or(wasm_error!(
                     WasmErrorInner::Guest(
                         "CreateAgent action must have a previous action".into()

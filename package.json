@@ -81,11 +81,11 @@
   "dependencies": {
     "@electron-toolkit/preload": "^2.0.0",
     "@electron-toolkit/utils": "^2.0.0",
-    "@holochain-open-dev/elements": "^0.700.0-rc.0",
-    "@holochain-open-dev/profiles": "^0.700.0-rc.0",
-    "@holochain-open-dev/stores": "^0.700.0-rc.0",
-    "@holochain-open-dev/utils": "^0.700.0-rc.0",
-    "@holochain/client": "=0.21.0-rc.1",
+    "@holochain-open-dev/elements": "^0.700.0",
+    "@holochain-open-dev/profiles": "^0.700.0",
+    "@holochain-open-dev/stores": "^0.700.0",
+    "@holochain-open-dev/utils": "^0.700.0",
+    "@holochain/client": "^0.21.0",
     "@lightningrodlabs/we-rust-utils": "^0.700.0-dev.0",
     "electron-updater": "6.6.2",
     "@msgpack/msgpack": "^2.8.0",
@@ -138,5 +138,8 @@
     "vite": "^4.4.9",
     "vitepress": "1.3.4",
     "vite-plugin-static-copy": "^0.13.1"
+  },
+  "resolutions": {
+    "@holochain/client": "^0.21.0"
   }
 }

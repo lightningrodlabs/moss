@@ -1,5 +1,5 @@
 {
-  "holochain": "0.7.0-rc.3",
+  "holochain": "0.7.0",
   "groupHapp": {
     "version": "0.16.0-dev.1",
     "sha256": "f78b064eb96ad68d5973102bf22c7e51a26e1fd17e0a8c0762f022bab4f5d6a1"
