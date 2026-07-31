@@ -1586,12 +1586,12 @@
     lit-svelte-stores "^0.3.3"
     svelte "^3.53.1"
 
-"@holochain-open-dev/tryorama@^0.20.0-rc.0":
-  version "0.20.0-rc.0"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/tryorama/-/tryorama-0.20.0-rc.0.tgz#9e875e9d74a0f7ff54a8c236892d6e69140706f5"
-  integrity sha512-UennYHQNNRgjijJAczm4a3UBaVPNUs6o3OfIQDNZ/WDkJXV7qDsoxzLkBKzmraJaRmBjTgA6QPxTXVVb3gO71w==
+"@holochain-open-dev/tryorama@^0.20.0":
+  version "0.20.0"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/tryorama/-/tryorama-0.20.0.tgz#154aec3d785f54c11a06657d1928cf8909bbaf59"
+  integrity sha512-I6Jz9txxu56efuBN7OFeX6Q2Jc7OWbTy7/JNFxZImF4KsCd+/rkswNXN/G9opyw/BLhFedVbLV0KBA3iKWOqWg==
   dependencies:
-    "@holochain/client" "^0.21.0-rc.1"
+    "@holochain/client" "^0.21.0"
     get-port "^7.0.0"
     js-yaml "^4.1.0"
     lodash "^4.17.21"
@@ -1616,7 +1616,7 @@
   resolved "https://registry.yarnpkg.com/@holochain-playground/cli/-/cli-0.1.1.tgz#a5deb207dd3362cf7ab45070f0bc3cb8f12d9602"
   integrity sha512-JbapAe+uBaec52rTePjdlP0mq3zQhJG/hrdbCd+eecZLA3cXWEGgISR5YwLtx6udN+0ghCDH4U6KILjPiwWZMg==
 
-"@holochain/client@^0.21.0", "@holochain/client@^0.21.0-rc.1":
+"@holochain/client@^0.21.0":
   version "0.21.0"
   resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.21.0.tgz#e19c780702043892287655b7cdb70a3896dd47d9"
   integrity sha512-o1Fzu/9LXWSb1zP21sLXvhTihUKs/5r4ZEFKQW/e9MPogHiMsyt3/6AYKB+X0ZcUilC5sBSFODIAifRu0XMQqA==
