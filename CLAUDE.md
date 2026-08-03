@@ -8,6 +8,12 @@ Moss is a Holochain-based runtime for composable peer-to-peer collaboration tool
 
 **Core Architecture**: Electron main process (Node.js + Rust utils) manages Holochain conductor subprocesses, while the renderer process provides a web UI that loads applet iframes. Applets communicate via `@theweave/api` and make Holochain zome calls through WebSocket connections.
 
+## Repository state (facts, keep current)
+
+- **Active dev branch is `main-0.7`** (Holochain 0.7.0 line). `main-0.6` is the current shipping line; `main` is behind both and is where `origin/HEAD` still points — a fresh clone or a session that doesn't check will read the wrong lineage. Confirm with `git branch --show-current` before reading source, and verify the remote default with `git ls-remote --symref origin HEAD` (not the local cache).
+- **Holochain 0.7.0 / HDK 0.7.0 / HDI 0.8.0** — authoritative source is `moss.config.json` and the workspace `Cargo.toml`, not this file. When you change the version, update those, not a copy here.
+- The 0.7 upgrade is in progress; see `plans/holochain-0.7-upgrade.md` and `plans/forward-port-0.6-to-0.7.md` for status (both describe work that has largely landed — treat their prose as historical, verify against code).
+
 ## Requirements, Tradeoffs & Dev Instructions
 
 0. When reporting on status, or asking questions don't add the emotional tags at the beginning and end of phrases, (you can tell you are doing this if there's an exclamation point at the end of the phrase/sentence). Just code related information.
@@ -15,7 +21,7 @@ Moss is a Holochain-based runtime for composable peer-to-peer collaboration tool
 2. Perfect is the enemy of the good. This plan should not be implemented to the highest possible standard of efficiency or robustness, but rather in a way that allows for reaching the functionality goals in reasonable time, and iterating on quality goals over time.
 3. Don't add claude co-authored/generated messages in commit descriptions
 4. **Strong typing**: when possible allways use strong typing in typescript.
-5. **Holochain reference sources**: We are using Holochain 0.6. The source for this is local and lives at the same level as this repo. DO NOT USE .cargo files or web searches to research holochain, just look locally.
+5. **Holochain reference sources**: We are using Holochain 0.7.0 (HDK 0.7.0, HDI 0.8.0) — see `moss.config.json` and the workspace `Cargo.toml`. The local source lives at the same level as this repo in `../holochain-lrl`; prefer it and DO NOT web-search to research holochain. Caveat: `../holochain-lrl` is currently at `0.7.0-rc.2`, while `Cargo.lock` pins the `0.7.0` final crates from crates.io — the two differ in places (e.g. `OpActivity::CreateAgent` gained an `agent` field in final). When the local rc source and a compile error disagree, the resolved crate under `~/.cargo/registry/.../hdi-0.8.0` is authoritative for the pinned version.
 6. **Code comments**: Code comments must explain intent (what the code is trying to achieve), not the change itself. Do not write comments that compare to prior behavior, contrast with other functions, or describe what the code is _no longer_ doing — that belongs in the PR description or commit message.
 7. **UI/UX/CSS/layout (and timing/3rd-party-internal) bugs = measure, don't reason.** These emerge from how layers compose at runtime; static reasoning and "looks right" fixes will loop endlessly. Before editing: dump the _real_ DOM geometry (walk the ancestor chain incl. across shadow roots; log per element `overflowX/Y`, `clientH/scrollH` (→ which element scrolls), `clientW/scrollW`, rect `top/bottom`). Read back every DOM mutation to confirm it actually applied before building on it. A repro only counts if it reproduces the _failure_ — if the repro passes but the app fails, the repro is wrong; replicate the exact containment. With multiple candidate causes, the next action is a measurement that distinguishes them, not a fix for the likeliest. Never tune a formula whose reference frame may be broken (e.g. filling to a container that has collapsed to content height).
 8. **Maintainability** Don't let file sizes get too big. Split into separate concerns when possible.
@@ -82,9 +88,13 @@ yarn build:linux
 # Run all tests
 yarn test
 
-# Run specific test suites
-yarn test:group
-yarn test:assets
+# Run specific tryorama suites (these live in the `tests` workspace, not the root
+# package.json — run them from there)
+yarn workspace tests test:group
+yarn workspace tests test:assets
+
+# Fast pure-node unit tests (main + renderer helper modules), no holochain needed
+yarn test:unit
 ```
 
 Tests use Vitest and @holochain/tryorama for Holochain DNA testing.
@@ -194,8 +204,8 @@ yarn link:libs
 
 - `filesystem.ts` - Manages profile directories, app storage, UI/happ assets
 - `holochainManager.ts` - Controls Holochain conductor subprocess lifecycle
-- `lairManager.ts` - Manages lair-keystore subprocess for cryptographic signing
-- `index.ts` - IPC handlers for renderer communication (50+ functions)
+- `lairKeystore.ts` - Manages lair-keystore subprocess for cryptographic signing
+- `index.ts` - IPC handlers for renderer communication (~78 `ipcMain.handle` registrations)
 - Uses `@lightningrodlabs/we-rust-utils` for native functionality
 
 **Renderer Process** (`src/renderer/src/`):
@@ -218,13 +228,12 @@ yarn link:libs
   - Manages applet registry, agent permissions, custom views
   - Each group has unique network seed (private p2p network)
 - Tool DNAs - Provided by applets, installed per group-tool combination
-- Each DNA cell is identified by `applet#<sha256(networkSeed)>#<hash>`
+- Applet app IDs are `applet#<lowercase-base64(appletHash)>` (single `#`, no network-seed segment) — see `appIdFromAppletHash` in `shared/utils/src/utils.ts`
 
 **Connections**:
 
-- Admin WebSocket: Port 65432 (conductor management)
-- App WebSocket: Port 65433 (zome calls)
-- Conductor config stored per profile in `~/.config/Moss/profiles/[profile]/`
+- Admin and app WebSocket ports are **not fixed** — the admin port is `process.env.ADMIN_PORT` or a random free port via `getPort()` (`src/main/holochainManager.ts`), and the app port is assigned by `attachAppInterface`. Do not assume 65432/65433.
+- The app interface is created with `allowed_origins: '*'` (`holochainManager.ts`); in packaged builds the admin interface is origin-locked to `moss://admin.*`.
 
 ### Workspace Structure
 
@@ -302,17 +311,23 @@ defineConfig({
 
 ### File System Layout
 
-Profile data is stored in `~/.config/Moss/profiles/[profile-name]/`:
+Profile data is rooted at Electron's `userData` path (Linux: `~/.config/org.lightningrodlabs.moss-<breaking-version>/`), then `<breaking-version>/<profile>/` (default profile is `default`). See `FileSystemStore.connect` and the dir assignments in `src/main/filesystem.ts`:
 
 ```
-conductor-config.yaml          # Holochain conductor configuration
-databases/                     # Conductor SQLite databases
-lair/                         # Keystore data
-applets-metadata/             # App asset info
-tools-icons/                  # Cached tool icons
-uis/                          # UI assets (by sha256)
-happs/                        # .happ files (by sha256)
-logs/                         # Application logs
+<userData>/<breaking-version>/<profile>/
+  config/                      # conductor config
+  data/                        # everything below lives under data/
+    conductor/                 # Conductor SQLite databases
+    keystore/                  # lair keystore data
+    apps/                      # installed app metadata
+    groups/                    # group data
+    tools/                     # tool data
+    happs/                     # .happ files (by sha256)
+    uis/                       # UI assets (by sha256)
+    icons/                     # cached tool icons
+    feedback/                  # feedback records
+  logs/                        # Application logs
+  chromium/                    # Electron sessionData
 ```
 
 ## Build System
@@ -353,12 +368,12 @@ Zomes are compiled to WASM32 target and packaged into `.happ` files using the `h
 ### Holochain Integration
 
 - `src/main/holochainManager.ts` - Conductor management
-- `shared/group-client/src/group-client.ts` - Group DNA client
+- `shared/group-client/src/groupClient.ts` - Group DNA client
 
 ### Configuration
 
-- `cli/defineConfig.ts` - Dev config schema
-- `moss.config.json` - Runtime configuration (ports, bootstrap URLs)
+- `shared/types/src/defineConfig.ts` is the dev-config schema source; the build emits the committed `cli/defineConfig.js`/`.d.ts` via `tsconfig.defineConfig.json`
+- `moss.config.json` - the Holochain version, group-happ version + sha256, and the feedback URL (not ports or bootstrap URLs)
 
 ## Creating Tools/Applets
 
@@ -373,7 +388,7 @@ Documentation for building Moss tools: https://dev.theweave.social/build/overvie
 
 ## Holochain Version Management
 
-The project fetches specific Holochain and lair-keystore binaries from https://github.com/matthme/holochain-binaries/releases. Binary versions are specified in fetch scripts (`scripts/fetch-binaries.mjs`).
+The project fetches specific Holochain and lair-keystore binaries from the official `https://github.com/holochain/holochain/releases` (see the URL construction in `scripts/fetch-fns.mjs`). The Holochain version comes from `moss.config.json`; `scripts/fetch-binaries.mjs` / `fetch-hc.mjs` drive the download.
 
 ## Common Patterns
 
@@ -388,29 +403,24 @@ window.electronAPI.signZomeCall(...)
 
 ### Reactive Stores
 
-Uses `@holochain-open-dev/stores` pattern:
+Uses `@holochain-open-dev/stores` helpers — the real ones imported by `moss-store.ts` are `lazyLoad`, `asyncDerived`, `derived`, `writable`, `manualReloadStore`, `pipe` (there is no `LazyStore` class):
 
 ```typescript
-const store = new LazyStore(async () => {
+import { lazyLoad, asyncDerived } from '@holochain-open-dev/stores';
+
+const store = lazyLoad(async () => {
   // async initialization
   return data;
-});
-
-subscribe(store, (value) => {
-  // react to changes
 });
 ```
 
 ### Applet Communication
 
-Applets use message passing via `WeaveClient`:
+Applets connect with `WeaveClient.connect()` and read `client.renderInfo` (populated from `window.__WEAVE_RENDER_INFO__`); host↔applet messaging is the `postMessage` protocol typed by `AppletToParentRequest` in `libs/api/src/types.ts`, dispatched host-side in `src/renderer/src/applets/applet-host.ts`. `WeaveClient` has no `on`/`send` methods.
 
 ```typescript
-const client = await WeaveClient.connect();
-client.on('message', (message) => {
-  // handle parent messages
-});
-client.send({ type: '...', data: {...} });
+const client = await WeaveClient.connect(appletServices);
+const info = client.renderInfo; // discriminated union describing what to render
 ```
 
 ## Release Process

@@ -19,6 +19,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # why: a fast, pure-Node quality gate that is deliberately decoupled from the
+  # slow nix/holochain tryorama build below. It runs the TypeScript typecheck of
+  # both projects and the main/renderer unit suite (`yarn test:unit`) — both of
+  # which were previously green locally but ran in no workflow, so type errors
+  # and unit regressions (including the validate-media-url SSRF harness) could
+  # merge unnoticed. Kept separate so a red Rust/holochain build never masks a
+  # unit/type regression, and so PRs get a signal in ~2min instead of ~15.
+  unit-and-typecheck:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: yarn install
+
+      # why: typecheck:web resolves the @theweave/* packages from their built
+      # dist/, so the libraries must be compiled before tsc runs. build:libs is
+      # pure tsc — no holochain binaries needed.
+      - name: Build libraries
+        run: yarn build:libs
+
+      - name: Typecheck (node + web)
+        run: yarn typecheck
+
+      - name: Unit tests
+        run: yarn test:unit
+
   tryorama-tests:
     runs-on: ubuntu-22.04
     steps:
