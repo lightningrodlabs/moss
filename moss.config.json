@@ -1,8 +1,8 @@
 {
   "holochain": "0.7.0",
   "groupHapp": {
-    "version": "0.16.0-dev.1",
-    "sha256": "f78b064eb96ad68d5973102bf22c7e51a26e1fd17e0a8c0762f022bab4f5d6a1"
+    "version": "0.16.0-dev.2",
+    "sha256": "603ef404712c2ef6293397380f61bdd24796c471f408c9732df87425be8df087"
   },
   "binariesAppendix": "moss-0.16",
   "feedbackWorkerUrl": "https://moss-design-feedback.eric-114.workers.dev"
