@@ -33,7 +33,6 @@ pub fn genesis_self_check(_data: GenesisSelfCheckData) -> ExternResult<ValidateC
    //debug!("props = {:?}", props);
    let maybe_properties: Result<ExampleDnaProperties, <ExampleDnaProperties as TryFrom<SerializedBytes>>::Error> = props.try_into();
    if let Err(e) = maybe_properties {
-      debug!("Deserializing dna properties failed: {:?}", e);
       return Err(wasm_error!("Deserializing dna properties failed: {:?}", e));
    }
    if maybe_properties.unwrap().invalid {
@@ -375,7 +374,7 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             _ => Ok(ValidateCallbackResult::Valid),
         },
         FlatOp::AgentActivity(agent_activity) => match agent_activity {
-            OpActivity::CreateAgent { action } => {
+            OpActivity::CreateAgent { action, .. } => {
                 let agent: AgentPubKey = action.data.entry_hash.clone().into();
                 let prev_action_hash = action.prev_action().cloned().ok_or(wasm_error!(
                     WasmErrorInner::Guest(
