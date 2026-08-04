@@ -65,7 +65,10 @@ declare global {
       selectScreenOrWindow: () => Promise<string>;
       setMyIcon: (icon: string) => Promise<void>;
       setMyTitle: (title: string) => Promise<void>;
-      signZomeCallApplet: (request: CallZomeRequest) => Promise<CallZomeRequestSigned>;
+      signZomeCallApplet: (
+        request: CallZomeRequest,
+        callerAppletIds: string[],
+      ) => Promise<CallZomeRequestSigned>;
     };
   }
 }

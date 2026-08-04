@@ -583,28 +583,37 @@ if (!RUNNING_WITH_COMMAND) {
   };
 
   // Cache of the cells an applet is allowed to have signed. Resolving these means
-  // a listApps round-trip, and signing is on the hot path, so results are cached
-  // and only rebuilt on a cache miss that is old enough to be worth re-checking
-  // (which is what makes a just-installed app's cells become known).
-  const APPLET_CELL_CACHE_MIN_REBUILD_MS = 3000;
+  // a listApps round-trip, and signing is on the hot path, so results are cached.
+  // A miss (the decision below says "no") always refreshes once before the call
+  // is refused, so a just-installed applet or group is picked up immediately with
+  // no false rejection; concurrent refreshes are coalesced into one listApps.
   let appletCellCache:
-    | { ownByAppletId: Map<string, Set<string>>; groupCells: Set<string>; builtAt: number }
+    | { ownByAppletId: Map<string, Set<string>>; groupCells: Set<string> }
     | undefined;
+  let cacheRebuildInFlight: Promise<void> | undefined;
 
-  const rebuildAppletCellCache = async (): Promise<void> => {
-    const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
-    const ownByAppletId = new Map<string, Set<string>>();
-    const groupCells = new Set<string>();
-    for (const app of apps) {
-      const appId = app.installed_app_id;
-      if (appId.startsWith('applet#')) {
-        ownByAppletId.set(appletIdFromAppId(appId), new Set(cellIdsOfApp(app)));
-      } else if (appId.startsWith('group#')) {
-        // Only the `group` role cell hosts the profiles zome an applet may call.
-        for (const key of cellIdsOfApp(app, 'group')) groupCells.add(key);
+  const rebuildAppletCellCache = (): Promise<void> => {
+    if (cacheRebuildInFlight) return cacheRebuildInFlight;
+    cacheRebuildInFlight = (async () => {
+      try {
+        const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
+        const ownByAppletId = new Map<string, Set<string>>();
+        const groupCells = new Set<string>();
+        for (const app of apps) {
+          const appId = app.installed_app_id;
+          if (appId.startsWith('applet#')) {
+            ownByAppletId.set(appletIdFromAppId(appId), new Set(cellIdsOfApp(app)));
+          } else if (appId.startsWith('group#')) {
+            // Only the `group` role cell hosts the profiles zome an applet may call.
+            for (const key of cellIdsOfApp(app, 'group')) groupCells.add(key);
+          }
+        }
+        appletCellCache = { ownByAppletId, groupCells };
+      } finally {
+        cacheRebuildInFlight = undefined;
       }
-    }
-    appletCellCache = { ownByAppletId, groupCells, builtAt: Date.now() };
+    })();
+    return cacheRebuildInFlight;
   };
 
   // The union of own-cells across the caller's applet ids. A plain applet caller
@@ -635,11 +644,9 @@ if (!RUNNING_WITH_COMMAND) {
 
     if (!appletCellCache) await rebuildAppletCellCache();
     let decision = evaluate();
-    if (
-      !decision.sign &&
-      appletCellCache &&
-      Date.now() - appletCellCache.builtAt > APPLET_CELL_CACHE_MIN_REBUILD_MS
-    ) {
+    if (!decision.sign) {
+      // Refresh once before refusing: the cell may belong to an applet or group
+      // installed since the cache was last built.
       await rebuildAppletCellCache();
       decision = evaluate();
     }
