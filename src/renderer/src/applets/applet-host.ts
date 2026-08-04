@@ -698,8 +698,20 @@ export async function handleAppletIframeMessage(
       const appletAgents = await groupStore!.groupClient.getJoinedAppletAgents(appletHash);
       return appletAgents.map((appletAgent) => appletAgent.applet_pubkey);
     }
-    case 'sign-zome-call':
-      return signZomeCallApplet(message.request);
+    case 'sign-zome-call': {
+      // Scope signing to the requesting iframe's real identity (derived from its
+      // origin, above). An applet may sign for its own cells; a cross-group view
+      // may sign for any applet of the tool it aggregates. The host refuses
+      // anything else, so the group app token an applet holds cannot be used to
+      // drive the group/custom_views/foyer/assets zomes.
+      const callerAppletIds =
+        source.type === 'applet'
+          ? [encodeHashToBase64(source.appletHash)]
+          : Object.keys(
+              await toPromise(mossStore.appletsForToolId.get(source.toolCompatibilityId)),
+            );
+      return signZomeCallApplet(message.request, callerAppletIds);
+    }
     case 'log-zome-call':
       mossStore.logZomeCall({
         info: {

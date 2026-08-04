@@ -47,7 +47,10 @@ declare global {
       signZomeCall: (request: CallZomeRequest) => Promise<CallZomeRequestSigned>;
     };
     electronAPI: {
-      signZomeCallApplet: (request: CallZomeRequest) => Promise<CallZomeRequestSigned>;
+      signZomeCallApplet: (
+        request: CallZomeRequest,
+        callerAppletIds: string[],
+      ) => Promise<CallZomeRequestSigned>;
       appletMessageToParentResponse: (response: any, id: string) => Promise<void>;
       parentToAppletMessage: (
         message: ParentToAppletMessage,
@@ -425,8 +428,11 @@ export async function validateHappOrWebhapp(bytes: number[]) {
   return window.electronAPI.validateHappOrWebhapp(bytes);
 }
 
-export const signZomeCallApplet = async (request: CallZomeRequest) => {
-  return window.electronAPI.signZomeCallApplet(request);
+export const signZomeCallApplet = async (
+  request: CallZomeRequest,
+  callerAppletIds: string[],
+) => {
+  return window.electronAPI.signZomeCallApplet(request, callerAppletIds);
 };
 
 // Dev UI Override

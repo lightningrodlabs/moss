@@ -165,23 +165,47 @@ export class WalWindow extends LitElement {
       const request = message.data;
 
       const handleRequest = async (request: AppletToParentMessage) => {
+        if (this.isAppletDev === undefined) return;
+        // Derive the sender's identity from its iframe origin rather than trusting
+        // the message or assuming it is this window's own applet. An unrecognized
+        // origin is not processed — the same trust boundary the main window
+        // enforces via getIframeKind.
+        const iframeKind = getIframeKind(message, this.isAppletDev);
+        if (!iframeKind) {
+          throw new Error('Ignoring WAL-window message from an unrecognized iframe origin.');
+        }
+        const derivedSource: AppletToParentMessage['source'] =
+          iframeKind.type === 'cross-group'
+            ? {
+                type: 'cross-group',
+                toolCompatibilityId: iframeKind.toolCompatibilityId,
+                subType: request.source.subType,
+              }
+            : {
+                type: 'applet',
+                appletHash: iframeKind.appletHash,
+                groupHash: iframeKind.groupHash ?? this.groupHash!,
+                subType: request.source.subType,
+              };
+
         const handleDefault = () => {
-          const appletToParentMessage: AppletToParentMessage = {
+          return walWindow.electronAPI.appletMessageToParent({
             request: request.request,
-            source: {
-              type: 'applet',
-              appletHash: this.appletHash!,
-              groupHash: this.groupHash!,
-              subType: request.source.subType,
-            },
-          };
-          // console.log('Sending AppletToParentMessage: ', appletToParentMessage);
-          return walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
+            source: derivedSource,
+          });
         };
         if (request) {
           switch (request.request.type) {
-            case 'sign-zome-call':
-              return window.electronAPI.signZomeCallApplet(request.request.request);
+            case 'sign-zome-call': {
+              if (iframeKind.type !== 'applet') {
+                throw new Error(
+                  'Signing zome calls from a cross-group iframe is not supported in a WAL window.',
+                );
+              }
+              return window.electronAPI.signZomeCallApplet(request.request.request, [
+                encodeHashToBase64(iframeKind.appletHash),
+              ]);
+            }
             case 'user-select-screen':
               return window.electronAPI.selectScreenOrWindow();
             case 'request-close':
@@ -192,12 +216,7 @@ export class WalWindow extends LitElement {
               let response;
               const appletToParentMessage: AppletToParentMessage = {
                 request: message.data.request,
-                source: {
-                  type: 'applet',
-                  appletHash: this.appletHash!,
-                  groupHash: this.groupHash!,
-                  subType: request.source.subType,
-                },
+                source: derivedSource,
               };
               try {
                 response = await walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
@@ -214,12 +233,7 @@ export class WalWindow extends LitElement {
               let response;
               const appletToParentMessage: AppletToParentMessage = {
                 request: message.data.request,
-                source: {
-                  type: 'applet',
-                  appletHash: this.appletHash!,
-                  groupHash: this.groupHash!,
-                  subType: request.source.subType,
-                },
+                source: derivedSource,
               };
               try {
                 response = await walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
