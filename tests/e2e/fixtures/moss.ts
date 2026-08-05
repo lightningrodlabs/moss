@@ -37,9 +37,9 @@ export type LaunchOptions = {
   mossProfile?: string;
   /**
    * Local kitsune2 bootstrap URLs to plumb to Moss via --bootstrap-url /
-   * --signaling-url / --relay-url. When provided, both agents in a multi-agent
-   * test share a single in-process bootstrap, so cross-agent peer discovery
-   * converges in seconds rather than minutes.
+   * --relay-url. When provided, both agents in a multi-agent test share a
+   * single in-process bootstrap, so cross-agent peer discovery converges in
+   * seconds rather than minutes.
    */
   bootstrap?: BootstrapUrls;
   /**
@@ -122,8 +122,6 @@ export async function launchMoss(opts: LaunchOptions): Promise<LaunchedMoss> {
       ? [
           '--bootstrap-url',
           opts.bootstrap.bootstrapUrl,
-          '--signaling-url',
-          opts.bootstrap.signalingUrl,
           '--relay-url',
           opts.bootstrap.relayUrl,
         ]
@@ -291,7 +289,6 @@ export const test = base.extend<MossTestFixtures, MossWorkerFixtures>({
         running = await startBootstrap();
         await use({
           bootstrapUrl: running.bootstrapUrl,
-          signalingUrl: running.signalingUrl,
           relayUrl: running.relayUrl,
         });
       } finally {

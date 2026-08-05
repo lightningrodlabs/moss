@@ -20,7 +20,6 @@ import readline from 'node:readline';
  */
 export type BootstrapUrls = {
   bootstrapUrl: string;
-  signalingUrl: string;
   relayUrl: string;
 };
 
@@ -71,7 +70,6 @@ export async function startBootstrap(): Promise<RunningBootstrap> {
 
   return new Promise<RunningBootstrap>((resolve, reject) => {
     let bootstrapUrl: string | undefined;
-    let signalingUrl: string | undefined;
     let relayUrl: string | undefined;
     let running = false;
 
@@ -85,9 +83,9 @@ export async function startBootstrap(): Promise<RunningBootstrap> {
     }, 15_000);
 
     const finishIfReady = () => {
-      if (running && bootstrapUrl && signalingUrl && relayUrl) {
+      if (running && bootstrapUrl && relayUrl) {
         clearTimeout(timeout);
-        resolve({ bootstrapUrl, signalingUrl, relayUrl, proc });
+        resolve({ bootstrapUrl, relayUrl, proc });
       }
     };
 
@@ -95,7 +93,6 @@ export async function startBootstrap(): Promise<RunningBootstrap> {
       if (line.includes('#kitsune2_bootstrap_srv#listening#')) {
         const hostAndPort = line.split('#kitsune2_bootstrap_srv#listening#')[1].split('#')[0];
         bootstrapUrl = `http://${hostAndPort}`;
-        signalingUrl = `ws://${hostAndPort}`;
         relayUrl = `http://${hostAndPort}/relay`;
       }
       if (line.includes('#kitsune2_bootstrap_srv#running#')) {

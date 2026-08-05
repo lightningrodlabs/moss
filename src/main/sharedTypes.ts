@@ -27,7 +27,6 @@ export type DeveloperCollective = {
 // CHANGE ALSO IN src/renderer/src/electron-api.ts
 export interface NetworkInfo {
   bootstrap_urls: string[];
-  signal_urls: string[];
   relay_urls: string[];
 }
 // CHANGE ALSO IN src/renderer/src/electron-api.ts

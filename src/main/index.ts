@@ -71,7 +71,6 @@ import { nanoid } from 'nanoid';
 import {
   APPLET_DEV_TMP_FOLDER_PREFIX,
   PRODUCTION_BOOTSTRAP_URLS,
-  PRODUCTION_SIGNALING_URLS,
   PRODUCTION_RELAY_URLS,
   validateArgs,
 } from './cli/cli';
@@ -298,10 +297,6 @@ program
   .option(
     '-b, --bootstrap-url <url>',
     'URL of the bootstrap server to use (not persisted across restarts).',
-  )
-  .option(
-    '-s, --signaling-url <url>',
-    'URL of the signaling server to use (not persisted across restarts).',
   )
   .option(
     '-r, --relay-url <url>',
@@ -691,7 +686,7 @@ if (!RUNNING_WITH_COMMAND) {
    * Determine the URLs for the network services
    * In production return run options or hardcoded production urls
    * In dev return run options or local services urls
-   * @returns [bootstrapUrl[], signalingUrl[], relayUrl[]]
+   * @returns [bootstrapUrl[], relayUrl[]]
    */
   const getNetworkUrls = (): NetworkInfo => {
     // Production
@@ -700,16 +695,12 @@ if (!RUNNING_WITH_COMMAND) {
         bootstrap_urls: RUN_OPTIONS.bootstrapUrl
           ? [RUN_OPTIONS.bootstrapUrl]
           : PRODUCTION_BOOTSTRAP_URLS,
-        signal_urls: RUN_OPTIONS.signalingUrl
-          ? [RUN_OPTIONS.signalingUrl]
-          : PRODUCTION_SIGNALING_URLS,
         relay_urls: RUN_OPTIONS.relayUrl ? [RUN_OPTIONS.relayUrl] : PRODUCTION_RELAY_URLS,
       };
     }
-    const [bootstrapUrl, signalingUrl, relayUrl] = readLocalServices();
+    const [bootstrapUrl, relayUrl] = readLocalServices();
     return {
       bootstrap_urls: [RUN_OPTIONS.bootstrapUrl ?? bootstrapUrl],
-      signal_urls: [RUN_OPTIONS.signalingUrl ?? signalingUrl],
       relay_urls: [RUN_OPTIONS.relayUrl ?? relayUrl],
     };
   };
@@ -1116,17 +1107,14 @@ if (!RUNNING_WITH_COMMAND) {
 
     SYSTRAY.setContextMenu(contextMenu);
 
-    if (!RUN_OPTIONS.bootstrapUrl || !RUN_OPTIONS.signalingUrl || !RUN_OPTIONS.relayUrl) {
+    if (!RUN_OPTIONS.bootstrapUrl || !RUN_OPTIONS.relayUrl) {
       // in dev mode
       if (RUN_OPTIONS.devInfo) {
-        const [bootstrapUrl, signalingUrl, relayUrl, localServicesHandle] =
+        const [bootstrapUrl, relayUrl, localServicesHandle] =
           RUN_OPTIONS.devInfo.agentIdx === 1 ? await startLocalServices() : readLocalServices();
         RUN_OPTIONS.bootstrapUrl = RUN_OPTIONS.bootstrapUrl
           ? RUN_OPTIONS.bootstrapUrl
           : bootstrapUrl;
-        RUN_OPTIONS.signalingUrl = RUN_OPTIONS.signalingUrl
-          ? RUN_OPTIONS.signalingUrl
-          : signalingUrl;
         RUN_OPTIONS.relayUrl = RUN_OPTIONS.relayUrl ? RUN_OPTIONS.relayUrl : relayUrl;
         LOCAL_SERVICES_HANDLE = localServicesHandle;
       } else {
@@ -1134,9 +1122,6 @@ if (!RUNNING_WITH_COMMAND) {
         RUN_OPTIONS.bootstrapUrl = RUN_OPTIONS.bootstrapUrl
           ? RUN_OPTIONS.bootstrapUrl
           : (networkOverrides.bootstrapUrl ?? PRODUCTION_BOOTSTRAP_URLS[0]);
-        RUN_OPTIONS.signalingUrl = RUN_OPTIONS.signalingUrl
-          ? RUN_OPTIONS.signalingUrl
-          : PRODUCTION_SIGNALING_URLS[0];
         RUN_OPTIONS.relayUrl = RUN_OPTIONS.relayUrl
           ? RUN_OPTIONS.relayUrl
           : (networkOverrides.relayUrl ?? PRODUCTION_RELAY_URLS[0]);
@@ -1738,7 +1723,7 @@ if (!RUNNING_WITH_COMMAND) {
         }, 5000);
       }
       /** Grab Network Urls */
-      let network_info: NetworkInfo = { bootstrap_urls: [], signal_urls: [], relay_urls: [] };
+      let network_info: NetworkInfo = { bootstrap_urls: [], relay_urls: [] };
       try {
         network_info = getNetworkUrls();
       } catch (e) {
