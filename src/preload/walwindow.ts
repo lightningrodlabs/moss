@@ -31,8 +31,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   selectScreenOrWindow: () => ipcRenderer.invoke('select-screen-or-window'),
   setMyIcon: (icon: string) => ipcRenderer.invoke('set-my-icon', icon),
   setMyTitle: (title: string) => ipcRenderer.invoke('set-my-title', title),
-  signZomeCallApplet: (request: CallZomeRequest) =>
-    ipcRenderer.invoke('sign-zome-call-applet', request),
+  signZomeCallApplet: (request: CallZomeRequest, callerAppletIds: string[]) =>
+    ipcRenderer.invoke('sign-zome-call-applet', request, callerAppletIds),
 });
 
 declare global {

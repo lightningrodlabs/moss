@@ -31,8 +31,8 @@ contextBridge.exposeInMainWorld('__HC_ZOME_CALL_SIGNER__', {
 });
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  signZomeCallApplet: (request: CallZomeRequest) =>
-    ipcRenderer.invoke('sign-zome-call-applet', request),
+  signZomeCallApplet: (request: CallZomeRequest, callerAppletIds: string[]) =>
+    ipcRenderer.invoke('sign-zome-call-applet', request, callerAppletIds),
   appletMessageToParentResponse: (response: any, id: string) =>
     ipcRenderer.invoke('applet-message-to-parent-response', response, id),
   parentToAppletMessage: (message: ParentToAppletMessage, forApplet: AppletId) =>
