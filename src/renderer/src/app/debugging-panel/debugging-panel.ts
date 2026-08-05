@@ -1778,28 +1778,6 @@ export class DebuggingPanel extends LitElement {
               >
               <div id="bootstrap-result" style="display:none; margin-left:5px;"></div>
             </dd>
-            <dt>Signal</dt>
-            <dd>
-              ${this._mossStore.conductorInfo.network_info.signal_urls.length
-                ? this._mossStore.conductorInfo.network_info.signal_urls[0]
-                : 'None'}
-              <sl-button
-                size="small"
-                @click=${async (_e) => {
-                  const res = await pingServer(
-                    this._mossStore.conductorInfo.network_info.signal_urls[0],
-                  );
-                  const elem = this.shadowRoot?.getElementById('signal-result') as HTMLElement;
-                  if (!elem) return;
-                  elem.style.display = 'inline';
-                  elem.style.color = res.online ? 'green' : 'red';
-                  elem.innerHTML = res.online ? `online - ${res.latencyMs} ms` : 'offline';
-                  this.requestUpdate();
-                }}
-                >Ping</sl-button
-              >
-              <div id="signal-result" style="display:none; margin-left:5px;"></div>
-            </dd>
             <dt>Relay</dt>
             <dd>
               ${this._mossStore.conductorInfo.network_info.relay_urls.length

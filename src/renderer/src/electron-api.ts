@@ -275,7 +275,6 @@ export interface ProgressInfo {
 
 export interface NetworkInfo {
   bootstrap_urls: string[];
-  signal_urls: string[];
   relay_urls: string[];
 }
 

@@ -48,7 +48,7 @@ import { readIcon } from '../utils';
 import { AppletHash } from '@theweave/api';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
-export function readLocalServices(): [string, string, string] {
+export function readLocalServices(): [string, string] {
   if (!fs.existsSync('.kitsune2_bootstrap_srv')) {
     throw new Error(
       'No .kitsune2_bootstrap_srv file found. Make sure agent with agentIdx 1 is running before you start additional agents.',
@@ -56,15 +56,15 @@ export function readLocalServices(): [string, string, string] {
   }
   const localServicesString = fs.readFileSync('.kitsune2_bootstrap_srv', 'utf-8');
   try {
-    const { bootstrapUrl, signalingUrl, relayUrl } = JSON.parse(localServicesString);
-    return [bootstrapUrl, signalingUrl, relayUrl];
+    const { bootstrapUrl, relayUrl } = JSON.parse(localServicesString);
+    return [bootstrapUrl, relayUrl];
   } catch (e) {
     throw new Error('Failed to parse content of .kitsune2_bootstrap_srv');
   }
 }
 
 export async function startLocalServices(): Promise<
-  [string, string, string, childProcess.ChildProcessWithoutNullStreams]
+  [string, string, childProcess.ChildProcessWithoutNullStreams]
 > {
   if (fs.existsSync('.hc_local_services')) {
     fs.rmSync('.hc_local_services');
@@ -82,30 +82,23 @@ export async function startLocalServices(): Promise<
   const localServicesHandle = childProcess.spawn(bootstrapSrvBinary);
   return new Promise((resolve) => {
     let bootstrapUrl;
-    let signalingUrl;
     let relayUrl;
     let bootstrapRunning = false;
-    let signalRunning = false;
     localServicesHandle.stdout.pipe(split()).on('data', async (line: string) => {
       console.log(`[weave-cli] | [kitsune2-bootstrap-srv]: ${line}`);
       if (line.includes('#kitsune2_bootstrap_srv#listening#')) {
         const hostAndPort = line.split('#kitsune2_bootstrap_srv#listening#')[1].split('#')[0];
         bootstrapUrl = `http://${hostAndPort}`;
-        signalingUrl = `ws://${hostAndPort}`;
         // As of kitsune2_bootstrap_srv 0.4.0-dev.7, the relay is served
         // at the /relay route of the bootstrap server itself.
         relayUrl = `http://${hostAndPort}/relay`;
       }
       if (line.includes('#kitsune2_bootstrap_srv#running#')) {
         bootstrapRunning = true;
-        signalRunning = true;
       }
-      fs.writeFileSync(
-        '.kitsune2_bootstrap_srv',
-        JSON.stringify({ bootstrapUrl, signalingUrl, relayUrl }),
-      );
-      if (bootstrapRunning && signalRunning && bootstrapUrl) {
-        resolve([bootstrapUrl, signalingUrl, relayUrl, localServicesHandle]);
+      fs.writeFileSync('.kitsune2_bootstrap_srv', JSON.stringify({ bootstrapUrl, relayUrl }));
+      if (bootstrapRunning && bootstrapUrl) {
+        resolve([bootstrapUrl, relayUrl, localServicesHandle]);
       }
     });
     localServicesHandle.stderr.pipe(split()).on('data', async (line: string) => {

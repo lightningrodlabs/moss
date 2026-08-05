@@ -12,19 +12,14 @@ const SUPPORTED_APPLET_SOURCE_TYPES = ['localhost', 'filesystem', 'https'];
 // here since there is a check to prevent accidental use of a production bootstrap server in development
 // mode
 export const PRODUCTION_BOOTSTRAP_URLS = [
-  'https://bootstrap.moss.social',
+  'https://bootstrap-relay.moss.social',
   'https://dev-test-bootstrap2.holochain.org',
 ];
-// The first one will be picked by default. But all production signaling servers should be listed
-// here since there is a check to prevent accidental use of a production signaling server in development
-// mode
-export const PRODUCTION_SIGNALING_URLS = [
-  'wss://bootstrap.moss.social',
-  'wss://dev-test-bootstrap2.holochain.org',
-];
-// The first one will be picked by default.
+// The first one will be picked by default. Holochain 0.7 serves the iroh relay
+// from the same kitsune2-bootstrap-srv node as the bootstrap server; the
+// trailing-dot FQDN is the iroh relay URL convention.
 export const PRODUCTION_RELAY_URLS = [
-  'https://iroh-relay.moss.social./',
+  'https://bootstrap-relay.moss.social./',
   'https://use1-1.relay.n0.iroh-canary.iroh.link./',
 ];
 export const DEFAULT_ICE_URLS = ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'];
@@ -46,7 +41,6 @@ export interface CliOpts {
   holochainWasmLog?: string | undefined;
   lairRustLog?: string | undefined;
   bootstrapUrl?: string;
-  signalingUrl?: string;
   relayUrl?: string;
   iceUrls?: string;
   forceProductionUrls?: boolean;
@@ -60,7 +54,6 @@ export interface RunOptions {
   appstoreNetworkSeed: string;
   devInfo: WeAppletDevInfo | undefined;
   bootstrapUrl: string | undefined;
-  signalingUrl: string | undefined;
   relayUrl: string | undefined;
   iceUrls: string[];
   customBinary: string | undefined;
@@ -110,7 +103,7 @@ export function validateArgs(args: CliOpts): RunOptions {
   )
     throw new Error('--sync-time argument must be of type number.');
 
-  // validate bootstarp and signaling urls
+  // validate bootstrap url
   if (args.devConfig) {
     if (
       args.bootstrapUrl &&
@@ -118,15 +111,7 @@ export function validateArgs(args: CliOpts): RunOptions {
       !args.forceProductionUrls
     )
       throw new Error(
-        'The production bootstrap server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with kitsune2-bootstrap-srv. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
-      );
-    if (
-      args.signalingUrl &&
-      PRODUCTION_SIGNALING_URLS.includes(args.signalingUrl) &&
-      !args.forceProductionUrls
-    )
-      throw new Error(
-        'The production signaling server should not be used in development. Instead, you can spin up a local bootstrap and signaling server with kitsune2-bootstrap-srv. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
+        'The production bootstrap server should not be used in development. Instead, you can spin up a local bootstrap server with kitsune2-bootstrap-srv. If you explicitly want to use the production server, you need to provide the --force-production-urls flag.',
       );
   }
   if (args.holochainPath && typeof args.holochainPath !== 'string') {
@@ -189,7 +174,6 @@ export function validateArgs(args: CliOpts): RunOptions {
     appstoreNetworkSeed,
     devInfo,
     bootstrapUrl: args.bootstrapUrl,
-    signalingUrl: args.signalingUrl,
     relayUrl: args.relayUrl,
     iceUrls: args.iceUrls ? args.iceUrls.split(',') : DEFAULT_ICE_URLS,
     customBinary: args.holochainPath ? args.holochainPath : undefined,
