@@ -174,7 +174,17 @@ export class WalWindow extends LitElement {
       // origin is unrecognised. Skipping (rather than replying) keeps such a
       // message from resolving as a spurious `{ success, undefined }`.
       if (this.isAppletDev === undefined) return;
-      const iframeKind = getIframeKind(message, this.isAppletDev);
+      // getIframeKind throws for an origin matching none of its branches (e.g. an
+      // embedded remote iframe). Fail closed and log, rather than letting it
+      // escape the async listener as an unhandled rejection (the main window
+      // catches this in its own try/catch).
+      let iframeKind: ReturnType<typeof getIframeKind>;
+      try {
+        iframeKind = getIframeKind(message, this.isAppletDev);
+      } catch (e) {
+        console.warn('WAL window: ignoring message from an unrecognized iframe origin.', e);
+        return;
+      }
       if (!iframeKind) return;
 
       const handleRequest = async (request: AppletToParentMessage) => {
