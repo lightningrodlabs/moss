@@ -25,6 +25,7 @@ import { localized, msg } from '@lit/localize';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import { IframeStore } from './iframe-store';
 import { getIframeKind } from './applets/applet-host';
+import { deriveWalMessageSource } from './wal-message-source';
 
 // import { ipcRenderer } from 'electron';
 
@@ -167,29 +168,21 @@ export class WalWindow extends LitElement {
     window.addEventListener('message', async (message: MessageEvent<AppletToParentMessage>) => {
       const request = message.data;
 
+      // Derive the sender's identity from its iframe origin — never from the
+      // message — and, like the main window's `if (!receivedFromSource) return`,
+      // skip without responding when the window is not yet initialised or the
+      // origin is unrecognised. Skipping (rather than replying) keeps such a
+      // message from resolving as a spurious `{ success, undefined }`.
+      if (this.isAppletDev === undefined) return;
+      const iframeKind = getIframeKind(message, this.isAppletDev);
+      if (!iframeKind) return;
+
       const handleRequest = async (request: AppletToParentMessage) => {
-        if (this.isAppletDev === undefined) return;
-        // Derive the sender's identity from its iframe origin rather than trusting
-        // the message or assuming it is this window's own applet. An unrecognized
-        // origin is not processed — the same trust boundary the main window
-        // enforces via getIframeKind.
-        const iframeKind = getIframeKind(message, this.isAppletDev);
-        if (!iframeKind) {
-          throw new Error('Ignoring WAL-window message from an unrecognized iframe origin.');
-        }
-        const derivedSource: AppletToParentMessage['source'] =
-          iframeKind.type === 'cross-group'
-            ? {
-                type: 'cross-group',
-                toolCompatibilityId: iframeKind.toolCompatibilityId,
-                subType: request.source.subType,
-              }
-            : {
-                type: 'applet',
-                appletHash: iframeKind.appletHash,
-                groupHash: iframeKind.groupHash ?? this.groupHash!,
-                subType: request.source.subType,
-              };
+        const derivedSource = deriveWalMessageSource(
+          iframeKind,
+          request.source.subType,
+          this.groupHash!,
+        );
 
         const handleDefault = () => {
           return walWindow.electronAPI.appletMessageToParent({
@@ -248,72 +241,41 @@ export class WalWindow extends LitElement {
               return response;
             }
             case 'get-iframe-config': {
-              if (this.isAppletDev === undefined) return;
-              const iframeKind = getIframeKind(message, this.isAppletDev);
-              if (!iframeKind) return;
               if (iframeKind.type === 'cross-group') {
                 this.iframeStore.registerCrossGroupIframe(iframeKind.toolCompatibilityId, {
                   id: request.request.id,
                   subType: request.request.subType,
                   source: message.source,
                 });
-                return walWindow.electronAPI.appletMessageToParent({
-                  request: request.request,
-                  source: {
-                    type: 'cross-group',
-                    toolCompatibilityId: iframeKind.toolCompatibilityId,
-                    subType: request.source.subType,
-                  },
-                });
               } else {
-                const appletId = encodeHashToBase64(iframeKind.appletHash);
-                this.iframeStore.registerAppletIframe(appletId, {
+                this.iframeStore.registerAppletIframe(encodeHashToBase64(iframeKind.appletHash), {
                   id: request.request.id,
                   subType: request.request.subType,
                   source: message.source,
                 });
-                // Use the child iframe's applet identity, not the parent window's
-                return walWindow.electronAPI.appletMessageToParent({
-                  request: request.request,
-                  source: {
-                    type: 'applet',
-                    appletHash: iframeKind.appletHash,
-                    groupHash: iframeKind.groupHash ?? this.groupHash!,
-                    subType: request.source.subType,
-                  },
-                });
               }
+              // Forward under the child iframe's own identity, not this window's.
+              return walWindow.electronAPI.appletMessageToParent({
+                request: request.request,
+                source: derivedSource,
+              });
             }
             case 'unregister-iframe': {
-              if (this.isAppletDev === undefined) return;
-              const iframeKind = getIframeKind(message, this.isAppletDev);
-              if (!iframeKind) return;
               if (iframeKind.type === 'cross-group') {
                 this.iframeStore.unregisterCrossGroupIframe(
                   iframeKind.toolCompatibilityId,
                   request.request.id,
                 );
-                return walWindow.electronAPI.appletMessageToParent({
-                  request: request.request,
-                  source: {
-                    type: 'cross-group',
-                    toolCompatibilityId: iframeKind.toolCompatibilityId,
-                    subType: request.source.subType,
-                  },
-                });
               } else {
-                const appletId = encodeHashToBase64(iframeKind.appletHash);
-                this.iframeStore.unregisterAppletIframe(appletId, request.request.id);
-                return walWindow.electronAPI.appletMessageToParent({
-                  request: request.request,
-                  source: {
-                    type: 'applet',
-                    appletHash: iframeKind.appletHash,
-                    groupHash: iframeKind.groupHash ?? this.groupHash!,
-                    subType: request.source.subType,
-                  },
-                });
+                this.iframeStore.unregisterAppletIframe(
+                  encodeHashToBase64(iframeKind.appletHash),
+                  request.request.id,
+                );
               }
+              return walWindow.electronAPI.appletMessageToParent({
+                request: request.request,
+                source: derivedSource,
+              });
             }
 
             default:

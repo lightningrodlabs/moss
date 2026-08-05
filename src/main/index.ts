@@ -644,9 +644,12 @@ if (!RUNNING_WITH_COMMAND) {
 
     if (!appletCellCache) await rebuildAppletCellCache();
     let decision = evaluate();
-    if (!decision.sign) {
-      // Refresh once before refusing: the cell may belong to an applet or group
-      // installed since the cache was last built.
+    // Refresh once before refusing only when the cell is simply unknown — it may
+    // belong to an applet or group installed since the cache was last built. A
+    // known group cell refused for a non-profiles zome cannot become allowed by
+    // a rebuild, so don't pay a listApps round-trip for those (a misbehaving
+    // applet could otherwise trigger one per rejected call).
+    if (!decision.sign && decision.reason === 'unknown-cell') {
       await rebuildAppletCellCache();
       decision = evaluate();
     }
