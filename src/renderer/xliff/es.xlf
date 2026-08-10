@@ -114,10 +114,6 @@
   <source>Join Group</source>
   <target>Unirse al grupo</target>
 </trans-unit>
-<trans-unit id="s417b25879ae9b5a0">
-  <source>Invite Link</source>
-  <target>Enlace de invitación</target>
-</trans-unit>
 <trans-unit id="sa7b4f3aab0562402">
   <source>You have been invited to join a group.</source>
   <target>Has sido invitado a unirte a un grupo.</target>
@@ -321,14 +317,6 @@
 <trans-unit id="s3687049d1af562c4">
   <source>Copy</source>
   <target>Copiar</target>
-</trans-unit>
-<trans-unit id="s5ae217c0cc09e418">
-  <source>About invite links:</source>
-  <target>Sobre los enlaces de invitación:</target>
-</trans-unit>
-<trans-unit id="s85211b812dbfebf4">
-  <source>Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.</source>
-  <target>Actualmente las invitaciones de Moss funcionan según la regla "Aquí está mi dirección, la puerta está abierta". Cualquiera con un enlace puede unirse al grupo, así que ten cuidado dónde compartes este enlace.</target>
 </trans-unit>
 <trans-unit id="s7be45b1c52747d13">
   <source>No tools yet.</source>
@@ -1014,10 +1002,6 @@
   <source>search</source>
   <target>buscar</target>
 </trans-unit>
-<trans-unit id="sc1b8a74e113727e2">
-  <source>Search or enter weave-0.15:// URL</source>
-  <target>Buscar o introducir URL weave-0.15://</target>
-</trans-unit>
 <trans-unit id="sade7d29e999d2472">
   <source>Enter at least <x id="0" equiv-text="${this.minChars}"/> characters to start searching.</source>
   <target>Introduce al menos <x id="0" equiv-text="${this.minChars}"/> caracteres para empezar a buscar.</target>
@@ -1157,22 +1141,6 @@
 <trans-unit id="s4dcc66195b1ddc69">
   <source>What brought you here today?</source>
   <target>¿Qué te trajo aquí hoy?</target>
-</trans-unit>
-<trans-unit id="sbf68658bb3dad7f1">
-  <source>I have an invite link to join a group</source>
-  <target>Tengo un enlace de invitación para unirme a un grupo</target>
-</trans-unit>
-<trans-unit id="s3eadd48b1fc794ca">
-  <source>An invite link looks like:</source>
-  <target>Un enlace de invitación se ve así:</target>
-</trans-unit>
-<trans-unit id="s9c0c49be73d09c2b">
-  <source>paste invite link here</source>
-  <target>pega el enlace de invitación aquí</target>
-</trans-unit>
-<trans-unit id="sc2795100b3106520">
-  <source>invite link</source>
-  <target>enlace de invitación</target>
 </trans-unit>
 <trans-unit id="s6c6bf3ea2ad3d219">
   <source>Join</source>
@@ -2096,10 +2064,6 @@ comienza ahora</target>
   <source>Update failed (see console for details).</source>
   <target>Error en la actualización (consulte la consola para más detalles).</target>
 </trans-unit>
-<trans-unit id="sd9f5f2484b0f0d29">
-  <source>Invalid invite link: <x id="0" equiv-text="${e}"/></source>
-  <target>Enlace de invitación no válido: <x id="0" equiv-text="${e}"/></target>
-</trans-unit>
 <trans-unit id="sd947928196d52aa4">
   <source>Add List</source>
   <target>Añadir lista</target>
@@ -2607,6 +2571,78 @@ comienza ahora</target>
   <source>This asset cannot be loaded until the Tool that created it is activated.</source>
         <target>Este recurso no se puede cargar hasta que se active la herramienta que lo creó.</target>
       </trans-unit>
+<trans-unit id="sf483617ac11ebaeb">
+  <source>Could not read that invite. Paste the full invite link or invite code you were given.</source>
+  <target>No se pudo leer esa invitación. Pega el enlace de invitación o el código de invitación completo que te dieron.</target>
+</trans-unit>
+<trans-unit id="sdf4f11d3455629da">
+  <source>This invite is for Moss <x id="0" equiv-text="${e.foundVersion}"/> and cannot be used to join a group from Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/>. Ask for an invite created in Moss <x id="2" equiv-text="${WEAVE_PROTOCOL_VERSION}"/>, or install Moss <x id="3" equiv-text="${e.foundVersion}"/> to join that group.</source>
+  <target>Esta invitación es para Moss <x id="0" equiv-text="${e.foundVersion}"/> y no se puede usar para unirse a un grupo desde Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/>. Pide una invitación creada en Moss <x id="2" equiv-text="${WEAVE_PROTOCOL_VERSION}"/>, o instala Moss <x id="3" equiv-text="${e.foundVersion}"/> para unirte a ese grupo.</target>
+</trans-unit>
+<trans-unit id="s7764f8028784b176">
+  <source>This invite was created by a different version of Moss and cannot be used to join a group from Moss <x id="0" equiv-text="${WEAVE_PROTOCOL_VERSION}"/>.</source>
+  <target>Esta invitación fue creada por una versión diferente de Moss y no se puede usar para unirse a un grupo desde Moss <x id="0" equiv-text="${WEAVE_PROTOCOL_VERSION}"/>.</target>
+</trans-unit>
+<trans-unit id="s28a58167e7be42b9">
+  <source>This invite is incomplete. Ask the sender for the full invite link or code.</source>
+  <target>Esta invitación está incompleta. Pide al remitente el enlace o código de invitación completo.</target>
+</trans-unit>
+<trans-unit id="s96b539f3c8f5720f">
+  <source>This invite is damaged. Ask the sender for a new invite link or code.</source>
+  <target>Esta invitación está dañada. Pide al remitente un nuevo enlace o código de invitación.</target>
+</trans-unit>
+<trans-unit id="s09d6fe2b6d1ed2e0">
+  <source>That does not look like a Moss invite. Paste the full invite link or invite code you were given.</source>
+  <target>Eso no parece una invitación de Moss. Pega el enlace de invitación o el código de invitación completo que te dieron.</target>
+</trans-unit>
+<trans-unit id="s5ba3a1c7131f3035">
+  <source>paste invite link or code here</source>
+  <target>pega aquí el enlace o código de invitación</target>
+</trans-unit>
+<trans-unit id="s75f39a8c0570a138">
+  <source>Or send this invite code instead, for places where links get stripped or broken:</source>
+  <target>O envía este código de invitación en su lugar, para lugares donde los enlaces se eliminan o se rompen:</target>
+</trans-unit>
+<trans-unit id="seb7c7ca17d2e5094">
+  <source>Invite code copied to clipboard.</source>
+  <target>Código de invitación copiado al portapapeles.</target>
+</trans-unit>
+<trans-unit id="sa2d0771ad945ebc6">
+  <source>About invites:</source>
+  <target>Acerca de las invitaciones:</target>
+</trans-unit>
+<trans-unit id="sc876ae441f06b330">
+  <source>Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with the link or code can join the group, so be careful where you share them.</source>
+  <target>Actualmente las invitaciones de Moss funcionan según la regla "Aquí está mi dirección, la puerta está abierta". Cualquiera con el enlace o el código puede unirse al grupo, así que ten cuidado dónde los compartes.</target>
+</trans-unit>
+<trans-unit id="sb94744303c6e9e17">
+  <source>Search or enter <x id="0" equiv-text="${WEAVE_URL_PREFIX}"/> URL</source>
+  <target>Buscar o introducir una URL <x id="0" equiv-text="${WEAVE_URL_PREFIX}"/></target>
+</trans-unit>
+<trans-unit id="s5402600a6df3df15">
+  <source>I have an invite to join a group</source>
+  <target>Tengo una invitación para unirme a un grupo</target>
+</trans-unit>
+<trans-unit id="s656436384a28f1a0">
+  <source>An invite looks like:</source>
+  <target>Una invitación se ve así:</target>
+</trans-unit>
+<trans-unit id="s08b05407b5565ca4">
+  <source>or</source>
+  <target>o</target>
+</trans-unit>
+<trans-unit id="s4293c75da1daaeb0">
+  <source>invite</source>
+  <target>invitación</target>
+</trans-unit>
+<trans-unit id="s1c04b89dde1527e6">
+  <source>Invite Link or Code</source>
+  <target>Enlace o código de invitación</target>
+</trans-unit>
+<trans-unit id="s63f2ae9fc0f5f2e6">
+  <source>This link was created by Moss <x id="0" equiv-text="${foundVersion}"/> and points to content Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> cannot open. Open it in Moss <x id="2" equiv-text="${foundVersion}"/>.</source>
+  <target>Este enlace fue creado por Moss <x id="0" equiv-text="${foundVersion}"/> y apunta a contenido que Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> no puede abrir. Ábrelo en Moss <x id="2" equiv-text="${foundVersion}"/>.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

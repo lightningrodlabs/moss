@@ -114,10 +114,6 @@
   <source>Join Group</source>
   <target>Gruba Katıl</target>
 </trans-unit>
-<trans-unit id="s417b25879ae9b5a0">
-  <source>Invite Link</source>
-  <target>Davet Bağlantısı</target>
-</trans-unit>
 <trans-unit id="sa7b4f3aab0562402">
   <source>You have been invited to join a group.</source>
   <target>Bir gruba katılmaya davet edildiniz.</target>
@@ -321,14 +317,6 @@
 <trans-unit id="s3687049d1af562c4">
   <source>Copy</source>
   <target>Kopyala</target>
-</trans-unit>
-<trans-unit id="s5ae217c0cc09e418">
-  <source>About invite links:</source>
-  <target>Davet bağlantıları hakkında:</target>
-</trans-unit>
-<trans-unit id="s85211b812dbfebf4">
-  <source>Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.</source>
-  <target>Şu anda Moss davetleri "İşte ev adresim, kapı açık" kuralına göre çalışıyor. Bağlantıya sahip herkes gruba katılabilir, bu yüzden bu bağlantıyı nerede paylaştığınıza dikkat edin.</target>
 </trans-unit>
 <trans-unit id="s7be45b1c52747d13">
   <source>No tools yet.</source>
@@ -1014,10 +1002,6 @@
   <source>search</source>
   <target>ara</target>
 </trans-unit>
-<trans-unit id="sc1b8a74e113727e2">
-  <source>Search or enter weave-0.15:// URL</source>
-  <target>Ara veya weave-0.15:// URL girin</target>
-</trans-unit>
 <trans-unit id="sade7d29e999d2472">
   <source>Enter at least <x id="0" equiv-text="${this.minChars}"/> characters to start searching.</source>
   <target>Aramaya başlamak için en az <x id="0" equiv-text="${this.minChars}"/> karakter girin.</target>
@@ -1157,22 +1141,6 @@
 <trans-unit id="s4dcc66195b1ddc69">
   <source>What brought you here today?</source>
   <target>Bugün sizi buraya ne getirdi?</target>
-</trans-unit>
-<trans-unit id="sbf68658bb3dad7f1">
-  <source>I have an invite link to join a group</source>
-  <target>Bir gruba katılmak için davet bağlantım var</target>
-</trans-unit>
-<trans-unit id="s3eadd48b1fc794ca">
-  <source>An invite link looks like:</source>
-  <target>Davet bağlantısı şöyle görünür:</target>
-</trans-unit>
-<trans-unit id="s9c0c49be73d09c2b">
-  <source>paste invite link here</source>
-  <target>davet bağlantısını buraya yapıştırın</target>
-</trans-unit>
-<trans-unit id="sc2795100b3106520">
-  <source>invite link</source>
-  <target>davet bağlantısı</target>
 </trans-unit>
 <trans-unit id="s6c6bf3ea2ad3d219">
   <source>Join</source>
@@ -2096,10 +2064,6 @@ starts now</source>
   <source>Update failed (see console for details).</source>
   <target>Güncelleme başarısız oldu (ayrıntılar için konsola bakın).</target>
 </trans-unit>
-<trans-unit id="sd9f5f2484b0f0d29">
-  <source>Invalid invite link: <x id="0" equiv-text="${e}"/></source>
-  <target>Geçersiz davet bağlantısı: <x id="0" equiv-text="${e}"/></target>
-</trans-unit>
 <trans-unit id="sd947928196d52aa4">
   <source>Add List</source>
   <target>Liste Ekle</target>
@@ -2607,6 +2571,78 @@ starts now</source>
   <source>This asset cannot be loaded until the Tool that created it is activated.</source>
         <target>Bu varlık, onu oluşturan Aracın etkinleştirilmesine kadar yüklenemez.</target>
       </trans-unit>
+<trans-unit id="sf483617ac11ebaeb">
+  <source>Could not read that invite. Paste the full invite link or invite code you were given.</source>
+  <target>Bu davet okunamadı. Size verilen davet bağlantısının veya davet kodunun tamamını yapıştırın.</target>
+</trans-unit>
+<trans-unit id="sdf4f11d3455629da">
+  <source>This invite is for Moss <x id="0" equiv-text="${e.foundVersion}"/> and cannot be used to join a group from Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/>. Ask for an invite created in Moss <x id="2" equiv-text="${WEAVE_PROTOCOL_VERSION}"/>, or install Moss <x id="3" equiv-text="${e.foundVersion}"/> to join that group.</source>
+  <target>Bu davet Moss <x id="0" equiv-text="${e.foundVersion}"/> içindir ve Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> üzerinden bir gruba katılmak için kullanılamaz. Moss <x id="2" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> ile oluşturulmuş bir davet isteyin veya o gruba katılmak için Moss <x id="3" equiv-text="${e.foundVersion}"/> kurun.</target>
+</trans-unit>
+<trans-unit id="s7764f8028784b176">
+  <source>This invite was created by a different version of Moss and cannot be used to join a group from Moss <x id="0" equiv-text="${WEAVE_PROTOCOL_VERSION}"/>.</source>
+  <target>Bu davet Moss'un farklı bir sürümüyle oluşturuldu ve Moss <x id="0" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> üzerinden bir gruba katılmak için kullanılamaz.</target>
+</trans-unit>
+<trans-unit id="s28a58167e7be42b9">
+  <source>This invite is incomplete. Ask the sender for the full invite link or code.</source>
+  <target>Bu davet eksik. Gönderenden davet bağlantısının veya kodunun tamamını isteyin.</target>
+</trans-unit>
+<trans-unit id="s96b539f3c8f5720f">
+  <source>This invite is damaged. Ask the sender for a new invite link or code.</source>
+  <target>Bu davet bozuk. Gönderenden yeni bir davet bağlantısı veya kodu isteyin.</target>
+</trans-unit>
+<trans-unit id="s09d6fe2b6d1ed2e0">
+  <source>That does not look like a Moss invite. Paste the full invite link or invite code you were given.</source>
+  <target>Bu bir Moss daveti gibi görünmüyor. Size verilen davet bağlantısının veya davet kodunun tamamını yapıştırın.</target>
+</trans-unit>
+<trans-unit id="s5ba3a1c7131f3035">
+  <source>paste invite link or code here</source>
+  <target>davet bağlantısını veya kodunu buraya yapıştırın</target>
+</trans-unit>
+<trans-unit id="s75f39a8c0570a138">
+  <source>Or send this invite code instead, for places where links get stripped or broken:</source>
+  <target>Ya da bağlantıların silindiği veya bozulduğu yerler için bunun yerine bu davet kodunu gönderin:</target>
+</trans-unit>
+<trans-unit id="seb7c7ca17d2e5094">
+  <source>Invite code copied to clipboard.</source>
+  <target>Davet kodu panoya kopyalandı.</target>
+</trans-unit>
+<trans-unit id="sa2d0771ad945ebc6">
+  <source>About invites:</source>
+  <target>Davetler hakkında:</target>
+</trans-unit>
+<trans-unit id="sc876ae441f06b330">
+  <source>Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with the link or code can join the group, so be careful where you share them.</source>
+  <target>Şu anda Moss davetleri "İşte ev adresim, kapı açık" kuralına göre çalışıyor. Bağlantıya veya koda sahip herkes gruba katılabilir, bu yüzden bunları nerede paylaştığınıza dikkat edin.</target>
+</trans-unit>
+<trans-unit id="sb94744303c6e9e17">
+  <source>Search or enter <x id="0" equiv-text="${WEAVE_URL_PREFIX}"/> URL</source>
+  <target>Arayın veya <x id="0" equiv-text="${WEAVE_URL_PREFIX}"/> URL girin</target>
+</trans-unit>
+<trans-unit id="s5402600a6df3df15">
+  <source>I have an invite to join a group</source>
+  <target>Bir gruba katılmak için davetim var</target>
+</trans-unit>
+<trans-unit id="s656436384a28f1a0">
+  <source>An invite looks like:</source>
+  <target>Bir davet şuna benzer:</target>
+</trans-unit>
+<trans-unit id="s08b05407b5565ca4">
+  <source>or</source>
+  <target>veya</target>
+</trans-unit>
+<trans-unit id="s4293c75da1daaeb0">
+  <source>invite</source>
+  <target>davet</target>
+</trans-unit>
+<trans-unit id="s1c04b89dde1527e6">
+  <source>Invite Link or Code</source>
+  <target>Davet bağlantısı veya kodu</target>
+</trans-unit>
+<trans-unit id="s63f2ae9fc0f5f2e6">
+  <source>This link was created by Moss <x id="0" equiv-text="${foundVersion}"/> and points to content Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> cannot open. Open it in Moss <x id="2" equiv-text="${foundVersion}"/>.</source>
+  <target>Bu bağlantı Moss <x id="0" equiv-text="${foundVersion}"/> tarafından oluşturuldu ve Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> sürümünün açamayacağı içeriğe işaret ediyor. Moss <x id="2" equiv-text="${foundVersion}"/> ile açın.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

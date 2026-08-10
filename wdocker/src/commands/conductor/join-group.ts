@@ -1,5 +1,8 @@
 import crypto from 'crypto';
-import { partialModifiersFromInviteLink, globalPubKeyFromListAppsResponse } from '@theweave/utils';
+import {
+  partialModifiersFromInviteString,
+  globalPubKeyFromListAppsResponse,
+} from '@theweave/utils';
 import { AdminWebsocket, AppInfo, encodeHashToBase64 } from '@holochain/client';
 import { input } from '@inquirer/prompts';
 
@@ -75,8 +78,7 @@ export async function installGroup(
   await downloadGroupHappIfNecessary();
 
   // install group into conductor
-  const partialModifiers = partialModifiersFromInviteLink(inviteLink);
-  if (!partialModifiers) throw new Error('Invite link seems to be invalid.');
+  const partialModifiers = partialModifiersFromInviteString(inviteLink);
 
   console.log('Listing apps');
 

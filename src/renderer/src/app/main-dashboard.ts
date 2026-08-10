@@ -24,7 +24,10 @@ import {
   weaveUrlFromWal,
   decodeContext,
 } from '@theweave/api';
-import { invitePropsToPartialModifiers } from '@theweave/utils';
+import { InviteParseError, invitePropsToPartialModifiers, weaveLinkVersion } from '@theweave/utils';
+import { WEAVE_PROTOCOL_VERSION } from '@theweave/moss-types';
+import { foreignVersionLinkMessage, inviteErrorMessage } from '../invite-error.js';
+import { releaseSeriesFromVersion } from '../release-series.js';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -661,6 +664,13 @@ export class MainDashboard extends LitElement {
     window.electronAPI.onDeepLinkReceived(async (_, deepLink) => {
       console.log('Received deeplink: ', deepLink);
       try {
+        // A link made by another Moss version points at content this version cannot
+        // reach, so say so rather than acting on a half-understood link.
+        const linkVersion = weaveLinkVersion(deepLink);
+        if (linkVersion && linkVersion !== WEAVE_PROTOCOL_VERSION) {
+          notifyError(foreignVersionLinkMessage(deepLink, linkVersion));
+          return;
+        }
         const split = deepLink.split('://');
         // ['we', 'hrl/uhC0k-GO_J2D51Ibh2jKjVJHAHPadV7gndBwrqAmDxRW3b…kzMgM3yU2RkmaCoiY8IVcUQx_TLOjJe8SxJVy7iIhoVIvlZrD']
         const split2 = split[1].split('/');
@@ -682,10 +692,14 @@ export class MainDashboard extends LitElement {
           await this.handleOpenGroup(split2[1]);
         } else if (split2[0] === 'applet') {
           await this.handleOpenAppletMain(decodeHashFromBase64(split2[1]));
+        } else {
+          notifyError(msg('Error opening the link.'));
         }
       } catch (e) {
         console.error(e);
-        notifyError(msg('Error opening the link.'));
+        notifyError(
+          e instanceof InviteParseError ? inviteErrorMessage(e) : msg('Error opening the link.'),
+        );
       }
     });
 
@@ -722,17 +736,24 @@ export class MainDashboard extends LitElement {
 
     this.appVersion = this._mossStore.version;
 
-    // Fetch Moss update feed
-    try {
-      const response = await fetch(
-        'https://raw.githubusercontent.com/lightningrodlabs/moss/main/news.json',
-      );
-      const updateFeed = await response.json();
-      if (updateFeed['0.15.x']) {
-        this._updateFeed = updateFeed['0.15.x'];
+    // The feed is keyed by Moss release series, so it follows the running version
+    // rather than needing an edit each time the series is bumped.
+    const releaseSeries = releaseSeriesFromVersion(this.appVersion);
+    if (!releaseSeries) {
+      console.warn('Skipping Moss update feed: unrecognized app version ', this.appVersion);
+    } else {
+      // Fetch Moss update feed
+      try {
+        const response = await fetch(
+          'https://raw.githubusercontent.com/lightningrodlabs/moss/main/news.json',
+        );
+        const updateFeed = await response.json();
+        if (updateFeed[releaseSeries]) {
+          this._updateFeed = updateFeed[releaseSeries];
+        }
+      } catch (e) {
+        console.warn('Failed to fetch update feed: ', e);
       }
-    } catch (e) {
-      console.warn('Failed to fetch update feed: ', e);
     }
 
     await window.electronAPI.requestIframeStoreSync();

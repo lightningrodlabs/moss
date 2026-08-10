@@ -6,12 +6,10 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 
-import { encodeHashToBase64 } from '@holochain/client';
 import { notify, sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiShareVariantOutline } from '@mdi/js';
 
-import { WAL } from '@theweave/api';
-import { encodeContext } from '../utils';
+import { WAL, weaveUrlFromWal } from '@theweave/api';
 
 @localized()
 @customElement('share-wal')
@@ -20,13 +18,7 @@ export class ShareWal extends LitElement {
   wal!: WAL;
 
   async copyWal() {
-    let url = `weave-0.15://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
-      this.wal.hrl[1],
-    )}`;
-    if (this.wal.context) {
-      url = `${url}?context=${encodeContext(this.wal.context)}`;
-    }
-    await navigator.clipboard.writeText(url);
+    await navigator.clipboard.writeText(weaveUrlFromWal(this.wal));
 
     notify(msg('Link copied.'));
   }

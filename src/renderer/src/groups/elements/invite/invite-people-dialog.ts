@@ -8,7 +8,7 @@ import { notify } from '@holochain-open-dev/elements';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '../../../ui/moss-dialog.js';
 
-import { modifiersToInviteUrl } from '../../../utils.js';
+import { modifiersToInviteCode, modifiersToInviteUrl } from '../../../invite-link.js';
 import { mossStyles } from '../../../shared-styles.js';
 
 @localized()
@@ -26,6 +26,7 @@ export class InvitePeopleDialog extends LitElement {
     }
 
     const invitationUrl = modifiersToInviteUrl(this.modifiers);
+    const invitationCode = modifiersToInviteCode(this.modifiers);
 
     return html`
       <moss-dialog id="invite-member-dialog" headerAlign="center" width="674px">
@@ -43,7 +44,7 @@ export class InvitePeopleDialog extends LitElement {
             <span style="opacity: 0.7; font-size: 16px;"
               >${msg('Copy and send the link below to invite people:')}</span
             >
-            <div class="row" style="margin-top: 16px; margin-bottom: 60px;">
+            <div class="row" style="margin-top: 16px; margin-bottom: 24px;">
               <sl-input
                 disabled
                 value=${invitationUrl}
@@ -67,12 +68,41 @@ export class InvitePeopleDialog extends LitElement {
               </button>
             </div>
 
+            <span style="opacity: 0.7; font-size: 16px;"
+              >${msg(
+                'Or send this invite code instead, for places where links get stripped or broken:',
+              )}</span
+            >
+            <div class="row" style="margin-top: 16px; margin-bottom: 60px;">
+              <sl-input
+                disabled
+                value=${invitationCode}
+                class="moss-input copy-link-input"
+                style="margin-right: 8px; cursor: pointer; flex: 1;"
+                @click=${async () => {
+                  await navigator.clipboard.writeText(invitationCode);
+                  notify(msg('Invite code copied to clipboard.'));
+                }}
+              >
+              </sl-input>
+              <button
+                variant="primary"
+                class="moss-button"
+                @click=${async () => {
+                  await navigator.clipboard.writeText(invitationCode);
+                  notify(msg('Invite code copied to clipboard.'));
+                }}
+              >
+                ${msg('Copy')}
+              </button>
+            </div>
+
             <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">
-              ${msg('About invite links:')}
+              ${msg('About invites:')}
             </div>
             <div style="font-size: 12px; opacity: 0.7;">
               ${msg(
-                'Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.',
+                'Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with the link or code can join the group, so be careful where you share them.',
               )}
             </div>
           </div>

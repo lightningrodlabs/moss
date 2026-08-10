@@ -16,19 +16,25 @@ import { mossStoreContext } from './context.js';
 import { MossStore } from './moss-store.js';
 import { appletDevConfig, getConductorInfo, ImportGroupsProgress } from './electron-api.js';
 import { LegacyProfileInfo } from './electron-api.js';
-import { localized, msg, str } from '@lit/localize';
+import { localized, msg } from '@lit/localize';
 import { arrowLeftShortIcon, createGroupIcon, mossIcon } from './ui/icons.js';
 import './ui/moss-select-avatar.js';
 import './ui/moss-select-avatar-fancy.js';
 import { defaultIcons } from './ui/defaultIcons.js';
 // import { GroupProfile } from '@theweave/api';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
-import { partialModifiersFromInviteLink } from '@theweave/utils';
+import { partialModifiersFromInviteString } from '@theweave/utils';
+import { inviteErrorMessage } from './invite-error.js';
 import { notifyError } from '@holochain-open-dev/elements';
 import { safeSetInterval, SafeIntervalHandle } from './utils.js';
 import { buildHeadlessWeaveClient } from './applets/applet-host.js';
 import SlRadioGroup from '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
-import { PartialModifiers } from '@theweave/moss-types';
+import {
+  PartialModifiers,
+  WEAVE_PROTOCOL_VERSION,
+  WEAVE_URL_PREFIX,
+  WEAVE_WEB_PREFIX,
+} from '@theweave/moss-types';
 
 enum MossAppState {
   Loading,
@@ -125,7 +131,7 @@ export class MossApp extends LitElement {
     // to avoid flash of untranslated content
 
     this.loadingText = msg('loading...');
-    window.window.__WEAVE_PROTOCOL_VERSION__ = '0.15';
+    window.window.__WEAVE_PROTOCOL_VERSION__ = WEAVE_PROTOCOL_VERSION;
     window.__ZOME_CALL_LOGGING_ENABLED__ = !!window.sessionStorage.getItem(
       '__ZOME_CALL_LOGGING_ENABLED__',
     );
@@ -302,10 +308,10 @@ export class MossApp extends LitElement {
     this.creatingGroup = true;
     let modifiers: PartialModifiers;
     try {
-      modifiers = partialModifiersFromInviteLink(this.inviteLink);
+      modifiers = partialModifiersFromInviteString(this.inviteLink);
     } catch (e) {
-      notifyError(msg(str`Invalid invite link: ${e}`));
-      console.error('Error: Failed to join group: Invite link is invalid: ', e);
+      notifyError(inviteErrorMessage(e));
+      console.error('Error: Failed to join group: Invite is invalid: ', e);
       this.creatingGroup = false;
       return;
     }
@@ -675,20 +681,21 @@ export class MossApp extends LitElement {
         <div class="row">
           <div class="moss-card column items-center" style="margin: 6px; width: 430px;">
             <div class="dialog-title" style="width: 300px; margin-bottom: 28px; margin-top: 40px;">
-              ${msg('I have an invite link to join a group')}
+              ${msg('I have an invite to join a group')}
             </div>
 
             <div class="column center-content hint" style="margin-bottom: 12px;">
-              <div style="margin-bottom: 3px;">${msg('An invite link looks like:')}</div>
-              <div class="">https://theweave.social/wal?weave-0.15://invite...</div>
+              <div style="margin-bottom: 3px;">${msg('An invite looks like:')}</div>
+              <div class="">${WEAVE_WEB_PREFIX}${WEAVE_URL_PREFIX}invite...</div>
+              <div class="">${msg('or')} moss-${WEAVE_PROTOCOL_VERSION}-...</div>
             </div>
 
             <div class="row items-center justify-center" style="margin-bottom: 28px;">
               <sl-input
                 class="moss-input"
                 id="invite-link-input"
-                placeholder=${msg('paste invite link here')}
-                label=${msg('invite link')}
+                placeholder=${msg('paste invite link or code here')}
+                label=${msg('invite')}
                 style="margin-right: 12px; width: 258px;"
                 @input=${() => {
                   const inviteLinkInput = this.shadowRoot?.getElementById(

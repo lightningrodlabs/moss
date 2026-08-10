@@ -2,7 +2,7 @@ import { css, html, LitElement } from 'lit';
 import { state, query, customElement } from 'lit/decorators.js';
 
 import { consume } from '@lit/context';
-import { localized, msg, str } from '@lit/localize';
+import { localized, msg } from '@lit/localize';
 import { ProvisionedCell } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/select-avatar.js';
@@ -17,7 +17,8 @@ import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { mossStyles } from '../../shared-styles.js';
 import { PartialModifiers } from '@theweave/moss-types';
-import { partialModifiersFromInviteLink } from '@theweave/utils';
+import { partialModifiersFromInviteString } from '@theweave/utils';
+import { inviteErrorMessage } from '../../invite-error.js';
 import { MossDialog } from '../../ui/moss-dialog.js';
 import '../../ui/moss-dialog.js';
 
@@ -64,10 +65,10 @@ export class JoinGroupDialog extends LitElement {
 
     if (this._joinByPaste && fields.link) {
       try {
-        modifiers = partialModifiersFromInviteLink(fields.link);
+        modifiers = partialModifiersFromInviteString(fields.link);
       } catch (e) {
-        notifyError(msg(str`Invalid invite link: ${e}`));
-        console.error('Error: Failed to join group: Invite link is invalid: ', e);
+        notifyError(inviteErrorMessage(e));
+        console.error('Error: Failed to join group: Invite is invalid: ', e);
         return;
       }
     } else {
@@ -138,8 +139,8 @@ export class JoinGroupDialog extends LitElement {
                     name="link"
                     id="invite-link-field"
                     class="moss-input"
-                    .label=${msg('Invite Link')}
-                    placeholder=${msg('Invite Link')}
+                    .label=${msg('Invite Link or Code')}
+                    placeholder=${msg('paste invite link or code here')}
                     style="width: 400px;"
                     required
                   ></sl-input>

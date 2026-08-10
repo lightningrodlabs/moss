@@ -21,6 +21,9 @@ import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 import SlDropdown from '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
 
 import { AssetLocationAndInfo, WAL } from '@theweave/api';
+import { WEAVE_PROTOCOL_VERSION, WEAVE_URL_PREFIX } from '@theweave/moss-types';
+import { isWeaveUrl, weaveLinkVersion } from '@theweave/utils';
+import { foreignVersionLinkMessage } from '../../invite-error.js';
 import { mdiArrowRight, mdiMagnify } from '@mdi/js';
 import { mossStoreContext } from '../../context';
 import { MossStore } from '../../moss-store';
@@ -82,7 +85,7 @@ export class PocketSearch extends LitElement implements FormField {
    * @attr field-label
    */
   @property({ type: String, attribute: 'placeholder' })
-  placeholder: string = msg('Search or enter weave-0.15:// URL');
+  placeholder: string = msg(str`Search or enter ${WEAVE_URL_PREFIX} URL`);
 
   @property({ type: Number, attribute: 'min-chars' })
   minChars: number = 2;
@@ -98,6 +101,13 @@ export class PocketSearch extends LitElement implements FormField {
 
   @state()
   wurl: string | undefined;
+
+  /**
+   * Set when the field holds a weave URL from a Moss version this one cannot open,
+   * so the field explains itself instead of leaving the open button inert.
+   */
+  @state()
+  foreignLinkMessage: string | undefined;
 
   @state()
   _searchResults = new StoreSubscriber(
@@ -123,6 +133,8 @@ export class PocketSearch extends LitElement implements FormField {
     setTimeout(() => {
       this._textField.value = '';
       this.value = this.defaultValue;
+      this.wurl = undefined;
+      this.foreignLinkMessage = undefined;
     });
   }
 
@@ -155,13 +167,20 @@ export class PocketSearch extends LitElement implements FormField {
   onFilterChange() {
     const filter = this._textField.value;
     if (this.mode === 'open') {
-      if (filter.startsWith('weave-0.15://')) {
+      // Recognize weave URLs of any protocol version, so that one this Moss version
+      // cannot open is named as such rather than silently searched for.
+      if (isWeaveUrl(filter)) {
+        const linkVersion = weaveLinkVersion(filter);
+        const openable = linkVersion === WEAVE_PROTOCOL_VERSION;
         // No dropdown but enable opening of WAL
-        this.wurl = filter;
+        this.wurl = openable ? filter : undefined;
+        this.foreignLinkMessage =
+          linkVersion && !openable ? foreignVersionLinkMessage(filter, linkVersion) : undefined;
         this.dropdown.hide();
         return;
       } else {
         this.wurl = undefined;
+        this.foreignLinkMessage = undefined;
       }
     }
     this.filterLength = filter.length;
@@ -260,6 +279,7 @@ export class PocketSearch extends LitElement implements FormField {
               slot="trigger"
               style="width: 600px;"
               .placeholder=${this.placeholder}
+              .helpText=${this.foreignLinkMessage ?? ''}
               @input=${() => this.onFilterChange()}
             >
               <sl-icon

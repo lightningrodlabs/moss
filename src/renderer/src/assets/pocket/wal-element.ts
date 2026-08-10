@@ -9,9 +9,7 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
-import { encodeHashToBase64 } from '@holochain/client';
-
-import { encodeContext, WAL, weaveUrlFromWal } from '@theweave/api';
+import { WAL, weaveUrlFromWal } from '@theweave/api';
 
 import { mossStyles } from '../../shared-styles.js';
 import { mossStoreContext } from '../../context.js';
@@ -34,7 +32,7 @@ export class WalElement extends LitElement {
   selectTitle: string | undefined;
 
   // async copyHrl() {
-  //   const url = `https://theweave.social/wal?weave-0.15://hrl/${encodeHashToBase64(
+  //   const url = `https://theweave.social/wal?weave-0.16://hrl/${encodeHashToBase64(
   //     this.hrl[0]
   //   )}/${encodeHashToBase64(this.hrl[1])}`;
   //   await navigator.clipboard.writeText(url);
@@ -105,12 +103,7 @@ export class WalElement extends LitElement {
   render() {
     switch (this.assetInfo.value.status) {
       case 'pending':
-        return html` <div
-          class="row element"
-          title=${`weave-0.15://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
-            this.wal.hrl[1],
-          )}${this.wal.context ? `?context=${encodeContext(this.wal.context)}` : ''}`}
-        >
+        return html` <div class="row element" title=${weaveUrlFromWal(this.wal)}>
           <sl-tooltip .content=${msg('Loading...')}>
             <div
               class="row disabled"
@@ -130,12 +123,7 @@ export class WalElement extends LitElement {
         } else {
           console.error('Failed to get asset info for WAL element: ', this.assetInfo.value.error);
         }
-        return html` <div
-          class="row element"
-          title=${`weave-0.15://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
-            this.wal.hrl[1],
-          )}${this.wal.context ? `?context=${encodeContext(this.wal.context)}` : ''}`}
-        >
+        return html` <div class="row element" title=${weaveUrlFromWal(this.wal)}>
           <sl-tooltip
             .content=${appletDisabled
               ? msg('Cannot be selected - the associated Tool is disabled')
@@ -158,12 +146,7 @@ export class WalElement extends LitElement {
       case 'complete':
         if (this.assetInfo.value.value) {
           return html`
-            <div
-              class="row element"
-              title=${`weave-0.15://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
-                this.wal.hrl[1],
-              )}${this.wal.context ? `?context=${encodeContext(this.wal.context)}` : ''}`}
-            >
+            <div class="row element" title=${weaveUrlFromWal(this.wal)}>
               <sl-tooltip .content=${this.selectTitle ?? msg('Select')}>
                 <div
                   class="row open"

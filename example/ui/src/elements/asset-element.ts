@@ -12,7 +12,6 @@ import { encodeHashToBase64, EntryHash } from '@holochain/client';
 
 import {
   AssetLocationAndInfo,
-  encodeContext,
   WalRelationAndTags,
   WeaveClient,
   weaveUrlFromWal,
@@ -60,13 +59,7 @@ export class AssetElement extends LitElement {
     console.log('this.assetInfo: ', this.assetInfo.assetInfo);
     return html`<div
         class="column element"
-        title=${`weave-0.15://hrl/${encodeHashToBase64(
-          this.walRelationAndTags.wal.hrl[0],
-        )}/${encodeHashToBase64(this.walRelationAndTags.wal.hrl[1])}${
-          this.walRelationAndTags.wal.context
-            ? `?context=${encodeContext(this.walRelationAndTags.wal.context)}`
-            : ''
-        }`}
+        title=${weaveUrlFromWal(this.walRelationAndTags.wal)}
       >
         <div class="row">
         <div

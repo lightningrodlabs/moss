@@ -146,10 +146,6 @@
   <source>Join Group</source>
   <target>グループに参加</target>
 </trans-unit>
-<trans-unit id="s417b25879ae9b5a0">
-  <source>Invite Link</source>
-  <target>招待リンク</target>
-</trans-unit>
 <trans-unit id="sa7b4f3aab0562402">
   <source>You have been invited to join a group.</source>
   <target>グループへの招待を受けました。</target>
@@ -353,14 +349,6 @@
 <trans-unit id="s3687049d1af562c4">
   <source>Copy</source>
   <target>コピー</target>
-</trans-unit>
-<trans-unit id="s5ae217c0cc09e418">
-  <source>About invite links:</source>
-  <target>招待リンクについて:</target>
-</trans-unit>
-<trans-unit id="s85211b812dbfebf4">
-  <source>Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with a link can join the group, so be careful where you share this link.</source>
-  <target>現在、Mossの招待は「ここが私の家の住所です。ドアは開いています」というルールで機能します。リンクを持っている人は誰でもグループに参加できるため、このリンクを共有する場所には注意してください。</target>
 </trans-unit>
 <trans-unit id="s7be45b1c52747d13">
   <source>No tools yet.</source>
@@ -1054,10 +1042,6 @@
   <source>search</source>
   <target>検索</target>
 </trans-unit>
-<trans-unit id="sc1b8a74e113727e2">
-  <source>Search or enter weave-0.15:// URL</source>
-  <target>検索またはweave-0.15:// URLを入力</target>
-</trans-unit>
 <trans-unit id="sade7d29e999d2472">
   <source>Enter at least <x id="0" equiv-text="${this.minChars}"/> characters to start searching.</source>
   <target>検索を開始するには少なくとも<x id="0" equiv-text="${this.minChars}"/>文字を入力してください。</target>
@@ -1201,22 +1185,6 @@
 <trans-unit id="s4dcc66195b1ddc69">
   <source>What brought you here today?</source>
   <target>今日は何をお探しですか?</target>
-</trans-unit>
-<trans-unit id="sbf68658bb3dad7f1">
-  <source>I have an invite link to join a group</source>
-  <target>グループに参加する招待リンクがあります</target>
-</trans-unit>
-<trans-unit id="s3eadd48b1fc794ca">
-  <source>An invite link looks like:</source>
-  <target>招待リンクはこのような形式です:</target>
-</trans-unit>
-<trans-unit id="s9c0c49be73d09c2b">
-  <source>paste invite link here</source>
-  <target>ここに招待リンクを貼り付け</target>
-</trans-unit>
-<trans-unit id="sc2795100b3106520">
-  <source>invite link</source>
-  <target>招待リンク</target>
 </trans-unit>
 <trans-unit id="s6c6bf3ea2ad3d219">
   <source>Join</source>
@@ -2096,10 +2064,6 @@ starts now</source>
   <source>Update failed (see console for details).</source>
   <target>更新に失敗しました（詳細はコンソールを参照してください）。</target>
 </trans-unit>
-<trans-unit id="sd9f5f2484b0f0d29">
-  <source>Invalid invite link: <x id="0" equiv-text="${e}"/></source>
-  <target>無効な招待リンクです: <x id="0" equiv-text="${e}"/></target>
-</trans-unit>
 <trans-unit id="sd947928196d52aa4">
   <source>Add List</source>
   <target>リストを追加</target>
@@ -2607,6 +2571,78 @@ starts now</source>
   <source>This asset cannot be loaded until the Tool that created it is activated.</source>
         <target>このアセットは、作成したツールがアクティブ化されるまで読み込めません。</target>
       </trans-unit>
+<trans-unit id="sf483617ac11ebaeb">
+  <source>Could not read that invite. Paste the full invite link or invite code you were given.</source>
+  <target>この招待を読み取れませんでした。受け取った招待リンクまたは招待コードをそのまま貼り付けてください。</target>
+</trans-unit>
+<trans-unit id="sdf4f11d3455629da">
+  <source>This invite is for Moss <x id="0" equiv-text="${e.foundVersion}"/> and cannot be used to join a group from Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/>. Ask for an invite created in Moss <x id="2" equiv-text="${WEAVE_PROTOCOL_VERSION}"/>, or install Moss <x id="3" equiv-text="${e.foundVersion}"/> to join that group.</source>
+  <target>この招待は Moss <x id="0" equiv-text="${e.foundVersion}"/> 用のため、Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> からグループに参加することはできません。Moss <x id="2" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> で作成された招待を依頼するか、そのグループに参加するには Moss <x id="3" equiv-text="${e.foundVersion}"/> をインストールしてください。</target>
+</trans-unit>
+<trans-unit id="s7764f8028784b176">
+  <source>This invite was created by a different version of Moss and cannot be used to join a group from Moss <x id="0" equiv-text="${WEAVE_PROTOCOL_VERSION}"/>.</source>
+  <target>この招待は別のバージョンの Moss で作成されたため、Moss <x id="0" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> からグループに参加することはできません。</target>
+</trans-unit>
+<trans-unit id="s28a58167e7be42b9">
+  <source>This invite is incomplete. Ask the sender for the full invite link or code.</source>
+  <target>この招待は不完全です。送信者に完全な招待リンクまたはコードを依頼してください。</target>
+</trans-unit>
+<trans-unit id="s96b539f3c8f5720f">
+  <source>This invite is damaged. Ask the sender for a new invite link or code.</source>
+  <target>この招待は破損しています。送信者に新しい招待リンクまたはコードを依頼してください。</target>
+</trans-unit>
+<trans-unit id="s09d6fe2b6d1ed2e0">
+  <source>That does not look like a Moss invite. Paste the full invite link or invite code you were given.</source>
+  <target>これは Moss の招待ではないようです。受け取った招待リンクまたは招待コードをそのまま貼り付けてください。</target>
+</trans-unit>
+<trans-unit id="s5ba3a1c7131f3035">
+  <source>paste invite link or code here</source>
+  <target>招待リンクまたはコードをここに貼り付け</target>
+</trans-unit>
+<trans-unit id="s75f39a8c0570a138">
+  <source>Or send this invite code instead, for places where links get stripped or broken:</source>
+  <target>リンクが削除されたり壊れたりする場所では、代わりにこの招待コードを送ってください:</target>
+</trans-unit>
+<trans-unit id="seb7c7ca17d2e5094">
+  <source>Invite code copied to clipboard.</source>
+  <target>招待コードをクリップボードにコピーしました。</target>
+</trans-unit>
+<trans-unit id="sa2d0771ad945ebc6">
+  <source>About invites:</source>
+  <target>招待について:</target>
+</trans-unit>
+<trans-unit id="sc876ae441f06b330">
+  <source>Currently Moss invites work according to the rule "Here is my home address, the door is open." Everyone with the link or code can join the group, so be careful where you share them.</source>
+  <target>現在、Mossの招待は「ここが私の家の住所です。ドアは開いています」というルールで機能します。リンクまたはコードを持っている人は誰でもグループに参加できるため、共有する場所には注意してください。</target>
+</trans-unit>
+<trans-unit id="sb94744303c6e9e17">
+  <source>Search or enter <x id="0" equiv-text="${WEAVE_URL_PREFIX}"/> URL</source>
+  <target>検索または <x id="0" equiv-text="${WEAVE_URL_PREFIX}"/> URL を入力</target>
+</trans-unit>
+<trans-unit id="s5402600a6df3df15">
+  <source>I have an invite to join a group</source>
+  <target>グループに参加するための招待があります</target>
+</trans-unit>
+<trans-unit id="s656436384a28f1a0">
+  <source>An invite looks like:</source>
+  <target>招待は次のような形式です:</target>
+</trans-unit>
+<trans-unit id="s08b05407b5565ca4">
+  <source>or</source>
+  <target>または</target>
+</trans-unit>
+<trans-unit id="s4293c75da1daaeb0">
+  <source>invite</source>
+  <target>招待</target>
+</trans-unit>
+<trans-unit id="s1c04b89dde1527e6">
+  <source>Invite Link or Code</source>
+  <target>招待リンクまたはコード</target>
+</trans-unit>
+<trans-unit id="s63f2ae9fc0f5f2e6">
+  <source>This link was created by Moss <x id="0" equiv-text="${foundVersion}"/> and points to content Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> cannot open. Open it in Moss <x id="2" equiv-text="${foundVersion}"/>.</source>
+  <target>このリンクは Moss <x id="0" equiv-text="${foundVersion}"/> で作成されており、Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> では開けないコンテンツを指しています。Moss <x id="2" equiv-text="${foundVersion}"/> で開いてください。</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

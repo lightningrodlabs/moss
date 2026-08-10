@@ -9,9 +9,7 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
-import { encodeHashToBase64 } from '@holochain/client';
-
-import { encodeContext, WAL, weaveUrlFromWal } from '@theweave/api';
+import { WAL, weaveUrlFromWal } from '@theweave/api';
 
 import { mossStyles } from '../../shared-styles.js';
 import { mossStoreContext } from '../../context.js';
@@ -60,9 +58,7 @@ export class WalCreatedElement extends LitElement {
           return html`
             <div
               class="row element"
-              title=${`weave-0.15://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
-                this.wal.hrl[1],
-              )}${this.wal.context ? `?context=${encodeContext(this.wal.context)}` : ''}`}
+              title=${weaveUrlFromWal(this.wal)}
             >
               <sl-tooltip .content=${this.selectTitle ?? msg('Select')}>
                 <div

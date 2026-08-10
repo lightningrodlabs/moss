@@ -869,11 +869,6 @@ export function progenitorFromProperties(properties: Uint8Array): AgentPubKeyB64
   return groupDnaProperties.progenitor;
 }
 
-export function modifiersToInviteUrl(modifiers: DnaModifiers) {
-  const groupDnaProperties = decode(modifiers.properties) as GroupDnaProperties;
-  return `https://theweave.social/wal?weave-0.15://invite/${modifiers.network_seed}&progenitor=${groupDnaProperties.progenitor}`;
-}
-
 export async function groupModifiersToAppId(modifiers: DnaModifiers): Promise<InstalledAppId> {
   const hashBuffer = await crypto.subtle.digest(
     'SHA-256',
@@ -886,10 +881,12 @@ export async function groupModifiersToAppId(modifiers: DnaModifiers): Promise<In
   return `group#${hashedSeed}#${groupDnaProperties.progenitor ? groupDnaProperties.progenitor : null}`;
 }
 
-// Allow weave-0.15:// in addition to DOMPurify's default URI schemes, so that
-// weave-asset links survive sanitization and reach setWindowOpenHandler.
+// Allow weave schemes of any protocol version in addition to DOMPurify's default URI
+// schemes, so that weave links survive sanitization and reach setWindowOpenHandler --
+// including links from another Moss version, which the handler explains rather than
+// dropping silently.
 const MARKDOWN_ALLOWED_URI_REGEXP =
-  /^(?:(?:https?|ftps?|mailto|tel|callto|sms|cid|xmpp|weave-0\.15):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
+  /^(?:(?:https?|ftps?|mailto|tel|callto|sms|cid|xmpp|weave-\d+\.\d+):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
 
 DOMPurify.addHook('afterSanitizeAttributes', (node) => {
   if (node.tagName === 'A') {

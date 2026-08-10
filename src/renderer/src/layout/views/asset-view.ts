@@ -11,7 +11,7 @@ import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@theweave/elements/dist/elements/share-wal.js';
 import '@theweave/elements/dist/elements/weave-client-context.js';
 
-import { encodeContext, WAL } from '@theweave/api';
+import { WAL, weaveUrlFromWal } from '@theweave/api';
 
 import { mossStoreContext } from '../../context.js';
 import { DnaLocation, EntryDefLocation } from '../../processes/hrl/locate-hrl.js';
@@ -20,7 +20,7 @@ import { MossStore } from '../../moss-store.js';
 import './applet-view.js';
 import '../../assets/pocket/wal-pocket.js';
 import { buildHeadlessWeaveClient } from '../../applets/applet-host.js';
-import { CellType, encodeHashToBase64 } from '@holochain/client';
+import { CellType } from '@holochain/client';
 import { openWalInWindow } from '../../utils.js';
 
 @customElement('asset-view')
@@ -63,13 +63,7 @@ export class AssetView extends LitElement {
   }
 
   async copyWal() {
-    let url = `weave-0.15://hrl/${encodeHashToBase64(this.wal.hrl[0])}/${encodeHashToBase64(
-      this.wal.hrl[1],
-    )}`;
-    if (this.wal.context) {
-      url = `${url}?context=${encodeContext(this.wal.context)}`;
-    }
-    await navigator.clipboard.writeText(url);
+    await navigator.clipboard.writeText(weaveUrlFromWal(this.wal));
 
     notify(msg('URL copied to clipboard.'));
   }
