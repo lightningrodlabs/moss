@@ -1053,9 +1053,24 @@ export async function handleAppletIframeMessage(
       groupStore.unsubscribeFromAssetStore(message.wal, encodeHashToBase64(source.appletHash));
       return;
     }
-    default:
+    case 'ready':
+    case 'search':
+      // Declared in AppletToParentRequest but not sent by any current applet, so
+      // the host has never handled them (they fell through to the throw below).
+      // Kept as explicit cases so the exhaustiveness guard holds; wire a real
+      // handler here if an applet starts sending one.
       throw Error(`Got unsupported message type: '${message.type}'`);
+    default:
+      // Exhaustiveness guard: every AppletToParentRequest variant must have a
+      // case above. A new variant makes `message` non-`never` here, which is a
+      // compile error — surfacing the gap at build time rather than as a runtime
+      // "unsupported message type" reject.
+      return assertNever(message);
   }
+}
+
+function assertNever(message: never): never {
+  throw Error(`Got unsupported message type: '${(message as AppletToParentRequest).type}'`);
 }
 
 export class AppletHost {

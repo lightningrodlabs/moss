@@ -4,7 +4,8 @@
  * The corresponding typescript types are defined in libs/api/types.ts
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type, type Static } from '@sinclair/typebox';
+import type { AppletToParentRequest as AppletToParentRequestType } from '@theweave/api';
 
 const EntryHash = Type.Uint8Array({ minByteLength: 39, maxByteLength: 39 });
 const ActionHash = Type.Uint8Array({ minByteLength: 39, maxByteLength: 39 });
@@ -528,3 +529,20 @@ export const AppletToParentRequest = Type.Union([
     { additionalProperties: false },
   ),
 ]);
+
+/**
+ * Compile-time link between this TypeBox validator and the AppletToParentRequest
+ * union in @theweave/api. The two are maintained by hand; if a new message type
+ * is added to the union but not here (or vice versa), the message-type
+ * discriminant sets diverge and `_WireContractInSync` fails to compile. This
+ * catches the drift that would otherwise make a new message fail validateRequest
+ * at runtime — the applet-side counterpart to the IPC-contract drift test.
+ */
+type SchemaMessageTypes = Static<typeof AppletToParentRequest>['type'];
+type UnionMessageTypes = AppletToParentRequestType['type'];
+type MutuallyAssignable<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
+type Assert<T extends true> = T;
+// Exported only so tsc counts it as used; the compile-time check is the point.
+export type WireContractInSync = Assert<
+  MutuallyAssignable<SchemaMessageTypes, UnionMessageTypes>
+>;
