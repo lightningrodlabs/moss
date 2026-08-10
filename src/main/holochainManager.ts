@@ -161,14 +161,67 @@ export class HolochainManager {
     conductorHandle.stdin.write(password);
     conductorHandle.stdin.end();
 
+    // Backstop for a conductor that never prints 'Conductor ready.' and never
+    // exits (a true hang). Generous so a slow first-run WASM compile does not
+    // trip it; the deterministic failures (crash / bad config / port conflict)
+    // are caught by the exit + error listeners below, not by this timer.
+    const LAUNCH_TIMEOUT_MS = 300_000;
+
     return new Promise((resolve, reject) => {
+      // A conductor process can fail in three ways this Promise must settle on,
+      // none of which the log-string matches below cover: it can fail to spawn
+      // ('error'), or exit before 'Conductor ready.' with a message that matches
+      // neither magic string (a lost port race, an incompatible database) — both
+      // of which previously left this Promise pending forever, hanging the UI at
+      // "starting Holochain...". `settled` guards against double-settling and
+      // also distinguishes a pre-ready exit (reject) from a post-ready crash
+      // (surface to the renderer; the Promise is long resolved).
+      let settled = false;
+      const timeout = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        reject(
+          `Holochain did not become ready within ${LAUNCH_TIMEOUT_MS / 1000}s. Check the logs for details (Help > Open Logs).`,
+        );
+      }, LAUNCH_TIMEOUT_MS);
+      const finishOk = (manager: HolochainManager) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        resolve(manager);
+      };
+      const finishErr = (message: string) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        reject(message);
+      };
+
+      conductorHandle.on('error', (err) => {
+        finishErr(`Failed to launch the Holochain conductor process: ${err}`);
+      });
+      conductorHandle.on('exit', (code, signal) => {
+        if (!settled) {
+          finishErr(
+            `Holochain conductor exited during startup (code ${code}, signal ${signal}) before becoming ready. Check the logs for details (Help > Open Logs).`,
+          );
+          return;
+        }
+        // Crashed after a successful startup: the Promise is already resolved, so
+        // surface it to the renderer rather than dropping it silently.
+        weEmitter.emitHolochainFatalPanic({
+          version,
+          data: `Holochain conductor exited after startup (code ${code}, signal ${signal}).`,
+        });
+      });
+
       conductorHandle.stdout.pipe(split()).on('data', async (line: string) => {
         weEmitter.emitHolochainLog({
           version,
           data: line,
         });
         if (line.includes('could not be parsed, because it is not valid YAML')) {
-          reject(
+          finishErr(
             `Holochain failed to start up and crashed. Check the logs for details (Help > Open Logs).`,
           );
         }
@@ -197,7 +250,7 @@ export class HolochainManager {
               console.log('Attached app interface port: ', attachAppInterfaceResponse);
               appPort = attachAppInterfaceResponse.port;
             }
-            resolve(
+            finishOk(
               new HolochainManager(
                 conductorHandle,
                 weEmitter,
@@ -210,7 +263,7 @@ export class HolochainManager {
               ),
             );
           } catch (e) {
-            reject(`Holochain conductor ready but failed to connect: ${e}`);
+            finishErr(`Holochain conductor ready but failed to connect: ${e}`);
           }
         }
       });
@@ -220,7 +273,7 @@ export class HolochainManager {
           data: line,
         });
         if (line.includes('holochain had a problem and crashed')) {
-          reject(
+          finishErr(
             `Holochain failed to start up and crashed. Check the logs for details (Help > Open Logs).`,
           );
         }
