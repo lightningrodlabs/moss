@@ -84,8 +84,6 @@ import {
   AppWebsocket,
   CallZomeRequest,
   CallZomeTransform,
-  CellId,
-  CellInfo,
   CellType,
   DnaHashB64,
   InstalledAppId,
@@ -113,14 +111,13 @@ import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import {
   appletIdFromAppId,
   deriveToolCompatibilityId,
-  getCellId,
   globalPubKeyFromListAppsResponse,
   isWeaveUrl,
   toLowerCaseB64,
   toolCompatibilityIdFromDistInfo,
   toOriginalCaseB64,
 } from '@theweave/utils';
-import { decideZomeCallSignable, type ZomeCallSigningDecision } from './zomeCallSigningPolicy';
+import { AppletZomeCallAuthorizer } from './appletZomeCallAuthorizer';
 import { sortVersionsDescending } from './utils';
 import { Profile as AgentProfile } from '@holochain-open-dev/profiles';
 import { Jimp } from 'jimp';
@@ -578,95 +575,13 @@ if (!RUNNING_WITH_COMMAND) {
     return signZomeCall(zomeCall, WE_RUST_HANDLER, WE_EMITTER);
   };
 
-  // Stable string key for a CellId ([DnaHash, AgentPubKey]) so it can go in a Set.
-  const cellIdKey = (cellId: CellId): string =>
-    `${encodeHashToBase64(cellId[0])}|${encodeHashToBase64(cellId[1])}`;
-
-  const cellIdsOfApp = (appInfo: AppInfo, roleFilter?: string): string[] => {
-    const keys: string[] = [];
-    for (const [roleName, cellInfos] of Object.entries(appInfo.cell_info)) {
-      if (roleFilter && roleName !== roleFilter) continue;
-      for (const cellInfo of cellInfos as CellInfo[]) {
-        const cellId = getCellId(cellInfo);
-        if (cellId) keys.push(cellIdKey(cellId));
-      }
-    }
-    return keys;
-  };
-
-  // Cache of the cells an applet is allowed to have signed. Resolving these means
-  // a listApps round-trip, and signing is on the hot path, so results are cached.
-  // A miss (the decision below says "no") always refreshes once before the call
-  // is refused, so a just-installed applet or group is picked up immediately with
-  // no false rejection; concurrent refreshes are coalesced into one listApps.
-  let appletCellCache:
-    | { ownByAppletId: Map<string, Set<string>>; groupCells: Set<string> }
-    | undefined;
-  let cacheRebuildInFlight: Promise<void> | undefined;
-
-  const rebuildAppletCellCache = (): Promise<void> => {
-    if (cacheRebuildInFlight) return cacheRebuildInFlight;
-    cacheRebuildInFlight = (async () => {
-      try {
-        const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
-        const ownByAppletId = new Map<string, Set<string>>();
-        const groupCells = new Set<string>();
-        for (const app of apps) {
-          const appId = app.installed_app_id;
-          if (appId.startsWith('applet#')) {
-            ownByAppletId.set(appletIdFromAppId(appId), new Set(cellIdsOfApp(app)));
-          } else if (appId.startsWith('group#')) {
-            // Only the `group` role cell hosts the profiles zome an applet may call.
-            for (const key of cellIdsOfApp(app, 'group')) groupCells.add(key);
-          }
-        }
-        appletCellCache = { ownByAppletId, groupCells };
-      } finally {
-        cacheRebuildInFlight = undefined;
-      }
-    })();
-    return cacheRebuildInFlight;
-  };
-
-  // The union of own-cells across the caller's applet ids. A plain applet caller
-  // passes one id; a cross-group view passes every applet of its tool, so it may
-  // legitimately sign for any of them (but still only their own cells).
-  const ownCellsForCallers = (callerAppletIds: AppletId[]): Set<string> => {
-    const union = new Set<string>();
-    for (const id of callerAppletIds) {
-      for (const key of appletCellCache?.ownByAppletId.get(id) ?? []) union.add(key);
-    }
-    return union;
-  };
-
-  // Decide whether to sign, rebuilding the cache once if a first look says no —
-  // covers the case where the applet or a group was installed since the last build.
-  const authorizeAppletZomeCall = async (
-    callerAppletIds: AppletId[],
-    zomeCall: CallZomeRequest,
-  ): Promise<ZomeCallSigningDecision> => {
-    if (!zomeCall.cell_id) return { sign: false, reason: 'unknown-cell' };
-    const evaluate = (): ZomeCallSigningDecision =>
-      decideZomeCallSignable({
-        cellIdB64: cellIdKey(zomeCall.cell_id!),
-        zomeName: zomeCall.zome_name,
-        appletOwnCellIdsB64: ownCellsForCallers(callerAppletIds),
-        groupCellIdsB64: appletCellCache?.groupCells ?? new Set(),
-      });
-
-    if (!appletCellCache) await rebuildAppletCellCache();
-    let decision = evaluate();
-    // Refresh once before refusing only when the cell is simply unknown — it may
-    // belong to an applet or group installed since the cache was last built. A
-    // known group cell refused for a non-profiles zome cannot become allowed by
-    // a rebuild, so don't pay a listApps round-trip for those (a misbehaving
-    // applet could otherwise trigger one per rejected call).
-    if (!decision.sign && decision.reason === 'unknown-cell') {
-      await rebuildAppletCellCache();
-      decision = evaluate();
-    }
-    return decision;
-  };
+  // Scopes applet-requested signing to each applet's own cells + group profiles.
+  // Reads live app info lazily via the admin websocket (set during launch); its
+  // cache is invalidated when an applet is uninstalled so it never keeps granting
+  // for a cell whose app is gone.
+  const appletZomeCallAuthorizer = new AppletZomeCallAuthorizer(() =>
+    HOLOCHAIN_MANAGER!.adminWebsocket.listApps({}),
+  );
 
   const handleSignZomeCallApplet = async (
     _e: IpcMainInvokeEvent,
@@ -678,7 +593,7 @@ if (!RUNNING_WITH_COMMAND) {
     if (!Array.isArray(callerAppletIds) || callerAppletIds.length === 0)
       throw Error('sign-zome-call-applet requires the requesting applet id(s).');
 
-    const decision = await authorizeAppletZomeCall(callerAppletIds, zomeCall);
+    const decision = await appletZomeCallAuthorizer.authorize(callerAppletIds, zomeCall);
     if (!decision.sign) {
       throw Error(
         `Refusing to sign zome call for applet(s) ${callerAppletIds.join(', ')}: ${decision.reason}. An applet may only sign calls to its own cells and to the profiles zome of a group cell.`,
@@ -2844,6 +2759,7 @@ if (!RUNNING_WITH_COMMAND) {
       await HOLOCHAIN_MANAGER!.adminWebsocket.uninstallApp({
         installed_app_id: appId,
       });
+      appletZomeCallAuthorizer.invalidate();
       try {
         WE_FILE_SYSTEM.deleteAppMetaDataDir(appId);
       } catch (e: any) {
@@ -3145,6 +3061,7 @@ if (!RUNNING_WITH_COMMAND) {
       await HOLOCHAIN_MANAGER!.adminWebsocket.uninstallApp({
         installed_app_id: appId,
       });
+      appletZomeCallAuthorizer.invalidate();
       WE_FILE_SYSTEM.deleteAppMetaDataDir(appId);
     });
     ipcMain.handle('launch', async (_e): Promise<boolean> => {
