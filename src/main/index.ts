@@ -66,6 +66,9 @@ import {
   ToolCompatibilityId,
   ToolInfoAndVersions,
   WeaveDevConfig,
+  WEAVE_PROTOCOL_VERSION,
+  WEAVE_URL_SCHEME,
+  SUPERSEDED_URL_SCHEMES,
 } from '@theweave/moss-types';
 import { nanoid } from 'nanoid';
 import {
@@ -112,14 +115,12 @@ import {
   deriveToolCompatibilityId,
   getCellId,
   globalPubKeyFromListAppsResponse,
+  isWeaveUrl,
   toLowerCaseB64,
   toolCompatibilityIdFromDistInfo,
   toOriginalCaseB64,
 } from '@theweave/utils';
-import {
-  decideZomeCallSignable,
-  type ZomeCallSigningDecision,
-} from './zomeCallSigningPolicy';
+import { decideZomeCallSignable, type ZomeCallSigningDecision } from './zomeCallSigningPolicy';
 import { sortVersionsDescending } from './utils';
 import { Profile as AgentProfile } from '@holochain-open-dev/profiles';
 import { Jimp } from 'jimp';
@@ -182,13 +183,27 @@ console.log('MOSS VERSION: ', appVersion);
 
 // console.log('process.argv: ', process.argv);
 
-// Set as default protocol client for weave-0.15 deep links
+// Claim this Moss version's own deep link scheme, so that links made by a Moss
+// version with an incompatible group DNA are routed to the version that can open them.
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient('weave-0.15', process.execPath, [path.resolve(process.argv[1])]);
+    app.setAsDefaultProtocolClient(WEAVE_URL_SCHEME, process.execPath, [
+      path.resolve(process.argv[1]),
+    ]);
   }
 } else {
-  app.setAsDefaultProtocolClient('weave-0.15');
+  app.setAsDefaultProtocolClient(WEAVE_URL_SCHEME);
+}
+
+// Earlier builds of this Moss version claimed the previous version's scheme. Hand it
+// back so that its links reach the Moss version that made them. This is a no-op unless
+// this executable is the currently registered handler, and unimplemented on Linux.
+for (const scheme of SUPERSEDED_URL_SCHEMES) {
+  try {
+    app.removeAsDefaultProtocolClient(scheme);
+  } catch (e) {
+    console.warn(`Failed to release protocol scheme ${scheme}: `, e);
+  }
 }
 
 const ranViaCli = process.argv[3] && process.argv[3].endsWith('weave');
@@ -408,7 +423,9 @@ if (!RUNNING_WITH_COMMAND) {
     } else {
       // https://github.com/electron/electron/issues/40173
       if (process.platform !== 'darwin') {
-        CACHED_DEEP_LINK = process.argv.find((arg) => arg.startsWith('weave-0.15://'));
+        // Accept any protocol version here, matching the running-instance paths below,
+        // so a link from another Moss version is explained rather than dropped.
+        CACHED_DEEP_LINK = process.argv.find((arg) => isWeaveUrl(arg));
       }
 
       // This event will always be triggered in the first instance, no matter with which profile
@@ -1060,7 +1077,7 @@ if (!RUNNING_WITH_COMMAND) {
     );
 
     SYSTRAY = new Tray(SYSTRAY_ICON_DEFAULT);
-    SYSTRAY.setToolTip('Moss (0.15)');
+    SYSTRAY.setToolTip(`Moss (${semver.major(appVersion)}.${semver.minor(appVersion)})`);
 
     const notificationIcon = nativeImage.createFromPath(path.join(ICONS_DIRECTORY, '128x128.png'));
 
@@ -1735,7 +1752,7 @@ if (!RUNNING_WITH_COMMAND) {
             app_port: HOLOCHAIN_MANAGER.appPort,
             admin_port: HOLOCHAIN_MANAGER.adminPort,
             moss_version: app.getVersion(),
-            weave_protocol_version: '0.15',
+            weave_protocol_version: WEAVE_PROTOCOL_VERSION,
             network_info,
           }
         : undefined;

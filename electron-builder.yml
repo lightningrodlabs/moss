@@ -11,9 +11,10 @@ asarUnpack:
   - resources/**
 afterSign: scripts/notarize.js
 protocols:
+  # Must match WEAVE_URL_SCHEME in shared/types/src/const.ts (guarded by a unit test).
   - name: Weave URL
     schemes:
-      - weave-0.15
+      - weave-0.16
 win:
   executableName: moss
 nsis:

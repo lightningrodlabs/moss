@@ -13,6 +13,7 @@ import {
 import { decode, encode } from '@msgpack/msgpack';
 import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import { ResourceLocation, ToolVersionInfo, WeaveDevConfig } from '@theweave/moss-types';
+import { isWeaveUrl } from '@theweave/utils';
 import { sha512 } from 'js-sha512';
 import { WeEmitter } from './weEmitter';
 import { compareVersions, validate as validateSemver } from 'compare-versions';
@@ -79,7 +80,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       // ignore vite routing in dev mode
       return;
     }
-    if (e.url.startsWith('weave-0.15://')) {
+    if (isWeaveUrl(e.url)) {
       e.preventDefault();
       // This event is emitted to allow the window to prevent the
       // beforeunload event to execute
@@ -108,7 +109,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       // ignore vite routing in dev mode
       return;
     }
-    if (e.url.startsWith('weave-0.15://')) {
+    if (isWeaveUrl(e.url)) {
       emitToWindow(browserWindow, 'deep-link-received', e.url);
       e.preventDefault();
       return;
@@ -130,7 +131,7 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
   // happ windows are not allowed to spawn new electron windows
   browserWindow.webContents.setWindowOpenHandler((details) => {
     // console.log('GOT NEW WINDOW EVENT: ', details);
-    if (details.url.startsWith('weave-0.15://')) {
+    if (isWeaveUrl(details.url)) {
       emitToWindow(browserWindow, 'deep-link-received', details.url);
     }
     if (details.url.startsWith('http://') || details.url.startsWith('https://')) {
