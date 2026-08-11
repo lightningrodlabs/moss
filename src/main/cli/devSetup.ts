@@ -37,6 +37,7 @@ import * as childProcess from 'child_process';
 import split from 'split';
 import { AgentProfile, AppletConfig, GroupConfig, WebHappLocation } from '@theweave/moss-types';
 import { EntryRecord } from '@holochain-open-dev/utils';
+import { ProfilesClient } from '@holochain-open-dev/profiles/dist/profiles-client.js';
 import { KITSUNE2_BOOTSTRAP_SRV_BINARY } from '../const';
 import {
   appIdFromAppletHash,
@@ -494,14 +495,10 @@ async function joinGroup(
   const avatarSrc = agentProfile.avatar ? await readIcon(agentProfile.avatar) : undefined;
   console.log('Creating profile....');
 
-  await groupWebsocket.callZome({
-    role_name: 'group',
-    zome_name: 'profiles',
-    fn_name: 'create_profile',
-    payload: {
-      nickname: agentProfile.nickname,
-      fields: avatarSrc ? { avatar: avatarSrc } : {},
-    },
+  const profilesClient = new ProfilesClient(groupWebsocket, 'group');
+  await profilesClient.createProfile({
+    nickname: agentProfile.nickname,
+    fields: avatarSrc ? { avatar: avatarSrc } : {},
   });
   console.log('profile created.');
 

@@ -9,6 +9,7 @@ export default defineConfig({
         exclude: [
           '@holochain/client',
           '@holochain-open-dev/utils',
+          '@holochain-open-dev/profiles',
           'nanoid',
           'mime',
           '@theweave/moss-types',

@@ -15,6 +15,7 @@ import fs from 'fs';
 import { startConductor } from './start.js';
 import { WDockerFilesystem } from '../filesystem.js';
 import { getAdminWsAndAppPort, getAppWs, getWeRustHandler } from '../helpers/helpers.js';
+import { ProfilesClient } from '@holochain-open-dev/profiles/dist/profiles-client.js';
 import {
   ALWAYS_ONLINE_TAG,
   GroupClient,
@@ -140,32 +141,18 @@ setTimeout(async () => {
     const myPubkeySum = Array.from(groupAppWs.myPubKey).reduce((acc, curr) => acc + curr, 0);
 
     // Get all local agents first, then try getting them over the network
-    const allAgents: AgentPubKey[] = await groupAppWs.callZome({
-      role_name: 'group',
-      zome_name: 'profiles',
-      fn_name: 'get_agents_with_profile',
-      payload: { input: null, local: true },
-    });
+    const profilesClient = new ProfilesClient(groupAppWs, 'group');
+    const allAgents: AgentPubKey[] = await profilesClient.getAgentsWithProfile(true);
     GROUP_ALL_AGENTS[groupApp.installed_app_id] = allAgents;
     try {
-      const allAgents: AgentPubKey[] = await groupAppWs.callZome({
-        role_name: 'group',
-        zome_name: 'profiles',
-        fn_name: 'get_agents_with_profile',
-        payload: { input: null, local: false },
-      });
+      const allAgents: AgentPubKey[] = await profilesClient.getAgentsWithProfile(false);
       GROUP_ALL_AGENTS[groupApp.installed_app_id] = allAgents;
     } catch (e) {
       console.warn('WARN: Failed to get agents with profile via the network.');
     }
     setInterval(async () => {
       try {
-        const allAgents: AgentPubKey[] = await groupAppWs.callZome({
-          role_name: 'group',
-          zome_name: 'profiles',
-          fn_name: 'get_agents_with_profile',
-          payload: { input: null, local: false },
-        });
+        const allAgents: AgentPubKey[] = await profilesClient.getAgentsWithProfile(false);
         GROUP_ALL_AGENTS[groupApp.installed_app_id] = allAgents;
       } catch (e) {
         console.warn('WARN: Failed to get agents with profile via the network.');
