@@ -1203,7 +1203,7 @@ if (!RUNNING_WITH_COMMAND) {
         }
         // Kill holochain and lair
         if (LAIR_HANDLE) LAIR_HANDLE.kill();
-        if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.processHandle.kill();
+        if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.shutdown();
         // Remove all data
         await WE_FILE_SYSTEM.factoryReset();
         // restart Moss
@@ -1246,7 +1246,7 @@ if (!RUNNING_WITH_COMMAND) {
           window.window.close();
         }
         if (LAIR_HANDLE) LAIR_HANDLE.kill();
-        if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.processHandle.kill();
+        if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.shutdown();
         const options: Electron.RelaunchOptions = { args: process.argv };
         if (process.env.APPIMAGE) {
           options.args!.unshift('--appimage-extract-and-run');
@@ -1265,7 +1265,7 @@ if (!RUNNING_WITH_COMMAND) {
         window.window.close();
       }
       if (LAIR_HANDLE) LAIR_HANDLE.kill();
-      if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.processHandle.kill();
+      if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.shutdown();
       const options: Electron.RelaunchOptions = { args: process.argv };
       if (process.env.APPIMAGE) {
         options.args!.unshift('--appimage-extract-and-run');
@@ -3160,7 +3160,7 @@ if (!RUNNING_WITH_COMMAND) {
       LAIR_HANDLE.kill();
     }
     if (HOLOCHAIN_MANAGER) {
-      HOLOCHAIN_MANAGER.processHandle.kill();
+      HOLOCHAIN_MANAGER.shutdown();
     }
     if (LOCAL_SERVICES_HANDLE) {
       LOCAL_SERVICES_HANDLE.kill();
