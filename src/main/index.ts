@@ -577,8 +577,8 @@ if (!RUNNING_WITH_COMMAND) {
 
   // Scopes applet-requested signing to each applet's own cells + group profiles.
   // Reads live app info lazily via the admin websocket (set during launch); its
-  // cache is invalidated when an applet is uninstalled so it never keeps granting
-  // for a cell whose app is gone.
+  // cache is invalidated on app enable/uninstall so a just-installed cell is
+  // grantable at once and a gone cell is never granted.
   const appletZomeCallAuthorizer = new AppletZomeCallAuthorizer(() =>
     HOLOCHAIN_MANAGER!.adminWebsocket.listApps({}),
   );
@@ -1162,6 +1162,10 @@ if (!RUNNING_WITH_COMMAND) {
 
   function registerIPCHandlers(notificationIcon: Electron.NativeImage) {
     ipcMain.handle('exit', () => {
+      // app.exit(0) skips the before-quit handler, so stop the subprocesses here
+      // or they survive as orphans holding the admin port and keystore.
+      if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.shutdown();
+      if (LAIR_HANDLE) LAIR_HANDLE.kill();
       app.exit(0);
     });
     ipcMain.handle('open-logs', async () => WE_FILE_SYSTEM.openLogs());
@@ -1807,6 +1811,7 @@ if (!RUNNING_WITH_COMMAND) {
           });
         }
         await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+        appletZomeCallAuthorizer.invalidate();
         setTimeout(
           () =>
             autoSaveGroupsExport().catch((e) =>
@@ -2082,6 +2087,7 @@ if (!RUNNING_WITH_COMMAND) {
             },
           });
           await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+          appletZomeCallAuthorizer.invalidate();
 
           const token = await HOLOCHAIN_MANAGER!.getAppToken(appId);
           const appWs = await AppWebsocket.connect({
@@ -2388,6 +2394,7 @@ if (!RUNNING_WITH_COMMAND) {
         console.log('Determined appId for group: ', appId);
         if (apps.map((appInfo) => appInfo.installed_app_id).includes(appId)) {
           await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+          appletZomeCallAuthorizer.invalidate();
           const appInfo = apps.find((appInfo) => appInfo.installed_app_id === appId);
           if (!appInfo) throw new Error('AppInfo undefined.');
           return appInfo;
@@ -2417,6 +2424,7 @@ if (!RUNNING_WITH_COMMAND) {
           },
         });
         await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+        appletZomeCallAuthorizer.invalidate();
         setTimeout(
           () =>
             autoSaveGroupsExport().catch((e) =>
@@ -3033,6 +3041,7 @@ if (!RUNNING_WITH_COMMAND) {
         // Enable the app after storing metadata in case enabling fails
         try {
           await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+          appletZomeCallAuthorizer.invalidate();
         } catch (e) {
           // If the app failed to get enabled due to a reason other than awaiting memproofs, log it
           // but continue. The app would then need to get enabled in the UI.

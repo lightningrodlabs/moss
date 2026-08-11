@@ -173,46 +173,53 @@ export class HolochainManager {
     conductorHandle.stdin.write(password);
     conductorHandle.stdin.end();
 
-    // Backstop for a conductor that never prints 'Conductor ready.' and never
-    // exits (a true hang). Generous so a slow first-run WASM compile does not
-    // trip it; the deterministic failures (crash / bad config / port conflict)
-    // are caught by the exit + error listeners below, not by this timer.
-    const LAUNCH_TIMEOUT_MS = 300_000;
+    // Inactivity backstop for a conductor that hangs without ever becoming ready
+    // and without exiting. It measures silence, not total time, so a slow but
+    // progressing first-run migration + WASM compile (which keeps logging) is not
+    // killed; deterministic failures (crash / bad config / port conflict) are
+    // caught by the exit + error listeners, not by this timer.
+    const LAUNCH_INACTIVITY_TIMEOUT_MS = 300_000;
 
     return new Promise((resolve, reject) => {
       // A conductor process can fail to spawn ('error'), or exit before
       // 'Conductor ready.' with a message that matches neither magic string
-      // below (a lost port race, an incompatible database), or hang without ever
+      // below (a lost port race, an incompatible database), or go silent without
       // becoming ready — all of which must settle this Promise rather than leave
       // the UI waiting at "starting Holochain...". `settled` guards against
       // double-settling; a failed launch also kills the process so it cannot
       // linger holding the admin port and SQLite locks.
       let settled = false;
-      const timeout = setTimeout(() => {
-        finishErr(
-          `Holochain did not become ready within ${LAUNCH_TIMEOUT_MS / 1000}s. Check the logs for details (Help > Open Logs).`,
-        );
-      }, LAUNCH_TIMEOUT_MS);
+      let inactivityTimer: ReturnType<typeof setTimeout>;
       const finishOk = (manager: HolochainManager) => {
         if (settled) return;
         settled = true;
-        clearTimeout(timeout);
+        clearTimeout(inactivityTimer);
         resolve(manager);
       };
       const finishErr = (message: string) => {
         if (settled) return;
         settled = true;
-        clearTimeout(timeout);
+        clearTimeout(inactivityTimer);
         conductorHandle.kill();
         reject(message);
       };
+      // Restart the silence timer on any output; startup progress keeps it alive.
+      const armInactivityTimer = () => {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(() => {
+          finishErr(
+            `Holochain produced no output for ${LAUNCH_INACTIVITY_TIMEOUT_MS / 1000}s and never became ready. Check the logs for details (Help > Open Logs).`,
+          );
+        }, LAUNCH_INACTIVITY_TIMEOUT_MS);
+      };
+      armInactivityTimer();
 
       conductorHandle.on('error', (err) => {
         finishErr(`Failed to launch the Holochain conductor process: ${err}`);
       });
-      // Only the pre-ready exit is handled here. A post-startup exit is handled
-      // by the manager-aware listener attached once launch succeeds (below),
-      // which can tell a deliberate shutdown from a crash.
+      // A pre-ready exit rejects the launch. A post-startup exit is judged by a
+      // separate listener attached once the manager exists, because there it must
+      // distinguish a deliberate shutdown from a crash.
       conductorHandle.on('exit', (code, signal) => {
         if (settled) return;
         finishErr(
@@ -221,6 +228,7 @@ export class HolochainManager {
       });
 
       conductorHandle.stdout.pipe(split()).on('data', async (line: string) => {
+        armInactivityTimer();
         weEmitter.emitHolochainLog({
           version,
           data: line,
@@ -231,6 +239,9 @@ export class HolochainManager {
           );
         }
         if (line.includes('Conductor ready.')) {
+          // Guard against a second matching line opening a second admin websocket
+          // and attaching a second post-startup exit listener.
+          if (settled) return;
           console.log(
             `[MOSS] Detected 'Conductor ready.' on stdout. Connecting to admin port ${adminPort}...`,
           );
@@ -267,8 +278,10 @@ export class HolochainManager {
             );
             // Report a crash after a successful startup, but not a deliberate
             // stop (quit / restart / factory reset, which set `shuttingDown`).
-            // MOSS_ERROR is used because it has a subscriber (logs.ts); the
-            // fatal-panic channel has none, so it would drop the report.
+            // Emit on MOSS_ERROR so the crash reaches the log subscriber.
+            // TODO: also surface this to the renderer — the UI currently keeps
+            // rendering against a dead conductor and every zome call fails
+            // opaquely; there is no user-facing "conductor stopped" notification.
             conductorHandle.on('exit', (code, signal) => {
               if (manager.shuttingDown) return;
               weEmitter.emitMossError(
@@ -282,6 +295,7 @@ export class HolochainManager {
         }
       });
       conductorHandle.stderr.pipe(split()).on('data', (line: string) => {
+        armInactivityTimer();
         weEmitter.emitHolochainError({
           version,
           data: line,

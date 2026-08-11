@@ -103,6 +103,9 @@ export async function launch(
       runOptions.holochainWasmLog,
     );
   } catch (e) {
+    // lair is already running at this point; kill it so a failed launch (and each
+    // splash-screen retry) doesn't leave an orphan lair against the keystore dir.
+    lairHandle.kill();
     weEmitter.emitMossError(`Failed to launch HolochainManager: ${e}`);
     throw new Error(`Failed to launch HolochainManager: ${e}`);
   }
@@ -114,6 +117,10 @@ export async function launch(
   try {
     weRustHandler = await rustUtils.WeRustHandler.connect(lairUrl, password);
   } catch (e) {
+    // Both lair and the conductor are running now; kill both so a failed launch
+    // doesn't leave them orphaned holding the keystore and the admin port.
+    lairHandle.kill();
+    holochainManager.shutdown();
     weEmitter.emitMossError(`Failed to connect to WeRustHandler: ${e}`);
     throw new Error(`Failed to connect to WeRustHandler: ${e}`);
   }

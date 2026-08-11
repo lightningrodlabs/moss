@@ -29,7 +29,10 @@ const ASSETS_CELL = cellId([3]);
 const FOREIGN_CELL = cellId([255]);
 
 const appletApp = (id: string, cell: CellId): AppInfo =>
-  ({ installed_app_id: appIdFromAppletId(id), cell_info: { forum: [provisioned(cell)] } }) as unknown as AppInfo;
+  ({
+    installed_app_id: appIdFromAppletId(id),
+    cell_info: { forum: [provisioned(cell)] },
+  }) as unknown as AppInfo;
 
 const groupApp = (): AppInfo =>
   ({
@@ -46,7 +49,9 @@ function req(id: CellId, zome_name: string): CallZomeRequest {
 }
 
 /** Harness with a controllable clock and mutable installed-app list. */
-function harness(initial: AppInfo[] = [appletApp(APPLET_A, A_CELL), appletApp(APPLET_B, B_CELL), groupApp()]) {
+function harness(
+  initial: AppInfo[] = [appletApp(APPLET_A, A_CELL), appletApp(APPLET_B, B_CELL), groupApp()],
+) {
   let now = 0;
   let apps = initial;
   let calls = 0;
@@ -110,7 +115,9 @@ describe('AppletZomeCallAuthorizer', () => {
 
   it('a cross-group caller may sign for any of its tool’s applets', async () => {
     const { authorizer } = harness();
-    expect((await authorizer.authorize([APPLET_A, APPLET_B], req(B_CELL, 'posts'))).sign).toBe(true);
+    expect((await authorizer.authorize([APPLET_A, APPLET_B], req(B_CELL, 'posts'))).sign).toBe(
+      true,
+    );
   });
 
   it('refuses a missing cell_id', async () => {
@@ -170,43 +177,86 @@ describe('AppletZomeCallAuthorizer', () => {
     expect(h.calls()).toBe(2);
   });
 
-  it('self-heals a missed uninstall once the cache ages past the max (leaveGroup bypass)', async () => {
+  it('self-heals a missed uninstall via a background refresh once past the max age', async () => {
     const h = harness();
-    // A is granted while installed.
+    // A is granted while installed (cache built at t=0).
     expect((await h.authorizer.authorize([APPLET_A], req(A_CELL, 'posts'))).sign).toBe(true);
     // A is uninstalled via a path that does NOT call invalidate() (leaveGroup).
     h.setApps([appletApp(APPLET_B, B_CELL), groupApp()]);
-    // Before the max age, the stale grant may persist (no live iframe uses it)...
+    // Within the max age the stale grant persists (no live iframe uses it).
     h.advance(30_000);
     expect((await h.authorizer.authorize([APPLET_A], req(A_CELL, 'posts'))).sign).toBe(true);
-    // ...but past the max age the cache is rebuilt and the grant is gone.
-    h.advance(61_000);
+    // Past the max age, the first call still serves the stale set (does not block)
+    // but kicks a background refresh.
+    h.advance(31_000);
+    expect((await h.authorizer.authorize([APPLET_A], req(A_CELL, 'posts'))).sign).toBe(true);
+    // Once the refresh settles, the grant is gone.
+    await flush();
     expect((await h.authorizer.authorize([APPLET_A], req(A_CELL, 'posts'))).sign).toBe(false);
   });
 
-  it('an invalidate during an in-flight rebuild discards that stale snapshot (generation)', async () => {
+  it('keeps signing when a stale-age background refresh rejects', async () => {
     let now = 0;
-    let apps = [appletApp(APPLET_A, A_CELL)];
-    let release!: () => void;
-    const gate = new Promise<void>((r) => (release = r));
-    let calls = 0;
+    let fail = false;
     const authorizer = new AppletZomeCallAuthorizer(
       async () => {
-        calls += 1;
-        await gate; // hold the first listApps open
-        return apps;
+        if (fail) throw new Error('admin socket reconnecting');
+        return [appletApp(APPLET_A, A_CELL), groupApp()];
       },
       () => now,
     );
-    // Start a rebuild that will resolve to the pre-uninstall snapshot.
+    expect((await authorizer.authorize([APPLET_A], req(A_CELL, 'posts'))).sign).toBe(true);
+    now += 61_000; // stale; the background refresh will now reject
+    fail = true;
+    // Signing keeps working against the warm cache; the rejected refresh does not
+    // propagate (and must not surface as an unhandled rejection).
+    expect((await authorizer.authorize([APPLET_A], req(A_CELL, 'posts'))).sign).toBe(true);
+    await flush();
+  });
+
+  it('an invalidate during an in-flight rebuild discards that stale snapshot (generation)', async () => {
+    const { authorizer, releaseListApps, setApps } = gatedHarness([appletApp(APPLET_A, A_CELL)]);
     const first = authorizer.authorize([APPLET_A], req(A_CELL, 'posts'));
-    // App is uninstalled and invalidate() is called while listApps is in flight.
-    apps = [];
+    setApps([]); // uninstalled while listApps is in flight
     authorizer.invalidate();
-    release();
+    releaseListApps();
     await first;
     // The stale snapshot must not have been committed: A is no longer granted.
     expect((await authorizer.authorize([APPLET_A], req(A_CELL, 'posts'))).sign).toBe(false);
-    expect(calls).toBeGreaterThanOrEqual(2); // the discarded build + a fresh one
+  });
+
+  it('a legit call after an in-flight invalidate rebuilds fresh (no strand)', async () => {
+    // The discarded rebuild must not leave the authorizer refusing a cell that is
+    // still installed: the next call re-lists and grants it.
+    const { authorizer, releaseListApps } = gatedHarness([appletApp(APPLET_A, A_CELL), groupApp()]);
+    const first = authorizer.authorize([APPLET_A], req(A_CELL, 'posts'));
+    authorizer.invalidate();
+    releaseListApps();
+    await first;
+    expect((await authorizer.authorize([APPLET_A], req(A_CELL, 'posts'))).sign).toBe(true);
   });
 });
+
+/** Resolve after pending microtasks + one macrotask so background rebuilds settle. */
+const flush = () => new Promise((r) => setTimeout(r, 0));
+
+/** Harness whose listApps blocks until releaseListApps() is called, for in-flight races. */
+function gatedHarness(initial: AppInfo[]) {
+  let apps = initial;
+  let release!: () => void;
+  const gate = new Promise<void>((r) => (release = r));
+  const authorizer = new AppletZomeCallAuthorizer(
+    async () => {
+      await gate;
+      return apps;
+    },
+    () => 0,
+  );
+  return {
+    authorizer,
+    releaseListApps: () => release(),
+    setApps: (a: AppInfo[]) => {
+      apps = a;
+    },
+  };
+}
