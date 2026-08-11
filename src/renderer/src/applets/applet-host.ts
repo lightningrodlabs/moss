@@ -1056,9 +1056,9 @@ export async function handleAppletIframeMessage(
     case 'ready':
     case 'search':
       // Declared in AppletToParentRequest but not sent by any current applet, so
-      // the host has never handled them (they fell through to the throw below).
-      // Kept as explicit cases so the exhaustiveness guard holds; wire a real
-      // handler here if an applet starts sending one.
+      // the host has no handler for them. Kept as explicit cases so the
+      // exhaustiveness guard holds; wire a real handler here if an applet starts
+      // sending one.
       throw Error(`Got unsupported message type: '${message.type}'`);
     default:
       // Exhaustiveness guard: every AppletToParentRequest variant must have a
