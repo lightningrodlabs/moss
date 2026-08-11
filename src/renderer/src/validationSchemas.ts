@@ -413,13 +413,6 @@ export const AppletToParentRequest = Type.Union([
   ),
   Type.Object(
     {
-      type: Type.Literal('asset-to-pocket'),
-      wal: WAL,
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
       type: Type.Literal('user-select-asset'),
       from: Type.Optional(
         Type.Union([
@@ -521,20 +514,13 @@ export const AppletToParentRequest = Type.Union([
     },
     { additionalProperties: false },
   ),
-  Type.Object(
-    {
-      type: Type.Literal('unsubscribe-from-asset-store'),
-      wal: WAL,
-    },
-    { additionalProperties: false },
-  ),
 ]);
 
 /**
  * Compile-time link between this TypeBox validator and the AppletToParentRequest
  * union in @theweave/api. The two are maintained by hand; if a new message type
  * is added to the union but not here (or vice versa), the message-type
- * discriminant sets diverge and `_WireContractInSync` fails to compile. This
+ * discriminant sets diverge and `WireContractInSync` fails to compile. This
  * catches the drift that would otherwise make a new message fail validateRequest
  * at runtime — the applet-side counterpart to the IPC-contract drift test.
  */
@@ -543,6 +529,4 @@ type UnionMessageTypes = AppletToParentRequestType['type'];
 type MutuallyAssignable<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
 type Assert<T extends true> = T;
 // Exported only so tsc counts it as used; the compile-time check is the point.
-export type WireContractInSync = Assert<
-  MutuallyAssignable<SchemaMessageTypes, UnionMessageTypes>
->;
+export type WireContractInSync = Assert<MutuallyAssignable<SchemaMessageTypes, UnionMessageTypes>>;
