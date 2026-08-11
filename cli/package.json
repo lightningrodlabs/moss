@@ -17,7 +17,7 @@
   "dependencies": {
     "@holochain/client": "^0.21.0",
     "@holochain-open-dev/elements": "^0.700.0",
-    "@holochain-open-dev/profiles": "^0.700.0",
+    "@holochain-open-dev/profiles": "^0.701.0",
     "@holochain-open-dev/stores": "^0.700.0",
     "@holochain-open-dev/utils": "^0.700.0",
     "@lightningrodlabs/we-rust-utils": "^0.700.0-dev.0",
