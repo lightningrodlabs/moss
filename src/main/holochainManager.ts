@@ -173,37 +173,49 @@ export class HolochainManager {
     conductorHandle.stdin.write(password);
     conductorHandle.stdin.end();
 
-    // Inactivity backstop for a conductor that hangs without ever becoming ready
-    // and without exiting. It measures silence, not total time, so a slow but
-    // progressing first-run migration + WASM compile (which keeps logging) is not
-    // killed; deterministic failures (crash / bad config / port conflict) are
-    // caught by the exit + error listeners, not by this timer.
+    // Two backstops for a conductor that never becomes ready. The inactivity
+    // timer measures silence, not total time, so a slow but progressing first-run
+    // migration + WASM compile (which keeps logging) is not killed. The absolute
+    // cap catches the opposite failure the inactivity timer cannot see — a
+    // conductor that keeps logging but never prints 'Conductor ready.' (a pre-ready
+    // retry loop, or a reworded magic string). Deterministic failures (crash / bad
+    // config / port conflict) are caught by the exit + error listeners.
     const LAUNCH_INACTIVITY_TIMEOUT_MS = 300_000;
+    const LAUNCH_ABSOLUTE_TIMEOUT_MS = 20 * 60_000;
 
     return new Promise((resolve, reject) => {
       // A conductor process can fail to spawn ('error'), or exit before
       // 'Conductor ready.' with a message that matches neither magic string
-      // below (a lost port race, an incompatible database), or go silent without
-      // becoming ready — all of which must settle this Promise rather than leave
-      // the UI waiting at "starting Holochain...". `settled` guards against
-      // double-settling; a failed launch also kills the process so it cannot
-      // linger holding the admin port and SQLite locks.
+      // below (a lost port race, an incompatible database), or never become ready
+      // (silent, or logging-but-stuck) — all of which must settle this Promise
+      // rather than leave the UI waiting at "starting Holochain...". `settled`
+      // guards against double-settling; a failed launch also kills the process so
+      // it cannot linger holding the admin port and SQLite locks.
       let settled = false;
+      let readyHandled = false;
       let inactivityTimer: ReturnType<typeof setTimeout>;
+      const absoluteTimer = setTimeout(() => {
+        finishErr(
+          `Holochain did not become ready within ${LAUNCH_ABSOLUTE_TIMEOUT_MS / 60_000} minutes. Check the logs for details (Help > Open Logs).`,
+        );
+      }, LAUNCH_ABSOLUTE_TIMEOUT_MS);
       const finishOk = (manager: HolochainManager) => {
         if (settled) return;
         settled = true;
         clearTimeout(inactivityTimer);
+        clearTimeout(absoluteTimer);
         resolve(manager);
       };
       const finishErr = (message: string) => {
         if (settled) return;
         settled = true;
         clearTimeout(inactivityTimer);
+        clearTimeout(absoluteTimer);
         conductorHandle.kill();
         reject(message);
       };
       // Restart the silence timer on any output; startup progress keeps it alive.
+      // Only while unsettled, so it stops once the conductor is up and logging.
       const armInactivityTimer = () => {
         clearTimeout(inactivityTimer);
         inactivityTimer = setTimeout(() => {
@@ -228,7 +240,7 @@ export class HolochainManager {
       });
 
       conductorHandle.stdout.pipe(split()).on('data', async (line: string) => {
-        armInactivityTimer();
+        if (!settled) armInactivityTimer();
         weEmitter.emitHolochainLog({
           version,
           data: line,
@@ -240,8 +252,12 @@ export class HolochainManager {
         }
         if (line.includes('Conductor ready.')) {
           // Guard against a second matching line opening a second admin websocket
-          // and attaching a second post-startup exit listener.
-          if (settled) return;
+          // and attaching a second post-startup exit listener. `readyHandled` is
+          // set synchronously here because `settled` is not set until the async
+          // connect sequence below completes — a second line arriving mid-connect
+          // would otherwise pass a `settled`-only check.
+          if (settled || readyHandled) return;
+          readyHandled = true;
           console.log(
             `[MOSS] Detected 'Conductor ready.' on stdout. Connecting to admin port ${adminPort}...`,
           );
@@ -295,7 +311,7 @@ export class HolochainManager {
         }
       });
       conductorHandle.stderr.pipe(split()).on('data', (line: string) => {
-        armInactivityTimer();
+        if (!settled) armInactivityTimer();
         weEmitter.emitHolochainError({
           version,
           data: line,

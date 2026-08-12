@@ -142,103 +142,115 @@ export async function launch(
 
   //   console.log('Tools Library installed.');
   // }
-  // Install other default apps if necessary (not in applet-dev mode)
-  if (!runOptions.devInfo) {
-    await Promise.all(
-      Object.entries(DEFAULT_APPS).map(async ([appName, fileName]) => {
-        const appId = `default-app#${appName.toLowerCase()}`; // convert to lowercase to be able to use it in custom protocol
-        if (
-          !holochainManager.installedApps.map((appInfo) => appInfo.installed_app_id).includes(appId)
-        ) {
-          console.log(`Installing default app ${appName}`);
-          if (splashscreenWindow)
-            splashscreenWindow.webContents.send(
-              'loading-progress-update',
-              `Installing default app ${appName}...`,
-            );
-
-          const distributionInfo: DistributionInfo = {
-            type: 'default-app',
-          };
-          await holochainManager.installWebApp(
-            path.join(DEFAULT_APPS_DIRECTORY, fileName),
-            appId,
-            distributionInfo,
-            runOptions.appstoreNetworkSeed,
-          );
-          console.log(`Default app ${appName} installed.`);
-        } else {
-          // Compare the hashes to check whether happ and/or UI got an update
-          const currentAppAssetsInfo = mossFileSystem.readAppAssetsInfo(appId);
+  // Install other default apps if necessary (not in applet-dev mode). Wrapped so
+  // a failure in any post-spawn stage tears down the lair + conductor already
+  // running instead of throwing past the launch IPC's destructuring and leaving
+  // them orphaned holding the keystore and admin port.
+  try {
+    if (!runOptions.devInfo) {
+      await Promise.all(
+        Object.entries(DEFAULT_APPS).map(async ([appName, fileName]) => {
+          const appId = `default-app#${appName.toLowerCase()}`; // convert to lowercase to be able to use it in custom protocol
           if (
-            currentAppAssetsInfo.type === 'webhapp' &&
-            currentAppAssetsInfo.ui.location.type === 'filesystem'
+            !holochainManager.installedApps
+              .map((appInfo) => appInfo.installed_app_id)
+              .includes(appId)
           ) {
-            const webHappPath = path.join(DEFAULT_APPS_DIRECTORY, fileName);
-            const webHappBytes = fs.readFileSync(webHappPath);
-            const { happSha256, webhappSha256, uiSha256 } = await rustUtils.validateHappOrWebhapp(
-              Array.from(webHappBytes),
+            console.log(`Installing default app ${appName}`);
+            if (splashscreenWindow)
+              splashscreenWindow.webContents.send(
+                'loading-progress-update',
+                `Installing default app ${appName}...`,
+              );
+
+            const distributionInfo: DistributionInfo = {
+              type: 'default-app',
+            };
+            await holochainManager.installWebApp(
+              path.join(DEFAULT_APPS_DIRECTORY, fileName),
+              appId,
+              distributionInfo,
+              runOptions.appstoreNetworkSeed,
             );
-            console.log('READ uiHash: ', uiSha256);
-            if (happSha256 !== currentAppAssetsInfo.happ.sha256) {
-              // In case that the previous happ sha256 is not the one of KanDo 0.9.1, replace it fully
-              // const sha256Happ_0_9_1 =
-              //   'e0b9ce4f16b632b436b888373981e1023762b59cc3cc646d76aed36bb7b565ed';
-              // if (currentAppAssetsInfo.happ.sha256 !== sha256Happ_0_9_1) {
-              // console.warn(
-              //   'Found old KanDo feedback board. Uninstalling it and replacing it with a new version',
-              // );
-              // console.log(
-              //   `Old happ hash: ${currentAppAssetsInfo.happ.sha256}. New happ hash: ${happHash}`,
-              // );
-              // if (splashscreenWindow)
-              //   splashscreenWindow.webContents.send(
-              //     'loading-progress-update',
-              //     'Replacing feedback board with new version...',
-              //   );
-              // await holochainManager.adminWebsocket.uninstallApp({ installed_app_id: appId });
-              // // back up previous assets info
-              // mossFileSystem.backupAppAssetsInfo(appId);
-              // const networkSeed = defaultAppNetworkSeed();
-              // const distributionInfo: DistributionInfo = {
-              //   type: 'default-app',
-              // };
-              // // Install new app
-              // await holochainManager.installWebApp(
-              //   path.join(DEFAULT_APPS_DIRECTORY, fileName),
-              //   appId,
-              //   distributionInfo,
-              //   networkSeed,
-              // );
-              // return;
-              // } else {
-              console.warn(
-                'Got new default app with the same name but a different happ hash. Aborted UI update process.',
+            console.log(`Default app ${appName} installed.`);
+          } else {
+            // Compare the hashes to check whether happ and/or UI got an update
+            const currentAppAssetsInfo = mossFileSystem.readAppAssetsInfo(appId);
+            if (
+              currentAppAssetsInfo.type === 'webhapp' &&
+              currentAppAssetsInfo.ui.location.type === 'filesystem'
+            ) {
+              const webHappPath = path.join(DEFAULT_APPS_DIRECTORY, fileName);
+              const webHappBytes = fs.readFileSync(webHappPath);
+              const { happSha256, webhappSha256, uiSha256 } = await rustUtils.validateHappOrWebhapp(
+                Array.from(webHappBytes),
               );
-              return;
-              // }
-            }
-            if (uiSha256 && uiSha256 !== currentAppAssetsInfo.ui.location.sha256) {
-              // TODO emit this to the logs
-              console.log(`Found new UI for default app '${appId}'. Installing.`);
-              const newAppAssetsInfo = currentAppAssetsInfo;
-              newAppAssetsInfo.sha256 = webhappSha256;
-              (newAppAssetsInfo.ui.location as { type: 'filesystem'; sha256: string }).sha256 =
-                uiSha256;
-              await rustUtils.saveHappOrWebhapp(
-                webHappPath,
-                mossFileSystem.happsDir,
-                mossFileSystem.uisDir,
-              );
-              mossFileSystem.backupAppAssetsInfo(appId);
-              mossFileSystem.storeAppAssetsInfo(appId, newAppAssetsInfo);
+              console.log('READ uiHash: ', uiSha256);
+              if (happSha256 !== currentAppAssetsInfo.happ.sha256) {
+                // In case that the previous happ sha256 is not the one of KanDo 0.9.1, replace it fully
+                // const sha256Happ_0_9_1 =
+                //   'e0b9ce4f16b632b436b888373981e1023762b59cc3cc646d76aed36bb7b565ed';
+                // if (currentAppAssetsInfo.happ.sha256 !== sha256Happ_0_9_1) {
+                // console.warn(
+                //   'Found old KanDo feedback board. Uninstalling it and replacing it with a new version',
+                // );
+                // console.log(
+                //   `Old happ hash: ${currentAppAssetsInfo.happ.sha256}. New happ hash: ${happHash}`,
+                // );
+                // if (splashscreenWindow)
+                //   splashscreenWindow.webContents.send(
+                //     'loading-progress-update',
+                //     'Replacing feedback board with new version...',
+                //   );
+                // await holochainManager.adminWebsocket.uninstallApp({ installed_app_id: appId });
+                // // back up previous assets info
+                // mossFileSystem.backupAppAssetsInfo(appId);
+                // const networkSeed = defaultAppNetworkSeed();
+                // const distributionInfo: DistributionInfo = {
+                //   type: 'default-app',
+                // };
+                // // Install new app
+                // await holochainManager.installWebApp(
+                //   path.join(DEFAULT_APPS_DIRECTORY, fileName),
+                //   appId,
+                //   distributionInfo,
+                //   networkSeed,
+                // );
+                // return;
+                // } else {
+                console.warn(
+                  'Got new default app with the same name but a different happ hash. Aborted UI update process.',
+                );
+                return;
+                // }
+              }
+              if (uiSha256 && uiSha256 !== currentAppAssetsInfo.ui.location.sha256) {
+                // TODO emit this to the logs
+                console.log(`Found new UI for default app '${appId}'. Installing.`);
+                const newAppAssetsInfo = currentAppAssetsInfo;
+                newAppAssetsInfo.sha256 = webhappSha256;
+                (newAppAssetsInfo.ui.location as { type: 'filesystem'; sha256: string }).sha256 =
+                  uiSha256;
+                await rustUtils.saveHappOrWebhapp(
+                  webHappPath,
+                  mossFileSystem.happsDir,
+                  mossFileSystem.uisDir,
+                );
+                mossFileSystem.backupAppAssetsInfo(appId);
+                mossFileSystem.storeAppAssetsInfo(appId, newAppAssetsInfo);
+              }
             }
           }
-        }
-      }),
-    );
-  } else {
-    await devSetup(runOptions.devInfo, holochainManager, mossFileSystem, false, weRustHandler);
+        }),
+      );
+    } else {
+      await devSetup(runOptions.devInfo, holochainManager, mossFileSystem, false, weRustHandler);
+    }
+  } catch (e) {
+    lairHandle.kill();
+    holochainManager.shutdown();
+    weEmitter.emitMossError(`Failed during post-launch setup: ${e}`);
+    throw new Error(`Failed during post-launch setup: ${e}`);
   }
   return [lairHandle, holochainManager, weRustHandler];
 }

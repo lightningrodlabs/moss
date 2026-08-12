@@ -583,6 +583,15 @@ if (!RUNNING_WITH_COMMAND) {
     HOLOCHAIN_MANAGER!.adminWebsocket.listApps({}),
   );
 
+  // Enable an app and refresh the signing scope in one step. Enabling changes the
+  // set of callable cells, so every enable site must invalidate the authorizer;
+  // routing them all through here keeps that pairing in one place instead of
+  // relying on each call site to remember it.
+  const enableAppAndInvalidate = async (installedAppId: string): Promise<void> => {
+    await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: installedAppId });
+    appletZomeCallAuthorizer.invalidate();
+  };
+
   const handleSignZomeCallApplet = async (
     _e: IpcMainInvokeEvent,
     zomeCall: CallZomeRequest,
@@ -1550,7 +1559,10 @@ if (!RUNNING_WITH_COMMAND) {
         if (!appId || appId === '') {
           throw new Error('No app id provided.');
         }
+        // installApp enables internally (bypassing enableAppAndInvalidate), and
+        // appId is arbitrary — refresh the signing scope in case it is an applet.
         await HOLOCHAIN_MANAGER!.installApp(filePath, appId, networkSeed);
+        appletZomeCallAuthorizer.invalidate();
       },
     );
     ipcMain.handle('is-dev-mode-enabled', (_e): boolean => !app.isPackaged || RUN_OPTIONS.dev);
@@ -1810,8 +1822,7 @@ if (!RUNNING_WITH_COMMAND) {
             },
           });
         }
-        await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
-        appletZomeCallAuthorizer.invalidate();
+        await enableAppAndInvalidate(appId);
         setTimeout(
           () =>
             autoSaveGroupsExport().catch((e) =>
@@ -2086,8 +2097,7 @@ if (!RUNNING_WITH_COMMAND) {
               group: { type: 'provisioned', value: { modifiers: { properties } } },
             },
           });
-          await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
-          appletZomeCallAuthorizer.invalidate();
+          await enableAppAndInvalidate(appId);
 
           const token = await HOLOCHAIN_MANAGER!.getAppToken(appId);
           const appWs = await AppWebsocket.connect({
@@ -2313,9 +2323,7 @@ if (!RUNNING_WITH_COMMAND) {
                     agent_key: myPubKey,
                     network_seed: toolNetworkSeed,
                   });
-                  await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({
-                    installed_app_id: appletAppId,
-                  });
+                  await enableAppAndInvalidate(appletAppId);
 
                   appletAgentPubKey = appletAppInfo.agent_pub_key;
                 }
@@ -2393,8 +2401,7 @@ if (!RUNNING_WITH_COMMAND) {
         const appId = `group#${hashedSeed}#${progenitor}`;
         console.log('Determined appId for group: ', appId);
         if (apps.map((appInfo) => appInfo.installed_app_id).includes(appId)) {
-          await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
-          appletZomeCallAuthorizer.invalidate();
+          await enableAppAndInvalidate(appId);
           const appInfo = apps.find((appInfo) => appInfo.installed_app_id === appId);
           if (!appInfo) throw new Error('AppInfo undefined.');
           return appInfo;
@@ -2423,8 +2430,7 @@ if (!RUNNING_WITH_COMMAND) {
             },
           },
         });
-        await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
-        appletZomeCallAuthorizer.invalidate();
+        await enableAppAndInvalidate(appId);
         setTimeout(
           () =>
             autoSaveGroupsExport().catch((e) =>
@@ -3040,8 +3046,7 @@ if (!RUNNING_WITH_COMMAND) {
 
         // Enable the app after storing metadata in case enabling fails
         try {
-          await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
-          appletZomeCallAuthorizer.invalidate();
+          await enableAppAndInvalidate(appId);
         } catch (e) {
           // If the app failed to get enabled due to a reason other than awaiting memproofs, log it
           // but continue. The app would then need to get enabled in the UI.
