@@ -26,7 +26,6 @@ import { mdiEmailOutline, mdiWeb } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import './elements/curation-list-manager.js';
 import './elements/installable-tools-web2.js';
-import './elements/tool-publisher-detail.js';
 import { mossStoreContext } from '../context.js';
 import { consume } from '@lit/context';
 import { MossStore } from '../moss-store.js';
@@ -41,8 +40,6 @@ import { appStoreIcon, devIcon, experimentalToolIcon, stableToolIcon } from '../
 import '../ui/moss-dialog.js';
 import { MossDialog } from '../ui/moss-dialog';
 import { NamedUrl, UrlListManager } from './elements/curation-list-manager';
-
-export { DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS } from './fetch-unified-tools.js';
 
 enum ToolLibraryView {
   Main,

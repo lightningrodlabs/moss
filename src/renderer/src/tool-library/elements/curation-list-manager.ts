@@ -4,7 +4,7 @@ import { msg } from '@lit/localize';
 import { ToolCurations } from '@theweave/moss-types';
 import { mossStyles } from '../../shared-styles';
 import { trashIcon } from '../../ui/icons';
-import { DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS } from '../tool-library-web2';
+import { DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS } from '../fetch-unified-tools.js';
 
 export interface NamedUrl {
   id: string;
