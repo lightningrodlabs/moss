@@ -47,6 +47,10 @@ export class AppletZomeCallAuthorizer {
     | undefined;
   private generation = 0;
   private rebuildInFlight: Promise<void> | undefined;
+  // When the last rebuild was *attempted* (vs `cache.builtAt` = last success).
+  // Rate-limits background refreshes so a rejecting listApps (admin socket
+  // outage) can't fire one doomed round-trip per authorize call.
+  private lastAttemptAt = -Infinity;
 
   constructor(
     private listApps: () => Promise<AppInfo[]>,
@@ -76,11 +80,14 @@ export class AppletZomeCallAuthorizer {
     if (!this.cache) {
       // Cold start (or just invalidated): must block until we know the cells.
       await this.rebuild();
-    } else if (this.clock() - this.cache.builtAt > CACHE_MAX_AGE_MS) {
+    } else if (
+      this.clock() - this.cache.builtAt > CACHE_MAX_AGE_MS &&
+      this.clock() - this.lastAttemptAt > MIN_UNKNOWN_REBUILD_INTERVAL_MS
+    ) {
       // Stale-while-revalidate: keep serving the current set and refresh in the
-      // background. The .catch keeps a rejected listApps (socket reconnecting,
-      // conductor restarting) from becoming an unhandled rejection or a signing
-      // outage.
+      // background, at most once per interval. The .catch keeps a rejected
+      // listApps (socket reconnecting, conductor restarting) from becoming an
+      // unhandled rejection, a signing outage, or one doomed round-trip per call.
       void this.rebuild().catch(() => {});
     }
 
@@ -111,6 +118,7 @@ export class AppletZomeCallAuthorizer {
 
   private rebuild(): Promise<void> {
     if (this.rebuildInFlight) return this.rebuildInFlight;
+    this.lastAttemptAt = this.clock();
     const generationAtStart = this.generation;
     const p = (async () => {
       try {

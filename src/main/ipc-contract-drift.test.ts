@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 /**
  * IPC contract drift guard.
@@ -17,9 +18,11 @@ import path from 'node:path';
  * invisible here — keep channel names as string literals at the call site.
  */
 
-const REPO_ROOT = process.cwd();
-const PRELOAD_DIR = path.join(REPO_ROOT, 'src', 'preload');
-const MAIN_DIR = path.join(REPO_ROOT, 'src', 'main');
+// Resolve relative to this file (src/main/…), not the cwd, so the scan works
+// regardless of where vitest is invoked from.
+const SRC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const PRELOAD_DIR = path.join(SRC_DIR, 'preload');
+const MAIN_DIR = path.join(SRC_DIR, 'main');
 
 function tsFiles(dir: string): string[] {
   const out: string[] = [];

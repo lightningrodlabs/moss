@@ -214,6 +214,35 @@ describe('AppletZomeCallAuthorizer', () => {
     await flush();
   });
 
+  it('rate-limits doomed background refreshes during an outage (one per interval)', async () => {
+    let now = 0;
+    let calls = 0;
+    let fail = false;
+    const authorizer = new AppletZomeCallAuthorizer(
+      async () => {
+        calls += 1;
+        if (fail) throw new Error('admin socket down');
+        return [appletApp(APPLET_A, A_CELL), groupApp()];
+      },
+      () => now,
+    );
+    await authorizer.authorize([APPLET_A], req(A_CELL, 'posts')); // build (1)
+    expect(calls).toBe(1);
+    now += 61_000; // stale
+    fail = true; // outage
+    // Three signs during the outage fire only one background refresh attempt.
+    await authorizer.authorize([APPLET_A], req(A_CELL, 'posts'));
+    await flush();
+    await authorizer.authorize([APPLET_A], req(A_CELL, 'posts'));
+    await authorizer.authorize([APPLET_A], req(A_CELL, 'posts'));
+    await flush();
+    expect(calls).toBe(2);
+    now += 2_000; // past the interval → one more attempt allowed
+    await authorizer.authorize([APPLET_A], req(A_CELL, 'posts'));
+    await flush();
+    expect(calls).toBe(3);
+  });
+
   it('an invalidate during an in-flight rebuild discards that stale snapshot (generation)', async () => {
     const { authorizer, releaseListApps, setApps } = gatedHarness([appletApp(APPLET_A, A_CELL)]);
     const first = authorizer.authorize([APPLET_A], req(A_CELL, 'posts'));
