@@ -170,6 +170,10 @@ export class HolochainManager {
     const conductorHandle = childProcess.spawn(binary, ['-c', configPath, '-p'], {
       env: conductorEnv,
     });
+    // Without a stdin 'error' handler, a spawn failure (missing/incompatible
+    // binary) can surface as an uncaught EPIPE/ERR_STREAM_DESTROYED that crashes
+    // main before the process 'error' listener turns it into a clean rejection.
+    conductorHandle.stdin.on('error', () => {});
     conductorHandle.stdin.write(password);
     conductorHandle.stdin.end();
 
@@ -180,7 +184,11 @@ export class HolochainManager {
     // conductor that keeps logging but never prints 'Conductor ready.' (a pre-ready
     // retry loop, or a reworded magic string). Deterministic failures (crash / bad
     // config / port conflict) are caught by the exit + error listeners.
-    const LAUNCH_INACTIVITY_TIMEOUT_MS = 300_000;
+    // Silence is only meant to catch a true hang, and a healthy first-run
+    // migration + WASM compile can legitimately log nothing above `warn` (the
+    // chattiest startup targets are demoted to `error`) for a while — so this is
+    // deliberately long; the absolute cap is the real deadline.
+    const LAUNCH_INACTIVITY_TIMEOUT_MS = 10 * 60_000;
     const LAUNCH_ABSOLUTE_TIMEOUT_MS = 20 * 60_000;
 
     return new Promise((resolve, reject) => {
@@ -261,8 +269,9 @@ export class HolochainManager {
           console.log(
             `[MOSS] Detected 'Conductor ready.' on stdout. Connecting to admin port ${adminPort}...`,
           );
+          let adminWebsocket: AdminWebsocket | undefined;
           try {
-            const adminWebsocket = await AdminWebsocket.connect({
+            adminWebsocket = await AdminWebsocket.connect({
               url: new URL(`ws://127.0.0.1:${adminPort}`),
               wsClientOptions: {
                 origin: 'moss://admin.main',
@@ -281,6 +290,14 @@ export class HolochainManager {
               });
               console.log('Attached app interface port: ', attachAppInterfaceResponse);
               appPort = attachAppInterfaceResponse.port;
+            }
+            // A timer may have already failed (and killed) the launch while this
+            // connect sequence was awaiting. Don't build a manager or attach a
+            // crash listener against a conductor that is being torn down, and
+            // close the websocket we just opened so it doesn't leak.
+            if (settled) {
+              adminWebsocket.client.close();
+              return;
             }
             const manager = new HolochainManager(
               conductorHandle,
@@ -306,6 +323,13 @@ export class HolochainManager {
             });
             finishOk(manager);
           } catch (e) {
+            // Close the websocket if it opened before a later step threw, so a
+            // failed connect doesn't leak a socket against the conductor we kill.
+            try {
+              adminWebsocket?.client.close();
+            } catch {
+              // ignore
+            }
             finishErr(`Holochain conductor ready but failed to connect: ${e}`);
           }
         }

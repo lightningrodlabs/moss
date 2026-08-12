@@ -151,7 +151,7 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     // why: cast lets us add `isAppletInstalled` here without bloating the
     // public AssetServices type in @theweave/api. `<wal-embed>` reaches it
     // via optional chaining on `window.__WEAVE_API__.assets`.
-    assets: ({
+    assets: {
       assetInfo: async (wal: WAL): Promise<AssetLocationAndInfo | undefined> => {
         const maybeCachedInfo = mossStore.mossCache.assetInfo.value(wal);
         if (maybeCachedInfo) {
@@ -262,7 +262,7 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
       assetStore: (_wal: WAL) => {
         throw new Error('assetStore is not supported in headless WeaveServices.');
       },
-    } as any),
+    } as any,
     async requestClose() {
       throw new Error('Close request is not supported in the headless WeaveClient.');
     },
@@ -1062,9 +1062,8 @@ export async function handleAppletIframeMessage(
       throw Error(`Got unsupported message type: '${message.type}'`);
     default:
       // Exhaustiveness guard: every AppletToParentRequest variant must have a
-      // case above. A new variant makes `message` non-`never` here, which is a
-      // compile error — surfacing the gap at build time rather than as a runtime
-      // "unsupported message type" reject.
+      // case above, so a new variant makes `message` non-`never` here and fails
+      // the build.
       return assertNever(message);
   }
 }

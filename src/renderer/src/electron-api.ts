@@ -398,7 +398,6 @@ export async function appletDevConfig(): Promise<WeaveDevConfig | undefined> {
   return window.electronAPI.appletDevConfig();
 }
 
-
 export async function selectScreenOrWindow(): Promise<string> {
   return window.electronAPI.selectScreenOrWindow();
 }
@@ -411,10 +410,7 @@ export async function validateHappOrWebhapp(bytes: number[]) {
   return window.electronAPI.validateHappOrWebhapp(bytes);
 }
 
-export const signZomeCallApplet = async (
-  request: CallZomeRequest,
-  callerAppletIds: string[],
-) => {
+export const signZomeCallApplet = async (request: CallZomeRequest, callerAppletIds: string[]) => {
   return window.electronAPI.signZomeCallApplet(request, callerAppletIds);
 };
 

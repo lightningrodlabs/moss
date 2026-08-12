@@ -583,10 +583,11 @@ if (!RUNNING_WITH_COMMAND) {
     HOLOCHAIN_MANAGER!.adminWebsocket.listApps({}),
   );
 
-  // Enable an app and refresh the signing scope in one step. Enabling changes the
-  // set of callable cells, so every enable site must invalidate the authorizer;
-  // routing them all through here keeps that pairing in one place instead of
-  // relying on each call site to remember it.
+  // Enable an app and refresh the signing scope in one step: enabling widens the
+  // set of callable cells, so the authorizer must re-resolve. Routing every
+  // IPC-reachable enable through here keeps the pairing in one place. (The
+  // install-app handler invalidates directly, since HolochainManager.installApp
+  // enables internally.)
   const enableAppAndInvalidate = async (installedAppId: string): Promise<void> => {
     await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: installedAppId });
     appletZomeCallAuthorizer.invalidate();
@@ -1172,9 +1173,11 @@ if (!RUNNING_WITH_COMMAND) {
   function registerIPCHandlers(notificationIcon: Electron.NativeImage) {
     ipcMain.handle('exit', () => {
       // app.exit(0) skips the before-quit handler, so stop the subprocesses here
-      // or they survive as orphans holding the admin port and keystore.
+      // or they survive as orphans holding the admin port and keystore. (Anything
+      // still unassigned during the launch window can't be stopped from here.)
       if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.shutdown();
       if (LAIR_HANDLE) LAIR_HANDLE.kill();
+      if (LOCAL_SERVICES_HANDLE) LOCAL_SERVICES_HANDLE.kill();
       app.exit(0);
     });
     ipcMain.handle('open-logs', async () => WE_FILE_SYSTEM.openLogs());
@@ -1559,8 +1562,8 @@ if (!RUNNING_WITH_COMMAND) {
         if (!appId || appId === '') {
           throw new Error('No app id provided.');
         }
-        // installApp enables internally (bypassing enableAppAndInvalidate), and
-        // appId is arbitrary — refresh the signing scope in case it is an applet.
+        // installApp enables internally, and appId is arbitrary — refresh the
+        // signing scope in case it is an applet.
         await HOLOCHAIN_MANAGER!.installApp(filePath, appId, networkSeed);
         appletZomeCallAuthorizer.invalidate();
       },
@@ -3088,6 +3091,8 @@ if (!RUNNING_WITH_COMMAND) {
         password,
         RUN_OPTIONS,
       );
+      // A (re)launch replaces the conductor, so any cached signing scope is stale.
+      appletZomeCallAuthorizer.invalidate();
       // Persist the primary agent pubkey so future cross-version imports can find it.
       // This also covers existing users upgrading from a build without this feature.
       const postLaunchApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
