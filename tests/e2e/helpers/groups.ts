@@ -236,10 +236,17 @@ export async function getCurrentGroupInviteLink(page: Page): Promise<string> {
   // ("Node is not an <input>"). Read its `.value` JS property via evaluate.
   // Poll because the template binds `.value=...` reactively — first render
   // frame may have an empty value before invitationUrl resolves.
+  // The dialog has two copy-link inputs — the invite link and, below it, the
+  // invite code. Take the first (the link); the /invite/ poll below confirms it.
+  // A short evaluate timeout keeps a never-opening dialog (zero matches) failing
+  // fast with a locator error rather than hanging to the suite timeout.
   const readLink = () =>
     page
       .locator('invite-people-dialog sl-input.copy-link-input')
-      .evaluate((el) => (el as HTMLElement & { value: string }).value);
+      .first()
+      .evaluate((el) => (el as HTMLElement & { value: string }).value, undefined, {
+        timeout: 5000,
+      });
   await expect.poll(readLink, { timeout: 10_000 }).toMatch(/invite/i);
   const link = await readLink();
 
