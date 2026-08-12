@@ -26,6 +26,9 @@ export class HolochainManager {
   weEmitter: WeEmitter;
   version: HolochainVersion;
   appTokens: Record<InstalledAppId, AppAuthenticationToken> = {};
+  // Set when the conductor is being deliberately stopped, so its process 'exit'
+  // is not mistaken for a crash (see the post-startup exit listener in launch()).
+  shuttingDown = false;
 
   constructor(
     processHandle: childProcess.ChildProcessWithoutNullStreams,
@@ -45,6 +48,15 @@ export class HolochainManager {
     this.fs = mossFileSystem;
     this.installedApps = installedApps;
     this.version = version;
+  }
+
+  /**
+   * Deliberately stop the conductor. Marks the stop as intentional first so the
+   * process 'exit' is not reported as a crash, then kills the process.
+   */
+  shutdown(): void {
+    this.shuttingDown = true;
+    this.processHandle.kill();
   }
 
   static async launch(
@@ -158,26 +170,108 @@ export class HolochainManager {
     const conductorHandle = childProcess.spawn(binary, ['-c', configPath, '-p'], {
       env: conductorEnv,
     });
+    // Without a stdin 'error' handler, a spawn failure (missing/incompatible
+    // binary) can surface as an uncaught EPIPE/ERR_STREAM_DESTROYED that crashes
+    // main before the process 'error' listener turns it into a clean rejection.
+    conductorHandle.stdin.on('error', () => {});
     conductorHandle.stdin.write(password);
     conductorHandle.stdin.end();
 
+    // Two backstops for a conductor that never becomes ready. The inactivity
+    // timer measures silence, not total time, so a slow but progressing first-run
+    // migration + WASM compile (which keeps logging) is not killed. The absolute
+    // cap catches the opposite failure the inactivity timer cannot see — a
+    // conductor that keeps logging but never prints 'Conductor ready.' (a pre-ready
+    // retry loop, or a reworded magic string). Deterministic failures (crash / bad
+    // config / port conflict) are caught by the exit + error listeners.
+    // Silence is only meant to catch a true hang, and a healthy first-run
+    // migration + WASM compile can legitimately log nothing above `warn` (the
+    // chattiest startup targets are demoted to `error`) for a while — so this is
+    // deliberately long; the absolute cap is the real deadline.
+    const LAUNCH_INACTIVITY_TIMEOUT_MS = 10 * 60_000;
+    const LAUNCH_ABSOLUTE_TIMEOUT_MS = 20 * 60_000;
+
     return new Promise((resolve, reject) => {
+      // A conductor process can fail to spawn ('error'), or exit before
+      // 'Conductor ready.' with a message that matches neither magic string
+      // below (a lost port race, an incompatible database), or never become ready
+      // (silent, or logging-but-stuck) — all of which must settle this Promise
+      // rather than leave the UI waiting at "starting Holochain...". `settled`
+      // guards against double-settling; a failed launch also kills the process so
+      // it cannot linger holding the admin port and SQLite locks.
+      let settled = false;
+      let readyHandled = false;
+      let inactivityTimer: ReturnType<typeof setTimeout>;
+      const absoluteTimer = setTimeout(() => {
+        finishErr(
+          `Holochain did not become ready within ${LAUNCH_ABSOLUTE_TIMEOUT_MS / 60_000} minutes. Check the logs for details (Help > Open Logs).`,
+        );
+      }, LAUNCH_ABSOLUTE_TIMEOUT_MS);
+      const finishOk = (manager: HolochainManager) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(inactivityTimer);
+        clearTimeout(absoluteTimer);
+        resolve(manager);
+      };
+      const finishErr = (message: string) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(inactivityTimer);
+        clearTimeout(absoluteTimer);
+        conductorHandle.kill();
+        reject(message);
+      };
+      // Restart the silence timer on any output; startup progress keeps it alive.
+      // Only while unsettled, so it stops once the conductor is up and logging.
+      const armInactivityTimer = () => {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(() => {
+          finishErr(
+            `Holochain produced no output for ${LAUNCH_INACTIVITY_TIMEOUT_MS / 1000}s and never became ready. Check the logs for details (Help > Open Logs).`,
+          );
+        }, LAUNCH_INACTIVITY_TIMEOUT_MS);
+      };
+      armInactivityTimer();
+
+      conductorHandle.on('error', (err) => {
+        finishErr(`Failed to launch the Holochain conductor process: ${err}`);
+      });
+      // A pre-ready exit rejects the launch. A post-startup exit is judged by a
+      // separate listener attached once the manager exists, because there it must
+      // distinguish a deliberate shutdown from a crash.
+      conductorHandle.on('exit', (code, signal) => {
+        if (settled) return;
+        finishErr(
+          `Holochain conductor exited during startup (code ${code}, signal ${signal}) before becoming ready. Check the logs for details (Help > Open Logs).`,
+        );
+      });
+
       conductorHandle.stdout.pipe(split()).on('data', async (line: string) => {
+        if (!settled) armInactivityTimer();
         weEmitter.emitHolochainLog({
           version,
           data: line,
         });
         if (line.includes('could not be parsed, because it is not valid YAML')) {
-          reject(
+          finishErr(
             `Holochain failed to start up and crashed. Check the logs for details (Help > Open Logs).`,
           );
         }
         if (line.includes('Conductor ready.')) {
+          // Guard against a second matching line opening a second admin websocket
+          // and attaching a second post-startup exit listener. `readyHandled` is
+          // set synchronously here because `settled` is not set until the async
+          // connect sequence below completes — a second line arriving mid-connect
+          // would otherwise pass a `settled`-only check.
+          if (settled || readyHandled) return;
+          readyHandled = true;
           console.log(
             `[MOSS] Detected 'Conductor ready.' on stdout. Connecting to admin port ${adminPort}...`,
           );
+          let adminWebsocket: AdminWebsocket | undefined;
           try {
-            const adminWebsocket = await AdminWebsocket.connect({
+            adminWebsocket = await AdminWebsocket.connect({
               url: new URL(`ws://127.0.0.1:${adminPort}`),
               wsClientOptions: {
                 origin: 'moss://admin.main',
@@ -197,30 +291,57 @@ export class HolochainManager {
               console.log('Attached app interface port: ', attachAppInterfaceResponse);
               appPort = attachAppInterfaceResponse.port;
             }
-            resolve(
-              new HolochainManager(
-                conductorHandle,
-                weEmitter,
-                mossFileSystem,
-                adminPort,
-                appPort,
-                adminWebsocket,
-                installedApps,
-                version,
-              ),
+            // A timer may have already failed (and killed) the launch while this
+            // connect sequence was awaiting. Don't build a manager or attach a
+            // crash listener against a conductor that is being torn down, and
+            // close the websocket we just opened so it doesn't leak.
+            if (settled) {
+              adminWebsocket.client.close();
+              return;
+            }
+            const manager = new HolochainManager(
+              conductorHandle,
+              weEmitter,
+              mossFileSystem,
+              adminPort,
+              appPort,
+              adminWebsocket,
+              installedApps,
+              version,
             );
+            // Report a crash after a successful startup, but not a deliberate
+            // stop (quit / restart / factory reset, which set `shuttingDown`).
+            // Emit on MOSS_ERROR so the crash reaches the log subscriber.
+            // TODO: also surface this to the renderer — the UI currently keeps
+            // rendering against a dead conductor and every zome call fails
+            // opaquely; there is no user-facing "conductor stopped" notification.
+            conductorHandle.on('exit', (code, signal) => {
+              if (manager.shuttingDown) return;
+              weEmitter.emitMossError(
+                `Holochain conductor (v${version}) exited unexpectedly after startup (code ${code}, signal ${signal}).`,
+              );
+            });
+            finishOk(manager);
           } catch (e) {
-            reject(`Holochain conductor ready but failed to connect: ${e}`);
+            // Close the websocket if it opened before a later step threw, so a
+            // failed connect doesn't leak a socket against the conductor we kill.
+            try {
+              adminWebsocket?.client.close();
+            } catch {
+              // ignore
+            }
+            finishErr(`Holochain conductor ready but failed to connect: ${e}`);
           }
         }
       });
       conductorHandle.stderr.pipe(split()).on('data', (line: string) => {
+        if (!settled) armInactivityTimer();
         weEmitter.emitHolochainError({
           version,
           data: line,
         });
         if (line.includes('holochain had a problem and crashed')) {
-          reject(
+          finishErr(
             `Holochain failed to start up and crashed. Check the logs for details (Help > Open Logs).`,
           );
         }

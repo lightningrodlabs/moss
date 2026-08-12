@@ -2,7 +2,6 @@ import {
   AppInfo,
   CallZomeRequest,
   CallZomeRequestSigned,
-  ActionHashB64,
   AgentPubKeyB64,
   InstalledAppId,
   ZomeName,
@@ -122,7 +121,6 @@ declare global {
         ) => any,
       ) => void;
       closeMainWindow: () => Promise<void>;
-      openApp: (appId: string) => Promise<void>;
       openWalWindow: (
         iframeSrc: string,
         appletId: AppletId,
@@ -176,9 +174,6 @@ declare global {
         weaveLocation: WeaveLocation | undefined,
         appletName: string | undefined,
       ) => Promise<void>;
-      enableDevMode: () => Promise<void>;
-      disableDevMode: () => Promise<void>;
-      fetchIcon: (appActionHashB64: ActionHashB64) => Promise<string>;
       selectScreenOrWindow: () => Promise<string>;
       captureScreen: () => Promise<string>;
       getFeedbackWorkerUrl: () => Promise<string>;
@@ -391,10 +386,6 @@ export async function getToolIcon(
   return window.electronAPI.getToolIcon(toolId, resourceLocation);
 }
 
-export async function openApp(appId: string): Promise<void> {
-  return window.electronAPI.openApp(appId);
-}
-
 export async function isDevModeEnabled(): Promise<boolean> {
   return window.electronAPI.isDevModeEnabled();
 }
@@ -405,14 +396,6 @@ export async function isAppletDev(): Promise<boolean> {
 
 export async function appletDevConfig(): Promise<WeaveDevConfig | undefined> {
   return window.electronAPI.appletDevConfig();
-}
-
-export async function enableDevMode(): Promise<void> {
-  return window.electronAPI.enableDevMode();
-}
-
-export async function disableDevMode(): Promise<void> {
-  return window.electronAPI.disableDevMode();
 }
 
 export async function selectScreenOrWindow(): Promise<string> {
@@ -427,10 +410,7 @@ export async function validateHappOrWebhapp(bytes: number[]) {
   return window.electronAPI.validateHappOrWebhapp(bytes);
 }
 
-export const signZomeCallApplet = async (
-  request: CallZomeRequest,
-  callerAppletIds: string[],
-) => {
+export const signZomeCallApplet = async (request: CallZomeRequest, callerAppletIds: string[]) => {
   return window.electronAPI.signZomeCallApplet(request, callerAppletIds);
 };
 

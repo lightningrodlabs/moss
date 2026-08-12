@@ -151,7 +151,7 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     // why: cast lets us add `isAppletInstalled` here without bloating the
     // public AssetServices type in @theweave/api. `<wal-embed>` reaches it
     // via optional chaining on `window.__WEAVE_API__.assets`.
-    assets: ({
+    assets: {
       assetInfo: async (wal: WAL): Promise<AssetLocationAndInfo | undefined> => {
         const maybeCachedInfo = mossStore.mossCache.assetInfo.value(wal);
         if (maybeCachedInfo) {
@@ -262,7 +262,7 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
       assetStore: (_wal: WAL) => {
         throw new Error('assetStore is not supported in headless WeaveServices.');
       },
-    } as any),
+    } as any,
     async requestClose() {
       throw new Error('Close request is not supported in the headless WeaveClient.');
     },
@@ -1053,9 +1053,23 @@ export async function handleAppletIframeMessage(
       groupStore.unsubscribeFromAssetStore(message.wal, encodeHashToBase64(source.appletHash));
       return;
     }
-    default:
+    case 'ready':
+    case 'search':
+      // Declared in AppletToParentRequest but not sent by any current applet, so
+      // the host has no handler for them. Kept as explicit cases so the
+      // exhaustiveness guard holds; wire a real handler here if an applet starts
+      // sending one.
       throw Error(`Got unsupported message type: '${message.type}'`);
+    default:
+      // Exhaustiveness guard: every AppletToParentRequest variant must have a
+      // case above, so a new variant makes `message` non-`never` here and fails
+      // the build.
+      return assertNever(message);
   }
+}
+
+function assertNever(message: never): never {
+  throw Error(`Got unsupported message type: '${(message as AppletToParentRequest).type}'`);
 }
 
 export class AppletHost {

@@ -10,20 +10,14 @@ const __dirname = path.dirname(__filename);
 // here since there is a check to prevent accidental use of a production bootstrap server in development
 // mode
 export const PRODUCTION_BOOTSTRAP_URLS = [
-  'https://bootstrap.moss.social',
+  'https://bootstrap-relay.moss.social',
   'https://dev-test-bootstrap2.holochain.org',
 ];
-// The first one will be picked by default. But all production signaling servers should be listed
-// here since there is a check to prevent accidental use of a production signaling server in development
-// mode
-export const PRODUCTION_SIGNALING_URLS = [
-  'wss://bootstrap.moss.social',
-  'wss://dev-test-bootstrap2.holochain.org',
-];
-
-// The first one will be picked by default.
+// The first one will be picked by default. Holochain 0.7 serves the iroh relay
+// from the same kitsune2-bootstrap-srv node as the bootstrap server; the
+// trailing-dot FQDN is the iroh relay URL convention.
 export const PRODUCTION_RELAY_URLS = [
-  'https://iroh-relay.moss.social./',
+  'https://bootstrap-relay.moss.social./',
   'https://use1-1.relay.n0.iroh-canary.iroh.link./',
 ];
 

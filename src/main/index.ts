@@ -84,8 +84,6 @@ import {
   AppWebsocket,
   CallZomeRequest,
   CallZomeTransform,
-  CellId,
-  CellInfo,
   CellType,
   DnaHashB64,
   InstalledAppId,
@@ -113,14 +111,13 @@ import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import {
   appletIdFromAppId,
   deriveToolCompatibilityId,
-  getCellId,
   globalPubKeyFromListAppsResponse,
   isWeaveUrl,
   toLowerCaseB64,
   toolCompatibilityIdFromDistInfo,
   toOriginalCaseB64,
 } from '@theweave/utils';
-import { decideZomeCallSignable, type ZomeCallSigningDecision } from './zomeCallSigningPolicy';
+import { AppletZomeCallAuthorizer } from './appletZomeCallAuthorizer';
 import { sortVersionsDescending } from './utils';
 import { Profile as AgentProfile } from '@holochain-open-dev/profiles';
 import { ProfilesClient } from '@holochain-open-dev/profiles/dist/profiles-client.js';
@@ -579,94 +576,22 @@ if (!RUNNING_WITH_COMMAND) {
     return signZomeCall(zomeCall, WE_RUST_HANDLER, WE_EMITTER);
   };
 
-  // Stable string key for a CellId ([DnaHash, AgentPubKey]) so it can go in a Set.
-  const cellIdKey = (cellId: CellId): string =>
-    `${encodeHashToBase64(cellId[0])}|${encodeHashToBase64(cellId[1])}`;
+  // Scopes applet-requested signing to each applet's own cells + group profiles.
+  // Reads live app info lazily via the admin websocket (set during launch); its
+  // cache is invalidated on app enable/uninstall so a just-installed cell is
+  // grantable at once and a gone cell is never granted.
+  const appletZomeCallAuthorizer = new AppletZomeCallAuthorizer(() =>
+    HOLOCHAIN_MANAGER!.adminWebsocket.listApps({}),
+  );
 
-  const cellIdsOfApp = (appInfo: AppInfo, roleFilter?: string): string[] => {
-    const keys: string[] = [];
-    for (const [roleName, cellInfos] of Object.entries(appInfo.cell_info)) {
-      if (roleFilter && roleName !== roleFilter) continue;
-      for (const cellInfo of cellInfos as CellInfo[]) {
-        const cellId = getCellId(cellInfo);
-        if (cellId) keys.push(cellIdKey(cellId));
-      }
-    }
-    return keys;
-  };
-
-  // Cache of the cells an applet is allowed to have signed. Resolving these means
-  // a listApps round-trip, and signing is on the hot path, so results are cached.
-  // A miss (the decision below says "no") always refreshes once before the call
-  // is refused, so a just-installed applet or group is picked up immediately with
-  // no false rejection; concurrent refreshes are coalesced into one listApps.
-  let appletCellCache:
-    | { ownByAppletId: Map<string, Set<string>>; groupCells: Set<string> }
-    | undefined;
-  let cacheRebuildInFlight: Promise<void> | undefined;
-
-  const rebuildAppletCellCache = (): Promise<void> => {
-    if (cacheRebuildInFlight) return cacheRebuildInFlight;
-    cacheRebuildInFlight = (async () => {
-      try {
-        const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
-        const ownByAppletId = new Map<string, Set<string>>();
-        const groupCells = new Set<string>();
-        for (const app of apps) {
-          const appId = app.installed_app_id;
-          if (appId.startsWith('applet#')) {
-            ownByAppletId.set(appletIdFromAppId(appId), new Set(cellIdsOfApp(app)));
-          } else if (appId.startsWith('group#')) {
-            // Only the `group` role cell hosts the profiles zome an applet may call.
-            for (const key of cellIdsOfApp(app, 'group')) groupCells.add(key);
-          }
-        }
-        appletCellCache = { ownByAppletId, groupCells };
-      } finally {
-        cacheRebuildInFlight = undefined;
-      }
-    })();
-    return cacheRebuildInFlight;
-  };
-
-  // The union of own-cells across the caller's applet ids. A plain applet caller
-  // passes one id; a cross-group view passes every applet of its tool, so it may
-  // legitimately sign for any of them (but still only their own cells).
-  const ownCellsForCallers = (callerAppletIds: AppletId[]): Set<string> => {
-    const union = new Set<string>();
-    for (const id of callerAppletIds) {
-      for (const key of appletCellCache?.ownByAppletId.get(id) ?? []) union.add(key);
-    }
-    return union;
-  };
-
-  // Decide whether to sign, rebuilding the cache once if a first look says no —
-  // covers the case where the applet or a group was installed since the last build.
-  const authorizeAppletZomeCall = async (
-    callerAppletIds: AppletId[],
-    zomeCall: CallZomeRequest,
-  ): Promise<ZomeCallSigningDecision> => {
-    if (!zomeCall.cell_id) return { sign: false, reason: 'unknown-cell' };
-    const evaluate = (): ZomeCallSigningDecision =>
-      decideZomeCallSignable({
-        cellIdB64: cellIdKey(zomeCall.cell_id!),
-        zomeName: zomeCall.zome_name,
-        appletOwnCellIdsB64: ownCellsForCallers(callerAppletIds),
-        groupCellIdsB64: appletCellCache?.groupCells ?? new Set(),
-      });
-
-    if (!appletCellCache) await rebuildAppletCellCache();
-    let decision = evaluate();
-    // Refresh once before refusing only when the cell is simply unknown — it may
-    // belong to an applet or group installed since the cache was last built. A
-    // known group cell refused for a non-profiles zome cannot become allowed by
-    // a rebuild, so don't pay a listApps round-trip for those (a misbehaving
-    // applet could otherwise trigger one per rejected call).
-    if (!decision.sign && decision.reason === 'unknown-cell') {
-      await rebuildAppletCellCache();
-      decision = evaluate();
-    }
-    return decision;
+  // Enable an app and refresh the signing scope in one step: enabling widens the
+  // set of callable cells, so the authorizer must re-resolve. Routing every
+  // IPC-reachable enable through here keeps the pairing in one place. (The
+  // install-app handler invalidates directly, since HolochainManager.installApp
+  // enables internally.)
+  const enableAppAndInvalidate = async (installedAppId: string): Promise<void> => {
+    await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: installedAppId });
+    appletZomeCallAuthorizer.invalidate();
   };
 
   const handleSignZomeCallApplet = async (
@@ -679,7 +604,7 @@ if (!RUNNING_WITH_COMMAND) {
     if (!Array.isArray(callerAppletIds) || callerAppletIds.length === 0)
       throw Error('sign-zome-call-applet requires the requesting applet id(s).');
 
-    const decision = await authorizeAppletZomeCall(callerAppletIds, zomeCall);
+    const decision = await appletZomeCallAuthorizer.authorize(callerAppletIds, zomeCall);
     if (!decision.sign) {
       throw Error(
         `Refusing to sign zome call for applet(s) ${callerAppletIds.join(', ')}: ${decision.reason}. An applet may only sign calls to its own cells and to the profiles zome of a group cell.`,
@@ -1248,6 +1173,12 @@ if (!RUNNING_WITH_COMMAND) {
 
   function registerIPCHandlers(notificationIcon: Electron.NativeImage) {
     ipcMain.handle('exit', () => {
+      // app.exit(0) skips the before-quit handler, so stop the subprocesses here
+      // or they survive as orphans holding the admin port and keystore. (Anything
+      // still unassigned during the launch window can't be stopped from here.)
+      if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.shutdown();
+      if (LAIR_HANDLE) LAIR_HANDLE.kill();
+      if (LOCAL_SERVICES_HANDLE) LOCAL_SERVICES_HANDLE.kill();
       app.exit(0);
     });
     ipcMain.handle('open-logs', async () => WE_FILE_SYSTEM.openLogs());
@@ -1289,7 +1220,7 @@ if (!RUNNING_WITH_COMMAND) {
         }
         // Kill holochain and lair
         if (LAIR_HANDLE) LAIR_HANDLE.kill();
-        if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.processHandle.kill();
+        if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.shutdown();
         // Remove all data
         await WE_FILE_SYSTEM.factoryReset();
         // restart Moss
@@ -1332,7 +1263,7 @@ if (!RUNNING_WITH_COMMAND) {
           window.window.close();
         }
         if (LAIR_HANDLE) LAIR_HANDLE.kill();
-        if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.processHandle.kill();
+        if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.shutdown();
         const options: Electron.RelaunchOptions = { args: process.argv };
         if (process.env.APPIMAGE) {
           options.args!.unshift('--appimage-extract-and-run');
@@ -1351,7 +1282,7 @@ if (!RUNNING_WITH_COMMAND) {
         window.window.close();
       }
       if (LAIR_HANDLE) LAIR_HANDLE.kill();
-      if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.processHandle.kill();
+      if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.shutdown();
       const options: Electron.RelaunchOptions = { args: process.argv };
       if (process.env.APPIMAGE) {
         options.args!.unshift('--appimage-extract-and-run');
@@ -1632,7 +1563,10 @@ if (!RUNNING_WITH_COMMAND) {
         if (!appId || appId === '') {
           throw new Error('No app id provided.');
         }
+        // installApp enables internally, and appId is arbitrary — refresh the
+        // signing scope in case it is an applet.
         await HOLOCHAIN_MANAGER!.installApp(filePath, appId, networkSeed);
+        appletZomeCallAuthorizer.invalidate();
       },
     );
     ipcMain.handle('is-dev-mode-enabled', (_e): boolean => !app.isPackaged || RUN_OPTIONS.dev);
@@ -1892,7 +1826,7 @@ if (!RUNNING_WITH_COMMAND) {
             },
           });
         }
-        await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+        await enableAppAndInvalidate(appId);
         setTimeout(
           () =>
             autoSaveGroupsExport().catch((e) =>
@@ -2167,7 +2101,7 @@ if (!RUNNING_WITH_COMMAND) {
               group: { type: 'provisioned', value: { modifiers: { properties } } },
             },
           });
-          await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+          await enableAppAndInvalidate(appId);
 
           const token = await HOLOCHAIN_MANAGER!.getAppToken(appId);
           const appWs = await AppWebsocket.connect({
@@ -2389,9 +2323,7 @@ if (!RUNNING_WITH_COMMAND) {
                     agent_key: myPubKey,
                     network_seed: toolNetworkSeed,
                   });
-                  await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({
-                    installed_app_id: appletAppId,
-                  });
+                  await enableAppAndInvalidate(appletAppId);
 
                   appletAgentPubKey = appletAppInfo.agent_pub_key;
                 }
@@ -2469,7 +2401,7 @@ if (!RUNNING_WITH_COMMAND) {
         const appId = `group#${hashedSeed}#${progenitor}`;
         console.log('Determined appId for group: ', appId);
         if (apps.map((appInfo) => appInfo.installed_app_id).includes(appId)) {
-          await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+          await enableAppAndInvalidate(appId);
           const appInfo = apps.find((appInfo) => appInfo.installed_app_id === appId);
           if (!appInfo) throw new Error('AppInfo undefined.');
           return appInfo;
@@ -2498,7 +2430,7 @@ if (!RUNNING_WITH_COMMAND) {
             },
           },
         });
-        await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+        await enableAppAndInvalidate(appId);
         setTimeout(
           () =>
             autoSaveGroupsExport().catch((e) =>
@@ -2841,6 +2773,7 @@ if (!RUNNING_WITH_COMMAND) {
       await HOLOCHAIN_MANAGER!.adminWebsocket.uninstallApp({
         installed_app_id: appId,
       });
+      appletZomeCallAuthorizer.invalidate();
       try {
         WE_FILE_SYSTEM.deleteAppMetaDataDir(appId);
       } catch (e: any) {
@@ -3113,7 +3046,7 @@ if (!RUNNING_WITH_COMMAND) {
 
         // Enable the app after storing metadata in case enabling fails
         try {
-          await HOLOCHAIN_MANAGER!.adminWebsocket.enableApp({ installed_app_id: appId });
+          await enableAppAndInvalidate(appId);
         } catch (e) {
           // If the app failed to get enabled due to a reason other than awaiting memproofs, log it
           // but continue. The app would then need to get enabled in the UI.
@@ -3142,6 +3075,7 @@ if (!RUNNING_WITH_COMMAND) {
       await HOLOCHAIN_MANAGER!.adminWebsocket.uninstallApp({
         installed_app_id: appId,
       });
+      appletZomeCallAuthorizer.invalidate();
       WE_FILE_SYSTEM.deleteAppMetaDataDir(appId);
     });
     ipcMain.handle('launch', async (_e): Promise<boolean> => {
@@ -3154,6 +3088,8 @@ if (!RUNNING_WITH_COMMAND) {
         password,
         RUN_OPTIONS,
       );
+      // A (re)launch replaces the conductor, so any cached signing scope is stale.
+      appletZomeCallAuthorizer.invalidate();
       // Persist the primary agent pubkey so future cross-version imports can find it.
       // This also covers existing users upgrading from a build without this feature.
       const postLaunchApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
@@ -3240,7 +3176,7 @@ if (!RUNNING_WITH_COMMAND) {
       LAIR_HANDLE.kill();
     }
     if (HOLOCHAIN_MANAGER) {
-      HOLOCHAIN_MANAGER.processHandle.kill();
+      HOLOCHAIN_MANAGER.shutdown();
     }
     if (LOCAL_SERVICES_HANDLE) {
       LOCAL_SERVICES_HANDLE.kill();
