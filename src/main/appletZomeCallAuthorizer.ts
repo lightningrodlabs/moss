@@ -16,14 +16,15 @@ import { decideZomeCallSignable, type ZomeCallSigningDecision } from './zomeCall
 const CACHE_MAX_AGE_MS = 60_000;
 
 /**
- * Minimum time between rebuilds triggered by an unknown-cell refusal. A rebuild
- * picks up an applet or group installed since the last build, but only once per
- * interval, so a flood of calls to a genuinely-unknown cell cannot drive an
- * unthrottled listApps per call. Legitimate new cells do not depend on this
- * timing: the install IPC handlers call invalidate(), which drops the cache so
- * the next call rebuilds regardless of the interval. The residual case is a cell
- * that appears with no main-process signal (an applet cloning its own DNA over
- * the app websocket) and is called within the interval of the last build.
+ * Minimum time between rebuild *attempts* (see maybeRebuild). A rebuild picks up
+ * an applet or group installed since the last build, but only once per interval,
+ * so a flood of unknown-cell calls — or a rejecting listApps during an outage —
+ * cannot drive an unthrottled round-trip per call. Legitimate new cells do not
+ * depend on this timing: the install IPC handlers call invalidate(), which drops
+ * the cache and resets the attempt clock so the next call rebuilds regardless of
+ * the interval. The residual case is a cell that appears with no main-process
+ * signal (an applet cloning its own DNA over the app websocket) and is called
+ * within the interval of the last build.
  */
 const MIN_UNKNOWN_REBUILD_INTERVAL_MS = 1_000;
 
@@ -62,6 +63,9 @@ export class AppletZomeCallAuthorizer {
     this.cache = undefined;
     this.generation += 1;
     this.rebuildInFlight = undefined;
+    // Allow the next authorize() to rebuild immediately rather than being
+    // rate-limited against the previous attempt.
+    this.lastAttemptAt = -Infinity;
   }
 
   async authorize(
@@ -78,29 +82,40 @@ export class AppletZomeCallAuthorizer {
       });
 
     if (!this.cache) {
-      // Cold start (or just invalidated): must block until we know the cells.
-      await this.rebuild();
-    } else if (
-      this.clock() - this.cache.builtAt > CACHE_MAX_AGE_MS &&
-      this.clock() - this.lastAttemptAt > MIN_UNKNOWN_REBUILD_INTERVAL_MS
-    ) {
-      // Stale-while-revalidate: keep serving the current set and refresh in the
-      // background, at most once per interval. The .catch keeps a rejected
-      // listApps (socket reconnecting, conductor restarting) from becoming an
-      // unhandled rejection, a signing outage, or one doomed round-trip per call.
-      void this.rebuild().catch(() => {});
+      // Cold start (or just invalidated): block until we know the cells. If the
+      // rebuild fails (or is rate-limited during an outage) the cache stays
+      // undefined and we fail closed below.
+      await this.maybeRebuild();
+    } else if (this.clock() - this.cache.builtAt > CACHE_MAX_AGE_MS) {
+      // Stale-while-revalidate: keep serving the current set, refresh in the
+      // background.
+      void this.maybeRebuild();
     }
 
     let decision = evaluate();
-    if (
-      !decision.sign &&
-      decision.reason === 'unknown-cell' &&
-      (!this.cache || this.clock() - this.cache.builtAt > MIN_UNKNOWN_REBUILD_INTERVAL_MS)
-    ) {
-      await this.rebuild();
+    if (!decision.sign && decision.reason === 'unknown-cell') {
+      // Refresh once to pick up a cell installed/cloned since the last build.
+      await this.maybeRebuild();
       decision = evaluate();
     }
     return decision;
+  }
+
+  /**
+   * Rebuild the cache, but at most one *attempt* per interval (whether it
+   * succeeds or fails), and never propagating a failure. This is the one rate
+   * limit and error boundary for all three authorize() call sites: a flood of
+   * unknown-cell calls, or a rejecting listApps during an admin-socket outage,
+   * fires at most one round-trip per interval, and callers always fall through to
+   * a fail-closed decision rather than throwing a raw socket error at the applet.
+   * Concurrent callers coalesce onto the in-flight rebuild.
+   */
+  private maybeRebuild(): Promise<void> {
+    if (this.rebuildInFlight) return this.rebuildInFlight.catch(() => {});
+    if (this.clock() - this.lastAttemptAt <= MIN_UNKNOWN_REBUILD_INTERVAL_MS) {
+      return Promise.resolve();
+    }
+    return this.rebuild().catch(() => {});
   }
 
   /**
@@ -122,6 +137,11 @@ export class AppletZomeCallAuthorizer {
     const generationAtStart = this.generation;
     const p = (async () => {
       try {
+        // Suspend before calling listApps so the `this.rebuildInFlight = p` below
+        // always runs before the body can complete — otherwise a *synchronously*
+        // throwing listApps would leave a rejected promise stored in
+        // rebuildInFlight that every future rebuild() short-circuits onto forever.
+        await Promise.resolve();
         const apps = await this.listApps();
         // An invalidate() during the listApps round-trip means this snapshot may
         // already be stale (e.g. the app it would grant was just uninstalled), so

@@ -243,6 +243,35 @@ describe('AppletZomeCallAuthorizer', () => {
     expect(calls).toBe(3);
   });
 
+  it('an unknown-cell call during an outage refuses without throwing or flooding listApps', async () => {
+    let now = 0;
+    let calls = 0;
+    let fail = false;
+    const authorizer = new AppletZomeCallAuthorizer(
+      async () => {
+        calls += 1;
+        if (fail) throw new Error('admin socket down');
+        return [appletApp(APPLET_A, A_CELL), groupApp()];
+      },
+      () => now,
+    );
+    await authorizer.authorize([APPLET_A], req(A_CELL, 'posts')); // build (1)
+    now += 61_000;
+    fail = true;
+    // Unknown cell during the outage: refuses cleanly (no raw socket error) ...
+    expect(await authorizer.authorize([APPLET_A], req(FOREIGN_CELL, 'x'))).toEqual({
+      sign: false,
+      reason: 'unknown-cell',
+    });
+    await flush();
+    const attemptsSoFar = calls;
+    // ... and further unknown-cell calls within the interval fire no new round-trips.
+    await authorizer.authorize([APPLET_A], req(FOREIGN_CELL, 'x'));
+    await authorizer.authorize([APPLET_A], req(FOREIGN_CELL, 'x'));
+    await flush();
+    expect(calls).toBe(attemptsSoFar);
+  });
+
   it('an invalidate during an in-flight rebuild discards that stale snapshot (generation)', async () => {
     const { authorizer, releaseListApps, setApps } = gatedHarness([appletApp(APPLET_A, A_CELL)]);
     const first = authorizer.authorize([APPLET_A], req(A_CELL, 'posts'));
