@@ -993,23 +993,30 @@ export class DebuggingPanel extends LitElement {
   }
 
   /**
-   * Convert a Kitsune SpaceId (base64-encoded 32-byte hash) to a DNA hash.
-   * The SpaceId is the core 32 bytes of the DNA hash without the type prefix and DHT location.
-   * SpaceId uses URL-safe base64 encoding (with - and _ instead of + and /).
+   * Convert a Kitsune SpaceId to a DNA hash. Two wire forms exist: the full
+   * DnaHash multibase string (e.g. "uhC0k…", what kitsune2 emits under
+   * Holochain 0.7) and the bare 32-byte core in URL-safe base64. Decode the
+   * full form directly; reconstruct the core form by adding the type prefix
+   * and DHT location.
    */
   spaceIdToDnaHash(spaceId: string): DnaHash {
+    if (spaceId.startsWith('uhC0k')) {
+      return decodeHashFromBase64(spaceId);
+    }
     const bytes = this.decodeUrlSafeBase64(spaceId);
-    // Convert the 32-byte core to a full DNA hash (adds type prefix and DHT location)
     return hashFrom32AndType(bytes, HoloHashType.Dna);
   }
 
   /**
-   * Convert a Kitsune pub_key (URL-safe base64-encoded 32-byte core) to a full AgentPubKey.
-   * Uses hashFrom32AndType to properly construct the full 39-byte hash.
+   * Convert a Kitsune pub_key to a full AgentPubKey. Accepts either the full
+   * AgentPubKey multibase string (e.g. "uhCAk…") or the bare 32-byte core in
+   * URL-safe base64, mirroring {@link spaceIdToDnaHash}.
    */
   kitsuneAgentIdToAgentPubKey(kitsuneAgentId: string): Uint8Array {
+    if (kitsuneAgentId.startsWith('uhCAk')) {
+      return decodeHashFromBase64(kitsuneAgentId);
+    }
     const bytes = this.decodeUrlSafeBase64(kitsuneAgentId);
-    // Convert the 32-byte core to a full agent pub key (adds type prefix and DHT location)
     return hashFrom32AndType(bytes, HoloHashType.Agent);
   }
 
