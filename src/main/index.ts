@@ -123,6 +123,7 @@ import {
 import { decideZomeCallSignable, type ZomeCallSigningDecision } from './zomeCallSigningPolicy';
 import { sortVersionsDescending } from './utils';
 import { Profile as AgentProfile } from '@holochain-open-dev/profiles';
+import { ProfilesClient } from '@holochain-open-dev/profiles/dist/profiles-client.js';
 import { Jimp } from 'jimp';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
@@ -2215,14 +2216,10 @@ if (!RUNNING_WITH_COMMAND) {
                   : {};
 
               emitProgress(current, groupProfile?.name, 'setting-profile');
-              await appWs.callZome({
-                role_name: 'group',
-                zome_name: 'profiles',
-                fn_name: 'create_profile',
-                payload: {
-                  nickname: agentProfile.nickname,
-                  fields: normalizedAgentFields,
-                },
+              const profilesClient = new ProfilesClient(appWs, 'group');
+              await profilesClient.createProfile({
+                nickname: agentProfile.nickname,
+                fields: normalizedAgentFields,
               });
             } catch (profileErr) {
               console.warn(`Failed to set agent profile for group ${appId}:`, profileErr);

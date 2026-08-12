@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@folder/xdg": "4.0.1",
+    "@holochain-open-dev/profiles": "^0.701.0",
     "@holochain/client": "^0.21.0",
     "@lightningrodlabs/we-rust-utils": "^0.700.0-dev.0",
     "@theweave/api": "file:../libs/api",

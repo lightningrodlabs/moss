@@ -1557,10 +1557,10 @@
     prosemirror-state "^1.4.3"
     prosemirror-view "^1.31.3"
 
-"@holochain-open-dev/profiles@^0.700.0":
-  version "0.700.0"
-  resolved "https://registry.yarnpkg.com/@holochain-open-dev/profiles/-/profiles-0.700.0.tgz#0d2503ae5d56f6475d7fe7c3f2ad887e1fda58a2"
-  integrity sha512-VKF0HiOdKvDUNRw8dqlFgXHjq8DrJN81CE2CUYgDTYYzvo8Jixc49I3OAgzVww0E3uIgn9XyNBYeI5UavBA/vw==
+"@holochain-open-dev/profiles@^0.701.0":
+  version "0.701.0"
+  resolved "https://registry.yarnpkg.com/@holochain-open-dev/profiles/-/profiles-0.701.0.tgz#d46d4bb076fe5c901d8b9a28d505e1aa4b68261b"
+  integrity sha512-AM+mWSd5l2Hv3XO7JcP/owe4F7Jvg4vwbCBvtLGe/S3zZlaIyrYvPu1c4gMWbvLW79PKD9NuoWnE9NGkyPqfaQ==
   dependencies:
     "@holochain-open-dev/elements" "^0.700.0"
     "@holochain-open-dev/stores" "^0.700.0"
@@ -3115,18 +3115,18 @@
     defer-to-connect "^2.0.0"
 
 "@theweave/api@file:libs/api":
-  version "0.7.0-dev.0"
+  version "0.7.0-dev.2"
   dependencies:
-    "@holochain-open-dev/profiles" "^0.700.0"
+    "@holochain-open-dev/profiles" "^0.701.0"
     "@holochain/client" "^0.21.0"
     "@msgpack/msgpack" "^2.8.0"
     js-base64 "^3.7.2"
 
 "@theweave/elements@file:libs/elements":
-  version "0.7.0-dev.0"
+  version "0.7.0-dev.2"
   dependencies:
     "@holochain-open-dev/elements" "^0.700.0"
-    "@holochain-open-dev/profiles" "^0.700.0"
+    "@holochain-open-dev/profiles" "^0.701.0"
     "@holochain-open-dev/stores" "^0.700.0"
     "@holochain-open-dev/utils" "^0.700.0"
     "@holochain/client" "^0.21.0"
@@ -3134,12 +3134,12 @@
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"
     "@shoelace-style/shoelace" "^2.20.0"
-    "@theweave/api" "^0.7.0-dev.0"
+    "@theweave/api" "^0.7.0-dev.2"
     js-base64 "^3.7.5"
     lit "^3.0.2"
 
 "@theweave/group-client@file:shared/group-client":
-  version "0.7.0-dev.0"
+  version "0.7.0-dev.1"
   dependencies:
     "@holochain-open-dev/utils" "^0.700.0"
     "@holochain/client" "^0.21.0"
@@ -3147,7 +3147,7 @@
     "@theweave/api" "^0.7.0-dev.0"
 
 "@theweave/utils@file:shared/utils":
-  version "0.7.0-dev.0"
+  version "0.7.0-dev.1"
   dependencies:
     "@holochain/client" "^0.21.0"
     "@msgpack/msgpack" "^2.7.2"

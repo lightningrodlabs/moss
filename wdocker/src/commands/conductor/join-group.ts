@@ -4,6 +4,7 @@ import {
   globalPubKeyFromListAppsResponse,
 } from '@theweave/utils';
 import { AdminWebsocket, AppInfo, encodeHashToBase64 } from '@holochain/client';
+import { ProfilesClient } from '@holochain-open-dev/profiles/dist/profiles-client.js';
 import { input } from '@inquirer/prompts';
 
 import {
@@ -50,15 +51,11 @@ export async function joinGroup(conductorId: string, inviteLink: string): Promis
   console.log('Creating profile');
   const weRustHandler = await getWeRustHandler(wDockerFs, password);
   const groupAppWs = await getAppWs(adminWs, appPort, appInfo.installed_app_id, weRustHandler);
-  await groupAppWs.callZome({
-    role_name: 'group',
-    zome_name: 'profiles',
-    fn_name: 'create_profile',
-    payload: {
-      nickname: profileName,
-      fields: {
-        wdockerNode: wdockerNodeDescription,
-      },
+  const profilesClient = new ProfilesClient(groupAppWs, 'group');
+  await profilesClient.createProfile({
+    nickname: profileName,
+    fields: {
+      wdockerNode: wdockerNodeDescription,
     },
   });
   console.log('Group joined successfully.');
