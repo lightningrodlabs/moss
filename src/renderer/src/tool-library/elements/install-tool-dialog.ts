@@ -52,8 +52,8 @@ type MatchingInactiveTool = {
 };
 
 @localized()
-@customElement('install-tool-dialog-web2')
-export class InstallToolDialogWeb2 extends LitElement {
+@customElement('install-tool-dialog')
+export class InstallToolDialog extends LitElement {
   @consume({ context: mossStoreContext, subscribe: true })
   mossStore!: MossStore;
 

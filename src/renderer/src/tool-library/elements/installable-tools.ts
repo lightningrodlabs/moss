@@ -27,8 +27,8 @@ import { MossDialog } from '../../ui/moss-dialog.js';
 import '../../ui/moss-dialog.js';
 
 @localized()
-@customElement('installable-tools-web2')
-export class InstallableToolsWeb2 extends LitElement {
+@customElement('installable-tools')
+export class InstallableTools extends LitElement {
   @consume({ context: mossStoreContext, subscribe: true })
   mossStore!: MossStore;
 

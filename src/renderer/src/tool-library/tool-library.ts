@@ -25,7 +25,7 @@ import '../groups/elements/invite/select-group.js';
 import { mdiEmailOutline, mdiWeb } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import './elements/curation-list-manager.js';
-import './elements/installable-tools-web2.js';
+import './elements/installable-tools.js';
 import { mossStoreContext } from '../context.js';
 import { consume } from '@lit/context';
 import { MossStore } from '../moss-store.js';
@@ -33,8 +33,8 @@ import { groupStoreContext } from '../groups/context.js';
 import { GroupStore } from '../groups/group-store.js';
 import { SelectGroup } from '../groups/elements/invite/select-group.js';
 import { DnaHashB64, decodeHashFromBase64 } from '@holochain/client';
-import { InstallToolDialogWeb2 } from './elements/install-tool-dialog-web2.js';
-import './elements/install-tool-dialog-web2.js';
+import { InstallToolDialog } from './elements/install-tool-dialog.js';
+import './elements/install-tool-dialog.js';
 import { ToolAndCurationInfo, ToolListUrl } from '../types';
 import { appStoreIcon, devIcon, experimentalToolIcon, stableToolIcon } from '../ui/icons.js';
 import '../ui/moss-dialog.js';
@@ -53,8 +53,8 @@ enum ToolDetailView {
 }
 
 @localized()
-@customElement('tool-library-web2')
-export class ToolLibraryWeb2 extends LitElement {
+@customElement('tool-library')
+export class ToolLibrary extends LitElement {
   @consume({ context: mossStoreContext, subscribe: true })
   mossStore!: MossStore;
 
@@ -68,7 +68,7 @@ export class ToolLibraryWeb2 extends LitElement {
   detailView: ToolDetailView = ToolDetailView.Description;
 
   @query('#install-tool-dialog')
-  _installToolDialog!: InstallToolDialogWeb2;
+  _installToolDialog!: InstallToolDialog;
 
   @query('#select-group')
   _selectGroup!: SelectGroup;
@@ -262,7 +262,7 @@ export class ToolLibraryWeb2 extends LitElement {
             >
           </div>
         </div>
-        <installable-tools-web2
+        <installable-tools
           style="display: flex; flex: 1;"
           .devCollectives=${this.allDeveloperCollectives}
           .unifiedTools=${filteredUnifiedTools}
@@ -306,7 +306,7 @@ export class ToolLibraryWeb2 extends LitElement {
             //   })
             // );
           }}
-        ></installable-tools-web2>
+        ></installable-tools>
       </div>
     `;
   }
@@ -448,7 +448,7 @@ export class ToolLibraryWeb2 extends LitElement {
           ? decodeHashFromBase64(this._selectedGroupDnaHash)
           : undefined}
       >
-        <install-tool-dialog-web2
+        <install-tool-dialog
           id="install-tool-dialog"
           @install-tool-dialog-closed=${() => {
             this._selectedGroupDnaHash = undefined;
@@ -460,7 +460,7 @@ export class ToolLibraryWeb2 extends LitElement {
             this.view = ToolLibraryView.Main;
             this.detailView = ToolDetailView.Description;
           }}
-        ></install-tool-dialog-web2>
+        ></install-tool-dialog>
       </group-context>
       <div class="column container" style="flex: 1;">
         <div class="header column center-content">
