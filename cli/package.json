@@ -1,6 +1,6 @@
 {
   "name": "@theweave/cli",
-  "version": "0.16.0-dev.4",
+  "version": "0.16.0-dev.5",
   "description": "CLI to run Tools for the Weave in development mode",
   "license": "CAL-1.0",
   "repository": {
@@ -12,7 +12,8 @@
     "weave": "./cli.js"
   },
   "scripts": {
-    "postinstall": "node ./fetch-binaries.mjs"
+    "postinstall": "node ./fetch-binaries.mjs",
+    "prepublishOnly": "node ../scripts/check-cli-dist.mjs"
   },
   "dependencies": {
     "@holochain/client": "^0.21.0",

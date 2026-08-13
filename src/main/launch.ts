@@ -125,24 +125,7 @@ export async function launch(
     throw new Error(`Failed to connect to WeRustHandler: ${e}`);
   }
 
-  // // Install default appstore if necessary:
-  // if (
-  //   !holochainManager.installedApps
-  //     .map((appInfo) => appInfo.installed_app_id)
-  //     .includes(TOOLS_LIBRARY_APP_ID)
-  // ) {
-  //   console.log('Installing Tools Library...');
-  //   if (splashscreenWindow)
-  //     splashscreenWindow.webContents.send('loading-progress-update', 'Installing Tools Library...');
-  //   await holochainManager.installApp(
-  //     path.join(DEFAULT_APPS_DIRECTORY, 'tools-library.happ'),
-  //     TOOLS_LIBRARY_APP_ID,
-  //     runOptions.appstoreNetworkSeed,
-  //   );
-
-  //   console.log('Tools Library installed.');
-  // }
-  // Install other default apps if necessary (not in applet-dev mode). Wrapped so
+  // Install default apps if necessary (not in applet-dev mode). Wrapped so
   // a failure in any post-spawn stage tears down the lair + conductor already
   // running instead of throwing past the launch IPC's destructuring and leaving
   // them orphaned holding the keystore and admin port.
