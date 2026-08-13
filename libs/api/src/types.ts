@@ -139,10 +139,8 @@ export type NotificationCount = {
 
 export interface OpenViews {
   openAppletMain(appletHash: EntryHash, wal?: WAL): void;
-  openAppletBlock(appletHash: EntryHash, block: string, context: any): void;
   openWal(wal: WAL): void;
-  openCrossGroupMain(appletBundleId: string): void;
-  openCrossGroupBlock(appletBundleId: string, block: string, context: any): void;
+  openCrossGroupMain(toolCompatibilityId: string): void;
 }
 
 export type AssetLocationAndInfo = {
@@ -168,7 +166,6 @@ export type AppletClients = {
 
 export type AppletView =
   | { type: 'main'; wal?: WAL }
-  | { type: 'block'; block: string; context: any }
   | {
       type: 'asset';
       /**
@@ -199,15 +196,9 @@ export type AppletView =
       cancel: () => Promise<void>;
     };
 
-export type CrossGroupView =
-  | {
-      type: 'main';
-    }
-  | {
-      type: 'block';
-      block: string;
-      context: any;
-    };
+export type CrossGroupView = {
+  type: 'main';
+};
 
 export type CreatableType = {
   /**
@@ -236,14 +227,6 @@ export type CreatableResult =
       type: 'error';
       error: any;
     };
-
-export type BlockType = {
-  label: string;
-  icon_src: string;
-  view: 'applet-view' | 'cross-group-view';
-};
-
-export type BlockName = string;
 
 /**
  * Indicates where/how an applet view is being rendered by Moss. Lets an applet
@@ -300,9 +283,6 @@ export type ParentToAppletMessage =
       type: 'get-applet-asset-info';
       wal: WAL;
       recordInfo?: RecordInfo;
-    }
-  | {
-      type: 'get-block-types';
     }
   | {
       type: 'search';
@@ -373,7 +353,7 @@ export type AppletToParentRequest =
       // to be able to send messages to it
       type: 'get-iframe-config';
       id: string;
-      subType: 'main' | 'asset' | 'block' | 'creatable';
+      subType: 'main' | 'asset' | 'creatable';
     }
   | {
       type: 'unregister-iframe';
@@ -542,18 +522,6 @@ export type OpenViewRequest =
   | {
       type: 'cross-group-main';
       appletBundleId: string;
-    }
-  | {
-      type: 'applet-block';
-      appletHash: EntryHash;
-      block: string;
-      context: any;
-    }
-  | {
-      type: 'cross-group-block';
-      appletBundleId: string;
-      block: string;
-      context: any;
     }
   | {
       type: 'asset';

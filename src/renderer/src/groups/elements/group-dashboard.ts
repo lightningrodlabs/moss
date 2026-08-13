@@ -26,6 +26,7 @@ import '../../ui/moss-dialog.js';
 import './dashboard-tile-dialog.js';
 
 import { GroupStore } from '../group-store.js';
+import { amIPrivileged, myStewardPermissionHash } from '../accountability-utils.js';
 import { groupStoreContext } from '../context.js';
 import { openViewsContext } from '../../layout/context.js';
 import { AppOpenViews } from '../../layout/types.js';
@@ -294,17 +295,12 @@ export class GroupDashboardEl extends LitElement {
 
   private _amIPrivileged(): boolean {
     const acc = this._accountabilities.value;
-    if (acc.status !== 'complete') return false;
-    return acc.value.some((a) => a.type === 'Steward' || a.type === 'Progenitor');
+    return acc.status === 'complete' && amIPrivileged(acc.value);
   }
 
   private _getMyPermissionHash(): ActionHash | undefined {
     const acc = this._accountabilities.value;
-    if (acc.status !== 'complete') return undefined;
-    for (const a of acc.value) {
-      if (a.type === 'Steward') return a.content.permission_hash;
-    }
-    return undefined;
+    return acc.status === 'complete' ? myStewardPermissionHash(acc.value) : undefined;
   }
 
   private _currentDashboard(): GroupDashboard | undefined {

@@ -24,6 +24,7 @@ import { appIdFromAppletHash, isAppRunning } from '@theweave/utils';
 import { dnaHashForCell, getCellNetworkSeed, getProvisionedCells } from '../../utils.js';
 import { chevronSingleDownIcon, chevronSingleUpIcon } from '../../ui/icons.js';
 import { BaseAppletSettingsCard } from './base-applet-settings-card.js';
+import { myStewardPermissionHash } from '../../groups/accountability-utils.js';
 import {
   selectDevUiWebhapp,
   setDevUiOverride,
@@ -109,7 +110,6 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
     );
   }
 
-  // TODO: use MossPrivilege instead
   async toggleAlwaysOnlineNodesSetting() {
     console.log('this.groupAppletsMetaData.value', this.groupAppletsMetaData.value);
     console.log('amIPrivileged: ', this.amIPrivileged());
@@ -139,17 +139,10 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
     await this.groupStore.groupAppletsMetaData.reload();
   }
 
-  // TODO: use MossPrivilege instead
   getMyPermissionHash(): ActionHash | undefined {
-    if (this.myAccountabilities.value.status !== 'complete') {
-      return undefined;
-    }
-    for (const acc of this.myAccountabilities.value.value) {
-      if (acc.type === 'Steward') {
-        return acc.content.permission_hash;
-      }
-    }
-    return undefined;
+    return this.myAccountabilities.value.status === 'complete'
+      ? myStewardPermissionHash(this.myAccountabilities.value.value)
+      : undefined;
   }
 
   toolVersion() {

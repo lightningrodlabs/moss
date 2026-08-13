@@ -278,21 +278,6 @@ Event listener allowing to register a callback that will get executed if a remot
 </td></tr>
 <tr><td>
 
-[openAppletBlock](./api.weaveservices.openappletblock.md)
-
-</td><td>
-
-</td><td>
-
-(appletHash: any, block: string, context: any) =&gt; Promise&lt;void&gt;
-
-</td><td>
-
-Open the specified block view of the specified Applet
-
-</td></tr>
-<tr><td>
-
 [openAppletMain](./api.weaveservices.openappletmain.md)
 
 </td><td>
@@ -323,32 +308,17 @@ Open the asset associated to the specified WAL
 </td></tr>
 <tr><td>
 
-[openCrossGroupBlock](./api.weaveservices.opencrossgroupblock.md)
-
-</td><td>
-
-</td><td>
-
-(appletBundleId: string, block: string, context: any) =&gt; Promise&lt;void&gt;
-
-</td><td>
-
-Open the specified block view of the specified Applet Type
-
-</td></tr>
-<tr><td>
-
 [openCrossGroupMain](./api.weaveservices.opencrossgroupmain.md)
 
 </td><td>
 
 </td><td>
 
-(appletBundleId: string) =&gt; Promise&lt;void&gt;
+(toolCompatibilityId: string) =&gt; Promise&lt;void&gt;
 
 </td><td>
 
-Open the cross-group main view of the specified Applet Type.
+Open the cross-group main view of the specified Tool class.
 
 </td></tr>
 <tr><td>

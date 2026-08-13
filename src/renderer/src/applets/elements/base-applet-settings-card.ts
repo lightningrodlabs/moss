@@ -27,6 +27,7 @@ import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { groupStoreContext } from '../../groups/context.js';
 import { GroupStore } from '../../groups/group-store.js';
+import { amIPrivileged, canArchive } from '../../groups/accountability-utils.js';
 import { mossStyles } from '../../shared-styles.js';
 import { toolSettingsStyles } from '../../groups/elements/settings/tool-settings-styles.js';
 
@@ -108,37 +109,20 @@ export abstract class BaseAppletSettingsCard extends LitElement {
     // Override in subclasses if needed
   }
 
-  amIPrivileged() {
-    if (this.myAccountabilities.value.status !== 'complete') {
-      return false;
-    }
-    for (const acc of this.myAccountabilities.value.value) {
-      if (acc.type === 'Steward' || acc.type == 'Progenitor') {
-        return true;
-      }
-    }
-    return false;
+  amIPrivileged(): boolean {
+    return (
+      this.myAccountabilities.value.status === 'complete' &&
+      amIPrivileged(this.myAccountabilities.value.value)
+    );
   }
 
-  // TODO: Use MossPrivilege instead
-  canIArchive() {
-    // added by me
-    if (
-      !!this.addedBy &&
-      encodeHashToBase64(this.addedBy) === encodeHashToBase64(this.groupStore.groupClient.myPubKey)
-    ) {
-      return true;
-    }
-    // progenitor
-    if (this.myAccountabilities.value.status !== 'complete') {
-      return false;
-    }
-    for (const acc of this.myAccountabilities.value.value) {
-      if (acc.type == 'Progenitor') {
-        return true;
-      }
-    }
-    return false;
+  canIArchive(): boolean {
+    const accountabilities = this.myAccountabilities.value;
+    return canArchive(
+      accountabilities.status === 'complete' ? accountabilities.value : [],
+      this.addedBy,
+      this.groupStore.groupClient.myPubKey,
+    );
   }
 
   deprecateState(): 'archived' | 'notArchived' | undefined {

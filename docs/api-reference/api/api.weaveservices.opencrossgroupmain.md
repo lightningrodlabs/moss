@@ -4,10 +4,10 @@
 
 ## WeaveServices.openCrossGroupMain property
 
-Open the cross-group main view of the specified Applet Type.
+Open the cross-group main view of the specified Tool class.
 
 **Signature:**
 
 ```typescript
-openCrossGroupMain: (appletBundleId: string) => Promise<void>;
+openCrossGroupMain: (toolCompatibilityId: string) => Promise<void>;
 ```

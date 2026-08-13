@@ -13,6 +13,7 @@ import { Accountability } from '@theweave/group-client';
 import { localized, msg } from '@lit/localize';
 import { groupStoreContext } from '../../context.js';
 import { GroupStore } from '../../group-store.js';
+import { canDelegateSteward } from '../../accountability-utils.js';
 import { mossStyles } from '../../../shared-styles.js';
 import { pencilIcon } from '../../../icons/icons.js';
 
@@ -47,18 +48,11 @@ export class AgentPermissionButton extends LitElement {
     () => [this.groupStore],
   );
 
-  // TODO: Use MossPrivilege instead
-  canIAddStewards() {
-    if (this.myAccountabilities.value.status !== 'complete') {
-      return false;
-    }
-    const myAccountabilities = this.myAccountabilities.value.value;
-    for (const acc of myAccountabilities) {
-      if (acc.type === 'Progenitor' || (acc.type === 'Steward' && !acc.content.permission.expiry)) {
-        return true;
-      }
-    }
-    return false;
+  canIAddStewards(): boolean {
+    return (
+      this.myAccountabilities.value.status === 'complete' &&
+      canDelegateSteward(this.myAccountabilities.value.value)
+    );
   }
 
   renderAccountability(accs: Accountability[]) {

@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-openCrossGroupMain(appletBundleId: string): void;
+openCrossGroupMain(toolCompatibilityId: string): void;
 ```
 
 ## Parameters
@@ -27,7 +27,7 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-appletBundleId
+toolCompatibilityId
 
 </td><td>
 

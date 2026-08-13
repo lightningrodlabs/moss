@@ -27,6 +27,7 @@ import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { groupStoreContext } from '../../groups/context.js';
 import { GroupStore } from '../../groups/group-store.js';
+import { amIPrivileged } from '../../groups/accountability-utils.js';
 import { AppletStore } from '../../applets/applet-store.js';
 import { mossStyles } from '../../shared-styles.js';
 import { PersistedStore } from '../../persisted-store.js';
@@ -284,17 +285,11 @@ export class GroupAppletsSidebar extends LitElement {
   @state()
   onlinePeersCollapsed: boolean = false;
 
-  // TODO: Use MossPrivilege instead
-  amIPrivileged() {
-    if (this.myAccountabilities.value.status !== 'complete') {
-      return false;
-    }
-    for (const acc of this.myAccountabilities.value.value) {
-      if (acc.type === 'Steward' || acc.type == 'Progenitor') {
-        return true;
-      }
-    }
-    return false;
+  amIPrivileged(): boolean {
+    return (
+      this.myAccountabilities.value.status === 'complete' &&
+      amIPrivileged(this.myAccountabilities.value.value)
+    );
   }
 
   renderAppletButtons(applets: ReadonlyMap<EntryHash, AppletStore>) {

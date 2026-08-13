@@ -57,6 +57,6 @@ describe('deriveWalMessageSource', () => {
       groupHash: IFRAME_GROUP,
       subType: 'main',
     };
-    expect(deriveWalMessageSource(kind, 'block', FALLBACK_GROUP).subType).toBe('block');
+    expect(deriveWalMessageSource(kind, 'asset', FALLBACK_GROUP).subType).toBe('asset');
   });
 });

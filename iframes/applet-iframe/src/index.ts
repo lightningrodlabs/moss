@@ -273,34 +273,12 @@ const weaveApi: WeaveServices = {
       },
     }),
 
-  openAppletBlock: async (appletHash, block: string, context: any): Promise<void> =>
-    postMessage({
-      type: 'open-view',
-      request: {
-        type: 'applet-block',
-        appletHash,
-        block,
-        context,
-      },
-    }),
-
-  openCrossGroupMain: (appletBundleId: string): Promise<void> =>
+  openCrossGroupMain: (toolCompatibilityId: string): Promise<void> =>
     postMessage({
       type: 'open-view',
       request: {
         type: 'cross-group-main',
-        appletBundleId,
-      },
-    }),
-
-  openCrossGroupBlock: (appletBundleId: string, block: string, context: any): Promise<void> =>
-    postMessage({
-      type: 'open-view',
-      request: {
-        type: 'cross-group-block',
-        appletBundleId,
-        block,
-        context,
+        appletBundleId: toolCompatibilityId,
       },
     }),
 
@@ -625,8 +603,6 @@ const handleParentMessageGeneral = async (
         message.wal,
         message.recordInfo,
       );
-    case 'get-block-types':
-      return window.__WEAVE_APPLET_SERVICES__.blockTypes;
     case 'search':
       return window.__WEAVE_APPLET_SERVICES__.search(
         appletClient,
@@ -843,7 +819,6 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
 
   const view = args[0].split('=')[1] as 'applet-view' | 'cross-group-view';
   let viewType: string | undefined;
-  let block: string | undefined;
   let hrl: Hrl | undefined;
   let context: any | undefined;
   let creatableName: string | undefined;
@@ -853,9 +828,6 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
     viewType = args[1].split('=')[1];
   }
 
-  if (args[2] && args[2].split('=')[0] === 'block') {
-    block = args[2].split('=')[1];
-  }
   if (args[2] && args[2].split('=')[0] === 'hrl') {
     hrl = parseHrl(args[2].split('=')[1]);
   }
@@ -882,19 +854,6 @@ async function queryStringToRenderView(s: string): Promise<RenderView> {
         view: {
           type: 'main',
           wal,
-        },
-      };
-    case 'block':
-      if (view !== 'applet-view' && view !== 'cross-group-view') {
-        throw new Error(`invalid query string: ${s}.`);
-      }
-      if (!block) throw new Error(`Invalid query string: ${s}. Missing block name.`);
-      return {
-        type: view,
-        view: {
-          type: 'block',
-          block,
-          context,
         },
       };
     case 'asset':

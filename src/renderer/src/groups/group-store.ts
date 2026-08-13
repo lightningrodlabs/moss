@@ -5,15 +5,16 @@ import {
   Readable,
   Unsubscriber,
   Writable,
+  asyncDerived,
   asyncReadable,
   completed,
   derived,
   get,
+  joinAsync,
   joinMap,
   lazyLoad,
   lazyLoadAndPoll,
   manualReloadStore,
-  mapAndJoin,
   pipe,
   sliceAndJoin,
   toPromise,
@@ -74,13 +75,8 @@ import {
   walDecodeContext,
 } from '@theweave/group-client';
 import { FoyerStore } from './foyer.js';
-import {
-  appIdFromAppletHash,
-  deriveToolCompatibilityId,
-  isAppDisabled,
-  isAppRunning,
-  toLowerCaseB64,
-} from '@theweave/utils';
+import { partitionAppletsByStatus } from './applet-status.js';
+import { appIdFromAppletHash, deriveToolCompatibilityId } from '@theweave/utils';
 import { decode, encode } from '@msgpack/msgpack';
 import {
   AssetsClient,
@@ -1446,15 +1442,12 @@ export class GroupStore {
    * in order to not re-enable those when enabling all applets again
    */
   async disableAllApplets(): Promise<Array<AppletHash>> {
+    // Refresh the conductor's app list so the pre-disable snapshot is current.
+    await this.mossStore.installedApps.reload();
     const installedApplets = await toPromise(this.allMyInstalledApplets);
-    const installedApps = await this.mossStore.adminWebsocket.listApps({});
-    const disabledAppIds = installedApps
-      .filter((app) => isAppDisabled(app))
-      .map((appInfo) => appInfo.installed_app_id);
+    const disabledApplets = await toPromise(this.allMyDisabledApplets);
 
-    const disabledAppletsIds = installedApplets
-      .filter((appletHash) => disabledAppIds.includes(appIdFromAppletHash(appletHash)))
-      .map((appletHash) => encodeHashToBase64(appletHash));
+    const disabledAppletsIds = disabledApplets.map((appletHash) => encodeHashToBase64(appletHash));
     // persist which applets have already been disabled
     this.mossStore.persistedStore.disabledGroupApplets.set(disabledAppletsIds, this.groupDnaHash);
 
@@ -1517,86 +1510,6 @@ export class GroupStore {
   // Currently unused
   // allGroupApplets = lazyLoadAndPoll(async () => this.groupClient.getGroupApplets(), APPLETS_POLLING_FREQUENCY);
 
-  allMyInstalledApplets = manualReloadStore(async () => {
-    const allMyApplets = await (async () => {
-      if (!this.constructed) {
-        return retryUntilResolved<Array<AppletHash>>(
-          () => this.groupClient.getMyJoinedAppletsHashes(),
-          200,
-          undefined,
-          false,
-        );
-      }
-      return this.groupClient.getMyJoinedAppletsHashes();
-    })();
-
-    const installedApps = await this.mossStore.adminWebsocket.listApps({});
-
-    const output = allMyApplets.filter((appletHash) =>
-      installedApps
-        .map((appInfo) => appInfo.installed_app_id)
-        .includes(`applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`),
-    );
-    return output;
-  });
-
-  allMyRunningApplets = manualReloadStore(async () => {
-    const allMyApplets = await (async () => {
-      if (!this.constructed) {
-        return retryUntilResolved<Array<AppletHash>>(
-          () => this.groupClient.getMyJoinedAppletsHashes(),
-          200,
-          undefined,
-          false,
-        );
-      }
-      return this.groupClient.getMyJoinedAppletsHashes();
-    })();
-    const installedApps = await this.mossStore.adminWebsocket.listApps({});
-    const runningAppIds = installedApps
-      .filter((app) => isAppRunning(app))
-      .map((appInfo) => appInfo.installed_app_id);
-
-    // console.log('Got runningAppIds: ', runningAppIds);
-    // console.log(
-    //   'Got allMyApplets: ',
-    //   allMyApplets.map((hash) => encodeHashToBase64(hash)),
-    // );
-
-    const output = allMyApplets.filter((appletHash) =>
-      runningAppIds.includes(`applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`),
-    );
-    // console.log(
-    //   'Got allMyRunningApplets: ',
-    //   output.map((h) => encodeHashToBase64(h)),
-    // );
-    return output;
-  });
-
-  // Applets I have joined and installed locally but which are currently disabled
-  // (installed in the conductor but not running).
-  allMyDisabledApplets = manualReloadStore(async () => {
-    const allMyApplets = await (async () => {
-      if (!this.constructed) {
-        return retryUntilResolved<Array<AppletHash>>(
-          () => this.groupClient.getMyJoinedAppletsHashes(),
-          200,
-          undefined,
-          false,
-        );
-      }
-      return this.groupClient.getMyJoinedAppletsHashes();
-    })();
-    const installedApps = await this.mossStore.adminWebsocket.listApps({});
-    const disabledAppIds = installedApps
-      .filter((app) => isAppDisabled(app))
-      .map((appInfo) => appInfo.installed_app_id);
-
-    return allMyApplets.filter((appletHash) =>
-      disabledAppIds.includes(`applet#${toLowerCaseB64(encodeHashToBase64(appletHash))}`),
-    );
-  });
-
   allMyApplets = manualReloadStore(async () => {
     if (!this.constructed) {
       return retryUntilResolved<Array<AppletHash>>(
@@ -1608,6 +1521,21 @@ export class GroupStore {
     }
     return this.groupClient.getMyJoinedAppletsHashes();
   });
+
+  // The applets this agent has joined in the group DNA, split by the status
+  // the conductor reports for them.
+  private myAppletsByStatus = asyncDerived(
+    joinAsync([this.allMyApplets, this.mossStore.installedApps]),
+    ([myApplets, installedApps]) => partitionAppletsByStatus(myApplets, installedApps),
+  );
+
+  allMyInstalledApplets = asyncDerived(this.myAppletsByStatus, (status) => status.installed);
+
+  allMyRunningApplets = asyncDerived(this.myAppletsByStatus, (status) => status.running);
+
+  // Applets I have joined and installed locally but which are currently disabled
+  // (installed in the conductor but not running).
+  allMyDisabledApplets = asyncDerived(this.myAppletsByStatus, (status) => status.disabled);
 
   allAdvertisedApplets = manualReloadStore(async () => {
     if (!this.constructed) {
@@ -1654,10 +1582,6 @@ export class GroupStore {
   activeAppletStores: AsyncReadable<HoloHashMap<EntryHash, AppletStore>> = pipe(
     this.allMyRunningApplets,
     (allApplets) => sliceAndJoin(this.mossStore.appletStores as GetonlyMap<any, any>, allApplets),
-  );
-
-  allBlocks = pipe(this.activeAppletStores, (appletsStores) =>
-    mapAndJoin(appletsStores, (s) => s.blocks),
   );
 
   allUnreadNotifications = pipe(
