@@ -2,6 +2,25 @@ import { encodeHashToBase64 } from '@holochain/client';
 import type { ActionHash, AgentPubKey } from '@holochain/client';
 import type { Accountability } from '@theweave/group-client';
 
+/**
+ * Single authority for privilege decisions in the renderer, derived from a
+ * group's `Accountability` list (the group zome filters expired steward
+ * claims before returning it).
+ *
+ * This module is the intended integration point for the role/privilege
+ * model in `@theweave/api` (`MossPrivilege`, `MossRole`,
+ * `MossAccountability`): when gating moves to declared privileges, the
+ * evaluation lands here, behind these signatures. Three gaps currently
+ * keep that model from expressing the rules below:
+ * - `canDelegateSteward` grants MakeSteward only to stewards without an
+ *   expiry, while `MossRole.Steward` carries MakeSteward unconditionally —
+ *   the role map needs mandate-aware evaluation over the accountability.
+ * - `canArchive` includes a resource-ownership rule (the agent who added
+ *   the tool may archive it), which a role→privilege map cannot express.
+ * - Steward writes must attach their claim's `permission_hash` to zome
+ *   calls; the privilege model has no credential carriage.
+ */
+
 /** A group member may manage tools and group settings if they are the
  * progenitor or hold any (unexpired) steward claim. The zome filters
  * expired claims, so presence in the list is sufficient. */
