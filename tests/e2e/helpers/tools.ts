@@ -18,9 +18,9 @@ export type InstallToolOptions = {
  */
 export async function openToolLibrary(page: Page) {
   await page.getByRole('button', { name: 'Tool Library' }).click();
-  // why: tool-library-web2 fetches curation lists asynchronously in firstUpdated;
+  // why: tool-library fetches curation lists asynchronously in firstUpdated;
   // wait for at least one tool card before we try to click one.
-  await expect(page.locator('installable-tools-web2')).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('installable-tools')).toBeVisible({ timeout: 30_000 });
 }
 
 /**
@@ -41,15 +41,15 @@ export async function installToolFromLibrary(page: Page, opts: InstallToolOption
   const dialogSelect = page.locator('library-tool-details select-group').first();
   await dialogSelect.locator('button.install-button').click();
   await dialogSelect.locator(`sl-menu-item:has-text("${opts.groupName}")`).first().click();
-  // Confirm in the install dialog. install-tool-dialog-web2's submit button is
-  // labelled "Add to Group" (see install-tool-dialog-web2.ts:473).
+  // Confirm in the install dialog. install-tool-dialog's submit button is
+  // labelled "Add to Group" (see install-tool-dialog.ts:473).
   await page
-    .locator('install-tool-dialog-web2')
+    .locator('install-tool-dialog')
     .getByRole('button', { name: /add to group/i })
     .click();
   // why: install includes a webhapp download + DNA registration; can take a while
   // even from a localhost fixture (lair signing, conductor admin calls, gossip).
-  await expect(page.locator('install-tool-dialog-web2')).toBeHidden({ timeout: 120_000 });
+  await expect(page.locator('install-tool-dialog')).toBeHidden({ timeout: 120_000 });
 }
 
 /**
