@@ -110,8 +110,6 @@ export class ExampleApplet extends LitElement {
                 </profiles-context>
               </posts-context>
             `;
-          case 'block':
-            throw new Error('Block view is not implemented.');
           case 'asset':
             if (!this.weaveClient.renderInfo.view.recordInfo) {
               throw new Error(

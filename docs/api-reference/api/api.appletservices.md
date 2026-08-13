@@ -59,21 +59,6 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-[blockTypes](./api.appletservices.blocktypes.md)
-
-</td><td>
-
-</td><td>
-
-Record&lt;[BlockName](./api.blockname.md)<!-- -->, [BlockType](./api.blocktype.md)<!-- -->&gt;
-
-</td><td>
-
-Render block types that this Applet offers
-
-</td></tr>
-<tr><td>
-
 [creatables](./api.appletservices.creatables.md)
 
 </td><td>

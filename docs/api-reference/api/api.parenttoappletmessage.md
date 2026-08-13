@@ -14,9 +14,6 @@ export type ParentToAppletMessage =
       recordInfo?: RecordInfo;
     }
   | {
-      type: 'get-block-types';
-    }
-  | {
       type: 'search';
       filter: string;
     }

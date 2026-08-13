@@ -17,6 +17,7 @@ export type RenderInfo =
       appletHash: AppletHash;
       groupProfiles: GroupProfile[];
       groupHash: DnaHash | null;
+      renderLocation?: RenderLocation;
     }
   | {
       type: 'cross-group-view';
@@ -25,4 +26,4 @@ export type RenderInfo =
     };
 ```
 
-**References:** [AppletView](./api.appletview.md)<!-- -->, [ReadonlyPeerStatusStore](./api.readonlypeerstatusstore.md)<!-- -->, [AppletHash](./api.applethash.md)<!-- -->, [GroupProfile](./api.groupprofile.md)<!-- -->, [CrossGroupView](./api.crossgroupview.md)<!-- -->, [AppletClients](./api.appletclients.md)
+**References:** [AppletView](./api.appletview.md)<!-- -->, [ReadonlyPeerStatusStore](./api.readonlypeerstatusstore.md)<!-- -->, [AppletHash](./api.applethash.md)<!-- -->, [GroupProfile](./api.groupprofile.md)<!-- -->, [RenderLocation](./api.renderlocation.md)<!-- -->, [CrossGroupView](./api.crossgroupview.md)<!-- -->, [AppletClients](./api.appletclients.md)

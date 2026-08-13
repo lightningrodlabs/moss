@@ -254,19 +254,6 @@ Description
 </td></tr>
 <tr><td>
 
-[openAppletBlock](./api.weaveclient.openappletblock.md)
-
-</td><td>
-
-</td><td>
-
-(appletHash: any, block: string, context: any) =&gt; Promise&lt;void&gt;
-
-</td><td>
-
-</td></tr>
-<tr><td>
-
 [openAppletMain](./api.weaveclient.openappletmain.md)
 
 </td><td>
@@ -293,26 +280,13 @@ Description
 </td></tr>
 <tr><td>
 
-[openCrossGroupBlock](./api.weaveclient.opencrossgroupblock.md)
-
-</td><td>
-
-</td><td>
-
-(appletBundleId: string, block: string, context: any) =&gt; Promise&lt;void&gt;
-
-</td><td>
-
-</td></tr>
-<tr><td>
-
 [openCrossGroupMain](./api.weaveclient.opencrossgroupmain.md)
 
 </td><td>
 
 </td><td>
 
-(appletBundleId: string) =&gt; Promise&lt;void&gt;
+(toolCompatibilityId: string) =&gt; Promise&lt;void&gt;
 
 </td><td>
 

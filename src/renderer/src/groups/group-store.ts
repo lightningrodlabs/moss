@@ -15,7 +15,6 @@ import {
   lazyLoad,
   lazyLoadAndPoll,
   manualReloadStore,
-  mapAndJoin,
   pipe,
   sliceAndJoin,
   toPromise,
@@ -1583,10 +1582,6 @@ export class GroupStore {
   activeAppletStores: AsyncReadable<HoloHashMap<EntryHash, AppletStore>> = pipe(
     this.allMyRunningApplets,
     (allApplets) => sliceAndJoin(this.mossStore.appletStores as GetonlyMap<any, any>, allApplets),
-  );
-
-  allBlocks = pipe(this.activeAppletStores, (appletsStores) =>
-    mapAndJoin(appletsStores, (s) => s.blocks),
   );
 
   allUnreadNotifications = pipe(

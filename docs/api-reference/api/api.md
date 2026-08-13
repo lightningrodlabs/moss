@@ -303,20 +303,6 @@ Description
 </td></tr>
 <tr><td>
 
-[BlockName](./api.blockname.md)
-
-</td><td>
-
-</td></tr>
-<tr><td>
-
-[BlockType](./api.blocktype.md)
-
-</td><td>
-
-</td></tr>
-<tr><td>
-
 [CreatableName](./api.creatablename.md)
 
 </td><td>
@@ -496,6 +482,17 @@ Hash of HoloHash length but all zeroes
 </td></tr>
 <tr><td>
 
+[RenderLocation](./api.renderlocation.md)
+
+</td><td>
+
+Indicates where/how an applet view is being rendered by Moss. Lets an applet adapt its behavior to the surface it is shown on — e.g. avoid eagerly joining a room when merely embedded inline in a dashboard.
+
+- 'main': the applet's main view (full applet UI) - 'embedded': an asset embedded inline (e.g. a dashboard tile / attachment) - 'side': the side-panel asset viewer - 'window': a dedicated standalone window
+
+</td></tr>
+<tr><td>
+
 [RenderView](./api.renderview.md)
 
 </td><td>
@@ -537,7 +534,7 @@ Events
 
 </td><td>
 
-String of the format weave-0.15://
+String of the format weave-<!-- -->&lt;<!-- -->protocol version<!-- -->&gt;<!-- -->://, e.g. weave-0.16://
 
 </td></tr>
 <tr><td>

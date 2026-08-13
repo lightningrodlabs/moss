@@ -6,7 +6,6 @@ import {
   type AppletToParentRequest,
   type ParentToAppletMessage,
   type IframeConfig,
-  type BlockType,
   type WeaveServices,
   type GroupProfile,
   type FrameNotification,
@@ -331,8 +330,6 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
     openAppletMain: async () => {},
     openCrossGroupMain: async () => {},
     openAsset: async () => {},
-    openCrossGroupBlock: async () => {},
-    openAppletBlock: async () => {},
     async userSelectScreen() {
       throw new Error('userSelectScreen is not supported in headless WeaveServices.');
     },
@@ -484,20 +481,8 @@ export async function handleAppletIframeMessage(
       switch (message.request.type) {
         case 'applet-main':
           return openViews.openAppletMain(message.request.appletHash, message.request.wal);
-        case 'applet-block':
-          return openViews.openAppletBlock(
-            message.request.appletHash,
-            message.request.block,
-            message.request.context,
-          );
         case 'cross-group-main':
           return openViews.openCrossGroupMain(message.request.appletBundleId);
-        case 'cross-group-block':
-          return openViews.openCrossGroupBlock(
-            message.request.appletBundleId,
-            message.request.block,
-            message.request.context,
-          );
         case 'asset':
           if (message.request.mode === 'window') {
             return openWalInWindow(message.request.wal, mossStore);
@@ -1094,12 +1079,6 @@ export class AppletHost {
     return this.postMessage({
       type: 'search',
       filter,
-    });
-  }
-
-  getBlocks(): Promise<Record<string, BlockType>> {
-    return this.postMessage({
-      type: 'get-block-types',
     });
   }
 

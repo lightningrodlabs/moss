@@ -4,9 +4,7 @@ import { ToolCompatibilityId } from '@theweave/moss-types';
 
 export interface AppOpenViews {
   openAppletMain(appletHash: EntryHash, wal?: WAL): void;
-  openAppletBlock(appletHash: EntryHash, block: string, context: any): void;
   openCrossGroupMain(toolCompatibilityId: ToolCompatibilityId): void;
-  openCrossGroupBlock(toolCompatibilityId: ToolCompatibilityId, block: string, context: any): void;
   openAsset(wal: WAL, mode?: OpenAssetMode): void;
   userSelectWal(
     from?: 'search' | 'pocket' | 'create' | 'pocket-no-create',

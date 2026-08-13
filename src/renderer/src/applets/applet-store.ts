@@ -1,14 +1,5 @@
-import {
-  AsyncReadable,
-  Writable,
-  derived,
-  lazyLoad,
-  lazyLoadAndPoll,
-  pipe,
-  writable,
-} from '@holochain-open-dev/stores';
+import { AsyncReadable, Writable, derived, lazyLoad, writable } from '@holochain-open-dev/stores';
 import { AppAuthenticationToken, encodeHashToBase64, EntryHash } from '@holochain/client';
-import { BlockType } from '@theweave/api';
 
 import { AppletHost } from './applet-host.js';
 import {
@@ -56,10 +47,6 @@ export class AppletStore {
       });
     }
   });
-
-  blocks: AsyncReadable<Record<string, BlockType>> = pipe(this.host, (host) =>
-    lazyLoadAndPoll(() => (host ? host.getBlocks() : Promise.resolve({})), 10000),
-  );
 
   _unreadNotifications: Writable<[string | undefined, number | undefined]> = writable([
     undefined,

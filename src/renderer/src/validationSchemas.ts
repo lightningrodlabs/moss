@@ -145,24 +145,6 @@ const OpenViewRequest = Type.Union([
   ),
   Type.Object(
     {
-      type: Type.Literal('applet-block'),
-      appletHash: EntryHash,
-      block: Type.String(),
-      context: Type.Any(),
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
-      type: Type.Literal('cross-group-block'),
-      appletBundleId: Type.String(),
-      block: Type.String(),
-      context: Type.Any(),
-    },
-    { additionalProperties: false },
-  ),
-  Type.Object(
-    {
       type: Type.Literal('asset'),
       wal: WAL,
       mode: Type.Optional(OpenAssetMode),
@@ -230,12 +212,7 @@ export const AppletToParentRequest = Type.Union([
     {
       type: Type.Literal('get-iframe-config'),
       id: Type.String(),
-      subType: Type.Union([
-        Type.Literal('main'),
-        Type.Literal('asset'),
-        Type.Literal('creatable'),
-        Type.Literal('block'),
-      ]),
+      subType: Type.Union([Type.Literal('main'), Type.Literal('asset'), Type.Literal('creatable')]),
       // TODO remove the crossGroup field altogether once it's removed in @theweave/api
       // since it's not required anymore
       crossGroup: Type.Optional(Type.Boolean()),
