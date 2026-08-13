@@ -23,6 +23,7 @@ import { dnaHashForCell, getCellNetworkSeed, getProvisionedCells } from '../../u
 import { StoreSubscriber, lazyLoadAndPoll } from '@holochain-open-dev/stores';
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
+import { amIPrivileged, canArchive, myStewardPermissionHash } from '../accountability-utils.js';
 import { appIdFromAppletHash, isAppRunning } from '@theweave/utils';
 import {
   selectDevUiWebhapp,
@@ -102,38 +103,20 @@ export class AppletDetailCard extends LitElement {
   @state()
   _devOverrideLoading = false;
 
-  // TODO: Use MossPrivilege instead
-  amIPrivileged() {
-    if (this.myAccountabilities.value.status !== 'complete') {
-      return false;
-    }
-    for (const acc of this.myAccountabilities.value.value) {
-      if (acc.type === 'Steward' || acc.type == 'Progenitor') {
-        return true;
-      }
-    }
-    return false;
+  amIPrivileged(): boolean {
+    return (
+      this.myAccountabilities.value.status === 'complete' &&
+      amIPrivileged(this.myAccountabilities.value.value)
+    );
   }
 
-  // TODO: Use MossPrivilege instead
-  canIArchive() {
-    // added by me
-    if (
-      !!this.addedBy &&
-      encodeHashToBase64(this.addedBy) === encodeHashToBase64(this.groupStore.groupClient.myPubKey)
-    ) {
-      return true;
-    }
-    // progenitor
-    if (this.myAccountabilities.value.status !== 'complete') {
-      return false;
-    }
-    for (const acc of this.myAccountabilities.value.value) {
-      if (acc.type == 'Progenitor') {
-        return true;
-      }
-    }
-    return false;
+  canIArchive(): boolean {
+    const accountabilities = this.myAccountabilities.value;
+    return canArchive(
+      accountabilities.status === 'complete' ? accountabilities.value : [],
+      this.addedBy,
+      this.groupStore.groupClient.myPubKey,
+    );
   }
 
   archiveState(): 'archived' | 'notArchived' | undefined {
@@ -250,7 +233,6 @@ export class AppletDetailCard extends LitElement {
     }
   }
 
-  // TODO: use MossPrivilege instead
   async toggleAlwaysOnlineNodesSetting() {
     console.log('this.groupAppletsMetaData.value', this.groupAppletsMetaData.value);
     console.log('amIPrivileged: ', this.amIPrivileged());
@@ -281,17 +263,10 @@ export class AppletDetailCard extends LitElement {
     await this.groupStore.groupAppletsMetaData.reload();
   }
 
-  // TODO: use MossPrivilege instead
   getMyPermissionHash(): ActionHash | undefined {
-    if (this.myAccountabilities.value.status !== 'complete') {
-      return undefined;
-    }
-    for (const acc of this.myAccountabilities.value.value) {
-      if (acc.type === 'Steward') {
-        return acc.content.permission_hash;
-      }
-    }
-    return undefined;
+    return this.myAccountabilities.value.status === 'complete'
+      ? myStewardPermissionHash(this.myAccountabilities.value.value)
+      : undefined;
   }
 
   toolVersion() {

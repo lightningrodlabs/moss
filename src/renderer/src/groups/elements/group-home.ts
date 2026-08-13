@@ -56,6 +56,7 @@ import './group-dashboard.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
+import { amIPrivileged } from '../accountability-utils.js';
 import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { mossStyles } from '../../shared-styles.js';
@@ -789,30 +790,11 @@ export class GroupHome extends LitElement {
     }
   }
 
-  // TODO: use MossPrivilege instead
-  getMyPermissionHash(): ActionHash | undefined {
-    if (this.myAccountabilities.value.status !== 'complete') {
-      return undefined;
-    }
-    for (const acc of this.myAccountabilities.value.value) {
-      if (acc.type === 'Steward') {
-        return acc.content.permission_hash;
-      }
-    }
-    return undefined;
-  }
-
-  // TODO: use MossPrivilege instead
-  amIPrivileged() {
-    if (this.myAccountabilities.value.status !== 'complete') {
-      return false;
-    }
-    for (const acc of this.myAccountabilities.value.value) {
-      if (acc.type === 'Steward' || acc.type == 'Progenitor') {
-        return true;
-      }
-    }
-    return false;
+  amIPrivileged(): boolean {
+    return (
+      this.myAccountabilities.value.status === 'complete' &&
+      amIPrivileged(this.myAccountabilities.value.value)
+    );
   }
 
   renderHomeContent() {

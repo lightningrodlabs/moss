@@ -28,6 +28,7 @@ import SlTextarea from '@shoelace-style/shoelace/dist/components/textarea/textar
 import { groupStoreContext } from '../../groups/context.js';
 import { mossStyles } from '../../shared-styles.js';
 import { GroupStore } from '../../groups/group-store.js';
+import { amIPrivileged, myStewardPermissionHash } from '../../groups/accountability-utils.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore } from '../../moss-store.js';
 import { ToolAndCurationInfo } from '../../types.js';
@@ -172,23 +173,9 @@ export class InstallToolDialog extends LitElement {
     return this._duplicateName;
   }
 
-  // TODO: Use MossPrivilege instead
   async checkPrivileges(): Promise<[boolean, ActionHash | undefined]> {
     const myAccountabilities = await toPromise(this.groupStore.myAccountabilities);
-    let hash: ActionHash | undefined = undefined;
-    let isPriv = false;
-    for (const acc of myAccountabilities) {
-      if (acc.type === 'Steward') {
-        hash = acc.content.permission_hash;
-        isPriv = true;
-        continue;
-      }
-      if (acc.type == 'Progenitor') {
-        isPriv = true;
-        continue;
-      }
-    }
-    return [isPriv, hash];
+    return [amIPrivileged(myAccountabilities), myStewardPermissionHash(myAccountabilities)];
   }
 
   async findMatchingInactiveTool(): Promise<MatchingInactiveTool | undefined> {
