@@ -1480,7 +1480,7 @@ export class MossStore {
     await this.adminWebsocket.disableApp({
       installed_app_id: appIdFromAppletHash(appletHash),
     });
-    await this.reloadAfterAppletEnableDisable(appletHash);
+    await this.reloadAfterAppletEnableDisable();
   }
 
   async enableApplet(appletHash: EntryHash) {
@@ -1490,7 +1490,7 @@ export class MossStore {
     await this.adminWebsocket.enableApp({
       installed_app_id: appIdFromAppletHash(appletHash),
     });
-    await this.reloadAfterAppletEnableDisable(appletHash);
+    await this.reloadAfterAppletEnableDisable();
   }
 
   /**
@@ -1947,13 +1947,6 @@ export class MossStore {
     );
     await this.disabledGroups.reload();
     await this.groupStores.reload();
-    // const groupStores = await toPromise(this.groupStores);
-    // await Promise.all(
-    //   Array.from(groupStores.values()).map(async (store) => {
-    //     await store.allMyApplets.reload();
-    //     await store.allMyRunningApplets.reload();
-    //   }),
-    // );
     await this.installedApps.reload();
     await this.allAppAssetInfos.reload();
   }
@@ -1967,26 +1960,14 @@ export class MossStore {
     await this.installedApps.reload();
     await this.allAppAssetInfos.reload();
     await groupStore.allMyApplets.reload();
-    await groupStore.allMyInstalledApplets.reload();
-    await groupStore.allMyRunningApplets.reload();
   }
 
   /**
-   * Refresh the stores that go stale when an applet is enabled or disabled:
-   * the conductor's installed-app list and the running-applets store of every
-   * group containing this applet.
+   * Refresh the conductor's installed-app list, which is the authority the
+   * per-group applet status stores derive from.
    */
-  async reloadAfterAppletEnableDisable(appletHash: AppletHash) {
+  async reloadAfterAppletEnableDisable() {
     await this.installedApps.reload();
-    const groupStores = await toPromise(this.groupsForApplet.get(appletHash)!);
-    await Promise.all(
-      Array.from(groupStores.values()).map(async (gs) => {
-        if (gs) {
-          await gs.allMyRunningApplets.reload();
-          await gs.allMyDisabledApplets.reload();
-        }
-      }),
-    );
   }
 
   async emitParentToAppletMessage(message: ParentToAppletMessage, forApplets: AppletId[]) {
