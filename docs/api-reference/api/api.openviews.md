@@ -23,13 +23,6 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
-[openAppletBlock(appletHash, block, context)](./api.openviews.openappletblock.md)
-
-</td><td>
-
-</td></tr>
-<tr><td>
-
 [openAppletMain(appletHash, wal)](./api.openviews.openappletmain.md)
 
 </td><td>
@@ -37,14 +30,7 @@ Description
 </td></tr>
 <tr><td>
 
-[openCrossGroupBlock(appletBundleId, block, context)](./api.openviews.opencrossgroupblock.md)
-
-</td><td>
-
-</td></tr>
-<tr><td>
-
-[openCrossGroupMain(appletBundleId)](./api.openviews.opencrossgroupmain.md)
+[openCrossGroupMain(toolCompatibilityId)](./api.openviews.opencrossgroupmain.md)
 
 </td><td>
 

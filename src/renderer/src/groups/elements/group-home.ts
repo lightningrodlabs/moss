@@ -3,7 +3,6 @@ import { localized, msg } from '@lit/localize';
 import { css, html, LitElement, TemplateResult, nothing } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import {
-  ActionHash,
   AgentPubKey,
   DnaModifiers,
   EntryHash,
@@ -42,8 +41,6 @@ import './group-peers-status.js';
 import './group-applets.js';
 import './looking-for-peers.js';
 import '../../custom-views/elements/all-custom-views.js';
-import './create-custom-group-view.js';
-import './edit-custom-group-view.js';
 import '../../ui/tab-group.js';
 import './foyer-stream.js';
 import './agent-permission.js';
@@ -70,15 +67,9 @@ import type { GroupDashboardEl } from './group-dashboard.js';
 import yaml from 'js-yaml';
 import { decode } from '@msgpack/msgpack';
 
-type View =
-  | {
-      view: 'main';
-    }
-  | { view: 'create-custom-view' }
-  | {
-      view: 'edit-custom-view';
-      customViewHash: ActionHash;
-    };
+type View = {
+  view: 'main';
+};
 
 @localized()
 @customElement('group-home')
@@ -1060,43 +1051,10 @@ export class GroupHome extends LitElement {
     `;
   }
 
-  renderCreateCustomView() {
-    return html`<div class="column" style="flex: 1">
-      <create-custom-group-view
-        style="flex: 1"
-        @create-cancelled=${() => {
-          this.view = { view: 'main' };
-        }}
-        @custom-view-created=${() => {
-          this.view = { view: 'main' };
-        }}
-      ></create-custom-group-view>
-    </div>`;
-  }
-
-  renderEditCustomView(customViewHash: EntryHash) {
-    return html`<div class="column" style="flex: 1">
-      <edit-custom-group-view
-        .customViewHash=${customViewHash}
-        style="flex: 1"
-        @edit-cancelled=${() => {
-          this.view = { view: 'main' };
-        }}
-        @custom-view-updated=${() => {
-          this.view = { view: 'main' };
-        }}
-      ></edit-custom-group-view>
-    </div>`;
-  }
-
   renderContentInner(groupProfile: GroupProfile, modifiers: DnaModifiers) {
     switch (this.view.view) {
       case 'main':
         return this.renderMain(groupProfile, modifiers);
-      case 'create-custom-view':
-        return this.renderCreateCustomView();
-      case 'edit-custom-view':
-        return this.renderEditCustomView(this.view.customViewHash);
     }
   }
 

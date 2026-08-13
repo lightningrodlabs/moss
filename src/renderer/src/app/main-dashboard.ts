@@ -294,14 +294,14 @@ export class MainDashboard extends LitElement {
         wal,
       });
     },
-    openAppletBlock: (_appletHash, _block, _context) => {
-      throw new Error('Opening applet blocks is currently not implemented.');
-    },
-    openCrossGroupMain: (_appletBundleHash) => {
-      throw new Error('Opening cross-group main views is currently not implemented.');
-    },
-    openCrossGroupBlock: (_appletBundleHash, _block, _context) => {
-      throw new Error('Opening cross-applet blocks is currently not implemented.');
+    openCrossGroupMain: (toolCompatibilityId) => {
+      this._mossStore.setDashboardState({
+        viewType: 'personal',
+        viewState: {
+          type: 'tool',
+          toolCompatibilityId,
+        },
+      });
     },
     openAsset: async (wal: WAL, mode?: OpenAssetMode) => {
       const tabId = weaveUrlFromWal(wal);
@@ -1156,9 +1156,6 @@ export class MainDashboard extends LitElement {
                     });
                   }}
                   @custom-view-selected=${(_e) => {
-                    throw new Error('Displaying custom views is currently not implemented.');
-                  }}
-                  @custom-view-created=${(_e) => {
                     throw new Error('Displaying custom views is currently not implemented.');
                   }}
                 ></group-container>

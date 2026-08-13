@@ -642,9 +642,6 @@ export function renderViewToQueryString(
         base = `${base}&context=${b64context}`;
       }
     }
-    if (renderView.view.type === 'block') {
-      base = `${base}&block=${renderView.view.block}`;
-    }
     if (renderView.view.type === 'asset') {
       const wal = renderView.view.wal;
       base = `${base}&hrl=${stringifyHrl(wal.hrl)}`;

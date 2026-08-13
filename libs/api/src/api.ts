@@ -12,11 +12,9 @@ import {
   TransportStats,
 } from '@holochain/client';
 import {
-  BlockType,
   AssetInfo,
   WAL,
   RenderInfo,
-  BlockName,
   AppletHash,
   AppletInfo,
   AssetLocationAndInfo,
@@ -173,7 +171,6 @@ export const initializeHotReload = async () => {
 export class AppletServices {
   constructor() {
     ((this.creatables = {}),
-      (this.blockTypes = {}),
       (this.search = async (_appletClient, _appletHash, _weaveServices, _searchFilter) => []),
       (this.getAssetInfo = async (_appletClient, _wal, _recordInfo) => undefined));
   }
@@ -183,10 +180,6 @@ export class AppletServices {
    */
   creatables: Record<CreatableName, CreatableType>;
 
-  /**
-   * Render block types that this Applet offers
-   */
-  blockTypes: Record<BlockName, BlockType>;
   /**
    * Get info about the specified entry of this Applet
    */
@@ -370,27 +363,11 @@ export interface WeaveServices {
    */
   openAppletMain: (appletHash: EntryHash, wal?: WAL) => Promise<void>;
   /**
-   * Open the specified block view of the specified Applet
-   * @param appletHash
-   * @param block
-   * @param context
+   * Open the cross-group main view of the specified Tool class.
+   * @param toolCompatibilityId
    * @returns
    */
-  openAppletBlock: (appletHash, block: string, context: any) => Promise<void>;
-  /**
-   * Open the cross-group main view of the specified Applet Type.
-   * @param appletBundleId
-   * @returns
-   */
-  openCrossGroupMain: (appletBundleId: string) => Promise<void>;
-  /**
-   * Open the specified block view of the specified Applet Type
-   * @param appletBundleId
-   * @param block
-   * @param context
-   * @returns
-   */
-  openCrossGroupBlock: (appletBundleId: string, block: string, context: any) => Promise<void>;
+  openCrossGroupMain: (toolCompatibilityId: string) => Promise<void>;
   /**
    * Open the asset associated to the specified WAL
    * @param wal
@@ -540,14 +517,8 @@ export class WeaveClient implements WeaveServices {
   openAppletMain = async (appletHash: EntryHash, wal?: WAL): Promise<void> =>
     window.__WEAVE_API__.openAppletMain(appletHash, wal);
 
-  openAppletBlock = async (appletHash, block: string, context: any): Promise<void> =>
-    window.__WEAVE_API__.openAppletBlock(appletHash, block, context);
-
-  openCrossGroupMain = (appletBundleId: string): Promise<void> =>
-    window.__WEAVE_API__.openCrossGroupMain(appletBundleId);
-
-  openCrossGroupBlock = (appletBundleId: string, block: string, context: any): Promise<void> =>
-    window.__WEAVE_API__.openCrossGroupBlock(appletBundleId, block, context);
+  openCrossGroupMain = (toolCompatibilityId: string): Promise<void> =>
+    window.__WEAVE_API__.openCrossGroupMain(toolCompatibilityId);
 
   openAsset = (wal: WAL, mode?: OpenAssetMode): Promise<void> =>
     window.__WEAVE_API__.openAsset(wal, mode);

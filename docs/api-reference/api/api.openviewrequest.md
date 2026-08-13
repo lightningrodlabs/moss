@@ -18,18 +18,6 @@ export type OpenViewRequest =
       appletBundleId: string;
     }
   | {
-      type: 'applet-block';
-      appletHash: EntryHash;
-      block: string;
-      context: any;
-    }
-  | {
-      type: 'cross-group-block';
-      appletBundleId: string;
-      block: string;
-      context: any;
-    }
-  | {
       type: 'asset';
       wal: WAL;
       mode?: OpenAssetMode;

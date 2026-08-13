@@ -13,11 +13,6 @@ export type AppletView =
       wal?: WAL;
     }
   | {
-      type: 'block';
-      block: string;
-      context: any;
-    }
-  | {
       type: 'asset';
       recordInfo?: RecordInfo;
       wal: WAL;

@@ -14,7 +14,7 @@ export type AppletToParentRequest =
   | {
       type: 'get-iframe-config';
       id: string;
-      subType: 'main' | 'asset' | 'block' | 'creatable';
+      subType: 'main' | 'asset' | 'creatable';
     }
   | {
       type: 'unregister-iframe';

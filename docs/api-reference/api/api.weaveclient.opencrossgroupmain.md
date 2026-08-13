@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-openCrossGroupMain: (appletBundleId: string) => Promise<void>;
+openCrossGroupMain: (toolCompatibilityId: string) => Promise<void>;
 ```

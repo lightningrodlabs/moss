@@ -7,13 +7,11 @@ The differences between a Weave Tool and a normal Holochain App are:
 - A Weave Tool can make use of the profiles zome provided by the Frame instead of using its own profiles module
 - A Weave Tool can provide more than just the default "main" UI. It can additionally provide:
   - UI elements to display single "assets"
-  - UI widgets/blocks of any kind
-  - UI elements ("main" view or "blocks") that render information across all instances of that same Tool type
+  - A "main" view that renders information across all instances of that same Tool type
 - A Weave Tool can provide `AppletServices` for the Frame or other Applets to use, including:
   - search: Searching in the Tool that returns Holochain Resource Locators (HRLs) with context pointing to an asset
   - creatables: Assets that can be created on-the-fly by a user.
   - getAssetInfo(): A function that returns info for the asset associated to the WAL if it exists in the Tool and the method is implemented.
-  - blockTypes: Types of UI widgets/blocks that this Tool can render if requested by the Frame.
 
 **Definition**: An "Asset" is anything that a) can be identified with an HRL plus arbitrary context and b) has an associated
 "asset-view", i.e. it can be displayed by the applet if requested.
@@ -48,7 +46,7 @@ import { WeaveClient, AppletServices, WAL, AssetInfo } from '@theweave/api';
 
 // First define your AppletServices that the Frame can call on your applet
 // to do things like search your applet or get information
-// about the available block views etc.
+// about the assets it holds.
 const appletServices: Appletservices = {
     // Types of attachment that this Tool offers for other Applets to attach
     creatables: {
@@ -61,19 +59,6 @@ const appletServices: Appletservices = {
             ...
         }
 
-    },
-    // Types of UI widgets/blocks that this Tool supports
-    blockTypes: {
-        'most_recent_posts': {
-            label: 'most_recent_posts',
-            icon_src: 'data:image/png;base64,KJNjknAKJkajsn',
-            view: "applet-view",
-        },
-        'bookmarked_posts': {
-            label: 'bookmarked_posts',
-            icon_src: 'data:image/png;base64,LKlkJElkjJnlksja',
-            view: "cross-applet-view",
-        }
     },
     getAssetInfo: async (
         appletClient: AppClient,
@@ -125,15 +110,6 @@ switch (weaveClient.renderInfo.type) {
     switch (weaveClient.renderInfo.view.type) {
       case "main":
         // here comes your rendering logic for the main view
-      case "block":
-        switch(weaveClient.renderInfo.view.block) {
-          case "most_recent_posts":
-            // your rendering logic to display this block type
-          case "bookmarked_posts":
-            // Your rendering logic to display this block type
-          default:
-             throw new Error("Unknown applet-view block type");
-        }
       case "asset":
         switch (weaveClient.renderInfo.view.roleName) {
           case "forum":
@@ -172,8 +148,6 @@ switch (weaveClient.renderInfo.type) {
     switch (this.weaveClient.renderInfo.view.type) {
       case "main":
         // here comes your rendering logic for the cross-applet main view
-      case "block":
-        //
       default:
         throw new Error("Unknown cross-applet-view render type.")
 
