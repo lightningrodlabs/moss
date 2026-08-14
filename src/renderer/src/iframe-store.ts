@@ -5,7 +5,24 @@ export type IframeInfo = {
   id: string; // RNG
   subType: string;
   source: MessageEventSource | null | 'wal-window';
+  /**
+   * Set once the iframe has registered its ParentToApplet message handlers.
+   * Before that point the iframe cannot answer requests: window.postMessage
+   * does not queue for listeners that do not exist yet, so anything sent
+   * earlier is discarded without a reply.
+   */
+  ready: boolean;
 };
+
+type ReadyWaiter = {
+  key: string;
+  subType: string;
+  resolve: (info: IframeInfo | undefined) => void;
+};
+
+const appletKey = (appletId: AppletId) => `applet:${appletId}`;
+const crossGroupKey = (toolCompatibilityId: ToolCompatibilityId) =>
+  `cross-group:${toolCompatibilityId}`;
 
 /**
  * Stores references to iframes and allows to send iframe messages
@@ -17,11 +34,13 @@ export class IframeStore {
   appletIframes: Record<AppletId, Array<IframeInfo>> = {};
   crossGroupIframes: Record<ToolCompatibilityId, Array<IframeInfo>> = {};
 
-  registerAppletIframe(appletId: AppletId, iframeInfo: IframeInfo): void {
+  private readyWaiters: Array<ReadyWaiter> = [];
+
+  registerAppletIframe(appletId: AppletId, iframeInfo: Omit<IframeInfo, 'ready'>): void {
     // TODO: Check if iframeInfo.id is already in use
     let iframes = this.appletIframes[appletId];
     if (!iframes) iframes = [];
-    iframes.push(iframeInfo);
+    iframes.push({ ...iframeInfo, ready: false });
     this.appletIframes[appletId] = iframes;
   }
 
@@ -30,12 +49,69 @@ export class IframeStore {
     this.appletIframes[appletId] = iframes.filter(({ id }) => id !== idToRemove);
   }
 
-  registerCrossGroupIframe(toolCompatibilityId: ToolCompatibilityId, iframeInfo: IframeInfo): void {
+  registerCrossGroupIframe(
+    toolCompatibilityId: ToolCompatibilityId,
+    iframeInfo: Omit<IframeInfo, 'ready'>,
+  ): void {
     // TODO: Check if iframeInfo.id is already in use
     let iframes = this.crossGroupIframes[toolCompatibilityId];
     if (!iframes) iframes = [];
-    iframes.push(iframeInfo);
+    iframes.push({ ...iframeInfo, ready: false });
     this.crossGroupIframes[toolCompatibilityId] = iframes;
+  }
+
+  markAppletIframeReady(appletId: AppletId, source: MessageEventSource | 'wal-window'): void {
+    this.markReady(this.appletIframes[appletId], appletKey(appletId), source);
+  }
+
+  markCrossGroupIframeReady(
+    toolCompatibilityId: ToolCompatibilityId,
+    source: MessageEventSource | 'wal-window',
+  ): void {
+    this.markReady(
+      this.crossGroupIframes[toolCompatibilityId],
+      crossGroupKey(toolCompatibilityId),
+      source,
+    );
+  }
+
+  /**
+   * Resolves with the iframe of the given subType once it is able to answer
+   * messages, or with undefined if that has not happened within timeoutMs.
+   */
+  async waitForReadyAppletIframe(
+    appletId: AppletId,
+    subType: string,
+    timeoutMs: number,
+  ): Promise<IframeInfo | undefined> {
+    const alreadyReady = (this.appletIframes[appletId] ?? []).find(
+      (info) => info.ready && info.subType === subType,
+    );
+    if (alreadyReady) return alreadyReady;
+
+    return new Promise<IframeInfo | undefined>((resolve) => {
+      const waiter: ReadyWaiter = { key: appletKey(appletId), subType, resolve };
+      this.readyWaiters.push(waiter);
+      setTimeout(() => {
+        this.readyWaiters = this.readyWaiters.filter((w) => w !== waiter);
+        resolve(undefined);
+      }, timeoutMs);
+    });
+  }
+
+  private markReady(
+    iframes: Array<IframeInfo> | undefined,
+    key: string,
+    source: MessageEventSource | 'wal-window',
+  ): void {
+    const info = (iframes ?? []).find((candidate) => candidate.source === source);
+    if (!info) return;
+    info.ready = true;
+    this.readyWaiters = this.readyWaiters.filter((waiter) => {
+      if (waiter.key !== key || waiter.subType !== info.subType) return true;
+      waiter.resolve(info);
+      return false;
+    });
   }
 
   unregisterCrossGroupIframe(toolCompatibilityId: ToolCompatibilityId, idToRemove: string): void {

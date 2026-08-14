@@ -551,6 +551,12 @@ const weaveApi: WeaveServices = {
   } else {
     throw new Error('Bad RenderView type.');
   }
+
+  // Report to the host that this iframe is now able to answer ParentToApplet
+  // messages. window.postMessage does not queue for listeners that do not exist
+  // yet, so anything the host sends before this point is discarded silently.
+  await postMessage({ type: 'ready' });
+
   window.dispatchEvent(new CustomEvent('applet-iframe-ready'));
 })();
 

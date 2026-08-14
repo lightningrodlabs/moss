@@ -1547,7 +1547,16 @@ export class MossStore {
 
       const token = await this.getAuthenticationToken(appIdFromAppletHash(appletHash));
 
-      set(new AppletStore(appletHash, applet, this.conductorInfo, token, this.isAppletDev));
+      set(
+        new AppletStore(
+          appletHash,
+          applet,
+          this.conductorInfo,
+          token,
+          this.isAppletDev,
+          this.iframeStore,
+        ),
+      );
     }),
   );
 
