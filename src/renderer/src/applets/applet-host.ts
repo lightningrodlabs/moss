@@ -1039,9 +1039,23 @@ export async function handleAppletIframeMessage(
       return;
     }
     case 'ready':
+      // The iframe reports readiness once its ParentToApplet handlers are
+      // registered, so the host can avoid posting into a window that is unable
+      // to answer yet.
+      if (eventSource) {
+        if (source.type === 'cross-group') {
+          mossStore.iframeStore.markCrossGroupIframeReady(source.toolCompatibilityId, eventSource);
+        } else {
+          mossStore.iframeStore.markAppletIframeReady(
+            encodeHashToBase64(source.appletHash),
+            eventSource,
+          );
+        }
+      }
+      return;
     case 'search':
       // Declared in AppletToParentRequest but not sent by any current applet, so
-      // the host has no handler for them. Kept as explicit cases so the
+      // the host has no handler for it. Kept as an explicit case so the
       // exhaustiveness guard holds; wire a real handler here if an applet starts
       // sending one.
       throw Error(`Got unsupported message type: '${message.type}'`);
