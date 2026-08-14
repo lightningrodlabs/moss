@@ -1103,14 +1103,18 @@ export class AppletHost {
     });
   }
 
-  async postMessage<T>(message: ParentToAppletMessage) {
+  async postMessage<T>(message: ParentToAppletMessage, timeoutMs = 20000) {
     return new Promise<T>((resolve, reject) => {
       const { port1, port2 } = new MessageChannel();
 
-      const timeoutMs = 60000;
       const timeout = setTimeout(() => {
         port1.close();
-        reject(new Error(`postMessage to applet timed out after ${timeoutMs}ms`));
+        reject(
+          new Error(
+            `postMessage '${message.type}' to applet ${this.appletId} timed out after ${timeoutMs}ms. ` +
+              `The iframe reported that it can answer messages, so the request most likely stalled inside the Tool's own handler.`,
+          ),
+        );
       }, timeoutMs);
 
       this.source.postMessage(message, { targetOrigin: '*', transfer: [port2] });
