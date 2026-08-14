@@ -1075,7 +1075,7 @@ export class AppletHost {
   appletId: AppletId;
 
   constructor(
-    public iframe: HTMLIFrameElement,
+    public source: MessageEventSource,
     appletId: AppletId,
   ) {
     this.appletId = appletId;
@@ -1113,7 +1113,7 @@ export class AppletHost {
         reject(new Error(`postMessage to applet timed out after ${timeoutMs}ms`));
       }, timeoutMs);
 
-      this.iframe.contentWindow!.postMessage(message, '*', [port2]);
+      this.source.postMessage(message, { targetOrigin: '*', transfer: [port2] });
 
       port1.onmessage = (m) => {
         clearTimeout(timeout);
