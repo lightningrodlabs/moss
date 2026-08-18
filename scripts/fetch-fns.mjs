@@ -40,7 +40,32 @@ switch (process.platform) {
     throw new Error(`Got unexpected OS platform: ${process.platform}`);
 }
 
+/**
+ * sha256 (hex) of a file on disk, or null if the file does not exist.
+ */
+export function sha256OfFile(filePath) {
+  if (!fs.existsSync(filePath)) return null;
+  const hasher = crypto.createHash('sha256');
+  hasher.update(fs.readFileSync(filePath));
+  return hasher.digest('hex');
+}
+
 export function downloadFile(url, targetPath, expectedSha256Hex, chmod = false) {
+  // Idempotent fetch: if the file is already on disk and already hashes to the
+  // expected sha256, there is nothing to download. This also allows a locally
+  // built binary to be pre-placed at the target path (see
+  // scripts/install-local-binaries.mjs and RUNBOOK-fieldtest.md).
+  if (expectedSha256Hex) {
+    const existingSha256Hex = sha256OfFile(targetPath);
+    if (existingSha256Hex === expectedSha256Hex) {
+      console.log(
+        `${targetPath} already present with the expected sha256 (${expectedSha256Hex}). Skipping download.`,
+      );
+      if (chmod) fs.chmodSync(targetPath, 511);
+      return;
+    }
+  }
+
   console.log('Downloading from', url);
   exec(`curl -f -L --output ${targetPath} ${url}`, (error, stdout, stderr) => {
     console.log(stdout);
