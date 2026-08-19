@@ -3,6 +3,7 @@
   "version": "0.16.0-dev.5",
   "private": true,
   "description": "Moss (0.16)",
+  "homepage": "https://theweave.social",
   "main": "./out/main/index.js",
   "workspaces": [
     "libs/*",
