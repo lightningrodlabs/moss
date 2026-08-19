@@ -24,8 +24,12 @@ import fs from 'fs';
 import path from 'path';
 import { sha256OfFile } from './fetch-fns.mjs';
 
+// NOTE: this is the cargo-zigbuild output dir (glibc 2.34 baseline), NOT
+// target/release. A plain `cargo build --release` inherits the build machine's
+// glibc and produces binaries that fail to start on older distros. Never point
+// this at target/release. See RUNBOOK-fieldtest.md section 3.
 const DEFAULT_PATCHED_BIN_DIR =
-  '/home/eric/code/metacurrency/holochain/holochain-hello-07/target/release';
+  '/home/eric/code/metacurrency/holochain/holochain-hello-07/target/x86_64-unknown-linux-gnu/release';
 
 const sourceDir = process.env.MOSS_PATCHED_BIN_DIR ?? DEFAULT_PATCHED_BIN_DIR;
 

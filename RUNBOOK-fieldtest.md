@@ -44,12 +44,12 @@ Four files, no application code:
 
 ### Checksums pinned
 
-| Binary                   | sha256                                                             |                  |
-| ------------------------ | ------------------------------------------------------------------ | ---------------- |
-| `holochain`              | `b3fc9c78af37232dd778cdbec3a474707def2333b773fd979118ce9d2b19c4ac` | patched          |
-| `hc`                     | `fa9e6fe3ef90b04f62db5376511ea440c44a837964635e2ade63ae1ac10d6321` | patched          |
-| `lair-keystore`          | `7a77822ab5e0020d0f3c358030d4ccfa8c6c144407a5c075d302c7b0fcf670c1` | stock, unchanged |
-| `kitsune2-bootstrap-srv` | `ba5a61c981300c1854e33cec5a091bfb2f9137ea977a938685eef0afa809b7be` | stock, unchanged |
+| Binary                   | sha256                                                             |                   |
+| ------------------------ | ------------------------------------------------------------------ | ----------------- |
+| `holochain`              | `10888746b94ea0c10a2a9f295a4369d9d1e2e53d1f799c7a30b8792c0b5780b9` | patched, zigbuild |
+| `hc`                     | `3ffa907e66151f5de415d07f49b1b5c74416aa570c3656eb7efc170e9e81fc0f` | patched, zigbuild |
+| `lair-keystore`          | `7a77822ab5e0020d0f3c358030d4ccfa8c6c144407a5c075d302c7b0fcf670c1` | stock, unchanged  |
+| `kitsune2-bootstrap-srv` | `ba5a61c981300c1854e33cec5a091bfb2f9137ea977a938685eef0afa809b7be` | stock, unchanged  |
 
 Only `holochain` and `hc` are patched. `lair-keystore` and `kitsune2-bootstrap-srv`
 are still fetched from the stock holochain 0.7.0 release.
@@ -65,23 +65,52 @@ are still fetched from the stock holochain 0.7.0 release.
 The patched Holochain lives on **`lightningrodlabs/holochain`**, branch
 **`feat/hello-pok-access-0.7`** (pushed).
 
+**Toolchain required:** `zig` and `cargo-zigbuild` (`cargo install cargo-zigbuild`),
+in addition to the normal Rust toolchain.
+
 ```bash
 git clone -b feat/hello-pok-access-0.7 https://github.com/lightningrodlabs/holochain
 cd holochain
-cargo build --release --locked -p holochain -p holochain_cli
+cargo zigbuild --release --locked --target x86_64-unknown-linux-gnu.2.34 \
+  -p holochain -p holochain_cli
 ```
 
-Outputs land at `target/release/holochain` and `target/release/hc`. Both report a
-plain `0.7.0` version string (`holochain 0.7.0` / `holochain_cli 0.7.0`) — the version
-string is _not_ a way to tell patched from stock. Use the sha256 above.
+Outputs land at `target/x86_64-unknown-linux-gnu/release/{holochain,hc}` — note the
+**target-qualified** path, not `target/release/`.
+
+### Why zigbuild, and not `cargo build`
+
+> **Never distribute a plain `cargo build --release` binary.**
+
+A plain host build links against whatever glibc the build machine has. The first cut
+of this field-test bundle was built that way on a glibc-2.39 machine, and the
+resulting AppImage died on other testers' boxes with **"Missing GLIBC 2.38"**.
+
+The stock holochain releases cap their symbol requirements at **GLIBC_2.34**, so that
+is the compatibility envelope this build has to match. The `.2.34` suffix on the
+zigbuild target pins exactly that. Everything else already in the bundle — stock
+`lair-keystore`, stock `kitsune2-bootstrap-srv`, and the Electron runtime — is at or
+below 2.34, so 2.34 is the ceiling for the bundle as a whole.
+
+Verify any candidate binary before pinning it:
+
+```bash
+objdump -T target/x86_64-unknown-linux-gnu/release/holochain \
+  | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1
+# must print GLIBC_2.34 -- anything higher is not distributable
+```
+
+Both binaries report a plain `0.7.0` version string (`holochain 0.7.0` /
+`holochain_cli 0.7.0`) — the version string is _not_ a way to tell patched from stock,
+nor portable from non-portable. Use the sha256 and the objdump check.
 
 **Path-dependency note.** That branch consumes **kitsune2 by absolute path**, from
 `lightningrodlabs/kitsune2` branch `feat/hello-pok-access`. The `[patch]` /
 path-dependency entries in its `Cargo.toml` point at a checkout on the original
 build machine, so a fresh clone will not build until you either check kitsune2 out
 alongside it and fix the paths, or repoint them at your own checkout. Expect to edit
-paths before the first `cargo build`. This is also why `--locked` matters: it keeps
-the resolved kitsune2 revision stable.
+paths before the first build. This is also why `--locked` matters: it keeps the
+resolved kitsune2 revision stable.
 
 ---
 
@@ -100,8 +129,12 @@ yarn build:linux                 # AppImage
 `install:local-binaries` reads from a hardcoded default build path. Override it:
 
 ```bash
-MOSS_PATCHED_BIN_DIR=/path/to/holochain/target/release yarn install:local-binaries
+MOSS_PATCHED_BIN_DIR=/path/to/holochain/target/x86_64-unknown-linux-gnu/release \
+  yarn install:local-binaries
 ```
+
+Point it at the **zigbuild** output dir (`target/x86_64-unknown-linux-gnu/release`),
+never at `target/release` — see section 3.
 
 It places three files: `holochain-v0.7.0`, `hc-v0.7.0`, and `hc` (the unversioned copy
 that `fetch-hc.mjs` would otherwise produce).
@@ -110,15 +143,20 @@ If `install:local-binaries` reports a sha256 mismatch, you built a different rev
 than the one pinned here — do not "fix" it by editing the checksums file unless you
 intend to re-pin the whole cohort.
 
-### Verifying a build is actually patched
+### Verifying a build is actually patched and portable
 
 ```bash
 sha256sum resources/bins/holochain-v0.7.0
-# must be b3fc9c78af37232dd778cdbec3a474707def2333b773fd979118ce9d2b19c4ac
+# must be 10888746b94ea0c10a2a9f295a4369d9d1e2e53d1f799c7a30b8792c0b5780b9
+
+objdump -T resources/bins/holochain-v0.7.0 \
+  | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1
+# must be GLIBC_2.34
 ```
 
-And in a packaged app, the binaries live at
-`resources/app.asar.unpacked/resources/bins/`.
+In a packaged app the binaries live at
+`resources/app.asar.unpacked/resources/bins/`, and both checks should be re-run there
+after `yarn build:linux` — that is the copy testers actually execute.
 
 ---
 
@@ -148,16 +186,21 @@ All on Linux x86_64, Node v22.14.0, yarn 1.22.22:
 - `yarn install` — pass
 - `yarn build:libs` — pass
 - `yarn install:local-binaries` — pass, both binaries checksum-verified
-- `yarn fetch:binaries` — pass; skipped the two patched binaries, downloaded and
-  verified stock `lair-keystore` and `kitsune2-bootstrap-srv`
+- `yarn fetch:binaries` — pass; skipped all four already-correct binaries, downloading
+  nothing
 - `yarn check:binaries` — pass
 - `yarn typecheck` — pass, clean
 - `yarn build` — pass
-- `yarn build:linux` — **AppImage produced** (175 MB); the `deb` target then failed on
-  a pre-existing missing `homepage` field in `package.json`, unrelated to this branch
+- `yarn build:linux` — **AppImage produced**,
+  `dist/org.lightningrodlabs.moss-0.16-0.16.0-dev.4-x86_64.AppImage`, 172,178,603 bytes
+  (164 MiB); the `deb` target then failed on a pre-existing missing `homepage` field in
+  `package.json`, unrelated to this branch
 
-Packaged binaries under `dist/linux-unpacked/` were confirmed to carry the patched
-checksums.
+Packaged binaries under `dist/linux-unpacked/resources/app.asar.unpacked/resources/bins/`
+were confirmed to carry the patched checksums, and `objdump -T` on the **in-package**
+`holochain` and `hc` confirms a **GLIBC_2.34** ceiling. Stock `lair-keystore`,
+`kitsune2-bootstrap-srv`, and the bundled Electron runtime are all at or below 2.34, so
+the AppImage as a whole requires no more than glibc 2.34.
 
 ### Two pre-existing gotchas, unrelated to this branch
 
@@ -176,7 +219,11 @@ checksums.
    `aarch64-apple-darwin`, `x86_64-apple-darwin`, and `x86_64-pc-windows-msvc`.
 2. Add their sha256s to `holochain-checksums.json` and extend
    `install-local-binaries.mjs` beyond its current Linux-x64 guard.
-3. macOS builds additionally need signing/notarization to be distributable.
+3. macOS builds additionally need signing/notarization to be distributable, and need
+   an explicit `MACOSX_DEPLOYMENT_TARGET` for the same reason Linux needs the glibc
+   pin — a host build silently inherits the build machine's minimum OS version. The
+   Linux "Missing GLIBC 2.38" failure was exactly this class of bug; do not assume the
+   other platforms are immune to it.
 4. Note a latent bug in `scripts/fetch-fns.mjs`: on Windows the computed
    `targetEnding` is `x86_64-pc-windows-msvc` while the checksum keys are
    `x86_64-pc-windows-msvc.exe`. The lookup returns `undefined`, and because the

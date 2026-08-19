@@ -7,6 +7,9 @@
     "which carry the kitsune2 hello/PoK access module. There is no GitHub release to",
     "download them from -- they must be placed on disk with `yarn install:local-binaries`",
     "before `yarn fetch:binaries`. See RUNBOOK-fieldtest.md.",
+    "These are cargo-zigbuild builds pinned to a GLIBC 2.34 baseline, matching the",
+    "envelope of the stock holochain releases. A plain `cargo build --release` inherits",
+    "the build machine's glibc and will not start on older distros -- never distribute one.",
     "EVERY OTHER PLATFORM ENTRY IN THIS FILE STILL REFERENCES STOCK HOLOCHAIN 0.7.0.",
     "A field test cohort built from this branch is therefore LINUX x86_64 ONLY: patched",
     "nodes advertise HCP2P_PROTO_VER=1002 and refuse stock peers at preflight, so a mixed",
@@ -21,14 +24,14 @@
     "aarch64-unknown-linux-gnu": "fca45395c716a79bfb87e1b7d6ebe695e8fd5fb79348224c6fb24be354341761",
     "x86_64-apple-darwin": "8333ede23dd59a9f6f31aba06aac963cb25178a3dac25ec7257fa04fdad2d210",
     "x86_64-pc-windows-msvc.exe": "643ed26e84a7ae72a454bd78b9427b50883fb1306406ba7b5fa4857c61c6b322",
-    "x86_64-unknown-linux-gnu": "fa9e6fe3ef90b04f62db5376511ea440c44a837964635e2ade63ae1ac10d6321"
+    "x86_64-unknown-linux-gnu": "3ffa907e66151f5de415d07f49b1b5c74416aa570c3656eb7efc170e9e81fc0f"
   },
   "holochain": {
     "aarch64-apple-darwin": "fa44e56402294221cad34933bfe12e079460aa22acf98723f5b4e68e3e33cc3b",
     "aarch64-unknown-linux-gnu": "a01a6b0be4a6fa52276fb0aca94559a05457bbad495bdd01802208d3f3649e51",
     "x86_64-apple-darwin": "53d48d0f92fdfb2d70cd302a3782df142ab324c023943319d2c33226a79dea0c",
     "x86_64-pc-windows-msvc.exe": "5d9bd8cf28c45645158d56198cfec38d04ac4cf620ba89ca37db2f7c46d7b3d2",
-    "x86_64-unknown-linux-gnu": "b3fc9c78af37232dd778cdbec3a474707def2333b773fd979118ce9d2b19c4ac"
+    "x86_64-unknown-linux-gnu": "10888746b94ea0c10a2a9f295a4369d9d1e2e53d1f799c7a30b8792c0b5780b9"
   },
   "kitsune2-bootstrap-srv": {
     "aarch64-apple-darwin": "a5ada66e9663c8badb3a0d2b2ff3af4a667a21aab2438c8cc79f0833c26f602b",
