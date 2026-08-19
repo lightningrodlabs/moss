@@ -33,14 +33,15 @@ added here, **hand out Linux builds only**.
 
 ## 2. What changed on this branch
 
-Four files, no application code:
+Five files, no application code:
 
 | File                                 | Change                                                                                                                                                                                                                                                                                               |
 | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `scripts/fetch-fns.mjs`              | Added `sha256OfFile()`, and made `downloadFile()` skip the download when the target file already exists **and** already hashes to the expected sha256. Makes the fetch idempotent and lets a locally built binary be pre-placed instead of downloaded. This change is generic and harmless upstream. |
 | `holochain-checksums.json`           | `holochain` and `hc` entries for `x86_64-unknown-linux-gnu` repointed at the patched binaries, plus a `_FIELD_TEST_ONLY` note block. All other platforms untouched.                                                                                                                                  |
 | `scripts/install-local-binaries.mjs` | New. Copies the locally built patched binaries into `resources/bins/` under the expected filenames, verifying each against `holochain-checksums.json`. Refuses to run on non-Linux-x64.                                                                                                              |
-| `package.json`                       | Added the `install:local-binaries` script.                                                                                                                                                                                                                                                           |
+| `scripts/check-resources.mjs`        | New. Asserts every packaged path under `resources/` exists and matches its expected sha256, so a half-populated worktree fails at build time instead of shipping. Chained into `check:binaries`.                                                                                                     |
+| `package.json`                       | Added the `install:local-binaries` and `check:resources` scripts; `check:binaries` now also runs `check:resources`.                                                                                                                                                                                  |
 
 ### Checksums pinned
 
@@ -116,15 +117,64 @@ resolved kitsune2 revision stable.
 
 ## 4. Building Moss with the patched binaries
 
+### Populating a fresh worktree
+
+**Read this before building in a new clone or `git worktree`.** Several of the things
+electron-builder packages are **gitignored** and produced by _separate_ fetch or build
+steps. A worktree that runs only some of them still compiles and still packages — the
+gap only surfaces at runtime, on a tester's machine. This has now bitten twice:
+
+- `target/wasm32-unknown-unknown/release/hrl_locator.wasm` missing → loud, fails the
+  build immediately.
+- `resources/default-apps/group.happ` missing → **silent**; the AppImage built and ran
+  fine, and only failed when a user created a group, with
+  `FfsIoError NotFound: .../app.asar.unpacked/resources/default-apps/group.happ`.
+
+The complete inventory of non-tracked artifacts:
+
+| Artifact                                                 | Produced by                                          | Packaged?                            |
+| -------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------ |
+| `resources/bins/holochain-v0.7.0`, `hc-v0.7.0`, `hc`     | `yarn install:local-binaries` (patched, this branch) | yes                                  |
+| `resources/bins/lair-keystore-v0.7.0`                    | `yarn fetch:binaries`                                | yes                                  |
+| `resources/bins/kitsune2-bootstrap-srv-v0.7.0`           | `yarn fetch:binaries`                                | yes                                  |
+| `resources/default-apps/group.happ`                      | `yarn fetch:group-happ`                              | yes                                  |
+| `target/wasm32-unknown-unknown/release/hrl_locator.wasm` | `yarn build:zomes`                                   | no, inlined into the renderer bundle |
+| `out/`, `cli/dist/`                                      | `yarn build`                                         | yes (`out/`)                         |
+
+Tracked in git and needing no fetch: `resources/conductor-config.yaml`,
+`resources/icon.png`, `resources/icons/*`.
+
+`target/` is **per-worktree** and gitignored, so a sibling checkout's build artifacts
+do not carry over — each worktree must produce its own.
+
+### Full sequence
+
 ```bash
 yarn install
 yarn build:libs
+yarn build:zomes                 # produces hrl_locator.wasm; required by yarn build
 yarn install:local-binaries      # copies patched holochain + hc into resources/bins
-yarn fetch:binaries              # skips the two patched ones, downloads lair + bootstrap-srv
-yarn check:binaries
+yarn fetch:binaries              # skips the patched ones, downloads lair + bootstrap-srv
+yarn fetch:group-happ            # resources/default-apps/group.happ -- DO NOT SKIP
+yarn check:binaries              # now also runs check:resources over the full inventory
 yarn build                       # typecheck + iframes + electron-vite + cli
 yarn build:linux                 # AppImage
 ```
+
+`yarn setup` wraps most of this, but note it does **not** run `install:local-binaries`
+(field-test-only) and does not run `build:zomes`.
+
+### The guard against this recurring
+
+`scripts/check-resources.mjs` (new on this branch) asserts every packaged path under
+`resources/` exists **and** matches its expected sha256 — binaries against
+`holochain-checksums.json`, `group.happ` against `moss.config.json`. It is chained into
+`yarn check:binaries`, which every `build:*` script already invokes, so the assertion is
+picked up at all existing call sites without touching them.
+
+`scripts/check-binaries.mjs` was left as-is; it only ever checked `holochain` and
+`lair-keystore`, which is why it did not catch the missing `group.happ`. Run the pair
+directly with `yarn check:resources` if you want the inventory check alone.
 
 `install:local-binaries` reads from a hardcoded default build path. Override it:
 
@@ -188,28 +238,34 @@ All on Linux x86_64, Node v22.14.0, yarn 1.22.22:
 - `yarn install:local-binaries` — pass, both binaries checksum-verified
 - `yarn fetch:binaries` — pass; skipped all four already-correct binaries, downloading
   nothing
-- `yarn check:binaries` — pass
+- `yarn fetch:group-happ` — pass, `group.happ` sha256 matches `moss.config.json`
+- `yarn check:binaries` (now chaining `check:resources`) — pass, 15 packaged files
+  present and verified; also negative-tested by removing `group.happ`, which correctly
+  fails the build with the remediation command
 - `yarn typecheck` — pass, clean
 - `yarn build` — pass
 - `yarn build:linux` — **AppImage produced**,
-  `dist/org.lightningrodlabs.moss-0.16-0.16.0-dev.4-x86_64.AppImage`, 172,178,603 bytes
-  (164 MiB); the `deb` target then failed on a pre-existing missing `homepage` field in
+  `dist/org.lightningrodlabs.moss-0.16-0.16.0-dev.4-x86_64.AppImage`, 176,339,197 bytes
+  (168 MiB); the `deb` target then failed on a pre-existing missing `homepage` field in
   `package.json`, unrelated to this branch
 
-Packaged binaries under `dist/linux-unpacked/resources/app.asar.unpacked/resources/bins/`
-were confirmed to carry the patched checksums, and `objdump -T` on the **in-package**
-`holochain` and `hc` confirms a **GLIBC_2.34** ceiling. Stock `lair-keystore`,
-`kitsune2-bootstrap-srv`, and the bundled Electron runtime are all at or below 2.34, so
-the AppImage as a whole requires no more than glibc 2.34.
+In-package verification under
+`dist/linux-unpacked/resources/app.asar.unpacked/resources/`:
 
-### Two pre-existing gotchas, unrelated to this branch
+- all 15 expected files present, including `default-apps/group.happ` at the exact path
+  the conductor's `FfsIoError NotFound` referenced, sha256
+  `643563f7485bc8c208f170e718acf613d424f2d122a5fd7a3e671a4018725ce1`
+- `bins/holochain-v0.7.0` and `bins/hc` carry the patched checksums
+- `objdump -T` on the in-package `holochain` and `hc` confirms a **GLIBC_2.34** ceiling;
+  stock `lair-keystore`, `kitsune2-bootstrap-srv`, and the bundled Electron runtime are
+  all at or below 2.34, so the AppImage as a whole requires no more than glibc 2.34
 
-1. **`yarn build` needs the zome WASM.** The renderer imports
-   `target/wasm32-unknown-unknown/release/hrl_locator.wasm`, so `yarn build:zomes`
-   must have been run in _this_ worktree (`target/` is gitignored and per-worktree, so
-   a sibling checkout's artifacts do not carry over).
-2. **`yarn build:linux` cannot produce a `deb`** until `homepage` is added to
-   `package.json`. The AppImage is produced first and is unaffected.
+### Pre-existing gotcha, unrelated to this branch
+
+**`yarn build:linux` cannot produce a `deb`** until `homepage` is added to
+`package.json`. The AppImage is produced first and is unaffected, so this is currently
+cosmetic — but it does mean `build:linux` always exits non-zero, which will mask a real
+failure in CI. Worth fixing before this is automated.
 
 ---
 
