@@ -6,6 +6,11 @@ import crypto from 'crypto';
 const configJSON = fs.readFileSync('holochain-checksums.json');
 const HOLOCHAIN_CHECKSUMS = JSON.parse(configJSON);
 
+/**
+ * Where holochain release assets come from unless a binary overrides it.
+ */
+const DEFAULT_BINARIES_REPO = 'holochain/holochain';
+
 const binariesDir = path.join('resources', 'bins');
 fs.mkdirSync(binariesDir, { recursive: true });
 
@@ -107,6 +112,33 @@ export function expectedSha256For(binaryName) {
   return assertSha256(value, `${binaryName} (${ASSET_TARGET})`);
 }
 
+/**
+ * Which GitHub release a given binary's assets are pulled from.
+ *
+ * Defaults to the stock holochain releases: repo `holochain/holochain`, tag
+ * `holochain-<version>`. `holochain-checksums.json` may override this per
+ * binary through a `binarySources` block:
+ *
+ *   "binarySources": {
+ *     "holochain": {
+ *       "binariesRepo": "lightningrodlabs/holochain",
+ *       "binariesTag": "holochain-0.7.0-hello.0"
+ *     }
+ *   }
+ *
+ * The override is deliberately per-binary and not global. The hello/PoK field
+ * test repoints only `holochain` and `hc` at a fork release; `lair-keystore` and
+ * `kitsune2-bootstrap-srv` are unpatched and must keep coming from the stock
+ * release, which they do simply by having no entry here.
+ */
+export function binarySourceFor(binaryName, version) {
+  const override = HOLOCHAIN_CHECKSUMS.binarySources?.[binaryName] ?? {};
+  return {
+    repo: override.binariesRepo ?? DEFAULT_BINARIES_REPO,
+    tag: override.binariesTag ?? `holochain-${version}`,
+  };
+}
+
 export function downloadFile(url, targetPath, expectedSha256Hex, chmod = false) {
   // A missing or placeholder checksum is a hard failure -- see assertSha256.
   assertSha256(expectedSha256Hex, targetPath);
@@ -158,6 +190,7 @@ export function downloadHolochainBinary(filename, withVersion = true, versionOve
     binariesDir,
     withVersion ? binaryFilenameWithVersion : `${filename}${EXE_SUFFIX}`,
   );
-  const holochainBinaryUrl = `https://github.com/holochain/holochain/releases/download/holochain-${version}/${completeBinaryFilename}`;
+  const { repo, tag } = binarySourceFor(filename, version);
+  const holochainBinaryUrl = `https://github.com/${repo}/releases/download/${tag}/${completeBinaryFilename}`;
   downloadFile(holochainBinaryUrl, targetPath, expectedSha256For(filename), true);
 }
