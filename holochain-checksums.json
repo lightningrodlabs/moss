@@ -15,37 +15,10 @@
     "'lair-keystore' and 'kitsune2-bootstrap-srv' are UNPATCHED. They have no",
     "binarySources entry and therefore still come from the stock",
     "holochain/holochain @ holochain-0.7.0 release. Do not add one.",
+    "All ten holochain/hc checksums below are from the CI-built assets of the fork",
+    "release (workflow run 32280878224, commit dee232d207, kitsune2 rev e01e55ee).",
     "NOTE: `yarn update-hc-checksums` regenerates this file from GitHub release assets",
     "and will destroy this note, the binarySources block, and the patched checksums."
-  ],
-  "_TODO_hello_0": [
-    "UNFINISHED -- the 0.16.0-dev.5 field-test release is not dispatchable until every",
-    "entry below reads a real sha256 taken from the assets of",
-    "https://github.com/lightningrodlabs/holochain/releases/tag/holochain-0.7.0-hello.0",
-    "",
-    "  holochain.aarch64-apple-darwin        <- holochain-aarch64-apple-darwin",
-    "  holochain.aarch64-unknown-linux-gnu   <- holochain-aarch64-unknown-linux-gnu",
-    "  holochain.x86_64-apple-darwin         <- holochain-x86_64-apple-darwin",
-    "  holochain.x86_64-pc-windows-msvc.exe  <- holochain-x86_64-pc-windows-msvc.exe",
-    "  holochain.x86_64-unknown-linux-gnu    <- holochain-x86_64-unknown-linux-gnu",
-    "  hc.aarch64-apple-darwin               <- hc-aarch64-apple-darwin",
-    "  hc.aarch64-unknown-linux-gnu          <- hc-aarch64-unknown-linux-gnu",
-    "  hc.x86_64-apple-darwin                <- hc-x86_64-apple-darwin",
-    "  hc.x86_64-pc-windows-msvc.exe         <- hc-x86_64-pc-windows-msvc.exe",
-    "  hc.x86_64-unknown-linux-gnu           <- hc-x86_64-unknown-linux-gnu",
-    "",
-    "Four of the five platforms read 'TODO-hello.0' and fail loudly: an unparseable",
-    "checksum is a hard error in both `yarn fetch:binaries` and `yarn check:resources`.",
-    "",
-    "x86_64-unknown-linux-gnu IS THE EXCEPTION AND IS THE EASY ONE TO MISS. It holds a",
-    "REAL sha256 -- but of the LOCAL cargo-zigbuild output, not of the fork release",
-    "asset. It is left in place only so this worktree keeps building on Linux x64 while",
-    "the fork release is still being produced. It will not match the CI-built asset even",
-    "if the two are functionally identical, so it MUST be overwritten from the release",
-    "along with the other four. It fails loudly if forgotten (sha256 mismatch on",
-    "download), but it does NOT fail in the same 'obviously unfilled' way the others do.",
-    "",
-    "Delete this whole block once all ten entries come from the release."
   ],
   "version": "0.7.0",
   "binarySources": {
@@ -59,18 +32,18 @@
     }
   },
   "hc": {
-    "aarch64-apple-darwin": "TODO-hello.0",
-    "aarch64-unknown-linux-gnu": "TODO-hello.0",
-    "x86_64-apple-darwin": "TODO-hello.0",
-    "x86_64-pc-windows-msvc.exe": "TODO-hello.0",
-    "x86_64-unknown-linux-gnu": "3ffa907e66151f5de415d07f49b1b5c74416aa570c3656eb7efc170e9e81fc0f"
+    "aarch64-apple-darwin": "6f7cccf1dceb27d640b3b39a40fc8064afd2f6108cb8870725c63983fc251a63",
+    "aarch64-unknown-linux-gnu": "acd108d892f9c39eecc36f17fd366122ef717595a41af70a2fe61cf0a9b65db6",
+    "x86_64-apple-darwin": "8aaad244f0ad84bea8ec222e33e4d57da0b93fba7d1e831e538cfd1200907cb2",
+    "x86_64-pc-windows-msvc.exe": "ca109140bdb0417bb55a58a261e0cd77f6548f971abe6abb03e82d4ba89afcc8",
+    "x86_64-unknown-linux-gnu": "6da769536d60b65156c3802065a8d3a54cd25a9a4c4dd048194be3d094e1cfeb"
   },
   "holochain": {
-    "aarch64-apple-darwin": "TODO-hello.0",
-    "aarch64-unknown-linux-gnu": "TODO-hello.0",
-    "x86_64-apple-darwin": "TODO-hello.0",
-    "x86_64-pc-windows-msvc.exe": "TODO-hello.0",
-    "x86_64-unknown-linux-gnu": "10888746b94ea0c10a2a9f295a4369d9d1e2e53d1f799c7a30b8792c0b5780b9"
+    "aarch64-apple-darwin": "1b4b8c682d87d905a63ed0b89e412ee1562bc5835a2af8a2d91bd3f47b3c4656",
+    "aarch64-unknown-linux-gnu": "612964e0ecbb876e74ff4a1a49409e02f13bd32d6d3332db9c2b8bb7611b5a69",
+    "x86_64-apple-darwin": "63f53458a54080d8bb309af0800fbdd3a51e4bae8d51bbf98cd1c95702fdb9cc",
+    "x86_64-pc-windows-msvc.exe": "52354357b8a579920549f5c70008ebb56951ba7e7292ea90d516efbc80c743e8",
+    "x86_64-unknown-linux-gnu": "f1d7068e7785526222ea091c9646b6181007aaead797b5e34c7115673bc181dd"
   },
   "kitsune2-bootstrap-srv": {
     "aarch64-apple-darwin": "a5ada66e9663c8badb3a0d2b2ff3af4a667a21aab2438c8cc79f0833c26f602b",
