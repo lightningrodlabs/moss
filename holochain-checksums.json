@@ -5,7 +5,7 @@
     "release artifacts. They are PATCHED binaries carrying the kitsune2 hello/PoK",
     "access module, built from lightningrodlabs/holochain branch",
     "feat/hello-pok-access-0.7 and published as the fork release",
-    "lightningrodlabs/holochain @ holochain-0.7.0-hello.1. The `binarySources` block",
+    "lightningrodlabs/holochain @ holochain-0.7.0-hello.2. The `binarySources` block",
     "below is what repoints the fetch at that release.",
     "Patched nodes advertise HCP2P_PROTO_VER=1002 and reject stock peers at preflight,",
     "so a build made from this branch CANNOT see stock Moss on the network. That is",
@@ -16,7 +16,7 @@
     "binarySources entry and therefore still come from the stock",
     "holochain/holochain @ holochain-0.7.0 release. Do not add one.",
     "All ten holochain/hc checksums below are from the CI-built assets of the fork",
-    "release (workflow run 32382465279, commit 80b5c637, kitsune2 rev 91d9258 (cross-relay preflight fix)).",
+    "release (workflow run 32494200923, commit 2a80da24, kitsune2 rev 09d3365 (QAD relay re-insert fix)).",
     "NOTE: `yarn update-hc-checksums` regenerates this file from GitHub release assets",
     "and will destroy this note, the binarySources block, and the patched checksums."
   ],
@@ -24,26 +24,26 @@
   "binarySources": {
     "holochain": {
       "binariesRepo": "lightningrodlabs/holochain",
-      "binariesTag": "holochain-0.7.0-hello.1"
+      "binariesTag": "holochain-0.7.0-hello.2"
     },
     "hc": {
       "binariesRepo": "lightningrodlabs/holochain",
-      "binariesTag": "holochain-0.7.0-hello.1"
+      "binariesTag": "holochain-0.7.0-hello.2"
     }
   },
   "hc": {
-    "aarch64-apple-darwin": "ac08896af38b88eabfa420a1c31f086e69ec81277fbfdb4b1b3d09363bd134e7",
-    "aarch64-unknown-linux-gnu": "28abd48a176c9bd1f7d020ed472177ca60afd09db50c22df6696c456682736a2",
-    "x86_64-apple-darwin": "efb1f51e01f1778e989b8c517908222692697414c4cd0a78c87c0c7d554ab63f",
-    "x86_64-pc-windows-msvc.exe": "79d814ad58747ef5888d0f986c19eecefaf6b74f64d0a3b114285095d7af9863",
-    "x86_64-unknown-linux-gnu": "3afa650516f3aa3843f2a6de56d21fdf038b8a658a815a6c4453bba9d6bba1f8"
+    "aarch64-apple-darwin": "9a3a70599db1f46b3d8e3a8d76f9b87b8d4ae83703142e69488055a4f12f7f20",
+    "aarch64-unknown-linux-gnu": "15ed03fb0948f360cffeeb2b042182a2580ee08f644811c8d272b7394969e64b",
+    "x86_64-apple-darwin": "b198a8af2681f55d6ced36c0a26da447c16f9773f5ee8dd65b51d642f022a832",
+    "x86_64-pc-windows-msvc.exe": "e6b5de0f81059d3545f45c439114873e33316e691a4010d005bc09323b2c3989",
+    "x86_64-unknown-linux-gnu": "4a0d53efa5d38f86c5764749eb4a89b18dcbfb0fa576f9756729e3076e79c7dc"
   },
   "holochain": {
-    "aarch64-apple-darwin": "32dc6634faa080b33b4fa2ed7565e7c2861e7019b78b98784cdb03595bfb67a3",
-    "aarch64-unknown-linux-gnu": "c91ebeef4bc0db0592684a61e2f4fb056c00eb6acd6128ed35a588cb38001171",
-    "x86_64-apple-darwin": "78b76f84e3e1c6530cb6a51adbffc1cf2be5f76b531c8fceb43f5a50675214d8",
-    "x86_64-pc-windows-msvc.exe": "18de8e51cf3a38b181941dcd7b0fcc52bbf89749cc494810a7051f0b967856c6",
-    "x86_64-unknown-linux-gnu": "51618713ffda5829ad08e77958466871161ae98f3310403796d2a1db40b95577"
+    "aarch64-apple-darwin": "00034a4ab35cc60f0a4be647717b3d9090aebb0d52b1862d7bfb5bb0babe87bb",
+    "aarch64-unknown-linux-gnu": "c587cf09171909ddf86edff505cd05de4259c4afca2b2d6c25ec8e6e6203a34a",
+    "x86_64-apple-darwin": "b7c2b47ea7114e41208573d476ae7236a1e9c467a01696d7b40f5adff46ca9be",
+    "x86_64-pc-windows-msvc.exe": "1c7b5097cea65c84574894fd2feb0ff5986850a2033355e3f48c7691094e1307",
+    "x86_64-unknown-linux-gnu": "773f51a08aea72b73550161b815d673a155f628a1d41485c8531fc701040900b"
   },
   "kitsune2-bootstrap-srv": {
     "aarch64-apple-darwin": "a5ada66e9663c8badb3a0d2b2ff3af4a667a21aab2438c8cc79f0833c26f602b",
