@@ -41,6 +41,13 @@ yarn workspace @theweave/wdocker build
 node wdocker/dist/cli.js --help
 ```
 
+Nothing puts a `wdocker` binary on your `PATH` in this mode, so substitute
+`node wdocker/dist/cli.js` for `wdocker` in the steps below.
+
+⚠️ Conductors created by a 0.15 wdocker live under a separate data root and do
+not show up in `wdocker list` on 0.16. They are still on disk, just not
+reachable from a 0.16 node.
+
 1. Run a new conductor with a name of your choice:
 
 ```
@@ -89,4 +96,22 @@ Commands:
   disable-group <conductor-name> <dna-hash-base64>        Disable a Moss group and all the tools installed in it.
   enable-group <conductor-name> <dna-hash-base64>         Enable a Moss group and all the tools installed in it.
   help [command]                                          display help for command
+```
+
+## Publishing
+
+`@theweave/utils` must be published at `>= 0.7.0-dev.2` before
+`@theweave/wdocker` is. wdocker imports `partialModifiersFromInviteString`,
+which no earlier release of `@theweave/utils` exports; the yarn workspace link
+hides that locally, and the installed CLI dies at module load.
+
+Before announcing a release, smoke test the actual tarball against the real
+registry:
+
+```
+yarn workspace @theweave/wdocker build
+cd wdocker && npm pack
+mkdir /tmp/wdocker-smoke && cd /tmp/wdocker-smoke && npm init -y
+npm install /path/to/theweave-wdocker-<version>.tgz
+node node_modules/@theweave/wdocker/dist/cli.js --help
 ```
