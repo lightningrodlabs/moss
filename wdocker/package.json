@@ -15,7 +15,7 @@
   "scripts": {
     "build": "tsc && cp ../moss.config.json ./dist && cp ../holochain-checksums.json ./dist && cp ../resources/conductor-config.yaml ./dist",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "node ../scripts/check-wdocker-package.mjs"
+    "prepublishOnly": "yarn build && node ../scripts/check-wdocker-package.mjs"
   },
   "dependencies": {
     "@folder/xdg": "4.0.1",
@@ -23,9 +23,9 @@
     "@holochain/client": "^0.21.0",
     "@lightningrodlabs/we-rust-utils": "^0.700.0-dev.0",
     "@theweave/api": "^0.7.0-dev.2",
-    "@theweave/group-client": "0.7.0-dev.1",
-    "@theweave/moss-types": "0.7.0-dev.1",
-    "@theweave/utils": "0.7.0-dev.1",
+    "@theweave/group-client": "^0.7.0-dev.1",
+    "@theweave/moss-types": "^0.7.0-dev.1",
+    "@theweave/utils": "^0.7.0-dev.2",
     "@inquirer/prompts": "6.0.1",
     "@msgpack/msgpack": "^2.8.0",
     "@sinclair/typebox": "0.33.12",
