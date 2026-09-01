@@ -5,7 +5,12 @@ import { defineConfig } from 'vitest/config';
 // via `yarn test`; these run via `yarn test:unit`.
 export default defineConfig({
   test: {
-    include: ['src/**/*.test.ts', 'shared/**/src/**/*.test.ts', 'scripts/**/*.test.ts'],
+    include: [
+      'src/**/*.test.ts',
+      'shared/**/src/**/*.test.ts',
+      'scripts/**/*.test.ts',
+      'wdocker/src/**/*.test.ts',
+    ],
     environment: 'node',
   },
 });
