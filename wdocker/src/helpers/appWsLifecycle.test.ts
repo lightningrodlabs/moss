@@ -38,14 +38,56 @@ describe('withAppWs', () => {
     expect(close).toHaveBeenCalledTimes(1);
   });
 
-  it('does not mask the callback result when closing fails', async () => {
-    const result = await withAppWs(
-      async () =>
-        fakeAppWs(() => {
-          throw new Error('socket already gone');
-        }),
-      async () => 'value',
-    );
-    expect(result).toBe('value');
+  it('warns instead of throwing when closing fails, and keeps the callback result', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const result = await withAppWs(
+        async () =>
+          fakeAppWs(() => {
+            throw new Error('socket already gone');
+          }),
+        async () => 'value',
+      );
+      expect(result).toBe('value');
+      expect(warn).toHaveBeenCalledTimes(1);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('propagates a connect failure without running the callback', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const use = vi.fn(async () => 'value');
+    try {
+      await expect(
+        withAppWs(async () => {
+          throw new Error('connect failed');
+        }, use),
+      ).rejects.toThrow('connect failed');
+      expect(use).not.toHaveBeenCalled();
+      expect(warn).not.toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('surfaces the callback error rather than a close error when both fail', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      await expect(
+        withAppWs(
+          async () =>
+            fakeAppWs(() => {
+              throw new Error('socket already gone');
+            }),
+          async () => {
+            throw new Error('zome call failed');
+          },
+        ),
+      ).rejects.toThrow('zome call failed');
+      expect(warn).toHaveBeenCalledTimes(1);
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

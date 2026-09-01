@@ -112,9 +112,8 @@ export async function getAppWs(
     input: (req) => signZomeCall(req as CallZomeRequest, weRustHandler),
     output: (o) => decode(o as any),
   };
-  // createAppWebsocket keeps the auth token pinned across reconnects; a bare
-  // AppWebsocket.connect leaves a long-lived daemon socket unrecoverable after
-  // one transient failure.
+  // Pin the auth token across reconnects so a long-lived daemon socket stays
+  // usable after a transient failure.
   return createAppWebsocket({
     url: new URL(`ws://localhost:${appPort}`),
     token: authTokenResponse.token,

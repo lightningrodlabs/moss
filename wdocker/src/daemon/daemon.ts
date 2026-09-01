@@ -235,17 +235,24 @@ async function checkForNewGroupsAndApplets(
             console.log('No new tools found.');
           }
 
-          await checkForUnjoinedClonedCells(groupClient, adminWs, appPort, weRustHandler);
+          await checkForUnjoinedClonedCells(
+            groupClient,
+            groupApp.installed_app_id,
+            adminWs,
+            appPort,
+            weRustHandler,
+          );
         },
       );
     } catch (e) {
-      console.error('Failed to check for Tools in group ', groupApp.installed_app_id);
+      console.error('Failed to check for Tools in group ', groupApp.installed_app_id, ': ', e);
     }
   }
 }
 
 async function checkForUnjoinedClonedCells(
   groupClient: GroupClient,
+  groupAppId: InstalledAppId,
   adminWs: AdminWebsocket,
   appPort: number,
   weRustHandler: WeRustHandler,
@@ -280,13 +287,17 @@ async function checkForUnjoinedClonedCells(
           );
         } catch (e) {
           console.error(
-            `Failed to create clone cell for applet with hash ${encodeHashToBase64(appletHash)} and AppletClonedCell with hash ${encodeHashToBase64(unjoinedCloneHash)}`,
+            `Failed to create clone cell for applet with hash ${encodeHashToBase64(appletHash)} and AppletClonedCell with hash ${encodeHashToBase64(unjoinedCloneHash)}: `,
+            e,
           );
         }
       }
     }
   } catch (e) {
-    console.error('Failed to check for unjoined cloned cells');
+    console.error(
+      `Failed to check for unjoined cloned cells in group with app id ${groupAppId}: `,
+      e,
+    );
   }
 }
 

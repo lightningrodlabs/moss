@@ -25,16 +25,29 @@ function tsFiles(dir: string): string[] {
   return out;
 }
 
+/**
+ * Reduce a source file to the code the compiler sees, so prose that names a
+ * construction can neither satisfy nor trip the assertions below.
+ */
+function stripComments(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
+    .filter((line) => !line.trim().startsWith('//'))
+    .join('\n');
+}
+
 describe('app websocket construction', () => {
-  it('builds every app websocket through createAppWebsocket', () => {
-    const helpers = fs.readFileSync(HELPERS, 'utf8');
-    expect(helpers).toContain('createAppWebsocket');
+  it('builds its app websocket by calling createAppWebsocket', () => {
+    const helpers = stripComments(fs.readFileSync(HELPERS, 'utf8'));
+    expect(helpers).toMatch(/return createAppWebsocket\(/);
   });
 
-  it('has no direct AppWebsocket.connect call outside helpers.ts', () => {
+  it('has no direct AppWebsocket.connect call anywhere in wdocker/src', () => {
     const offenders = tsFiles(SRC_DIR)
-      .filter((file) => file !== HELPERS)
-      .filter((file) => /AppWebsocket\.connect\s*\(/.test(fs.readFileSync(file, 'utf8')))
+      .filter((file) =>
+        /AppWebsocket\.connect\s*\(/.test(stripComments(fs.readFileSync(file, 'utf8'))),
+      )
       .map((file) => path.relative(SRC_DIR, file));
     expect(offenders).toEqual([]);
   });
