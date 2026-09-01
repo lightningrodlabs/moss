@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { AppWebsocket } from '@holochain/client';
 
-import { withAppWs } from './appWsLifecycle.js';
+import {
+  LONG_LIVED_APP_AUTH_TOKEN_PARAMS,
+  PER_CYCLE_APP_AUTH_TOKEN_PARAMS,
+  withAppWs,
+} from './appWsLifecycle.js';
 
 function fakeAppWs(close: () => unknown): AppWebsocket {
   return { client: { close } } as unknown as AppWebsocket;
@@ -71,6 +75,21 @@ describe('withAppWs', () => {
     }
   });
 
+  it('settles when close never resolves', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const result = await withAppWs(
+        async () => fakeAppWs(() => new Promise(() => undefined)),
+        async () => 'value',
+        5,
+      );
+      expect(result).toBe('value');
+      expect(warn).toHaveBeenCalledTimes(1);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
   it('surfaces the callback error rather than a close error when both fail', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     try {
@@ -89,5 +108,17 @@ describe('withAppWs', () => {
     } finally {
       warn.mockRestore();
     }
+  });
+});
+
+describe('app auth token params', () => {
+  it('keeps long-lived sockets on a non-expiring, reusable token', () => {
+    expect(LONG_LIVED_APP_AUTH_TOKEN_PARAMS).toEqual({ single_use: false, expiry_seconds: 0 });
+  });
+
+  it('keeps per-cycle sockets on a short-lived single-use token', () => {
+    expect(PER_CYCLE_APP_AUTH_TOKEN_PARAMS.single_use).toBe(true);
+    expect(PER_CYCLE_APP_AUTH_TOKEN_PARAMS.expiry_seconds).toBeGreaterThan(0);
+    expect(PER_CYCLE_APP_AUTH_TOKEN_PARAMS.expiry_seconds).toBeLessThanOrEqual(60);
   });
 });

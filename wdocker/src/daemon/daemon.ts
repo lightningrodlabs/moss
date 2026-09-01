@@ -15,7 +15,7 @@ import fs from 'fs';
 import { startConductor } from './start.js';
 import { WDockerFilesystem } from '../filesystem.js';
 import { getAdminWsAndAppPort, getAppWs, getWeRustHandler } from '../helpers/helpers.js';
-import { withAppWs } from '../helpers/appWsLifecycle.js';
+import { LONG_LIVED_APP_AUTH_TOKEN_PARAMS, withAppWs } from '../helpers/appWsLifecycle.js';
 import { ProfilesClient } from '@holochain-open-dev/profiles/dist/profiles-client.js';
 import {
   ALWAYS_ONLINE_TAG,
@@ -133,9 +133,16 @@ setTimeout(async () => {
   // These sockets stay open for the lifetime of the daemon: they carry the
   // peer-status signal handler and the ping/profile intervals below. The
   // sticky auth token from createAppWebsocket is what keeps them usable across
-  // transient reconnects.
+  // transient reconnects, and the token it replays has to stay redeemable for
+  // as long as the socket lives.
   for (const groupApp of enabledGroupApps) {
-    const groupAppWs = await getAppWs(adminWs, appPort, groupApp.installed_app_id, weRustHandler);
+    const groupAppWs = await getAppWs(
+      adminWs,
+      appPort,
+      groupApp.installed_app_id,
+      weRustHandler,
+      LONG_LIVED_APP_AUTH_TOKEN_PARAMS,
+    );
     const peerStatusClient = new PeerStatusClient(groupAppWs, 'group');
     peerStatusClient.onSignal(async (signal: SignalPayloadPeerStatus) => {
       if (signal.type == 'Ping') {

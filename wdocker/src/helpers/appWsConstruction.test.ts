@@ -11,6 +11,11 @@ import { fileURLToPath } from 'node:url';
  * transient reconnect. A bare `AppWebsocket.connect` silently opts out of it,
  * and the daemon's sockets live for the uptime of the node. Keep construction
  * in one place so the patch cannot be skipped by accident.
+ *
+ * Scope: this guard only covers how a socket is constructed. It says nothing
+ * about whether a socket is ever handed back — a `getAppWs` call inside a
+ * check cycle that never closes its socket passes this file untouched, and
+ * only review catches it.
  */
 const SRC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const HELPERS = path.join(SRC_DIR, 'helpers', 'helpers.ts');
