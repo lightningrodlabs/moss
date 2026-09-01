@@ -16,6 +16,8 @@ import {
 } from '@holochain/client';
 import { password as passwordInput } from '@inquirer/prompts';
 
+import { createAppWebsocket } from '@theweave/utils';
+
 import { WDockerFilesystem } from '../filesystem.js';
 import { GROUP_HAPP_URL, MOSS_CONFIG } from '../const.js';
 import { downloadFile, signZomeCall } from '../utils.js';
@@ -110,7 +112,10 @@ export async function getAppWs(
     input: (req) => signZomeCall(req as CallZomeRequest, weRustHandler),
     output: (o) => decode(o as any),
   };
-  return AppWebsocket.connect({
+  // createAppWebsocket keeps the auth token pinned across reconnects; a bare
+  // AppWebsocket.connect leaves a long-lived daemon socket unrecoverable after
+  // one transient failure.
+  return createAppWebsocket({
     url: new URL(`ws://localhost:${appPort}`),
     token: authTokenResponse.token,
     callZomeTransform,
