@@ -47,7 +47,7 @@ jobs:
       - name: Build libraries
         run: yarn build:libs
 
-      - name: Typecheck (node + web)
+      - name: Typecheck (node + web + wdocker)
         run: yarn typecheck
 
       - name: Unit tests

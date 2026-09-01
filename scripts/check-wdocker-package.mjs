@@ -13,6 +13,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
+import { isDeepStrictEqual } from 'node:util';
 
 // Paths relative to the wdocker package root, all read at runtime: cli.js and
 // daemon.js are the two bin entry points, and src/const.ts reads the other
@@ -65,7 +66,9 @@ function main() {
 
   for (const file of REQUIRED_FILES) {
     if (!fs.existsSync(path.join(root, file))) {
-      problems.push(`missing required file ${file} — run \`yarn workspace @theweave/wdocker build\`.`);
+      problems.push(
+        `missing required file ${file} — run \`yarn workspace @theweave/wdocker build\`.`,
+      );
     }
   }
 
@@ -73,9 +76,14 @@ function main() {
   if (fs.existsSync(distConfigPath) && fs.existsSync(referenceConfigPath)) {
     const distConfig = JSON.parse(fs.readFileSync(distConfigPath, 'utf-8'));
     const reference = JSON.parse(fs.readFileSync(referenceConfigPath, 'utf-8'));
-    if (distConfig.holochain !== reference.holochain) {
+    // dist/moss.config.json is a verbatim copy of the repo root file and every
+    // field in it is load-bearing at runtime, so anything but equality means
+    // dist/ was assembled from a different revision.
+    if (!isDeepStrictEqual(distConfig, reference)) {
       problems.push(
-        `dist/moss.config.json pins Holochain ${distConfig.holochain} but the repo is on ${reference.holochain} — dist/ is stale, rebuild it.`,
+        `dist/moss.config.json does not match the repo root — dist/ is stale, rebuild it.\n` +
+          `    dist/moss.config.json: ${JSON.stringify(distConfig)}\n` +
+          `    moss.config.json:      ${JSON.stringify(reference)}`,
       );
     }
   }

@@ -17,8 +17,11 @@ const MOSS_CONFIG = { holochain: '0.7.0', binariesAppendix: 'moss-0.16' };
 
 function run(pkgDir: string, referenceConfig: string): { status: number; output: string } {
   try {
+    // Capture the child's stderr rather than letting it through: the failure
+    // cases below expect it, so it is data, not test output.
     const output = execFileSync(process.execPath, [SCRIPT, pkgDir, referenceConfig], {
       encoding: 'utf-8',
+      stdio: 'pipe',
     });
     return { status: 0, output };
   } catch (e: any) {
@@ -111,5 +114,16 @@ describe('check-wdocker-package', () => {
     expect(result.status).toBe(1);
     expect(result.output).toContain('0.6.1-rc.1');
     expect(result.output).toContain('0.7.0');
+  });
+
+  it('rejects a drift in a field other than holochain', () => {
+    const { pkgDir, referenceConfig } = makePackage({}, [], {
+      ...MOSS_CONFIG,
+      binariesAppendix: 'moss-0.15',
+    });
+    const result = run(pkgDir, referenceConfig);
+    expect(result.status).toBe(1);
+    expect(result.output).toContain('moss-0.15');
+    expect(result.output).toContain('moss-0.16');
   });
 });
