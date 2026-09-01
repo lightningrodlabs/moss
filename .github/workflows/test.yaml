@@ -20,10 +20,11 @@ concurrency:
 
 jobs:
   # why: a fast, pure-Node quality gate deliberately decoupled from the slow
-  # nix/holochain tryorama build below — the TypeScript typecheck of both
-  # projects plus the main/renderer unit suite (incl. the validate-media-url
-  # SSRF harness). Kept separate so a red Rust/holochain build never masks a
-  # unit/type regression, and so PRs get a signal in ~2min instead of ~15.
+  # nix/holochain tryorama build below — the TypeScript typecheck of the
+  # electron app and the wdocker CLI plus the main/renderer unit suite (incl.
+  # the validate-media-url SSRF harness). Kept separate so a red
+  # Rust/holochain build never masks a unit/type regression, and so PRs get a
+  # signal in ~2min instead of ~15.
   unit-and-typecheck:
     runs-on: ubuntu-22.04
     steps:
