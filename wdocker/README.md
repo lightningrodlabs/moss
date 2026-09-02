@@ -19,8 +19,19 @@ Example:
 WDOCKER_PASSWORD='secret' \
 WDOCKER_PROFILE_NAME='my-node' \
 WDOCKER_NODE_DESCRIPTION='Runs in CI' \
-wdocker join-group my-conductor "[group invite link]"
+wdocker join-group my-conductor "[group invite link or invite code]"
 ```
+
+`join-group` takes either form of invite: a group invite link
+(`weave-<version>://invite/...`, including the `https://theweave.social/wal?...`
+forwarding form) or a bare invite code (`moss-<version>-...`). An invite code
+contains no shell metacharacters, so it needs no quoting.
+
+On failure `join-group` exits `1` and prints a single-line reason to stderr. An
+invite that cannot be used is reported as `ERROR: invalid invite (<reason>):
+<detail>`, where `<reason>` is one of `wrong-format`, `version-mismatch`,
+`invalid-seed` or `invalid-progenitor` — branch on that tag rather than on the
+prose. On success it exits `0`.
 
 ## Instructions
 
@@ -30,9 +41,13 @@ wdocker join-group my-conductor "[group invite link]"
 npm install -g @theweave/wdocker
 ```
 
-⚠️ The versions currently on npm target the Holochain 0.6 line and cannot join
-Moss 0.16 (Holochain 0.7) groups. Until a 0.16 release is published, build from
-a checkout of the moss repo instead:
+⚠️ `wdocker` and the Moss group it joins must be on the same Moss line. The
+`0.16.x` releases join Moss 0.16 (Holochain 0.7) groups; the `0.15.x` releases
+join Moss 0.15 (Holochain 0.6) groups. An invite from the other line is refused
+with a `version-mismatch` error rather than producing a group that can never
+find its peers.
+
+To run an unreleased version, build from a checkout of the moss repo instead:
 
 ```
 yarn install
@@ -56,11 +71,12 @@ wdocker run [name of your choice]
 
 This will prompt you to enter a password which that you will have to enter for any commands that want to access this conductor later.
 
-2. In a separate terminal, you can now join a Moss group with this running conductor.<br>
-   ⚠️ **IMPORTANT**: The invite link must be entered in "quotes".
+2. In a separate terminal, you can now join a Moss group with this running conductor. Either
+   a group invite link or a bare invite code works.<br>
+   ⚠️ **IMPORTANT**: An invite link must be entered in "quotes".
 
 ```
-wdocker join-group [conductor name from above] "[group invite link]"
+wdocker join-group [conductor name from above] "[group invite link or invite code]"
 ```
 
 3. That's it. The running conductor will now check for new unactivated tools in the group every 5 minutes and install them if needed. If you stop the conductor you can start it going forward with
@@ -92,7 +108,7 @@ Commands:
   list-apps <conductor-name>                              list all installed apps for a conductor
   list-groups <conductor-name>                            list all joined groups for a conductor
   group-info [options] <conductor-name> <group-dna-hash>  list all joined groups for a conductor
-  join-group <conductor-name> <invite-link-in-quotes>     Join a Moss group with a conductor
+  join-group <conductor-name> <invite-in-quotes>          Join a Moss group with a conductor
   disable-group <conductor-name> <dna-hash-base64>        Disable a Moss group and all the tools installed in it.
   enable-group <conductor-name> <dna-hash-base64>         Enable a Moss group and all the tools installed in it.
   help [command]                                          display help for command
