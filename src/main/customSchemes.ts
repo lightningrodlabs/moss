@@ -4,6 +4,7 @@ import url from 'url';
 import path from 'path';
 import fs from 'fs';
 import { HolochainManager } from './holochainManager';
+import { withUtf8ContentType } from './assetCharset';
 
 const APPLET_IFRAME_SCRIPT = fs.readFileSync(
   path.resolve(__dirname, '../applet-iframe/index.mjs'),
@@ -107,11 +108,12 @@ export async function handleDefaultAppsProtocol(
 
       // remove title attribute to be able to set title to app id later
       modifiedContent = modifiedContent.replace(/<title>.*?<\/title>/i, '');
-      const response = new Response(modifiedContent, indexHtmlResponse);
-      return response;
+      return withUtf8ContentType(new Response(modifiedContent, indexHtmlResponse));
     } else {
-      return net.fetch(
-        url.pathToFileURL(path.join(uiAssetsDir, ...uriComponents.slice(1))).toString(),
+      return withUtf8ContentType(
+        await net.fetch(
+          url.pathToFileURL(path.join(uiAssetsDir, ...uriComponents.slice(1))).toString(),
+        ),
       );
     }
   });
@@ -148,9 +150,8 @@ async function serveAssets(uiAssetsDir: string, absoluteFilePath: string, uriCom
 
     // remove title attribute to be able to set title to app id later
     modifiedContent = modifiedContent.replace(/<title>.*?<\/title>/i, '');
-    const response = new Response(modifiedContent, indexHtmlResponse);
-    return response;
+    return withUtf8ContentType(new Response(modifiedContent, indexHtmlResponse));
   } else {
-    return net.fetch(url.pathToFileURL(absoluteFilePath).toString());
+    return withUtf8ContentType(await net.fetch(url.pathToFileURL(absoluteFilePath).toString()));
   }
 }
