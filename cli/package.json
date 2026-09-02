@@ -13,7 +13,7 @@
   },
   "scripts": {
     "postinstall": "node ./fetch-binaries.mjs",
-    "prepublishOnly": "node ../scripts/check-cli-dist.mjs"
+    "prepublishOnly": "node ../scripts/check-cli-dist.mjs && node ../scripts/publish-staleness.mjs"
   },
   "dependencies": {
     "@holochain/client": "^0.21.0",

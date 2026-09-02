@@ -15,7 +15,7 @@
   "scripts": {
     "build": "tsc && cp ../moss.config.json ./dist && cp ../holochain-checksums.json ./dist && cp ../resources/conductor-config.yaml ./dist",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "yarn build && node ../scripts/check-wdocker-package.mjs"
+    "prepublishOnly": "yarn build && node ../scripts/check-wdocker-package.mjs && node ../scripts/publish-staleness.mjs"
   },
   "dependencies": {
     "@folder/xdg": "4.0.1",

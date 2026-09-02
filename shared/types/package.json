@@ -13,7 +13,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "build:watch": "tsc --watch --preserveWatchOutput"
+    "build:watch": "tsc --watch --preserveWatchOutput",
+    "prepublishOnly": "node ../../scripts/publish-staleness.mjs"
   },
   "type": "module",
   "dependencies": {

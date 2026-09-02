@@ -49,3 +49,30 @@ When updating all packages, publish in this order:
 1. @theweave/utils
 1. @theweave/cli
 1. @theweave/wdocker
+
+### Publishing only some of them
+
+A package whose source has changed since its last release must be bumped and
+republished before anything that depends on it, even when that package is not
+what you set out to publish. In the monorepo yarn links every `@theweave/*`
+dependency to the workspace, so an import resolves against source that may
+never have been released; an installed copy resolves the same import against
+the registry and dies at module load with "does not provide an export named
+…". The version number alone does not tell you — a package can sit at one
+version for weeks while its source moves.
+
+`scripts/publish-staleness.mjs` checks this and runs as a `prepublishOnly`
+hook for every package with sibling `@theweave/*` dependencies. To check
+before you start:
+
+```
+node scripts/publish-staleness.mjs <package-dir>
+```
+
+Set `PUBLISH_ALLOW_STALE_DEPS=1` to publish anyway (for example when the
+changed source is irrelevant to the dependent, or the registry is
+unreachable).
+
+The gate is static; it cannot prove the tarball works. For anything with a
+bin, install the packed tarball from the real registry and run it before
+announcing the release — `wdocker/README.md` has the procedure.
