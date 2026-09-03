@@ -546,21 +546,9 @@
   <source>Error fetching the custom views</source>
   <target>Error al obtener las vistas personalizadas</target>
 </trans-unit>
-<trans-unit id="s9b21b1ade9a93f3b">
-  <source>Error creating the custom view</source>
-  <target>Error al crear la vista personalizada</target>
-</trans-unit>
 <trans-unit id="sad75043f72f63552">
   <source>Custom View Name</source>
   <target>Nombre de vista personalizada</target>
-</trans-unit>
-<trans-unit id="s57d1286dd70605a5">
-  <source>Create Custom View</source>
-  <target>Crear vista personalizada</target>
-</trans-unit>
-<trans-unit id="s55797f0c2b3b37a0">
-  <source>Error fetching the blocks for this group</source>
-  <target>Error al obtener los bloques de este grupo</target>
 </trans-unit>
 <trans-unit id="s3111a346bb42ba2a">
   <source>Error updating the custom view</source>
@@ -2642,6 +2630,42 @@ comienza ahora</target>
 <trans-unit id="s63f2ae9fc0f5f2e6">
   <source>This link was created by Moss <x id="0" equiv-text="${foundVersion}"/> and points to content Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> cannot open. Open it in Moss <x id="2" equiv-text="${foundVersion}"/>.</source>
   <target>Este enlace fue creado por Moss <x id="0" equiv-text="${foundVersion}"/> y apunta a contenido que Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> no puede abrir. Ábrelo en Moss <x id="2" equiv-text="${foundVersion}"/>.</target>
+</trans-unit>
+<trans-unit id="s6a6bfaa591000ddf">
+  <source>Downloading from the tool library…</source>
+  <target>Descargando desde la biblioteca de herramientas…</target>
+</trans-unit>
+<trans-unit id="sd6607463accdcb14">
+  <source>Tool library unreachable. Looking for group members who have this Tool…</source>
+  <target>Biblioteca de herramientas inaccesible. Buscando miembros del grupo que tengan esta herramienta…</target>
+</trans-unit>
+<trans-unit id="s9c6afced36071fdf">
+  <source>Looking for group members who have this Tool…</source>
+  <target>Buscando miembros del grupo que tengan esta herramienta…</target>
+</trans-unit>
+<trans-unit id="s4726647ef1c65574">
+  <source>No online group member has this Tool.</source>
+  <target>Ningún miembro del grupo en línea tiene esta herramienta.</target>
+</trans-unit>
+<trans-unit id="s357ea71ff9c644e0">
+  <source>Requesting Tool from <x id="0" equiv-text="${name}"/>…</source>
+  <target>Solicitando la herramienta a <x id="0" equiv-text="${name}"/>…</target>
+</trans-unit>
+<trans-unit id="s83260653bcf91fc9">
+  <source>Receiving from <x id="0" equiv-text="${name}"/>…</source>
+  <target>Recibiendo de <x id="0" equiv-text="${name}"/>…</target>
+</trans-unit>
+<trans-unit id="s665341cbbc550bc0">
+  <source>Transfer from <x id="0" equiv-text="${name}"/> failed. Trying the next member…</source>
+  <target>Falló la transferencia desde <x id="0" equiv-text="${name}"/>. Probando con el siguiente miembro…</target>
+</trans-unit>
+<trans-unit id="s954986670870010a">
+  <source>Installing…</source>
+  <target>Instalando…</target>
+</trans-unit>
+<trans-unit id="s5bef5fe0927d40c4">
+  <source>Installation failed.</source>
+  <target>La instalación falló.</target>
 </trans-unit>
 </body>
 </file>

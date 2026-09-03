@@ -1,4 +1,6 @@
 import { css, html, LitElement } from 'lit';
+import { GroupStore } from '../../groups/group-store.js';
+import '../../groups/elements/applet-install-progress.js';
 import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg, str } from '@lit/localize';
 import { consume } from '@lit/context';
@@ -68,6 +70,9 @@ export class ToolInfoDialog extends LitElement {
 
   @state()
   private _activating: boolean = false;
+
+  @state()
+  private _activateGroupStore: GroupStore | undefined;
 
   // When set, the dialog shows a "Deactivate" action that disables this
   // (currently running) applet, turning it off without uninstalling it.
@@ -159,6 +164,7 @@ export class ToolInfoDialog extends LitElement {
     try {
       const groupStore = await this.mossStore.groupStore(groupDnaHash);
       if (!groupStore) throw new Error('No group store found for group.');
+      this._activateGroupStore = groupStore;
       await groupStore.installApplet(appletHash);
       await this.mossStore.reloadManualStores();
       this.dispatchEvent(
@@ -178,6 +184,7 @@ export class ToolInfoDialog extends LitElement {
       console.error(e);
     }
     this._activating = false;
+    this._activateGroupStore = undefined;
   }
 
   private async _deactivate() {
@@ -279,6 +286,13 @@ export class ToolInfoDialog extends LitElement {
             ${this._activating ? msg('Activating…') : msg('Activate')}
           </button>
         </div>
+        ${this._activating
+          ? html`<applet-install-progress
+              style="margin-top: 10px;"
+              .appletHash=${this._activateContext.appletHash}
+              .groupStore=${this._activateGroupStore}
+            ></applet-install-progress>`
+          : ''}
       `;
     }
     if (this._deactivateAppletHash) {

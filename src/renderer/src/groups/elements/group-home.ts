@@ -38,6 +38,7 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 
 import './group-peers-status.js';
+import './applet-install-progress.js';
 import './group-applets.js';
 import './looking-for-peers.js';
 import '../../custom-views/elements/all-custom-views.js';
@@ -770,6 +771,13 @@ export class GroupHome extends LitElement {
                                   >
                                 `}
                           </div>
+                          ${this._joiningNewApplet === encodeHashToBase64(info.appletHash)
+                            ? html`<applet-install-progress
+                                style="margin-top: 10px;"
+                                .appletHash=${info.appletHash}
+                                .groupStore=${this._groupStore}
+                              ></applet-install-progress>`
+                            : html``}
                         </div>
                       </sl-card>
                     `,

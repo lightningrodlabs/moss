@@ -578,21 +578,9 @@
   <source>Error fetching the custom views</source>
   <target>カスタムビューの取得中にエラーが発生しました</target>
 </trans-unit>
-<trans-unit id="s9b21b1ade9a93f3b">
-  <source>Error creating the custom view</source>
-  <target>カスタムビューの作成中にエラーが発生しました</target>
-</trans-unit>
 <trans-unit id="sad75043f72f63552">
   <source>Custom View Name</source>
   <target>カスタムビュー名</target>
-</trans-unit>
-<trans-unit id="s57d1286dd70605a5">
-  <source>Create Custom View</source>
-  <target>カスタムビューを作成</target>
-</trans-unit>
-<trans-unit id="s55797f0c2b3b37a0">
-  <source>Error fetching the blocks for this group</source>
-  <target>このグループのブロックの取得中にエラーが発生しました</target>
 </trans-unit>
 <trans-unit id="s3111a346bb42ba2a">
   <source>Error updating the custom view</source>
@@ -2642,6 +2630,42 @@ starts now</source>
 <trans-unit id="s63f2ae9fc0f5f2e6">
   <source>This link was created by Moss <x id="0" equiv-text="${foundVersion}"/> and points to content Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> cannot open. Open it in Moss <x id="2" equiv-text="${foundVersion}"/>.</source>
   <target>このリンクは Moss <x id="0" equiv-text="${foundVersion}"/> で作成されており、Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> では開けないコンテンツを指しています。Moss <x id="2" equiv-text="${foundVersion}"/> で開いてください。</target>
+</trans-unit>
+<trans-unit id="s6a6bfaa591000ddf">
+  <source>Downloading from the tool library…</source>
+  <target>ツールライブラリからダウンロード中…</target>
+</trans-unit>
+<trans-unit id="sd6607463accdcb14">
+  <source>Tool library unreachable. Looking for group members who have this Tool…</source>
+  <target>ツールライブラリに接続できません。このツールを持つグループメンバーを探しています…</target>
+</trans-unit>
+<trans-unit id="s9c6afced36071fdf">
+  <source>Looking for group members who have this Tool…</source>
+  <target>このツールを持つグループメンバーを探しています…</target>
+</trans-unit>
+<trans-unit id="s4726647ef1c65574">
+  <source>No online group member has this Tool.</source>
+  <target>オンラインのグループメンバーでこのツールを持つ人はいません。</target>
+</trans-unit>
+<trans-unit id="s357ea71ff9c644e0">
+  <source>Requesting Tool from <x id="0" equiv-text="${name}"/>…</source>
+  <target><x id="0" equiv-text="${name}"/> にツールをリクエスト中…</target>
+</trans-unit>
+<trans-unit id="s83260653bcf91fc9">
+  <source>Receiving from <x id="0" equiv-text="${name}"/>…</source>
+  <target><x id="0" equiv-text="${name}"/> から受信中…</target>
+</trans-unit>
+<trans-unit id="s665341cbbc550bc0">
+  <source>Transfer from <x id="0" equiv-text="${name}"/> failed. Trying the next member…</source>
+  <target><x id="0" equiv-text="${name}"/> からの転送に失敗しました。次のメンバーを試しています…</target>
+</trans-unit>
+<trans-unit id="s954986670870010a">
+  <source>Installing…</source>
+  <target>インストール中…</target>
+</trans-unit>
+<trans-unit id="s5bef5fe0927d40c4">
+  <source>Installation failed.</source>
+  <target>インストールに失敗しました。</target>
 </trans-unit>
 </body>
 </file>

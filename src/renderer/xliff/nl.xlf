@@ -638,21 +638,9 @@
   <source>Error fetching the custom views</source>
   <target>Fout bij het ophalen van de aangepaste weergaven</target>
 </trans-unit>
-<trans-unit id="s9b21b1ade9a93f3b">
-  <source>Error creating the custom view</source>
-  <target>Fout bij het aanmaken van de aangepaste weergave</target>
-</trans-unit>
 <trans-unit id="sad75043f72f63552">
   <source>Custom View Name</source>
   <target>Naam aangepaste weergave</target>
-</trans-unit>
-<trans-unit id="s57d1286dd70605a5">
-  <source>Create Custom View</source>
-  <target>Aangepaste weergave aanmaken</target>
-</trans-unit>
-<trans-unit id="s55797f0c2b3b37a0">
-  <source>Error fetching the blocks for this group</source>
-  <target>Fout bij het ophalen van de blokken voor deze groep</target>
 </trans-unit>
 <trans-unit id="s3111a346bb42ba2a">
   <source>Error updating the custom view</source>
@@ -2642,6 +2630,42 @@ begint nu</target>
 <trans-unit id="s63f2ae9fc0f5f2e6">
   <source>This link was created by Moss <x id="0" equiv-text="${foundVersion}"/> and points to content Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> cannot open. Open it in Moss <x id="2" equiv-text="${foundVersion}"/>.</source>
   <target>Deze link is gemaakt door Moss <x id="0" equiv-text="${foundVersion}"/> en verwijst naar inhoud die Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> niet kan openen. Open hem in Moss <x id="2" equiv-text="${foundVersion}"/>.</target>
+</trans-unit>
+<trans-unit id="s6a6bfaa591000ddf">
+  <source>Downloading from the tool library…</source>
+  <target>Downloaden uit de toolbibliotheek…</target>
+</trans-unit>
+<trans-unit id="sd6607463accdcb14">
+  <source>Tool library unreachable. Looking for group members who have this Tool…</source>
+  <target>Toolbibliotheek onbereikbaar. Zoeken naar groepsleden die deze tool hebben…</target>
+</trans-unit>
+<trans-unit id="s9c6afced36071fdf">
+  <source>Looking for group members who have this Tool…</source>
+  <target>Zoeken naar groepsleden die deze tool hebben…</target>
+</trans-unit>
+<trans-unit id="s4726647ef1c65574">
+  <source>No online group member has this Tool.</source>
+  <target>Geen online groepslid heeft deze tool.</target>
+</trans-unit>
+<trans-unit id="s357ea71ff9c644e0">
+  <source>Requesting Tool from <x id="0" equiv-text="${name}"/>…</source>
+  <target>Tool opvragen bij <x id="0" equiv-text="${name}"/>…</target>
+</trans-unit>
+<trans-unit id="s83260653bcf91fc9">
+  <source>Receiving from <x id="0" equiv-text="${name}"/>…</source>
+  <target>Ontvangen van <x id="0" equiv-text="${name}"/>…</target>
+</trans-unit>
+<trans-unit id="s665341cbbc550bc0">
+  <source>Transfer from <x id="0" equiv-text="${name}"/> failed. Trying the next member…</source>
+  <target>Overdracht van <x id="0" equiv-text="${name}"/> mislukt. Volgend lid wordt geprobeerd…</target>
+</trans-unit>
+<trans-unit id="s954986670870010a">
+  <source>Installing…</source>
+  <target>Installeren…</target>
+</trans-unit>
+<trans-unit id="s5bef5fe0927d40c4">
+  <source>Installation failed.</source>
+  <target>Installatie mislukt.</target>
 </trans-unit>
 </body>
 </file>
