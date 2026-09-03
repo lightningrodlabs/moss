@@ -48,14 +48,14 @@ placeholders are hard failures by design (§8.2).
 
 No application code. Build tooling only:
 
-| File                                 | Change                                                                                                                                                                                                                                                                                                                                                  |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `scripts/fetch-fns.mjs`              | Added `sha256OfFile()`; made `downloadFile()` skip the download when the target already hashes to the expected sha256, so a locally built binary can be pre-placed. **dev.5:** added the `binarySources` indirection (§8.1), unified the asset/checksum key into one `ASSET_TARGET` constant (§8.3), and made a missing checksum a hard failure (§8.2). |
-| `holochain-checksums.json`           | `holochain` and `hc` repointed at the fork release via `binarySources`, plus the `_FIELD_TEST_ONLY` and `_TODO_hello_0` note blocks. `lair-keystore` and `kitsune2-bootstrap-srv` untouched and still stock.                                                                                                                                            |
-| `scripts/check-resources.mjs`        | New. Asserts every packaged path under `resources/` exists and matches its expected sha256, so a half-populated worktree fails at build time instead of shipping. Chained into `check:binaries`. **dev.5:** shares `ASSET_TARGET` with the fetch, and an unpinned artifact now fails rather than warns.                                                 |
-| `scripts/install-local-binaries.mjs` | Copies locally built patched binaries into `resources/bins/`, verifying each against `holochain-checksums.json`. Refuses to run on non-Linux-x64. **Local-dev convenience only — deliberately not in any CI path**, since CI fetches from the fork release.                                                                                             |
-| `package.json`                       | Added `install:local-binaries` and `check:resources`; `check:binaries` now also runs `check:resources`. **dev.5:** version `0.16.0-dev.5`, added the missing `homepage` field (§6), and added `yarn fetch:hc` to `setup:release` (§8.5).                                                                                                                |
-| `.github/workflows/release-dev.yaml` | **dev.5:** the network-partition warning is appended to every release body unconditionally (§8.7).                                                                                                                                                                                                                                                      |
+| File                                 | Change                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scripts/fetch-fns.mjs`              | Added `sha256OfFile()`; made `downloadFile()` skip the download when the target already hashes to the expected sha256, so a locally built binary can be pre-placed. **dev.5:** added the `binarySources` indirection (§8.1), unified the asset/checksum key into one `ASSET_TARGET` constant (§8.3), and made a missing checksum a hard failure (§8.2).                                                  |
+| `holochain-checksums.json`           | `holochain` and `hc` repointed at the fork release via `binarySources`, plus the `_FIELD_TEST_ONLY` and `_TODO_hello_0` note blocks. `lair-keystore` and `kitsune2-bootstrap-srv` untouched and still stock.                                                                                                                                                                                             |
+| `scripts/check-resources.mjs`        | New. Asserts every packaged path under `resources/` exists and matches its expected sha256, so a half-populated worktree fails at build time instead of shipping. **dev.5:** shares `ASSET_TARGET` with the fetch, and an unpinned artifact now fails rather than warns. **mdns:** it is now the only pre-packaging check — `check:binaries` runs it and nothing else, and `check-binaries.mjs` is gone. |
+| `scripts/install-local-binaries.mjs` | Copies locally built patched binaries into `resources/bins/`, verifying each against `holochain-checksums.json`. Refuses to run on non-Linux-x64. **Local-dev convenience only — deliberately not in any CI path**, since CI fetches from the fork release.                                                                                                                                              |
+| `package.json`                       | Added `install:local-binaries` and `check:resources`; `check:binaries` runs `check-resources.mjs`. **dev.5:** version `0.16.0-dev.5`, added the missing `homepage` field (§6), and added `yarn fetch:hc` to `setup:release` (§8.5).                                                                                                                                                                      |
+| `.github/workflows/release-dev.yaml` | **dev.5:** the network-partition warning is appended to every release body unconditionally (§8.7).                                                                                                                                                                                                                                                                                                       |
 
 ### Which binaries come from where
 
@@ -147,15 +147,15 @@ gap only surfaces at runtime, on a tester's machine. This has now bitten twice:
 
 The complete inventory of non-tracked artifacts:
 
-| Artifact                                                 | Produced by                                                       | Packaged?                            |
-| -------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------ |
-| `resources/bins/holochain-v0.7.0`, `hc-v0.7.0`           | `yarn fetch:binaries` (from the fork release)                     | yes                                  |
-| `resources/bins/hc`                                      | `yarn fetch:hc` — **separate step**, not part of `fetch:binaries` | yes                                  |
-| `resources/bins/lair-keystore-v0.7.0`                    | `yarn fetch:binaries` (stock)                                     | yes                                  |
-| `resources/bins/kitsune2-bootstrap-srv-v0.7.0`           | `yarn fetch:binaries` (stock)                                     | yes                                  |
-| `resources/default-apps/group.happ`                      | `yarn fetch:group-happ`                                           | yes                                  |
-| `target/wasm32-unknown-unknown/release/hrl_locator.wasm` | `yarn build:zomes`                                                | no, inlined into the renderer bundle |
-| `out/`, `cli/dist/`                                      | `yarn build`                                                      | yes (`out/`)                         |
+| Artifact                                                     | Produced by                                                       | Packaged?                            |
+| ------------------------------------------------------------ | ----------------------------------------------------------------- | ------------------------------------ |
+| `resources/bins/holochain-v0.7.0-mdns.0`, `hc-v0.7.0-mdns.0` | `yarn fetch:binaries` (from the fork release)                     | yes                                  |
+| `resources/bins/hc`                                          | `yarn fetch:hc` — **separate step**, not part of `fetch:binaries` | yes                                  |
+| `resources/bins/lair-keystore-v0.7.0`                        | `yarn fetch:binaries` (stock)                                     | yes                                  |
+| `resources/bins/kitsune2-bootstrap-srv-v0.7.0`               | `yarn fetch:binaries` (stock)                                     | yes                                  |
+| `resources/default-apps/group.happ`                          | `yarn fetch:group-happ`                                           | yes                                  |
+| `target/wasm32-unknown-unknown/release/hrl_locator.wasm`     | `yarn build:zomes`                                                | no, inlined into the renderer bundle |
+| `out/`, `cli/dist/`                                          | `yarn build`                                                      | yes (`out/`)                         |
 
 The unversioned `resources/bins/hc` is the easy one to lose: `fetch:binaries` produces
 only `hc-v<version>`, and `fetch:hc` is a separate script. `setup:release` omitted it
@@ -205,26 +205,28 @@ workflow — see §8.1.
 
 `scripts/check-resources.mjs` (new on this branch) asserts every packaged path under
 `resources/` exists **and** matches its expected sha256 — binaries against
-`holochain-checksums.json`, `group.happ` against `moss.config.json`. It is chained into
-`yarn check:binaries`, which every `build:*` script already invokes, so the assertion is
-picked up at all existing call sites without touching them.
+`holochain-checksums.json`, `group.happ` against `moss.config.json`. It is what
+`yarn check:binaries` runs, and every `build:*` script already invokes that, so the
+assertion is picked up at all existing call sites without touching them. It is the only
+such check: the narrower `check-binaries.mjs` (which only ever looked at `holochain` and
+`lair-keystore`, and so missed `group.happ`) is gone. `yarn check:resources` runs the
+same script under its own name.
 
-`scripts/check-binaries.mjs` was left as-is; it only ever checked `holochain` and
-`lair-keystore`, which is why it did not catch the missing `group.happ`. Run the pair
-directly with `yarn check:resources` if you want the inventory check alone.
-
-`install:local-binaries` reads from a hardcoded default build path. Override it:
+`install:local-binaries` defaults to `../holochain-lrl/target-local/release`, the mDNS
+build in the sibling holochain-lrl checkout (branch `feat/mdns-bootstrap-0.7.0-hello`,
+built with `CARGO_TARGET_DIR=target-local`). Override it:
 
 ```bash
 MOSS_PATCHED_BIN_DIR=/path/to/holochain/target/x86_64-unknown-linux-gnu/release \
   yarn install:local-binaries
 ```
 
-Point it at the **zigbuild** output dir (`target/x86_64-unknown-linux-gnu/release`),
-never at `target/release` — see section 3.
+Whatever you point it at must hash to the pinned checksum, and the pinned artifact is a
+**zigbuild** (glibc 2.34 baseline — see section 3), so a plain `target/release` build of
+the same revision will be refused here rather than shipped.
 
-It places three files: `holochain-v0.7.0`, `hc-v0.7.0`, and `hc` (the unversioned copy
-that `fetch-hc.mjs` would otherwise produce).
+It places three files: `holochain-v0.7.0-mdns.0`, `hc-v0.7.0-mdns.0`, and `hc` (the
+unversioned copy that `fetch-hc.mjs` would otherwise produce).
 
 If `install:local-binaries` reports a sha256 mismatch, you built a different revision
 than the one pinned here — do not "fix" it by editing the checksums file unless you
@@ -234,9 +236,9 @@ intend to re-pin the whole cohort.
 
 ```bash
 # must equal holochain.x86_64-unknown-linux-gnu in holochain-checksums.json
-sha256sum resources/bins/holochain-v0.7.0
+sha256sum resources/bins/holochain-v0.7.0-mdns.0
 
-objdump -T resources/bins/holochain-v0.7.0 \
+objdump -T resources/bins/holochain-v0.7.0-mdns.0 \
   | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1
 # must be GLIBC_2.34
 ```
@@ -252,8 +254,9 @@ after `yarn build:linux` — that is the copy testers actually execute.
 
 > **Note:** a matching sha256 no longer implies the binary is patched, only that it is
 > the one this branch pinned. The authority on "is this patched" is
-> `binarySources` — the binary came from `holochain-0.7.0-hello.0` or it did not. Both
-> patched and stock binaries report a plain `holochain 0.7.0` version string.
+> `binarySources` — the binary came from the fork release or it did not, and that is
+> also what puts the release tag in its filename. Both patched and stock binaries report
+> a plain `holochain 0.7.0` version string.
 
 ---
 
@@ -606,43 +609,42 @@ through the same `binarySources` mechanism as §8.1. `lair-keystore` and
 
 ### 9.1 The fork binaries have their own filenames
 
-`moss.config.json` carries a `holochainBinaryTag`:
+A binary is named after the release it came from. `binarySources` in
+`holochain-checksums.json` — the same block that repoints the fetch (§8.1) — is the
+only place that says which binaries are fork builds, so the file on disk and the
+release it was downloaded from cannot drift apart. With `holochain` and `hc` sourced
+from `holochain-0.7.0-mdns.0` they land in `resources/bins` as
+`holochain-v0.7.0-mdns.0` and `hc-v0.7.0-mdns.0` rather than `…-v0.7.0`.
 
-```json
-{
-  "holochain": "0.7.0",
-  "holochainBinaryTag": "0.7.0-mdns.0"
-}
-```
-
-With it set, `holochain` and `hc` land in `resources/bins` as
-`holochain-v0.7.0-mdns.0` and `hc-v0.7.0-mdns.0` rather than `…-v0.7.0`. That is what
-makes it impossible for a stock `holochain-v0.7.0` left over in the (gitignored)
-`resources/bins` from another branch to be packaged as if it were the fork: the app
-looks for a filename that only the fork fetch produces. `lair-keystore` and
-`kitsune2-bootstrap-srv` are unpatched and keep `-v0.7.0`.
+That is what makes it impossible for a stock `holochain-v0.7.0` left over in the
+(gitignored) `resources/bins` from another branch to be packaged as if it were the
+fork: the app looks for a filename that only the fork fetch produces.
+`lair-keystore` and `kitsune2-bootstrap-srv` have no `binarySources` entry, so they
+are fetched from the stock release and keep `-v0.7.0`.
 
 The derivation lives in `scripts/binary-names.mjs`, shared by the build scripts and
-by the electron main process (`src/main/const.ts`). Remove the key and everything
-reverts to stock naming.
+by the electron main process (`src/main/const.ts`, which also uses it for the
+"Starting Holochain …" the splash screen shows). Remove the `binarySources` entries
+and everything reverts to stock releases and stock naming.
 
-`yarn check:binaries` now **hashes** `holochain`, `hc` and `lair-keystore` against
-`holochain-checksums.json` instead of only checking that they exist, for the same
-reason: existence alone cannot tell a stale binary from the pinned one.
+`yarn check:binaries` **hashes** every packaged binary against
+`holochain-checksums.json` rather than checking that it exists, for the same reason:
+existence alone cannot tell a stale binary from the pinned one.
 
 ### 9.2 The switch
 
-mDNS discovery is **on by default**. To turn it off for a run:
+mDNS discovery is **on by default**. To turn it off:
 
 ```bash
 moss --disable-mdns
 ```
 
-The flag sets `network.advanced.mdnsBootstrap.enabled` and
-`network.advanced.irohTransport.enableLanDiscovery` in `conductor-config.yaml`.
-Both are always written explicitly, `false` included — the config file is read back
-and merged into on each launch, so a node that once ran with mDNS on needs an
-explicit `false` to stop announcing. Composition lives in
+It is a **per-launch switch, not a stored preference**: the next launch without the
+flag has mDNS on again. The flag sets `network.advanced.mdnsBootstrap.enabled` and
+`network.advanced.irohTransport.enableLanDiscovery` in `conductor-config.yaml`, and
+both are always written explicitly, `false` included — the config file is rewritten
+from the run options on every launch, and a node that once ran with mDNS on needs
+that explicit `false` to stop announcing. Composition lives in
 `src/main/conductorNetworkConfig.ts` (`composeAdvancedSettings`).
 
 Both keys are kitsune2 _module_ config, and kitsune2 ignores module keys it does not
@@ -662,11 +664,22 @@ Each running conductor shows up as a resolved record whose TXT fields carry
 candidates for each other) and `url` (the peer URL to dial). No records means the
 mDNS module is off or `avahi-daemon` is not running.
 
-**2. Peers are being found and dialled.** In the conductor log
-(`--print-holochain-logs`, or the logfile under the profile's `logs/`):
+**2. Peers are being found and dialled.** The lines below are `debug`/`info` and the
+conductor defaults to `RUST_LOG=warn`, so they are not in the log unless you raise the
+level for those modules. Launch with:
+
+```bash
+moss --print-holochain-logs \
+  --holochain-rust-log 'warn,kitsune2_bootstrap_mdns=debug,kitsune2_transport_iroh=info,kitsune2_core::factories::core_hello=debug'
+```
+
+With the level raised, the lines go to the logfile too, whether or not you pass
+`--print-holochain-logs`:
+`~/.config/org.lightningrodlabs.moss-<breaking-version>/<breaking-version>/<profile>/logs/we.log`
+(profile is `default` unless you passed `--profile`). Then look for:
 
 ```
-mdns: discovered peer, dialling
+mdns: discovered peer, dialling url=
 ```
 
 **3. The connection is direct, not relayed** — the point of the exercise:

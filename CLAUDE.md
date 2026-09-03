@@ -373,7 +373,7 @@ Zomes are compiled to WASM32 target and packaged into `.happ` files using the `h
 ### Configuration
 
 - `shared/types/src/defineConfig.ts` is the dev-config schema source; the build emits the committed `cli/defineConfig.js`/`.d.ts` via `tsconfig.defineConfig.json`
-- `moss.config.json` - the Holochain version, group-happ version + sha256, and the feedback URL (not ports or bootstrap URLs)
+- `moss.config.json` - the Holochain version, the group-happ version + sha256, `binariesAppendix`, an optional `kitsune2BootstrapSrv` version override, and the feedback URL (not ports or bootstrap URLs). Which release each binary is fetched from — and therefore its filename in `resources/bins` — is not here: it is `binarySources` in `holochain-checksums.json`, applied by `scripts/binary-names.mjs`
 
 ## Creating Tools/Applets
 

@@ -14,6 +14,8 @@ export type BinaryNameConfig = {
   binarySources?: Record<string, { binariesRepo?: string; binariesTag?: string }>;
 };
 
+export declare function binaryVersionFor(binaryName: string, config: BinaryNameConfig): string;
+
 export declare function holochainBinaryName(
   binaryName: string,
   config: BinaryNameConfig,

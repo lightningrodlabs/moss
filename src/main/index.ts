@@ -330,7 +330,7 @@ program
   .option('--disable-os-notifications', 'Disables all notifications to the Operating System')
   .option(
     '--disable-mdns',
-    'Disables discovery of peers on the local network via mDNS. Without it, Moss finds peers on the same LAN even when the bootstrap and relay servers are unreachable.',
+    'Disables discovery of peers on the local network via mDNS for this launch (not persisted across restarts). mDNS is on by default, so Moss finds peers on the same LAN even when the bootstrap and relay servers are unreachable; launching again without the flag turns it back on.',
   )
   .option(
     '--tool-curation-url <url>',

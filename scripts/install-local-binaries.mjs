@@ -1,10 +1,11 @@
 /**
- * FIELD-TEST-ONLY -- branch feat/hello-pok-fieldtest. DO NOT MERGE TO main-0.7.
+ * FIELD-TEST-ONLY -- branch feat/mdns-dev-build-0.7. DO NOT MERGE TO main-0.7.
  *
- * The hello/PoK field test runs a locally built, PATCHED holochain 0.7.0 from
- * lightningrodlabs/holochain branch feat/hello-pok-access-0.7. Those binaries are
- * not published as GitHub release assets, so `yarn fetch:binaries` has nothing to
- * download them from.
+ * The field test runs a locally built, PATCHED holochain 0.7.0 from the
+ * holochain-lrl checkout, branch feat/mdns-bootstrap-0.7.0-hello (mDNS LAN
+ * discovery on top of the hello/PoK access module). Use this when those binaries
+ * are not published as GitHub release assets yet, so `yarn fetch:binaries` has
+ * nothing to download them from.
  *
  * This script copies the locally built binaries into ./resources/bins under the
  * exact filenames the rest of the toolchain expects, and verifies each one against
@@ -24,12 +25,16 @@ import fs from 'fs';
 import path from 'path';
 import { resolvedBinaryName, sha256OfFile } from './fetch-fns.mjs';
 
-// NOTE: this is the cargo-zigbuild output dir (glibc 2.34 baseline), NOT
-// target/release. A plain `cargo build --release` inherits the build machine's
-// glibc and produces binaries that fail to start on older distros. Never point
-// this at target/release. See RUNBOOK-fieldtest.md section 3.
-const DEFAULT_PATCHED_BIN_DIR =
-  '/home/eric/code/metacurrency/holochain/holochain-hello-07/target/x86_64-unknown-linux-gnu/release';
+// The mDNS build is made in the holochain-lrl checkout next to this repo, with
+// CARGO_TARGET_DIR=target-local so it does not collide with that checkout's own
+// builds. Set MOSS_PATCHED_BIN_DIR if yours lives elsewhere.
+//
+// Whatever the source, a binary is installed only if it hashes to the pinned
+// checksum. A build against a different glibc baseline than the pinned artifact
+// -- the reason the release binaries are cargo-zigbuild'd, so they start on
+// older distros -- has different bytes and is refused here rather than shipped.
+// See RUNBOOK-fieldtest.md section 3.
+const DEFAULT_PATCHED_BIN_DIR = '../holochain-lrl/target-local/release';
 
 const sourceDir = process.env.MOSS_PATCHED_BIN_DIR ?? DEFAULT_PATCHED_BIN_DIR;
 

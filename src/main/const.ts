@@ -3,7 +3,11 @@ import fs from 'fs';
 import yaml from 'js-yaml';
 import { app } from 'electron';
 import { HOLOCHAIN_CHECKSUMS, MOSS_CONFIG } from './mossConfig';
-import { holochainBinaryName, type BinaryNameConfig } from '../../scripts/binary-names.mjs';
+import {
+  binaryVersionFor,
+  holochainBinaryName,
+  type BinaryNameConfig,
+} from '../../scripts/binary-names.mjs';
 
 const RESOURCES_DIRECTORY = app.isPackaged
   ? path.join(app.getAppPath(), '../app.asar.unpacked/resources')
@@ -21,11 +25,15 @@ const BINARY_NAME_CONFIG: BinaryNameConfig = {
 const binaryPath = (binaryName: string): string =>
   path.join(BINARIES_DIRECTORY, holochainBinaryName(binaryName, BINARY_NAME_CONFIG));
 
-// Keyed by holochain version, not by binary filename: callers look the binary up
-// by the version they intend to run. The filename may carry a fork release tag
-// instead of that version (see scripts/binary-names.mjs).
-const HOLOCHAIN_BINARIES: Record<string, string> = {};
-HOLOCHAIN_BINARIES[MOSS_CONFIG.holochain] = binaryPath('holochain');
+const HOLOCHAIN_BINARY = binaryPath('holochain');
+
+/**
+ * The release the shipped holochain binary was built from -- the holochain
+ * version for a stock build, the fork release tag for a fork build. It is what
+ * the startup progress and logs should name, so a field-test build says which
+ * build it is starting.
+ */
+const HOLOCHAIN_BINARY_VERSION = binaryVersionFor('holochain', BINARY_NAME_CONFIG);
 
 const LAIR_BINARY = binaryPath('lair-keystore');
 
@@ -41,7 +49,8 @@ const conductorConfigTemplateString = fs.readFileSync(
 const CONDUCTOR_CONFIG_TEMPLATE = yaml.load(conductorConfigTemplateString);
 
 export {
-  HOLOCHAIN_BINARIES,
+  HOLOCHAIN_BINARY,
+  HOLOCHAIN_BINARY_VERSION,
   LAIR_BINARY,
   KITSUNE2_BOOTSTRAP_SRV_BINARY,
   CONDUCTOR_CONFIG_TEMPLATE,

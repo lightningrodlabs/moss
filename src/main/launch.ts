@@ -6,7 +6,7 @@ import { MossFileSystem } from './filesystem';
 import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
 import { DistributionInfo } from '@theweave/moss-types';
 import { DEFAULT_APPS_DIRECTORY } from './paths';
-import { HOLOCHAIN_BINARIES, LAIR_BINARY } from './const';
+import { HOLOCHAIN_BINARY, HOLOCHAIN_BINARY_VERSION, LAIR_BINARY } from './const';
 import { HolochainManager } from './holochainManager';
 import { devSetup } from './cli/devSetup';
 import { RunOptions } from './cli/cli';
@@ -82,7 +82,7 @@ export async function launch(
   if (splashscreenWindow)
     splashscreenWindow.webContents.send(
       'loading-progress-update',
-      `Starting Holochain ${holochainVersion}...`,
+      `Starting Holochain ${HOLOCHAIN_BINARY_VERSION}...`,
     );
 
   // launch holochain
@@ -91,7 +91,7 @@ export async function launch(
     holochainManager = await HolochainManager.launch(
       weEmitter,
       mossFileSystem,
-      runOptions.customBinary ? runOptions.customBinary : HOLOCHAIN_BINARIES[holochainVersion],
+      runOptions.customBinary ? runOptions.customBinary : HOLOCHAIN_BINARY,
       password,
       holochainVersion,
       mossFileSystem.conductorDir,

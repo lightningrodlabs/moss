@@ -30,9 +30,11 @@ describe('composeAdvancedSettings', () => {
   });
 
   it('preserves iroh transport keys it does not own', () => {
-    const previous: AdvancedSettings = {
+    // The config comes back from YAML, so it can carry kitsune2 module keys Moss
+    // has no type for. The cast is how a test states that.
+    const previous = {
       irohTransport: { someOtherKitsuneKey: 'keep me', enableLanDiscovery: false },
-    };
+    } as AdvancedSettings;
     const advanced = composeAdvancedSettings(previous, PACKAGED_MDNS_ON);
     expect(advanced.irohTransport).toEqual({
       someOtherKitsuneKey: 'keep me',
