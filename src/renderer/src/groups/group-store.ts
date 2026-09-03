@@ -1380,7 +1380,7 @@ export class GroupStore {
     if (distributionInfo.type !== 'web2-tool-list')
       throw new Error("Tool source types other than 'web2-tool-list' are currently not supported.");
 
-    const appInfo = await this.mossStore.installApplet(appletHash, applet);
+    const appInfo = await this.mossStore.installApplet(appletHash, applet, this);
     const joinAppletInput = {
       applet,
       joining_pubkey: appInfo.agent_pub_key,
