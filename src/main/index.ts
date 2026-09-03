@@ -39,6 +39,12 @@ import {
   importLegacyProfileData,
   LegacyProfileInfo,
 } from './filesystem';
+import {
+  readToolAssetsChunk,
+  readToolAssetsManifest,
+  storeToolAssetsFromPeer,
+  ToolAssetDirs,
+} from './peerToolAssets';
 import { LAIR_BINARY } from './const';
 import { MOSS_CONFIG } from './mossConfig';
 // import { AdminWebsocket } from '@holochain/client';
@@ -67,11 +73,14 @@ import { ConductorInfo, NetworkInfo, ToolWeaveConfig } from './sharedTypes';
 import {
   AppAssetsInfo,
   AppHashes,
+  AssetSource,
   DeveloperCollectiveToolList,
   DistributionInfo,
   ResourceLocation,
   ToolCompatibilityId,
   ToolInfoAndVersions,
+  ToolTransferManifest,
+  ToolTransferRequest,
   WeaveDevConfig,
   WEAVE_PROTOCOL_VERSION,
   WEAVE_URL_SCHEME,
@@ -2498,6 +2507,38 @@ if (!RUNNING_WITH_COMMAND) {
         return appInfo;
       },
     );
+    const toolAssetDirs = (): ToolAssetDirs => ({
+      happsDir: WE_FILE_SYSTEM.happsDir,
+      uisDir: WE_FILE_SYSTEM.uisDir,
+      toolsDir: WE_FILE_SYSTEM.toolsDir,
+    });
+    ipcMain.handle(
+      'read-tool-assets-manifest',
+      async (
+        _e,
+        request: ToolTransferRequest,
+        chunkSize: number,
+      ): Promise<ToolTransferManifest | undefined> =>
+        readToolAssetsManifest(toolAssetDirs(), request, chunkSize),
+    );
+    ipcMain.handle(
+      'read-tool-assets-chunk',
+      async (
+        _e,
+        request: ToolTransferRequest,
+        index: number,
+        chunkSize: number,
+      ): Promise<Uint8Array> => readToolAssetsChunk(toolAssetDirs(), request, index, chunkSize),
+    );
+    ipcMain.handle(
+      'store-tool-assets-from-peer',
+      async (
+        _e,
+        manifest: ToolTransferManifest,
+        bytes: Uint8Array,
+        expected: ToolTransferRequest,
+      ): Promise<void> => storeToolAssetsFromPeer(toolAssetDirs(), manifest, bytes, expected),
+    );
     ipcMain.handle('fetch-and-validate-happ-or-webhapp', async (_e, url: string): Promise<any> => {
       let byteArray;
       if (url.startsWith('file://')) {
@@ -2880,6 +2921,7 @@ if (!RUNNING_WITH_COMMAND) {
         appHashes: AppHashes,
         uiPort?: number,
         roles_settings?: RoleSettingsMap,
+        assetSource?: AssetSource,
       ): Promise<AppInfo> => {
         const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
         const alreadyInstalledAppInfo = apps.find((appInfo) => appInfo.installed_app_id === appId);
@@ -3069,6 +3111,7 @@ if (!RUNNING_WITH_COMMAND) {
           sha256Webhapp,
           sha256Ui,
           uiPort,
+          assetSource,
         );
         WE_FILE_SYSTEM.storeAppAssetsInfo(appId, appAssetsInfo);
 
