@@ -2686,6 +2686,41 @@ comienza ahora</target>
 <trans-unit id="sf55d634dcc743595">
   <source>Services</source>
   <target>Servicios</target>
+<trans-unit id="s6a6bfaa591000ddf">
+  <source>Downloading from the tool library…</source>
+  <target>Descargando desde la biblioteca de herramientas…</target>
+</trans-unit>
+<trans-unit id="sd6607463accdcb14">
+  <source>Tool library unreachable. Looking for group members who have this Tool…</source>
+  <target>Biblioteca de herramientas inaccesible. Buscando miembros del grupo que tengan esta herramienta…</target>
+</trans-unit>
+<trans-unit id="s9c6afced36071fdf">
+  <source>Looking for group members who have this Tool…</source>
+  <target>Buscando miembros del grupo que tengan esta herramienta…</target>
+</trans-unit>
+<trans-unit id="s4726647ef1c65574">
+  <source>No online group member has this Tool.</source>
+  <target>Ningún miembro del grupo en línea tiene esta herramienta.</target>
+</trans-unit>
+<trans-unit id="s357ea71ff9c644e0">
+  <source>Requesting Tool from <x id="0" equiv-text="${name}"/>…</source>
+  <target>Solicitando la herramienta a <x id="0" equiv-text="${name}"/>…</target>
+</trans-unit>
+<trans-unit id="s83260653bcf91fc9">
+  <source>Receiving from <x id="0" equiv-text="${name}"/>…</source>
+  <target>Recibiendo de <x id="0" equiv-text="${name}"/>…</target>
+</trans-unit>
+<trans-unit id="s665341cbbc550bc0">
+  <source>Transfer from <x id="0" equiv-text="${name}"/> failed. Trying the next member…</source>
+  <target>Falló la transferencia desde <x id="0" equiv-text="${name}"/>. Probando con el siguiente miembro…</target>
+</trans-unit>
+<trans-unit id="s954986670870010a">
+  <source>Installing…</source>
+  <target>Instalando…</target>
+</trans-unit>
+<trans-unit id="s5bef5fe0927d40c4">
+  <source>Installation failed.</source>
+  <target>La instalación falló.</target>
 </trans-unit>
 </body>
 </file>
