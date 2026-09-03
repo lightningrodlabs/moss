@@ -329,6 +329,10 @@ program
   )
   .option('--disable-os-notifications', 'Disables all notifications to the Operating System')
   .option(
+    '--disable-mdns',
+    'Disables discovery of peers on the local network via mDNS. Without it, Moss finds peers on the same LAN even when the bootstrap and relay servers are unreachable.',
+  )
+  .option(
     '--tool-curation-url <url>',
     'Override the default tool curation list URL. Used by the E2E test harness to point at a local curation fixture; not persisted across restarts.',
   )
