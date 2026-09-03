@@ -116,6 +116,15 @@ objdump -T target/x86_64-unknown-linux-gnu/release/holochain \
 # must print GLIBC_2.34 -- anything higher is not distributable
 ```
 
+A plain build made inside `nix develop` fails even earlier than a glibc mismatch:
+the linker writes a `/nix/store/…/ld-linux-x86-64.so.2` program interpreter into
+the ELF, and on a machine without that store path the kernel refuses to exec the
+file at all. Moss then reports `spawn …/holochain-v<tag> ENOENT` for a binary that
+is demonstrably inside the AppImage. Check with
+`readelf -l <binary> | grep interpreter`; a distributable binary must say
+`/lib64/ld-linux-x86-64.so.2`. zigbuild produces that even when run from inside the
+nix shell.
+
 Both binaries report a plain `0.7.0` version string (`holochain 0.7.0` /
 `holochain_cli 0.7.0`) — the version string is _not_ a way to tell patched from stock,
 nor portable from non-portable. Use the sha256 and the objdump check.
