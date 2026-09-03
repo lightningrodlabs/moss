@@ -1,12 +1,14 @@
 {
   "_FIELD_TEST_ONLY": [
-    "BRANCH feat/hello-pok-fieldtest -- DO NOT MERGE TO main-0.7.",
+    "BRANCH feat/mdns-dev-build-0.7 -- DO NOT MERGE TO main-0.7.",
     "The 'holochain' and 'hc' entries in this file are NOT the stock holochain 0.7.0",
     "release artifacts. They are PATCHED binaries carrying the kitsune2 hello/PoK",
-    "access module, built from lightningrodlabs/holochain branch",
-    "feat/hello-pok-access-0.7 and published as the fork release",
-    "lightningrodlabs/holochain @ holochain-0.7.0-hello.2. The `binarySources` block",
+    "access module plus mDNS LAN discovery, built from lightningrodlabs/holochain",
+    "branch feat/mdns-bootstrap-0.7.0-hello and published as the fork release",
+    "lightningrodlabs/holochain @ holochain-0.7.0-mdns.0. The `binarySources` block",
     "below is what repoints the fetch at that release.",
+    "mdns.0 is additive on hello.2: it adds an mDNS LAN bootstrap/discovery path and",
+    "keeps the same HCP2P_PROTO_VER=1002, so hello.2 and mdns.0 nodes interoperate.",
     "Patched nodes advertise HCP2P_PROTO_VER=1002 and reject stock peers at preflight,",
     "so a build made from this branch CANNOT see stock Moss on the network. That is",
     "deliberate -- it isolates the field-test cohort -- but it means every installer",
@@ -16,7 +18,7 @@
     "binarySources entry and therefore still come from the stock",
     "holochain/holochain @ holochain-0.7.0 release. Do not add one.",
     "All ten holochain/hc checksums below are from the CI-built assets of the fork",
-    "release (workflow run 32494200923, commit 2a80da24, kitsune2 rev 09d3365 (QAD relay re-insert fix)).",
+    "release (workflow run 33708101673, commit 98a46d229, kitsune2 rev 123e9d29).",
     "NOTE: `yarn update-hc-checksums` regenerates this file from GitHub release assets",
     "and will destroy this note, the binarySources block, and the patched checksums."
   ],
@@ -24,26 +26,26 @@
   "binarySources": {
     "holochain": {
       "binariesRepo": "lightningrodlabs/holochain",
-      "binariesTag": "holochain-0.7.0-hello.2"
+      "binariesTag": "holochain-0.7.0-mdns.0"
     },
     "hc": {
       "binariesRepo": "lightningrodlabs/holochain",
-      "binariesTag": "holochain-0.7.0-hello.2"
+      "binariesTag": "holochain-0.7.0-mdns.0"
     }
   },
   "hc": {
-    "aarch64-apple-darwin": "9a3a70599db1f46b3d8e3a8d76f9b87b8d4ae83703142e69488055a4f12f7f20",
-    "aarch64-unknown-linux-gnu": "15ed03fb0948f360cffeeb2b042182a2580ee08f644811c8d272b7394969e64b",
-    "x86_64-apple-darwin": "b198a8af2681f55d6ced36c0a26da447c16f9773f5ee8dd65b51d642f022a832",
-    "x86_64-pc-windows-msvc.exe": "e6b5de0f81059d3545f45c439114873e33316e691a4010d005bc09323b2c3989",
-    "x86_64-unknown-linux-gnu": "4a0d53efa5d38f86c5764749eb4a89b18dcbfb0fa576f9756729e3076e79c7dc"
+    "aarch64-apple-darwin": "3d213f30c4477731daa4b19564cac0735e94d37f112b6353411a7195c01001c7",
+    "aarch64-unknown-linux-gnu": "d8d6b5f4645f6575f495037d01c967328b0d9bbf54eefa46b443f07475d2a7e5",
+    "x86_64-apple-darwin": "36c4ccc86c54a3f47a12a4ae494969fdec179273f5fa6c7eb7a050375b345e66",
+    "x86_64-pc-windows-msvc.exe": "426a12056b515a67117894654ca58caf6d375669293a523b590eabf41b0342c7",
+    "x86_64-unknown-linux-gnu": "7be693229a59f02db10fa426dcc2727bd4d4b453b956e49fa5e4711be9a3e99c"
   },
   "holochain": {
-    "aarch64-apple-darwin": "00034a4ab35cc60f0a4be647717b3d9090aebb0d52b1862d7bfb5bb0babe87bb",
-    "aarch64-unknown-linux-gnu": "c587cf09171909ddf86edff505cd05de4259c4afca2b2d6c25ec8e6e6203a34a",
-    "x86_64-apple-darwin": "b7c2b47ea7114e41208573d476ae7236a1e9c467a01696d7b40f5adff46ca9be",
-    "x86_64-pc-windows-msvc.exe": "1c7b5097cea65c84574894fd2feb0ff5986850a2033355e3f48c7691094e1307",
-    "x86_64-unknown-linux-gnu": "773f51a08aea72b73550161b815d673a155f628a1d41485c8531fc701040900b"
+    "aarch64-apple-darwin": "8f554d779586fad1589081e10444fd9bbd8577b04b2e7f473be68fe3572d891d",
+    "aarch64-unknown-linux-gnu": "ef53a23d74bf46054b0fc517a0a3da11ab312096250f5a14ff0cac5edd06622e",
+    "x86_64-apple-darwin": "1482361df285339a78423d94a63cbc0a9ff77e6f44faabc8f719afed8c69979c",
+    "x86_64-pc-windows-msvc.exe": "cf594ab91f310d11584f53d232f6f2537e9b4cf73e3a164cad6eb0bc92a930be",
+    "x86_64-unknown-linux-gnu": "7fea825a5e3dfff017f400d81729bb001c78f5360034a868ddfb0e5be04829a9"
   },
   "kitsune2-bootstrap-srv": {
     "aarch64-apple-darwin": "a5ada66e9663c8badb3a0d2b2ff3af4a667a21aab2438c8cc79f0833c26f602b",
