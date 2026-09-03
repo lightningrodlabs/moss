@@ -2,6 +2,7 @@
   "_FIELD_TEST_ONLY": [
     "BRANCH feat/mdns-dev-build-0.7 -- DO NOT MERGE TO main-0.7.",
     "The 'holochain' and 'hc' entries in this file are NOT the stock holochain 0.7.0",
+    "release artifacts. They are PATCHED binaries carrying the kitsune2 hello/PoK",
     "access module plus mDNS LAN discovery, built from lightningrodlabs/holochain",
     "branch feat/mdns-bootstrap-0.7.0-hello at commit 46f22e121431d64cb583d96d76d31262c2f6bb98",
     "(kitsune2 rev a742244604c5b7d0994c213108abd67824dd9afc), destined for the fork",
