@@ -583,9 +583,99 @@ passed as `release_notes`, so it cannot be forgotten:
 - everyone in the cohort must install from this same release;
 - do not hand it to anyone outside the cohort;
 - the first fire-and-forget message to a brand-new peer is dropped while the hello/PoK
-  handshake runs, and recovers on the next send (§5) — expected, not a bug.
+  handshake runs, and recovers on the next send (§5) — expected, not a bug;
+- what mDNS LAN discovery does and how to switch it off (§9).
 
 It is appended by the workflow rather than typed by hand because a build handed out
 without it does not look broken to its user. It looks like a working Moss that nobody
 else is on, and that misdiagnosis costs a tester an afternoon. If you edit the release
 notes after the run, leave that block in place.
+
+---
+
+## 9. The mDNS LAN-discovery build (`holochain-0.7.0-mdns.0`)
+
+The `feat/mdns-dev-build-0.7` branch adds LAN peer discovery on top of the hello/PoK
+build. It is **additive**: the hello/PoK access module and the
+`HCP2P_PROTO_VER=1002` partition of §1 still apply unchanged, so everything above
+about cohort isolation holds.
+
+**Fork release:** `lightningrodlabs/holochain` @ `holochain-0.7.0-mdns.0`, repointed
+through the same `binarySources` mechanism as §8.1. `lair-keystore` and
+`kitsune2-bootstrap-srv` remain stock.
+
+### 9.1 The fork binaries have their own filenames
+
+`moss.config.json` carries a `holochainBinaryTag`:
+
+```json
+{
+  "holochain": "0.7.0",
+  "holochainBinaryTag": "0.7.0-mdns.0"
+}
+```
+
+With it set, `holochain` and `hc` land in `resources/bins` as
+`holochain-v0.7.0-mdns.0` and `hc-v0.7.0-mdns.0` rather than `…-v0.7.0`. That is what
+makes it impossible for a stock `holochain-v0.7.0` left over in the (gitignored)
+`resources/bins` from another branch to be packaged as if it were the fork: the app
+looks for a filename that only the fork fetch produces. `lair-keystore` and
+`kitsune2-bootstrap-srv` are unpatched and keep `-v0.7.0`.
+
+The derivation lives in `scripts/binary-names.mjs`, shared by the build scripts and
+by the electron main process (`src/main/const.ts`). Remove the key and everything
+reverts to stock naming.
+
+`yarn check:binaries` now **hashes** `holochain`, `hc` and `lair-keystore` against
+`holochain-checksums.json` instead of only checking that they exist, for the same
+reason: existence alone cannot tell a stale binary from the pinned one.
+
+### 9.2 The switch
+
+mDNS discovery is **on by default**. To turn it off for a run:
+
+```bash
+moss --disable-mdns
+```
+
+The flag sets `network.advanced.mdnsBootstrap.enabled` and
+`network.advanced.irohTransport.enableLanDiscovery` in `conductor-config.yaml`.
+Both are always written explicitly, `false` included — the config file is read back
+and merged into on each launch, so a node that once ran with mDNS on needs an
+explicit `false` to stop announcing. Composition lives in
+`src/main/conductorNetworkConfig.ts` (`composeAdvancedSettings`).
+
+Both keys are kitsune2 _module_ config, and kitsune2 ignores module keys it does not
+recognise, so a config written by this build is still loadable by a stock holochain
+binary.
+
+### 9.3 Confirming it is actually working
+
+**1. The node is announcing itself.** On the machine running Moss:
+
+```bash
+avahi-browse -trp _kitsune2._udp
+```
+
+Each running conductor shows up as a resolved record whose TXT fields carry
+`spacefp` (the space fingerprint — it must match on both machines for them to be
+candidates for each other) and `url` (the peer URL to dial). No records means the
+mDNS module is off or `avahi-daemon` is not running.
+
+**2. Peers are being found and dialled.** In the conductor log
+(`--print-holochain-logs`, or the logfile under the profile's `logs/`):
+
+```
+mdns: discovered peer, dialling
+```
+
+**3. The connection is direct, not relayed** — the point of the exercise:
+
+```
+Connection established … direct=true
+```
+
+`direct=true` is what says the two machines are talking over the LAN rather than
+through the iroh relay. The offline test is exactly this with the bootstrap server
+and relay unreachable: pull the uplink, restart both nodes, and confirm all three
+signals above.
