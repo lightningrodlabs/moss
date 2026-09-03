@@ -1785,6 +1785,11 @@ git commit -m "feat(ui): show install progress including transfers from group me
 
 ### Task 8: Manual two-agent verification and status update
 
+Status: not yet run. Tasks 1-7 are implemented and committed; an in-memory
+end-to-end test (`src/main/peerToolTransfer.e2e.test.ts`) covers everything
+except the Holochain signal hop and Electron IPC. The spec's "Manual
+verification" section carries the recipe.
+
 **Files:**
 - Modify: `plans/peer-tool-transfer.md` (Status line; record the measured chunk ceiling)
 

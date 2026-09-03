@@ -1,6 +1,12 @@
 # Peer tool transfer: installing a group's Tools from other members
 
-Status: design approved 2026-09-03, implementation in progress.
+Status: implemented 2026-09-03 on branch `feat/peer-tool-transfer` (all tasks in
+`plans/peer-tool-transfer-plan.md` except the manual two-agent run). Verified by
+unit tests, an in-memory end-to-end test that drives the real main-process
+reader/writer through the real requester and provider, `yarn typecheck`, and
+`yarn build`. Not yet verified: a live two-agent transfer over Holochain remote
+signals, and the real remote-signal payload ceiling (chunk size stays at
+512 KiB until measured). See "Manual verification" below.
 
 ## Problem
 
@@ -241,6 +247,26 @@ eight target locales.
   `src/preload/admin.ts`; typings in `src/renderer/src/electron-api.ts`.
 - `src/main/filesystem.ts`: `deriveAppAssetsInfo` accepts an asset source.
 - `src/renderer/xliff/*.xlf` and generated locale modules.
+
+## Manual verification (still to do)
+
+Two agents on one machine are enough. Agent 1 installs a Tool from a real
+developer-collective tool list while online. Agent 2 joins the group, sees the
+applet, and must not be able to reach the tool list when activating it.
+
+The cheapest way to cut only agent 2's HTTP without touching its Holochain
+traffic is a dead proxy for its Chromium network stack: launch agent 2's
+Electron with `--proxy-server=127.0.0.1:9`. Both renderer `fetch` and main's
+`net.fetch` go through Chromium and fail fast; the holochain subprocess does
+not use the proxy, so the two conductors still talk. This recipe has not been
+exercised yet; if the flag does not reach Electron through electron-vite, pull
+the machine's network cable after both agents show each other online instead.
+
+Expected on agent 2 beneath the Activate button: library download, then
+"Tool library unreachable…", then "Requesting Tool from <agent 1>…", then a
+progress bar, then "Installing…", then the "Tool installed." toast, and the
+Tool opens. Then repeat with `TOOL_TRANSFER_CHUNK_SIZE` raised (for example to
+4 MiB) to find the remote-signal ceiling, and record it here.
 
 ## Testing
 
