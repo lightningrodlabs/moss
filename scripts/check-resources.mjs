@@ -19,13 +19,17 @@
 import fs from 'fs';
 import path from 'path';
 import { ASSET_TARGET, assertSha256, sha256OfFile } from './fetch-fns.mjs';
+import { holochainBinaryName, versionedBinaryName } from './binary-names.mjs';
 
 const mossConfig = JSON.parse(fs.readFileSync('moss.config.json', 'utf-8'));
 const checksums = JSON.parse(fs.readFileSync('holochain-checksums.json', 'utf-8'));
 
 const exe = process.platform === 'win32' ? '.exe' : '';
-const holochainVersion = mossConfig.holochain;
 const bootstrapSrvVersion = mossConfig.kitsune2BootstrapSrv ?? checksums.version;
+
+// Binary filenames come from the shared derivation so this check looks for the
+// same file the app will look for at runtime, fork tag included.
+const bin = (name) => path.join('resources', 'bins', holochainBinaryName(name, mossConfig));
 
 // ASSET_TARGET is the single host->checksum-key mapping, shared with
 // fetch-fns.mjs so this check and the fetch can never disagree about which key
@@ -42,22 +46,26 @@ const REQUIRED = [
   // --- binaries, from `yarn fetch:binaries` / `yarn fetch:hc` /
   //     `yarn install:local-binaries` (field-test branch only) ---
   {
-    file: path.join('resources', 'bins', `holochain-v${holochainVersion}${exe}`),
+    file: bin('holochain'),
     sha256: checksums.holochain?.[ASSET_TARGET],
     source: 'yarn install:local-binaries (patched) / yarn fetch:binaries',
   },
   {
-    file: path.join('resources', 'bins', `lair-keystore-v${holochainVersion}${exe}`),
+    file: bin('lair-keystore'),
     sha256: checksums['lair-keystore']?.[ASSET_TARGET],
     source: 'yarn fetch:binaries',
   },
   {
-    file: path.join('resources', 'bins', `kitsune2-bootstrap-srv-v${bootstrapSrvVersion}${exe}`),
+    file: path.join(
+      'resources',
+      'bins',
+      versionedBinaryName('kitsune2-bootstrap-srv', bootstrapSrvVersion),
+    ),
     sha256: checksums['kitsune2-bootstrap-srv']?.[ASSET_TARGET],
     source: 'yarn fetch:binaries',
   },
   {
-    file: path.join('resources', 'bins', `hc-v${holochainVersion}${exe}`),
+    file: bin('hc'),
     sha256: checksums.hc?.[ASSET_TARGET],
     source: 'yarn install:local-binaries (patched) / yarn fetch:binaries',
   },

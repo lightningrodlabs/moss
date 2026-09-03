@@ -2,9 +2,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
 import crypto from 'crypto';
+import { holochainBinaryName, versionedBinaryName } from './binary-names.mjs';
 
 const configJSON = fs.readFileSync('holochain-checksums.json');
 const HOLOCHAIN_CHECKSUMS = JSON.parse(configJSON);
+
+const MOSS_CONFIG = JSON.parse(fs.readFileSync('moss.config.json', 'utf-8'));
 
 /**
  * Where holochain release assets come from unless a binary overrides it.
@@ -185,7 +188,13 @@ export function downloadFile(url, targetPath, expectedSha256Hex, chmod = false) 
 export function downloadHolochainBinary(filename, withVersion = true, versionOverride = null) {
   const version = versionOverride ?? HOLOCHAIN_CHECKSUMS.version;
   const completeBinaryFilename = `${filename}-${ASSET_TARGET}`;
-  const binaryFilenameWithVersion = `${filename}-v${version}${EXE_SUFFIX}`;
+  // The on-disk name comes from moss.config.json, so a fork build lands under a
+  // filename the app can tell apart from the stock one; the release asset name
+  // and the checksum key are unaffected -- the fork publishes the same asset
+  // names, just under a different tag.
+  const binaryFilenameWithVersion = versionOverride
+    ? versionedBinaryName(filename, versionOverride)
+    : holochainBinaryName(filename, MOSS_CONFIG);
   const targetPath = path.join(
     binariesDir,
     withVersion ? binaryFilenameWithVersion : `${filename}${EXE_SUFFIX}`,

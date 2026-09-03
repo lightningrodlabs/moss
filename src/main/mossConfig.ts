@@ -5,6 +5,12 @@ import { app } from 'electron';
 export type MossConfig = {
   groupHapp: VersionAndSha256;
   holochain: string;
+  /**
+   * Set when the shipped holochain/hc binaries are a fork build rather than the
+   * stock release of `holochain`. It is the release tag that gives those two
+   * binaries their own filenames -- see scripts/binary-names.mjs.
+   */
+  holochainBinaryTag?: string;
   kitsune2BootstrapSrv?: string;
   binariesAppendix: string;
   feedbackWorkerUrl?: string;
