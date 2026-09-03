@@ -13,6 +13,7 @@ import winston, { createLogger, transports, format } from 'winston';
 import { ConductorRunningInfo, RunningSecretInfo, WDockerFilesystem } from '../filesystem.js';
 import { AdminWebsocket } from '@holochain/client';
 import { getInitPassword, getPassword } from '../helpers/helpers.js';
+import { isWdaemonProcess } from '../helpers/processMatching.js';
 import {
   CONDUCTOR_CONFIG_TEMPLATE,
   PRODUCTION_BOOTSTRAP_URLS,
@@ -58,16 +59,10 @@ export async function isDaemonRunning(id: string): Promise<boolean> {
   wDockerFs.setConductorId(id);
   const runningInfo = wDockerFs.readRunningFile();
   if (runningInfo) {
-    console.log('running info found.');
     const procs = await psList();
-    console.log('runningInfo.daemonPid: ', runningInfo.daemonPid);
     const daemonProcess = procs.find((proc) => proc.pid === runningInfo.daemonPid);
-    if (daemonProcess) {
-      console.log('daemonProcess: ', daemonProcess);
-      const cmd = daemonProcess.cmd || '';
-      if (cmd.includes('wdaemon') || cmd.includes('daemon.js')) {
-        return true;
-      }
+    if (daemonProcess && isWdaemonProcess(daemonProcess)) {
+      return true;
     }
   }
   return false;

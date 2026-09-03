@@ -13,7 +13,7 @@
   },
   "scripts": {
     "postinstall": "node ./fetch-binaries.mjs",
-    "prepublishOnly": "node ../scripts/check-cli-dist.mjs"
+    "prepublishOnly": "node ../scripts/check-cli-dist.mjs && node ../scripts/publish-staleness.mjs"
   },
   "dependencies": {
     "@holochain/client": "^0.21.0",
@@ -26,8 +26,8 @@
     "@electron-toolkit/utils": "^2.0.0",
     "electron-updater": "6.6.2",
     "@theweave/api": "^0.7.0-dev.2",
-    "@theweave/moss-types": "0.7.0-dev.1",
-    "@theweave/utils": "0.7.0-dev.1",
+    "@theweave/moss-types": "^0.7.0-dev.2",
+    "@theweave/utils": "^0.7.0-dev.2",
     "@msgpack/msgpack": "^2.8.0",
     "@sinclair/typebox": "0.33.12",
     "adm-zip": "0.5.14",

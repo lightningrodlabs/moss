@@ -1,6 +1,6 @@
 {
   "name": "@theweave/wdocker",
-  "version": "0.16.0-dev.1",
+  "version": "0.16.0-dev.4",
   "description": "CLI to run always-online nodes for the Weave",
   "license": "CAL-1.0",
   "repository": {
@@ -13,16 +13,19 @@
   },
   "type": "module",
   "scripts": {
-    "build": "tsc && cp ../moss.config.json ./dist && cp ../holochain-checksums.json ./dist && cp ../resources/conductor-config.yaml ./dist"
+    "build": "tsc && cp ../moss.config.json ./dist && cp ../holochain-checksums.json ./dist && cp ../resources/conductor-config.yaml ./dist",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "yarn build && node ../scripts/check-wdocker-package.mjs && node ../scripts/publish-staleness.mjs"
   },
   "dependencies": {
     "@folder/xdg": "4.0.1",
     "@holochain-open-dev/profiles": "^0.701.0",
     "@holochain/client": "^0.21.0",
     "@lightningrodlabs/we-rust-utils": "^0.700.0-dev.0",
-    "@theweave/api": "file:../libs/api",
-    "@theweave/utils": "file:../shared/utils",
-    "@theweave/group-client": "file:../shared/group-client",
+    "@theweave/api": "^0.7.0-dev.2",
+    "@theweave/group-client": "^0.7.0-dev.1",
+    "@theweave/moss-types": "^0.7.0-dev.1",
+    "@theweave/utils": "^0.7.0-dev.2",
     "@inquirer/prompts": "6.0.1",
     "@msgpack/msgpack": "^2.8.0",
     "@sinclair/typebox": "0.33.12",

@@ -16,6 +16,9 @@ import {
 } from '@holochain/client';
 import { password as passwordInput } from '@inquirer/prompts';
 
+import { createAppWebsocket } from '@theweave/utils';
+
+import { AppAuthTokenParams, PER_CYCLE_APP_AUTH_TOKEN_PARAMS } from './appWsLifecycle.js';
 import { WDockerFilesystem } from '../filesystem.js';
 import { GROUP_HAPP_URL, MOSS_CONFIG } from '../const.js';
 import { downloadFile, signZomeCall } from '../utils.js';
@@ -95,22 +98,32 @@ export async function getAdminWsAndAppPort(
   };
 }
 
+/**
+ * Connect an app websocket for `installedAppId`.
+ *
+ * `tokenParams` decides how long the socket can keep re-authenticating:
+ * callers that hold the socket for the uptime of the node have to pass
+ * LONG_LIVED_APP_AUTH_TOKEN_PARAMS. The default suits a socket that is closed
+ * again within the same check cycle.
+ */
 export async function getAppWs(
   adminWs: AdminWebsocket,
   appPort: number,
   installedAppId: InstalledAppId,
   weRustHandler: rustUtils.WeRustHandler,
+  tokenParams: AppAuthTokenParams = PER_CYCLE_APP_AUTH_TOKEN_PARAMS,
 ): Promise<AppWebsocket> {
   const authTokenResponse = await adminWs.issueAppAuthenticationToken({
     installed_app_id: installedAppId,
-    expiry_seconds: 10,
-    single_use: true,
+    ...tokenParams,
   });
   const callZomeTransform: CallZomeTransform = {
     input: (req) => signZomeCall(req as CallZomeRequest, weRustHandler),
     output: (o) => decode(o as any),
   };
-  return AppWebsocket.connect({
+  // Pin the auth token across reconnects so a long-lived daemon socket stays
+  // usable after a transient failure.
+  return createAppWebsocket({
     url: new URL(`ws://localhost:${appPort}`),
     token: authTokenResponse.token,
     callZomeTransform,
