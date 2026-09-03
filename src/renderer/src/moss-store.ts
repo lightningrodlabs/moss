@@ -84,6 +84,7 @@ import {
 import { AppletStore } from './applets/applet-store.js';
 import {
   AppHashes,
+  AppletInstallProgress,
   DeveloperCollective,
   DeveloperCollectiveToolList,
   DistributionInfo,
@@ -177,6 +178,12 @@ function getNotificationFeedEntryId({ source, notification }: MossNotification):
 
   return `${sourceKey}:${encodeAndStringify(notification)}`;
 }
+
+/**
+ * How long to wait on the tool library before treating it as unreachable and
+ * asking group members instead. Offline machines otherwise hang on the fetch.
+ */
+const TOOL_LIST_FETCH_TIMEOUT_MS = 10_000;
 
 export class MossStore {
   constructor(
@@ -1331,108 +1338,26 @@ export class MossStore {
    * Actions
    */
 
-  async installApplet(appletHash: EntryHash, applet: Applet): Promise<AppInfo> {
-    console.log('Installing applet with hash: ', encodeHashToBase64(appletHash));
-    const appId = appIdFromAppletHash(appletHash);
-    if (!applet.network_seed) {
-      throw new Error(
-        'Network Seed not defined. Undefined network seed is currently not supported.',
-      );
-    }
+  /**
+   * Live status of Tool installs in progress, keyed by applet id, so every
+   * surface that starts an install can show the same feedback.
+   */
+  appletInstallProgress: Writable<Record<AppletId, AppletInstallProgress>> = writable({});
 
-    const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
-    Value.Assert(TDistributionInfo, distributionInfo);
+  private setInstallProgress(
+    appletId: AppletId,
+    progress: AppletInstallProgress | undefined,
+  ): void {
+    this.appletInstallProgress.update((all) => {
+      const next = { ...all };
+      if (progress) next[appletId] = progress;
+      else delete next[appletId];
+      return next;
+    });
+  }
 
-    let appHashes: AppHashes;
-    let happOrWebhappUrl: string;
-    let uiPort: number | undefined;
-
-    if (distributionInfo.type === 'web2-tool-list') {
-      // In case it's applet dev mode *and* it's a tool from the dev config
-      // then derive the relevant info right here
-      if (this.appletDevConfig && distributionInfo.info.toolListUrl.startsWith('###DEVCONFIG###')) {
-        const toolConfig = this.appletDevConfig.applets.find(
-          (config) => config.name === distributionInfo.info.toolId,
-        );
-        if (!toolConfig) throw new Error('No matching Tool found in the dev config.');
-
-        switch (toolConfig.source.type) {
-          case 'filesystem':
-            happOrWebhappUrl = `file://${toolConfig.source.path}`;
-            break;
-          case 'https':
-            happOrWebhappUrl = toolConfig.source.url;
-            break;
-          case 'localhost':
-            happOrWebhappUrl = `file://${toolConfig.source.happPath}`;
-            break;
-        }
-
-        appHashes =
-          toolConfig.source.type === 'localhost'
-            ? {
-                type: 'happ',
-                sha256: '###DEVCONFIG###',
-              }
-            : {
-                type: 'webhapp',
-                sha256: '###DEVCONFIG###',
-                happ: {
-                  sha256: '###DEVCONFIG###',
-                },
-                ui: {
-                  sha256: '###DEVCONFIG###',
-                },
-              };
-
-        const uiPortString = distributionInfo.info.toolListUrl.replace('###DEVCONFIG###', '');
-        if (uiPortString) {
-          uiPort = parseInt(uiPortString);
-        }
-      } else {
-        // Fetch latest version of the Tool
-        const resp = await fetch(distributionInfo.info.toolListUrl, { cache: 'no-cache' });
-        const toolList: DeveloperCollectiveToolList = await resp.json();
-
-        // take all apps and add them to the list of all apps
-        const toolInfo = toolList.tools.find(
-          (tool) =>
-            tool.id === distributionInfo.info.toolId &&
-            tool.versionBranch == distributionInfo.info.versionBranch,
-        );
-        if (!toolInfo) throw new Error('No tool info found in developer collective.');
-        // Filter by versions that have a valid semver version and the same sha256 as stored in the Applet entry
-        const latestVersion = getLatestVersionFromToolInfo(toolInfo, applet.sha256_happ);
-        if (!latestVersion)
-          throw new Error(
-            'No version found for the Tool with a valid semver version and the correct happ sha256.',
-          );
-
-        appHashes = {
-          type: 'webhapp',
-          sha256: latestVersion.hashes.webhappSha256, // The sha256 of the happ needs to match the one in the AppletEntry
-          happ: {
-            sha256: applet.sha256_happ,
-          },
-          ui: {
-            sha256: latestVersion.hashes.uiSha256,
-          },
-        };
-
-        happOrWebhappUrl = latestVersion.url;
-      }
-    } else {
-      throw new Error(
-        "Distribution info types other than 'web2-tool-list' are currently not supported.",
-      );
-    }
-
-    // Only in dev mode AppHashes of type 'happ' are currently allowed
-    if (appHashes.type !== 'webhapp' && !this.isAppletDev) {
-      throw new Error(`Got invalid AppHashes type: ${appHashes.type}. AppHashes: ${appHashes}`);
-    }
-
-    const roles_settings: RoleSettingsMap = Object.fromEntries(
+  private rolesSettingsFor(applet: Applet): RoleSettingsMap {
+    return Object.fromEntries(
       Object.entries(applet.properties).map(([key, bytes]) => {
         const settings: RoleSettings = {
           type: 'provisioned',
@@ -1444,17 +1369,225 @@ export class MossStore {
         return [key, settings];
       }),
     );
+  }
 
+  /**
+   * Resolves where to download the Tool from and which hashes to verify, using
+   * the developer collective's tool list (or the dev config in applet dev mode).
+   */
+  private async resolveToolLibraryInstall(
+    applet: Applet,
+    distributionInfo: Extract<DistributionInfo, { type: 'web2-tool-list' }>,
+  ): Promise<{ appHashes: AppHashes; happOrWebhappUrl: string; uiPort?: number }> {
+    // In case it's applet dev mode *and* it's a tool from the dev config
+    // then derive the relevant info right here
+    if (this.appletDevConfig && distributionInfo.info.toolListUrl.startsWith('###DEVCONFIG###')) {
+      const toolConfig = this.appletDevConfig.applets.find(
+        (config) => config.name === distributionInfo.info.toolId,
+      );
+      if (!toolConfig) throw new Error('No matching Tool found in the dev config.');
+
+      let happOrWebhappUrl: string;
+      switch (toolConfig.source.type) {
+        case 'filesystem':
+          happOrWebhappUrl = `file://${toolConfig.source.path}`;
+          break;
+        case 'https':
+          happOrWebhappUrl = toolConfig.source.url;
+          break;
+        case 'localhost':
+          happOrWebhappUrl = `file://${toolConfig.source.happPath}`;
+          break;
+      }
+
+      const appHashes: AppHashes =
+        toolConfig.source.type === 'localhost'
+          ? {
+              type: 'happ',
+              sha256: '###DEVCONFIG###',
+            }
+          : {
+              type: 'webhapp',
+              sha256: '###DEVCONFIG###',
+              happ: {
+                sha256: '###DEVCONFIG###',
+              },
+              ui: {
+                sha256: '###DEVCONFIG###',
+              },
+            };
+
+      const uiPortString = distributionInfo.info.toolListUrl.replace('###DEVCONFIG###', '');
+      const uiPort = uiPortString ? parseInt(uiPortString) : undefined;
+      return { appHashes, happOrWebhappUrl, uiPort };
+    }
+
+    // Fetch latest version of the Tool
+    const resp = await fetch(distributionInfo.info.toolListUrl, {
+      cache: 'no-cache',
+      signal: AbortSignal.timeout(TOOL_LIST_FETCH_TIMEOUT_MS),
+    });
+    const toolList: DeveloperCollectiveToolList = await resp.json();
+
+    const toolInfo = toolList.tools.find(
+      (tool) =>
+        tool.id === distributionInfo.info.toolId &&
+        tool.versionBranch == distributionInfo.info.versionBranch,
+    );
+    if (!toolInfo) throw new Error('No tool info found in developer collective.');
+    // Filter by versions that have a valid semver version and the same sha256 as stored in the Applet entry
+    const latestVersion = getLatestVersionFromToolInfo(toolInfo, applet.sha256_happ);
+    if (!latestVersion)
+      throw new Error(
+        'No version found for the Tool with a valid semver version and the correct happ sha256.',
+      );
+
+    const appHashes: AppHashes = {
+      type: 'webhapp',
+      sha256: latestVersion.hashes.webhappSha256, // The sha256 of the happ needs to match the one in the AppletEntry
+      happ: {
+        sha256: applet.sha256_happ,
+      },
+      ui: {
+        sha256: latestVersion.hashes.uiSha256,
+      },
+    };
+    return { appHashes, happOrWebhappUrl: latestVersion.url };
+  }
+
+  /**
+   * Installs an applet that is registered in a group. The tool library is the
+   * primary source; when a group store is given and the library path fails,
+   * the Tool is fetched from online group members instead.
+   */
+  async installApplet(
+    appletHash: EntryHash,
+    applet: Applet,
+    groupStore?: GroupStore,
+  ): Promise<AppInfo> {
+    console.log('Installing applet with hash: ', encodeHashToBase64(appletHash));
+    const appletId: AppletId = encodeHashToBase64(appletHash);
+    const appId = appIdFromAppletHash(appletHash);
+    if (!applet.network_seed) {
+      throw new Error(
+        'Network Seed not defined. Undefined network seed is currently not supported.',
+      );
+    }
+
+    const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
+    Value.Assert(TDistributionInfo, distributionInfo);
+    if (distributionInfo.type !== 'web2-tool-list') {
+      throw new Error(
+        "Distribution info types other than 'web2-tool-list' are currently not supported.",
+      );
+    }
+    const roles_settings = this.rolesSettingsFor(applet);
+
+    try {
+      this.setInstallProgress(appletId, { phase: 'library' });
+      const { appHashes, happOrWebhappUrl, uiPort } = await this.resolveToolLibraryInstall(
+        applet,
+        distributionInfo,
+      );
+      // Only in dev mode AppHashes of type 'happ' are currently allowed
+      if (appHashes.type !== 'webhapp' && !this.isAppletDev) {
+        throw new Error(`Got invalid AppHashes type: ${appHashes.type}. AppHashes: ${appHashes}`);
+      }
+      this.setInstallProgress(appletId, { phase: 'installing' });
+      const appInfo = await window.electronAPI.installAppletBundle(
+        appId,
+        applet.network_seed,
+        happOrWebhappUrl,
+        distributionInfo,
+        appHashes,
+        uiPort,
+        roles_settings,
+      );
+      this.setInstallProgress(appletId, { phase: 'done' });
+      return appInfo;
+    } catch (libraryError) {
+      const libraryMessage =
+        libraryError instanceof Error ? libraryError.message : String(libraryError);
+      console.warn(`Installing from the tool library failed: ${libraryMessage}`);
+      if (!groupStore) {
+        this.setInstallProgress(appletId, { phase: 'failed', error: libraryMessage });
+        throw libraryError;
+      }
+      this.setInstallProgress(appletId, { phase: 'library-failed', error: libraryMessage });
+      try {
+        return await this.installAppletFromPeers(
+          appletHash,
+          applet,
+          groupStore,
+          distributionInfo,
+          roles_settings,
+        );
+      } catch (peerError) {
+        const peerMessage = peerError instanceof Error ? peerError.message : String(peerError);
+        this.setInstallProgress(appletId, { phase: 'failed', error: peerMessage });
+        throw new Error(`Tool library: ${libraryMessage}. Group members: ${peerMessage}`);
+      }
+    } finally {
+      // Keep the terminal state on screen long enough to be read, then clear it.
+      setTimeout(() => this.setInstallProgress(appletId, undefined), 4000);
+    }
+  }
+
+  private async installAppletFromPeers(
+    appletHash: EntryHash,
+    applet: Applet,
+    groupStore: GroupStore,
+    distributionInfo: DistributionInfo,
+    roles_settings: RoleSettingsMap,
+  ): Promise<AppInfo> {
+    const appletId: AppletId = encodeHashToBase64(appletHash);
+    const appId = appIdFromAppletHash(appletHash);
+    if (!applet.sha256_ui || !applet.sha256_webhapp) {
+      throw new Error('Applet entry lacks UI or webhapp hashes.');
+    }
+    this.setInstallProgress(appletId, { phase: 'peer-search' });
+    const peers = await groupStore.onlineAppletPeers(appletHash);
+    if (peers.length === 0) {
+      this.setInstallProgress(appletId, { phase: 'peer-none' });
+      throw new Error('No online group member has this Tool.');
+    }
+    await groupStore.fetchToolFromPeers(appletHash, applet, (event) => {
+      const peer = encodeHashToBase64(event.peer);
+      switch (event.type) {
+        case 'requesting':
+          this.setInstallProgress(appletId, { phase: 'peer-request', peer });
+          break;
+        case 'progress':
+          this.setInstallProgress(appletId, {
+            phase: 'peer-download',
+            peer,
+            chunksDone: event.chunksDone,
+            chunksTotal: event.chunksTotal,
+          });
+          break;
+        case 'peer-failed':
+          this.setInstallProgress(appletId, { phase: 'peer-failed', peer, error: event.error });
+          break;
+      }
+    });
+    this.setInstallProgress(appletId, { phase: 'installing' });
+    const appHashes: AppHashes = {
+      type: 'webhapp',
+      sha256: applet.sha256_webhapp,
+      happ: { sha256: applet.sha256_happ },
+      ui: { sha256: applet.sha256_ui },
+    };
     const appInfo = await window.electronAPI.installAppletBundle(
       appId,
       applet.network_seed!,
-      happOrWebhappUrl,
+      '',
       distributionInfo,
       appHashes,
-      uiPort,
+      undefined,
       roles_settings,
+      { type: 'peer' },
     );
-
+    this.setInstallProgress(appletId, { phase: 'done' });
     return appInfo;
   }
 
