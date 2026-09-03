@@ -22,9 +22,12 @@ import {
 import {
   AppAssetsInfo,
   AppHashes,
+  AssetSource,
   DistributionInfo,
   ResourceLocation,
   ToolCompatibilityId,
+  ToolTransferManifest,
+  ToolTransferRequest,
   WeaveDevConfig,
 } from '@theweave/moss-types';
 import { ToolWeaveConfig } from './types';
@@ -154,8 +157,23 @@ declare global {
         appHashes: AppHashes,
         uiPort?: number,
         roles_settings?: RoleSettingsMap,
+        assetSource?: AssetSource,
       ) => Promise<AppInfo>;
       uninstallAppletBundle: (appId: string) => Promise<void>;
+      readToolAssetsManifest: (
+        request: ToolTransferRequest,
+        chunkSize: number,
+      ) => Promise<ToolTransferManifest | undefined>;
+      readToolAssetsChunk: (
+        request: ToolTransferRequest,
+        index: number,
+        chunkSize: number,
+      ) => Promise<Uint8Array>;
+      storeToolAssetsFromPeer: (
+        manifest: ToolTransferManifest,
+        bytes: Uint8Array,
+        expected: ToolTransferRequest,
+      ) => Promise<void>;
       isMainWindowFocused: () => Promise<boolean | undefined>;
       isDevModeEnabled: () => Promise<boolean>;
       joinGroup: (networkSeed: string, progenitor: AgentPubKeyB64 | null) => Promise<AppInfo>;
