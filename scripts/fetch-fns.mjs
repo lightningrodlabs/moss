@@ -2,12 +2,44 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
 import crypto from 'crypto';
-import { holochainBinaryName, versionedBinaryName } from './binary-names.mjs';
+import { binaryReleaseTag, exeSuffix, holochainBinaryName } from './binary-names.mjs';
 
 const configJSON = fs.readFileSync('holochain-checksums.json');
 const HOLOCHAIN_CHECKSUMS = JSON.parse(configJSON);
 
-const MOSS_CONFIG = JSON.parse(fs.readFileSync('moss.config.json', 'utf-8'));
+/**
+ * moss.config.json, exported so the fetch and check scripts all read it once,
+ * from here, rather than each parsing their own copy.
+ */
+export const MOSS_CONFIG = JSON.parse(fs.readFileSync('moss.config.json', 'utf-8'));
+
+// The two files describe the same toolchain from different angles -- one names
+// the version, the other pins the artifacts of that version -- and every
+// derivation below reads across both. Mirrors the runtime check in
+// src/main/mossConfig.ts, so the drift is caught at fetch time rather than on a
+// user's machine.
+if (MOSS_CONFIG.holochain !== HOLOCHAIN_CHECKSUMS.version) {
+  throw new Error(
+    `The version of Holochain in moss.config.json (${MOSS_CONFIG.holochain}) does not match the version in holochain-checksums.json (${HOLOCHAIN_CHECKSUMS.version}). Please update moss.config.json or holochain-checksums.json accordingly.`,
+  );
+}
+
+/**
+ * Everything the binary-name derivation needs, drawn from the two config files:
+ * the versions from moss.config.json, the per-binary fork sources from
+ * holochain-checksums.json.
+ */
+const BINARY_NAME_CONFIG = {
+  ...MOSS_CONFIG,
+  binarySources: HOLOCHAIN_CHECKSUMS.binarySources,
+};
+
+/**
+ * The filename `binaryName` has in `resources/bins` on this host.
+ */
+export function resolvedBinaryName(binaryName) {
+  return holochainBinaryName(binaryName, BINARY_NAME_CONFIG);
+}
 
 /**
  * Where holochain release assets come from unless a binary overrides it.
@@ -50,8 +82,6 @@ switch (process.platform) {
     throw new Error(`Got unexpected OS platform: ${process.platform}`);
 }
 
-const EXE_SUFFIX = process.platform === 'win32' ? '.exe' : '';
-
 /**
  * The release-asset target suffix for this host -- e.g.
  * `x86_64-unknown-linux-gnu`, or `x86_64-pc-windows-msvc.exe` on Windows.
@@ -66,7 +96,7 @@ const EXE_SUFFIX = process.platform === 'win32' ? '.exe' : '';
  * all. Deriving both from a single constant makes that class of drift
  * impossible.
  */
-export const ASSET_TARGET = `${hostTriple}${EXE_SUFFIX}`;
+export const ASSET_TARGET = `${hostTriple}${exeSuffix()}`;
 
 const SHA256_HEX = /^[0-9a-f]{64}$/;
 
@@ -133,12 +163,14 @@ export function expectedSha256For(binaryName) {
  * test repoints only `holochain` and `hc` at a fork release; `lair-keystore` and
  * `kitsune2-bootstrap-srv` are unpatched and must keep coming from the stock
  * release, which they do simply by having no entry here.
+ *
+ * The tag comes from the same derivation that names the file on disk, so a
+ * binary fetched from a fork release cannot be stored under a stock filename.
  */
-export function binarySourceFor(binaryName, version) {
-  const override = HOLOCHAIN_CHECKSUMS.binarySources?.[binaryName] ?? {};
+export function binarySourceFor(binaryName) {
   return {
-    repo: override.binariesRepo ?? DEFAULT_BINARIES_REPO,
-    tag: override.binariesTag ?? `holochain-${version}`,
+    repo: HOLOCHAIN_CHECKSUMS.binarySources?.[binaryName]?.binariesRepo ?? DEFAULT_BINARIES_REPO,
+    tag: binaryReleaseTag(binaryName, BINARY_NAME_CONFIG),
   };
 }
 
@@ -185,21 +217,16 @@ export function downloadFile(url, targetPath, expectedSha256Hex, chmod = false) 
   });
 }
 
-export function downloadHolochainBinary(filename, withVersion = true, versionOverride = null) {
-  const version = versionOverride ?? HOLOCHAIN_CHECKSUMS.version;
+export function downloadHolochainBinary(filename, withVersion = true) {
   const completeBinaryFilename = `${filename}-${ASSET_TARGET}`;
-  // The on-disk name comes from moss.config.json, so a fork build lands under a
-  // filename the app can tell apart from the stock one; the release asset name
-  // and the checksum key are unaffected -- the fork publishes the same asset
-  // names, just under a different tag.
-  const binaryFilenameWithVersion = versionOverride
-    ? versionedBinaryName(filename, versionOverride)
-    : holochainBinaryName(filename, MOSS_CONFIG);
+  // A fork build lands under a filename the app can tell apart from the stock
+  // one; the release asset name and the checksum key are unaffected -- the fork
+  // publishes the same asset names, just under a different tag.
   const targetPath = path.join(
     binariesDir,
-    withVersion ? binaryFilenameWithVersion : `${filename}${EXE_SUFFIX}`,
+    withVersion ? resolvedBinaryName(filename) : `${filename}${exeSuffix()}`,
   );
-  const { repo, tag } = binarySourceFor(filename, version);
+  const { repo, tag } = binarySourceFor(filename);
   const holochainBinaryUrl = `https://github.com/${repo}/releases/download/${tag}/${completeBinaryFilename}`;
   downloadFile(holochainBinaryUrl, targetPath, expectedSha256For(filename), true);
 }

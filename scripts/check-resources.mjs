@@ -18,18 +18,20 @@
 
 import fs from 'fs';
 import path from 'path';
-import { ASSET_TARGET, assertSha256, sha256OfFile } from './fetch-fns.mjs';
-import { holochainBinaryName, versionedBinaryName } from './binary-names.mjs';
+import {
+  ASSET_TARGET,
+  MOSS_CONFIG,
+  assertSha256,
+  resolvedBinaryName,
+  sha256OfFile,
+} from './fetch-fns.mjs';
+import { exeSuffix } from './binary-names.mjs';
 
-const mossConfig = JSON.parse(fs.readFileSync('moss.config.json', 'utf-8'));
 const checksums = JSON.parse(fs.readFileSync('holochain-checksums.json', 'utf-8'));
 
-const exe = process.platform === 'win32' ? '.exe' : '';
-const bootstrapSrvVersion = mossConfig.kitsune2BootstrapSrv ?? checksums.version;
-
 // Binary filenames come from the shared derivation so this check looks for the
-// same file the app will look for at runtime, fork tag included.
-const bin = (name) => path.join('resources', 'bins', holochainBinaryName(name, mossConfig));
+// same file the app will look for at runtime, fork release tag included.
+const bin = (name) => path.join('resources', 'bins', resolvedBinaryName(name));
 
 // ASSET_TARGET is the single host->checksum-key mapping, shared with
 // fetch-fns.mjs so this check and the fetch can never disagree about which key
@@ -56,11 +58,7 @@ const REQUIRED = [
     source: 'yarn fetch:binaries',
   },
   {
-    file: path.join(
-      'resources',
-      'bins',
-      versionedBinaryName('kitsune2-bootstrap-srv', bootstrapSrvVersion),
-    ),
+    file: bin('kitsune2-bootstrap-srv'),
     sha256: checksums['kitsune2-bootstrap-srv']?.[ASSET_TARGET],
     source: 'yarn fetch:binaries',
   },
@@ -70,7 +68,7 @@ const REQUIRED = [
     source: 'yarn install:local-binaries (patched) / yarn fetch:binaries',
   },
   {
-    file: path.join('resources', 'bins', `hc${exe}`),
+    file: path.join('resources', 'bins', `hc${exeSuffix()}`),
     sha256: checksums.hc?.[ASSET_TARGET],
     source: 'yarn install:local-binaries (patched) / yarn fetch:hc',
   },
@@ -80,7 +78,7 @@ const REQUIRED = [
   // Missing this one packages cleanly and only fails when a user makes a group.
   {
     file: path.join('resources', 'default-apps', 'group.happ'),
-    sha256: mossConfig.groupHapp?.sha256 ?? null,
+    sha256: MOSS_CONFIG.groupHapp?.sha256 ?? null,
     source: 'yarn fetch:group-happ',
   },
 

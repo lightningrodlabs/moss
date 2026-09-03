@@ -1,33 +1,61 @@
 import { describe, expect, it } from 'vitest';
-import fs from 'fs';
-import path from 'path';
-import url from 'node:url';
 
 import {
-  binaryVersionFor,
+  binaryReleaseTag,
+  exeSuffix,
   holochainBinaryName,
-  versionedBinaryName,
   type BinaryNameConfig,
 } from './binary-names.mjs';
 
+/** No binarySources at all: every binary comes from the stock release. */
 const STOCK: BinaryNameConfig = { holochain: '0.7.0' };
-const FORK: BinaryNameConfig = { holochain: '0.7.0', holochainBinaryTag: '0.7.0-mdns.0' };
+
+/** holochain and hc repointed at a fork release, the rest left stock. */
+const FORK: BinaryNameConfig = {
+  holochain: '0.7.0',
+  binarySources: {
+    holochain: {
+      binariesRepo: 'lightningrodlabs/holochain',
+      binariesTag: 'holochain-0.7.0-mdns.0',
+    },
+    hc: { binariesRepo: 'lightningrodlabs/holochain', binariesTag: 'holochain-0.7.0-mdns.0' },
+  },
+};
+
+/** kitsune2-bootstrap-srv is released on its own cadence. */
+const BOOTSTRAP_SRV_OVERRIDE: BinaryNameConfig = {
+  holochain: '0.7.0',
+  kitsune2BootstrapSrv: '0.7.1',
+};
 
 describe('holochainBinaryName', () => {
-  it('uses the plain holochain version when no fork tag is configured', () => {
+  it('uses the holochain version when the binary has no fork source', () => {
     expect(holochainBinaryName('holochain', STOCK, 'linux')).toBe('holochain-v0.7.0');
     expect(holochainBinaryName('hc', STOCK, 'linux')).toBe('hc-v0.7.0');
+    expect(holochainBinaryName('lair-keystore', STOCK, 'linux')).toBe('lair-keystore-v0.7.0');
+    expect(holochainBinaryName('kitsune2-bootstrap-srv', STOCK, 'linux')).toBe(
+      'kitsune2-bootstrap-srv-v0.7.0',
+    );
   });
 
-  it('uses the fork tag for holochain and hc when one is configured', () => {
+  it('uses the fork release tag for the binaries that have one', () => {
     expect(holochainBinaryName('holochain', FORK, 'linux')).toBe('holochain-v0.7.0-mdns.0');
     expect(holochainBinaryName('hc', FORK, 'linux')).toBe('hc-v0.7.0-mdns.0');
   });
 
-  it('keeps the stock holochain version for the unpatched binaries', () => {
+  it('keeps the stock holochain version for binaries with no fork source', () => {
     expect(holochainBinaryName('lair-keystore', FORK, 'linux')).toBe('lair-keystore-v0.7.0');
     expect(holochainBinaryName('kitsune2-bootstrap-srv', FORK, 'linux')).toBe(
       'kitsune2-bootstrap-srv-v0.7.0',
+    );
+  });
+
+  it('applies the kitsune2-bootstrap-srv version override to that binary alone', () => {
+    expect(holochainBinaryName('kitsune2-bootstrap-srv', BOOTSTRAP_SRV_OVERRIDE, 'linux')).toBe(
+      'kitsune2-bootstrap-srv-v0.7.1',
+    );
+    expect(holochainBinaryName('holochain', BOOTSTRAP_SRV_OVERRIDE, 'linux')).toBe(
+      'holochain-v0.7.0',
     );
   });
 
@@ -38,36 +66,28 @@ describe('holochainBinaryName', () => {
   });
 });
 
-describe('binaryVersionFor', () => {
-  it('exposes the version separately so callers can apply their own override', () => {
-    expect(binaryVersionFor('holochain', FORK)).toBe('0.7.0-mdns.0');
-    expect(binaryVersionFor('hc', FORK)).toBe('0.7.0-mdns.0');
-    expect(binaryVersionFor('lair-keystore', FORK)).toBe('0.7.0');
-    expect(binaryVersionFor('holochain', STOCK)).toBe('0.7.0');
+describe('binaryReleaseTag', () => {
+  it('is the stock release tag for a binary with no fork source', () => {
+    expect(binaryReleaseTag('holochain', STOCK)).toBe('holochain-0.7.0');
+    expect(binaryReleaseTag('lair-keystore', FORK)).toBe('holochain-0.7.0');
   });
 
-  it('composes with versionedBinaryName the way callers with an override do', () => {
-    expect(versionedBinaryName('kitsune2-bootstrap-srv', '0.7.1', 'linux')).toBe(
-      'kitsune2-bootstrap-srv-v0.7.1',
+  it('is the configured fork tag where there is one', () => {
+    expect(binaryReleaseTag('holochain', FORK)).toBe('holochain-0.7.0-mdns.0');
+    expect(binaryReleaseTag('hc', FORK)).toBe('holochain-0.7.0-mdns.0');
+  });
+
+  it('follows the kitsune2-bootstrap-srv version override', () => {
+    expect(binaryReleaseTag('kitsune2-bootstrap-srv', BOOTSTRAP_SRV_OVERRIDE)).toBe(
+      'holochain-0.7.1',
     );
   });
 });
 
-describe('the checked-in moss.config.json', () => {
-  const repoRoot = path.join(path.dirname(url.fileURLToPath(import.meta.url)), '..');
-  const mossConfig: BinaryNameConfig = JSON.parse(
-    fs.readFileSync(path.join(repoRoot, 'moss.config.json'), 'utf-8'),
-  );
-
-  it('names the unpatched binaries after the holochain version', () => {
-    expect(holochainBinaryName('lair-keystore', mossConfig, 'linux')).toBe(
-      `lair-keystore-v${mossConfig.holochain}`,
-    );
-  });
-
-  it('names holochain after the configured binary tag, if there is one', () => {
-    const expected = mossConfig.holochainBinaryTag ?? mossConfig.holochain;
-    expect(holochainBinaryName('holochain', mossConfig, 'linux')).toBe(`holochain-v${expected}`);
-    expect(holochainBinaryName('hc', mossConfig, 'linux')).toBe(`hc-v${expected}`);
+describe('exeSuffix', () => {
+  it('is .exe on win32 and empty everywhere else', () => {
+    expect(exeSuffix('win32')).toBe('.exe');
+    expect(exeSuffix('linux')).toBe('');
+    expect(exeSuffix('darwin')).toBe('');
   });
 });

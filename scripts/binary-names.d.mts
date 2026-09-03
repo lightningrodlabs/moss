@@ -1,23 +1,18 @@
 /**
  * Types for binary-names.mjs, so the electron main process can import the same
- * module the build scripts use. Keep in step with the exports over there.
+ * module the build scripts use. Declares what src/main imports; keep in step
+ * with the exports over there.
  */
 
-/** The subset of moss.config.json that determines binary filenames. */
+/**
+ * What the derivation reads: the versions from moss.config.json, the per-binary
+ * fork sources from holochain-checksums.json.
+ */
 export type BinaryNameConfig = {
   holochain: string;
-  holochainBinaryTag?: string;
+  kitsune2BootstrapSrv?: string;
+  binarySources?: Record<string, { binariesRepo?: string; binariesTag?: string }>;
 };
-
-export declare const FORK_TAGGED_BINARIES: string[];
-
-export declare function binaryVersionFor(binaryName: string, config: BinaryNameConfig): string;
-
-export declare function versionedBinaryName(
-  binaryName: string,
-  version: string,
-  platform?: string,
-): string;
 
 export declare function holochainBinaryName(
   binaryName: string,

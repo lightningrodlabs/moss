@@ -22,8 +22,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { sha256OfFile } from './fetch-fns.mjs';
-import { holochainBinaryName } from './binary-names.mjs';
+import { resolvedBinaryName, sha256OfFile } from './fetch-fns.mjs';
 
 // NOTE: this is the cargo-zigbuild output dir (glibc 2.34 baseline), NOT
 // target/release. A plain `cargo build --release` inherits the build machine's
@@ -35,7 +34,6 @@ const DEFAULT_PATCHED_BIN_DIR =
 const sourceDir = process.env.MOSS_PATCHED_BIN_DIR ?? DEFAULT_PATCHED_BIN_DIR;
 
 const checksums = JSON.parse(fs.readFileSync('holochain-checksums.json', 'utf-8'));
-const mossConfig = JSON.parse(fs.readFileSync('moss.config.json', 'utf-8'));
 
 if (process.platform !== 'linux' || process.arch !== 'x64') {
   throw new Error(
@@ -48,8 +46,8 @@ const targetEnding = 'x86_64-unknown-linux-gnu';
 // `hc` is placed both with and without the version suffix because
 // fetch-binaries.mjs produces `hc-v<version>` and fetch-hc.mjs produces `hc`.
 const BINARIES = {
-  holochain: [holochainBinaryName('holochain', mossConfig)],
-  hc: [holochainBinaryName('hc', mossConfig), 'hc'],
+  holochain: [resolvedBinaryName('holochain')],
+  hc: [resolvedBinaryName('hc'), 'hc'],
 };
 
 const binariesDir = path.join('resources', 'bins');
