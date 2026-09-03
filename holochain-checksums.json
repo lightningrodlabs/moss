@@ -4,11 +4,15 @@
     "The 'holochain' and 'hc' entries in this file are NOT the stock holochain 0.7.0",
     "release artifacts. They are PATCHED binaries carrying the kitsune2 hello/PoK",
     "access module plus mDNS LAN discovery, built from lightningrodlabs/holochain",
-    "branch feat/mdns-bootstrap-0.7.0-hello and published as the fork release",
-    "lightningrodlabs/holochain @ holochain-0.7.0-mdns.0. The `binarySources` block",
-    "below is what repoints the fetch at that release.",
-    "mdns.0 is additive on hello.2: it adds an mDNS LAN bootstrap/discovery path and",
-    "keeps the same HCP2P_PROTO_VER=1002, so hello.2 and mdns.0 nodes interoperate.",
+    "branch feat/mdns-bootstrap-0.7.0-hello at commit 46f22e121431d64cb583d96d76d31262c2f6bb98",
+    "(kitsune2 rev a742244604c5b7d0994c213108abd67824dd9afc), destined for the fork",
+    "release lightningrodlabs/holochain @ holochain-0.7.0-mdns.1. The `binarySources`",
+    "block below is what repoints the fetch at that release.",
+    "mdns.1 fixes LAN discovery across a local address change: the mDNS responder now",
+    "rebinds when the host's addresses change, so a node that moves networks or gets a",
+    "new address keeps answering and finding LAN peers instead of going silent.",
+    "mdns.1 is otherwise additive on hello.2, keeping the same HCP2P_PROTO_VER=1002, so",
+    "hello.2, mdns.0 and mdns.1 nodes interoperate.",
     "Patched nodes advertise HCP2P_PROTO_VER=1002 and reject stock peers at preflight,",
     "so a build made from this branch CANNOT see stock Moss on the network. That is",
     "deliberate -- it isolates the field-test cohort -- but it means every installer",
@@ -17,8 +21,14 @@
     "'lair-keystore' and 'kitsune2-bootstrap-srv' are UNPATCHED. They have no",
     "binarySources entry and therefore still come from the stock",
     "holochain/holochain @ holochain-0.7.0 release. Do not add one.",
-    "All ten holochain/hc checksums below are from the CI-built assets of the fork",
-    "release (workflow run 33708101673, commit 98a46d229, kitsune2 rev 123e9d29).",
+    "PINNING STATE: the holochain-0.7.0-mdns.1 GitHub release does not exist yet (the",
+    "macOS arm64 build leg is still running). Only x86_64-unknown-linux-gnu is pinned,",
+    "from the CI artifacts of workflow run 33781530598",
+    "(bins-x86_64-unknown-linux-gnu). The other four targets for each of 'holochain'",
+    "and 'hc' carry the placeholder PENDING-mdns.1-release and MUST be filled in from",
+    "the release's checksums-sha256.txt once it is published. assertSha256 rejects a",
+    "placeholder only on the host that needs it, so a linux x86_64 build works today",
+    "while a mac or windows build fails loudly rather than fetching the wrong bytes.",
     "NOTE: `yarn update-hc-checksums` regenerates this file from GitHub release assets",
     "and will destroy this note, the binarySources block, and the patched checksums."
   ],
@@ -26,26 +36,26 @@
   "binarySources": {
     "holochain": {
       "binariesRepo": "lightningrodlabs/holochain",
-      "binariesTag": "holochain-0.7.0-mdns.0"
+      "binariesTag": "holochain-0.7.0-mdns.1"
     },
     "hc": {
       "binariesRepo": "lightningrodlabs/holochain",
-      "binariesTag": "holochain-0.7.0-mdns.0"
+      "binariesTag": "holochain-0.7.0-mdns.1"
     }
   },
   "hc": {
-    "aarch64-apple-darwin": "3d213f30c4477731daa4b19564cac0735e94d37f112b6353411a7195c01001c7",
-    "aarch64-unknown-linux-gnu": "d8d6b5f4645f6575f495037d01c967328b0d9bbf54eefa46b443f07475d2a7e5",
-    "x86_64-apple-darwin": "36c4ccc86c54a3f47a12a4ae494969fdec179273f5fa6c7eb7a050375b345e66",
-    "x86_64-pc-windows-msvc.exe": "426a12056b515a67117894654ca58caf6d375669293a523b590eabf41b0342c7",
-    "x86_64-unknown-linux-gnu": "7be693229a59f02db10fa426dcc2727bd4d4b453b956e49fa5e4711be9a3e99c"
+    "aarch64-apple-darwin": "PENDING-mdns.1-release",
+    "aarch64-unknown-linux-gnu": "PENDING-mdns.1-release",
+    "x86_64-apple-darwin": "PENDING-mdns.1-release",
+    "x86_64-pc-windows-msvc.exe": "PENDING-mdns.1-release",
+    "x86_64-unknown-linux-gnu": "738e72dd6abbc7f6bb6e2cf3abcea6823d39e624d1161c0cde348fd1a335df64"
   },
   "holochain": {
-    "aarch64-apple-darwin": "8f554d779586fad1589081e10444fd9bbd8577b04b2e7f473be68fe3572d891d",
-    "aarch64-unknown-linux-gnu": "ef53a23d74bf46054b0fc517a0a3da11ab312096250f5a14ff0cac5edd06622e",
-    "x86_64-apple-darwin": "1482361df285339a78423d94a63cbc0a9ff77e6f44faabc8f719afed8c69979c",
-    "x86_64-pc-windows-msvc.exe": "cf594ab91f310d11584f53d232f6f2537e9b4cf73e3a164cad6eb0bc92a930be",
-    "x86_64-unknown-linux-gnu": "7fea825a5e3dfff017f400d81729bb001c78f5360034a868ddfb0e5be04829a9"
+    "aarch64-apple-darwin": "PENDING-mdns.1-release",
+    "aarch64-unknown-linux-gnu": "PENDING-mdns.1-release",
+    "x86_64-apple-darwin": "PENDING-mdns.1-release",
+    "x86_64-pc-windows-msvc.exe": "PENDING-mdns.1-release",
+    "x86_64-unknown-linux-gnu": "08a3125ef3a1b5cb44500f74a95146b54dc697d3d9c43a5fb43f8c103d935e4a"
   },
   "kitsune2-bootstrap-srv": {
     "aarch64-apple-darwin": "a5ada66e9663c8badb3a0d2b2ff3af4a667a21aab2438c8cc79f0833c26f602b",
