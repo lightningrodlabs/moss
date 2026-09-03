@@ -74,11 +74,13 @@ side handles the messages; the main process only touches disk.
 ### Messages
 
 ```ts
+type ToolTransferRequest = { happSha256: string; uiSha256: string; toolCompatibilityId: string };
+
 type ToolTransferMessage =
-  | { kind: 'request'; requestId: string; happSha256: string; uiSha256: string; toolCompatibilityId: string }
+  | ({ kind: 'request'; requestId: string; from: AgentPubKey } & ToolTransferRequest)
   | { kind: 'offer'; requestId: string; manifest: ToolTransferManifest }
   | { kind: 'unavailable'; requestId: string; reason: string }
-  | { kind: 'chunk-request'; requestId: string; index: number }
+  | ({ kind: 'chunk-request'; requestId: string; from: AgentPubKey; index: number } & ToolTransferRequest)
   | { kind: 'chunk'; requestId: string; index: number; bytes: Uint8Array };
 
 type ToolTransferManifest = {
@@ -89,10 +91,13 @@ type ToolTransferManifest = {
 };
 ```
 
-`requestId` is a nanoid chosen by the requester. All replies carry it so a
-requester can run one transfer per applet and ignore stragglers from abandoned
-attempts. The sender of every message is known from the signal's `from_agent`;
-the requester only accepts replies from the peer it asked.
+`requestId` is a random UUID chosen by the requester. All replies carry it so
+a requester can ignore stragglers from abandoned attempts and unrelated
+transfers. The group zome's arbitrary signal does not carry the sender's key,
+so requester-to-provider messages include `from` to tell the provider where to
+reply, and chunk requests repeat the request identity so the provider stays
+stateless. Replies are matched on `requestId` alone; since it is unguessable
+and signals are point-to-point, a third party cannot inject a reply.
 
 ### The byte stream
 
