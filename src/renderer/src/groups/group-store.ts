@@ -64,7 +64,7 @@ import {
   SafeIntervalHandle,
   onlineDebugLog,
 } from '../utils.js';
-import { DistributionInfo, TDistributionInfo } from '@theweave/moss-types';
+import { DistributionInfo, TDistributionInfo, ToolTransferRequest } from '@theweave/moss-types';
 import {
   AssetRelationWithTags,
   decodeAssetRelationWALs,
@@ -76,7 +76,13 @@ import {
 } from '@theweave/group-client';
 import { FoyerStore } from './foyer.js';
 import { partitionAppletsByStatus } from './applet-status.js';
-import { appIdFromAppletHash, deriveToolCompatibilityId } from '@theweave/utils';
+import {
+  appIdFromAppletHash,
+  deriveToolCompatibilityId,
+  toolCompatibilityIdFromDistInfoString,
+} from '@theweave/utils';
+import { GroupToolTransferTransport } from './tool-transfer/group-transport';
+import { requestToolFromPeers, RequesterEvent } from './tool-transfer/requester';
 import { decode, encode } from '@msgpack/msgpack';
 import {
   AssetsClient,
@@ -114,6 +120,7 @@ export class GroupStore {
   profilesStore: ProfilesStore;
 
   groupClient: GroupClient;
+  toolTransfer: GroupToolTransferTransport;
 
   peerStatusClient: PeerStatusClient;
 
@@ -198,6 +205,7 @@ export class GroupStore {
     public assetsClient: AssetsClient,
   ) {
     this.groupClient = new GroupClient(appWebsocket, authenticationToken, 'group');
+    this.toolTransfer = new GroupToolTransferTransport(this.groupClient);
 
     this.peerStatusClient = new PeerStatusClient(appWebsocket, 'group');
     this.profilesStore = new ProfilesStore(new ProfilesClient(appWebsocket, 'group'));
@@ -358,6 +366,8 @@ export class GroupStore {
             },
             [signalContent.appletId],
           );
+        } else if (signalContent.type === 'tool-transfer') {
+          this.toolTransfer.receive(signalContent.payload);
         }
       }
     });
@@ -1309,6 +1319,53 @@ export class GroupStore {
     } else {
       return this._myPubkeySum < pubkeySum;
     }
+  }
+
+  /**
+   * Members who have joined the applet and are currently reachable. Only they
+   * can have the Tool's bytes, and only reachable ones can answer a transfer.
+   */
+  async onlineAppletPeers(appletHash: AppletHash): Promise<AgentPubKey[]> {
+    const statuses = get(this._peerStatuses) ?? {};
+    const myPubKeyB64 = encodeHashToBase64(this.groupClient.myPubKey);
+    const joined = await this.groupClient.getJoinedAppletAgents(appletHash);
+    return joined
+      .map((agent) => agent.group_pubkey)
+      .filter((pubkey) => {
+        const b64 = encodeHashToBase64(pubkey);
+        if (b64 === myPubKeyB64) return false;
+        const status = statuses[b64]?.status;
+        return status === 'online' || status === 'inactive';
+      });
+  }
+
+  /**
+   * Pulls the Tool's assets from an online member and stores them where a
+   * library download would have put them. Resolves with the member that served.
+   */
+  async fetchToolFromPeers(
+    appletHash: AppletHash,
+    applet: Applet,
+    onEvent: (event: RequesterEvent) => void,
+  ): Promise<AgentPubKey> {
+    if (!applet.sha256_ui) {
+      throw new Error('Applet entry has no UI sha256; cannot fetch it from group members.');
+    }
+    const request: ToolTransferRequest = {
+      happSha256: applet.sha256_happ,
+      uiSha256: applet.sha256_ui,
+      toolCompatibilityId: toolCompatibilityIdFromDistInfoString(applet.distribution_info),
+    };
+    const peers = await this.onlineAppletPeers(appletHash);
+    const { manifest, bytes, peer } = await requestToolFromPeers(
+      this.toolTransfer,
+      this.groupClient.myPubKey,
+      peers,
+      request,
+      onEvent,
+    );
+    await window.electronAPI.storeToolAssetsFromPeer(manifest, bytes, request);
+    return peer;
   }
 
   // Installs an applet instance that already exists in this group into this conductor
