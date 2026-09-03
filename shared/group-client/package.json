@@ -21,6 +21,7 @@
     "@holochain/client": "^0.21.0",
     "@holochain-open-dev/utils": "^0.700.0",
     "@theweave/api": "^0.7.0-dev.0",
+    "@theweave/moss-types": "^0.7.0-dev.0",
     "@msgpack/msgpack": "^2.7.2"
   },
   "devDependencies": {
