@@ -38,14 +38,49 @@ jobs:
       - name: Create prerelease
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_NOTES: ${{ github.event.inputs.release_notes }}
         shell: bash
         run: |
           # --prerelease keeps this out of the auto-updater path. --notes
           # body is editable after the run.
+          #
+          # The network-partition warning below is appended unconditionally
+          # rather than left to whoever fills in release_notes. On this branch
+          # it is the single most important thing a tester needs to know, and
+          # a build handed out without it looks to its user like a working
+          # Moss that nobody else is on. It must not be possible to forget.
           gh release create "${{ steps.tag.outputs.TAG }}" \
             --title "Moss ${{ steps.tag.outputs.APP_VERSION }} (test ${{ github.run_number }})" \
             --prerelease \
-            --notes "${{ github.event.inputs.release_notes }}
+            --notes "${RELEASE_NOTES}
+
+          ## Read before installing: this build cannot talk to stock Moss
+
+          This is a **hello/PoK + mDNS LAN discovery field-test build**
+          (Holochain \`holochain-0.7.0-mdns.0\`) and it is **network-partitioned
+          from every other Moss install**, on purpose. It runs a patched Holochain
+          that advertises \`HCP2P_PROTO_VER=1002\` instead of the stock protocol
+          version, so stock peers are rejected at preflight, before any app traffic.
+
+          Consequences:
+
+          - You can only see other people running **this exact build**. Everyone in
+            the test cohort must install from this release.
+          - Against anyone on a normal Moss, the failure looks like *nothing is
+            happening* — no error, just an empty-looking network. That is expected.
+          - Do not hand this to anyone outside the test cohort.
+          - The first fire-and-forget message to a brand-new peer is dropped while
+            the hello/PoK handshake completes. It recovers on the next send. Known
+            and expected; not a bug.
+
+          ## What is new in this build: LAN discovery
+
+          This build also finds peers on your **local network over mDNS**, so two
+          machines on the same Wi-Fi or LAN can find each other and connect
+          directly **even with the bootstrap server and the relay unreachable** —
+          a conference room with no internet, a home network with the uplink
+          pulled. It is on by default; run Moss with \`--disable-mdns\` if you do
+          not want it announcing itself on the local network.
 
           Installed version will report as ${{ steps.tag.outputs.APP_VERSION }}. When the
           real ${{ steps.tag.outputs.APP_VERSION }} ships to stable, auto-update will NOT

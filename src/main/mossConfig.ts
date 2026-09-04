@@ -22,7 +22,17 @@ export const MOSS_CONFIG: MossConfig = JSON.parse(mossConfigJSON);
 const holochainChecksumsPath = path.join(app.getAppPath(), 'holochain-checksums.json');
 const holochainChecksumsJSON = fs.readFileSync(holochainChecksumsPath, 'utf-8');
 
-export const HOLOCHAIN_CHECKSUMS: any = JSON.parse(holochainChecksumsJSON);
+/**
+ * The pinned holochain toolchain: the version, and per binary the release its
+ * assets come from. A binary listed in `binarySources` is a fork build, which is
+ * what gives it a filename of its own -- see scripts/binary-names.mjs.
+ */
+export type HolochainChecksums = {
+  version: string;
+  binarySources?: Record<string, { binariesRepo?: string; binariesTag?: string }>;
+};
+
+export const HOLOCHAIN_CHECKSUMS: HolochainChecksums = JSON.parse(holochainChecksumsJSON);
 
 if (MOSS_CONFIG.holochain !== HOLOCHAIN_CHECKSUMS.version) {
   throw new Error(

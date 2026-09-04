@@ -46,6 +46,7 @@ export interface CliOpts {
   forceProductionUrls?: boolean;
   printHolochainLogs?: boolean;
   toolCurationUrl?: string;
+  disableMdns?: boolean;
 }
 
 export interface RunOptions {
@@ -64,6 +65,12 @@ export interface RunOptions {
   disableOsNotifications: boolean;
   dev: boolean;
   toolCurationUrl: string | undefined;
+  /**
+   * Whether the conductor should discover peers on the local network over mDNS.
+   * On by default; --disable-mdns is the opt-out for a tester who does not want
+   * Moss announcing itself on the LAN.
+   */
+  mdnsEnabled: boolean;
 }
 
 export function validateArgs(args: CliOpts): RunOptions {
@@ -184,6 +191,7 @@ export function validateArgs(args: CliOpts): RunOptions {
     disableOsNotifications: args.disableOsNotifications ? true : false,
     dev: args.dev ? true : false,
     toolCurationUrl: args.toolCurationUrl,
+    mdnsEnabled: !args.disableMdns,
   };
 }
 
