@@ -67,6 +67,14 @@ export class ToolInfoDialog extends LitElement {
   /** Bumped on every show() so a slow background lookup cannot decorate a later dialog. */
   private _showToken = 0;
 
+  /**
+   * How the background tool-library lookup went. It separates "the library said
+   * this Tool is not curated" from "the library could not be reached", which
+   * read very differently to someone offline.
+   */
+  @state()
+  private _detailsLookup: 'pending' | 'done' | 'unavailable' = 'done';
+
   // When set, the dialog shows an "Activate" action that joins this applet
   // (a peer registered it in the group but the local agent hasn't joined yet).
   @state()
@@ -104,6 +112,7 @@ export class ToolInfoDialog extends LitElement {
 
   async show(input: ToolInfoInput) {
     this._resolvedTool = undefined;
+    this._detailsLookup = 'done';
     this._installedAs = undefined;
     this._fallbackTitle = undefined;
     this._fallbackSubtitle = undefined;
@@ -144,6 +153,7 @@ export class ToolInfoDialog extends LitElement {
       // dialog is usable at once; the tool library only refines title and icon
       // and is resolved in the background, if it can be reached at all.
       this._loading = false;
+      this._detailsLookup = 'pending';
       const showToken = ++this._showToken;
       void this._ensureUnifiedTools()
         .then((map) => {
@@ -153,8 +163,12 @@ export class ToolInfoDialog extends LitElement {
             this._resolvedTool && this._resolvedTool.title !== input.applet.custom_name
               ? input.applet.custom_name
               : undefined;
+          this._detailsLookup = toolLibraryFetch.isOffline() ? 'unavailable' : 'done';
         })
-        .catch((e) => console.warn('@tool-info-dialog: tool library unavailable: ', e));
+        .catch((e) => {
+          if (showToken === this._showToken) this._detailsLookup = 'unavailable';
+          console.warn('@tool-info-dialog: tool library unavailable: ', e);
+        });
       return;
     }
 
@@ -282,11 +296,20 @@ export class ToolInfoDialog extends LitElement {
         ${this._fallbackSubtitle
           ? html`<div class="fallback-subtitle">${this._fallbackSubtitle}</div>`
           : ''}
-        <div class="fallback-note">
-          ${msg('Limited info available — this tool is not in any active curation list.')}
-        </div>
+        <div class="fallback-note">${this.renderDetailsNote()}</div>
       </div>
     `;
+  }
+
+  private renderDetailsNote() {
+    switch (this._detailsLookup) {
+      case 'pending':
+        return msg('Looking up Tool details…');
+      case 'unavailable':
+        return msg('Tool library unavailable — showing the details this group has.');
+      case 'done':
+        return msg('Limited info available — this tool is not in any active curation list.');
+    }
   }
 
   private renderActionFooter() {

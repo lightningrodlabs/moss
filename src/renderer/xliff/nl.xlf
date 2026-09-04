@@ -2671,6 +2671,18 @@ begint nu</target>
   <source>unknown Tool</source>
   <target>onbekende tool</target>
 </trans-unit>
+<trans-unit id="s806a286e5e7162db">
+  <source>Using the copy already on this computer…</source>
+  <target>De kopie die al op deze computer staat wordt gebruikt…</target>
+</trans-unit>
+<trans-unit id="s4d3f766e12322a7d">
+  <source>Looking up Tool details…</source>
+  <target>Toolgegevens opzoeken…</target>
+</trans-unit>
+<trans-unit id="s9ac726b2f8f057a7">
+  <source>Tool library unavailable — showing the details this group has.</source>
+  <target>Toolbibliotheek niet beschikbaar — de gegevens van deze groep worden getoond.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

@@ -2671,6 +2671,18 @@ starts now</source>
   <source>unknown Tool</source>
   <target>bilinmeyen araç</target>
 </trans-unit>
+<trans-unit id="s806a286e5e7162db">
+  <source>Using the copy already on this computer…</source>
+  <target>Bu bilgisayarda zaten bulunan kopya kullanılıyor…</target>
+</trans-unit>
+<trans-unit id="s4d3f766e12322a7d">
+  <source>Looking up Tool details…</source>
+  <target>Araç ayrıntıları aranıyor…</target>
+</trans-unit>
+<trans-unit id="s9ac726b2f8f057a7">
+  <source>Tool library unavailable — showing the details this group has.</source>
+  <target>Araç kitaplığı kullanılamıyor — bu grubun sahip olduğu bilgiler gösteriliyor.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

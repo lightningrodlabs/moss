@@ -2671,6 +2671,18 @@ starts now</source>
   <source>unknown Tool</source>
   <target>不明なツール</target>
 </trans-unit>
+<trans-unit id="s806a286e5e7162db">
+  <source>Using the copy already on this computer…</source>
+  <target>このコンピューターにある既存のコピーを使用しています…</target>
+</trans-unit>
+<trans-unit id="s4d3f766e12322a7d">
+  <source>Looking up Tool details…</source>
+  <target>ツールの詳細を取得しています…</target>
+</trans-unit>
+<trans-unit id="s9ac726b2f8f057a7">
+  <source>Tool library unavailable — showing the details this group has.</source>
+  <target>ツールライブラリを利用できません。このグループが持つ情報を表示しています。</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

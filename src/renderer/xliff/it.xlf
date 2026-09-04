@@ -2671,6 +2671,18 @@ inizia ora</target>
   <source>unknown Tool</source>
   <target>strumento sconosciuto</target>
 </trans-unit>
+<trans-unit id="s806a286e5e7162db">
+  <source>Using the copy already on this computer…</source>
+  <target>Utilizzo della copia già presente su questo computer…</target>
+</trans-unit>
+<trans-unit id="s4d3f766e12322a7d">
+  <source>Looking up Tool details…</source>
+  <target>Ricerca dei dettagli dello strumento…</target>
+</trans-unit>
+<trans-unit id="s9ac726b2f8f057a7">
+  <source>Tool library unavailable — showing the details this group has.</source>
+  <target>Libreria degli strumenti non disponibile — vengono mostrati i dati di questo gruppo.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
