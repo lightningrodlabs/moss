@@ -220,6 +220,22 @@ export type ToolTransferManifest = {
   chunkSize: number;
 };
 
+/**
+ * A Tool this computer can install without downloading anything, assembled
+ * from what an earlier install already recorded on disk.
+ */
+export type LocalToolInfo = {
+  toolCompatibilityId: string;
+  distributionInfo: DistributionInfo;
+  happSha256: string;
+  uiSha256: string;
+  webhappSha256?: string;
+  /** The icon as stored under tools/<toolCompatibilityId>/icon. */
+  icon: string;
+  /** When the happ landed on disk; the library sorts by it. */
+  installedAt: number;
+};
+
 export type ToolTransferRequest = {
   happSha256: string;
   uiSha256: string;

@@ -39,6 +39,7 @@ import {
   importLegacyProfileData,
   LegacyProfileInfo,
 } from './filesystem';
+import { listLocalTools } from './localTools';
 import {
   readToolAssetsChunk,
   readToolAssetsManifest,
@@ -77,6 +78,7 @@ import {
   AssetSource,
   DeveloperCollectiveToolList,
   DistributionInfo,
+  LocalToolInfo,
   ResourceLocation,
   ToolCompatibilityId,
   ToolInfoAndVersions,
@@ -2521,6 +2523,11 @@ if (!RUNNING_WITH_COMMAND) {
         chunkSize: number,
       ): Promise<ToolTransferManifest | undefined> =>
         readToolAssetsManifest(toolAssetDirs(), request, chunkSize),
+    );
+    ipcMain.handle(
+      'list-local-tools',
+      async (): Promise<LocalToolInfo[]> =>
+        listLocalTools({ ...toolAssetDirs(), appsDir: WE_FILE_SYSTEM.appsDir }),
     );
     ipcMain.handle(
       'are-tool-assets-present',

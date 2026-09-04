@@ -27,6 +27,7 @@ import {
   AudioSourceGrantInfo,
   AudioSourceRequestResult,
   DistributionInfo,
+  LocalToolInfo,
   ResourceLocation,
   ToolCompatibilityId,
   ToolTransferManifest,
@@ -168,6 +169,7 @@ declare global {
         request: ToolTransferRequest,
         chunkSize: number,
       ) => Promise<ToolTransferManifest | undefined>;
+      listLocalTools: () => Promise<LocalToolInfo[]>;
       areToolAssetsPresent: (request: ToolTransferRequest) => Promise<boolean>;
       readToolAssetsChunk: (
         request: ToolTransferRequest,
