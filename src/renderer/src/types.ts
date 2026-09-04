@@ -93,6 +93,11 @@ export type ToolAndCurationInfo = {
   latestVersion: ToolVersionInfo;
   toolListUrl: string;
   developerCollectiveId: string;
+  /**
+   * Set when this entry was assembled from assets already on this computer
+   * rather than from a curation list.
+   */
+  availableLocally?: boolean;
 };
 
 export type ToolInfoAndLatestVersion = {
@@ -136,6 +141,11 @@ export type UnifiedToolEntry = {
   }>;
   versionBranches: Map<string, VersionBranchInfo>;
   deprecation?: string;
+  /**
+   * Set when every version branch of this Tool came from assets already on
+   * this computer, meaning no curation list in reach offers it.
+   */
+  availableLocally?: boolean;
 };
 
 export type MossEvent = 'open-asset';

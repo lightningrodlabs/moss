@@ -247,11 +247,15 @@ export function groupToolsByBaseId(
         curationInfos: [...tool.curationInfos],
         versionBranches: new Map(),
         deprecation: tool.toolInfoAndVersions.deprecation,
+        availableLocally: !!tool.availableLocally,
       };
       grouped.set(baseId, unifiedEntry);
     } else {
       // Merge curation info
       unifiedEntry.curationInfos.push(...tool.curationInfos);
+      // Only wholly local Tools are presented as such: one branch offered by a
+      // reachable list means the Tool is in the library.
+      unifiedEntry.availableLocally = unifiedEntry.availableLocally && !!tool.availableLocally;
 
       // Update metadata if this version branch is newer (use latest version branch's metadata)
       // Prefer non-deprecated branches
