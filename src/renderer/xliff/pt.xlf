@@ -2667,6 +2667,10 @@ começa agora</target>
   <source>Installation failed.</source>
   <target>A instalação falhou.</target>
 </trans-unit>
+<trans-unit id="s81a2bbcbcbd48c75">
+  <source>unknown Tool</source>
+  <target>ferramenta desconhecida</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

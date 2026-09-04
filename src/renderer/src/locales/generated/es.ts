@@ -367,6 +367,7 @@ comienza ahora`,
 's81023d00acf4c745': `¡Ah, este maravilloso
 mundo P2P!`,
 's81850fd21bd71f71': `hash de herramienta`,
+'s81a2bbcbcbd48c75': `herramienta desconocida`,
 's81f150afaf1a4483': `Texto alternativo`,
 's8213840a0f7d2644': `No, mantener`,
 's823aec927799efba': `iniciando Holochain...`,

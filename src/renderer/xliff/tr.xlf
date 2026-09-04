@@ -2667,6 +2667,10 @@ starts now</source>
   <source>Installation failed.</source>
   <target>Yükleme başarısız oldu.</target>
 </trans-unit>
+<trans-unit id="s81a2bbcbcbd48c75">
+  <source>unknown Tool</source>
+  <target>bilinmeyen araç</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

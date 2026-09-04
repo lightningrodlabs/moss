@@ -367,6 +367,7 @@ güzel insan!`,
 's81023d00acf4c745': `Ah, bu harika
 P2P dünyası!`,
 's81850fd21bd71f71': `araç hash'i`,
+'s81a2bbcbcbd48c75': `bilinmeyen araç`,
 's81f150afaf1a4483': `Alt metin`,
 's8213840a0f7d2644': `Hayır, kalsın`,
 's823aec927799efba': `Holochain başlatılıyor...`,
