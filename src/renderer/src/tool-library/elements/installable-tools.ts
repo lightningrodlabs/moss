@@ -102,7 +102,7 @@ export class InstallableTools extends LitElement {
           );
       return html`
         <sl-tooltip content=${why}>
-          <div class="local-badge row items-center">
+          <div class="local-badge">
             <sl-icon .src=${wrapPathInSvg(mdiHarddisk)}></sl-icon>
             <span>${msg('Only on this computer')}</span>
           </div>
@@ -112,7 +112,7 @@ export class InstallableTools extends LitElement {
     if (branch.installedOnThisComputer) {
       return html`
         <sl-tooltip content=${msg('Already on this computer, so installing it needs no download.')}>
-          <div class="local-badge row items-center">
+          <div class="local-badge">
             <sl-icon .src=${wrapPathInSvg(mdiHarddisk)}></sl-icon>
             <span>${msg('On this computer')}</span>
           </div>
@@ -326,15 +326,23 @@ export class InstallableTools extends LitElement {
     libraryStyles,
     css`
       .local-badge {
+        /* Inline so the badge is only as wide as its text: it sits beside a
+           title in the details dialog and beside the icon on a card, and a
+           block-level box would stretch across both. */
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        vertical-align: middle;
         gap: 4px;
-        margin-left: auto;
         padding: 2px 8px;
         border-radius: 10px;
         font-size: 11px;
         background: var(--sl-color-neutral-200, #e4e4e7);
         color: var(--sl-color-neutral-700, #3f3f46);
         white-space: nowrap;
-        align-self: flex-start;
+      }
+      .local-badge sl-icon {
+        font-size: 13px;
       }
       .tool {
         width: 303px;
