@@ -90,7 +90,11 @@ export class InstallableTools extends LitElement {
    * because no curation list vouches for the Tool at all.
    */
   renderSourceBadge(tool: UnifiedToolEntry) {
-    if (tool.onlyOnThisComputer) {
+    // The card offers one branch, so the badge must describe that branch: a
+    // Tool whose v1 is here but whose v2 is on offer still needs a download.
+    const branch = getPrimaryVersionBranch(tool);
+    if (!branch) return '';
+    if (branch.onlyOnThisComputer) {
       const why = this.libraryReachable
         ? msg('Offered because it is installed on this computer. No curation list offers it.')
         : msg(
@@ -105,7 +109,7 @@ export class InstallableTools extends LitElement {
         </sl-tooltip>
       `;
     }
-    if (tool.installedOnThisComputer) {
+    if (branch.installedOnThisComputer) {
       return html`
         <sl-tooltip content=${msg('Already on this computer, so installing it needs no download.')}>
           <div class="local-badge row items-center">
@@ -253,9 +257,9 @@ export class InstallableTools extends LitElement {
         // different things, so those sort last whenever the order is by release.
         if (
           (this.sortMode === 'releaseDesc' || this.sortMode === 'releaseAsc') &&
-          !!tool_a.onlyOnThisComputer !== !!tool_b.onlyOnThisComputer
+          !!primaryA.onlyOnThisComputer !== !!primaryB.onlyOnThisComputer
         ) {
-          return tool_a.onlyOnThisComputer ? 1 : -1;
+          return primaryA.onlyOnThisComputer ? 1 : -1;
         }
         switch (this.sortMode) {
           case 'releaseAsc':
