@@ -8,6 +8,7 @@ import {
   readToolAssetsChunk,
   readToolAssetsManifest,
   storeToolAssetsFromPeer,
+  toolAssetsPresent,
   ToolAssetDirs,
 } from './peerToolAssets';
 
@@ -152,5 +153,25 @@ describe('readToolAssetsChunk + storeToolAssetsFromPeer', () => {
 
   it('rejects an out-of-range chunk index', async () => {
     await expect(readToolAssetsChunk(dirs, request, 999, 1024)).rejects.toThrow();
+  });
+});
+
+describe('toolAssetsPresent', () => {
+  it('is true when the happ, UI and icon are all on disk', () => {
+    expect(toolAssetsPresent(dirs, request)).toBe(true);
+  });
+
+  it('is false when any one of them is missing', () => {
+    expect(toolAssetsPresent(dirs, { ...request, happSha256: 'f'.repeat(64) })).toBe(false);
+    expect(toolAssetsPresent(dirs, { ...request, uiSha256: 'f'.repeat(64) })).toBe(false);
+    expect(toolAssetsPresent(dirs, { ...request, toolCompatibilityId: 'other' })).toBe(false);
+    // A missing icon alone is enough: the installer treats fetching one as fatal.
+    fs.rmSync(path.join(dirs.toolsDir, TOOL, 'icon'));
+    expect(toolAssetsPresent(dirs, request)).toBe(false);
+  });
+
+  it('refuses request fields that could escape the asset directories', () => {
+    expect(() => toolAssetsPresent(dirs, { ...request, happSha256: '../x' })).toThrow();
+    expect(() => toolAssetsPresent(dirs, { ...request, toolCompatibilityId: '../x' })).toThrow();
   });
 });
