@@ -12,6 +12,7 @@ import { deriveToolCompatibilityId, toolCompatibilityIdFromDistInfoString } from
 import { ToolAndCurationInfo, ToolListUrl, UnifiedToolEntry } from '../types.js';
 import { groupToolsByBaseId, sortVersionsDescending } from '../utils.js';
 import { DevModeToolLibrary, MossStore } from '../moss-store.js';
+import { toolLibraryFetch } from './library-fetch.js';
 
 export const DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   {
@@ -62,7 +63,7 @@ export async function fetchUnifiedTools(
   await Promise.allSettled(
     toolCurationConfigs.map(async (config) => {
       try {
-        const resp = await fetch(config.url, { cache: 'no-cache' });
+        const resp = await toolLibraryFetch.fetch(config.url, { cache: 'no-cache' });
         const toolCurations: ToolCurations = await resp.json();
         config.useLists.forEach((listName) => {
           const relevantList = toolCurations.curationLists[listName];
@@ -92,7 +93,7 @@ export async function fetchUnifiedTools(
   await Promise.allSettled(
     distinctToolListUrls.map(async (url) => {
       try {
-        const resp = await fetch(url, { cache: 'no-cache' });
+        const resp = await toolLibraryFetch.fetch(url, { cache: 'no-cache' });
         const toolList: DeveloperCollectiveToolList = await resp.json();
         toolLists[url] = toolList;
         developerCollectives[url] = toolList.developerCollective;
