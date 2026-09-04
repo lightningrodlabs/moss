@@ -84,7 +84,9 @@ export class InstallableTools extends LitElement {
   }
 
   /**
-   * Where this copy of the Tool would come from. Saying nothing is the right
+   * Where this copy of the Tool would come from. Rendered in normal flow, well
+   * clear of the absolutely positioned classification marker in the card's
+   * top-right corner. Saying nothing is the right
    * answer for the ordinary case of a curated Tool that is not here yet; the
    * rest are worth a word, either because installing needs no download or
    * because no curation list vouches for the Tool at all.
@@ -169,7 +171,6 @@ export class InstallableTools extends LitElement {
                   : ''}
               </div>
             </sl-tooltip>
-            ${this.renderSourceBadge(tool)}
           </div>
           <div id="xxx" class="column tool-info-area">
             <div class="tool-title" title="${tool.subtitle}">
@@ -183,7 +184,7 @@ export class InstallableTools extends LitElement {
                   </div>
                 `
               : ''}
-            ${this.renderDeveloperLine(tool)}
+            ${this.renderDeveloperLine(tool)} ${this.renderSourceBadge(tool)}
           </div>
         </div>
         <select-group
