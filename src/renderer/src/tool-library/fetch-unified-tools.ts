@@ -1,5 +1,6 @@
 import { validate as validateSemver } from 'compare-versions';
 import {
+  LocalToolInfo,
   DeveloperCollective,
   DeveloperCollectiveToolList,
   ToolCompatibilityId,
@@ -13,6 +14,7 @@ import { ToolAndCurationInfo, ToolListUrl, UnifiedToolEntry } from '../types.js'
 import { groupToolsByBaseId, sortVersionsDescending } from '../utils.js';
 import { DevModeToolLibrary, MossStore } from '../moss-store.js';
 import { toolLibraryFetch } from './library-fetch.js';
+import { mergeLocalTools } from './local-tools.js';
 
 export const DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   {
@@ -57,6 +59,16 @@ export async function fetchUnifiedTools(
       allTools[tool.toolCompatibilityId] = tool;
       developerCollectives[tool.toolListUrl] = devCollective;
     });
+  }
+
+  // Tools this computer already holds are offered too, so a new group can be
+  // furnished with no curation list in reach. Failing to read them must not
+  // take the library view down with it.
+  let localTools: LocalToolInfo[] = [];
+  try {
+    localTools = await window.electronAPI.listLocalTools();
+  } catch (e) {
+    console.warn('Failed to list Tools already on this computer: ', e);
   }
 
   const curationLists: { curator: ToolCurator; list: ToolCurationList }[] = [];
@@ -147,9 +159,11 @@ export async function fetchUnifiedTools(
     });
   });
 
+  const withLocal = mergeLocalTools(allTools, localTools);
+
   return {
-    unifiedTools: groupToolsByBaseId(allTools),
-    availableTools: allTools,
+    unifiedTools: groupToolsByBaseId(withLocal),
+    availableTools: withLocal,
     developerCollectives,
     curationLists,
   };
