@@ -175,10 +175,22 @@ the install call are separate steps. Flow:
    (`src/renderer/src/tool-library/library-fetch.ts`: 5 s bound per request,
    30 s refusal hold after a network failure, browser offline hint honoured),
    resolve hashes and URL, call `installAppletBundle`.
-2. If step 1 throws for any reason before the app is in the conductor, report
-   `library-failed` with the error, then run the peer path with progress
-   reports, then call `installAppletBundle` with the peer asset source.
-3. If the peer path also fails, throw with a message that names both failures.
+2. If step 1 throws for any reason, report `library-failed`, then try the
+   assets already on this computer: main answers whether the happ, UI and icon
+   the Applet entry pins are all present (all three, because a missing icon is
+   fatal to the installer), and if so the install runs straight off them with
+   no network at all. This path needs no group store, so it also covers an
+   offline group clone.
+3. Only if the assets are not here does the peer path run, with progress
+   reports, followed by `installAppletBundle` with the peer asset source.
+4. If the fallback also fails, throw with a message naming both failures.
+
+The library stays first so that an online member still gets the newest UI whose
+happ hash matches the entry; the local and peer paths install exactly the UI the
+entry pins. Step 1 failing is not only a network condition: a Tool delisted from
+its developer collective, a version whose happ hash no longer matches, or a dead
+download URL all land in the same fallback, so a member can be handed the Tool by
+another member while fully online.
 
 Trying peers after a non-network failure is acceptable for now; it costs one
 request round to each online peer.
