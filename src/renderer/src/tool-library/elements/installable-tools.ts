@@ -7,6 +7,7 @@ import { DnaHashB64 } from '@holochain/client';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
+import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '../../groups/elements/invite/select-group.js';
@@ -19,6 +20,8 @@ import { mossStoreContext } from '../../context.js';
 import { ToolAndCurationInfo, UnifiedToolEntry } from '../../types.js';
 import { getPrimaryVersionBranch, extractMajorVersion, markdownParseSafe } from '../../utils.js';
 import { experimentalToolIcon } from '../../ui/icons.js';
+import { mdiHarddisk } from '@mdi/js';
+import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import './library-tool-details.js';
 import { LibraryToolDetails } from './library-tool-details.js';
 import { libraryStyles } from '../libraryStyles.js';
@@ -57,6 +60,24 @@ export class InstallableTools extends LitElement {
 
   @state()
   selectedTool: UnifiedToolEntry | undefined;
+
+  /**
+   * The developer collective is only known when the Tool came from a curation
+   * list that was actually fetched, so a Tool offered from local assets has no
+   * link to show.
+   */
+  renderDeveloperLine(tool: UnifiedToolEntry) {
+    const collective = this.devCollectives[tool.toolListUrl];
+    if (!collective) return '';
+    return html`
+      <sl-tooltip content=${msg("Visit developer's website")}>
+        <div class="tool-developer">
+          <span style="opacity:.4">${msg('by')}</span>
+          <a href="${collective.contact.website}">${collective.name}</a>
+        </div>
+      </sl-tooltip>
+    `;
+  }
 
   renderInstallableTool(tool: UnifiedToolEntry) {
     const primaryBranch = getPrimaryVersionBranch(tool);
@@ -105,6 +126,18 @@ export class InstallableTools extends LitElement {
                   : ''}
               </div>
             </sl-tooltip>
+            ${tool.availableLocally
+              ? html`<sl-tooltip
+                  content=${msg(
+                    'Offered because it is installed on this computer. It is not in any curation list you can reach right now.',
+                  )}
+                >
+                  <div class="local-badge row items-center">
+                    <sl-icon .src=${wrapPathInSvg(mdiHarddisk)}></sl-icon>
+                    <span>${msg('On this computer')}</span>
+                  </div>
+                </sl-tooltip>`
+              : ''}
           </div>
           <div id="xxx" class="column tool-info-area">
             <div class="tool-title" title="${tool.subtitle}">
@@ -118,14 +151,7 @@ export class InstallableTools extends LitElement {
                   </div>
                 `
               : ''}
-            <sl-tooltip content=${msg("Visit developer's website")}>
-              <div class="tool-developer">
-                <span style="opacity:.4">${msg('by')}</span>
-                <a href="${this.devCollectives[tool.toolListUrl].contact.website}"
-                  >${this.devCollectives[tool.toolListUrl].name}</a
-                >
-              </div>
-            </sl-tooltip>
+            ${this.renderDeveloperLine(tool)}
           </div>
         </div>
         <select-group
@@ -211,20 +237,16 @@ export class InstallableTools extends LitElement {
         <div slot="header">
           ${this.selectedTool
             ? html`
-                ${this.selectedTool.title}
-                <div class="tool-developer">
-                  <span style="opacity:.4">${msg('by')}</span>
-                  <sl-tooltip content=${msg("Visit developer's website")}>
-                    <a href="${this.devCollectives[this.selectedTool.toolListUrl].contact.website}">
-                      ${this.devCollectives[this.selectedTool.toolListUrl].name}
-                    </a>
-                  </sl-tooltip>
-                </div>
-                <div class="tool-developer" style="color:grey">
-                  (curator:<a href=${this.selectedTool.curationInfos[0].curator.contact.website}>
-                    ${this.selectedTool.curationInfos[0].curator.name}</a
-                  >)
-                </div>
+                ${this.selectedTool.title} ${this.renderDeveloperLine(this.selectedTool)}
+                ${this.selectedTool.curationInfos[0]
+                  ? html`<div class="tool-developer" style="color:grey">
+                      (curator:<a
+                        href=${this.selectedTool.curationInfos[0].curator.contact.website}
+                      >
+                        ${this.selectedTool.curationInfos[0].curator.name}</a
+                      >)
+                    </div>`
+                  : ''}
               `
             : msg('Unknown Tool')}
         </div>
@@ -255,6 +277,17 @@ export class InstallableTools extends LitElement {
   static styles = [
     libraryStyles,
     css`
+      .local-badge {
+        gap: 4px;
+        margin-left: auto;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        background: var(--sl-color-neutral-200, #e4e4e7);
+        color: var(--sl-color-neutral-700, #3f3f46);
+        white-space: nowrap;
+        align-self: flex-start;
+      }
       .tool {
         width: 303px;
         height: 360px;
