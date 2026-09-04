@@ -99,6 +99,20 @@ export async function readToolAssetsManifest(
   };
 }
 
+/**
+ * Whether this computer already holds everything an install of that Tool needs:
+ * the happ, the unpacked UI, and the icon. All three matter, because the
+ * installer treats a missing icon as fatal and would try to fetch it.
+ */
+export function toolAssetsPresent(dirs: ToolAssetDirs, request: ToolTransferRequest): boolean {
+  assertRequestIsSafe(request);
+  return (
+    fs.existsSync(happPath(dirs, request)) &&
+    fs.existsSync(uiAssetsDir(dirs, request)) &&
+    fs.existsSync(iconPath(dirs, request))
+  );
+}
+
 async function readRange(p: string, offset: number, length: number): Promise<Uint8Array> {
   const handle = await fsPromises.open(p, 'r');
   try {

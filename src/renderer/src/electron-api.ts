@@ -164,6 +164,7 @@ declare global {
         request: ToolTransferRequest,
         chunkSize: number,
       ) => Promise<ToolTransferManifest | undefined>;
+      areToolAssetsPresent: (request: ToolTransferRequest) => Promise<boolean>;
       readToolAssetsChunk: (
         request: ToolTransferRequest,
         index: number,

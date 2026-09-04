@@ -82,6 +82,8 @@ export class AppletInstallProgressElement extends LitElement {
         return msg('Downloading from the tool library…');
       case 'library-failed':
         return msg('Tool library unreachable. Looking for group members who have this Tool…');
+      case 'local':
+        return msg('Using the copy already on this computer…');
       case 'peer-search':
         return msg('Looking for group members who have this Tool…');
       case 'peer-none':

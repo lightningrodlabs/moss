@@ -86,6 +86,7 @@ import { toolLibraryFetch } from './tool-library/library-fetch.js';
 import {
   AppHashes,
   AppletInstallProgress,
+  AssetSource,
   DeveloperCollective,
   DeveloperCollectiveToolList,
   DistributionInfo,
@@ -1503,12 +1504,20 @@ export class MossStore {
       const libraryMessage =
         libraryError instanceof Error ? libraryError.message : String(libraryError);
       console.warn(`Installing from the tool library failed: ${libraryMessage}`);
-      if (!groupStore) {
-        this.setInstallProgress(appletId, { phase: 'failed', error: libraryMessage });
-        throw libraryError;
-      }
       this.setInstallProgress(appletId, { phase: 'library-failed', error: libraryMessage });
       try {
+        // The bytes may already be here from another group or an earlier
+        // install, in which case neither the library nor a member is needed.
+        const localAppInfo = await this.installAppletFromLocalAssets(
+          appletHash,
+          applet,
+          distributionInfo,
+          roles_settings,
+        );
+        if (localAppInfo) return localAppInfo;
+        if (!groupStore) {
+          throw new Error('The Tool is not on this computer and there is no group to ask.');
+        }
         return await this.installAppletFromPeers(
           appletHash,
           applet,
@@ -1516,10 +1525,11 @@ export class MossStore {
           distributionInfo,
           roles_settings,
         );
-      } catch (peerError) {
-        const peerMessage = peerError instanceof Error ? peerError.message : String(peerError);
-        this.setInstallProgress(appletId, { phase: 'failed', error: peerMessage });
-        throw new Error(`Tool library: ${libraryMessage}. Group members: ${peerMessage}`);
+      } catch (fallbackError) {
+        const fallbackMessage =
+          fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+        this.setInstallProgress(appletId, { phase: 'failed', error: fallbackMessage });
+        throw new Error(`Tool library: ${libraryMessage}. Fallback: ${fallbackMessage}`);
       }
     } finally {
       // Keep the terminal state on screen long enough to be read, then clear it.
@@ -1535,10 +1545,6 @@ export class MossStore {
     roles_settings: RoleSettingsMap,
   ): Promise<AppInfo> {
     const appletId: AppletId = encodeHashToBase64(appletHash);
-    const appId = appIdFromAppletHash(appletHash);
-    if (!applet.sha256_ui || !applet.sha256_webhapp) {
-      throw new Error('Applet entry lacks UI or webhapp hashes.');
-    }
     this.setInstallProgress(appletId, { phase: 'peer-search' });
     const peers = await groupStore.onlineAppletPeers(appletHash);
     if (peers.length === 0) {
@@ -1564,6 +1570,50 @@ export class MossStore {
           break;
       }
     });
+    return this.installFromAppletEntryHashes(appletHash, applet, distributionInfo, roles_settings, {
+      type: 'peer',
+    });
+  }
+
+  /**
+   * Installs from assets already on this computer, or resolves undefined when
+   * they are not all here. Nothing is fetched either way.
+   */
+  private async installAppletFromLocalAssets(
+    appletHash: EntryHash,
+    applet: Applet,
+    distributionInfo: DistributionInfo,
+    roles_settings: RoleSettingsMap,
+  ): Promise<AppInfo | undefined> {
+    if (!applet.sha256_ui || !applet.sha256_webhapp) return undefined;
+    const present = await window.electronAPI.areToolAssetsPresent({
+      happSha256: applet.sha256_happ,
+      uiSha256: applet.sha256_ui,
+      toolCompatibilityId: toolCompatibilityIdFromDistInfoString(applet.distribution_info),
+    });
+    if (!present) return undefined;
+    this.setInstallProgress(encodeHashToBase64(appletHash), { phase: 'local' });
+    return this.installFromAppletEntryHashes(appletHash, applet, distributionInfo, roles_settings, {
+      type: 'local',
+    });
+  }
+
+  /**
+   * Installs the exact happ, UI and webhapp the group's Applet entry names,
+   * from assets already on disk. Used once the tool library is out of the
+   * picture, so no download URL is involved.
+   */
+  private async installFromAppletEntryHashes(
+    appletHash: EntryHash,
+    applet: Applet,
+    distributionInfo: DistributionInfo,
+    roles_settings: RoleSettingsMap,
+    assetSource: AssetSource,
+  ): Promise<AppInfo> {
+    const appletId: AppletId = encodeHashToBase64(appletHash);
+    if (!applet.sha256_ui || !applet.sha256_webhapp) {
+      throw new Error('Applet entry lacks UI or webhapp hashes.');
+    }
     this.setInstallProgress(appletId, { phase: 'installing' });
     const appHashes: AppHashes = {
       type: 'webhapp',
@@ -1572,14 +1622,14 @@ export class MossStore {
       ui: { sha256: applet.sha256_ui },
     };
     const appInfo = await window.electronAPI.installAppletBundle(
-      appId,
+      appIdFromAppletHash(appletHash),
       applet.network_seed!,
       '',
       distributionInfo,
       appHashes,
       undefined,
       roles_settings,
-      { type: 'peer' },
+      assetSource,
     );
     this.setInstallProgress(appletId, { phase: 'done' });
     return appInfo;

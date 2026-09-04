@@ -1,12 +1,7 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 // IPC_CHANGE_HERE
-import {
-  AgentPubKeyB64,
-  CallZomeRequest,
-  DnaHashB64,
-  RoleSettingsMap,
-} from '@holochain/client';
+import { AgentPubKeyB64, CallZomeRequest, DnaHashB64, RoleSettingsMap } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
 import {
   AppletId,
@@ -126,6 +121,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ),
   readToolAssetsManifest: (request: ToolTransferRequest, chunkSize: number) =>
     ipcRenderer.invoke('read-tool-assets-manifest', request, chunkSize),
+  areToolAssetsPresent: (request: ToolTransferRequest) =>
+    ipcRenderer.invoke('are-tool-assets-present', request),
   readToolAssetsChunk: (request: ToolTransferRequest, index: number, chunkSize: number) =>
     ipcRenderer.invoke('read-tool-assets-chunk', request, index, chunkSize),
   storeToolAssetsFromPeer: (

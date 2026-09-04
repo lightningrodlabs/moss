@@ -39,6 +39,7 @@ import {
 import {
   readToolAssetsChunk,
   readToolAssetsManifest,
+  toolAssetsPresent,
   storeToolAssetsFromPeer,
   ToolAssetDirs,
 } from './peerToolAssets';
@@ -2459,6 +2460,11 @@ if (!RUNNING_WITH_COMMAND) {
         chunkSize: number,
       ): Promise<ToolTransferManifest | undefined> =>
         readToolAssetsManifest(toolAssetDirs(), request, chunkSize),
+    );
+    ipcMain.handle(
+      'are-tool-assets-present',
+      async (_e, request: ToolTransferRequest): Promise<boolean> =>
+        toolAssetsPresent(toolAssetDirs(), request),
     );
     ipcMain.handle(
       'read-tool-assets-chunk',

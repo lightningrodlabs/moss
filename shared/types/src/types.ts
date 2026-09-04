@@ -194,6 +194,9 @@ export type AssetSource =
     }
   | {
       type: 'peer'; // Received from another member of a group
+    }
+  | {
+      type: 'local'; // Reused assets that were already on this computer
     };
 
 /**
@@ -238,6 +241,7 @@ export type ToolTransferMessage =
 export type AppletInstallProgress =
   | { phase: 'library' }
   | { phase: 'library-failed'; error: string }
+  | { phase: 'local' }
   | { phase: 'peer-search' }
   | { phase: 'peer-none' }
   | { phase: 'peer-request'; peer: AgentPubKeyB64 }
