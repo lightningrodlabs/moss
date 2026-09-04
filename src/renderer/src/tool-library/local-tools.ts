@@ -46,14 +46,16 @@ export function toolAndCurationInfoFromLocal(
     latestVersion: version,
     toolListUrl: info.toolListUrl,
     developerCollectiveId: info.developerCollectiveId,
-    availableLocally: true,
+    onlyOnThisComputer: true,
+    installedOnThisComputer: true,
   };
 }
 
 /**
  * Adds locally held Tools to what the curation lists offered, but only where
  * the lists say nothing: a Tool a reachable list describes is always described
- * by that list, since it has the real subtitle, tags and curation.
+ * by that list, since it has the real subtitle, tags and curation. A listed
+ * Tool that is also here is marked as such rather than replaced.
  */
 export function mergeLocalTools(
   libraryTools: Record<ToolCompatibilityId, ToolAndCurationInfo>,
@@ -61,7 +63,13 @@ export function mergeLocalTools(
 ): Record<ToolCompatibilityId, ToolAndCurationInfo> {
   const merged = { ...libraryTools };
   for (const local of localTools) {
-    if (merged[local.toolCompatibilityId]) continue;
+    const listed = merged[local.toolCompatibilityId];
+    if (listed) {
+      // The list describes it better, but it is still here, and saying so is
+      // what tells someone the install will need no download.
+      merged[local.toolCompatibilityId] = { ...listed, installedOnThisComputer: true };
+      continue;
+    }
     const entry = toolAndCurationInfoFromLocal(local);
     if (entry) merged[local.toolCompatibilityId] = entry;
   }

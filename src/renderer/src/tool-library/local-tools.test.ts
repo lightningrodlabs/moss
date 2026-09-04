@@ -41,7 +41,7 @@ describe('toolAndCurationInfoFromLocal', () => {
     });
     expect(entry.latestVersion.version).toBe('1.2.3');
     expect(entry.latestVersion.releasedAt).toBe(1_700_000_000_000);
-    expect(entry.availableLocally).toBe(true);
+    expect(entry.onlyOnThisComputer).toBe(true);
     // Nothing to download; the install path uses the assets already on disk.
     expect(entry.latestVersion.url).toBe('');
     expect(entry.curationInfos).toEqual([]);
@@ -60,18 +60,30 @@ describe('toolAndCurationInfoFromLocal', () => {
 });
 
 describe('mergeLocalTools', () => {
-  const libraryEntry = { toolCompatibilityId: 'compat-presence' } as ToolAndCurationInfo;
+  const libraryEntry = {
+    toolCompatibilityId: 'compat-presence',
+    toolInfoAndVersions: { title: 'Presence from the list' },
+  } as unknown as ToolAndCurationInfo;
 
   it('adds a locally held Tool the lists do not offer', () => {
     const merged = mergeLocalTools({}, [local]);
     expect(Object.keys(merged)).toEqual(['compat-presence']);
-    expect(merged['compat-presence'].availableLocally).toBe(true);
+    expect(merged['compat-presence'].onlyOnThisComputer).toBe(true);
+    expect(merged['compat-presence'].installedOnThisComputer).toBe(true);
   });
 
-  it('leaves a Tool the lists already describe untouched', () => {
+  it('keeps the list description of a Tool the lists offer, and notes it is also here', () => {
     const merged = mergeLocalTools({ 'compat-presence': libraryEntry }, [local]);
-    expect(merged['compat-presence']).toBe(libraryEntry);
-    expect(merged['compat-presence'].availableLocally).toBeUndefined();
+    // Described by the list, not replaced by the synthesized entry.
+    expect(merged['compat-presence'].onlyOnThisComputer).toBeUndefined();
+    expect(merged['compat-presence'].toolInfoAndVersions).toBe(libraryEntry.toolInfoAndVersions);
+    // But marked as present, which is what says the install needs no download.
+    expect(merged['compat-presence'].installedOnThisComputer).toBe(true);
+  });
+
+  it('leaves a listed Tool that is not here unmarked', () => {
+    const merged = mergeLocalTools({ 'compat-other': libraryEntry }, []);
+    expect(merged['compat-other'].installedOnThisComputer).toBeUndefined();
   });
 
   it('does not mutate the library record it was given', () => {
