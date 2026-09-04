@@ -171,8 +171,10 @@ variant; `deriveAppAssetsInfo` records it.
 The web2 branch of `installApplet` is split so the tool-library resolution and
 the install call are separate steps. Flow:
 
-1. Report `library`. Fetch the tool list with a 10 s timeout, resolve hashes
-   and URL, call `installAppletBundle`.
+1. Report `library`. Fetch the tool list through the shared tool-library gate
+   (`src/renderer/src/tool-library/library-fetch.ts`: 5 s bound per request,
+   30 s refusal hold after a network failure, browser offline hint honoured),
+   resolve hashes and URL, call `installAppletBundle`.
 2. If step 1 throws for any reason before the app is in the conductor, report
    `library-failed` with the error, then run the peer path with progress
    reports, then call `installAppletBundle` with the peer asset source.
@@ -261,6 +263,12 @@ Electron with `--proxy-server=127.0.0.1:9`. Both renderer `fetch` and main's
 not use the proxy, so the two conductors still talk. This recipe has not been
 exercised yet; if the flag does not reach Electron through electron-vite, pull
 the machine's network cable after both agents show each other online instead.
+
+Before activating: the applet card must appear in the group home as soon as
+gossip has delivered the Applet entry (polled every 10 s), with the library
+title and icon missing, and the tool info dialog must open with the Activate
+button immediately. Neither waits on the tool library any more (first field
+test 2026-09-03: both stalled for the DNS/connect timeout).
 
 Expected on agent 2 beneath the Activate button: library download, then
 "Tool library unreachable…", then "Requesting Tool from <agent 1>…", then a
