@@ -297,6 +297,7 @@ export class InstallableTools extends LitElement {
         <library-tool-details
           slot="content"
           id="tool-details"
+          .libraryReachable=${this.libraryReachable}
           .devCollectives=${this.devCollectives}
           .unifiedTool=${this.selectedTool}
           @install-tool-to-group=${() => {

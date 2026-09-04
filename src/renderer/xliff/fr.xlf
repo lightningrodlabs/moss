@@ -2711,6 +2711,14 @@ commence maintenant</target>
   <source>The tool library is unavailable, and no Tools are installed on this computer yet.</source>
   <target>La bibliothèque d'outils est indisponible et aucun outil n'est encore installé sur cet ordinateur.</target>
 </trans-unit>
+<trans-unit id="s03ee935aee948c28">
+  <source>Details unavailable because this Tool is not in any curation list.</source>
+  <target>Détails indisponibles car cet outil ne figure dans aucune liste de curation.</target>
+</trans-unit>
+<trans-unit id="sa6315e99a05e1c82">
+  <source>Details unavailable because the curation lists could not be loaded.</source>
+  <target>Détails indisponibles car les listes de curation n'ont pas pu être chargées.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
