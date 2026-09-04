@@ -10,12 +10,16 @@ signals, and the real remote-signal payload ceiling (chunk size stays at
 
 ## Problem
 
-A member who joins a group while the internet is down (for example over the
-mDNS LAN build) can see the group's applets but cannot activate any of them.
-`installApplet` resolves the Tool's download URL from the developer
-collective's web2 tool list and fetches the webhapp over HTTPS. Offline, both
-steps fail, even though other members on the same LAN have every byte of the
-Tool on disk.
+A member who is in a group but cannot reach the internet can see the group's
+applets and cannot activate any of them. `installApplet` resolves the Tool's
+download URL from the developer collective's web2 tool list and fetches the
+webhapp over HTTPS, and offline both steps fail, even though other members
+reachable on the local network have every byte of the Tool on disk.
+
+Nothing here depends on how those members found each other. It is most visible
+with LAN peer discovery, where a group keeps working with no internet at all,
+but the same gap appears whenever the tool library is unreachable and a peer is
+not.
 
 ## Goals
 
