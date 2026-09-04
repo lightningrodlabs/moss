@@ -190,7 +190,11 @@ export class ToolLibrary extends LitElement {
     ).sort((a, b) => a.localeCompare(b));
     // Offered as one more tag rather than its own control, so it appears only
     // when there is something to select and disappears when there is not.
-    if (classificationFiltered.some((entry) => entry.installedOnThisComputer)) {
+    if (
+      classificationFiltered.some(
+        (entry) => getPrimaryVersionBranch(entry)?.installedOnThisComputer,
+      )
+    ) {
       availableTags.push(ON_THIS_COMPUTER_TAG);
     }
     // If the selected tag is no longer offered (e.g. classification changed),
@@ -200,7 +204,9 @@ export class ToolLibrary extends LitElement {
     const filteredUnifiedTools = !activeTag
       ? classificationFiltered
       : activeTag === ON_THIS_COMPUTER_TAG
-        ? classificationFiltered.filter((entry) => entry.installedOnThisComputer)
+        ? classificationFiltered.filter(
+            (entry) => getPrimaryVersionBranch(entry)?.installedOnThisComputer,
+          )
         : classificationFiltered.filter((entry) => entry.tags.includes(activeTag));
     return html`
       <div class="column" style="display: flex; margin: 16px; flex: 1;">
