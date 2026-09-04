@@ -18,6 +18,7 @@ import {
   findUnifiedToolByCompatibilityId,
   resolveUnifiedToolForApplet,
 } from '../../tool-library/fetch-unified-tools.js';
+import { toolLibraryFetch } from '../../tool-library/library-fetch.js';
 import '../../ui/moss-dialog.js';
 import { MossDialog } from '../../ui/moss-dialog.js';
 import '../../tool-library/elements/library-tool-details.js';
@@ -62,6 +63,9 @@ export class ToolInfoDialog extends LitElement {
 
   @state()
   private _loading: boolean = false;
+
+  /** Bumped on every show() so a slow background lookup cannot decorate a later dialog. */
+  private _showToken = 0;
 
   // When set, the dialog shows an "Activate" action that joins this applet
   // (a peer registered it in the group but the local agent hasn't joined yet).
@@ -136,13 +140,21 @@ export class ToolInfoDialog extends LitElement {
       );
       this._fallbackTitle = input.applet.custom_name;
       this._fallbackSubtitle = input.applet.subtitle;
-      const map = await this._ensureUnifiedTools();
-      this._resolvedTool = resolveUnifiedToolForApplet(input.applet.distribution_info, map);
-      this._installedAs =
-        this._resolvedTool && this._resolvedTool.title !== input.applet.custom_name
-          ? input.applet.custom_name
-          : undefined;
+      // The Applet entry already carries everything the action needs, so the
+      // dialog is usable at once; the tool library only refines title and icon
+      // and is resolved in the background, if it can be reached at all.
       this._loading = false;
+      const showToken = ++this._showToken;
+      void this._ensureUnifiedTools()
+        .then((map) => {
+          if (showToken !== this._showToken) return;
+          this._resolvedTool = resolveUnifiedToolForApplet(input.applet.distribution_info, map);
+          this._installedAs =
+            this._resolvedTool && this._resolvedTool.title !== input.applet.custom_name
+              ? input.applet.custom_name
+              : undefined;
+        })
+        .catch((e) => console.warn('@tool-info-dialog: tool library unavailable: ', e));
       return;
     }
 
@@ -231,7 +243,11 @@ export class ToolInfoDialog extends LitElement {
       return this._unifiedToolsCache.tools;
     }
     const result = await fetchUnifiedTools(configs, this.mossStore.devModeToolLibrary);
-    this._unifiedToolsCache = { signature, tools: result.unifiedTools };
+    // A result assembled while the library was unreachable is incomplete; keep
+    // it uncached so the next open retries once the network is back.
+    if (!toolLibraryFetch.isOffline()) {
+      this._unifiedToolsCache = { signature, tools: result.unifiedTools };
+    }
     return result.unifiedTools;
   }
 
