@@ -121,6 +121,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ),
   readToolAssetsManifest: (request: ToolTransferRequest, chunkSize: number) =>
     ipcRenderer.invoke('read-tool-assets-manifest', request, chunkSize),
+  listLocalTools: () => ipcRenderer.invoke('list-local-tools'),
   areToolAssetsPresent: (request: ToolTransferRequest) =>
     ipcRenderer.invoke('are-tool-assets-present', request),
   readToolAssetsChunk: (request: ToolTransferRequest, index: number, chunkSize: number) =>
