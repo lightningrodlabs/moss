@@ -2683,21 +2683,33 @@ comienza ahora</target>
   <source>Tool library unavailable — showing the details this group has.</source>
   <target>Biblioteca de herramientas no disponible: se muestran los datos que tiene este grupo.</target>
 </trans-unit>
-<trans-unit id="s421a7db311ecb803">
-  <source>Offered because it is installed on this computer. It is not in any curation list you can reach right now.</source>
-  <target>Se ofrece porque está instalada en este ordenador. No figura en ninguna lista de curación accesible ahora mismo.</target>
-</trans-unit>
 <trans-unit id="sb9b472448ad4baf5">
   <source>On this computer</source>
   <target>En este ordenador</target>
 </trans-unit>
-<trans-unit id="s3927a16289348f69">
-  <source>Already installed on this computer, so no download is needed.</source>
-  <target>Ya está instalada en este ordenador, así que no hace falta descargar nada.</target>
-</trans-unit>
 <trans-unit id="sf64f5ebf325b6b15">
   <source>on this computer</source>
   <target>en este ordenador</target>
+</trans-unit>
+<trans-unit id="sb1f4c2480652efaf">
+  <source>Offered because it is installed on this computer. No curation list offers it.</source>
+  <target>Se ofrece porque está instalada en este ordenador. Ninguna lista de curación la ofrece.</target>
+</trans-unit>
+<trans-unit id="s964e40feacd6905e">
+  <source>Offered because it is installed on this computer. The tool library is unavailable, so it cannot be checked against a curation list.</source>
+  <target>Se ofrece porque está instalada en este ordenador. La biblioteca de herramientas no está disponible, así que no puede contrastarse con ninguna lista de curación.</target>
+</trans-unit>
+<trans-unit id="sc26825262c847fa5">
+  <source>Only on this computer</source>
+  <target>Solo en este ordenador</target>
+</trans-unit>
+<trans-unit id="sa60442ebb9f76461">
+  <source>Already on this computer, so installing it needs no download.</source>
+  <target>Ya está en este ordenador, así que instalarla no requiere ninguna descarga.</target>
+</trans-unit>
+<trans-unit id="s4f73472b397d6c4a">
+  <source>The tool library is unavailable, and no Tools are installed on this computer yet.</source>
+  <target>La biblioteca de herramientas no está disponible y todavía no hay herramientas instaladas en este ordenador.</target>
 </trans-unit>
 </body>
 </file>

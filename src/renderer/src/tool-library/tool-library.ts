@@ -22,7 +22,7 @@ import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
 import { mossStyles } from '../shared-styles.js';
 import '../groups/elements/invite/select-group.js';
-import { mdiEmailOutline, mdiHarddisk, mdiWeb } from '@mdi/js';
+import { mdiEmailOutline, mdiWeb } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import './elements/curation-list-manager.js';
 import './elements/installable-tools.js';
@@ -51,6 +51,12 @@ enum ToolDetailView {
   //VersionHistory,
   //PublisherInfo,
 }
+
+/**
+ * Marks the synthetic tag for Tools already on this computer. It is not a
+ * developer-supplied tag, so it carries a name no tool list would use.
+ */
+const ON_THIS_COMPUTER_TAG = '__on_this_computer__';
 
 @localized()
 @customElement('tool-library')
@@ -104,6 +110,9 @@ export class ToolLibrary extends LitElement {
   classification = 'all';
 
   @state()
+  libraryReachable = true;
+
+  @state()
   sortMode: 'releaseDesc' | 'releaseAsc' | 'alphaAsc' | 'alphaDesc' = 'releaseDesc';
 
   // Empty string means "all tags" (no tag filtering).
@@ -150,6 +159,7 @@ export class ToolLibrary extends LitElement {
       this.mossStore.devModeToolLibrary,
     );
     this.unifiedTools = result.unifiedTools;
+    this.libraryReachable = result.libraryReachable;
     this.allDeveloperCollectives = result.developerCollectives;
     this.availableTools = result.availableTools;
     this.curationLists = result.curationLists;
@@ -164,29 +174,34 @@ export class ToolLibrary extends LitElement {
     const classificationFiltered =
       this.classification === 'all'
         ? unifiedToolsArray
-        : this.classification === 'local'
-          ? unifiedToolsArray.filter((entry) => entry.availableLocally)
-          : this.classification === 'stable'
-            ? unifiedToolsArray.filter((entry) => {
-                const primary = getPrimaryVersionBranch(entry);
-                return primary && primary.curationInfos[0]?.info.visiblity !== 'low';
-              })
-            : unifiedToolsArray.filter((entry) => {
-                const primary = getPrimaryVersionBranch(entry);
-                return primary && primary.curationInfos[0]?.info.visiblity === 'low';
-              });
+        : this.classification === 'stable'
+          ? unifiedToolsArray.filter((entry) => {
+              const primary = getPrimaryVersionBranch(entry);
+              return primary && primary.curationInfos[0]?.info.visiblity !== 'low';
+            })
+          : unifiedToolsArray.filter((entry) => {
+              const primary = getPrimaryVersionBranch(entry);
+              return primary && primary.curationInfos[0]?.info.visiblity === 'low';
+            });
     // Offer every tag present across the (classification-filtered) tools, so the
     // tag options track the current classification view.
     const availableTags = Array.from(
       new Set(classificationFiltered.flatMap((entry) => entry.tags)),
     ).sort((a, b) => a.localeCompare(b));
+    // Offered as one more tag rather than its own control, so it appears only
+    // when there is something to select and disappears when there is not.
+    if (classificationFiltered.some((entry) => entry.installedOnThisComputer)) {
+      availableTags.push(ON_THIS_COMPUTER_TAG);
+    }
     // If the selected tag is no longer offered (e.g. classification changed),
     // fall back to showing all tools rather than an empty list.
     const activeTag =
       this.selectedTag && availableTags.includes(this.selectedTag) ? this.selectedTag : '';
-    const filteredUnifiedTools = activeTag
-      ? classificationFiltered.filter((entry) => entry.tags.includes(activeTag))
-      : classificationFiltered;
+    const filteredUnifiedTools = !activeTag
+      ? classificationFiltered
+      : activeTag === ON_THIS_COMPUTER_TAG
+        ? classificationFiltered.filter((entry) => entry.installedOnThisComputer)
+        : classificationFiltered.filter((entry) => entry.tags.includes(activeTag));
     return html`
       <div class="column" style="display: flex; margin: 16px; flex: 1;">
         <div class="row items-center" style="gap: 12px; justify-content: center;">
@@ -225,7 +240,9 @@ export class ToolLibrary extends LitElement {
                     <option value="" ?selected=${activeTag === ''}>${msg('All tags')}</option>
                     ${availableTags.map(
                       (tag) =>
-                        html`<option value=${tag} ?selected=${activeTag === tag}>${tag}</option>`,
+                        html`<option value=${tag} ?selected=${activeTag === tag}>
+                          ${tag === ON_THIS_COMPUTER_TAG ? msg('on this computer') : tag}
+                        </option>`,
                     )}
                   </select>
                 </label>
@@ -262,26 +279,13 @@ export class ToolLibrary extends LitElement {
                 ${experimentalToolIcon(16)} ${msg('experimental')}
               </button></sl-tooltip
             >
-            <sl-tooltip
-              .content=${msg('Already installed on this computer, so no download is needed.')}
-            >
-              <button
-                class="classification-button classification-button-local ${this.classification ===
-                'local'
-                  ? 'classification-active'
-                  : ''}"
-                @click=${async () => (this.classification = 'local')}
-              >
-                <sl-icon .src=${wrapPathInSvg(mdiHarddisk)}></sl-icon>
-                <span style="margin-left:5px">${msg('on this computer')}</span>
-              </button></sl-tooltip
-            >
           </div>
         </div>
         <installable-tools
           style="display: flex; flex: 1;"
           .devCollectives=${this.allDeveloperCollectives}
           .unifiedTools=${filteredUnifiedTools}
+          .libraryReachable=${this.libraryReachable}
           .sortMode=${this.sortMode}
           @install-tool-to-group=${(e) => {
             // Handle both old format (tool) and new format (unifiedTool + versionBranch)

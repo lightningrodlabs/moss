@@ -2683,21 +2683,33 @@ commence maintenant</target>
   <source>Tool library unavailable — showing the details this group has.</source>
   <target>Bibliothèque d'outils indisponible — affichage des informations dont dispose ce groupe.</target>
 </trans-unit>
-<trans-unit id="s421a7db311ecb803">
-  <source>Offered because it is installed on this computer. It is not in any curation list you can reach right now.</source>
-  <target>Proposé car il est installé sur cet ordinateur. Il ne figure dans aucune liste de curation accessible actuellement.</target>
-</trans-unit>
 <trans-unit id="sb9b472448ad4baf5">
   <source>On this computer</source>
   <target>Sur cet ordinateur</target>
 </trans-unit>
-<trans-unit id="s3927a16289348f69">
-  <source>Already installed on this computer, so no download is needed.</source>
-  <target>Déjà installé sur cet ordinateur, aucun téléchargement n'est nécessaire.</target>
-</trans-unit>
 <trans-unit id="sf64f5ebf325b6b15">
   <source>on this computer</source>
   <target>sur cet ordinateur</target>
+</trans-unit>
+<trans-unit id="sb1f4c2480652efaf">
+  <source>Offered because it is installed on this computer. No curation list offers it.</source>
+  <target>Proposé car il est installé sur cet ordinateur. Aucune liste de curation ne le propose.</target>
+</trans-unit>
+<trans-unit id="s964e40feacd6905e">
+  <source>Offered because it is installed on this computer. The tool library is unavailable, so it cannot be checked against a curation list.</source>
+  <target>Proposé car il est installé sur cet ordinateur. La bibliothèque d'outils est indisponible, il ne peut donc pas être vérifié auprès d'une liste de curation.</target>
+</trans-unit>
+<trans-unit id="sc26825262c847fa5">
+  <source>Only on this computer</source>
+  <target>Seulement sur cet ordinateur</target>
+</trans-unit>
+<trans-unit id="sa60442ebb9f76461">
+  <source>Already on this computer, so installing it needs no download.</source>
+  <target>Déjà sur cet ordinateur, l'installation ne nécessite aucun téléchargement.</target>
+</trans-unit>
+<trans-unit id="s4f73472b397d6c4a">
+  <source>The tool library is unavailable, and no Tools are installed on this computer yet.</source>
+  <target>La bibliothèque d'outils est indisponible et aucun outil n'est encore installé sur cet ordinateur.</target>
 </trans-unit>
 </body>
 </file>

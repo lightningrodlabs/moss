@@ -47,6 +47,10 @@ export class InstallableTools extends LitElement {
   @property()
   sortMode: 'releaseDesc' | 'releaseAsc' | 'alphaAsc' | 'alphaDesc' = 'releaseDesc';
 
+  /** Whether the curation lists answered when this list was built. */
+  @property()
+  libraryReachable = true;
+
   @state()
   _selectedGroupDnaHash: DnaHashB64 | undefined;
 
@@ -77,6 +81,41 @@ export class InstallableTools extends LitElement {
         </div>
       </sl-tooltip>
     `;
+  }
+
+  /**
+   * Where this copy of the Tool would come from. Saying nothing is the right
+   * answer for the ordinary case of a curated Tool that is not here yet; the
+   * rest are worth a word, either because installing needs no download or
+   * because no curation list vouches for the Tool at all.
+   */
+  renderSourceBadge(tool: UnifiedToolEntry) {
+    if (tool.onlyOnThisComputer) {
+      const why = this.libraryReachable
+        ? msg('Offered because it is installed on this computer. No curation list offers it.')
+        : msg(
+            'Offered because it is installed on this computer. The tool library is unavailable, so it cannot be checked against a curation list.',
+          );
+      return html`
+        <sl-tooltip content=${why}>
+          <div class="local-badge row items-center">
+            <sl-icon .src=${wrapPathInSvg(mdiHarddisk)}></sl-icon>
+            <span>${msg('Only on this computer')}</span>
+          </div>
+        </sl-tooltip>
+      `;
+    }
+    if (tool.installedOnThisComputer) {
+      return html`
+        <sl-tooltip content=${msg('Already on this computer, so installing it needs no download.')}>
+          <div class="local-badge row items-center">
+            <sl-icon .src=${wrapPathInSvg(mdiHarddisk)}></sl-icon>
+            <span>${msg('On this computer')}</span>
+          </div>
+        </sl-tooltip>
+      `;
+    }
+    return '';
   }
 
   renderInstallableTool(tool: UnifiedToolEntry) {
@@ -126,18 +165,7 @@ export class InstallableTools extends LitElement {
                   : ''}
               </div>
             </sl-tooltip>
-            ${tool.availableLocally
-              ? html`<sl-tooltip
-                  content=${msg(
-                    'Offered because it is installed on this computer. It is not in any curation list you can reach right now.',
-                  )}
-                >
-                  <div class="local-badge row items-center">
-                    <sl-icon .src=${wrapPathInSvg(mdiHarddisk)}></sl-icon>
-                    <span>${msg('On this computer')}</span>
-                  </div>
-                </sl-tooltip>`
-              : ''}
+            ${this.renderSourceBadge(tool)}
           </div>
           <div id="xxx" class="column tool-info-area">
             <div class="tool-title" title="${tool.subtitle}">
@@ -220,6 +248,15 @@ export class InstallableTools extends LitElement {
         const primaryA = getPrimaryVersionBranch(tool_a);
         const primaryB = getPrimaryVersionBranch(tool_b);
         if (!primaryA || !primaryB) return 0;
+        // A Tool offered from local assets has an install date standing in for
+        // a release date. Ordering the two together would be comparing
+        // different things, so those sort last whenever the order is by release.
+        if (
+          (this.sortMode === 'releaseDesc' || this.sortMode === 'releaseAsc') &&
+          !!tool_a.onlyOnThisComputer !== !!tool_b.onlyOnThisComputer
+        ) {
+          return tool_a.onlyOnThisComputer ? 1 : -1;
+        }
         switch (this.sortMode) {
           case 'releaseAsc':
             return primaryA.latestVersion.releasedAt - primaryB.latestVersion.releasedAt;
@@ -237,7 +274,8 @@ export class InstallableTools extends LitElement {
         <div slot="header">
           ${this.selectedTool
             ? html`
-                ${this.selectedTool.title} ${this.renderDeveloperLine(this.selectedTool)}
+                ${this.selectedTool.title} ${this.renderSourceBadge(this.selectedTool)}
+                ${this.renderDeveloperLine(this.selectedTool)}
                 ${this.selectedTool.curationInfos[0]
                   ? html`<div class="tool-developer" style="color:grey">
                       (curator:<a
@@ -267,7 +305,13 @@ export class InstallableTools extends LitElement {
         ${nonDeprecatedTools.length === 0
           ? html`
               <div class="column center-content" style="flex: 1; margin-top: 50px;">
-                <span class="placeholder">${msg('No Tools available yet...')}</span>
+                <span class="placeholder">
+                  ${this.libraryReachable
+                    ? msg('No Tools available yet...')
+                    : msg(
+                        'The tool library is unavailable, and no Tools are installed on this computer yet.',
+                      )}
+                </span>
               </div>
             `
           : nonDeprecatedTools.map((tool) => this.renderInstallableTool(tool))}
