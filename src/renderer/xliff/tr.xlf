@@ -2683,6 +2683,22 @@ starts now</source>
   <source>Tool library unavailable — showing the details this group has.</source>
   <target>Araç kitaplığı kullanılamıyor — bu grubun sahip olduğu bilgiler gösteriliyor.</target>
 </trans-unit>
+<trans-unit id="s421a7db311ecb803">
+  <source>Offered because it is installed on this computer. It is not in any curation list you can reach right now.</source>
+  <target>Bu bilgisayarda kurulu olduğu için sunuluyor. Şu anda erişebildiğiniz hiçbir derleme listesinde yok.</target>
+</trans-unit>
+<trans-unit id="sb9b472448ad4baf5">
+  <source>On this computer</source>
+  <target>Bu bilgisayarda</target>
+</trans-unit>
+<trans-unit id="s3927a16289348f69">
+  <source>Already installed on this computer, so no download is needed.</source>
+  <target>Bu bilgisayarda zaten kurulu, indirmeye gerek yok.</target>
+</trans-unit>
+<trans-unit id="sf64f5ebf325b6b15">
+  <source>on this computer</source>
+  <target>bu bilgisayarda</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

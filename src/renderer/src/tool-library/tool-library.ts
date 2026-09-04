@@ -22,7 +22,7 @@ import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
 import { mossStyles } from '../shared-styles.js';
 import '../groups/elements/invite/select-group.js';
-import { mdiEmailOutline, mdiWeb } from '@mdi/js';
+import { mdiEmailOutline, mdiHarddisk, mdiWeb } from '@mdi/js';
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import './elements/curation-list-manager.js';
 import './elements/installable-tools.js';
@@ -164,15 +164,17 @@ export class ToolLibrary extends LitElement {
     const classificationFiltered =
       this.classification === 'all'
         ? unifiedToolsArray
-        : this.classification === 'stable'
-          ? unifiedToolsArray.filter((entry) => {
-              const primary = getPrimaryVersionBranch(entry);
-              return primary && primary.curationInfos[0]?.info.visiblity !== 'low';
-            })
-          : unifiedToolsArray.filter((entry) => {
-              const primary = getPrimaryVersionBranch(entry);
-              return primary && primary.curationInfos[0]?.info.visiblity === 'low';
-            });
+        : this.classification === 'local'
+          ? unifiedToolsArray.filter((entry) => entry.availableLocally)
+          : this.classification === 'stable'
+            ? unifiedToolsArray.filter((entry) => {
+                const primary = getPrimaryVersionBranch(entry);
+                return primary && primary.curationInfos[0]?.info.visiblity !== 'low';
+              })
+            : unifiedToolsArray.filter((entry) => {
+                const primary = getPrimaryVersionBranch(entry);
+                return primary && primary.curationInfos[0]?.info.visiblity === 'low';
+              });
     // Offer every tag present across the (classification-filtered) tools, so the
     // tag options track the current classification view.
     const availableTags = Array.from(
@@ -258,6 +260,20 @@ export class ToolLibrary extends LitElement {
                 @click=${async () => (this.classification = 'experimental')}
               >
                 ${experimentalToolIcon(16)} ${msg('experimental')}
+              </button></sl-tooltip
+            >
+            <sl-tooltip
+              .content=${msg('Already installed on this computer, so no download is needed.')}
+            >
+              <button
+                class="classification-button classification-button-local ${this.classification ===
+                'local'
+                  ? 'classification-active'
+                  : ''}"
+                @click=${async () => (this.classification = 'local')}
+              >
+                <sl-icon .src=${wrapPathInSvg(mdiHarddisk)}></sl-icon>
+                <span style="margin-left:5px">${msg('on this computer')}</span>
               </button></sl-tooltip
             >
           </div>

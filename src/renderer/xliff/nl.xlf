@@ -2683,6 +2683,22 @@ begint nu</target>
   <source>Tool library unavailable — showing the details this group has.</source>
   <target>Toolbibliotheek niet beschikbaar — de gegevens van deze groep worden getoond.</target>
 </trans-unit>
+<trans-unit id="s421a7db311ecb803">
+  <source>Offered because it is installed on this computer. It is not in any curation list you can reach right now.</source>
+  <target>Aangeboden omdat deze op deze computer is geïnstalleerd. Hij staat in geen enkele nu bereikbare curatielijst.</target>
+</trans-unit>
+<trans-unit id="sb9b472448ad4baf5">
+  <source>On this computer</source>
+  <target>Op deze computer</target>
+</trans-unit>
+<trans-unit id="s3927a16289348f69">
+  <source>Already installed on this computer, so no download is needed.</source>
+  <target>Al geïnstalleerd op deze computer, dus downloaden is niet nodig.</target>
+</trans-unit>
+<trans-unit id="sf64f5ebf325b6b15">
+  <source>on this computer</source>
+  <target>op deze computer</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

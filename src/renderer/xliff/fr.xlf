@@ -2683,6 +2683,22 @@ commence maintenant</target>
   <source>Tool library unavailable — showing the details this group has.</source>
   <target>Bibliothèque d'outils indisponible — affichage des informations dont dispose ce groupe.</target>
 </trans-unit>
+<trans-unit id="s421a7db311ecb803">
+  <source>Offered because it is installed on this computer. It is not in any curation list you can reach right now.</source>
+  <target>Proposé car il est installé sur cet ordinateur. Il ne figure dans aucune liste de curation accessible actuellement.</target>
+</trans-unit>
+<trans-unit id="sb9b472448ad4baf5">
+  <source>On this computer</source>
+  <target>Sur cet ordinateur</target>
+</trans-unit>
+<trans-unit id="s3927a16289348f69">
+  <source>Already installed on this computer, so no download is needed.</source>
+  <target>Déjà installé sur cet ordinateur, aucun téléchargement n'est nécessaire.</target>
+</trans-unit>
+<trans-unit id="sf64f5ebf325b6b15">
+  <source>on this computer</source>
+  <target>sur cet ordinateur</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
