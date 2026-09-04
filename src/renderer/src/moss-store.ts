@@ -82,6 +82,7 @@ import {
   onlineDebugLog,
 } from './utils.js';
 import { AppletStore } from './applets/applet-store.js';
+import { toolLibraryFetch } from './tool-library/library-fetch.js';
 import {
   AppHashes,
   AppletInstallProgress,
@@ -178,12 +179,6 @@ function getNotificationFeedEntryId({ source, notification }: MossNotification):
 
   return `${sourceKey}:${encodeAndStringify(notification)}`;
 }
-
-/**
- * How long to wait on the tool library before treating it as unreachable and
- * asking group members instead. Offline machines otherwise hang on the fetch.
- */
-const TOOL_LIST_FETCH_TIMEOUT_MS = 10_000;
 
 export class MossStore {
   constructor(
@@ -960,7 +955,7 @@ export class MossStore {
     if (!noCache && maybeCachedInfo) return maybeCachedInfo;
     // Fetch latest version of the Tool
     try {
-      const resp = await fetch(toolListUrl, { cache: 'no-cache' });
+      const resp = await toolLibraryFetch.fetch(toolListUrl, { cache: 'no-cache' });
       const toolList: DeveloperCollectiveToolList = await resp.json();
       const toolInfo = toolList.tools.find(
         (tool) => tool.id === toolId && tool.versionBranch === versionBranch,
@@ -1423,9 +1418,8 @@ export class MossStore {
     }
 
     // Fetch latest version of the Tool
-    const resp = await fetch(distributionInfo.info.toolListUrl, {
+    const resp = await toolLibraryFetch.fetch(distributionInfo.info.toolListUrl, {
       cache: 'no-cache',
-      signal: AbortSignal.timeout(TOOL_LIST_FETCH_TIMEOUT_MS),
     });
     const toolList: DeveloperCollectiveToolList = await resp.json();
 
