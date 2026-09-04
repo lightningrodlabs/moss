@@ -2711,6 +2711,14 @@ starts now</source>
   <source>The tool library is unavailable, and no Tools are installed on this computer yet.</source>
   <target>Araç kitaplığı kullanılamıyor ve bu bilgisayarda henüz kurulu araç yok.</target>
 </trans-unit>
+<trans-unit id="s03ee935aee948c28">
+  <source>Details unavailable because this Tool is not in any curation list.</source>
+  <target>Bu araç hiçbir derleme listesinde olmadığı için ayrıntılar kullanılamıyor.</target>
+</trans-unit>
+<trans-unit id="sa6315e99a05e1c82">
+  <source>Details unavailable because the curation lists could not be loaded.</source>
+  <target>Derleme listeleri yüklenemediği için ayrıntılar kullanılamıyor.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
