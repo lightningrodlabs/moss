@@ -40,6 +40,12 @@ export function activeToolCurationConfigs(mossStore: MossStore): ToolCurationCon
 }
 
 export type FetchedUnifiedTools = {
+  /**
+   * Whether the tool library answered while this list was built. It separates
+   * "no curation list offers this Tool" from "no curation list could be read",
+   * which read very differently to someone offline.
+   */
+  libraryReachable: boolean;
   unifiedTools: Map<string, UnifiedToolEntry>;
   availableTools: Record<ToolCompatibilityId, ToolAndCurationInfo>;
   developerCollectives: Record<ToolListUrl, DeveloperCollective>;
@@ -162,6 +168,7 @@ export async function fetchUnifiedTools(
   const withLocal = mergeLocalTools(allTools, localTools);
 
   return {
+    libraryReachable: !toolLibraryFetch.isOffline(),
     unifiedTools: groupToolsByBaseId(withLocal),
     availableTools: withLocal,
     developerCollectives,

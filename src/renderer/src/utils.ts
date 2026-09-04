@@ -247,15 +247,20 @@ export function groupToolsByBaseId(
         curationInfos: [...tool.curationInfos],
         versionBranches: new Map(),
         deprecation: tool.toolInfoAndVersions.deprecation,
-        availableLocally: !!tool.availableLocally,
+        onlyOnThisComputer: !!tool.onlyOnThisComputer,
+        installedOnThisComputer: !!tool.installedOnThisComputer,
       };
       grouped.set(baseId, unifiedEntry);
     } else {
       // Merge curation info
       unifiedEntry.curationInfos.push(...tool.curationInfos);
       // Only wholly local Tools are presented as such: one branch offered by a
-      // reachable list means the Tool is in the library.
-      unifiedEntry.availableLocally = unifiedEntry.availableLocally && !!tool.availableLocally;
+      // reachable list means the Tool is in the library. Having any one branch
+      // on disk, by contrast, is enough to say the Tool is here.
+      unifiedEntry.onlyOnThisComputer =
+        unifiedEntry.onlyOnThisComputer && !!tool.onlyOnThisComputer;
+      unifiedEntry.installedOnThisComputer =
+        unifiedEntry.installedOnThisComputer || !!tool.installedOnThisComputer;
 
       // Update metadata if this version branch is newer (use latest version branch's metadata)
       // Prefer non-deprecated branches
@@ -272,6 +277,8 @@ export function groupToolsByBaseId(
       latestVersion: tool.latestVersion,
       allVersions: tool.toolInfoAndVersions.versions,
       curationInfos: tool.curationInfos,
+      onlyOnThisComputer: !!tool.onlyOnThisComputer,
+      installedOnThisComputer: !!tool.installedOnThisComputer,
     });
   }
 

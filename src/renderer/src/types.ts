@@ -95,9 +95,14 @@ export type ToolAndCurationInfo = {
   developerCollectiveId: string;
   /**
    * Set when this entry was assembled from assets already on this computer
-   * rather than from a curation list.
+   * rather than from a curation list, meaning no reachable list offers it.
    */
-  availableLocally?: boolean;
+  onlyOnThisComputer?: boolean;
+  /**
+   * Set when the assets for this Tool are on this computer, whether or not a
+   * curation list also offers it. Installing it needs no download.
+   */
+  installedOnThisComputer?: boolean;
 };
 
 export type ToolInfoAndLatestVersion = {
@@ -119,6 +124,8 @@ export type VersionBranchInfo = {
     info: CuratedTool;
     curator: ToolCurator;
   }>;
+  onlyOnThisComputer?: boolean;
+  installedOnThisComputer?: boolean;
 };
 
 /**
@@ -145,7 +152,11 @@ export type UnifiedToolEntry = {
    * Set when every version branch of this Tool came from assets already on
    * this computer, meaning no curation list in reach offers it.
    */
-  availableLocally?: boolean;
+  onlyOnThisComputer?: boolean;
+  /**
+   * Set when any version branch of this Tool is on this computer already.
+   */
+  installedOnThisComputer?: boolean;
 };
 
 export type MossEvent = 'open-asset';
