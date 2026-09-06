@@ -183,6 +183,32 @@ export const mossStyles = [
       outline: 2px solid var(--moss-purple);
     }
 
+    /* mode-switch: one row of exclusive choices, where picking one replaces
+       the pane below it */
+
+    .mode-switch {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 10px;
+      background: var(--moss-grey-light, rgba(0, 0, 0, 0.06));
+    }
+
+    .mode {
+      all: unset;
+      cursor: pointer;
+      padding: 6px 18px;
+      border-radius: 8px;
+      font-size: 15px;
+      opacity: 0.7;
+    }
+
+    .mode.selected {
+      background: var(--moss-white, #fff);
+      opacity: 1;
+      font-weight: 600;
+    }
+
     /* moss-card */
 
     .moss-card {
