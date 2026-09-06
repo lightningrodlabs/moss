@@ -2719,6 +2719,162 @@ starts now</source>
   <source>Details unavailable because the curation lists could not be loaded.</source>
   <target>キュレーションリストを読み込めなかったため、詳細を表示できません。</target>
 </trans-unit>
+<trans-unit id="sd9ad53251f2330a5">
+  <source>Stop</source>
+  <target>停止</target>
+</trans-unit>
+<trans-unit id="sff4fe7fc56e5b224">
+  <source>Two groups are showing this name — ask which is which.</source>
+  <target>この名前を表示しているグループが2つあります — どちらがどちらか確認してください。</target>
+</trans-unit>
+<trans-unit id="s3dfc7829a2c51f7f">
+  <source>Invite sent to <x id="0" equiv-text="${admitted.length}"/> of <x id="1" equiv-text="${sids.length}"/>. The rest may have just become ambiguous — ask them to start again.</source>
+  <target><x id="1" equiv-text="${sids.length}"/>人中<x id="0" equiv-text="${admitted.length}"/>人に招待を送信しました。残りは名前が重複した可能性があります — もう一度やり直すよう伝えてください。</target>
+</trans-unit>
+<trans-unit id="sac319fa554b9562c">
+  <source>Invite sent over the local network.</source>
+  <target>ローカルネットワーク経由で招待を送信しました。</target>
+</trans-unit>
+<trans-unit id="s49732b4064dac3db">
+  <source>Two people are showing this name — ask one of them to start again.</source>
+  <target>この名前を表示している人が2人います — どちらか一方にもう一度やり直すよう伝えてください。</target>
+</trans-unit>
+<trans-unit id="sa8a156adfa72e196">
+  <source>Visible for</source>
+  <target>表示時間</target>
+</trans-unit>
+<trans-unit id="sc2b5b8f281fd3a60">
+  <source>No reply. This network may be blocking it — try again, or ask for an invite link.</source>
+  <target>応答がありません。このネットワークがブロックしている可能性があります。もう一度試すか、招待リンクをもらってください。</target>
+</trans-unit>
+<trans-unit id="s0674c894d663cc90">
+  <source>Request access</source>
+  <target>参加を申請</target>
+</trans-unit>
+<trans-unit id="sd4e09fbf1d56c054">
+  <source>Looking for groups on this network…</source>
+  <target>このネットワーク上のグループを検索中…</target>
+</trans-unit>
+<trans-unit id="sb1974522c98cd941">
+  <source>You are already in this group — opening it.</source>
+  <target>すでにこのグループに参加しています。開きます。</target>
+</trans-unit>
+<trans-unit id="sfbb361265a8a03eb">
+  <source>None found</source>
+  <target>見つかりません</target>
+</trans-unit>
+<trans-unit id="s1ffad027e503cf09">
+  <source>Scan Local Network</source>
+  <target>ローカルネットワークを検索</target>
+</trans-unit>
+<trans-unit id="s200c2ff34504514f">
+  <source>Local Network Scan</source>
+  <target>ローカルネットワーク検索</target>
+</trans-unit>
+<trans-unit id="s1993a85877e9873c">
+  <source>seen <x id="0" equiv-text="${this.secondsAgo(offer.lastSeen)}"/>s ago</source>
+  <target><x id="0" equiv-text="${this.secondsAgo(offer.lastSeen)}"/>秒前に受信</target>
+</trans-unit>
+<trans-unit id="s9265b4d3d8a32c33">
+  <source>Use Invitation</source>
+  <target>招待を使う</target>
+</trans-unit>
+<trans-unit id="s65466b58996b7efe">
+  <source>Invitation</source>
+  <target>招待</target>
+</trans-unit>
+<trans-unit id="sa93f553e92ea609a">
+  <source>You are announced on this network as</source>
+  <target>このネットワークでの表示名</target>
+</trans-unit>
+<trans-unit id="sc2f4d0e526a6642a">
+  <source>Announce Myself</source>
+  <target>自分を知らせる</target>
+</trans-unit>
+<trans-unit id="s2072b414bfad9c88">
+  <source>You have been invited to</source>
+  <target>招待されました:</target>
+</trans-unit>
+<trans-unit id="s1379be55894c79ed">
+  <source>No invite was sent — a selected name may have just become ambiguous. Ask them to start again.</source>
+  <target>招待は送信されませんでした。選択した名前が今あいまいになった可能性があります。相手にやり直してもらってください。</target>
+</trans-unit>
+<trans-unit id="sf48048f9784a8124">
+  <source>Let people join on their own</source>
+  <target>自分で参加してもらう</target>
+</trans-unit>
+<trans-unit id="s8c2b2d3f709af64e">
+  <source>Admit people yourself</source>
+  <target>自分で承認する</target>
+</trans-unit>
+<trans-unit id="s5c1513edb89970fb">
+  <source>Ask people to announce themselves.</source>
+  <target>相手に自分を知らせてもらってください。</target>
+</trans-unit>
+<trans-unit id="s2470a123452c0e6a">
+  <source>Nobody is announcing themselves currently.</source>
+  <target>現在、誰も知らせていません。</target>
+</trans-unit>
+<trans-unit id="s96efe6c3124479ce">
+  <source>Invite sent</source>
+  <target>招待を送信済み</target>
+</trans-unit>
+<trans-unit id="s6b6b60a387cd2bf8">
+  <source>Send Invite</source>
+  <target>招待を送信</target>
+</trans-unit>
+<trans-unit id="sf6ad9ebbb41ab17e">
+  <source>Local Network</source>
+  <target>ローカルネットワーク</target>
+</trans-unit>
+<trans-unit id="s7d96ecbd48dfb33f">
+  <source>Start a Group</source>
+  <target>グループを作成</target>
+</trans-unit>
+<trans-unit id="s75f4d7f6f8c9d0a4">
+  <source>I want to join a group on the local network</source>
+  <target>ローカルネットワーク上のグループに参加したい</target>
+</trans-unit>
+<trans-unit id="s744b1ac4e27c20de">
+  <source>Tell the person adding you this name, so they can add you to the group.</source>
+  <target>追加してくれる人にこの名前を伝えると、グループに追加してもらえます。</target>
+</trans-unit>
+<trans-unit id="sbddd8b1c272af3e8">
+  <source>Listed Groups</source>
+  <target>掲載中のグループ</target>
+</trans-unit>
+<trans-unit id="s9e11be547aa1db5d">
+  <source>Unlisted Groups</source>
+  <target>未掲載のグループ</target>
+</trans-unit>
+<trans-unit id="s4fcf92ebb98ef1c4">
+  <source>If someone in an unlisted group is adding you, announce yourself here and tell them the name that appears.</source>
+  <target>未掲載のグループの誰かがあなたを追加する場合は、ここで自分を知らせ、表示された名前を伝えてください。</target>
+</trans-unit>
+<trans-unit id="s4c0642ad128f2bd5">
+  <source>Listing this group on the local network</source>
+  <target>このグループをローカルネットワークに掲載中</target>
+</trans-unit>
+<trans-unit id="s6af7d7a8ea6dbbda">
+  <source>auto-stopping listing in <x id="0" equiv-text="${this.remaining}"/></source>
+  <target><x id="0" equiv-text="${this.remaining}"/>後に掲載を自動停止</target>
+</trans-unit>
+<trans-unit id="s1361b85868b07f4a">
+  <source>List Group</source>
+  <target>グループを掲載</target>
+</trans-unit>
+<trans-unit id="s44c63095bdf6ece5">
+  <source>While listing, anyone on this network can join the group.</source>
+  <target>掲載中は、このネットワーク上の誰でもグループに参加できます。</target>
+</trans-unit>
+<trans-unit id="s245dad45a65c3fe0">
+  <source>You are no longer announcing yourself on this network.</source>
+  <target>このネットワークでの自己紹介を停止しました。</target>
+</trans-unit>
+<trans-unit id="s7b25cd71849bf7c8">
+  <source>This group is no longer listed on the local network.</source>
+  <target>このグループはローカルネットワークに掲載されなくなりました。</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

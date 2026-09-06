@@ -2719,6 +2719,162 @@ begint nu</target>
   <source>Details unavailable because the curation lists could not be loaded.</source>
   <target>Details niet beschikbaar omdat de curatielijsten niet konden worden geladen.</target>
 </trans-unit>
+<trans-unit id="sd9ad53251f2330a5">
+  <source>Stop</source>
+  <target>Stoppen</target>
+</trans-unit>
+<trans-unit id="sff4fe7fc56e5b224">
+  <source>Two groups are showing this name — ask which is which.</source>
+  <target>Twee groepen tonen deze naam — vraag welke welke is.</target>
+</trans-unit>
+<trans-unit id="s3dfc7829a2c51f7f">
+  <source>Invite sent to <x id="0" equiv-text="${admitted.length}"/> of <x id="1" equiv-text="${sids.length}"/>. The rest may have just become ambiguous — ask them to start again.</source>
+  <target>Uitnodiging verstuurd naar <x id="0" equiv-text="${admitted.length}"/> van <x id="1" equiv-text="${sids.length}"/>. De rest is mogelijk zojuist dubbelzinnig geworden — vraag hen om opnieuw te beginnen.</target>
+</trans-unit>
+<trans-unit id="sac319fa554b9562c">
+  <source>Invite sent over the local network.</source>
+  <target>Uitnodiging verstuurd via het lokale netwerk.</target>
+</trans-unit>
+<trans-unit id="s49732b4064dac3db">
+  <source>Two people are showing this name — ask one of them to start again.</source>
+  <target>Twee mensen tonen deze naam — vraag een van hen om opnieuw te beginnen.</target>
+</trans-unit>
+<trans-unit id="sa8a156adfa72e196">
+  <source>Visible for</source>
+  <target>Zichtbaar gedurende</target>
+</trans-unit>
+<trans-unit id="sc2b5b8f281fd3a60">
+  <source>No reply. This network may be blocking it — try again, or ask for an invite link.</source>
+  <target>Geen antwoord. Dit netwerk blokkeert het mogelijk — probeer het opnieuw of vraag om een uitnodigingslink.</target>
+</trans-unit>
+<trans-unit id="s0674c894d663cc90">
+  <source>Request access</source>
+  <target>Toegang vragen</target>
+</trans-unit>
+<trans-unit id="sd4e09fbf1d56c054">
+  <source>Looking for groups on this network…</source>
+  <target>Zoeken naar groepen op dit netwerk…</target>
+</trans-unit>
+<trans-unit id="sb1974522c98cd941">
+  <source>You are already in this group — opening it.</source>
+  <target>Je zit al in deze groep — hij wordt geopend.</target>
+</trans-unit>
+<trans-unit id="sfbb361265a8a03eb">
+  <source>None found</source>
+  <target>Niets gevonden</target>
+</trans-unit>
+<trans-unit id="s1ffad027e503cf09">
+  <source>Scan Local Network</source>
+  <target>Lokaal netwerk scannen</target>
+</trans-unit>
+<trans-unit id="s200c2ff34504514f">
+  <source>Local Network Scan</source>
+  <target>Lokale netwerkscan</target>
+</trans-unit>
+<trans-unit id="s1993a85877e9873c">
+  <source>seen <x id="0" equiv-text="${this.secondsAgo(offer.lastSeen)}"/>s ago</source>
+  <target><x id="0" equiv-text="${this.secondsAgo(offer.lastSeen)}"/>s geleden gezien</target>
+</trans-unit>
+<trans-unit id="s9265b4d3d8a32c33">
+  <source>Use Invitation</source>
+  <target>Uitnodiging gebruiken</target>
+</trans-unit>
+<trans-unit id="s65466b58996b7efe">
+  <source>Invitation</source>
+  <target>Uitnodiging</target>
+</trans-unit>
+<trans-unit id="sa93f553e92ea609a">
+  <source>You are announced on this network as</source>
+  <target>Je bent op dit netwerk aangekondigd als</target>
+</trans-unit>
+<trans-unit id="sc2f4d0e526a6642a">
+  <source>Announce Myself</source>
+  <target>Mezelf aankondigen</target>
+</trans-unit>
+<trans-unit id="s2072b414bfad9c88">
+  <source>You have been invited to</source>
+  <target>Je bent uitgenodigd voor</target>
+</trans-unit>
+<trans-unit id="s1379be55894c79ed">
+  <source>No invite was sent — a selected name may have just become ambiguous. Ask them to start again.</source>
+  <target>Er is geen uitnodiging verstuurd — een geselecteerde naam is misschien net dubbelzinnig geworden. Vraag ze opnieuw te beginnen.</target>
+</trans-unit>
+<trans-unit id="sf48048f9784a8124">
+  <source>Let people join on their own</source>
+  <target>Mensen zelf laten meedoen</target>
+</trans-unit>
+<trans-unit id="s8c2b2d3f709af64e">
+  <source>Admit people yourself</source>
+  <target>Zelf mensen toelaten</target>
+</trans-unit>
+<trans-unit id="s5c1513edb89970fb">
+  <source>Ask people to announce themselves.</source>
+  <target>Vraag mensen zich aan te kondigen.</target>
+</trans-unit>
+<trans-unit id="s2470a123452c0e6a">
+  <source>Nobody is announcing themselves currently.</source>
+  <target>Op dit moment kondigt niemand zich aan.</target>
+</trans-unit>
+<trans-unit id="s96efe6c3124479ce">
+  <source>Invite sent</source>
+  <target>Uitnodiging verstuurd</target>
+</trans-unit>
+<trans-unit id="s6b6b60a387cd2bf8">
+  <source>Send Invite</source>
+  <target>Uitnodiging versturen</target>
+</trans-unit>
+<trans-unit id="sf6ad9ebbb41ab17e">
+  <source>Local Network</source>
+  <target>Lokaal netwerk</target>
+</trans-unit>
+<trans-unit id="s7d96ecbd48dfb33f">
+  <source>Start a Group</source>
+  <target>Groep starten</target>
+</trans-unit>
+<trans-unit id="s75f4d7f6f8c9d0a4">
+  <source>I want to join a group on the local network</source>
+  <target>Ik wil lid worden van een groep op het lokale netwerk</target>
+</trans-unit>
+<trans-unit id="s744b1ac4e27c20de">
+  <source>Tell the person adding you this name, so they can add you to the group.</source>
+  <target>Geef deze naam door aan degene die je toevoegt, zodat die je aan de groep kan toevoegen.</target>
+</trans-unit>
+<trans-unit id="sbddd8b1c272af3e8">
+  <source>Listed Groups</source>
+  <target>Vermelde groepen</target>
+</trans-unit>
+<trans-unit id="s9e11be547aa1db5d">
+  <source>Unlisted Groups</source>
+  <target>Niet-vermelde groepen</target>
+</trans-unit>
+<trans-unit id="s4fcf92ebb98ef1c4">
+  <source>If someone in an unlisted group is adding you, announce yourself here and tell them the name that appears.</source>
+  <target>Als iemand uit een niet-vermelde groep je toevoegt, kondig jezelf hier aan en geef de getoonde naam door.</target>
+</trans-unit>
+<trans-unit id="s4c0642ad128f2bd5">
+  <source>Listing this group on the local network</source>
+  <target>Deze groep wordt vermeld op het lokale netwerk</target>
+</trans-unit>
+<trans-unit id="s6af7d7a8ea6dbbda">
+  <source>auto-stopping listing in <x id="0" equiv-text="${this.remaining}"/></source>
+  <target>vermelding stopt automatisch over <x id="0" equiv-text="${this.remaining}"/></target>
+</trans-unit>
+<trans-unit id="s1361b85868b07f4a">
+  <source>List Group</source>
+  <target>Groep vermelden</target>
+</trans-unit>
+<trans-unit id="s44c63095bdf6ece5">
+  <source>While listing, anyone on this network can join the group.</source>
+  <target>Tijdens het vermelden kan iedereen op dit netwerk lid worden van de groep.</target>
+</trans-unit>
+<trans-unit id="s245dad45a65c3fe0">
+  <source>You are no longer announcing yourself on this network.</source>
+  <target>Je kondigt jezelf niet meer aan op dit netwerk.</target>
+</trans-unit>
+<trans-unit id="s7b25cd71849bf7c8">
+  <source>This group is no longer listed on the local network.</source>
+  <target>Deze groep staat niet meer vermeld op het lokale netwerk.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

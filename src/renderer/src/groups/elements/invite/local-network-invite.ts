@@ -138,7 +138,7 @@ export class LocalNetworkInvite extends LitElement {
           ${this._offering.value
             ? html`
                 <div class="row broadcasting">
-                  <span>${msg('Announcing this group on the local network')}</span>
+                  <span>${msg('Listing this group on the local network')}</span>
                   <button
                     class="moss-button-secondary stop"
                     @click=${() => this.session.stopOffer()}
@@ -147,7 +147,7 @@ export class LocalNetworkInvite extends LitElement {
                   </button>
                 </div>
                 <span class="countdown"
-                  >${msg(str`auto-stopping announcement in ${this.remaining}`)}</span
+                  >${msg(str`auto-stopping listing in ${this.remaining}`)}</span
                 >
               `
             : html`
@@ -156,10 +156,10 @@ export class LocalNetworkInvite extends LitElement {
                   @click=${() =>
                     this.session.offerGroup(this.groupName, this.inviteCode, ADVERTISE_WINDOW_MS)}
                 >
-                  ${msg('Announce Group')}
+                  ${msg('List Group')}
                 </button>
                 <span class="hint"
-                  >${msg('While this runs, anyone on this network can join the group.')}</span
+                  >${msg('While listing, anyone on this network can join the group.')}</span
                 >
               `}
         </div>

@@ -227,7 +227,7 @@ export class LocalNetworkJoin extends LitElement {
     const offers = this._offers.value ?? [];
     return html`
       <div class="column section">
-        <span class="section-title">${msg('Groups on this network')}</span>
+        <span class="section-title">${msg('Listed Groups')}</span>
         ${offers.length
           ? offers.map((offer) => this.renderOffer(offer))
           : this.settled
@@ -247,7 +247,7 @@ export class LocalNetworkJoin extends LitElement {
           <span>${msg('You are announced on this network as')}</span>
           <span class="name">${name}</span>
           <span class="hint"
-            >${msg('Tell the person adding you this name, so they pick the right one.')}</span
+            >${msg('Tell the person adding you this name, so they can add you to the group.')}</span
           >
           <span class="hint">${msg('Visible for')} <strong>${this.remaining}</strong></span>
           <button class="moss-button-secondary" @click=${() => this.session.stopIntent()}>
@@ -259,10 +259,10 @@ export class LocalNetworkJoin extends LitElement {
 
     return html`
       <div class="column section" style="align-items: flex-start;">
-        <span class="section-title">${msg('Being added by a member')}</span>
+        <span class="section-title">${msg('Unlisted Groups')}</span>
         <span class="hint"
           >${msg(
-            'If someone in the group is adding you, announce yourself here and tell them the name that appears.',
+            'If someone in an unlisted group is adding you, announce yourself here and tell them the name that appears.',
           )}</span
         >
         <button
