@@ -36,6 +36,7 @@ import './cell-details.js';
 import './app-debugging-details.js';
 import './memory-chart.js';
 
+import { createLanBeaconProbe, type LanBeaconReading } from './lan-beacon-probe.js';
 import { mossStoreContext } from '../../context.js';
 import { MossStore, ZomeCallCounts } from '../../moss-store.js';
 import { mossStyles } from '../../shared-styles.js';
@@ -387,6 +388,16 @@ export class DebuggingPanel extends LitElement {
   // Cache: DnaHashB64 -> cell/role name (resolved from appInfo)
   private _dnaNameCache: Record<DnaHashB64, string> = {};
 
+  @state()
+  private _lanBeacon: LanBeaconReading | undefined;
+
+  private _lanProbe = createLanBeaconProbe({
+    api: window.electronAPI,
+    onReading: (reading) => {
+      this._lanBeacon = reading;
+    },
+  });
+
   // True while the panel is actually visible to the user. The panel stays
   // mounted in the DOM when its tab is unselected or the asset viewer is
   // collapsed, so disconnectedCallback alone isn't enough to stop polling —
@@ -418,6 +429,7 @@ export class DebuggingPanel extends LitElement {
       intervalMs: 2000,
       runImmediately: false,
     });
+    await this._lanProbe.start();
     // populate group app ids
     const groupDnaHashes = await toPromise(this._mossStore.groupsDnaHashes);
     await Promise.all(
@@ -453,6 +465,7 @@ export class DebuggingPanel extends LitElement {
       this._conductorMemoryPollInterval.cancel();
       this._conductorMemoryPollInterval = undefined;
     }
+    this._lanProbe.stop();
   }
 
   async pollMemory() {
@@ -1808,6 +1821,21 @@ export class DebuggingPanel extends LitElement {
               <div id="relay-result" style="display:none; margin-left:5px;"></div>
             </dd>
           </dl>
+        </div>
+        <div class="row" style="margin-bottom: 10px; display: flex; flex-direction: column;">
+          <h3 style="margin-bottom: 5px;">LAN Invite Beacon</h3>
+          ${(() => {
+            const lan = this._lanBeacon;
+            return lan
+              ? html`<div>
+                  <div>LAN beacon socket bound: ${lan.bound}</div>
+                  <div>Interfaces joined: ${lan.interfaces.join(', ') || 'none'}</div>
+                  <div>Advertising: ${lan.advertising}</div>
+                  <div>Beacons sent: ${lan.sent}</div>
+                  <div>Datagrams received: ${lan.received} — dropped: ${lan.dropped}</div>
+                </div>`
+              : html`<div>LAN beacon: not started</div>`;
+          })()}
         </div>
         ${this.renderMemorySection()} ${this.renderConductorMemorySection()}
         <div class="row items-center" style="margin-bottom: 10px;">
