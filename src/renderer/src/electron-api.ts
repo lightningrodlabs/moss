@@ -271,6 +271,29 @@ declare global {
       ) => Promise<{ uiSha256: string; happSha256: string; happHashMatch: boolean }>;
       clearDevUiOverride: (appId: string) => Promise<void>;
       getDevUiOverride: (appId: string) => Promise<{ active: boolean; uiSha256?: string }>;
+      lanBeaconSetListening: (listening: boolean) => Promise<void>;
+      lanBeaconStartAdvertising: (
+        payload: Uint8Array,
+        durationMs: number,
+      ) => Promise<number | undefined>;
+      lanBeaconSetHello: (payload: Uint8Array) => Promise<void>;
+      lanBeaconStopAdvertising: (id?: number) => Promise<void>;
+      lanBeaconUnicast: (payload: Uint8Array, address: string, port: number) => Promise<void>;
+      lanBeaconDiagnostics: () => Promise<{
+        bound: boolean;
+        interfaces: string[];
+        advertising: boolean;
+        advertisementId: number | undefined;
+        sent: number;
+        received: number;
+        dropped: number;
+      }>;
+      onLanBeaconDatagram: (
+        callback: (
+          e: unknown,
+          payload: { bytes: Uint8Array; address: string; port: number },
+        ) => unknown,
+      ) => void;
     };
     __ZOME_CALL_LOGGING_ENABLED__: boolean;
   }

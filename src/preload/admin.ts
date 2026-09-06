@@ -229,6 +229,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('set-dev-ui-override', appId, webhappPath),
   clearDevUiOverride: (appId: string) => ipcRenderer.invoke('clear-dev-ui-override', appId),
   getDevUiOverride: (appId: string) => ipcRenderer.invoke('get-dev-ui-override', appId),
+  lanBeaconSetListening: (listening: boolean) =>
+    ipcRenderer.invoke('lan-beacon-set-listening', listening),
+  lanBeaconStartAdvertising: (payload: Uint8Array, durationMs: number) =>
+    ipcRenderer.invoke('lan-beacon-start-advertising', payload, durationMs),
+  lanBeaconSetHello: (payload: Uint8Array) => ipcRenderer.invoke('lan-beacon-set-hello', payload),
+  lanBeaconStopAdvertising: (id?: number) => ipcRenderer.invoke('lan-beacon-stop-advertising', id),
+  lanBeaconUnicast: (payload: Uint8Array, address: string, port: number) =>
+    ipcRenderer.invoke('lan-beacon-unicast', payload, address, port),
+  lanBeaconDiagnostics: () => ipcRenderer.invoke('lan-beacon-diagnostics'),
+  onLanBeaconDatagram: (
+    callback: (
+      e: Electron.IpcRendererEvent,
+      payload: { bytes: Uint8Array; address: string; port: number },
+    ) => unknown,
+  ) => ipcRenderer.on('lan-beacon-datagram', callback),
 });
 
 declare global {
