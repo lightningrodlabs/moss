@@ -169,6 +169,14 @@ export class LocalNetworkJoin extends LitElement {
     );
   }
 
+  /**
+   * Whether this computer is currently announcing itself. The host reads it to
+   * warn that closing will stop it.
+   */
+  get announcing(): boolean {
+    return this._intending.value !== undefined;
+  }
+
   /** Whole seconds since a beacon for this entry last arrived. */
   private secondsAgo(lastSeen: number): number {
     return Math.max(0, Math.round((Date.now() - lastSeen) / 1000));
@@ -304,6 +312,11 @@ export class LocalNetworkJoin extends LitElement {
     css`
       :host {
         display: block;
+      }
+      /* Hidden while another tab is showing, but still mounted: the session
+         lives with the dialog, not with whichever tab is in front. */
+      :host([hidden]) {
+        display: none;
       }
       .section {
         gap: 8px;

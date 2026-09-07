@@ -103,6 +103,11 @@ export class LocalNetworkInvite extends LitElement {
     this.selected = next;
   }
 
+  /** Whether this group is currently listed. The host reads it to warn on close. */
+  get listing(): boolean {
+    return this._offering.value !== undefined;
+  }
+
   private async admit(): Promise<void> {
     const sids = [...this.selected];
     const admitted = await this.session.admit(sids, this.inviteCode, this.groupName);
@@ -214,6 +219,9 @@ export class LocalNetworkInvite extends LitElement {
     css`
       :host {
         display: block;
+      }
+      :host([hidden]) {
+        display: none;
       }
       .intent {
         align-items: center;

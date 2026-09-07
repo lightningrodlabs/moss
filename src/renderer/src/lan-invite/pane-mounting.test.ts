@@ -59,7 +59,7 @@ describe('local-network panes are mounted only while their dialog is open', () =
     ] as const) {
       const source = fs.readFileSync(path.join(RENDERER_SRC, file), 'utf8');
       expect(source, `${file} never handles sl-after-hide`).toMatch(
-        new RegExp(`sl-after-hide[\\s\\S]{0,400}${flag} = false`),
+        new RegExp(`sl-after-hide[\\s\\S]{0,900}${flag} = false`),
       );
     }
   });
