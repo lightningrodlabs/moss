@@ -9,6 +9,8 @@ import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
 
 import {
   allLocales,
+  getLocale,
+  isSupportedLocale,
   LANGUAGE_FLAGS,
   LANGUAGE_NAMES,
   setLocale,
@@ -34,10 +36,12 @@ export class LanguagePicker extends LitElement {
   private locale: SupportedLocale = 'en';
 
   firstUpdated(): void {
-    const stored = this.persistedStore.locale.value();
-    if (stored && (allLocales as readonly string[]).includes(stored)) {
-      this.locale = stored as SupportedLocale;
-    }
+    // The locale in force, not the stored preference. On a first launch there
+    // is no stored preference and index.html has already fallen back to the
+    // system language, so reading the preference would show a flag for a
+    // language the interface is not actually in.
+    const active = getLocale();
+    if (isSupportedLocale(active)) this.locale = active;
   }
 
   private async choose(locale: SupportedLocale): Promise<void> {
