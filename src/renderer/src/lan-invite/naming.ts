@@ -1,7 +1,7 @@
-import { WORDLIST } from './wordlist.js';
+import { ADJECTIVES, NOUNS } from './wordlist.js';
 
-const WORD_COUNT = 2;
-const BITS_PER_WORD = 11;
+/** Each list holds 2^8 words, so a name is one byte of digest per half. */
+const BITS_PER_WORD = 8;
 
 /**
  * The name two people say to each other to agree on which beacon is whose.
@@ -22,11 +22,9 @@ export async function nameFromPublicKey(rawPublicKey: Uint8Array): Promise<strin
   const digest = new Uint8Array(
     await crypto.subtle.digest('SHA-256', new Uint8Array(rawPublicKey)),
   );
-  const words: string[] = [];
-  for (let i = 0; i < WORD_COUNT; i++) {
-    words.push(WORDLIST[wordIndex(digest, i * BITS_PER_WORD)]);
-  }
-  return words.map(capitalise).join(' ');
+  const adjective = ADJECTIVES[wordIndex(digest, 0)];
+  const noun = NOUNS[wordIndex(digest, BITS_PER_WORD)];
+  return `${capitalise(adjective)} ${capitalise(noun)}`;
 }
 
 /** Reads `BITS_PER_WORD` bits out of the digest starting at `bitOffset`. */
