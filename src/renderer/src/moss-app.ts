@@ -24,6 +24,7 @@ import { defaultIcons } from './ui/defaultIcons.js';
 // import { GroupProfile } from '@theweave/api';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 import './app/dialogs/local-network-join.js';
+import './ui/language-picker.js';
 import { partialModifiersFromInviteString } from '@theweave/utils';
 import { inviteErrorMessage } from './invite-error.js';
 import { notifyError } from '@holochain-open-dev/elements';
@@ -796,16 +797,18 @@ export class MossApp extends LitElement {
           <div class="setup-card-body column">${this.setupBody()}</div>
         </div>
 
-        <button
-          @click=${() => {
-            window.localStorage.removeItem('isFirstLaunch');
-            this.state = MossAppState.Running;
-          }}
-          class="skip-button"
-          style="margin-top: 16px;"
-        >
-          ${msg('Skip Setup')}
-        </button>
+        <div class="row items-center" style="margin-top: 16px; gap: 12px;">
+          <button
+            @click=${() => {
+              window.localStorage.removeItem('isFirstLaunch');
+              this.state = MossAppState.Running;
+            }}
+            class="skip-button"
+          >
+            ${msg('Skip Setup')}
+          </button>
+          <language-picker></language-picker>
+        </div>
       </div>
     `;
   }
