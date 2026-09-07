@@ -807,7 +807,15 @@ export class MossApp extends LitElement {
           >
             ${msg('Skip Setup')}
           </button>
-          <language-picker></language-picker>
+          <language-picker
+            @locale-changed=${() => {
+              // @localized() should redraw this page on its own when the locale
+              // changes. Asking for it explicitly costs nothing and means the
+              // page cannot be left in the old language if that subscription
+              // ever misses.
+              this.requestUpdate();
+            }}
+          ></language-picker>
         </div>
       </div>
     `;
