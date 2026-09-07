@@ -15,7 +15,7 @@
 - Strong typing everywhere; no `any` in new code.
 - Zero additional stored data: the provider serves from `happs/<sha>.happ`, `uis/<sha>/assets/**` and `tools/<id>/icon` only.
 - No group DNA change; only the `GroupRemoteSignal` union grows.
-- Chunk size 512 KiB; requester window 4; offer timeout 10 s; chunk timeout 15 s; 3 attempts per chunk; manifest total cap 200 MB.
+- Chunk size 4 MiB (512 KiB until the 2026-09-07 measurement); requester window 4; offer timeout 10 s; chunk timeout 15 s; 3 attempts per chunk; manifest total cap 200 MB.
 - All user-facing strings through `msg()` with translations for de, fr, es, tr, it, pt, ja, nl.
 - Comments explain intent, never contrast with prior behavior.
 - Commit messages carry no co-author or generated-by trailers.

@@ -1,12 +1,12 @@
 # Peer tool transfer: installing a group's Tools from other members
 
 Status: implemented 2026-09-03 on branch `feat/peer-tool-transfer` (all tasks in
-`plans/peer-tool-transfer-plan.md` except the manual two-agent run). Verified by
-unit tests, an in-memory end-to-end test that drives the real main-process
-reader/writer through the real requester and provider, `yarn typecheck`, and
-`yarn build`. Not yet verified: a live two-agent transfer over Holochain remote
-signals, and the real remote-signal payload ceiling (chunk size stays at
-512 KiB until measured). See "Manual verification" below.
+`plans/peer-tool-transfer-plan.md`). Verified by unit tests, an in-memory
+end-to-end test that drives the real main-process reader/writer through the
+real requester and provider, `yarn typecheck`, `yarn build`, and a live
+two-agent transfer over Holochain remote signals (2026-09-07: `emergence`,
+2.8 MB happ and 8.1 MB webhapp, with 4 MiB chunks). See "Manual verification"
+below.
 
 ## Problem
 
@@ -120,8 +120,11 @@ Nothing is concatenated on disk; the provider reads only the ranges a chunk
 needs. UI files are listed sorted by their relative path so that the provider
 can rebuild the identical manifest for every chunk request without caching.
 
-Initial `chunkSize` is 512 KiB. Measure the actual remote-signal ceiling during
-implementation and raise it if the transport allows.
+`chunkSize` is 4 MiB (`TOOL_TRANSFER_CHUNK_SIZE`), the largest value verified
+over Holochain remote signals: a 2026-09-07 transfer of `emergence` (2.8 MB
+happ, 8.1 MB webhapp) completed with it. Implementation ran at 512 KiB until
+that measurement. Nothing above 4 MiB has been tried, so this is a verified
+value, not a measured ceiling.
 
 ### Requester algorithm (renderer, `ToolTransferRequester`)
 
@@ -266,7 +269,7 @@ eight target locales.
 - `src/main/filesystem.ts`: `deriveAppAssetsInfo` accepts an asset source.
 - `src/renderer/xliff/*.xlf` and generated locale modules.
 
-## Manual verification (still to do)
+## Manual verification
 
 Two agents on one machine are enough. Agent 1 installs a Tool from a real
 developer-collective tool list while online. Agent 2 joins the group, sees the
@@ -276,9 +279,9 @@ The cheapest way to cut only agent 2's HTTP without touching its Holochain
 traffic is a dead proxy for its Chromium network stack: launch agent 2's
 Electron with `--proxy-server=127.0.0.1:9`. Both renderer `fetch` and main's
 `net.fetch` go through Chromium and fail fast; the holochain subprocess does
-not use the proxy, so the two conductors still talk. This recipe has not been
-exercised yet; if the flag does not reach Electron through electron-vite, pull
-the machine's network cable after both agents show each other online instead.
+not use the proxy, so the two conductors still talk. The proxy flag is
+untested; if it does not reach Electron through electron-vite, pull the
+machine's network cable after both agents show each other online instead.
 
 Before activating: the applet card must appear in the group home as soon as
 gossip has delivered the Applet entry (polled every 10 s), with the library
@@ -289,8 +292,11 @@ test 2026-09-03: both stalled for the DNS/connect timeout).
 Expected on agent 2 beneath the Activate button: library download, then
 "Tool library unreachable…", then "Requesting Tool from <agent 1>…", then a
 progress bar, then "Installing…", then the "Tool installed." toast, and the
-Tool opens. Then repeat with `TOOL_TRANSFER_CHUNK_SIZE` raised (for example to
-4 MiB) to find the remote-signal ceiling, and record it here.
+Tool opens.
+
+Result: done 2026-09-07 on two machines running the mDNS field-test build,
+transferring `emergence` (2.8 MB happ, 8.1 MB webhapp) with
+`TOOL_TRANSFER_CHUNK_SIZE` at 4 MiB. That value is now the default.
 
 ## Testing
 
