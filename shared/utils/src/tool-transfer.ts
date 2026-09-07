@@ -1,6 +1,10 @@
 import { ToolTransferManifest } from '@theweave/moss-types';
 
-export const TOOL_TRANSFER_CHUNK_SIZE = 512 * 1024;
+// 4 MiB is the largest chunk verified end to end over Holochain remote signals
+// (a 2.8 MB happ plus its UI, 2026-09). Both ends of a transfer must agree: the
+// provider builds its manifest with this size and the requester refuses an
+// offer that names another, so every build must carry the same value.
+export const TOOL_TRANSFER_CHUNK_SIZE = 4 * 1024 * 1024;
 export const TOOL_TRANSFER_MAX_TOTAL_BYTES = 200 * 1024 * 1024;
 
 export type StreamSegment = { kind: 'happ' } | { kind: 'file'; path: string };
