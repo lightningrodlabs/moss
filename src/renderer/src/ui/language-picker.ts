@@ -1,6 +1,7 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
+import { notify } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
 import '@shoelace-style/shoelace/dist/components/menu/menu.js';
@@ -46,6 +47,7 @@ export class LanguagePicker extends LitElement {
       await setLocale(locale);
     } catch (e) {
       console.error('Failed to set locale:', e);
+      notify(msg('Failed to change language.'));
       return;
     }
     this.dispatchEvent(
@@ -64,10 +66,12 @@ export class LanguagePicker extends LitElement {
         >
           ${LANGUAGE_FLAGS[this.locale]}
         </button>
-        <sl-menu>
+        <sl-menu
+          @sl-select=${(e: CustomEvent) => this.choose(e.detail.item.value as SupportedLocale)}
+        >
           ${allLocales.map(
             (locale) => html`
-              <sl-menu-item ?checked=${locale === this.locale} @click=${() => this.choose(locale)}>
+              <sl-menu-item value=${locale} type="checkbox" ?checked=${locale === this.locale}>
                 ${LANGUAGE_FLAGS[locale]} ${LANGUAGE_NAMES[locale]}
               </sl-menu-item>
             `,
