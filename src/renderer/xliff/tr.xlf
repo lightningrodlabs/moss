@@ -546,21 +546,9 @@
   <source>Error fetching the custom views</source>
   <target>Özel görünümler alınırken hata</target>
 </trans-unit>
-<trans-unit id="s9b21b1ade9a93f3b">
-  <source>Error creating the custom view</source>
-  <target>Özel görünüm oluşturulurken hata</target>
-</trans-unit>
 <trans-unit id="sad75043f72f63552">
   <source>Custom View Name</source>
   <target>Özel Görünüm Adı</target>
-</trans-unit>
-<trans-unit id="s57d1286dd70605a5">
-  <source>Create Custom View</source>
-  <target>Özel Görünüm Oluştur</target>
-</trans-unit>
-<trans-unit id="s55797f0c2b3b37a0">
-  <source>Error fetching the blocks for this group</source>
-  <target>Bu grubun blokları alınırken hata</target>
 </trans-unit>
 <trans-unit id="s3111a346bb42ba2a">
   <source>Error updating the custom view</source>
@@ -2642,6 +2630,250 @@ starts now</source>
 <trans-unit id="s63f2ae9fc0f5f2e6">
   <source>This link was created by Moss <x id="0" equiv-text="${foundVersion}"/> and points to content Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> cannot open. Open it in Moss <x id="2" equiv-text="${foundVersion}"/>.</source>
   <target>Bu bağlantı Moss <x id="0" equiv-text="${foundVersion}"/> tarafından oluşturuldu ve Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> sürümünün açamayacağı içeriğe işaret ediyor. Moss <x id="2" equiv-text="${foundVersion}"/> ile açın.</target>
+</trans-unit>
+<trans-unit id="s6a6bfaa591000ddf">
+  <source>Downloading from the tool library…</source>
+  <target>Araç kitaplığından indiriliyor…</target>
+</trans-unit>
+<trans-unit id="sd6607463accdcb14">
+  <source>Tool library unreachable. Looking for group members who have this Tool…</source>
+  <target>Araç kitaplığına ulaşılamıyor. Bu araca sahip grup üyeleri aranıyor…</target>
+</trans-unit>
+<trans-unit id="s9c6afced36071fdf">
+  <source>Looking for group members who have this Tool…</source>
+  <target>Bu araca sahip grup üyeleri aranıyor…</target>
+</trans-unit>
+<trans-unit id="s4726647ef1c65574">
+  <source>No online group member has this Tool.</source>
+  <target>Çevrimiçi hiçbir grup üyesinde bu araç yok.</target>
+</trans-unit>
+<trans-unit id="s357ea71ff9c644e0">
+  <source>Requesting Tool from <x id="0" equiv-text="${name}"/>…</source>
+  <target>Araç <x id="0" equiv-text="${name}"/> kişisinden isteniyor…</target>
+</trans-unit>
+<trans-unit id="s83260653bcf91fc9">
+  <source>Receiving from <x id="0" equiv-text="${name}"/>…</source>
+  <target><x id="0" equiv-text="${name}"/> kişisinden alınıyor…</target>
+</trans-unit>
+<trans-unit id="s665341cbbc550bc0">
+  <source>Transfer from <x id="0" equiv-text="${name}"/> failed. Trying the next member…</source>
+  <target><x id="0" equiv-text="${name}"/> kişisinden aktarım başarısız oldu. Sonraki üye deneniyor…</target>
+</trans-unit>
+<trans-unit id="s954986670870010a">
+  <source>Installing…</source>
+  <target>Yükleniyor…</target>
+</trans-unit>
+<trans-unit id="s5bef5fe0927d40c4">
+  <source>Installation failed.</source>
+  <target>Yükleme başarısız oldu.</target>
+</trans-unit>
+<trans-unit id="s81a2bbcbcbd48c75">
+  <source>unknown Tool</source>
+  <target>bilinmeyen araç</target>
+</trans-unit>
+<trans-unit id="s806a286e5e7162db">
+  <source>Using the copy already on this computer…</source>
+  <target>Bu bilgisayarda zaten bulunan kopya kullanılıyor…</target>
+</trans-unit>
+<trans-unit id="s4d3f766e12322a7d">
+  <source>Looking up Tool details…</source>
+  <target>Araç ayrıntıları aranıyor…</target>
+</trans-unit>
+<trans-unit id="s9ac726b2f8f057a7">
+  <source>Tool library unavailable — showing the details this group has.</source>
+  <target>Araç kitaplığı kullanılamıyor — bu grubun sahip olduğu bilgiler gösteriliyor.</target>
+</trans-unit>
+<trans-unit id="sb9b472448ad4baf5">
+  <source>On this computer</source>
+  <target>Bu bilgisayarda</target>
+</trans-unit>
+<trans-unit id="sf64f5ebf325b6b15">
+  <source>on this computer</source>
+  <target>bu bilgisayarda</target>
+</trans-unit>
+<trans-unit id="sb1f4c2480652efaf">
+  <source>Offered because it is installed on this computer. No curation list offers it.</source>
+  <target>Bu bilgisayarda kurulu olduğu için sunuluyor. Hiçbir derleme listesi onu sunmuyor.</target>
+</trans-unit>
+<trans-unit id="s964e40feacd6905e">
+  <source>Offered because it is installed on this computer. The tool library is unavailable, so it cannot be checked against a curation list.</source>
+  <target>Bu bilgisayarda kurulu olduğu için sunuluyor. Araç kitaplığı kullanılamadığından bir derleme listesiyle karşılaştırılamıyor.</target>
+</trans-unit>
+<trans-unit id="sc26825262c847fa5">
+  <source>Only on this computer</source>
+  <target>Yalnızca bu bilgisayarda</target>
+</trans-unit>
+<trans-unit id="sa60442ebb9f76461">
+  <source>Already on this computer, so installing it needs no download.</source>
+  <target>Zaten bu bilgisayarda, bu yüzden kurulum için indirme gerekmez.</target>
+</trans-unit>
+<trans-unit id="s4f73472b397d6c4a">
+  <source>The tool library is unavailable, and no Tools are installed on this computer yet.</source>
+  <target>Araç kitaplığı kullanılamıyor ve bu bilgisayarda henüz kurulu araç yok.</target>
+</trans-unit>
+<trans-unit id="s03ee935aee948c28">
+  <source>Details unavailable because this Tool is not in any curation list.</source>
+  <target>Bu araç hiçbir derleme listesinde olmadığı için ayrıntılar kullanılamıyor.</target>
+</trans-unit>
+<trans-unit id="sa6315e99a05e1c82">
+  <source>Details unavailable because the curation lists could not be loaded.</source>
+  <target>Derleme listeleri yüklenemediği için ayrıntılar kullanılamıyor.</target>
+</trans-unit>
+<trans-unit id="sd9ad53251f2330a5">
+  <source>Stop</source>
+  <target>Durdur</target>
+</trans-unit>
+<trans-unit id="sff4fe7fc56e5b224">
+  <source>Two groups are showing this name — ask which is which.</source>
+  <target>Bu adı gösteren iki grup var — hangisinin hangisi olduğunu sorun.</target>
+</trans-unit>
+<trans-unit id="s3dfc7829a2c51f7f">
+  <source>Invite sent to <x id="0" equiv-text="${admitted.length}"/> of <x id="1" equiv-text="${sids.length}"/>. The rest may have just become ambiguous — ask them to start again.</source>
+  <target><x id="1" equiv-text="${sids.length}"/> kişiden <x id="0" equiv-text="${admitted.length}"/> kişiye davet gönderildi. Kalanlar az önce belirsiz hale gelmiş olabilir — yeniden başlamalarını isteyin.</target>
+</trans-unit>
+<trans-unit id="sac319fa554b9562c">
+  <source>Invite sent over the local network.</source>
+  <target>Davet yerel ağ üzerinden gönderildi.</target>
+</trans-unit>
+<trans-unit id="s49732b4064dac3db">
+  <source>Two people are showing this name — ask one of them to start again.</source>
+  <target>Bu adı gösteren iki kişi var — birinden yeniden başlamasını isteyin.</target>
+</trans-unit>
+<trans-unit id="sa8a156adfa72e196">
+  <source>Visible for</source>
+  <target>Görünürlük süresi</target>
+</trans-unit>
+<trans-unit id="sc2b5b8f281fd3a60">
+  <source>No reply. This network may be blocking it — try again, or ask for an invite link.</source>
+  <target>Yanıt yok. Bu ağ engelliyor olabilir — tekrar dene ya da bir davet bağlantısı iste.</target>
+</trans-unit>
+<trans-unit id="s0674c894d663cc90">
+  <source>Request access</source>
+  <target>Erişim iste</target>
+</trans-unit>
+<trans-unit id="sd4e09fbf1d56c054">
+  <source>Looking for groups on this network…</source>
+  <target>Bu ağda gruplar aranıyor…</target>
+</trans-unit>
+<trans-unit id="sb1974522c98cd941">
+  <source>You are already in this group — opening it.</source>
+  <target>Bu gruptasın zaten — açılıyor.</target>
+</trans-unit>
+<trans-unit id="sfbb361265a8a03eb">
+  <source>None found</source>
+  <target>Bulunamadı</target>
+</trans-unit>
+<trans-unit id="s1ffad027e503cf09">
+  <source>Scan Local Network</source>
+  <target>Yerel ağı tara</target>
+</trans-unit>
+<trans-unit id="s200c2ff34504514f">
+  <source>Local Network Scan</source>
+  <target>Yerel ağ taraması</target>
+</trans-unit>
+<trans-unit id="s1993a85877e9873c">
+  <source>seen <x id="0" equiv-text="${this.secondsAgo(offer.lastSeen)}"/>s ago</source>
+  <target><x id="0" equiv-text="${this.secondsAgo(offer.lastSeen)}"/>s önce görüldü</target>
+</trans-unit>
+<trans-unit id="s9265b4d3d8a32c33">
+  <source>Use Invitation</source>
+  <target>Davet kullan</target>
+</trans-unit>
+<trans-unit id="s65466b58996b7efe">
+  <source>Invitation</source>
+  <target>Davet</target>
+</trans-unit>
+<trans-unit id="sa93f553e92ea609a">
+  <source>You are announced on this network as</source>
+  <target>Bu ağda şu adla duyuruluyorsun:</target>
+</trans-unit>
+<trans-unit id="sc2f4d0e526a6642a">
+  <source>Announce Myself</source>
+  <target>Kendimi duyur</target>
+</trans-unit>
+<trans-unit id="s2072b414bfad9c88">
+  <source>You have been invited to</source>
+  <target>Şuraya davet edildin:</target>
+</trans-unit>
+<trans-unit id="s1379be55894c79ed">
+  <source>No invite was sent — a selected name may have just become ambiguous. Ask them to start again.</source>
+  <target>Davet gönderilmedi — seçilen bir ad az önce belirsiz hâle gelmiş olabilir. Yeniden başlamalarını iste.</target>
+</trans-unit>
+<trans-unit id="sf48048f9784a8124">
+  <source>Let people join on their own</source>
+  <target>İnsanlar kendileri katılsın</target>
+</trans-unit>
+<trans-unit id="s8c2b2d3f709af64e">
+  <source>Admit people yourself</source>
+  <target>İnsanları kendin kabul et</target>
+</trans-unit>
+<trans-unit id="s5c1513edb89970fb">
+  <source>Ask people to announce themselves.</source>
+  <target>İnsanlardan kendilerini duyurmalarını iste.</target>
+</trans-unit>
+<trans-unit id="s2470a123452c0e6a">
+  <source>Nobody is announcing themselves currently.</source>
+  <target>Şu anda kimse kendini duyurmuyor.</target>
+</trans-unit>
+<trans-unit id="s96efe6c3124479ce">
+  <source>Invite sent</source>
+  <target>Davet gönderildi</target>
+</trans-unit>
+<trans-unit id="s6b6b60a387cd2bf8">
+  <source>Send Invite</source>
+  <target>Davet gönder</target>
+</trans-unit>
+<trans-unit id="sf6ad9ebbb41ab17e">
+  <source>Local Network</source>
+  <target>Yerel ağ</target>
+</trans-unit>
+<trans-unit id="s7d96ecbd48dfb33f">
+  <source>Start a Group</source>
+  <target>Grup oluştur</target>
+</trans-unit>
+<trans-unit id="s75f4d7f6f8c9d0a4">
+  <source>I want to join a group on the local network</source>
+  <target>Yerel ağdaki bir gruba katılmak istiyorum</target>
+</trans-unit>
+<trans-unit id="s744b1ac4e27c20de">
+  <source>Tell the person adding you this name, so they can add you to the group.</source>
+  <target>Seni ekleyen kişiye bu adı söyle ki seni gruba ekleyebilsin.</target>
+</trans-unit>
+<trans-unit id="sbddd8b1c272af3e8">
+  <source>Listed Groups</source>
+  <target>Listelenen gruplar</target>
+</trans-unit>
+<trans-unit id="s9e11be547aa1db5d">
+  <source>Unlisted Groups</source>
+  <target>Listelenmeyen gruplar</target>
+</trans-unit>
+<trans-unit id="s4fcf92ebb98ef1c4">
+  <source>If someone in an unlisted group is adding you, announce yourself here and tell them the name that appears.</source>
+  <target>Listelenmeyen bir gruptaki biri seni ekliyorsa, burada kendini duyur ve görünen adı ona söyle.</target>
+</trans-unit>
+<trans-unit id="s4c0642ad128f2bd5">
+  <source>Listing this group on the local network</source>
+  <target>Bu grup yerel ağda listeleniyor</target>
+</trans-unit>
+<trans-unit id="s6af7d7a8ea6dbbda">
+  <source>auto-stopping listing in <x id="0" equiv-text="${this.remaining}"/></source>
+  <target>listeleme şu süre sonra otomatik duracak: <x id="0" equiv-text="${this.remaining}"/></target>
+</trans-unit>
+<trans-unit id="s1361b85868b07f4a">
+  <source>List Group</source>
+  <target>Grubu listele</target>
+</trans-unit>
+<trans-unit id="s44c63095bdf6ece5">
+  <source>While listing, anyone on this network can join the group.</source>
+  <target>Listeleme sürerken bu ağdaki herkes gruba katılabilir.</target>
+</trans-unit>
+<trans-unit id="s245dad45a65c3fe0">
+  <source>You are no longer announcing yourself on this network.</source>
+  <target>Bu ağda artık kendini duyurmuyorsun.</target>
+</trans-unit>
+<trans-unit id="s7b25cd71849bf7c8">
+  <source>This group is no longer listed on the local network.</source>
+  <target>Bu grup artık yerel ağda listelenmiyor.</target>
 </trans-unit>
 </body>
 </file>

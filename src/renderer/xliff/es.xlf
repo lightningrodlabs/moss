@@ -546,21 +546,9 @@
   <source>Error fetching the custom views</source>
   <target>Error al obtener las vistas personalizadas</target>
 </trans-unit>
-<trans-unit id="s9b21b1ade9a93f3b">
-  <source>Error creating the custom view</source>
-  <target>Error al crear la vista personalizada</target>
-</trans-unit>
 <trans-unit id="sad75043f72f63552">
   <source>Custom View Name</source>
   <target>Nombre de vista personalizada</target>
-</trans-unit>
-<trans-unit id="s57d1286dd70605a5">
-  <source>Create Custom View</source>
-  <target>Crear vista personalizada</target>
-</trans-unit>
-<trans-unit id="s55797f0c2b3b37a0">
-  <source>Error fetching the blocks for this group</source>
-  <target>Error al obtener los bloques de este grupo</target>
 </trans-unit>
 <trans-unit id="s3111a346bb42ba2a">
   <source>Error updating the custom view</source>
@@ -2642,6 +2630,250 @@ comienza ahora</target>
 <trans-unit id="s63f2ae9fc0f5f2e6">
   <source>This link was created by Moss <x id="0" equiv-text="${foundVersion}"/> and points to content Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> cannot open. Open it in Moss <x id="2" equiv-text="${foundVersion}"/>.</source>
   <target>Este enlace fue creado por Moss <x id="0" equiv-text="${foundVersion}"/> y apunta a contenido que Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> no puede abrir. Ábrelo en Moss <x id="2" equiv-text="${foundVersion}"/>.</target>
+</trans-unit>
+<trans-unit id="s6a6bfaa591000ddf">
+  <source>Downloading from the tool library…</source>
+  <target>Descargando desde la biblioteca de herramientas…</target>
+</trans-unit>
+<trans-unit id="sd6607463accdcb14">
+  <source>Tool library unreachable. Looking for group members who have this Tool…</source>
+  <target>Biblioteca de herramientas inaccesible. Buscando miembros del grupo que tengan esta herramienta…</target>
+</trans-unit>
+<trans-unit id="s9c6afced36071fdf">
+  <source>Looking for group members who have this Tool…</source>
+  <target>Buscando miembros del grupo que tengan esta herramienta…</target>
+</trans-unit>
+<trans-unit id="s4726647ef1c65574">
+  <source>No online group member has this Tool.</source>
+  <target>Ningún miembro del grupo en línea tiene esta herramienta.</target>
+</trans-unit>
+<trans-unit id="s357ea71ff9c644e0">
+  <source>Requesting Tool from <x id="0" equiv-text="${name}"/>…</source>
+  <target>Solicitando la herramienta a <x id="0" equiv-text="${name}"/>…</target>
+</trans-unit>
+<trans-unit id="s83260653bcf91fc9">
+  <source>Receiving from <x id="0" equiv-text="${name}"/>…</source>
+  <target>Recibiendo de <x id="0" equiv-text="${name}"/>…</target>
+</trans-unit>
+<trans-unit id="s665341cbbc550bc0">
+  <source>Transfer from <x id="0" equiv-text="${name}"/> failed. Trying the next member…</source>
+  <target>Falló la transferencia desde <x id="0" equiv-text="${name}"/>. Probando con el siguiente miembro…</target>
+</trans-unit>
+<trans-unit id="s954986670870010a">
+  <source>Installing…</source>
+  <target>Instalando…</target>
+</trans-unit>
+<trans-unit id="s5bef5fe0927d40c4">
+  <source>Installation failed.</source>
+  <target>La instalación falló.</target>
+</trans-unit>
+<trans-unit id="s81a2bbcbcbd48c75">
+  <source>unknown Tool</source>
+  <target>herramienta desconocida</target>
+</trans-unit>
+<trans-unit id="s806a286e5e7162db">
+  <source>Using the copy already on this computer…</source>
+  <target>Usando la copia que ya está en este ordenador…</target>
+</trans-unit>
+<trans-unit id="s4d3f766e12322a7d">
+  <source>Looking up Tool details…</source>
+  <target>Buscando los detalles de la herramienta…</target>
+</trans-unit>
+<trans-unit id="s9ac726b2f8f057a7">
+  <source>Tool library unavailable — showing the details this group has.</source>
+  <target>Biblioteca de herramientas no disponible: se muestran los datos que tiene este grupo.</target>
+</trans-unit>
+<trans-unit id="sb9b472448ad4baf5">
+  <source>On this computer</source>
+  <target>En este ordenador</target>
+</trans-unit>
+<trans-unit id="sf64f5ebf325b6b15">
+  <source>on this computer</source>
+  <target>en este ordenador</target>
+</trans-unit>
+<trans-unit id="sb1f4c2480652efaf">
+  <source>Offered because it is installed on this computer. No curation list offers it.</source>
+  <target>Se ofrece porque está instalada en este ordenador. Ninguna lista de curación la ofrece.</target>
+</trans-unit>
+<trans-unit id="s964e40feacd6905e">
+  <source>Offered because it is installed on this computer. The tool library is unavailable, so it cannot be checked against a curation list.</source>
+  <target>Se ofrece porque está instalada en este ordenador. La biblioteca de herramientas no está disponible, así que no puede contrastarse con ninguna lista de curación.</target>
+</trans-unit>
+<trans-unit id="sc26825262c847fa5">
+  <source>Only on this computer</source>
+  <target>Solo en este ordenador</target>
+</trans-unit>
+<trans-unit id="sa60442ebb9f76461">
+  <source>Already on this computer, so installing it needs no download.</source>
+  <target>Ya está en este ordenador, así que instalarla no requiere ninguna descarga.</target>
+</trans-unit>
+<trans-unit id="s4f73472b397d6c4a">
+  <source>The tool library is unavailable, and no Tools are installed on this computer yet.</source>
+  <target>La biblioteca de herramientas no está disponible y todavía no hay herramientas instaladas en este ordenador.</target>
+</trans-unit>
+<trans-unit id="s03ee935aee948c28">
+  <source>Details unavailable because this Tool is not in any curation list.</source>
+  <target>Detalles no disponibles porque esta herramienta no figura en ninguna lista de curación.</target>
+</trans-unit>
+<trans-unit id="sa6315e99a05e1c82">
+  <source>Details unavailable because the curation lists could not be loaded.</source>
+  <target>Detalles no disponibles porque no se pudieron cargar las listas de curación.</target>
+</trans-unit>
+<trans-unit id="sd9ad53251f2330a5">
+  <source>Stop</source>
+  <target>Detener</target>
+</trans-unit>
+<trans-unit id="sff4fe7fc56e5b224">
+  <source>Two groups are showing this name — ask which is which.</source>
+  <target>Dos grupos muestran este nombre — pregunta cuál es cuál.</target>
+</trans-unit>
+<trans-unit id="s3dfc7829a2c51f7f">
+  <source>Invite sent to <x id="0" equiv-text="${admitted.length}"/> of <x id="1" equiv-text="${sids.length}"/>. The rest may have just become ambiguous — ask them to start again.</source>
+  <target>Invitación enviada a <x id="0" equiv-text="${admitted.length}"/> de <x id="1" equiv-text="${sids.length}"/>. Los demás pueden haberse vuelto ambiguos — pídeles que vuelvan a empezar.</target>
+</trans-unit>
+<trans-unit id="sac319fa554b9562c">
+  <source>Invite sent over the local network.</source>
+  <target>Invitación enviada por la red local.</target>
+</trans-unit>
+<trans-unit id="s49732b4064dac3db">
+  <source>Two people are showing this name — ask one of them to start again.</source>
+  <target>Dos personas muestran este nombre — pídele a una de ellas que vuelva a empezar.</target>
+</trans-unit>
+<trans-unit id="sa8a156adfa72e196">
+  <source>Visible for</source>
+  <target>Visible durante</target>
+</trans-unit>
+<trans-unit id="sc2b5b8f281fd3a60">
+  <source>No reply. This network may be blocking it — try again, or ask for an invite link.</source>
+  <target>Sin respuesta. Puede que esta red la esté bloqueando — inténtalo de nuevo o pide un enlace de invitación.</target>
+</trans-unit>
+<trans-unit id="s0674c894d663cc90">
+  <source>Request access</source>
+  <target>Solicitar acceso</target>
+</trans-unit>
+<trans-unit id="sd4e09fbf1d56c054">
+  <source>Looking for groups on this network…</source>
+  <target>Buscando grupos en esta red…</target>
+</trans-unit>
+<trans-unit id="sb1974522c98cd941">
+  <source>You are already in this group — opening it.</source>
+  <target>Ya estás en este grupo — abriéndolo.</target>
+</trans-unit>
+<trans-unit id="sfbb361265a8a03eb">
+  <source>None found</source>
+  <target>Ninguno encontrado</target>
+</trans-unit>
+<trans-unit id="s1ffad027e503cf09">
+  <source>Scan Local Network</source>
+  <target>Explorar la red local</target>
+</trans-unit>
+<trans-unit id="s200c2ff34504514f">
+  <source>Local Network Scan</source>
+  <target>Exploración de red local</target>
+</trans-unit>
+<trans-unit id="s1993a85877e9873c">
+  <source>seen <x id="0" equiv-text="${this.secondsAgo(offer.lastSeen)}"/>s ago</source>
+  <target>visto hace <x id="0" equiv-text="${this.secondsAgo(offer.lastSeen)}"/>s</target>
+</trans-unit>
+<trans-unit id="s9265b4d3d8a32c33">
+  <source>Use Invitation</source>
+  <target>Usar invitación</target>
+</trans-unit>
+<trans-unit id="s65466b58996b7efe">
+  <source>Invitation</source>
+  <target>Invitación</target>
+</trans-unit>
+<trans-unit id="sa93f553e92ea609a">
+  <source>You are announced on this network as</source>
+  <target>Estás anunciado en esta red como</target>
+</trans-unit>
+<trans-unit id="sc2f4d0e526a6642a">
+  <source>Announce Myself</source>
+  <target>Anunciarme</target>
+</trans-unit>
+<trans-unit id="s2072b414bfad9c88">
+  <source>You have been invited to</source>
+  <target>Has sido invitado a</target>
+</trans-unit>
+<trans-unit id="s1379be55894c79ed">
+  <source>No invite was sent — a selected name may have just become ambiguous. Ask them to start again.</source>
+  <target>No se envió ninguna invitación — puede que un nombre seleccionado se haya vuelto ambiguo. Pídeles que empiecen de nuevo.</target>
+</trans-unit>
+<trans-unit id="sf48048f9784a8124">
+  <source>Let people join on their own</source>
+  <target>Dejar que se unan por su cuenta</target>
+</trans-unit>
+<trans-unit id="s8c2b2d3f709af64e">
+  <source>Admit people yourself</source>
+  <target>Admitir personas tú mismo</target>
+</trans-unit>
+<trans-unit id="s5c1513edb89970fb">
+  <source>Ask people to announce themselves.</source>
+  <target>Pide a la gente que se anuncie.</target>
+</trans-unit>
+<trans-unit id="s2470a123452c0e6a">
+  <source>Nobody is announcing themselves currently.</source>
+  <target>Nadie se está anunciando ahora mismo.</target>
+</trans-unit>
+<trans-unit id="s96efe6c3124479ce">
+  <source>Invite sent</source>
+  <target>Invitación enviada</target>
+</trans-unit>
+<trans-unit id="s6b6b60a387cd2bf8">
+  <source>Send Invite</source>
+  <target>Enviar invitación</target>
+</trans-unit>
+<trans-unit id="sf6ad9ebbb41ab17e">
+  <source>Local Network</source>
+  <target>Red local</target>
+</trans-unit>
+<trans-unit id="s7d96ecbd48dfb33f">
+  <source>Start a Group</source>
+  <target>Crear un grupo</target>
+</trans-unit>
+<trans-unit id="s75f4d7f6f8c9d0a4">
+  <source>I want to join a group on the local network</source>
+  <target>Quiero unirme a un grupo en la red local</target>
+</trans-unit>
+<trans-unit id="s744b1ac4e27c20de">
+  <source>Tell the person adding you this name, so they can add you to the group.</source>
+  <target>Dile este nombre a la persona que te añade, para que pueda añadirte al grupo.</target>
+</trans-unit>
+<trans-unit id="sbddd8b1c272af3e8">
+  <source>Listed Groups</source>
+  <target>Grupos listados</target>
+</trans-unit>
+<trans-unit id="s9e11be547aa1db5d">
+  <source>Unlisted Groups</source>
+  <target>Grupos no listados</target>
+</trans-unit>
+<trans-unit id="s4fcf92ebb98ef1c4">
+  <source>If someone in an unlisted group is adding you, announce yourself here and tell them the name that appears.</source>
+  <target>Si alguien de un grupo no listado te está añadiendo, anúnciate aquí y dile el nombre que aparece.</target>
+</trans-unit>
+<trans-unit id="s4c0642ad128f2bd5">
+  <source>Listing this group on the local network</source>
+  <target>Este grupo se está listando en la red local</target>
+</trans-unit>
+<trans-unit id="s6af7d7a8ea6dbbda">
+  <source>auto-stopping listing in <x id="0" equiv-text="${this.remaining}"/></source>
+  <target>el listado se detiene automáticamente en <x id="0" equiv-text="${this.remaining}"/></target>
+</trans-unit>
+<trans-unit id="s1361b85868b07f4a">
+  <source>List Group</source>
+  <target>Listar grupo</target>
+</trans-unit>
+<trans-unit id="s44c63095bdf6ece5">
+  <source>While listing, anyone on this network can join the group.</source>
+  <target>Mientras se lista, cualquiera en esta red puede unirse al grupo.</target>
+</trans-unit>
+<trans-unit id="s245dad45a65c3fe0">
+  <source>You are no longer announcing yourself on this network.</source>
+  <target>Ya no te estás anunciando en esta red.</target>
+</trans-unit>
+<trans-unit id="s7b25cd71849bf7c8">
+  <source>This group is no longer listed on the local network.</source>
+  <target>Este grupo ya no está listado en la red local.</target>
 </trans-unit>
 </body>
 </file>

@@ -1,5 +1,6 @@
 import { validate as validateSemver } from 'compare-versions';
 import {
+  LocalToolInfo,
   DeveloperCollective,
   DeveloperCollectiveToolList,
   ToolCompatibilityId,
@@ -12,6 +13,8 @@ import { deriveToolCompatibilityId, toolCompatibilityIdFromDistInfoString } from
 import { ToolAndCurationInfo, ToolListUrl, UnifiedToolEntry } from '../types.js';
 import { groupToolsByBaseId, sortVersionsDescending } from '../utils.js';
 import { DevModeToolLibrary, MossStore } from '../moss-store.js';
+import { toolLibraryFetch } from './library-fetch.js';
+import { mergeLocalTools } from './local-tools.js';
 
 export const DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   {
@@ -37,6 +40,12 @@ export function activeToolCurationConfigs(mossStore: MossStore): ToolCurationCon
 }
 
 export type FetchedUnifiedTools = {
+  /**
+   * Whether the tool library answered while this list was built. It separates
+   * "no curation list offers this Tool" from "no curation list could be read",
+   * which read very differently to someone offline.
+   */
+  libraryReachable: boolean;
   unifiedTools: Map<string, UnifiedToolEntry>;
   availableTools: Record<ToolCompatibilityId, ToolAndCurationInfo>;
   developerCollectives: Record<ToolListUrl, DeveloperCollective>;
@@ -58,11 +67,21 @@ export async function fetchUnifiedTools(
     });
   }
 
+  // Tools this computer already holds are offered too, so a new group can be
+  // furnished with no curation list in reach. Failing to read them must not
+  // take the library view down with it.
+  let localTools: LocalToolInfo[] = [];
+  try {
+    localTools = await window.electronAPI.listLocalTools();
+  } catch (e) {
+    console.warn('Failed to list Tools already on this computer: ', e);
+  }
+
   const curationLists: { curator: ToolCurator; list: ToolCurationList }[] = [];
   await Promise.allSettled(
     toolCurationConfigs.map(async (config) => {
       try {
-        const resp = await fetch(config.url, { cache: 'no-cache' });
+        const resp = await toolLibraryFetch.fetch(config.url, { cache: 'no-cache' });
         const toolCurations: ToolCurations = await resp.json();
         config.useLists.forEach((listName) => {
           const relevantList = toolCurations.curationLists[listName];
@@ -92,7 +111,7 @@ export async function fetchUnifiedTools(
   await Promise.allSettled(
     distinctToolListUrls.map(async (url) => {
       try {
-        const resp = await fetch(url, { cache: 'no-cache' });
+        const resp = await toolLibraryFetch.fetch(url, { cache: 'no-cache' });
         const toolList: DeveloperCollectiveToolList = await resp.json();
         toolLists[url] = toolList;
         developerCollectives[url] = toolList.developerCollective;
@@ -146,9 +165,12 @@ export async function fetchUnifiedTools(
     });
   });
 
+  const withLocal = mergeLocalTools(allTools, localTools);
+
   return {
-    unifiedTools: groupToolsByBaseId(allTools),
-    availableTools: allTools,
+    libraryReachable: !toolLibraryFetch.isOffline(),
+    unifiedTools: groupToolsByBaseId(withLocal),
+    availableTools: withLocal,
     developerCollectives,
     curationLists,
   };

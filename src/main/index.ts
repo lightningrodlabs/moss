@@ -36,8 +36,17 @@ import {
   importLegacyProfileData,
   LegacyProfileInfo,
 } from './filesystem';
+import { listLocalTools } from './localTools';
+import {
+  readToolAssetsChunk,
+  readToolAssetsManifest,
+  toolAssetsPresent,
+  storeToolAssetsFromPeer,
+  ToolAssetDirs,
+} from './peerToolAssets';
 import { LAIR_BINARY } from './const';
 import { MOSS_CONFIG } from './mossConfig';
+import { createLanBeaconService, type BeaconDiagnostics } from './lanBeacon';
 // import { AdminWebsocket } from '@holochain/client';
 import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
 import { HolochainManager } from './holochainManager';
@@ -60,11 +69,15 @@ import { ConductorInfo, NetworkInfo, ToolWeaveConfig } from './sharedTypes';
 import {
   AppAssetsInfo,
   AppHashes,
+  AssetSource,
   DeveloperCollectiveToolList,
   DistributionInfo,
+  LocalToolInfo,
   ResourceLocation,
   ToolCompatibilityId,
   ToolInfoAndVersions,
+  ToolTransferManifest,
+  ToolTransferRequest,
   WeaveDevConfig,
   WEAVE_PROTOCOL_VERSION,
   WEAVE_URL_SCHEME,
@@ -534,6 +547,7 @@ if (!RUNNING_WITH_COMMAND) {
   let SYSTRAY: Tray | undefined = undefined;
   let isAppQuitting = false;
   let LOCAL_SERVICES_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
+  const LAN_BEACON = createLanBeaconService();
   // A custom --profile normally means the user wants a fresh, dedicated data
   // store, so we skip the legacy-import prompt. The exception is --fork: forking
   // imported seeds only makes sense as part of the import flow, so when --fork
@@ -2437,6 +2451,75 @@ if (!RUNNING_WITH_COMMAND) {
         return appInfo;
       },
     );
+    const toolAssetDirs = (): ToolAssetDirs => ({
+      happsDir: WE_FILE_SYSTEM.happsDir,
+      uisDir: WE_FILE_SYSTEM.uisDir,
+      toolsDir: WE_FILE_SYSTEM.toolsDir,
+    });
+    ipcMain.handle(
+      'read-tool-assets-manifest',
+      async (
+        _e,
+        request: ToolTransferRequest,
+        chunkSize: number,
+      ): Promise<ToolTransferManifest | undefined> =>
+        readToolAssetsManifest(toolAssetDirs(), request, chunkSize),
+    );
+    ipcMain.handle(
+      'list-local-tools',
+      async (): Promise<LocalToolInfo[]> =>
+        listLocalTools({ ...toolAssetDirs(), appsDir: WE_FILE_SYSTEM.appsDir }),
+    );
+    ipcMain.handle(
+      'are-tool-assets-present',
+      async (_e, request: ToolTransferRequest): Promise<boolean> =>
+        toolAssetsPresent(toolAssetDirs(), request),
+    );
+    ipcMain.handle(
+      'read-tool-assets-chunk',
+      async (
+        _e,
+        request: ToolTransferRequest,
+        index: number,
+        chunkSize: number,
+      ): Promise<Uint8Array> => readToolAssetsChunk(toolAssetDirs(), request, index, chunkSize),
+    );
+    ipcMain.handle(
+      'store-tool-assets-from-peer',
+      async (
+        _e,
+        manifest: ToolTransferManifest,
+        bytes: Uint8Array,
+        expected: ToolTransferRequest,
+      ): Promise<void> => storeToolAssetsFromPeer(toolAssetDirs(), manifest, bytes, expected),
+    );
+    ipcMain.handle('lan-beacon-set-listening', async (_e, listening: boolean): Promise<void> => {
+      await LAN_BEACON.setListening(listening, (bytes, address, port) => {
+        if (MAIN_WINDOW) emitToWindow(MAIN_WINDOW, 'lan-beacon-datagram', { bytes, address, port });
+      });
+    });
+    ipcMain.handle(
+      'lan-beacon-start-advertising',
+      async (_e, payload: Uint8Array, durationMs: number): Promise<number | undefined> =>
+        LAN_BEACON.startAdvertising(payload, durationMs),
+    );
+    ipcMain.handle(
+      'lan-beacon-set-hello',
+      async (_e, payload: Uint8Array): Promise<void> => LAN_BEACON.setHello(payload),
+    );
+    ipcMain.handle(
+      'lan-beacon-stop-advertising',
+      async (_e, id?: number): Promise<void> => LAN_BEACON.stopAdvertising(id),
+    );
+    ipcMain.handle(
+      'lan-beacon-unicast',
+      async (_e, payload: Uint8Array, address: string, port: number): Promise<void> =>
+        LAN_BEACON.unicast(payload, address, port),
+    );
+    ipcMain.handle(
+      'lan-beacon-diagnostics',
+      async (): Promise<BeaconDiagnostics> => LAN_BEACON.diagnostics(),
+    );
     ipcMain.handle('fetch-and-validate-happ-or-webhapp', async (_e, url: string): Promise<any> => {
       let byteArray;
       if (url.startsWith('file://')) {
@@ -2819,6 +2902,7 @@ if (!RUNNING_WITH_COMMAND) {
         appHashes: AppHashes,
         uiPort?: number,
         roles_settings?: RoleSettingsMap,
+        assetSource?: AssetSource,
       ): Promise<AppInfo> => {
         const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
         const alreadyInstalledAppInfo = apps.find((appInfo) => appInfo.installed_app_id === appId);
@@ -3008,6 +3092,7 @@ if (!RUNNING_WITH_COMMAND) {
           sha256Webhapp,
           sha256Ui,
           uiPort,
+          assetSource,
         );
         WE_FILE_SYSTEM.storeAppAssetsInfo(appId, appAssetsInfo);
 
@@ -3177,5 +3262,8 @@ if (!RUNNING_WITH_COMMAND) {
     if (LOCAL_SERVICES_HANDLE) {
       LOCAL_SERVICES_HANDLE.kill();
     }
+    // This handler is not async, and the app is already on its way out by the
+    // time it fires, so the socket close is best-effort rather than awaited.
+    void LAN_BEACON.shutdown();
   });
 }

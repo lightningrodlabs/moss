@@ -1,4 +1,6 @@
 import { css, html, LitElement } from 'lit';
+import { GroupStore } from '../../groups/group-store.js';
+import '../../groups/elements/applet-install-progress.js';
 import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg, str } from '@lit/localize';
 import { consume } from '@lit/context';
@@ -16,6 +18,7 @@ import {
   findUnifiedToolByCompatibilityId,
   resolveUnifiedToolForApplet,
 } from '../../tool-library/fetch-unified-tools.js';
+import { toolLibraryFetch } from '../../tool-library/library-fetch.js';
 import '../../ui/moss-dialog.js';
 import { MossDialog } from '../../ui/moss-dialog.js';
 import '../../tool-library/elements/library-tool-details.js';
@@ -61,6 +64,17 @@ export class ToolInfoDialog extends LitElement {
   @state()
   private _loading: boolean = false;
 
+  /** Bumped on every show() so a slow background lookup cannot decorate a later dialog. */
+  private _showToken = 0;
+
+  /**
+   * How the background tool-library lookup went. It separates "the library said
+   * this Tool is not curated" from "the library could not be reached", which
+   * read very differently to someone offline.
+   */
+  @state()
+  private _detailsLookup: 'pending' | 'done' | 'unavailable' = 'done';
+
   // When set, the dialog shows an "Activate" action that joins this applet
   // (a peer registered it in the group but the local agent hasn't joined yet).
   @state()
@@ -68,6 +82,9 @@ export class ToolInfoDialog extends LitElement {
 
   @state()
   private _activating: boolean = false;
+
+  @state()
+  private _activateGroupStore: GroupStore | undefined;
 
   // When set, the dialog shows a "Deactivate" action that disables this
   // (currently running) applet, turning it off without uninstalling it.
@@ -95,6 +112,7 @@ export class ToolInfoDialog extends LitElement {
 
   async show(input: ToolInfoInput) {
     this._resolvedTool = undefined;
+    this._detailsLookup = 'done';
     this._installedAs = undefined;
     this._fallbackTitle = undefined;
     this._fallbackSubtitle = undefined;
@@ -131,13 +149,26 @@ export class ToolInfoDialog extends LitElement {
       );
       this._fallbackTitle = input.applet.custom_name;
       this._fallbackSubtitle = input.applet.subtitle;
-      const map = await this._ensureUnifiedTools();
-      this._resolvedTool = resolveUnifiedToolForApplet(input.applet.distribution_info, map);
-      this._installedAs =
-        this._resolvedTool && this._resolvedTool.title !== input.applet.custom_name
-          ? input.applet.custom_name
-          : undefined;
+      // The Applet entry already carries everything the action needs, so the
+      // dialog is usable at once; the tool library only refines title and icon
+      // and is resolved in the background, if it can be reached at all.
       this._loading = false;
+      this._detailsLookup = 'pending';
+      const showToken = ++this._showToken;
+      void this._ensureUnifiedTools()
+        .then((map) => {
+          if (showToken !== this._showToken) return;
+          this._resolvedTool = resolveUnifiedToolForApplet(input.applet.distribution_info, map);
+          this._installedAs =
+            this._resolvedTool && this._resolvedTool.title !== input.applet.custom_name
+              ? input.applet.custom_name
+              : undefined;
+          this._detailsLookup = toolLibraryFetch.isOffline() ? 'unavailable' : 'done';
+        })
+        .catch((e) => {
+          if (showToken === this._showToken) this._detailsLookup = 'unavailable';
+          console.warn('@tool-info-dialog: tool library unavailable: ', e);
+        });
       return;
     }
 
@@ -159,6 +190,7 @@ export class ToolInfoDialog extends LitElement {
     try {
       const groupStore = await this.mossStore.groupStore(groupDnaHash);
       if (!groupStore) throw new Error('No group store found for group.');
+      this._activateGroupStore = groupStore;
       await groupStore.installApplet(appletHash);
       await this.mossStore.reloadManualStores();
       this.dispatchEvent(
@@ -178,6 +210,7 @@ export class ToolInfoDialog extends LitElement {
       console.error(e);
     }
     this._activating = false;
+    this._activateGroupStore = undefined;
   }
 
   private async _deactivate() {
@@ -224,7 +257,11 @@ export class ToolInfoDialog extends LitElement {
       return this._unifiedToolsCache.tools;
     }
     const result = await fetchUnifiedTools(configs, this.mossStore.devModeToolLibrary);
-    this._unifiedToolsCache = { signature, tools: result.unifiedTools };
+    // A result assembled while the library was unreachable is incomplete; keep
+    // it uncached so the next open retries once the network is back.
+    if (!toolLibraryFetch.isOffline()) {
+      this._unifiedToolsCache = { signature, tools: result.unifiedTools };
+    }
     return result.unifiedTools;
   }
 
@@ -259,11 +296,20 @@ export class ToolInfoDialog extends LitElement {
         ${this._fallbackSubtitle
           ? html`<div class="fallback-subtitle">${this._fallbackSubtitle}</div>`
           : ''}
-        <div class="fallback-note">
-          ${msg('Limited info available — this tool is not in any active curation list.')}
-        </div>
+        <div class="fallback-note">${this.renderDetailsNote()}</div>
       </div>
     `;
+  }
+
+  private renderDetailsNote() {
+    switch (this._detailsLookup) {
+      case 'pending':
+        return msg('Looking up Tool details…');
+      case 'unavailable':
+        return msg('Tool library unavailable — showing the details this group has.');
+      case 'done':
+        return msg('Limited info available — this tool is not in any active curation list.');
+    }
   }
 
   private renderActionFooter() {
@@ -279,6 +325,13 @@ export class ToolInfoDialog extends LitElement {
             ${this._activating ? msg('Activating…') : msg('Activate')}
           </button>
         </div>
+        ${this._activating
+          ? html`<applet-install-progress
+              style="margin-top: 10px;"
+              .appletHash=${this._activateContext.appletHash}
+              .groupStore=${this._activateGroupStore}
+            ></applet-install-progress>`
+          : ''}
       `;
     }
     if (this._deactivateAppletHash) {

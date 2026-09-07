@@ -22,9 +22,13 @@ import {
 import {
   AppAssetsInfo,
   AppHashes,
+  AssetSource,
   DistributionInfo,
+  LocalToolInfo,
   ResourceLocation,
   ToolCompatibilityId,
+  ToolTransferManifest,
+  ToolTransferRequest,
   WeaveDevConfig,
 } from '@theweave/moss-types';
 import { ToolWeaveConfig } from './types';
@@ -154,8 +158,25 @@ declare global {
         appHashes: AppHashes,
         uiPort?: number,
         roles_settings?: RoleSettingsMap,
+        assetSource?: AssetSource,
       ) => Promise<AppInfo>;
       uninstallAppletBundle: (appId: string) => Promise<void>;
+      readToolAssetsManifest: (
+        request: ToolTransferRequest,
+        chunkSize: number,
+      ) => Promise<ToolTransferManifest | undefined>;
+      listLocalTools: () => Promise<LocalToolInfo[]>;
+      areToolAssetsPresent: (request: ToolTransferRequest) => Promise<boolean>;
+      readToolAssetsChunk: (
+        request: ToolTransferRequest,
+        index: number,
+        chunkSize: number,
+      ) => Promise<Uint8Array>;
+      storeToolAssetsFromPeer: (
+        manifest: ToolTransferManifest,
+        bytes: Uint8Array,
+        expected: ToolTransferRequest,
+      ) => Promise<void>;
       isMainWindowFocused: () => Promise<boolean | undefined>;
       isDevModeEnabled: () => Promise<boolean>;
       joinGroup: (networkSeed: string, progenitor: AgentPubKeyB64 | null) => Promise<AppInfo>;
@@ -250,6 +271,29 @@ declare global {
       ) => Promise<{ uiSha256: string; happSha256: string; happHashMatch: boolean }>;
       clearDevUiOverride: (appId: string) => Promise<void>;
       getDevUiOverride: (appId: string) => Promise<{ active: boolean; uiSha256?: string }>;
+      lanBeaconSetListening: (listening: boolean) => Promise<void>;
+      lanBeaconStartAdvertising: (
+        payload: Uint8Array,
+        durationMs: number,
+      ) => Promise<number | undefined>;
+      lanBeaconSetHello: (payload: Uint8Array) => Promise<void>;
+      lanBeaconStopAdvertising: (id?: number) => Promise<void>;
+      lanBeaconUnicast: (payload: Uint8Array, address: string, port: number) => Promise<void>;
+      lanBeaconDiagnostics: () => Promise<{
+        bound: boolean;
+        interfaces: string[];
+        advertising: boolean;
+        advertisementId: number | undefined;
+        sent: number;
+        received: number;
+        dropped: number;
+      }>;
+      onLanBeaconDatagram: (
+        callback: (
+          e: unknown,
+          payload: { bytes: Uint8Array; address: string; port: number },
+        ) => unknown,
+      ) => void;
     };
     __ZOME_CALL_LOGGING_ENABLED__: boolean;
   }
