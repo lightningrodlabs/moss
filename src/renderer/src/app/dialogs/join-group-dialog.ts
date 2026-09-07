@@ -88,6 +88,15 @@ export class JoinGroupDialog extends LitElement {
   _mode: 'code' | 'network' = 'code';
 
   /**
+   * Whether the network pane has been opened during this dialog. It stays
+   * mounted afterwards, hidden behind the other tab: an announcement belongs to
+   * the dialog, not to whichever tab happens to be in front, and tearing it
+   * down on a tab switch stopped the announcement and reset its countdown.
+   */
+  @state()
+  _networkVisited = false;
+
+  /**
    * Names of groups already on this computer, used to mark a likely match in
    * the offered list. The beacon carries no group identity, so this can only
    * ever be a hint.
@@ -187,7 +196,10 @@ export class JoinGroupDialog extends LitElement {
       <button
         type="button"
         class="mode ${this._mode === mode ? 'selected' : ''}"
-        @click=${() => (this._mode = mode)}
+        @click=${() => {
+          this._mode = mode;
+          if (mode === 'network') this._networkVisited = true;
+        }}
       >
         ${label}
       </button>
@@ -219,7 +231,14 @@ export class JoinGroupDialog extends LitElement {
           // Shoelace components inside the dialog body emit this event too;
           // only the dialog's own close, retargeted to the moss-dialog host,
           // tears the local-network pane down.
-          if (e.target === this._dialog) this._dialogOpen = false;
+          if (e.target !== this._dialog) return;
+          const pane = this.shadowRoot?.querySelector('local-network-join') as {
+            announcing: boolean;
+          } | null;
+          if (pane?.announcing)
+            notify(msg('You are no longer announcing yourself on this network.'));
+          this._dialogOpen = false;
+          this._networkVisited = false;
         }}
       >
         <span slot="header">${msg('Join Group')}</span>
@@ -227,17 +246,20 @@ export class JoinGroupDialog extends LitElement {
           <div class="column items-center">
           ${this._joinByPaste ? this.renderModeSwitch() : html``}
           ${
+            this._joinByPaste && this._dialogOpen && this._networkVisited
+              ? html`<local-network-join
+                  style="width: 400px;"
+                  ?hidden=${this._mode !== 'network'}
+                  .joinedGroupNames=${this._joinedGroupNames}
+                  @local-invite-received=${(e: CustomEvent<{ code: string; groupName: string }>) =>
+                    this.joinGroup({ link: e.detail.code })}
+                ></local-network-join>`
+              : html``
+          }
+          ${
             this._joinByPaste
               ? this._mode === 'network'
-                ? html`${this._dialogOpen
-                    ? html`<local-network-join
-                        style="width: 400px;"
-                        .joinedGroupNames=${this._joinedGroupNames}
-                        @local-invite-received=${(
-                          e: CustomEvent<{ code: string; groupName: string }>,
-                        ) => this.joinGroup({ link: e.detail.code })}
-                      ></local-network-join>`
-                    : html``}`
+                ? html``
                 : html`
                     <sl-input
                       name="link"

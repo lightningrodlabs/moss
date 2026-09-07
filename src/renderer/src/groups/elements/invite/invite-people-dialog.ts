@@ -44,6 +44,14 @@ export class InvitePeopleDialog extends LitElement {
   @state()
   _mode: 'code' | 'network' = 'code';
 
+  /**
+   * Whether the network pane has been opened while this dialog has been up. It
+   * stays mounted afterwards, hidden behind the other tab, so a listing is not
+   * stopped and its countdown not reset by switching tabs.
+   */
+  @state()
+  _networkVisited = false;
+
   render() {
     if (!this.groupProfile || !this.modifiers) {
       return html``;
@@ -61,7 +69,13 @@ export class InvitePeopleDialog extends LitElement {
           // Shoelace components inside the dialog body (the pane's duration
           // select, for one) emit this event too; only the dialog's own
           // close, retargeted to the moss-dialog host, ends the session.
-          if (e.target === this._dialog) this._paneOpen = false;
+          if (e.target !== this._dialog) return;
+          const pane = this.shadowRoot?.querySelector('local-network-invite') as {
+            listing: boolean;
+          } | null;
+          if (pane?.listing) notify(msg('This group is no longer listed on the local network.'));
+          this._paneOpen = false;
+          this._networkVisited = false;
         }}
       >
         <span slot="header">${msg('Invite People')}</span>
@@ -75,8 +89,7 @@ export class InvitePeopleDialog extends LitElement {
             <span style="font-size: 18px; font-weight: 500;">${this.groupProfile.name}</span>
           </div>
           <div class="column" style="max-width: 440px;">
-            ${this.renderModeSwitch()}
-            ${this._mode === 'network' ? this.renderLocalNetwork(invitationCode) : html``}
+            ${this.renderModeSwitch()} ${this.renderLocalNetwork(invitationCode)}
             ${this._mode === 'code' ? this.renderInviteCode(invitationUrl, invitationCode) : html``}
           </div>
         </div>
@@ -89,7 +102,10 @@ export class InvitePeopleDialog extends LitElement {
       <button
         type="button"
         class="mode ${this._mode === mode ? 'selected' : ''}"
-        @click=${() => (this._mode = mode)}
+        @click=${() => {
+          this._mode = mode;
+          if (mode === 'network') this._networkVisited = true;
+        }}
       >
         ${label}
       </button>
@@ -103,9 +119,10 @@ export class InvitePeopleDialog extends LitElement {
 
   private renderLocalNetwork(invitationCode: string) {
     return html`
-      ${this._paneOpen
+      ${this._paneOpen && this._networkVisited
         ? html`<local-network-invite
             style="margin-bottom: 24px;"
+            ?hidden=${this._mode !== 'network'}
             .inviteCode=${invitationCode}
             .groupName=${this.groupProfile.name}
           ></local-network-invite>`

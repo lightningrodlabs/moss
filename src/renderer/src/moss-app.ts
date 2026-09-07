@@ -27,7 +27,7 @@ import './app/dialogs/local-network-join.js';
 import './ui/language-picker.js';
 import { partialModifiersFromInviteString } from '@theweave/utils';
 import { inviteErrorMessage } from './invite-error.js';
-import { notifyError } from '@holochain-open-dev/elements';
+import { notify, notifyError } from '@holochain-open-dev/elements';
 import { safeSetInterval, SafeIntervalHandle } from './utils.js';
 import { buildHeadlessWeaveClient } from './applets/applet-host.js';
 import SlRadioGroup from '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
@@ -85,6 +85,15 @@ export class MossApp extends LitElement {
    */
   @state()
   private _setupPane: 'invite' | 'network' | 'create' = 'invite';
+
+  /**
+   * Whether the local-network answer has been opened. It stays mounted after
+   * that, hidden behind the other answers: someone who has announced themselves
+   * and then looks at another answer should still be announced when they come
+   * back, and should still see the same countdown.
+   */
+  @state()
+  private _networkVisited = false;
 
   /**
    * Used if group is created as part of initial setup
@@ -686,6 +695,7 @@ export class MossApp extends LitElement {
         class="mode ${this._setupPane === pane ? 'selected' : ''}"
         @click=${() => {
           this._setupPane = pane;
+          if (pane === 'network') this._networkVisited = true;
         }}
       >
         ${label}
@@ -717,14 +727,8 @@ export class MossApp extends LitElement {
   private setupBody() {
     switch (this._setupPane) {
       case 'network':
-        return html`
-          <local-network-join
-            @local-invite-received=${(e: CustomEvent<{ code: string; groupName: string }>) => {
-              this.inviteLink = e.detail.code;
-              void this.joinGroupAndHeadToMain();
-            }}
-          ></local-network-join>
-        `;
+        // Rendered outside this switch, so that it survives a change of answer.
+        return html``;
       case 'create':
         return html`
           <button
@@ -794,12 +798,31 @@ export class MossApp extends LitElement {
 
         <div class="setup-card column">
           <div class="dialog-title setup-card-header">${this.setupTitle()}</div>
-          <div class="setup-card-body column">${this.setupBody()}</div>
+          <div class="setup-card-body column">
+            ${this.setupBody()}
+            ${this._networkVisited
+              ? html`<local-network-join
+                  ?hidden=${this._setupPane !== 'network'}
+                  @local-invite-received=${(
+                    e: CustomEvent<{ code: string; groupName: string }>,
+                  ) => {
+                    this.inviteLink = e.detail.code;
+                    void this.joinGroupAndHeadToMain();
+                  }}
+                ></local-network-join>`
+              : html``}
+          </div>
         </div>
 
         <div class="row items-center" style="margin-top: 16px; gap: 12px;">
           <button
             @click=${() => {
+              const pane = this.shadowRoot?.querySelector('local-network-join') as {
+                announcing: boolean;
+              } | null;
+              if (pane?.announcing) {
+                notify(msg('You are no longer announcing yourself on this network.'));
+              }
               window.localStorage.removeItem('isFirstLaunch');
               this.state = MossAppState.Running;
             }}
