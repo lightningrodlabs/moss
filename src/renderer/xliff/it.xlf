@@ -578,21 +578,9 @@
   <source>Error fetching the custom views</source>
   <target>Errore nel recupero delle viste personalizzate</target>
 </trans-unit>
-<trans-unit id="s9b21b1ade9a93f3b">
-  <source>Error creating the custom view</source>
-  <target>Errore nella creazione della vista personalizzata</target>
-</trans-unit>
 <trans-unit id="sad75043f72f63552">
   <source>Custom View Name</source>
   <target>Nome della vista personalizzata</target>
-</trans-unit>
-<trans-unit id="s57d1286dd70605a5">
-  <source>Create Custom View</source>
-  <target>Crea vista personalizzata</target>
-</trans-unit>
-<trans-unit id="s55797f0c2b3b37a0">
-  <source>Error fetching the blocks for this group</source>
-  <target>Errore nel recupero dei blocchi per questo gruppo</target>
 </trans-unit>
 <trans-unit id="s3111a346bb42ba2a">
   <source>Error updating the custom view</source>
@@ -2642,6 +2630,94 @@ inizia ora</target>
 <trans-unit id="s63f2ae9fc0f5f2e6">
   <source>This link was created by Moss <x id="0" equiv-text="${foundVersion}"/> and points to content Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> cannot open. Open it in Moss <x id="2" equiv-text="${foundVersion}"/>.</source>
   <target>Questo link è stato creato da Moss <x id="0" equiv-text="${foundVersion}"/> e punta a contenuti che Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> non può aprire. Aprilo in Moss <x id="2" equiv-text="${foundVersion}"/>.</target>
+</trans-unit>
+<trans-unit id="s6a6bfaa591000ddf">
+  <source>Downloading from the tool library…</source>
+  <target>Download dalla libreria degli strumenti…</target>
+</trans-unit>
+<trans-unit id="sd6607463accdcb14">
+  <source>Tool library unreachable. Looking for group members who have this Tool…</source>
+  <target>Libreria degli strumenti non raggiungibile. Ricerca di membri del gruppo che hanno questo strumento…</target>
+</trans-unit>
+<trans-unit id="s9c6afced36071fdf">
+  <source>Looking for group members who have this Tool…</source>
+  <target>Ricerca di membri del gruppo che hanno questo strumento…</target>
+</trans-unit>
+<trans-unit id="s4726647ef1c65574">
+  <source>No online group member has this Tool.</source>
+  <target>Nessun membro del gruppo online ha questo strumento.</target>
+</trans-unit>
+<trans-unit id="s357ea71ff9c644e0">
+  <source>Requesting Tool from <x id="0" equiv-text="${name}"/>…</source>
+  <target>Richiesta dello strumento a <x id="0" equiv-text="${name}"/>…</target>
+</trans-unit>
+<trans-unit id="s83260653bcf91fc9">
+  <source>Receiving from <x id="0" equiv-text="${name}"/>…</source>
+  <target>Ricezione da <x id="0" equiv-text="${name}"/>…</target>
+</trans-unit>
+<trans-unit id="s665341cbbc550bc0">
+  <source>Transfer from <x id="0" equiv-text="${name}"/> failed. Trying the next member…</source>
+  <target>Trasferimento da <x id="0" equiv-text="${name}"/> non riuscito. Tentativo con il membro successivo…</target>
+</trans-unit>
+<trans-unit id="s954986670870010a">
+  <source>Installing…</source>
+  <target>Installazione…</target>
+</trans-unit>
+<trans-unit id="s5bef5fe0927d40c4">
+  <source>Installation failed.</source>
+  <target>Installazione non riuscita.</target>
+</trans-unit>
+<trans-unit id="s81a2bbcbcbd48c75">
+  <source>unknown Tool</source>
+  <target>strumento sconosciuto</target>
+</trans-unit>
+<trans-unit id="s806a286e5e7162db">
+  <source>Using the copy already on this computer…</source>
+  <target>Utilizzo della copia già presente su questo computer…</target>
+</trans-unit>
+<trans-unit id="s4d3f766e12322a7d">
+  <source>Looking up Tool details…</source>
+  <target>Ricerca dei dettagli dello strumento…</target>
+</trans-unit>
+<trans-unit id="s9ac726b2f8f057a7">
+  <source>Tool library unavailable — showing the details this group has.</source>
+  <target>Libreria degli strumenti non disponibile — vengono mostrati i dati di questo gruppo.</target>
+</trans-unit>
+<trans-unit id="sb9b472448ad4baf5">
+  <source>On this computer</source>
+  <target>Su questo computer</target>
+</trans-unit>
+<trans-unit id="sf64f5ebf325b6b15">
+  <source>on this computer</source>
+  <target>su questo computer</target>
+</trans-unit>
+<trans-unit id="sb1f4c2480652efaf">
+  <source>Offered because it is installed on this computer. No curation list offers it.</source>
+  <target>Proposto perché è installato su questo computer. Nessuna lista di curatela lo propone.</target>
+</trans-unit>
+<trans-unit id="s964e40feacd6905e">
+  <source>Offered because it is installed on this computer. The tool library is unavailable, so it cannot be checked against a curation list.</source>
+  <target>Proposto perché è installato su questo computer. La libreria degli strumenti non è disponibile, quindi non può essere verificato con una lista di curatela.</target>
+</trans-unit>
+<trans-unit id="sc26825262c847fa5">
+  <source>Only on this computer</source>
+  <target>Solo su questo computer</target>
+</trans-unit>
+<trans-unit id="sa60442ebb9f76461">
+  <source>Already on this computer, so installing it needs no download.</source>
+  <target>Già su questo computer, installarlo non richiede alcun download.</target>
+</trans-unit>
+<trans-unit id="s4f73472b397d6c4a">
+  <source>The tool library is unavailable, and no Tools are installed on this computer yet.</source>
+  <target>La libreria degli strumenti non è disponibile e su questo computer non è ancora installato alcuno strumento.</target>
+</trans-unit>
+<trans-unit id="s03ee935aee948c28">
+  <source>Details unavailable because this Tool is not in any curation list.</source>
+  <target>Dettagli non disponibili perché questo strumento non è in nessuna lista di curatela.</target>
+</trans-unit>
+<trans-unit id="sa6315e99a05e1c82">
+  <source>Details unavailable because the curation lists could not be loaded.</source>
+  <target>Dettagli non disponibili perché non è stato possibile caricare le liste di curatela.</target>
 </trans-unit>
 </body>
 </file>

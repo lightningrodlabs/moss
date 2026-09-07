@@ -1,12 +1,7 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 // IPC_CHANGE_HERE
-import {
-  AgentPubKeyB64,
-  CallZomeRequest,
-  DnaHashB64,
-  RoleSettingsMap,
-} from '@holochain/client';
+import { AgentPubKeyB64, CallZomeRequest, DnaHashB64, RoleSettingsMap } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
 import {
   AppletId,
@@ -19,9 +14,12 @@ import {
 } from '@theweave/api';
 import {
   AppHashes,
+  AssetSource,
   DistributionInfo,
   ResourceLocation,
   ToolCompatibilityId,
+  ToolTransferManifest,
+  ToolTransferRequest,
 } from '@theweave/moss-types';
 import { ProgressInfo } from 'electron-updater';
 
@@ -103,24 +101,36 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installAppletBundle: (
     appId: string,
     networkSeed: string,
-    agentPubKey: AgentPubKeyB64,
     happOrWebHappUrl: string,
     distributionInfo: DistributionInfo,
     appHashes: AppHashes,
     uiPort?: number,
     roles_settings?: RoleSettingsMap,
+    assetSource?: AssetSource,
   ) =>
     ipcRenderer.invoke(
       'install-applet-bundle',
       appId,
       networkSeed,
-      agentPubKey,
       happOrWebHappUrl,
       distributionInfo,
       appHashes,
       uiPort,
       roles_settings,
+      assetSource,
     ),
+  readToolAssetsManifest: (request: ToolTransferRequest, chunkSize: number) =>
+    ipcRenderer.invoke('read-tool-assets-manifest', request, chunkSize),
+  listLocalTools: () => ipcRenderer.invoke('list-local-tools'),
+  areToolAssetsPresent: (request: ToolTransferRequest) =>
+    ipcRenderer.invoke('are-tool-assets-present', request),
+  readToolAssetsChunk: (request: ToolTransferRequest, index: number, chunkSize: number) =>
+    ipcRenderer.invoke('read-tool-assets-chunk', request, index, chunkSize),
+  storeToolAssetsFromPeer: (
+    manifest: ToolTransferManifest,
+    bytes: Uint8Array,
+    expected: ToolTransferRequest,
+  ) => ipcRenderer.invoke('store-tool-assets-from-peer', manifest, bytes, expected),
   uninstallAppletBundle: (appId: string) => ipcRenderer.invoke('uninstall-applet-bundle', appId),
   isDevModeEnabled: () => ipcRenderer.invoke('is-dev-mode-enabled'),
   isMainWindowFocused: () => ipcRenderer.invoke('is-main-window-focused'),

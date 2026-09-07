@@ -39,6 +39,10 @@ export class LibraryToolDetails extends LitElement {
   @property({ type: Boolean })
   informational: boolean = false;
 
+  /** Whether the curation lists answered when this Tool's entry was built. */
+  @property()
+  libraryReachable: boolean = true;
+
   @state()
   tabsState: TabsState = TabsState.Overview;
 
@@ -51,6 +55,18 @@ export class LibraryToolDetails extends LitElement {
           }
         : null);
     const description = tool?.description || this.tool?.toolInfoAndVersions.description || '';
+    // A Tool offered from local assets has no description to show: the install
+    // records the hashes and the name, not the prose. Say why the panel is
+    // empty rather than leaving it blank.
+    if (!description.trim() && this.unifiedTool?.onlyOnThisComputer) {
+      return html`
+        <div class="tool-description details-unavailable" style="margin-top:25px;">
+          ${this.libraryReachable
+            ? msg('Details unavailable because this Tool is not in any curation list.')
+            : msg('Details unavailable because the curation lists could not be loaded.')}
+        </div>
+      `;
+    }
     return html`
       <div class="tool-description" style="margin-top:25px;">
         ${unsafeHTML(markdownParseSafe(description))}
@@ -330,6 +346,10 @@ export class LibraryToolDetails extends LitElement {
     mossStyles,
     libraryStyles,
     css`
+      .details-unavailable {
+        font-style: italic;
+        opacity: 0.6;
+      }
       .version-list {
         margin-top: 25px;
       }

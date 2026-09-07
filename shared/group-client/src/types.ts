@@ -8,6 +8,7 @@ import {
   Timestamp,
 } from '@holochain/client';
 import { AppletId, WAL } from '@theweave/api';
+import { ToolTransferMessage } from '@theweave/moss-types';
 
 export interface RelatedGroup {
   group_profile: GroupProfile;
@@ -326,4 +327,8 @@ export type GroupRemoteSignal =
       type: 'applet-signal';
       appletId: AppletId;
       payload: Uint8Array;
+    }
+  | {
+      type: 'tool-transfer';
+      payload: ToolTransferMessage;
     };
