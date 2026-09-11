@@ -1565,6 +1565,12 @@ if (!RUNNING_WITH_COMMAND) {
         appletZomeCallAuthorizer.invalidate();
       },
     );
+    // Applet clone cells are created, enabled and disabled from the renderer over
+    // the applet's own app websocket, so the main process learns of them only
+    // through this call; the applet's next signing request must see the new cell.
+    ipcMain.handle('refresh-applet-signing-scope', (): void => {
+      appletZomeCallAuthorizer.invalidate();
+    });
     ipcMain.handle('is-dev-mode-enabled', (_e): boolean => !app.isPackaged || RUN_OPTIONS.dev);
     ipcMain.handle('is-applet-dev', (_e): boolean => !!RUN_OPTIONS.devInfo);
     // why: lets the renderer's tool-library override the default production

@@ -1,3 +1,4 @@
+import { withSigningScopeRefresh } from './signing-scope';
 import { get, toPromise } from '@holochain-open-dev/stores';
 import {
   type AssetInfo,
@@ -774,7 +775,10 @@ export async function handleAppletIframeMessage(
       if (groupStores.size === 0) throw new Error('No group store found.');
       // Install the clone in the group
       const [appletClient, _] = await mossStore.getAppClient(appIdFromAppletHash(appletHash));
-      const clonedCell = await appletClient.createCloneCell(message.req);
+      const clonedCell = await withSigningScopeRefresh(
+        () => appletClient.createCloneCell(message.req),
+        () => window.electronAPI.refreshAppletSigningScope(),
+      );
       // Register the clone in the group dna(s) if it's supposed to be public
       if (message.publicToGroupMembers) {
         await Promise.all(
@@ -799,7 +803,10 @@ export async function handleAppletIframeMessage(
       }
       const appletHash = source.appletHash;
       const [appletClient, _] = await mossStore.getAppClient(appIdFromAppletHash(appletHash));
-      const clonedCell = await appletClient.enableCloneCell(message.req);
+      const clonedCell = await withSigningScopeRefresh(
+        () => appletClient.enableCloneCell(message.req),
+        () => window.electronAPI.refreshAppletSigningScope(),
+      );
       return clonedCell;
     }
     case 'disable-clone-cell': {
@@ -810,7 +817,10 @@ export async function handleAppletIframeMessage(
       }
       const appletHash = source.appletHash;
       const [appletClient, _] = await mossStore.getAppClient(appIdFromAppletHash(appletHash));
-      return appletClient.disableCloneCell(message.req);
+      return withSigningScopeRefresh(
+        () => appletClient.disableCloneCell(message.req),
+        () => window.electronAPI.refreshAppletSigningScope(),
+      );
     }
     /**
      * Asset related messages
