@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
 import crypto from 'crypto';
+import { binaryUrlFor } from './binary-source.mjs';
 
 const mossConfigJSON = fs.readFileSync(path.join('dist', 'main', 'moss.config.json'));
 const mossConfig = JSON.parse(mossConfigJSON);
@@ -50,8 +51,7 @@ function downloadFile(binaryName, versionOverride = null) {
 
   const binaryFilename = `${binaryName}-v${version}${process.platform === 'win32' ? '.exe' : ''}`;
   const targetPath = path.join(binariesDir, binaryFilename);
-  const binaryRemoteFilename = `${binaryName}-${targetEnding}`;
-  const url = `https://github.com/holochain/holochain/releases/download/holochain-${version}/${binaryRemoteFilename}`;
+  const url = binaryUrlFor(HOLOCHAIN_CHECKSUMS, binaryName, version, targetEnding);
 
   console.log('Downloading from ', url);
 

@@ -19,6 +19,7 @@ const REQUIRED_FILES = [
   'defineConfig.js',
   'defineConfig.d.ts',
   'fetch-binaries.mjs',
+  'binary-source.mjs',
   'dist/main/index.js',
   'dist/main/moss.config.json',
   'dist/main/holochain-checksums.json',
