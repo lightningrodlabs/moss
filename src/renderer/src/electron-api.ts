@@ -68,6 +68,7 @@ declare global {
         kind: 'image' | 'iframe',
       ) => Promise<{ ok: true; contentType: string } | { ok: false; reason: string }>;
       installApp: (filePath: string, appId: string, networkSeed?: string) => Promise<void>;
+      refreshAppletSigningScope: () => Promise<void>;
       isAppletDev: () => Promise<boolean>;
       appletDevConfig: () => Promise<WeaveDevConfig | undefined>;
       getToolCurationOverride: () => Promise<string | undefined>;
