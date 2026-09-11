@@ -40,6 +40,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('dialog-messagebox', options),
   installApp: (filePath: string, appId: string, networkSeed?: string) =>
     ipcRenderer.invoke('install-app', filePath, appId, networkSeed),
+  refreshAppletSigningScope: () => ipcRenderer.invoke('refresh-applet-signing-scope'),
   lairSetupRequired: () => ipcRenderer.invoke('lair-setup-required'),
   findLegacyProfiles: () => ipcRenderer.invoke('find-legacy-profiles'),
   getLairBinaryVersion: () => ipcRenderer.invoke('get-lair-binary-version'),
