@@ -77,7 +77,10 @@ export class LibraryToolDetails extends LitElement {
           <span>${this.timeAgo.format(version.releasedAt)}</span></sl-tooltip
         >
       </div>
-      <div>${msg(str`Change Log: ${version.changelog}`)}</div>
+      <div class="changelog">
+        <div>${msg('Change Log:')}</div>
+        ${unsafeHTML(markdownParseSafe(version.changelog ?? ''))}
+      </div>
       ${!this.informational && showInstallButton && hasMultipleBranches
         ? html`
             <select-group
@@ -330,6 +333,15 @@ export class LibraryToolDetails extends LitElement {
     mossStyles,
     libraryStyles,
     css`
+      .changelog p,
+      .changelog ul,
+      .changelog ol {
+        margin: 4px 0;
+      }
+      .changelog ul,
+      .changelog ol {
+        padding-left: 20px;
+      }
       .version-list {
         margin-top: 25px;
       }

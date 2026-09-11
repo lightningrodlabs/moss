@@ -2272,9 +2272,9 @@ beginnt jetzt</target>
   <source>Released:</source>
   <target>Veröffentlicht:</target>
 </trans-unit>
-<trans-unit id="s0246d749f0d614a1">
-  <source>Change Log: <x id="0" equiv-text="${version.changelog}"/></source>
-  <target>Änderungsprotokoll: <x id="0" equiv-text="${version.changelog}"/></target>
+<trans-unit id="s7c0d28da79593407">
+  <source>Change Log:</source>
+  <target>Änderungsprotokoll:</target>
 </trans-unit>
 <trans-unit id="sa17c38293a901a5e">
   <source>No permission to edit group home.</source>
