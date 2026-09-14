@@ -65,21 +65,17 @@ export class LibraryToolDetails extends LitElement {
     isFirstInList = false,
     hasMultipleBranches = false,
   ) {
-    return html`<div class="column" style="margin-top: 10px; padding-left: 0; border-left: none;">
-      <div class="row" style="justify-content: space-between; align-items: center;">
-        <div class="version" style="padding-left: 0; border-left: none;">
-          v${version.version} ${isFirstInList ? msg('(latest)') : ''}
-        </div>
-      </div>
-      <div>
-        ${msg('Released:')}
-        <sl-tooltip .content="${`${new Date(version.releasedAt)}`}">
-          <span>${this.timeAgo.format(version.releasedAt)}</span></sl-tooltip
-        >
-      </div>
-      <div class="changelog">
-        <div>${msg('Change Log:')}</div>
-        ${unsafeHTML(markdownParseSafe(version.changelog ?? ''))}
+    return html`<div class="column">
+      <div class="tool-description">
+        <h2>v${version.version} ${isFirstInList ? msg('(latest)') : ''}</h2>
+        <p>
+          ${msg('Released:')}
+          <sl-tooltip .content="${`${new Date(version.releasedAt)}`}">
+            <span>${this.timeAgo.format(version.releasedAt)}</span></sl-tooltip
+          >
+        </p>
+        <p>${msg('Change Log:')}</p>
+        <div class="changelog">${unsafeHTML(markdownParseSafe(version.changelog ?? ''))}</div>
       </div>
       ${!this.informational && showInstallButton && hasMultipleBranches
         ? html`
@@ -333,26 +329,24 @@ export class LibraryToolDetails extends LitElement {
     mossStyles,
     libraryStyles,
     css`
-      .changelog p,
-      .changelog ul,
-      .changelog ol {
-        margin: 4px 0;
-      }
-      .changelog ul,
-      .changelog ol {
-        padding-left: 20px;
-      }
       .version-list {
         margin-top: 25px;
+      }
+      /* A version's number is the section heading here, so headings authored
+         inside a changelog have to sit below it in the hierarchy. */
+      .changelog h1,
+      .changelog h2,
+      .changelog h3,
+      .changelog h4,
+      .changelog h5,
+      .changelog h6 {
+        font-size: 16px;
+        margin: 14px 0;
       }
       .version-branch-divider {
         height: 1px;
         background-color: rgba(0, 0, 0, 0.1);
         margin: 20px 0;
-      }
-      .version {
-        font-size: 16px;
-        font-weight: 600;
       }
     `,
   ];
