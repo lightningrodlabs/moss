@@ -10,6 +10,8 @@ interface BuildConfig {
   appId: string;
   productName: string;
   mac: { executableName?: string; extendInfo?: unknown };
+  nsis: { shortcutName?: string; uninstallDisplayName?: string };
+  linux: { desktop?: { Name?: string } };
 }
 
 const buildConfig = yaml.load(
@@ -17,7 +19,8 @@ const buildConfig = yaml.load(
 ) as BuildConfig;
 const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf-8'));
 const breakingVersion = (packageJson.name as string).match(/-(\d+\.\d+)$/)?.[1];
-const versionedName = `Moss (${breakingVersion})`;
+const versionedName = `moss-${breakingVersion}`;
+const versionedLabel = `Moss ${breakingVersion}`;
 
 /**
  * Moss versions with incompatible group DNAs are meant to be installed side by side, which
@@ -41,6 +44,17 @@ describe('install location versioning', () => {
 
   it('the mac bundle name carries the breaking version independently of productName', () => {
     expect(buildConfig.mac.executableName).toBe(versionedName);
+  });
+
+  /**
+   * productName doubles as a path segment, so it is a plain lowercase slug. The labels
+   * people see in launchers and uninstall lists are set separately and keep the version
+   * so that side-by-side installs can be told apart.
+   */
+  it('launcher and uninstall labels are readable and versioned', () => {
+    expect(buildConfig.linux.desktop?.Name).toBe(versionedLabel);
+    expect(buildConfig.nsis.shortcutName).toBe(versionedLabel);
+    expect(buildConfig.nsis.uninstallDisplayName).toBe(versionedLabel);
   });
 
   /**
