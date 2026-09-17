@@ -44,6 +44,19 @@ describe('install location versioning', () => {
   });
 
   /**
+   * electron-builder copies extendInfo into Info.plist with Object.assign, so a YAML list
+   * of single-key maps lands under the keys "0", "1", ... and the usage descriptions that
+   * macOS requires for camera and microphone access never reach the plist.
+   */
+  it('mac Info.plist additions are a map of plist keys', () => {
+    const extendInfo = buildConfig.mac.extendInfo;
+    expect(Array.isArray(extendInfo)).toBe(false);
+    expect(Object.keys(extendInfo as Record<string, unknown>)).toEqual(
+      expect.arrayContaining(['NSCameraUsageDescription', 'NSMicrophoneUsageDescription']),
+    );
+  });
+
+  /**
    * macOS shows productName in the menu bar and Electron locates its helper bundles by
    * it, so the version cannot be hidden there through Info.plist alone. The mac build
    * scripts override productName on the command line; the deb build must not.
