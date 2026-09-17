@@ -1,5 +1,8 @@
 appId: org.lightningrodlabs.moss-0.16
-productName: Moss
+# Carries the breaking version because electron-builder names the deb's /opt directory and
+# the macOS .app bundle after it, and breaking versions must install side by side. The
+# running app presents itself as plain "Moss" via app.setName(). Guarded by a unit test.
+productName: Moss (0.16)
 directories:
   buildResources: build
 files:
