@@ -63,6 +63,8 @@ import { AudioCaptureBackend, loadAudioCapture, probeAudioCapabilities } from '.
 import { AudioSourceGrants } from './audioSourceGrants';
 import { openAudioSourcePicker } from './audioSourcePicker';
 import { registerAudioSourceIpc } from './audioSourcesIpc';
+import { registerDeepLinkSchemes } from './deepLinkRegistration';
+import { repairLinuxHtmlDefault } from './linuxMimeapps';
 import { ConductorInfo, NetworkInfo, ToolWeaveConfig } from './sharedTypes';
 import {
   AppAssetsInfo,
@@ -188,27 +190,16 @@ console.log('MOSS VERSION: ', appVersion);
 
 // console.log('process.argv: ', process.argv);
 
-// Claim this Moss version's own deep link scheme, so that links made by a Moss
-// version with an incompatible group DNA are routed to the version that can open them.
-if (process.defaultApp) {
-  if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient(WEAVE_URL_SCHEME, process.execPath, [
-      path.resolve(process.argv[1]),
-    ]);
-  }
-} else {
-  app.setAsDefaultProtocolClient(WEAVE_URL_SCHEME);
-}
-
-// Earlier builds of this Moss version claimed the previous version's scheme. Hand it
-// back so that its links reach the Moss version that made them. This is a no-op unless
-// this executable is the currently registered handler, and unimplemented on Linux.
-for (const scheme of SUPERSEDED_URL_SCHEMES) {
-  try {
-    app.removeAsDefaultProtocolClient(scheme);
-  } catch (e) {
-    console.warn(`Failed to release protocol scheme ${scheme}: `, e);
-  }
+registerDeepLinkSchemes(app, {
+  platform: process.platform,
+  scheme: WEAVE_URL_SCHEME,
+  supersededSchemes: SUPERSEDED_URL_SCHEMES,
+  defaultApp: !!process.defaultApp,
+  execPath: process.execPath,
+  argv: process.argv,
+});
+if (process.platform === 'linux') {
+  repairLinuxHtmlDefault(process.env, os.homedir());
 }
 
 const ranViaCli = process.argv[3] && process.argv[3].endsWith('weave');
