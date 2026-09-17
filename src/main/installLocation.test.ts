@@ -1,36 +1,73 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
+import yaml from 'js-yaml';
 import { fileURLToPath } from 'url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
-const readBuildConfigValue = (key: string): string => {
-  const yml = fs.readFileSync(path.join(repoRoot, 'electron-builder.yml'), 'utf-8');
-  const match = yml.match(new RegExp(`^${key}:\\s*(.+?)\\s*$`, 'm'));
-  if (!match) throw new Error(`electron-builder.yml has no top-level "${key}"`);
-  return match[1];
-};
+interface BuildConfig {
+  appId: string;
+  productName: string;
+  mac: { executableName?: string; extendInfo?: unknown };
+}
+
+const buildConfig = yaml.load(
+  fs.readFileSync(path.join(repoRoot, 'electron-builder.yml'), 'utf-8'),
+) as BuildConfig;
+const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf-8'));
+const breakingVersion = (packageJson.name as string).match(/-(\d+\.\d+)$/)?.[1];
+const versionedName = `Moss (${breakingVersion})`;
 
 /**
  * Moss versions with incompatible group DNAs are meant to be installed side by side, which
  * is why the package name and appId carry the breaking version. electron-builder derives
- * the deb's `/opt/<productName>` directory and the macOS `<productName>.app` bundle from
- * productName alone, so it has to carry the version too or the installs collide.
+ * the deb's `/opt/<productName>` directory and the macOS `<executableName>.app` bundle
+ * name from the build config, so those have to carry the version too or the installs
+ * collide.
  */
 describe('install location versioning', () => {
-  const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf-8'));
-  const breakingVersion = (packageJson.name as string).match(/-(\d+\.\d+)$/)?.[1];
-
   it('package.json name ends with the breaking version', () => {
     expect(breakingVersion).toBeDefined();
   });
 
   it('productName carries the breaking version', () => {
-    expect(readBuildConfigValue('productName')).toBe(`Moss (${breakingVersion})`);
+    expect(buildConfig.productName).toBe(versionedName);
   });
 
   it('appId matches the package name', () => {
-    expect(readBuildConfigValue('appId')).toBe(packageJson.name);
+    expect(buildConfig.appId).toBe(packageJson.name);
+  });
+
+  it('the mac bundle name carries the breaking version independently of productName', () => {
+    expect(buildConfig.mac.executableName).toBe(versionedName);
+  });
+
+  /**
+   * macOS shows productName in the menu bar and Electron locates its helper bundles by
+   * it, so the version cannot be hidden there through Info.plist alone. The mac build
+   * scripts override productName on the command line; the deb build must not.
+   */
+  describe('per-platform build scripts', () => {
+    const scripts = packageJson.scripts as Record<string, string>;
+    const buildScripts = Object.entries(scripts).filter(([, cmd]) =>
+      cmd.includes('electron-builder --'),
+    );
+
+    it('mac builds present the app as plain Moss', () => {
+      const macScripts = buildScripts.filter(([, cmd]) => cmd.includes('--mac'));
+      expect(macScripts.length).toBeGreaterThan(0);
+      for (const [, cmd] of macScripts) {
+        expect(cmd).toContain('-c.productName=Moss');
+      }
+    });
+
+    it('linux builds keep the versioned productName', () => {
+      const linuxScripts = buildScripts.filter(([, cmd]) => cmd.includes('--linux'));
+      expect(linuxScripts.length).toBeGreaterThan(0);
+      for (const [, cmd] of linuxScripts) {
+        expect(cmd).not.toContain('productName');
+      }
+    });
   });
 });

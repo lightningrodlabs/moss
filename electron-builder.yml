@@ -1,7 +1,8 @@
 appId: org.lightningrodlabs.moss-0.16
-# Carries the breaking version because electron-builder names the deb's /opt directory and
-# the macOS .app bundle after it, and breaking versions must install side by side. The
-# running app presents itself as plain "Moss" via app.setName(). Guarded by a unit test.
+# Installed artifacts carry the breaking version so that Moss versions with incompatible
+# group DNAs install side by side and can be told apart: the deb's /opt directory, the
+# Start Menu shortcut and the .app bundle all derive from productName. The running app
+# presents itself as plain "Moss" via app.setName(). Guarded by a unit test.
 productName: Moss (0.16)
 directories:
   buildResources: build
@@ -26,6 +27,11 @@ nsis:
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
 mac:
+  # macOS shows CFBundleName in the menu bar and Electron locates its helper bundles by
+  # it, and both derive from productName, so the mac build scripts pass
+  # `-c.productName=Moss`. The bundle name comes from executableName instead and keeps
+  # the version so that two Moss versions can sit in /Applications together.
+  executableName: Moss (0.16)
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
