@@ -46,6 +46,7 @@ import {
 import { AppletToParentRequest as AppletToParentRequestSchema } from '../validationSchemas.js';
 import { AppletStore } from './applet-store.js';
 import { getAsrRendererBridge } from './asr-bridge.js';
+import { resolveAppletName } from './applet-name.js';
 import { Value } from '@sinclair/typebox/value';
 import { GroupRemoteSignal, Accountability } from '@theweave/group-client';
 import { appIdFromAppletHash, toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
@@ -488,9 +489,10 @@ export async function handleAppletIframeMessage(
     // ── Local ASR (whisper.cpp via Moss main) ────────────────────
     // Open / push / close are forwarded directly to the main IPC
     // handlers in src/main/asr/ipcHandlers.ts. The renderer-side
-    // bridge tracks sessionId → MessageEventSource so that the
-    // 'asr-event' IPC pushed back from main can be routed to the
-    // applet iframe that opened the session.
+    // bridge tracks sessionId → appletId so that the 'asr-event' IPC
+    // pushed back from main can be routed to the applet that opened
+    // the session, and so push/close can be refused for sessions the
+    // calling applet does not own.
     case 'asr-capabilities': {
       const caps = await window.electronAPI.asrCapabilities();
       // Fold the renderer-side global enable switch into `available`,
@@ -539,6 +541,7 @@ export async function handleAppletIframeMessage(
       return result;
     }
     case 'asr-push-audio': {
+      assertAsrSessionOwner(source, message.sessionId);
       await window.electronAPI.asrPushAudio({
         sessionId: message.sessionId,
         pcm: message.pcm,
@@ -547,6 +550,7 @@ export async function handleAppletIframeMessage(
       return undefined;
     }
     case 'asr-close-session': {
+      assertAsrSessionOwner(source, message.sessionId);
       await window.electronAPI.asrCloseSession({ sessionId: message.sessionId });
       getAsrRendererBridge().unregisterSession(message.sessionId);
       return undefined;
@@ -1257,15 +1261,18 @@ async function getFirstGroupStoreForHrl(
   return Array.from(groupsForApplet.values())[0];
 }
 
-async function resolveAppletName(
-  mossStore: MossStore,
-  appletHash: AppletHash,
-): Promise<string> {
-  try {
-    const appletStore = await toPromise(mossStore.appletStores.get(appletHash)!);
-    if (appletStore?.applet?.custom_name) return appletStore.applet.custom_name;
-  } catch {
-    // fall through — unknown applet, use a hash prefix
+/**
+ * Only the applet that opened an ASR session may push audio to it or
+ * close it; session ids are opaque strings that any iframe could guess
+ * or observe, so ownership is checked here rather than trusted.
+ */
+function assertAsrSessionOwner(source: IframeKind, sessionId: string): void {
+  const owner = getAsrRendererBridge().appletIdForSession(sessionId);
+  if (
+    source.type !== 'applet' ||
+    owner === undefined ||
+    owner !== encodeHashToBase64(source.appletHash)
+  ) {
+    throw new Error('ASR session not owned by this applet');
   }
-  return encodeHashToBase64(appletHash).slice(0, 12);
 }

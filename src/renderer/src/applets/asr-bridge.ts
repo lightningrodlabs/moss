@@ -12,19 +12,34 @@
 // delegate. The applet iframe filters events by sessionId so only the
 // window that actually opened the session reacts.
 //
+// The sessionId → appletId map is also the renderer's record of session
+// ownership: applet-host consults it before forwarding push/close
+// requests so one applet cannot drive another applet's session, and
+// the settings pane uses it to tear down sessions when the user revokes
+// access.
+//
 // Cross-group views aren't supported here — applet-host only registers
 // sessions whose source is an applet (see the asr-open-session case).
 
-import type { AppletId, ParentToAppletMessage } from '@theweave/api';
+import type { AppletId, AsrIncomingEvent } from '@theweave/api';
 
 import type { MossStore } from '../moss-store.js';
 
-type AsrIpcEvent = Extract<ParentToAppletMessage, { type: 'asr-event' }>['event'];
+/** Error text delivered to an applet whose session was closed by the user. */
+export const ASR_ACCESS_REVOKED_MESSAGE = 'Local ASR access revoked by user';
+
+type CloseSessionFn = (sessionId: string) => Promise<void>;
+
+const closeViaElectron: CloseSessionFn = (sessionId) =>
+  window.electronAPI.asrCloseSession({ sessionId });
 
 export class AsrRendererBridge {
   private sessionApplets = new Map<string, AppletId>();
 
-  constructor(private readonly mossStore: MossStore) {}
+  constructor(
+    private readonly mossStore: MossStore,
+    private readonly closeSession: CloseSessionFn = closeViaElectron,
+  ) {}
 
   registerSession(sessionId: string, appletId: AppletId): void {
     this.sessionApplets.set(sessionId, appletId);
@@ -34,14 +49,53 @@ export class AsrRendererBridge {
     this.sessionApplets.delete(sessionId);
   }
 
+  /** The applet that opened the session, or undefined if the session is unknown. */
+  appletIdForSession(sessionId: string): AppletId | undefined {
+    return this.sessionApplets.get(sessionId);
+  }
+
   /** Forward an event from main to every iframe/window hosting the session's applet. */
-  forwardEvent(event: AsrIpcEvent): void {
+  forwardEvent(event: AsrIncomingEvent): void {
     const appletId = this.sessionApplets.get(event.sessionId);
     if (!appletId) return; // unknown or already-closed session
+    void this.mossStore.emitParentToAppletMessage({ type: 'asr-event', event }, [appletId]);
+    // Main closes a session once it has errored, so the id is dead from
+    // here on; dropping it keeps the ownership map from growing.
+    if (event.eventType === 'error') this.sessionApplets.delete(event.sessionId);
+  }
+
+  /** Tear down every session opened by one applet, telling it why. */
+  async closeSessionsForApplet(appletId: AppletId): Promise<void> {
+    const sessionIds = [...this.sessionApplets.entries()]
+      .filter(([, owner]) => owner === appletId)
+      .map(([sessionId]) => sessionId);
+    await Promise.all(sessionIds.map((sessionId) => this.revokeSession(sessionId, appletId)));
+  }
+
+  /** Tear down every open session, telling each applet why. */
+  async closeAllSessions(): Promise<void> {
+    const entries = [...this.sessionApplets.entries()];
+    await Promise.all(
+      entries.map(([sessionId, appletId]) => this.revokeSession(sessionId, appletId)),
+    );
+  }
+
+  private async revokeSession(sessionId: string, appletId: AppletId): Promise<void> {
+    this.sessionApplets.delete(sessionId);
     void this.mossStore.emitParentToAppletMessage(
-      { type: 'asr-event', event },
+      {
+        type: 'asr-event',
+        event: { sessionId, eventType: 'error', error: ASR_ACCESS_REVOKED_MESSAGE },
+      },
       [appletId],
     );
+    // Main may already have dropped the session (idle timeout, error);
+    // the goal is that it is gone, so a rejection here is not a failure.
+    try {
+      await this.closeSession(sessionId);
+    } catch {
+      // intentionally ignored
+    }
   }
 
   /** Diagnostic. */

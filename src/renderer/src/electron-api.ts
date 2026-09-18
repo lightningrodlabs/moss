@@ -18,7 +18,7 @@ import {
   WAL,
   WeaveLocation,
 } from '@theweave/api';
-
+import type { AsrIncomingEvent, AsrSessionOptions, LocalModelCapabilities } from '@theweave/api';
 import {
   AppAssetsInfo,
   AppHashes,
@@ -34,7 +34,7 @@ import {
   ToolTransferRequest,
   WeaveDevConfig,
 } from '@theweave/moss-types';
-import { ToolWeaveConfig } from './types';
+import { AppletHostResponse, ToolWeaveConfig } from './types';
 
 // IPC_CHANGE_HERE
 
@@ -57,7 +57,7 @@ declare global {
         request: CallZomeRequest,
         callerAppletIds: string[],
       ) => Promise<CallZomeRequestSigned>;
-      appletMessageToParentResponse: (response: any, id: string) => Promise<void>;
+      appletMessageToParentResponse: (response: AppletHostResponse, id: string) => Promise<void>;
       parentToAppletMessage: (
         message: ParentToAppletMessage,
         forApplets: AppletId[],
@@ -318,21 +318,8 @@ declare global {
         appletName: string;
         senderWebContentsId?: number;
       }) => Promise<'granted' | 'denied'>;
-      asrCapabilities: () => Promise<{
-        asr: {
-          available: boolean;
-          languages: string[];
-          streaming: boolean;
-          model: string;
-          latencyTier: 'fast' | 'ok' | 'slow';
-        };
-      }>;
-      asrOpenSession: (opts: {
-        language?: string;
-        sampleRate?: number;
-        channels?: 1 | 2;
-        maxBufferMs?: number;
-      }) => Promise<{ sessionId: string }>;
+      asrCapabilities: () => Promise<LocalModelCapabilities>;
+      asrOpenSession: (opts: AsrSessionOptions) => Promise<{ sessionId: string }>;
       asrPushAudio: (req: {
         sessionId: string;
         pcm: Uint8Array;
@@ -340,20 +327,7 @@ declare global {
       }) => Promise<void>;
       asrCloseSession: (req: { sessionId: string }) => Promise<void>;
       onAsrEvent: (
-        callback: (
-          e: Electron.IpcRendererEvent,
-          event:
-            | {
-                sessionId: string;
-                eventType: 'final';
-                text: string;
-                tStart: number;
-                tEnd: number;
-                confidence?: number;
-                lang?: string;
-              }
-            | { sessionId: string; eventType: 'error'; error: string },
-        ) => void,
+        callback: (e: Electron.IpcRendererEvent, event: AsrIncomingEvent) => void,
       ) => void;
     };
     __ZOME_CALL_LOGGING_ENABLED__: boolean;

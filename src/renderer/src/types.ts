@@ -81,6 +81,16 @@ export type ToolWeaveConfig = {
   crossGroupView: boolean;
 };
 
+// CHANGE ALSO IN src/main/sharedTypes.ts
+/**
+ * Reply envelope the main renderer sends back for an AppletToParentRequest
+ * relayed from a WAL window. Carrying the error explicitly lets the
+ * relaying side reject right away instead of waiting out its timeout.
+ */
+export type AppletHostResponse =
+  | { type: 'success'; result: unknown }
+  | { type: 'error'; error: string };
+
 export type ToolListUrl = string;
 
 export type ToolAndCurationInfo = {

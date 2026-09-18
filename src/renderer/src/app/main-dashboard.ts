@@ -28,6 +28,7 @@ import { InviteParseError, invitePropsToPartialModifiers, weaveLinkVersion } fro
 import { WEAVE_PROTOCOL_VERSION } from '@theweave/moss-types';
 import { foreignVersionLinkMessage, inviteErrorMessage } from '../invite-error.js';
 import { releaseSeriesFromVersion } from '../release-series.js';
+import type { AppletHostResponse } from '../types.js';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -640,16 +641,12 @@ export class MainDashboard extends LitElement {
           'wal-window',
           payload.senderWebContentsId,
         );
-        await window.electronAPI.appletMessageToParentResponse(
-          { type: 'success', result },
-          payload.id,
-        );
+        const response: AppletHostResponse = { type: 'success', result };
+        await window.electronAPI.appletMessageToParentResponse(response, payload.id);
       } catch (e) {
         const error = e instanceof Error ? e.message : String(e);
-        await window.electronAPI.appletMessageToParentResponse(
-          { type: 'error', error },
-          payload.id,
-        );
+        const response: AppletHostResponse = { type: 'error', error };
+        await window.electronAPI.appletMessageToParentResponse(response, payload.id);
       }
     });
     void initAudioSourceGrantsStore();

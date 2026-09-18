@@ -77,6 +77,13 @@ import { registerDeepLinkSchemes } from './deepLinkRegistration';
 import { repairLinuxHtmlDefault } from './linuxMimeapps';
 import { ConductorInfo, NetworkInfo, ToolWeaveConfig } from './sharedTypes';
 import {
+  AppletHostResponse,
+  ConductorInfo,
+  NetworkInfo,
+  ToolWeaveConfig,
+  isAppletHostResponse,
+} from './sharedTypes';
+import {
   AppAssetsInfo,
   AppHashes,
   AssetSource,
@@ -1088,12 +1095,18 @@ if (!RUNNING_WITH_COMMAND) {
 
     // Local ASR (whisper.cpp sidecar). Lazy — sidecar doesn't actually
     // launch until an applet opens its first AsrSession. See
-    // MOSS_LOCAL_MODELS_PLAN.md for context.
+    // plans/local-models-asr.md for context. Sidecar output goes through
+    // WE_EMITTER so it lands in the same log file as lair and holochain.
     registerAsrIpc({
       binariesDir: BINARIES_DIRECTORY,
       resourcesPath: RESOURCES_DIRECTORY,
       whisperServerVersion: MOSS_CONFIG.whisperServer,
       repoRoot: app.getAppPath(),
+      onLog: (stream, chunk) => {
+        const line = `[whisper-server] ${chunk.trimEnd()}`;
+        if (stream === 'stderr') WE_EMITTER.emitMossError(line);
+        else WE_EMITTER.emitMossLog(line);
+      },
     });
 
     WE_EMITTER.emitMossLog(`RUN_OPTIONS on startup: ${formatUpdaterArg(RUN_OPTIONS)}`);
@@ -1372,21 +1385,18 @@ if (!RUNNING_WITH_COMMAND) {
       });
       return new Promise((resolve, reject) => {
         const timeoutMs = 60000;
-        const onResponse = (response: any) => {
+        // The main renderer answers with an AppletHostResponse envelope
+        // so a handler failure rejects the WAL window's request right
+        // away instead of surfacing as a timeout.
+        const onResponse = (response: unknown) => {
           clearTimeout(timeout);
-          // Optional envelope from the main renderer so it can signal
-          // handler errors instead of letting this promise hang until
-          // the 60s timeout. Older call sites send raw results —
-          // unwrap those unchanged for backward compat.
-          if (response && typeof response === 'object') {
-            if (response.type === 'error') {
-              return reject(new Error(response.error ?? 'Unknown applet-host error'));
-            }
-            if (response.type === 'success') {
-              return resolve(response.result);
-            }
+          if (!isAppletHostResponse(response)) {
+            return reject(new Error('Malformed applet-host response envelope'));
           }
-          return resolve(response);
+          if (response.type === 'error') {
+            return reject(new Error(response.error));
+          }
+          return resolve(response.result);
         };
         const timeout = setTimeout(() => {
           WE_EMITTER.off(messageId, onResponse);
@@ -1395,9 +1405,12 @@ if (!RUNNING_WITH_COMMAND) {
         WE_EMITTER.once(messageId, onResponse);
       });
     });
-    ipcMain.handle('applet-message-to-parent-response', (_e, response: any, id: string) => {
-      WE_EMITTER.emit(id, response);
-    });
+    ipcMain.handle(
+      'applet-message-to-parent-response',
+      (_e, response: AppletHostResponse, id: string) => {
+        WE_EMITTER.emit(id, response);
+      },
+    );
     // Native first-use consent dialog for the local ASR feature. Shown
     // attached to the BrowserWindow that actually initiated the request
     // (WAL windows have their own window; applet iframes live inside

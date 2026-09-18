@@ -74,5 +74,5 @@ export type {
   AsrPushAudioRequest,
 } from './ipcHandlers';
 
-export { registerAsrIpc, isAsrIpcRegistered, WHISPER_SERVER_VERSION } from './wireUp';
-export type { AsrWireUpConfig } from './wireUp';
+export { registerAsrIpc, isAsrIpcRegistered } from './wireUp';
+export type { AsrSidecarLogStream, AsrWireUpConfig } from './wireUp';

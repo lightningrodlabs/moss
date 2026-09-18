@@ -33,14 +33,8 @@ import {
 } from './ipcHandlers';
 import { SessionRegistry } from './sessionRegistry';
 
-/**
- * Fallback whisper.cpp version used when the caller does not pass one.
- * Kept in sync with `moss.config.json#whisperServer` — production
- * callers (src/main/index.ts) read that file and pass the value in;
- * this default only covers legacy test paths that construct a wire-up
- * without going through the config loader.
- */
-export const WHISPER_SERVER_VERSION = '1.8.4';
+/** Where a line of whisper-server output came from. */
+export type AsrSidecarLogStream = 'stdout' | 'stderr';
 
 export interface AsrWireUpConfig {
   /** Absolute path to the resources/bins directory. */
@@ -54,11 +48,11 @@ export interface AsrWireUpConfig {
    */
   resourcesPath?: string;
   /**
-   * whisper-server version. Used to construct the bundled binary
-   * filename (resources/bins/whisper-server-v<version><exe>). When
-   * omitted, falls back to WHISPER_SERVER_VERSION.
+   * whisper-server version, from `moss.config.json#whisperServer`. Used
+   * to construct the bundled binary filename
+   * (resources/bins/whisper-server-v<version><exe>).
    */
-  whisperServerVersion?: string;
+  whisperServerVersion: string;
   /**
    * Optional model override. If omitted, defaults to $MOSS_ASR_MODEL,
    * then to a bundled model under `resourcesPath`, then to the M0
@@ -74,7 +68,18 @@ export interface AsrWireUpConfig {
    * Defaults to $MOSS_ASR_LATENCY_TIER if set to fast/ok/slow, else 'ok'.
    */
   latencyTier?: 'fast' | 'ok' | 'slow';
+  /**
+   * Receives whisper-server's stdout/stderr output. Defaults to
+   * writing stderr to the Moss process's stderr and dropping stdout;
+   * the production caller routes both into the Moss log pipeline.
+   */
+  onLog?: (stream: AsrSidecarLogStream, chunk: string) => void;
 }
+
+const defaultOnLog = (stream: AsrSidecarLogStream, chunk: string): void => {
+  // whisper-server is verbose at startup; stderr is where problems show up.
+  if (stream === 'stderr') process.stderr.write(`[whisper-server] ${chunk}`);
+};
 
 let registered = false;
 
@@ -87,21 +92,16 @@ export function registerAsrIpc(config: AsrWireUpConfig): void {
   registered = true;
 
   const modelPath =
-    config.modelPath ??
-    defaultModelPath(config.repoRoot ?? process.cwd(), config.resourcesPath);
+    config.modelPath ?? defaultModelPath(config.repoRoot ?? process.cwd(), config.resourcesPath);
 
   const latencyTier = config.latencyTier ?? readLatencyTierEnv();
   initAsrService({
     binariesDir: config.binariesDir,
-    whisperServerVersion: config.whisperServerVersion ?? WHISPER_SERVER_VERSION,
+    whisperServerVersion: config.whisperServerVersion,
     isPackaged: app.isPackaged,
     modelPath,
     idleTimeoutMs: config.idleTimeoutMs,
-    onLog: (stream, chunk) => {
-      // whisper-server is verbose at startup. Drop stdout, keep stderr
-      // visible — that's where actual problems show up.
-      if (stream === 'stderr') process.stderr.write(`[whisper-server] ${chunk}`);
-    },
+    onLog: config.onLog ?? defaultOnLog,
     latencyTier,
   });
 
@@ -117,6 +117,13 @@ export function registerAsrIpc(config: AsrWireUpConfig): void {
       if (wc && !wc.isDestroyed()) wc.send('asr-event', event);
     },
     getCapabilities: () => getAsrCapabilities(),
+    // A session whose renderer is gone cannot receive events; lets the
+    // handlers treat such owners as closed rather than emitting into
+    // the void.
+    isOwnerAlive: (ownerId) => {
+      const wc = webContents.fromId(ownerId);
+      return !!wc && !wc.isDestroyed();
+    },
   };
 
   ipcMain.handle('asr-capabilities', () => asrGetCapabilities(ctx));
@@ -131,7 +138,9 @@ export function registerAsrIpc(config: AsrWireUpConfig): void {
   );
 
   // Renderer cleanup: when a webContents goes away (window closed,
-  // page navigated, applet iframe destroyed) drop all of its sessions.
+  // page navigated) drop all of its sessions. Applet iframes share the
+  // main window's webContents, so a tool closing its view is handled
+  // by the renderer-side gates, not here.
   app.on('web-contents-created', (_event, wc) => {
     wc.once('destroyed', () => {
       void asrCloseAllForOwner(ctx, wc.id);
