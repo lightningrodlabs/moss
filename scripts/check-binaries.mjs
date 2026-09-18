@@ -28,11 +28,12 @@ if (!fs.existsSync(path.join(binariesDirectory, expectedLairBinary))) {
 }
 
 // ASR checks (whisper-server binary + bundled model) are opt-in via
-// MOSS_REQUIRE_ASR=1. Dev mode uses a nix-shell fallback for the
-// binary (see src/main/asr/binaryResolver.ts) and the spike model, so
-// enforcing their presence would break `yarn applet-dev-*` for any
-// developer who skipped the ASR build on setup. Release CI flips the
-// flag on in yarn setup:release.
+// MOSS_REQUIRE_ASR=1 (`yarn check:binaries:release`). Plain `yarn setup`
+// does not build whisper-server — that needs cmake and a C++ toolchain —
+// and dev mode resolves the binary through a nix-shell fallback (see
+// src/main/asr/binaryResolver.ts), so `yarn applet-dev-*` runs the
+// plain check. `setup:release` and the packaging scripts run the strict
+// variant so a release never ships without the sidecar and model.
 if (process.env.MOSS_REQUIRE_ASR === '1') {
   if (mossConfig.whisperServer) {
     const expectedWhisperBinary = `whisper-server-v${mossConfig.whisperServer}${
@@ -48,8 +49,6 @@ if (process.env.MOSS_REQUIRE_ASR === '1') {
 
   const modelPath = path.join('resources', 'models', 'ggml-base.en.bin');
   if (!fs.existsSync(modelPath)) {
-    throw new Error(
-      `Expected ASR model at '${modelPath}' (run \`yarn fetch:asr-model\`).`,
-    );
+    throw new Error(`Expected ASR model at '${modelPath}' (run \`yarn fetch:asr-model\`).`);
   }
 }
