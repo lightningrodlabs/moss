@@ -1,3 +1,7 @@
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
@@ -63,6 +67,18 @@ describe('asrService singleton', () => {
     expect(getAsrCapabilities().asr.available).toBe(false);
   });
 
+  it('reports unavailable and refuses a broker when no model file is configured', () => {
+    const result = initAsrService({
+      binariesDir: '/tmp/nonexistent',
+      whisperServerVersion: '1.8.4',
+      isPackaged: false,
+      modelPath: null,
+    });
+    expect(result).toBeNull();
+    expect(getAsrCapabilities().asr.available).toBe(false);
+    expect(() => getAsrBroker()).toThrow(/model/i);
+  });
+
   it('shutdownAsrService() resets the singleton and is idempotent', async () => {
     initAsrService({
       binariesDir: '/tmp/nonexistent',
@@ -89,25 +105,33 @@ describe('defaultModelPath', () => {
     }
   });
 
-  it('falls back to the spike model when env is unset and no resourcesPath', () => {
+  it('returns null when neither a bundled nor a spike model file exists', () => {
     const orig = process.env.MOSS_ASR_MODEL;
     delete process.env.MOSS_ASR_MODEL;
     try {
-      expect(defaultModelPath('/repo')).toBe('/repo/spikes/asr-m0/models/ggml-base.en.bin');
+      expect(defaultModelPath('/nonexistent-repo', '/tmp/nonexistent-resources')).toBeNull();
+      expect(defaultModelPath('/nonexistent-repo')).toBeNull();
     } finally {
       if (orig !== undefined) process.env.MOSS_ASR_MODEL = orig;
     }
   });
 
-  it('falls back to the spike model when resourcesPath has no bundled model', () => {
+  it('prefers the bundled model, then the spike model, when the file exists', () => {
     const orig = process.env.MOSS_ASR_MODEL;
     delete process.env.MOSS_ASR_MODEL;
+    const root = mkdtempSync(path.join(tmpdir(), 'asr-model-'));
     try {
-      // /tmp/nonexistent-resources doesn't contain models/, so resolver falls through
-      expect(defaultModelPath('/repo', '/tmp/nonexistent-resources')).toBe(
-        '/repo/spikes/asr-m0/models/ggml-base.en.bin',
-      );
+      const spike = path.join(root, 'repo/spikes/asr-m0/models/ggml-base.en.bin');
+      mkdirSync(path.dirname(spike), { recursive: true });
+      writeFileSync(spike, '');
+      expect(defaultModelPath(path.join(root, 'repo'), path.join(root, 'resources'))).toBe(spike);
+
+      const bundled = path.join(root, 'resources/models/ggml-base.en.bin');
+      mkdirSync(path.dirname(bundled), { recursive: true });
+      writeFileSync(bundled, '');
+      expect(defaultModelPath(path.join(root, 'repo'), path.join(root, 'resources'))).toBe(bundled);
     } finally {
+      rmSync(root, { recursive: true, force: true });
       if (orig !== undefined) process.env.MOSS_ASR_MODEL = orig;
     }
   });

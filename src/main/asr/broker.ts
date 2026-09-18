@@ -105,6 +105,11 @@ export class AsrBroker {
     if (this.unloading) {
       await this.unloading;
     }
+    // A cold start that is still in flight will hand us its server once
+    // it finishes; wait for it so the sidecar is stopped rather than orphaned.
+    if (this.starting) {
+      await this.starting.catch(() => undefined);
+    }
     if (this.server) {
       const s = this.server;
       this.server = null;
@@ -124,6 +129,7 @@ export class AsrBroker {
     }
     if (this.starting) {
       const s = await this.starting;
+      this.assertAlive();
       this.sessionCount++;
       return s;
     }
@@ -141,8 +147,15 @@ export class AsrBroker {
       return s;
     })();
     const s = await this.starting;
+    this.assertAlive();
     this.sessionCount++;
     return s;
+  }
+
+  private assertAlive(): void {
+    if (this.destroyed) {
+      throw new Error('AsrBroker has been destroyed');
+    }
   }
 
   private async release(): Promise<void> {

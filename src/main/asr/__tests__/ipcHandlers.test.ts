@@ -24,11 +24,13 @@ interface Harness {
   registry: SessionRegistry;
 }
 
-function makeHarness(opts: {
-  transcribeText?: string;
-  idGen?: () => string;
-  capabilities?: LocalModelCapabilities;
-} = {}): Harness {
+function makeHarness(
+  opts: {
+    transcribeText?: string;
+    idGen?: () => string;
+    capabilities?: LocalModelCapabilities;
+  } = {},
+): Harness {
   const fakes: FakeWhisperServer[] = [];
   const broker = new AsrBroker({
     server: { command: ['noop'], modelPath: '/dev/null' },
@@ -130,6 +132,30 @@ describe('asrPushAudio', () => {
     ).rejects.toMatchObject({ kind: 'invalid' });
   });
 
+  it('drops the registry entry once the session reports an error', async () => {
+    const h = makeHarness();
+    const { sessionId } = await asrOpenSession(h.ctx, 7, {});
+    h.fakes[0].opts = {
+      transcribe: () => {
+        throw new Error('boom');
+      },
+    };
+    await asrPushAudio(h.ctx, 7, { sessionId, pcm: new Uint8Array(32_000), endOfUtterance: true });
+    await h.registry.get(sessionId)?.session.settle();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(h.events.some((e) => e.event.eventType === 'error')).toBe(true);
+    expect(h.registry.get(sessionId)).toBeUndefined();
+    expect(h.registry.size).toBe(0);
+  });
+
+  it('closes the session and throws when the owner died during open', async () => {
+    const h = makeHarness();
+    h.ctx.isOwnerAlive = () => false;
+    await expect(asrOpenSession(h.ctx, 7, {})).rejects.toThrow(/owner/);
+    expect(h.registry.size).toBe(0);
+    expect(h.ctx.getBroker().openSessionCount).toBe(0);
+  });
+
   it('emits an error event when the underlying session throws', async () => {
     const fakes: FakeWhisperServer[] = [];
     const broker = new AsrBroker({
@@ -153,9 +179,9 @@ describe('asrPushAudio', () => {
       getCapabilities: () => computeAsrCapabilities({ modelPath: '/tmp/ggml-base.en.bin' }),
     };
     const { sessionId } = await asrOpenSession(ctx, 1, {});
-    await expect(
-      asrPushAudio(ctx, 1, { sessionId, pcm: silentBytes(16_000), endOfUtterance: true }),
-    ).rejects.toThrow(/boom/);
+    const entry = registry.get(sessionId)!;
+    await asrPushAudio(ctx, 1, { sessionId, pcm: silentBytes(16_000), endOfUtterance: true });
+    await entry.session.settle();
     expect(events).toHaveLength(1);
     expect(events[0].event.eventType).toBe('error');
     if (events[0].event.eventType === 'error') {

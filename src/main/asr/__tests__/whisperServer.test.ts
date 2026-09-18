@@ -19,7 +19,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { WhisperServer } from '../whisperServer';
+import { buildInferenceBody, WhisperServer, WhisperServerStartError } from '../whisperServer';
 
 const REPO_ROOT = resolve(__dirname, '../../../..');
 const DEFAULT_MODEL = resolve(REPO_ROOT, 'spikes/asr-m0/models/ggml-base.en.bin');
@@ -94,6 +94,20 @@ describe('WhisperServer', () => {
     120_000,
   );
 
+  it('rejects start() with a start error when the binary cannot be spawned', async () => {
+    const server = new WhisperServer({
+      command: ['/nonexistent/dir/whisper-server-does-not-exist'],
+      modelPath: '/dev/null',
+      startTimeoutMs: 5_000,
+    });
+    const t0 = Date.now();
+    await expect(server.start()).rejects.toThrow(WhisperServerStartError);
+    // A spawn failure must surface immediately, not after the readiness timeout.
+    expect(Date.now() - t0).toBeLessThan(2_000);
+    expect(server.state).toBe('stopped');
+    await server.stop(); // no throw on a server that never spawned
+  });
+
   it('rejects transcribe() before start()', async () => {
     const server = new WhisperServer({
       command: ['whisper-server'],
@@ -121,5 +135,26 @@ describe('WhisperServer', () => {
     });
     await server.stop();
     expect(server.state).toBe('stopped');
+  });
+});
+
+describe('buildInferenceBody', () => {
+  it('sends the WAV as `file` plus one form part per extra field', () => {
+    const wav = Buffer.from('RIFFdata');
+    const body = buildInferenceBody('bnd', wav, {
+      response_format: 'verbose_json',
+      language: 'de',
+    });
+    const text = body.toString('latin1');
+    expect(text).toContain('name="file"; filename="audio.wav"');
+    expect(text).toContain('RIFFdata');
+    expect(text).toContain('name="response_format"\r\n\r\nverbose_json');
+    expect(text).toContain('name="language"\r\n\r\nde');
+    expect(text.endsWith('--bnd--\r\n')).toBe(true);
+  });
+
+  it('omits fields whose value is undefined', () => {
+    const body = buildInferenceBody('bnd', Buffer.alloc(0), { language: undefined });
+    expect(body.toString('latin1')).not.toContain('name="language"');
   });
 });

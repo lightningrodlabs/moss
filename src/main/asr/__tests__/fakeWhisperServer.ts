@@ -6,7 +6,12 @@
 // This file intentionally lives under __tests__/ so it never ships in
 // the main bundle even if some refactor accidentally re-exports it.
 
-import { AsrTranscribeResult, WhisperServerConfig, WhisperServerState } from '../types';
+import {
+  AsrTranscribeOptions,
+  AsrTranscribeResult,
+  WhisperServerConfig,
+  WhisperServerState,
+} from '../types';
 import type { WhisperServer } from '../whisperServer';
 
 export interface FakeServerOptions {
@@ -15,7 +20,7 @@ export interface FakeServerOptions {
   /** Make start() reject with this error after the delay. */
   failStartWith?: Error;
   /** Function run on each transcribe(); return canned results or throw. */
-  transcribe?: (wav: Buffer) => AsrTranscribeResult;
+  transcribe?: (wav: Buffer) => AsrTranscribeResult | Promise<AsrTranscribeResult>;
 }
 
 export class FakeWhisperServer {
@@ -25,10 +30,12 @@ export class FakeWhisperServer {
   startCalls = 0;
   stopCalls = 0;
   transcribeCalls: Buffer[] = [];
+  /** Options passed alongside each transcribe() call, in call order. */
+  transcribeOptions: Array<AsrTranscribeOptions | undefined> = [];
 
   constructor(
     public readonly config: WhisperServerConfig,
-    private readonly opts: FakeServerOptions = {},
+    public opts: FakeServerOptions = {},
   ) {}
 
   async start(): Promise<void> {
@@ -48,11 +55,12 @@ export class FakeWhisperServer {
     this.state = 'ready';
   }
 
-  async transcribe(wav: Buffer): Promise<AsrTranscribeResult> {
+  async transcribe(wav: Buffer, opts?: AsrTranscribeOptions): Promise<AsrTranscribeResult> {
     if (this.state !== 'ready') {
       throw new Error(`fake transcribe in state ${this.state}`);
     }
     this.transcribeCalls.push(wav);
+    this.transcribeOptions.push(opts);
     if (this.opts.transcribe) {
       return this.opts.transcribe(wav);
     }

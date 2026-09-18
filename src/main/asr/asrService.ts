@@ -32,11 +32,11 @@ export interface AsrServiceConfig {
   /** True when running inside a packaged app.asar; disables nix fallback. */
   isPackaged: boolean;
   /**
-   * Absolute path to the ggml model file (.bin). For the e2e dev flow,
-   * the wire-up code reads this from $MOSS_ASR_MODEL or a default that
-   * points at the M0 spike artifact.
+   * Absolute path to the ggml model file (.bin), or null when no model
+   * is present on this install. Without a model the service reports
+   * `available: false` and refuses to hand out a broker.
    */
-  modelPath: string;
+  modelPath: string | null;
   /**
    * Idle timeout before the sidecar unloads after the last session
    * closes. Defaults to AsrBroker's default (5 min).
@@ -68,6 +68,14 @@ let initError: Error | null = null;
 export function initAsrService(config: AsrServiceConfig): AsrBroker | null {
   if (initialized) return broker;
   initialized = true;
+  if (config.modelPath === null) {
+    initError = new Error(
+      'No ASR model is installed. Set $MOSS_ASR_MODEL or bundle resources/models/' +
+        BUNDLED_ASR_MODEL_FILENAME,
+    );
+    capabilities = computeAsrCapabilities({ modelPath: null, latencyTier: config.latencyTier });
+    return null;
+  }
   try {
     const resolved = resolveWhisperServerCommand({
       binariesDir: config.binariesDir,
@@ -168,15 +176,18 @@ export function _resetAsrServiceForTests(): void {
  *   3. <repoRoot>/spikes/asr-m0/models/ggml-base.en.bin — dev fallback
  *      populated manually via spikes/asr-m0/fetch-model.mjs.
  *
- * Returned as a function so test code can override the env without the
- * singleton caching the answer.
+ * Returns null when none of these exist, so capabilities can report
+ * the truth instead of advertising a model that fails at spawn time.
+ * The env override is trusted as given so a misconfigured path fails
+ * loudly at first use rather than silently disabling the feature.
  */
-export function defaultModelPath(repoRoot: string, resourcesPath?: string): string {
+export function defaultModelPath(repoRoot: string, resourcesPath?: string): string | null {
   const fromEnv = process.env.MOSS_ASR_MODEL;
   if (fromEnv && fromEnv.trim().length > 0) return fromEnv.trim();
+  const candidates: string[] = [];
   if (resourcesPath) {
-    const bundled = path.join(resourcesPath, 'models', BUNDLED_ASR_MODEL_FILENAME);
-    if (existsSync(bundled)) return bundled;
+    candidates.push(path.join(resourcesPath, 'models', BUNDLED_ASR_MODEL_FILENAME));
   }
-  return path.join(repoRoot, 'spikes/asr-m0/models', BUNDLED_ASR_MODEL_FILENAME);
+  candidates.push(path.join(repoRoot, 'spikes/asr-m0/models', BUNDLED_ASR_MODEL_FILENAME));
+  return candidates.find((c) => existsSync(c)) ?? null;
 }

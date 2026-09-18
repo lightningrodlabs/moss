@@ -13,6 +13,12 @@ export interface AsrSegment {
   confidence?: number;
 }
 
+/** Per-request decoding hints forwarded to whisper-server. */
+export interface AsrTranscribeOptions {
+  /** ISO 639-1 code. Omit to let whisper auto-detect. */
+  language?: string;
+}
+
 export interface AsrTranscribeResult {
   segments: AsrSegment[];
   /** Wall-clock time spent inside the runtime for this call, in ms. */

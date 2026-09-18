@@ -14,6 +14,5 @@ export default defineConfig({
       'libs/api/**/*.test.ts',
     ],
     environment: 'node',
-    testTimeout: 60 * 1_000,
   },
 });

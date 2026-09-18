@@ -37,6 +37,7 @@ describe('AsrSession', () => {
 
     // 1 second of mono @ 16 kHz = 16000 samples
     await session.pushAudio(silentPcm(16_000), true);
+    await session.settle();
 
     expect(finals).toHaveLength(1);
     expect(finals[0].text).toBe('hello world');
@@ -64,6 +65,7 @@ describe('AsrSession', () => {
     await session.pushAudio(silentPcm(16_000), true); // 1 s
     await session.pushAudio(silentPcm(8_000), true); // 0.5 s
     await session.pushAudio(silentPcm(16_000), true); // 1 s
+    await session.settle();
 
     expect(finals.map((f) => f.text)).toEqual(['seg1', 'seg2', 'seg3']);
     expect(finals[0].tStart).toBe(0);
@@ -79,11 +81,45 @@ describe('AsrSession', () => {
   it('force-flushes when buffered audio exceeds maxBufferMs', async () => {
     const fake = makeReadyServer();
     const session = new AsrSession(asWhisperServer(fake), () => {}, {
+      vad: false,
       maxBufferMs: 500, // half a second
     });
     // Push 600 ms without endOfUtterance — must force a flush.
     await session.pushAudio(silentPcm(16_000 * 0.6), false);
+    await session.settle();
     expect(fake.transcribeCalls).toHaveLength(1);
+  });
+
+  it('pushAudio resolves while a transcribe is still in flight', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const fake = makeReadyServer({
+      transcribe: async () => {
+        await gate;
+        return { segments: [{ text: 'late', tStart: 0, tEnd: 10 }], inferMs: 1 };
+      },
+    });
+    const session = new AsrSession(asWhisperServer(fake), () => {});
+    await session.pushAudio(silentPcm(16_000), true); // starts a transcribe that blocks on `gate`
+
+    // A plain append must not queue behind the blocked transcribe.
+    const outcome = await Promise.race([
+      session.pushAudio(silentPcm(160), false).then(() => 'resolved' as const),
+      new Promise<'stalled'>((r) => setTimeout(() => r('stalled'), 200)),
+    ]);
+    expect(outcome).toBe('resolved');
+
+    release();
+    await session.settle();
+    expect(fake.transcribeCalls).toHaveLength(1);
+  });
+
+  it('forwards opts.language to the server on every transcribe', async () => {
+    const fake = makeReadyServer();
+    const session = new AsrSession(asWhisperServer(fake), () => {}, { language: 'de' });
+    await session.pushAudio(silentPcm(16_000), true);
+    await session.settle();
+    expect(fake.transcribeOptions).toEqual([{ language: 'de' }]);
   });
 
   it('does NOT flush when there is no audio buffered, even on endOfUtterance', async () => {
@@ -98,6 +134,7 @@ describe('AsrSession', () => {
     const onClose = vi.fn();
     const session = new AsrSession(asWhisperServer(fake), onClose);
     await session.pushAudio(silentPcm(8_000), false); // buffered, no flush
+    await session.settle();
     expect(fake.transcribeCalls).toHaveLength(0);
     await session.close();
     expect(fake.transcribeCalls).toHaveLength(1);
@@ -137,23 +174,54 @@ describe('AsrSession', () => {
     const b = session.pushAudio(silentPcm(16_000), true);
     const c = session.pushAudio(silentPcm(16_000), true);
     await Promise.all([a, b, c]);
+    await session.settle();
 
     expect(finals.map((f) => f.text)).toEqual(['seg1', 'seg2', 'seg3']);
   });
 
-  it('emits an error event AND rejects pushAudio when the server errors', async () => {
+  it('emits an error event, closes itself, and rejects later pushes when the server errors', async () => {
     const fake = makeReadyServer({
       transcribe: () => {
         throw new Error('whisper-server exploded');
       },
     });
-    const session = new AsrSession(asWhisperServer(fake), () => {});
+    const onClose = vi.fn();
+    const session = new AsrSession(asWhisperServer(fake), onClose);
     const errors: Error[] = [];
     session.onError((e) => errors.push(e));
 
-    await expect(session.pushAudio(silentPcm(16_000), true)).rejects.toThrow(/exploded/);
+    await session.pushAudio(silentPcm(16_000), true);
+    await session.settle();
     expect(errors).toHaveLength(1);
     expect(errors[0].message).toMatch(/exploded/);
+    expect(session.isClosed).toBe(true);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    await expect(session.pushAudio(silentPcm(16_000), true)).rejects.toBeInstanceOf(
+      AsrSessionStateError,
+    );
+    // close() after a failure must not release the broker a second time.
+    await session.close();
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('emits an error and closes when the server is gone at flush time, dropping the buffer', async () => {
+    const fake = makeReadyServer();
+    const onClose = vi.fn();
+    const session = new AsrSession(asWhisperServer(fake), onClose, {
+      vad: false,
+      maxBufferMs: 500,
+    });
+    const errors: Error[] = [];
+    session.onError((e) => errors.push(e));
+
+    fake.state = 'stopped';
+    await session.pushAudio(silentPcm(16_000), false); // over the cap → flush attempt
+    await session.settle();
+    expect(fake.transcribeCalls).toHaveLength(0);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toBeInstanceOf(AsrSessionStateError);
+    expect(session.isClosed).toBe(true);
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('unsubscribes listeners returned by onFinal/onError', async () => {
@@ -163,9 +231,11 @@ describe('AsrSession', () => {
     const off = session.onFinal((ev) => finals.push(ev));
 
     await session.pushAudio(silentPcm(16_000), true);
+    await session.settle();
     expect(finals).toHaveLength(1);
     off();
     await session.pushAudio(silentPcm(16_000), true);
+    await session.settle();
     expect(finals).toHaveLength(1); // no new event
   });
 });
@@ -202,6 +272,7 @@ describe('AsrSession VAD', () => {
     await session.pushAudio(silentPcm(1600), false); // 100 ms silence — not yet
     expect(fake.transcribeCalls).toHaveLength(0);
     await session.pushAudio(silentPcm(1600), false); // another 100 ms — total 200 ms → flush
+    await session.settle();
     expect(fake.transcribeCalls).toHaveLength(1);
   });
 
@@ -222,15 +293,18 @@ describe('AsrSession VAD', () => {
     await session.pushAudio(speechPcm(1600), false);
     await session.pushAudio(silentPcm(1600), false);
     await session.pushAudio(silentPcm(1600), false);
+    await session.settle();
     expect(fake.transcribeCalls).toHaveLength(1);
     // Pure silence after the flush should NOT immediately re-trigger.
     await session.pushAudio(silentPcm(1600), false);
     await session.pushAudio(silentPcm(1600), false);
+    await session.settle();
     expect(fake.transcribeCalls).toHaveLength(1);
     // Second utterance: speech + silence → flush 2
     await session.pushAudio(speechPcm(1600), false);
     await session.pushAudio(silentPcm(1600), false);
     await session.pushAudio(silentPcm(1600), false);
+    await session.settle();
     expect(fake.transcribeCalls).toHaveLength(2);
   });
 
@@ -258,6 +332,7 @@ describe('AsrSession VAD', () => {
     await session.pushAudio(speechPcm(1600), false);
     await session.pushAudio(silentPcm(1600), false);
     await session.pushAudio(silentPcm(1600), false);
+    await session.settle();
 
     expect(finals.map((f) => f.text)).toEqual(['utt1', 'utt2']);
     expect(finals[0].tStart).toBe(0);
@@ -285,7 +360,44 @@ describe('AsrSession VAD', () => {
     const session = vadSession(fake);
     await session.pushAudio(speechPcm(1600), false); // speech, no silence yet
     await session.pushAudio(speechPcm(1600), true); // explicit commit mid-speech
+    await session.settle();
     expect(fake.transcribeCalls).toHaveLength(1);
+  });
+
+  it('never sends pre-speech silence to the server, even past maxBufferMs', async () => {
+    const fake = makeReadyServer();
+    const session = vadSession(fake, { maxBufferMs: 3_000 });
+    // 10 s of silence on an open mic: far past the cap, but nothing worth transcribing.
+    for (let i = 0; i < 10; i++) {
+      await session.pushAudio(silentPcm(16_000), false);
+    }
+    await session.settle();
+    expect(fake.transcribeCalls).toHaveLength(0);
+  });
+
+  it('keeps a bounded pre-roll of silence and advances the clock past what it dropped', async () => {
+    const fake = makeReadyServer({
+      transcribe: () => ({ segments: [{ text: 'hi', tStart: 0, tEnd: 100 }], inferMs: 1 }),
+    });
+    const session = vadSession(fake);
+    const finals: AsrFinalEvent[] = [];
+    session.onFinal((ev) => finals.push(ev));
+
+    // 40 × 1 s of silence, then a 100 ms utterance and 200 ms of silence.
+    for (let i = 0; i < 40; i++) {
+      await session.pushAudio(silentPcm(16_000), false);
+    }
+    await session.pushAudio(speechPcm(1600), false);
+    await session.pushAudio(silentPcm(1600), false);
+    await session.pushAudio(silentPcm(1600), false);
+    await session.settle();
+
+    expect(fake.transcribeCalls).toHaveLength(1);
+    // The WAV holds the retained pre-roll (2 s) plus the utterance (300 ms), not 40 s.
+    const wavSamples = (fake.transcribeCalls[0].byteLength - 44) / 2;
+    expect(wavSamples).toBe(2 * 16_000 + 3 * 1600);
+    // Timestamps stay relative to session start: 38 s of silence was dropped.
+    expect(finals[0].tStart).toBe(38_000);
   });
 
   it('ignores chunks below vadSilenceRms in pre-speech state', async () => {

@@ -10,11 +10,13 @@ interface BrokerHandle {
   fakes: FakeWhisperServer[];
 }
 
-function makeBroker(opts: {
-  idleTimeoutMs?: number;
-  startDelayMs?: number;
-  transcribeText?: string;
-} = {}): BrokerHandle {
+function makeBroker(
+  opts: {
+    idleTimeoutMs?: number;
+    startDelayMs?: number;
+    transcribeText?: string;
+  } = {},
+): BrokerHandle {
   const fakes: FakeWhisperServer[] = [];
   const broker = new AsrBroker({
     server: { command: ['noop'], modelPath: '/dev/null' },
@@ -127,12 +129,23 @@ describe('AsrBroker', () => {
     session.onFinal((ev) => finals.push(ev));
 
     await session.pushAudio(silentPcm(16_000), true);
+    await session.settle();
     expect(finals).toHaveLength(1);
     expect(finals[0].text).toBe('broker-routed');
     expect(fakes[0].transcribeCalls).toHaveLength(1);
 
     await session.close();
     await broker.destroy();
+  });
+
+  it('destroy() during a cold start stops the server once it finishes starting', async () => {
+    const { broker, fakes } = makeBroker({ startDelayMs: 50 });
+    const pending = broker.openSession();
+    await broker.destroy();
+    await expect(pending).rejects.toThrow(/destroyed/);
+    expect(fakes).toHaveLength(1);
+    expect(fakes[0].stopCalls).toBe(1);
+    expect(broker.isLoaded).toBe(false);
   });
 
   it('rejects openSession() after destroy()', async () => {

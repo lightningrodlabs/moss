@@ -12,10 +12,12 @@
 
 import { ChildProcessByStdio, spawn as spawnChild } from 'node:child_process';
 import type { Readable } from 'node:stream';
-import { createServer, Socket } from 'node:net';
+import { Socket } from 'node:net';
+import getPort from 'get-port';
 
 import {
   AsrSegment,
+  AsrTranscribeOptions,
   AsrTranscribeResult,
   WhisperServerConfig,
   WhisperServerState,
@@ -93,16 +95,20 @@ export class WhisperServer {
     }
     this._state = 'starting';
 
-    const port = this.config.port ?? (await pickFreePort());
+    const port = this.config.port ?? (await getPort({ host: this.host }));
     this.boundPort = port;
 
     const [cmd, ...leadingArgs] = this.config.command;
     const args = [
       ...leadingArgs,
-      '-m', this.config.modelPath,
-      '--host', this.host,
-      '--port', String(port),
-      '-t', String(this.threads),
+      '-m',
+      this.config.modelPath,
+      '--host',
+      this.host,
+      '--port',
+      String(port),
+      '-t',
+      String(this.threads),
     ];
 
     const proc = spawnChild(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
@@ -113,6 +119,17 @@ export class WhisperServer {
     let exited = false;
     let exitCode: number | null = null;
     let exitSignal: NodeJS.Signals | null = null;
+    const spawnFailure: { error: Error | null } = { error: null };
+    // A binary that cannot be executed (missing file, bad permissions)
+    // reports through 'error' rather than 'exit'; without a listener
+    // Node would raise it as an uncaught exception in the main process.
+    proc.once('error', (err) => {
+      spawnFailure.error = err;
+      exited = true;
+      if (this._state === 'starting' || this._state === 'ready') {
+        this._state = 'stopped';
+      }
+    });
     proc.once('exit', (code, signal) => {
       exited = true;
       exitCode = code;
@@ -130,7 +147,9 @@ export class WhisperServer {
     while (Date.now() < deadline) {
       if (exited) {
         throw new WhisperServerStartError(
-          `whisper-server exited before becoming ready (code=${exitCode}, signal=${exitSignal})`,
+          spawnFailure.error
+            ? `whisper-server could not be started: ${spawnFailure.error.message}`
+            : `whisper-server exited before becoming ready (code=${exitCode}, signal=${exitSignal})`,
         );
       }
       if (await canConnect(this.host, port)) {
@@ -155,7 +174,7 @@ export class WhisperServer {
    * mono, 16 kHz is what we feed; whisper-server resamples internally
    * but we minimize ambiguity by normalizing upstream).
    */
-  async transcribe(wav: Buffer): Promise<AsrTranscribeResult> {
+  async transcribe(wav: Buffer, opts: AsrTranscribeOptions = {}): Promise<AsrTranscribeResult> {
     if (this._state !== 'ready') {
       throw new WhisperServerStateError(
         `transcribe() called in state ${this._state}; server is not ready`,
@@ -163,17 +182,10 @@ export class WhisperServer {
     }
 
     const boundary = `----moss-asr-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const head = Buffer.from(
-      `--${boundary}\r\n` +
-        `Content-Disposition: form-data; name="file"; filename="audio.wav"\r\n` +
-        `Content-Type: audio/wav\r\n\r\n`,
-    );
-    const tail = Buffer.from(
-      `\r\n--${boundary}\r\n` +
-        `Content-Disposition: form-data; name="response_format"\r\n\r\nverbose_json\r\n` +
-        `--${boundary}--\r\n`,
-    );
-    const body = Buffer.concat([head, wav, tail]);
+    const body = buildInferenceBody(boundary, wav, {
+      response_format: 'verbose_json',
+      language: opts.language,
+    });
 
     const t0 = performance.now();
     let res: Response;
@@ -192,9 +204,7 @@ export class WhisperServer {
 
     if (!res.ok) {
       const text = await res.text().catch(() => '');
-      throw new WhisperServerTranscribeError(
-        `inference HTTP ${res.status}: ${text.slice(0, 500)}`,
-      );
+      throw new WhisperServerTranscribeError(`inference HTTP ${res.status}: ${text.slice(0, 500)}`);
     }
 
     const json = (await res.json()) as unknown;
@@ -235,22 +245,33 @@ export class WhisperServer {
   }
 }
 
-async function pickFreePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const srv = createServer();
-    srv.unref();
-    srv.on('error', reject);
-    srv.listen(0, '127.0.0.1', () => {
-      const addr = srv.address();
-      if (addr && typeof addr === 'object') {
-        const port = addr.port;
-        srv.close(() => resolve(port));
-      } else {
-        srv.close();
-        reject(new Error('could not pick a free port'));
-      }
-    });
-  });
+/**
+ * Multipart body for whisper-server's /inference endpoint: the WAV as
+ * the `file` part followed by one text part per defined field.
+ */
+export function buildInferenceBody(
+  boundary: string,
+  wav: Buffer,
+  fields: Record<string, string | undefined>,
+): Buffer<ArrayBuffer> {
+  const parts: Buffer[] = [
+    Buffer.from(
+      `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="file"; filename="audio.wav"\r\n` +
+        `Content-Type: audio/wav\r\n\r\n`,
+    ),
+    wav,
+  ];
+  for (const [name, value] of Object.entries(fields)) {
+    if (value === undefined) continue;
+    parts.push(
+      Buffer.from(
+        `\r\n--${boundary}\r\n` + `Content-Disposition: form-data; name="${name}"\r\n\r\n${value}`,
+      ),
+    );
+  }
+  parts.push(Buffer.from(`\r\n--${boundary}--\r\n`));
+  return Buffer.concat(parts);
 }
 
 async function canConnect(host: string, port: number): Promise<boolean> {

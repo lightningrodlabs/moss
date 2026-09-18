@@ -22,19 +22,18 @@
 // encoder pass per chunk and quality is poor. M2/M3 can add a partials
 // path with proper ML VAD chunking when there's a consumer that needs
 // them.
+//
+// pushAudio() never waits on inference: callers pump live audio from a
+// bounded capture queue, so a push that blocked for a whole transcribe
+// would drop the frames spoken meanwhile.
+
+import type { AsrFinalEvent, AsrSessionOptions } from '@theweave/api';
 
 import { AsrSegment, AsrTranscribeResult, WhisperServerState } from './types';
 import { WhisperServer } from './whisperServer';
 import { pcm16ToWav, PcmShape } from './wav';
 
-export interface AsrFinalEvent {
-  text: string;
-  /** ms from session start */
-  tStart: number;
-  tEnd: number;
-  confidence?: number;
-  lang?: string;
-}
+export type { AsrFinalEvent, AsrSessionOptions } from '@theweave/api';
 
 export interface AsrPartialEvent {
   text: string;
@@ -42,45 +41,16 @@ export interface AsrPartialEvent {
   tEnd: number;
 }
 
-export interface AsrSessionOptions {
-  /** ISO 639-1 code. Auto-detect if omitted (whisper-server default). */
-  language?: string;
-  /** Sample rate of pushed PCM. Defaults to 16000. */
-  sampleRate?: number;
-  /** Channels of pushed PCM. Defaults to 1. */
-  channels?: 1 | 2;
-  /**
-   * Maximum buffered audio (ms) before we force a flush, even without
-   * `endOfUtterance` and even if VAD never fires (e.g. continuous
-   * speech with no pauses). Belt-and-suspenders against runaway
-   * buffers. Default 30_000.
-   */
-  maxBufferMs?: number;
-  /**
-   * Enable Moss-side VAD. When true (default) the session commits an
-   * utterance whenever it sees `vadSilenceMs` of continuous silence
-   * after at least one speech chunk. When false, only `endOfUtterance`
-   * and `maxBufferMs` trigger commits — caller is fully in control.
-   */
-  vad?: boolean;
-  /**
-   * Silence threshold as RMS in normalized [-1, 1]. Audio chunks with
-   * RMS below this are treated as silence. Default 0.01 — typical room
-   * noise sits 0.001–0.005, normal speech sits 0.05–0.3 (post-AGC).
-   * Bump higher in noisy environments; lower for quiet voices.
-   */
-  vadSilenceRms?: number;
-  /**
-   * How much continuous post-speech silence (ms) triggers a commit.
-   * Default 500 — roughly the inter-sentence pause in conversational
-   * English. Shorter feels jumpy; longer feels laggy.
-   */
-  vadSilenceMs?: number;
-}
-
 const DEFAULT_SAMPLE_RATE = 16_000;
 const DEFAULT_CHANNELS: 1 | 2 = 1;
 const DEFAULT_MAX_BUFFER_MS = 30_000;
+/**
+ * How much audio to keep ahead of the first speech chunk when VAD is
+ * on. Enough to catch a soft onset the RMS gate missed; small enough
+ * that an open mic in a quiet room never accumulates or transcribes
+ * long stretches of silence.
+ */
+const PRE_SPEECH_RETAIN_MS = 2_000;
 
 const VAD_DEFAULTS = {
   enabled: true,
@@ -89,6 +59,15 @@ const VAD_DEFAULTS = {
 } as const;
 
 type Listener<T> = (ev: T) => void;
+
+/** Audio snapshot handed to one transcribe call. */
+interface FlushBatch {
+  chunks: Int16Array[];
+  samples: number;
+  /** Position of the batch's first sample on the session clock, in ms. */
+  baseMs: number;
+  durationMs: number;
+}
 
 export class AsrSessionStateError extends Error {
   constructor(message: string) {
@@ -109,13 +88,19 @@ export class AsrSessionStateError extends Error {
 export class AsrSession {
   private chunks: Int16Array[] = [];
   private bufferedSamples = 0;
-  private cursorMs = 0;
-  private closed = false;
   /**
-   * Serializes pushAudio() calls. Without this, two near-simultaneous
-   * push-with-flush calls would both build their own WAV from a
-   * shared buffer view in indeterminate order. Trade off some
-   * concurrency for predictable ordering of finals.
+   * Session clock: ms of audio accounted for so far, whether it was
+   * transcribed or dropped as pre-speech silence. Advanced
+   * synchronously at push time so timestamps never depend on when a
+   * transcribe happens to finish.
+   */
+  private clockMs = 0;
+  private closed = false;
+  private failed = false;
+  /**
+   * Chain of pending transcribe calls. Flushes run strictly in audio
+   * order so `final` events never arrive out of sequence, while
+   * pushAudio() itself only appends and returns.
    */
   private inflight: Promise<void> = Promise.resolve();
 
@@ -124,7 +109,9 @@ export class AsrSession {
   private errorListeners = new Set<Listener<Error>>();
 
   private readonly shape: PcmShape;
+  private readonly language: string | undefined;
   private readonly maxBufferSamples: number;
+  private readonly preSpeechRetainSamples: number;
 
   // VAD state. `hasSpoken` flips true on the first chunk above the
   // RMS threshold and resets when a flush commits. `silentSamples`
@@ -134,10 +121,6 @@ export class AsrSession {
   private readonly vadSilenceSamples: number;
   private vadHasSpoken = false;
   private vadSilentSamples = 0;
-  // opts.language is accepted in the public surface but not yet
-  // forwarded to whisper-server (the multipart body in WhisperServer.
-  // transcribe() doesn't include it). Wire it through when M2 needs
-  // language hints from real callers.
 
   constructor(
     private readonly server: WhisperServer,
@@ -148,17 +131,13 @@ export class AsrSession {
       sampleRate: opts.sampleRate ?? DEFAULT_SAMPLE_RATE,
       channels: opts.channels ?? DEFAULT_CHANNELS,
     };
-    this.maxBufferSamples =
-      ((opts.maxBufferMs ?? DEFAULT_MAX_BUFFER_MS) / 1000) *
-      this.shape.sampleRate *
-      this.shape.channels;
+    this.language = opts.language;
+    this.maxBufferSamples = this.msToSamples(opts.maxBufferMs ?? DEFAULT_MAX_BUFFER_MS);
+    this.preSpeechRetainSamples = this.msToSamples(PRE_SPEECH_RETAIN_MS);
 
     this.vadEnabled = opts.vad ?? VAD_DEFAULTS.enabled;
     this.vadSilenceRms = opts.vadSilenceRms ?? VAD_DEFAULTS.silenceRms;
-    const vadSilenceMs = opts.vadSilenceMs ?? VAD_DEFAULTS.silenceMs;
-    this.vadSilenceSamples = Math.round(
-      (vadSilenceMs / 1000) * this.shape.sampleRate * this.shape.channels,
-    );
+    this.vadSilenceSamples = this.msToSamples(opts.vadSilenceMs ?? VAD_DEFAULTS.silenceMs);
   }
 
   /** Diagnostic only. Reflects whether close() has been called. */
@@ -167,15 +146,15 @@ export class AsrSession {
   }
 
   /**
-   * Push a PCM16 chunk. Triggers a flush (transcribe → emit finals)
-   * when any of:
+   * Push a PCM16 chunk. Appends to the current utterance and returns
+   * immediately; a transcribe is queued (never awaited here) when any
+   * of these fire:
    *   - `endOfUtterance` is true
    *   - VAD detects silence-after-speech ≥ `vadSilenceMs`
    *   - the accumulated buffer reaches `maxBufferMs`
    *
-   * Pushes are serialized: a flush in progress will block subsequent
-   * pushes until done. This keeps `final` events ordered by audio
-   * time, which is what callers like Presence assume.
+   * Transcribe failures are reported through onError, after which the
+   * session is closed.
    */
   async pushAudio(pcm: Int16Array, endOfUtterance: boolean = false): Promise<void> {
     if (this.closed) {
@@ -183,22 +162,29 @@ export class AsrSession {
     }
     if (pcm.length === 0 && !endOfUtterance) return;
 
-    const next = this.inflight.then(async () => {
-      let vadFired = false;
-      if (pcm.length > 0) {
-        this.chunks.push(pcm);
-        this.bufferedSamples += pcm.length;
-        if (this.vadEnabled) {
-          vadFired = this.updateVad(pcm);
-        }
+    let vadFired = false;
+    if (pcm.length > 0) {
+      this.chunks.push(pcm);
+      this.bufferedSamples += pcm.length;
+      if (this.vadEnabled) {
+        vadFired = this.updateVad(pcm);
       }
-      const overCap = this.bufferedSamples >= this.maxBufferSamples;
-      if (endOfUtterance || vadFired || overCap) {
-        await this.flush();
-      }
-    });
-    this.inflight = next.catch(() => {});
-    return next;
+    }
+    if (this.vadEnabled && !this.vadHasSpoken && !endOfUtterance) {
+      this.trimPreSpeech();
+    }
+    const overCap = this.bufferedSamples >= this.maxBufferSamples;
+    if (endOfUtterance || vadFired || overCap) {
+      this.scheduleFlush();
+    }
+  }
+
+  /**
+   * Resolves once every transcribe queued so far has completed (or
+   * failed). Finals for those flushes have been emitted by then.
+   */
+  settle(): Promise<void> {
+    return this.inflight;
   }
 
   onFinal(cb: Listener<AsrFinalEvent>): () => void {
@@ -224,13 +210,21 @@ export class AsrSession {
     if (this.closed) return;
     this.closed = true;
     try {
-      await this.inflight;
-      if (this.bufferedSamples > 0) {
-        await this.flush();
+      if (this.bufferedSamples > 0 && !this.failed) {
+        this.scheduleFlush();
       }
+      await this.inflight;
     } finally {
       await this.onClose();
     }
+  }
+
+  private msToSamples(ms: number): number {
+    return Math.round((ms / 1000) * this.shape.sampleRate * this.shape.channels);
+  }
+
+  private samplesToMs(samples: number): number {
+    return Math.round((samples / this.shape.channels / this.shape.sampleRate) * 1000);
   }
 
   /**
@@ -265,58 +259,86 @@ export class AsrSession {
     this.vadSilentSamples = 0;
   }
 
-  private async flush(): Promise<void> {
-    if (this.bufferedSamples === 0) {
-      this.resetVad();
-      return;
+  /**
+   * Drop the oldest pre-speech chunks beyond the retention window.
+   * Dropped audio still advances the session clock so later finals
+   * keep their offsets from session start.
+   */
+  private trimPreSpeech(): void {
+    while (
+      this.chunks.length > 1 &&
+      this.bufferedSamples - this.chunks[0].length >= this.preSpeechRetainSamples
+    ) {
+      const dropped = this.chunks.shift()!;
+      this.bufferedSamples -= dropped.length;
+      this.clockMs += this.samplesToMs(dropped.length);
     }
-    if (this.server.state !== ('ready' satisfies WhisperServerState)) {
-      throw new AsrSessionStateError(
-        `cannot flush: underlying server is ${this.server.state}`,
-      );
-    }
+  }
 
-    const merged = mergeInt16(this.chunks, this.bufferedSamples);
-    const flushedSamples = this.bufferedSamples;
+  /** Snapshot the buffer as a batch and queue it behind earlier flushes. */
+  private scheduleFlush(): void {
+    this.resetVad();
+    if (this.bufferedSamples === 0) return;
+    const batch: FlushBatch = {
+      chunks: this.chunks,
+      samples: this.bufferedSamples,
+      baseMs: this.clockMs,
+      durationMs: this.samplesToMs(this.bufferedSamples),
+    };
     this.chunks = [];
     this.bufferedSamples = 0;
-    this.resetVad();
+    this.clockMs += batch.durationMs;
+    this.inflight = this.inflight.then(() => this.flushBatch(batch)).catch(() => undefined);
+  }
 
+  private async flushBatch(batch: FlushBatch): Promise<void> {
+    if (this.failed) return;
+    if (this.server.state !== ('ready' satisfies WhisperServerState)) {
+      this.fail(
+        new AsrSessionStateError(`cannot transcribe: underlying server is ${this.server.state}`),
+      );
+      return;
+    }
+
+    const merged = mergeInt16(batch.chunks, batch.samples);
     const wav = pcm16ToWav(merged, this.shape);
     let result: AsrTranscribeResult;
     try {
-      result = await this.server.transcribe(wav);
+      result = await this.server.transcribe(wav, { language: this.language });
     } catch (err) {
-      const e = err instanceof Error ? err : new Error(String(err));
-      this.emitError(e);
-      throw e;
+      this.fail(err instanceof Error ? err : new Error(String(err)));
+      return;
     }
-    // Unconditional diagnostic: if this prints empty text/segments on a
-    // flush where the caller pushed actual speech, the ASR layer is
-    // healthy and the problem is upstream (wrong sample rate in the WAV
-    // header, mic muted, etc.).
-    console.log('[asr-session] transcribe →', {
-      segments: result.segments.length,
-      text: result.segments.map((s) => s.text).join(' | '),
-      lang: result.lang,
-      inferMs: result.inferMs,
-    });
-
-    const flushedFrames = flushedSamples / this.shape.channels;
-    const flushedMs = Math.round((flushedFrames / this.shape.sampleRate) * 1000);
-    const baseMs = this.cursorMs;
 
     if (process.env.MOSS_ASR_DEBUG) {
       const texts = result.segments.map((s) => s.text).join(' | ');
       process.stderr.write(
-        `[asr-debug] flush: ${flushedSamples} samples @ ${this.shape.sampleRate}Hz×${this.shape.channels}ch (${flushedMs}ms) → segments=${result.segments.length} lang=${result.lang ?? '?'} inferMs=${result.inferMs}${texts ? ` text=${JSON.stringify(texts)}` : ''}\n`,
+        `[asr-debug] flush: ${batch.samples} samples @ ${this.shape.sampleRate}Hz×${this.shape.channels}ch (${batch.durationMs}ms) → segments=${result.segments.length} lang=${result.lang ?? '?'} inferMs=${result.inferMs}${texts ? ` text=${JSON.stringify(texts)}` : ''}\n`,
       );
     }
 
     for (const seg of result.segments) {
-      this.emitFinal(toFinal(seg, baseMs, result.lang));
+      this.emitFinal(toFinal(seg, batch.baseMs, result.lang));
     }
-    this.cursorMs += flushedMs;
+  }
+
+  /**
+   * Terminal failure: report once, drop whatever is buffered, and
+   * release the broker reference. A caller's own close() afterwards is
+   * a no-op, so the server is released exactly once.
+   */
+  private fail(err: Error): void {
+    if (this.failed) return;
+    this.failed = true;
+    this.chunks = [];
+    this.bufferedSamples = 0;
+    this.emitError(err);
+    if (!this.closed) {
+      this.closed = true;
+      void Promise.resolve()
+        .then(() => this.onClose())
+        .catch(() => undefined);
+    }
   }
 
   private emitFinal(ev: AsrFinalEvent): void {

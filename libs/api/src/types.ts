@@ -562,6 +562,13 @@ export interface AsrSessionOptions {
    * continuous silence after at least one speech chunk. When false,
    * only `endOfUtterance` on `pushAudio` and `maxBufferMs` trigger
    * commits — caller is fully in control.
+   *
+   * While VAD is on and no speech has been detected yet, Moss keeps
+   * only a short pre-roll of audio (about two seconds) and never sends
+   * pure silence to the model. Tools whose audio may sit below
+   * `vadSilenceRms` (very quiet voices, heavily attenuated input) and
+   * that segment utterances themselves should set `vad: false` so
+   * every pushed sample reaches the model.
    */
   vad?: boolean;
   /**
