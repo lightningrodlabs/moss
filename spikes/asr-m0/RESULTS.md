@@ -69,7 +69,7 @@ Cross-checks:
 
 ## What changes in the plan as a result
 
-Already updated MOSS_LOCAL_MODELS_PLAN.md:
+Already updated plans/local-models-asr.md:
 
 - M0 marked done; sidecar runtime recorded.
 - M1 amended: chunk via VAD (try `whisper-vad-speech-segments` first),

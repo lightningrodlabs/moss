@@ -384,5 +384,5 @@ Currently planned:
 - Manifest-declared `localModels.asr` permission + first-use consent
   prompt.
 
-See [`MOSS_LOCAL_MODELS_PLAN.md`](../../MOSS_LOCAL_MODELS_PLAN.md) for
+See [`plans/local-models-asr.md`](../../plans/local-models-asr.md) for
 the full roadmap.

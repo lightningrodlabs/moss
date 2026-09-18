@@ -247,19 +247,19 @@ parameters, no custom models.
 `ggml-base.en` (~141 MB), per Presence's recommendation. Validated
 on Linux x64: 12× realtime via direct whisper-cli, 7× realtime via
 whisper-server sidecar over loopback HTTP. Spike code and full
-findings in [spikes/asr-m0/](spikes/asr-m0/) — see
-[RESULTS.md](spikes/asr-m0/RESULTS.md) for the bench data.
+findings in [spikes/asr-m0/](../spikes/asr-m0/) — see
+[RESULTS.md](../spikes/asr-m0/RESULTS.md) for the bench data.
 
 The initial pick was an N-API binding (`smart-whisper`); reverted
 after measuring it 4–9× slower than `whisper-cli` on the same
 hardware running the same model, even after a clean local rebuild.
-See [RUNTIME_CHOICE.md](spikes/asr-m0/RUNTIME_CHOICE.md) for the
+See [RUNTIME_CHOICE.md](../spikes/asr-m0/RUNTIME_CHOICE.md) for the
 revised rationale. Mac/Win validation deferred to M1's portability
 pass.
 
 ### M1 — Moss-internal ASR service (in progress 2026-04-19)
 
-**Done so far** (all in [src/main/asr/](src/main/asr/), 78 unit tests):
+**Done so far** (all in [src/main/asr/](../src/main/asr/), 78 unit tests):
 
 - `WhisperServer` — sidecar-process wrapper (spawn, port pick, TCP
   readiness probe, multipart inference, SIGTERM/SIGKILL stop). Real

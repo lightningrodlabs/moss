@@ -5,7 +5,7 @@
 // CPU — see spikes/asr-m0/RESULTS.md).
 //
 // Model-download UX in-app (choose tier, show progress, resume, etc.)
-// is explicitly deferred per MOSS_LOCAL_MODELS_PLAN.md. Bundling
+// is explicitly deferred per plans/local-models-asr.md. Bundling
 // trades installer size for a test cohort that "just works".
 //
 // Idempotent: skips if the file is already present and the expected
