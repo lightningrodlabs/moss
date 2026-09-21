@@ -122,6 +122,12 @@ export class AsrSession {
   private vadHasSpoken = false;
   private vadSilentSamples = 0;
 
+  // MOSS_ASR_DEBUG trace of what the VAD sees, summarized once per
+  // second of pushed audio so a silent-looking session can be told
+  // apart from one whose speech never crosses the RMS gate.
+  private debugMaxRms = 0;
+  private debugSamplesSinceTrace = 0;
+
   constructor(
     private readonly server: WhisperServer,
     private readonly onClose: () => void | Promise<void>,
@@ -169,6 +175,7 @@ export class AsrSession {
       if (this.vadEnabled) {
         vadFired = this.updateVad(pcm);
       }
+      if (process.env.MOSS_ASR_DEBUG) this.traceVad(pcm);
     }
     if (this.vadEnabled && !this.vadHasSpoken && !endOfUtterance) {
       this.trimPreSpeech();
@@ -252,6 +259,17 @@ export class AsrSession {
       return true;
     }
     return false;
+  }
+
+  private traceVad(pcm: Int16Array): void {
+    this.debugMaxRms = Math.max(this.debugMaxRms, computeRms(pcm));
+    this.debugSamplesSinceTrace += pcm.length;
+    if (this.debugSamplesSinceTrace < this.msToSamples(1_000)) return;
+    process.stderr.write(
+      `[asr-debug] vad: maxRms=${this.debugMaxRms.toFixed(4)} gate=${this.vadSilenceRms} hasSpoken=${this.vadHasSpoken} buffered=${this.samplesToMs(this.bufferedSamples)}ms clock=${this.clockMs}ms\n`,
+    );
+    this.debugMaxRms = 0;
+    this.debugSamplesSinceTrace = 0;
   }
 
   private resetVad(): void {
