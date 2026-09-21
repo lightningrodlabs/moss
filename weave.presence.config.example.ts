@@ -14,7 +14,7 @@
 // Electron resolves relative paths against the physical working
 // directory, so a symlinked checkout makes `..` land somewhere else.
 
-import path from 'node:path';
+import * as path from 'node:path';
 
 import { defineConfig } from './cli/defineConfig';
 
