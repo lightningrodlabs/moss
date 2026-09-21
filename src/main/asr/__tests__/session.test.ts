@@ -144,6 +144,29 @@ describe('AsrSession', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('close() right after an end-of-utterance push still delivers that final', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const fake = makeReadyServer({
+      transcribe: async () => {
+        await gate;
+        return { segments: [{ text: 'last words', tStart: 0, tEnd: 10 }], inferMs: 1 };
+      },
+    });
+    const onClose = vi.fn();
+    const session = new AsrSession(asWhisperServer(fake), onClose);
+    const finals: AsrFinalEvent[] = [];
+    session.onFinal((ev) => finals.push(ev));
+
+    await session.pushAudio(silentPcm(16_000), true);
+    const closing = session.close();
+    expect(finals).toHaveLength(0);
+    release();
+    await closing;
+    expect(finals.map((f) => f.text)).toEqual(['last words']);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('rejects pushAudio after close()', async () => {
     const fake = makeReadyServer();
     const session = new AsrSession(asWhisperServer(fake), () => {});

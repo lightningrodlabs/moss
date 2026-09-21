@@ -46,6 +46,8 @@ export interface AsrSession {
    * Push a PCM16 chunk. Pass `endOfUtterance: true` if you have your
    * own VAD and know an utterance just ended; otherwise let Moss
    * decide when to commit (it force-flushes after a buffered window).
+   * Resolves once the host has accepted the audio; the final for a
+   * commit arrives later on onFinal, never before this resolves.
    */
   pushAudio(pcm16: Int16Array, endOfUtterance?: boolean): Promise<void>;
 
@@ -72,8 +74,11 @@ export interface AsrSession {
   onError(callback: (error: Error) => void): UnsubscribeFn;
 
   /**
-   * Close the session. Flushes any pending audio, releases the broker
-   * reference (which may then idle-unload the model). Idempotent.
+   * Close the session. Commits any pending audio and delivers the
+   * resulting finals to onFinal subscribers before resolving, then
+   * releases the broker reference (which may then idle-unload the
+   * model). Keep onFinal subscribed until close() resolves if the last
+   * utterance matters. Idempotent.
    */
   close(): Promise<void>;
 
@@ -241,11 +246,15 @@ class AppletAsrSession implements AsrSession {
   async close(): Promise<void> {
     if (this.closed) return;
     this.closed = true;
-    this.unsubscribeTransport();
+    // The host commits buffered audio while handling close, and those
+    // finals are emitted before the close reply, so the transport stays
+    // subscribed until the round-trip has completed.
     try {
       await this.transport.send({ type: 'asr-close-session', sessionId: this.sessionId });
     } catch {
       // close errors are not actionable for the caller
+    } finally {
+      this.unsubscribeTransport();
     }
   }
 

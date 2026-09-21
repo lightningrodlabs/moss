@@ -93,10 +93,10 @@ model (while any session is open, the model stays loaded).
 
 ```ts
 const session = await weaveClient.localModels!.asr.openSession({
-  language: 'en',          // optional; ISO 639-1. Omit for auto-detect.
-  sampleRate: 48_000,      // optional; the rate of PCM you will push. Moss resamples.
-  channels: 1,             // optional; 1 (default) or 2.
-  maxBufferMs: 30_000,     // optional; force-flush threshold if silence never arrives.
+  language: 'en', // optional; ISO 639-1. Omit for auto-detect.
+  sampleRate: 48_000, // optional; the rate of PCM you will push. Moss resamples.
+  channels: 1, // optional; 1 (default) or 2.
+  maxBufferMs: 30_000, // optional; force-flush threshold if silence never arrives.
 });
 ```
 
@@ -117,7 +117,7 @@ await session.pushAudio(pcm16);
 
 ### `endOfUtterance`
 
-Pass `endOfUtterance: true` when you *know* an utterance just ended —
+Pass `endOfUtterance: true` when you _know_ an utterance just ended —
 e.g. you implemented your own VAD or the user hit "stop speaking."
 Moss will immediately commit whatever is buffered and fire a `final`
 event. Without this flag, Moss runs its own energy-based VAD and commits
@@ -184,11 +184,11 @@ await session.close();
 
 ```ts
 interface AsrFinalEvent {
-  text: string;          // the transcribed utterance
-  tStart: number;        // ms from session start
+  text: string; // the transcribed utterance
+  tStart: number; // ms from session start
   tEnd: number;
-  confidence?: number;   // 0..1 if the model exposes it; often undefined
-  lang?: string;         // detected language code, if auto-detect was used
+  confidence?: number; // 0..1 if the model exposes it; often undefined
+  lang?: string; // detected language code, if auto-detect was used
 }
 ```
 
@@ -198,12 +198,20 @@ arrive as a single event if the speaker never pauses.
 
 ## Closing
 
-Always close sessions. `close()` is idempotent and flushes any buffered
-audio before releasing the Moss-side model reference:
+Always close sessions. `close()` is idempotent and commits any buffered
+audio before releasing the Moss-side model reference. The finals for that
+last commit are delivered to `onFinal` before `close()` resolves, so keep
+your subscription alive until then:
 
 ```ts
-await session.close();
+await session.pushAudio(lastChunk, true); // resolves once accepted, not once transcribed
+await session.close(); // the final for lastChunk arrives during this await
+offFinal();
 ```
+
+`pushAudio` never waits for the transcriber, even with `endOfUtterance`;
+unsubscribing right after it resolves can miss the utterance you just
+committed.
 
 Closing the last session on a Moss install allows the model to unload
 after an idle timeout (5 min by default), freeing RAM.
@@ -281,7 +289,7 @@ Runtime errors you may see:
 - Sidecar crash / model OOM — typically reported on `onError`; the
   session is already closed.
 - Malformed PCM — `pushAudio` rejects with `"PCM payload has odd byte
-  length"` if the `Int16Array`'s byte length isn't even. Shouldn't
+length"` if the `Int16Array`'s byte length isn't even. Shouldn't
   happen with the standard conversion.
 - Session not owned by caller — won't happen in normal Tool code;
   indicates a bug in Moss's routing.

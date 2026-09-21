@@ -13,10 +13,12 @@ interface FakeTransport extends AsrTransport {
   emit: (event: AsrIncomingEvent) => void;
 }
 
-function makeTransport(opts: {
-  openSessionId?: string;
-  sendImpl?: (req: AsrSessionRequest) => Promise<unknown>;
-} = {}): FakeTransport {
+function makeTransport(
+  opts: {
+    openSessionId?: string;
+    sendImpl?: (req: AsrSessionRequest) => Promise<unknown>;
+  } = {},
+): FakeTransport {
   const sent: AsrSessionRequest[] = [];
   const subscribers = new Set<(ev: AsrIncomingEvent) => void>();
   const transport: FakeTransport = {
@@ -179,6 +181,32 @@ describe('AsrSession.close', () => {
     await expect(session.close()).resolves.toBeUndefined();
   });
 
+  it('delivers finals that arrive while the close round-trip is pending', async () => {
+    // The host commits buffered audio as part of closing, so the last
+    // utterance's final is emitted before the close reply comes back.
+    let transport!: FakeTransport;
+    transport = makeTransport({
+      sendImpl: async (req) => {
+        if (req.type === 'asr-open-session') return { sessionId: 'sid-1' };
+        if (req.type === 'asr-close-session') {
+          transport.emit({
+            sessionId: 'sid-1',
+            eventType: 'final',
+            text: 'last words',
+            tStart: 0,
+            tEnd: 1,
+          });
+        }
+        return undefined;
+      },
+    });
+    const session = await openAsrSession(transport);
+    const finals: Array<{ text: string }> = [];
+    session.onFinal((ev) => finals.push(ev));
+    await session.close();
+    expect(finals.map((f) => f.text)).toEqual(['last words']);
+  });
+
   it('unsubscribes from the transport so events stop firing on closed sessions', async () => {
     const t = makeTransport();
     const session = await openAsrSession(t);
@@ -240,10 +268,12 @@ describe('fetchAsrCapabilities', () => {
 describe('AsrSession id isolation', () => {
   it('parallel sessions only see their own events', async () => {
     let n = 0;
-    const t = makeTransport({ sendImpl: async (req) => {
-      if (req.type === 'asr-open-session') return { sessionId: `sid-${++n}` };
-      return undefined;
-    } });
+    const t = makeTransport({
+      sendImpl: async (req) => {
+        if (req.type === 'asr-open-session') return { sessionId: `sid-${++n}` };
+        return undefined;
+      },
+    });
     // Re-use the same transport for two sessions; the FakeTransport
     // broadcasts events to all subscribers so each AsrSession sees them
     // and filters by its own id.
