@@ -27,6 +27,9 @@
 // bounded capture queue, so a push that blocked for a whole transcribe
 // would drop the frames spoken meanwhile.
 
+import { mkdirSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+
 import type { AsrFinalEvent, AsrSessionOptions } from '@theweave/api';
 
 import { AsrSegment, AsrTranscribeResult, WhisperServerState } from './types';
@@ -127,6 +130,11 @@ export class AsrSession {
   // apart from one whose speech never crosses the RMS gate.
   private debugMaxRms = 0;
   private debugSamplesSinceTrace = 0;
+  private debugChunksSinceTrace = 0;
+  // MOSS_ASR_DUMP_DIR: every committed WAV is written there, named by
+  // session and commit index, so what whisper heard can be replayed.
+  private readonly dumpTag = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  private dumpIndex = 0;
 
   constructor(
     private readonly server: WhisperServer,
@@ -264,12 +272,14 @@ export class AsrSession {
   private traceVad(pcm: Int16Array): void {
     this.debugMaxRms = Math.max(this.debugMaxRms, computeRms(pcm));
     this.debugSamplesSinceTrace += pcm.length;
+    this.debugChunksSinceTrace += 1;
     if (this.debugSamplesSinceTrace < this.msToSamples(1_000)) return;
     process.stderr.write(
-      `[asr-debug] vad: maxRms=${this.debugMaxRms.toFixed(4)} gate=${this.vadSilenceRms} hasSpoken=${this.vadHasSpoken} buffered=${this.samplesToMs(this.bufferedSamples)}ms clock=${this.clockMs}ms\n`,
+      `[asr-debug] vad: chunks=${this.debugChunksSinceTrace} maxRms=${this.debugMaxRms.toFixed(4)} gate=${this.vadSilenceRms} hasSpoken=${this.vadHasSpoken} buffered=${this.samplesToMs(this.bufferedSamples)}ms clock=${this.clockMs}ms\n`,
     );
     this.debugMaxRms = 0;
     this.debugSamplesSinceTrace = 0;
+    this.debugChunksSinceTrace = 0;
   }
 
   private resetVad(): void {
@@ -320,6 +330,7 @@ export class AsrSession {
 
     const merged = mergeInt16(batch.chunks, batch.samples);
     const wav = pcm16ToWav(merged, this.shape);
+    this.dumpWav(wav, batch);
     let result: AsrTranscribeResult;
     try {
       result = await this.server.transcribe(wav, { language: this.language });
@@ -337,6 +348,18 @@ export class AsrSession {
 
     for (const seg of result.segments) {
       this.emitFinal(toFinal(seg, batch.baseMs, result.lang));
+    }
+  }
+
+  private dumpWav(wav: Buffer, batch: FlushBatch): void {
+    const dir = process.env.MOSS_ASR_DUMP_DIR;
+    if (!dir) return;
+    try {
+      mkdirSync(dir, { recursive: true });
+      const name = `asr-${this.dumpTag}-${String(this.dumpIndex++).padStart(3, '0')}-at${batch.baseMs}ms-${batch.durationMs}ms.wav`;
+      writeFileSync(path.join(dir, name), wav);
+    } catch (err) {
+      process.stderr.write(`[asr-debug] wav dump failed: ${String(err)}\n`);
     }
   }
 

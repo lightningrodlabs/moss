@@ -1,3 +1,7 @@
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import { AsrFinalEvent, AsrSession, AsrSessionStateError } from '../session';
@@ -165,6 +169,31 @@ describe('AsrSession', () => {
     await closing;
     expect(finals.map((f) => f.text)).toEqual(['last words']);
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('dumps each committed WAV under MOSS_ASR_DUMP_DIR when set', async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'asr-dump-'));
+    const prev = process.env.MOSS_ASR_DUMP_DIR;
+    process.env.MOSS_ASR_DUMP_DIR = dir;
+    try {
+      const fake = makeReadyServer();
+      const session = new AsrSession(asWhisperServer(fake), () => {});
+      await session.pushAudio(silentPcm(16_000), true);
+      await session.pushAudio(silentPcm(8_000), true);
+      await session.settle();
+      const files = readdirSync(dir)
+        .filter((f) => f.endsWith('.wav'))
+        .sort();
+      expect(files).toHaveLength(2);
+      const first = readFileSync(path.join(dir, files[0]));
+      expect(first.subarray(0, 4).toString('ascii')).toBe('RIFF');
+      expect(first.byteLength).toBe(44 + 16_000 * 2);
+    } finally {
+      if (prev === undefined) delete process.env.MOSS_ASR_DUMP_DIR;
+      else process.env.MOSS_ASR_DUMP_DIR = prev;
+      rmSync(dir, { recursive: true, force: true });
+      expect(existsSync(dir)).toBe(false);
+    }
   });
 
   it('rejects pushAudio after close()', async () => {
