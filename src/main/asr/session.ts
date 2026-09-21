@@ -330,14 +330,22 @@ export class AsrSession {
 
     const merged = mergeInt16(batch.chunks, batch.samples);
     const wav = pcm16ToWav(merged, this.shape);
-    this.dumpWav(wav, batch);
+    const dumpBase = this.dumpWav(wav, batch);
     let result: AsrTranscribeResult;
     try {
       result = await this.server.transcribe(wav, { language: this.language });
     } catch (err) {
-      this.fail(err instanceof Error ? err : new Error(String(err)));
+      const error = err instanceof Error ? err : new Error(String(err));
+      this.dumpResult(dumpBase, { error: error.message });
+      this.fail(error);
       return;
     }
+    this.dumpResult(dumpBase, {
+      text: result.segments.map((seg) => seg.text).join(' '),
+      segments: result.segments,
+      lang: result.lang,
+      inferMs: result.inferMs,
+    });
 
     if (process.env.MOSS_ASR_DEBUG) {
       const texts = result.segments.map((s) => s.text).join(' | ');
@@ -351,15 +359,30 @@ export class AsrSession {
     }
   }
 
-  private dumpWav(wav: Buffer, batch: FlushBatch): void {
+  /** Returns the dump path without extension, or null when dumping is off. */
+  private dumpWav(wav: Buffer, batch: FlushBatch): string | null {
     const dir = process.env.MOSS_ASR_DUMP_DIR;
-    if (!dir) return;
+    if (!dir) return null;
     try {
       mkdirSync(dir, { recursive: true });
-      const name = `asr-${this.dumpTag}-${String(this.dumpIndex++).padStart(3, '0')}-at${batch.baseMs}ms-${batch.durationMs}ms.wav`;
-      writeFileSync(path.join(dir, name), wav);
+      const base = path.join(
+        dir,
+        `asr-${this.dumpTag}-${String(this.dumpIndex++).padStart(3, '0')}-at${batch.baseMs}ms-${batch.durationMs}ms`,
+      );
+      writeFileSync(`${base}.wav`, wav);
+      return base;
     } catch (err) {
       process.stderr.write(`[asr-debug] wav dump failed: ${String(err)}\n`);
+      return null;
+    }
+  }
+
+  private dumpResult(base: string | null, result: Record<string, unknown>): void {
+    if (!base) return;
+    try {
+      writeFileSync(`${base}.json`, JSON.stringify(result, null, 2));
+    } catch (err) {
+      process.stderr.write(`[asr-debug] result dump failed: ${String(err)}\n`);
     }
   }
 

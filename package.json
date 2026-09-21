@@ -58,6 +58,7 @@
     "fetch:hc": "node ./scripts/fetch-hc.mjs",
     "fetch:binaries": "node ./scripts/fetch-binaries.mjs",
     "fetch:asr-model": "node ./scripts/fetch-asr-model.mjs",
+    "asr:diagnose": "node ./scripts/asr-diagnose.mjs",
     "build:whisper-server": "node ./scripts/build-whisper-server.mjs",
     "check:binaries": "node ./scripts/check-binaries.mjs",
     "check:binaries:release": "cross-env MOSS_REQUIRE_ASR=1 node ./scripts/check-binaries.mjs",

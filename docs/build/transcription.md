@@ -294,6 +294,29 @@ length"` if the `Int16Array`'s byte length isn't even. Shouldn't
 - Session not owned by caller — won't happen in normal Tool code;
   indicates a bug in Moss's routing.
 
+## Diagnosing dropped speech
+
+Speech can be lost at three places: before Moss (the tool's frame pump),
+inside a commit (whisper), or after (the tool's handling of finals). Moss
+can record enough to tell them apart:
+
+- `MOSS_ASR_DEBUG=1` prints, on Moss's stderr, one `vad:` line per second
+  of pushed audio (chunk count, peak RMS against the silence gate, whether
+  speech has been detected, buffered ms) and one `flush:` line per commit
+  with whisper's text.
+- `MOSS_ASR_DUMP_DIR=<dir>` writes every commit as
+  `asr-<session>-<n>-at<start>ms-<duration>ms.wav` plus a `.json` sidecar
+  with whisper's segments, so what the model actually heard can be replayed.
+
+`yarn asr:diagnose <dir>` stitches a session's commits back onto its
+clock, transcribes the whole recording once as a reference (with
+`whisper-cli`, via nix by default or `$MOSS_WHISPER_CLI`), and writes
+`report-<session>.md`: per commit, the audio level, the commit text, the
+reference text for the same window, and a verdict (`ok`, `partial`,
+`speech-no-text`, `silence`, `error`). Pass `--reference <wav>` with a
+recording made at the source to also see loss before Moss; its span
+against the committed audio is the measure.
+
 ## Fallback strategy (for Tools shipped outside Moss)
 
 Tools that also run as standalone Holochain apps (no Moss shell) will
