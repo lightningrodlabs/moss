@@ -9,10 +9,13 @@
 //     this repo starts it for you).
 //
 // Paths here are relative to the Moss repo root (where yarn runs npm
-// scripts from). If you copy this file to rename it, keep the
-// ../presence references pointing at the sibling checkout.
+// scripts from). Set PRESENCE_DIR to point at a different Presence
+// checkout (a worktree, for instance); the applet-dev-presence scripts
+// honor the same variable for the UI dev server.
 
 import { defineConfig } from './cli/defineConfig';
+
+const PRESENCE_DIR = process.env.PRESENCE_DIR ?? '../presence';
 
 export default defineConfig({
   toolCurations: [],
@@ -22,7 +25,7 @@ export default defineConfig({
       networkSeed: '098rc1m-09384u-crm-29384u-cmkj',
       icon: {
         type: 'filesystem',
-        path: '../presence/ui/tennis_club.png',
+        path: `${PRESENCE_DIR}/ui/tennis_club.png`,
       },
       creatingAgent: {
         agentIdx: 1,
@@ -30,7 +33,7 @@ export default defineConfig({
           nickname: 'Gaston',
           avatar: {
             type: 'filesystem',
-            path: '../presence/ui/gaston.jpeg',
+            path: `${PRESENCE_DIR}/ui/gaston.jpeg`,
           },
         },
       },
@@ -41,7 +44,7 @@ export default defineConfig({
             nickname: 'Marsupilami',
             avatar: {
               type: 'filesystem',
-              path: '../presence/ui/marsupilami.jpeg',
+              path: `${PRESENCE_DIR}/ui/marsupilami.jpeg`,
             },
           },
         },
@@ -63,11 +66,11 @@ export default defineConfig({
       description: 'Be present.',
       icon: {
         type: 'filesystem',
-        path: '../presence/ui/icon.png',
+        path: `${PRESENCE_DIR}/ui/icon.png`,
       },
       source: {
         type: 'localhost',
-        happPath: '../presence/workdir/presence.happ',
+        happPath: `${PRESENCE_DIR}/workdir/presence.happ`,
         uiPort: 8888,
       },
     },
