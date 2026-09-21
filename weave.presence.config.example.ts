@@ -8,14 +8,17 @@
 //   - Presence UI dev server reachable on $UI_PORT (the npm script in
 //     this repo starts it for you).
 //
-// Paths here are relative to the Moss repo root (where yarn runs npm
-// scripts from). Set PRESENCE_DIR to point at a different Presence
-// checkout (a worktree, for instance); the applet-dev-presence scripts
-// honor the same variable for the UI dev server.
+// Set PRESENCE_DIR to point at a different Presence checkout (a
+// worktree, for instance); the applet-dev-presence scripts honor the
+// same variable for the UI dev server. Pass it as an absolute path:
+// Electron resolves relative paths against the physical working
+// directory, so a symlinked checkout makes `..` land somewhere else.
+
+import path from 'node:path';
 
 import { defineConfig } from './cli/defineConfig';
 
-const PRESENCE_DIR = process.env.PRESENCE_DIR ?? '../presence';
+const PRESENCE_DIR = path.resolve(process.env.PRESENCE_DIR ?? '../presence');
 
 export default defineConfig({
   toolCurations: [],
