@@ -176,6 +176,10 @@ export class AsrSession {
     }
     if (pcm.length === 0 && !endOfUtterance) return;
 
+    // Trimming applies only while no speech has been seen. The commit
+    // that a silence-after-speech triggers resets the VAD, so the state
+    // before this chunk is what decides whether the buffer is pre-roll.
+    const wasPreSpeech = this.vadEnabled && !this.vadHasSpoken;
     let vadFired = false;
     if (pcm.length > 0) {
       this.chunks.push(pcm);
@@ -185,7 +189,7 @@ export class AsrSession {
       }
       if (process.env.MOSS_ASR_DEBUG) this.traceVad(pcm);
     }
-    if (this.vadEnabled && !this.vadHasSpoken && !endOfUtterance) {
+    if (wasPreSpeech && !this.vadHasSpoken && !vadFired && !endOfUtterance) {
       this.trimPreSpeech();
     }
     const overCap = this.bufferedSamples >= this.maxBufferSamples;

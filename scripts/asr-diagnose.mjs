@@ -101,7 +101,10 @@ function transcribeReference(wavPath, model, cli, outPrefix) {
       ? process.env.MOSS_WHISPER_CLI.split(' ')
       : ['nix', 'shell', 'nixpkgs#whisper-cpp', '-c', 'whisper-cli'];
   const [cmd, ...lead] = command;
-  execFileSync(cmd, [...lead, '-m', model, '-f', wavPath, '-oj', '-of', outPrefix, '-np'], {
+  // Short word-aligned segments so each commit window gets its own slice
+  // of the reference instead of one sentence spanning the whole file.
+  const args = ['-m', model, '-f', wavPath, '-oj', '-of', outPrefix, '-np', '-sow', '-ml', '24'];
+  execFileSync(cmd, [...lead, ...args], {
     stdio: ['ignore', 'ignore', 'inherit'],
   });
   const json = JSON.parse(readFileSync(`${outPrefix}.json`, 'utf8'));

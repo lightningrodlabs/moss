@@ -416,6 +416,21 @@ describe('AsrSession VAD', () => {
     expect(fake.transcribeCalls).toHaveLength(1);
   });
 
+  it('commits the whole utterance when the VAD fires after speech longer than the pre-roll', async () => {
+    const fake = makeReadyServer();
+    const session = vadSession(fake);
+    // 5 s of continuous speech, then 200 ms of silence to trigger the commit.
+    for (let i = 0; i < 50; i++) {
+      await session.pushAudio(speechPcm(1600), false);
+    }
+    await session.pushAudio(silentPcm(1600), false);
+    await session.pushAudio(silentPcm(1600), false);
+    await session.settle();
+    expect(fake.transcribeCalls).toHaveLength(1);
+    const wavSamples = (fake.transcribeCalls[0].byteLength - 44) / 2;
+    expect(wavSamples).toBe(50 * 1600 + 2 * 1600);
+  });
+
   it('never sends pre-speech silence to the server, even past maxBufferMs', async () => {
     const fake = makeReadyServer();
     const session = vadSession(fake, { maxBufferMs: 3_000 });
