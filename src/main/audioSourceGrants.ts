@@ -61,6 +61,14 @@ interface Grant {
   port1: GrantPort;
   streams: Map<string, OpenStream>;
   timer: unknown;
+  /**
+   * True while `request` is still opening this grant's streams. A stream that
+   * dies synchronously, mid-open, must not be allowed to end the grant on its
+   * own just because it was briefly the only entry in `streams` — later rows
+   * in the same request may still succeed. Cleared once the open loop is done
+   * and the grant is either kept (streams > 0) or reported as failed.
+   */
+  opening: boolean;
 }
 
 const STREAM_FORMAT = { outputRate: 48000, outputChannels: 1, chunkMs: FRAME_MS } as const;
@@ -168,13 +176,14 @@ export class AudioSourceGrants {
       port1,
       streams: new Map(),
       timer: undefined,
+      opening: true,
     };
     this.grants.set(grantId, grant);
 
     const openedNames: string[] = [];
     let openedSystem = false;
     if (wantSystem) {
-      openedSystem = await this.openStream(grant, backend, 'system', {
+      openedSystem = this.openStream(grant, backend, 'system', {
         kind: 'system',
         excludeSelf: true,
         excludePids,
@@ -184,21 +193,18 @@ export class AudioSourceGrants {
     for (const row of wantApps) {
       const pid = pidById.get(row.id);
       if (pid === undefined) continue;
-      if (await this.openStream(grant, backend, 'app', { kind: 'process', processId: pid, ...STREAM_FORMAT })) {
+      if (this.openStream(grant, backend, 'app', { kind: 'process', processId: pid, ...STREAM_FORMAT })) {
         openedNames.push(row.name);
       }
     }
     if (grant.streams.size === 0) {
-      // A fatal event fired synchronously from inside one of the opens above
-      // may already have torn this grant down through closeStream/endGrant
-      // (which posts its own `ended` reason and closes the port) before this
-      // check runs. Only report the generic "failed to open" outcome when
-      // that did not happen — i.e. the grant was still present to delete.
-      const wasStillPending = this.grants.delete(grantId);
+      this.grants.delete(grantId);
       port1.close();
-      if (wasStillPending) throw new Error('Failed to open audio capture for the chosen sources.');
-      return null;
+      throw new Error('Failed to open audio capture for the chosen sources.');
     }
+    // Every row has now had its chance to open; a stream dying mid-open can
+    // no longer end this grant behind the loop's back (see `opening` above).
+    grant.opening = false;
     grant.info.label = describeSelection(openedSystem, openedNames);
 
     port1.on('message', (e) => {
@@ -238,12 +244,12 @@ export class AudioSourceGrants {
     await Promise.all(ids.map((id) => this.endGrant(id, reason)));
   }
 
-  private async openStream(
+  private openStream(
     grant: Grant,
     backend: AudioCaptureBackend,
     kind: 'system' | 'app',
     options: OpenOptions,
-  ): Promise<boolean> {
+  ): boolean {
     const id = `${kind}-${grant.streams.size}`;
     const stream: OpenStream = { id, kind, handle: { stop: async () => {} }, queue: [] };
     const onChunk = (chunk: JsAudioChunk) => {
@@ -271,10 +277,11 @@ export class AudioSourceGrants {
     if (!grant.streams.has(id)) {
       // The synchronous event above already closed this stream via the
       // placeholder handle (the only one closeStream could see at that
-      // point); stop the real handle too, and await it so the
-      // closeStream/endGrant teardown it triggered gets to run to
-      // completion before the caller decides what "nothing opened" means.
-      await handle.stop().catch(() => undefined);
+      // point); stop the real handle too so the addon's resource is
+      // released, without waiting on it — the grant's own `opening` flag,
+      // not this stream, is what keeps the grant alive for the rest of the
+      // open loop.
+      void handle.stop().catch(() => undefined);
       return false;
     }
     return true;
@@ -302,7 +309,10 @@ export class AudioSourceGrants {
   private async closeStream(grant: Grant, stream: OpenStream, reason: AudioSourceEndReason): Promise<void> {
     if (!grant.streams.delete(stream.id)) return;
     await stream.handle.stop().catch(() => undefined);
-    if (grant.streams.size === 0) await this.endGrant(grant.info.grantId, reason);
+    // While the grant is still being assembled (see `opening`), an empty
+    // `streams` map is a transient state between rows, not "every stream is
+    // gone" — ending the grant here would race the open loop's later rows.
+    if (!grant.opening && grant.streams.size === 0) await this.endGrant(grant.info.grantId, reason);
   }
 
   private pump(grant: Grant): void {

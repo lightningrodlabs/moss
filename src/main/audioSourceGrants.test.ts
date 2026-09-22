@@ -27,8 +27,8 @@ class FakeBackend implements AudioCaptureBackend {
   processesRejects = false;
   /** When set, openStream throws for options matching the predicate. */
   failOpen: (o: OpenOptions) => boolean = () => false;
-  /** When set, openStream fires this event synchronously before returning the handle. */
-  emitOnOpen?: JsStreamEvent;
+  /** Per-call: when it returns an event, openStream fires it synchronously before returning the handle. */
+  emitOnOpen: (options: OpenOptions) => JsStreamEvent | undefined = () => undefined;
 
   devices() {
     if (this.devicesThrows) throw new Error('no session');
@@ -43,7 +43,8 @@ class FakeBackend implements AudioCaptureBackend {
     const stop = vi.fn(async () => {});
     const s: OpenedStream = { options, onChunk, onEvent, stop };
     this.opened.push(s);
-    if (this.emitOnOpen) onEvent?.(this.emitOnOpen);
+    const ev = this.emitOnOpen(options);
+    if (ev) onEvent?.(ev);
     return { stop } as unknown as ReturnType<AudioCaptureBackend['openStream']>;
   }
   chunk(i: number, value: number, frames = FRAME_SAMPLES) {
@@ -281,15 +282,33 @@ describe('AudioSourceGrants.request', () => {
     expect(r.ports[0]?.closed ?? true).toBe(true);
   });
 
-  it('a fatal event fired synchronously during open does not strand the grant', async () => {
+  it('the sole stream dying via a synchronous fatal event during open rejects like any other open failure', async () => {
     const r = rig();
-    r.backend.emitOnOpen = { type: 'error', message: 'open failed' };
-    const result = await r.grants.request(REQ);
-    expect(result).toBeNull();
-    await flush();
+    r.backend.emitOnOpen = () => ({ type: 'error', message: 'open failed' });
+    await expect(r.grants.request(REQ)).rejects.toThrow(/Failed to open audio capture/);
     expect(r.grants.list()).toEqual([]);
-    expect(r.ports[0].sent.at(-1)).toEqual({ type: 'ended', reason: 'stream-error' });
     expect(r.backend.opened[0].stop).toHaveBeenCalledTimes(1);
+    expect(r.ports[0].closed).toBe(true);
+    expect(r.ports[0].sent.some((m) => (m as { type?: string }).type === 'ended')).toBe(false);
+  });
+
+  it('one stream dying via a synchronous fatal event during open does not strand the grant or leak the timer when a later row succeeds', async () => {
+    const r = rig();
+    r.backend.processList = [
+      { pid: 3, name: 'Firefox', isOutputActive: true },
+      { pid: 4, name: 'Spotify', isOutputActive: true },
+    ];
+    r.backend.emitOnOpen = (o) => (o.processId === 3 ? { type: 'error', message: 'open failed' } : undefined);
+    r.picker.mockImplementationOnce(async (rows) => rows.filter((x) => x.kind === 'app').map((x) => x.id));
+    const result = await r.grants.request(REQ);
+    expect(result?.label).toBe('Spotify');
+    expect(r.backend.opened).toHaveLength(2);
+    expect(r.backend.opened[0].stop).toHaveBeenCalledTimes(1);
+    expect(r.backend.opened[1].stop).not.toHaveBeenCalled();
+    expect(r.grants.list()).toHaveLength(1);
+    expect(r.scheduler.active).toBe(1);
+    r.scheduler.tick();
+    expect(r.ports[0].sent.at(-1)).toBeInstanceOf(Int16Array);
   });
 
   it('a second request while the picker is open rejects', async () => {
