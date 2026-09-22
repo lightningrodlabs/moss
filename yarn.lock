@@ -2137,41 +2137,41 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@lightningrodlabs/we-rust-utils-darwin-arm64@0.700.0-dev.0":
-  version "0.700.0-dev.0"
-  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-arm64/-/we-rust-utils-darwin-arm64-0.700.0-dev.0.tgz#4f0f6cd374c2c5d8949230d6be223d85fd122f3e"
-  integrity sha512-dxyZa0Obz/7GSb19oEkFdtjlCR/D7v8/0ctNqVnFUWml2cRPwzeAktDog9j3O/y4UXIIOyb1Mhf9lE6ZS0i0JQ==
+"@lightningrodlabs/we-rust-utils-darwin-arm64@0.700.1":
+  version "0.700.1"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-arm64/-/we-rust-utils-darwin-arm64-0.700.1.tgz#77a1c845ccb9c92cfec90f4ed868491b3d2d48dc"
+  integrity sha512-gxfEDUps5wdpS4qBMAxqjk+kN22MAQkaQPbaRK0/0u+F7DldbqEIEgxP9CZ2jUsKiW/ST5MOLnYwqqvYo5wSCg==
 
-"@lightningrodlabs/we-rust-utils-darwin-x64@0.700.0-dev.0":
-  version "0.700.0-dev.0"
-  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-x64/-/we-rust-utils-darwin-x64-0.700.0-dev.0.tgz#4b6794308fa306ef32b20ec66812caf9b1fc5b3b"
-  integrity sha512-c9AXdX4ce/RWrxVN33CySbbbZyTF67+1i8QWbywiSHzMdYk2vF4ByP//yycIwmfV9g5QHIENPBWD1AYRriB+gQ==
+"@lightningrodlabs/we-rust-utils-darwin-x64@0.700.1":
+  version "0.700.1"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-x64/-/we-rust-utils-darwin-x64-0.700.1.tgz#3353c9e9b8b1960c954f6a69aba7c00ad3c4a322"
+  integrity sha512-iUHjhUXej8aIjJuBPFqnkqHUa6rDssqY/MFcuGqZi1ecHAJgOkwWwGZRLQ0KDIdoOJCPwcDllRCvizQ9F1lYHw==
 
-"@lightningrodlabs/we-rust-utils-linux-arm64-gnu@0.700.0-dev.0":
-  version "0.700.0-dev.0"
-  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-linux-arm64-gnu/-/we-rust-utils-linux-arm64-gnu-0.700.0-dev.0.tgz#532ffe6591160cca5821e7d403f9b201c75992c4"
-  integrity sha512-Io9Max0fPNLR8rBuZC0m4ts6w1wvqdE61VXPKtGkz0nQ2q3PwoU5ElTQ5ANWu8O6267gR4a/+dnylDYbPAh4rw==
+"@lightningrodlabs/we-rust-utils-linux-arm64-gnu@0.700.1":
+  version "0.700.1"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-linux-arm64-gnu/-/we-rust-utils-linux-arm64-gnu-0.700.1.tgz#7559be359970d0e70337d7a6a666b71e574513b4"
+  integrity sha512-WQWUnX1DP+oXC8XPDEhQSCgU9ht/x85dMVIiaf+8u4w/h8OPxhu41u5tVBTBlAD6r7rBH6jnF0V/8RTkpwIJKQ==
 
-"@lightningrodlabs/we-rust-utils-linux-x64-gnu@0.700.0-dev.0":
-  version "0.700.0-dev.0"
-  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-linux-x64-gnu/-/we-rust-utils-linux-x64-gnu-0.700.0-dev.0.tgz#f102a33dce3e3676c820e4c6b5d45158363c4e8c"
-  integrity sha512-ETsdQfu9pdBG8t2duaIbT3iEvvaIRCrtha5sUtqNwE5hB6vXOKQkkqdKurFgoqVM4ul7RPku29HXgX7kyolAZQ==
+"@lightningrodlabs/we-rust-utils-linux-x64-gnu@0.700.1":
+  version "0.700.1"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-linux-x64-gnu/-/we-rust-utils-linux-x64-gnu-0.700.1.tgz#8fb3ce04ce9e66e7bcaa8c422b105b71eeb8e309"
+  integrity sha512-dX1oCu3+JuGUtLdyZQ/tLnQYvZcs1XufIXuUyfIFriwtDbhA9rdJp5xnefk0xHnLnRsw/eFYbrbrjmmlcki0ng==
 
-"@lightningrodlabs/we-rust-utils-win32-x64-msvc@0.700.0-dev.0":
-  version "0.700.0-dev.0"
-  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-win32-x64-msvc/-/we-rust-utils-win32-x64-msvc-0.700.0-dev.0.tgz#fa9b512c9b9a27b806c48b4b209296e0e2b92780"
-  integrity sha512-vdOEZMoqaZfPLDqL12Mmd60JSVgOqttzCFDSwUFC+vw71QGWssZ+e2LBzk9CGrUpGbM/gFCDeyVxSVxuHjJpZQ==
+"@lightningrodlabs/we-rust-utils-win32-x64-msvc@0.700.1":
+  version "0.700.1"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-win32-x64-msvc/-/we-rust-utils-win32-x64-msvc-0.700.1.tgz#bf3c5fddd7dab98a06a9fb1cd7dc1ad7696417b8"
+  integrity sha512-/mwWPXcLqcECFszt1p16LZTeg8o9YCWYmDlJT9AV501tfzOYcU9h+uozvyaUKc1hmh5GJsmx9G7XsMp8ZE87cA==
 
-"@lightningrodlabs/we-rust-utils@^0.700.0-dev.0":
-  version "0.700.0-dev.0"
-  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils/-/we-rust-utils-0.700.0-dev.0.tgz#c391114e1efdf5d09ac5c14e9c5ff1d2999ab71b"
-  integrity sha512-VfEc14vo5FpxD+enfERlVkto8r6qGiQQKA3vH3WPZIZb6HgziG5Du4MWoWri1JALEAyXkEI3ppS8marqKPxWMA==
+"@lightningrodlabs/we-rust-utils@^0.700.1":
+  version "0.700.1"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils/-/we-rust-utils-0.700.1.tgz#64ea6505a13c8728e72dbc99a9dc30575846e77b"
+  integrity sha512-/BxnFZd7HecyTuBzT0YxxavUiB0PZM2/qwwyXXpjJsM2j28rclhGG3ouyAqFVvxRUIE6j75a3ktDOG4TwPvAtg==
   optionalDependencies:
-    "@lightningrodlabs/we-rust-utils-darwin-arm64" "0.700.0-dev.0"
-    "@lightningrodlabs/we-rust-utils-darwin-x64" "0.700.0-dev.0"
-    "@lightningrodlabs/we-rust-utils-linux-arm64-gnu" "0.700.0-dev.0"
-    "@lightningrodlabs/we-rust-utils-linux-x64-gnu" "0.700.0-dev.0"
-    "@lightningrodlabs/we-rust-utils-win32-x64-msvc" "0.700.0-dev.0"
+    "@lightningrodlabs/we-rust-utils-darwin-arm64" "0.700.1"
+    "@lightningrodlabs/we-rust-utils-darwin-x64" "0.700.1"
+    "@lightningrodlabs/we-rust-utils-linux-arm64-gnu" "0.700.1"
+    "@lightningrodlabs/we-rust-utils-linux-x64-gnu" "0.700.1"
+    "@lightningrodlabs/we-rust-utils-win32-x64-msvc" "0.700.1"
 
 "@lion/accordion@^0.9.0":
   version "0.9.0"
@@ -3115,7 +3115,7 @@
     defer-to-connect "^2.0.0"
 
 "@theweave/api@file:libs/api":
-  version "0.7.0-dev.2"
+  version "0.7.0-dev.3"
   dependencies:
     "@holochain-open-dev/profiles" "^0.701.0"
     "@holochain/client" "^0.21.0"
