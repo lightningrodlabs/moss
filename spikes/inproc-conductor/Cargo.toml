@@ -1,0 +1,34 @@
+[package]
+name = "inproc_conductor_spike"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+napi = { version = "3.2.2", default-features = false, features = ["napi4", "tokio_rt"] }
+napi-derive = "3.2.2"
+holochain = "=0.7.0"
+holochain_conductor_api = "=0.7.0"
+holochain_keystore = "=0.7.0"
+holochain_serialized_bytes = "=0.0.57"
+lair_keystore_api = "=0.7.1"
+holochain_nonce = "=0.7.0"
+lair_keystore = { version = "=0.7.1", default-features = false }
+url2 = "0.0.6"
+rustls = "0.23.25"
+tokio = { version = "1", features = ["sync"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[build-dependencies]
+napi-build = "2.0.1"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = "symbols"
+
+# Standalone: kept out of the repo's wasm zome workspace.
+[workspace]
