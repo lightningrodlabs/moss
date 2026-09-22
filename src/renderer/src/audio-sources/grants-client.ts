@@ -52,7 +52,25 @@ export class AudioSourceGrantsClient {
   async endForIframe(iframeKey: string): Promise<void> {
     const ids = this.byIframe.get(iframeKey);
     if (!ids) return;
-    this.byIframe.delete(iframeKey);
-    for (const id of ids) await this.b.stopAudioSources(id, 'iframe-unloaded');
+    // Every id gets a stop attempt regardless of earlier failures in this
+    // same pass: a rejection must not leave a later grant's stop unattempted
+    // in main while the client has already forgotten it existed. Ids whose
+    // stop failed stay recorded so a retry can find them.
+    const stillGranted: string[] = [];
+    let firstError: unknown;
+    for (const id of ids) {
+      try {
+        await this.b.stopAudioSources(id, 'iframe-unloaded');
+      } catch (e) {
+        stillGranted.push(id);
+        if (firstError === undefined) firstError = e;
+      }
+    }
+    if (stillGranted.length > 0) {
+      this.byIframe.set(iframeKey, stillGranted);
+    } else {
+      this.byIframe.delete(iframeKey);
+    }
+    if (firstError !== undefined) throw firstError;
   }
 }

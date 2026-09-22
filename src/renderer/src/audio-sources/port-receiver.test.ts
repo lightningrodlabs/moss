@@ -60,6 +60,18 @@ describe('AudioSourcePortReceiver', () => {
     await expect(pending).rejects.toThrow(/without a port/);
   });
 
+  it('a second expect for the same requestId supersedes the first', async () => {
+    const onOrphan = vi.fn();
+    const r = new AudioSourcePortReceiver(fakeWindow, onOrphan);
+    const first = r.expect('r1', 1000);
+    const second = r.expect('r1', 1000);
+    await expect(first).rejects.toThrow(/superseded/);
+    const { port1 } = new MessageChannel();
+    r.handleMessage(portEvent({ type: 'audio-source-port', requestId: 'r1', grantId: 'g1' }, { ports: [port1] }));
+    expect(await second).toBe(port1);
+    expect(onOrphan).not.toHaveBeenCalled();
+  });
+
   it('times out when nothing arrives', async () => {
     const r = new AudioSourcePortReceiver(fakeWindow, () => {});
     await expect(r.expect('r1', 10)).rejects.toThrow(/timed out/);

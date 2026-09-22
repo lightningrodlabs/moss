@@ -37,9 +37,22 @@ export class AudioSourcePortReceiver {
   }
 
   expect(requestId: string, timeoutMs: number = PORT_DELIVERY_TIMEOUT_MS): Promise<MessagePort> {
+    // A still-pending call for the same requestId is superseded rather than
+    // silently overwritten: without this, its timer would still be armed,
+    // and when it fired it would delete the map entry that by then belongs
+    // to the new call, orphaning a delivery that has a live waiter.
+    const superseded = this.pending.get(requestId);
+    if (superseded) {
+      clearTimeout(superseded.timer);
+      this.pending.delete(requestId);
+      superseded.reject(new Error(`audio-source port expectation for ${requestId} superseded`));
+    }
     return new Promise<MessagePort>((resolve, reject) => {
       const timer = setTimeout(() => {
-        this.pending.delete(requestId);
+        // Only clear the entry if it is still the one this timer belongs to
+        // — a later `expect` call for the same requestId already cleared
+        // and replaced it.
+        if (this.pending.get(requestId)?.timer === timer) this.pending.delete(requestId);
         reject(new Error(`audio-source port delivery for ${requestId} timed out after ${timeoutMs}ms`));
       }, timeoutMs);
       this.pending.set(requestId, { resolve, reject, timer });

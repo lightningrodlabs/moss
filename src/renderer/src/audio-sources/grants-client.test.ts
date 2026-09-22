@@ -96,4 +96,32 @@ describe('AudioSourceGrantsClient.endForIframe', () => {
     await r.client.endForIframe('nope');
     expect(r.stopAudioSources).not.toHaveBeenCalled();
   });
+
+  it('attempts every id even when one stop fails, keeps the failed id, and rethrows', async () => {
+    let n = 0;
+    const failure = new Error('stop failed');
+    const stopAudioSources = vi.fn(async (grantId: string) => {
+      if (grantId === 'g-r2') throw failure;
+    });
+    const r = rig({
+      newRequestId: () => `r${++n}`,
+      requestAudioSources: vi.fn(async ({ requestId }) => ({ grantId: `g-${requestId}`, label: 'x', canExcludeSelf: true })),
+      stopAudioSources,
+    });
+    await r.client.request({ iframeKey: 'i1', toolName: 'A' });
+    await r.client.request({ iframeKey: 'i1', toolName: 'A' });
+    await r.client.request({ iframeKey: 'i1', toolName: 'A' });
+
+    await expect(r.client.endForIframe('i1')).rejects.toBe(failure);
+    expect(stopAudioSources.mock.calls).toEqual([
+      ['g-r1', 'iframe-unloaded'],
+      ['g-r2', 'iframe-unloaded'],
+      ['g-r3', 'iframe-unloaded'],
+    ]);
+    expect(r.client.grantIdsFor('i1')).toEqual(['g-r2']);
+
+    stopAudioSources.mockImplementation(async () => {});
+    await r.client.endForIframe('i1');
+    expect(r.client.grantIdsFor('i1')).toEqual([]);
+  });
 });
