@@ -27,6 +27,8 @@ class FakeBackend implements AudioCaptureBackend {
   processesRejects = false;
   /** When set, openStream throws for options matching the predicate. */
   failOpen: (o: OpenOptions) => boolean = () => false;
+  /** When set, openStream fires this event synchronously before returning the handle. */
+  emitOnOpen?: JsStreamEvent;
 
   devices() {
     if (this.devicesThrows) throw new Error('no session');
@@ -41,6 +43,7 @@ class FakeBackend implements AudioCaptureBackend {
     const stop = vi.fn(async () => {});
     const s: OpenedStream = { options, onChunk, onEvent, stop };
     this.opened.push(s);
+    if (this.emitOnOpen) onEvent?.(this.emitOnOpen);
     return { stop } as unknown as ReturnType<AudioCaptureBackend['openStream']>;
   }
   chunk(i: number, value: number, frames = FRAME_SAMPLES) {
@@ -276,6 +279,17 @@ describe('AudioSourceGrants.request', () => {
     await expect(r.grants.request(REQ)).rejects.toThrow(/Failed to open audio capture/);
     expect(r.grants.list()).toEqual([]);
     expect(r.ports[0]?.closed ?? true).toBe(true);
+  });
+
+  it('a fatal event fired synchronously during open does not strand the grant', async () => {
+    const r = rig();
+    r.backend.emitOnOpen = { type: 'error', message: 'open failed' };
+    const result = await r.grants.request(REQ);
+    expect(result).toBeNull();
+    await flush();
+    expect(r.grants.list()).toEqual([]);
+    expect(r.ports[0].sent.at(-1)).toEqual({ type: 'ended', reason: 'stream-error' });
+    expect(r.backend.opened[0].stop).toHaveBeenCalledTimes(1);
   });
 
   it('a second request while the picker is open rejects', async () => {

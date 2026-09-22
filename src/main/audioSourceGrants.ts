@@ -174,7 +174,7 @@ export class AudioSourceGrants {
     const openedNames: string[] = [];
     let openedSystem = false;
     if (wantSystem) {
-      openedSystem = this.openStream(grant, backend, 'system', {
+      openedSystem = await this.openStream(grant, backend, 'system', {
         kind: 'system',
         excludeSelf: true,
         excludePids,
@@ -184,14 +184,20 @@ export class AudioSourceGrants {
     for (const row of wantApps) {
       const pid = pidById.get(row.id);
       if (pid === undefined) continue;
-      if (this.openStream(grant, backend, 'app', { kind: 'process', processId: pid, ...STREAM_FORMAT })) {
+      if (await this.openStream(grant, backend, 'app', { kind: 'process', processId: pid, ...STREAM_FORMAT })) {
         openedNames.push(row.name);
       }
     }
     if (grant.streams.size === 0) {
-      this.grants.delete(grantId);
+      // A fatal event fired synchronously from inside one of the opens above
+      // may already have torn this grant down through closeStream/endGrant
+      // (which posts its own `ended` reason and closes the port) before this
+      // check runs. Only report the generic "failed to open" outcome when
+      // that did not happen — i.e. the grant was still present to delete.
+      const wasStillPending = this.grants.delete(grantId);
       port1.close();
-      throw new Error('Failed to open audio capture for the chosen sources.');
+      if (wasStillPending) throw new Error('Failed to open audio capture for the chosen sources.');
+      return null;
     }
     grant.info.label = describeSelection(openedSystem, openedNames);
 
@@ -232,12 +238,12 @@ export class AudioSourceGrants {
     await Promise.all(ids.map((id) => this.endGrant(id, reason)));
   }
 
-  private openStream(
+  private async openStream(
     grant: Grant,
     backend: AudioCaptureBackend,
     kind: 'system' | 'app',
     options: OpenOptions,
-  ): boolean {
+  ): Promise<boolean> {
     const id = `${kind}-${grant.streams.size}`;
     const stream: OpenStream = { id, kind, handle: { stop: async () => {} }, queue: [] };
     const onChunk = (chunk: JsAudioChunk) => {
@@ -245,13 +251,32 @@ export class AudioSourceGrants {
       stream.queue.push(chunk.data);
     };
     const onEvent = (ev: JsStreamEvent) => this.onStreamEvent(grant, stream, ev);
+    // Registered before the backend call: a fatal event the addon fires
+    // synchronously from inside openStream (permissionDenied/error at open
+    // time) reaches onStreamEvent -> closeStream while the addon call is
+    // still on the stack, and closeStream can only tear the stream down if
+    // it can find it in grant.streams. Registering after the call returned
+    // let such an event's teardown miss the entry, then this line inserted
+    // it anyway — a zombie stream the grant would never notice again.
+    grant.streams.set(id, stream);
+    let handle: OpenStream['handle'];
     try {
-      stream.handle = backend.openStream(options, onChunk, onEvent);
+      handle = backend.openStream(options, onChunk, onEvent);
     } catch (e) {
+      grant.streams.delete(id);
       console.warn(`[audio-sources] could not open ${kind} stream: ${(e as Error).message}`);
       return false;
     }
-    grant.streams.set(id, stream);
+    stream.handle = handle;
+    if (!grant.streams.has(id)) {
+      // The synchronous event above already closed this stream via the
+      // placeholder handle (the only one closeStream could see at that
+      // point); stop the real handle too, and await it so the
+      // closeStream/endGrant teardown it triggered gets to run to
+      // completion before the caller decides what "nothing opened" means.
+      await handle.stop().catch(() => undefined);
+      return false;
+    }
     return true;
   }
 
