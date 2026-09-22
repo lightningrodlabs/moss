@@ -6,8 +6,12 @@ export interface AudioSourceGrantsClientBindings {
   newRequestId: () => string;
   requestAudioSources: (req: { requestId: string; toolName: string }) => Promise<AudioSourceRequestResult | null>;
   stopAudioSources: (grantId: string, reason: 'user-stopped' | 'iframe-unloaded') => Promise<void>;
-  /** Resolves the port main delivers for `requestId`; rejects on timeout. */
+  /** Resolves the port main delivers for `requestId`; rejects once a deadline is armed and elapses. */
   expectPort: (requestId: string) => Promise<MessagePort>;
+  /** Bounds the port relay itself, once the invoke has actually answered. */
+  armPortDeadline: (requestId: string) => void;
+  /** Gives up on a port that will never be asked for again. */
+  cancelPortExpectation: (requestId: string) => void;
 }
 
 export interface AudioSourceGrantHandle {
@@ -33,11 +37,25 @@ export class AudioSourceGrantsClient {
     if (!this.b.isEnabled()) return null;
     const requestId = this.b.newRequestId();
     // Armed before the invoke: the port message and the invoke reply are
-    // separate IPC deliveries with no ordering guarantee between them.
+    // separate IPC deliveries with no ordering guarantee between them. The
+    // DEADLINE is armed later, only once the invoke has actually answered —
+    // the invoke itself does not resolve until the user closes the picker,
+    // and that wait must not count against a timeout meant to bound the
+    // sub-second port relay, not the user's decision.
     const portPromise = this.b.expectPort(requestId);
     portPromise.catch(() => undefined);
-    const result = await this.b.requestAudioSources({ requestId, toolName: req.toolName });
-    if (!result) return null;
+    let result: AudioSourceRequestResult | null;
+    try {
+      result = await this.b.requestAudioSources({ requestId, toolName: req.toolName });
+    } catch (e) {
+      this.b.cancelPortExpectation(requestId);
+      throw e;
+    }
+    if (!result) {
+      this.b.cancelPortExpectation(requestId);
+      return null;
+    }
+    this.b.armPortDeadline(requestId);
     let port: MessagePort;
     try {
       port = await portPromise;

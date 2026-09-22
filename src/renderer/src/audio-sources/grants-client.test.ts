@@ -6,12 +6,16 @@ function rig(overrides: Partial<AudioSourceGrantsClientBindings> = {}) {
   const requestAudioSources = vi.fn(async () => ({ grantId: 'g1', label: 'System audio', canExcludeSelf: true }));
   const stopAudioSources = vi.fn(async () => {});
   const expectPort = vi.fn(async (_requestId: string) => port);
+  const armPortDeadline = vi.fn();
+  const cancelPortExpectation = vi.fn();
   const b: AudioSourceGrantsClientBindings = {
     isEnabled: () => true,
     newRequestId: () => 'r1',
     requestAudioSources,
     stopAudioSources,
     expectPort,
+    armPortDeadline,
+    cancelPortExpectation,
     ...overrides,
   };
   // Return the bindings' own (possibly overridden) functions, not the
@@ -24,6 +28,8 @@ function rig(overrides: Partial<AudioSourceGrantsClientBindings> = {}) {
     requestAudioSources: b.requestAudioSources as unknown as typeof requestAudioSources,
     stopAudioSources: b.stopAudioSources as unknown as typeof stopAudioSources,
     expectPort: b.expectPort as unknown as typeof expectPort,
+    armPortDeadline: b.armPortDeadline as unknown as typeof armPortDeadline,
+    cancelPortExpectation: b.cancelPortExpectation as unknown as typeof cancelPortExpectation,
   };
 }
 
@@ -35,7 +41,7 @@ describe('AudioSourceGrantsClient.request', () => {
     expect(r.expectPort).not.toHaveBeenCalled();
   });
 
-  it('arms the port expectation BEFORE invoking main, then returns result + port', async () => {
+  it('arms the port expectation BEFORE invoking main, arms the deadline only AFTER, then returns result + port', async () => {
     const order: string[] = [];
     const r = rig({
       expectPort: vi.fn(async () => {
@@ -46,23 +52,37 @@ describe('AudioSourceGrantsClient.request', () => {
         order.push('invoke');
         return { grantId: 'g1', label: 'System audio', canExcludeSelf: true };
       }),
+      armPortDeadline: vi.fn(() => {
+        order.push('armDeadline');
+      }),
     });
     const out = await r.client.request({ iframeKey: 'i1', toolName: 'Presence' });
-    expect(order).toEqual(['expect', 'invoke']);
+    expect(order).toEqual(['expect', 'invoke', 'armDeadline']);
     expect(out?.result.grantId).toBe('g1');
     expect(r.requestAudioSources).toHaveBeenCalledWith({ requestId: 'r1', toolName: 'Presence' });
   });
 
-  it('main returns null (cancelled/unsupported) → null, expectation discarded', async () => {
+  it('main returns null (cancelled/unsupported) → null, expectation cancelled, deadline never armed', async () => {
     const r = rig({ requestAudioSources: vi.fn(async () => null) });
     expect(await r.client.request({ iframeKey: 'i1', toolName: 'Presence' })).toBeNull();
     expect(r.client.grantIdsFor('i1')).toEqual([]);
+    expect(r.cancelPortExpectation).toHaveBeenCalledWith('r1');
+    expect(r.armPortDeadline).not.toHaveBeenCalled();
+  });
+
+  it('invoking main throws → cancels the port expectation and rethrows, deadline never armed', async () => {
+    const failure = new Error('admin websocket down');
+    const r = rig({ requestAudioSources: vi.fn(async () => { throw failure; }) });
+    await expect(r.client.request({ iframeKey: 'i1', toolName: 'Presence' })).rejects.toBe(failure);
+    expect(r.cancelPortExpectation).toHaveBeenCalledWith('r1');
+    expect(r.armPortDeadline).not.toHaveBeenCalled();
   });
 
   it('port never arrives → stops the grant in main and rethrows', async () => {
     const r = rig({ expectPort: vi.fn(async () => { throw new Error('timed out'); }) });
     await expect(r.client.request({ iframeKey: 'i1', toolName: 'Presence' })).rejects.toThrow(/timed out/);
     expect(r.stopAudioSources).toHaveBeenCalledWith('g1', 'iframe-unloaded');
+    expect(r.armPortDeadline).toHaveBeenCalledWith('r1');
   });
 
   it('records the grant under its iframe key', async () => {

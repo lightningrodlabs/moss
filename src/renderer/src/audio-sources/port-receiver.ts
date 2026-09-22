@@ -9,7 +9,11 @@ export function matchAudioSourcePortMessage(data: unknown): AudioSourcePortDeliv
   return { requestId: d.requestId, grantId: d.grantId };
 }
 
-type Pending = { resolve: (port: MessagePort) => void; reject: (e: Error) => void; timer: ReturnType<typeof setTimeout> };
+type Pending = {
+  resolve: (port: MessagePort) => void;
+  reject: (e: Error) => void;
+  timer: ReturnType<typeof setTimeout> | undefined;
+};
 
 export const PORT_DELIVERY_TIMEOUT_MS = 10_000;
 
@@ -36,27 +40,60 @@ export class AudioSourcePortReceiver {
     target.addEventListener('message', (e) => this.handleMessage(e));
   }
 
-  expect(requestId: string, timeoutMs: number = PORT_DELIVERY_TIMEOUT_MS): Promise<MessagePort> {
+  // No deadline is armed here: the caller's own invoke (opening the picker,
+  // waiting on the user) has to resolve before there is anything to bound,
+  // and that wait is a human decision, not an IPC delivery. Call
+  // `armDeadline` once the invoke has actually answered.
+  expect(requestId: string): Promise<MessagePort> {
     // A still-pending call for the same requestId is superseded rather than
-    // silently overwritten: without this, its timer would still be armed,
-    // and when it fired it would delete the map entry that by then belongs
-    // to the new call, orphaning a delivery that has a live waiter.
+    // silently overwritten: without this, its timer (if any) would still be
+    // armed, and when it fired it would delete the map entry that by then
+    // belongs to the new call, orphaning a delivery that has a live waiter.
     const superseded = this.pending.get(requestId);
     if (superseded) {
-      clearTimeout(superseded.timer);
+      if (superseded.timer) clearTimeout(superseded.timer);
       this.pending.delete(requestId);
       superseded.reject(new Error(`audio-source port expectation for ${requestId} superseded`));
     }
     return new Promise<MessagePort>((resolve, reject) => {
-      const timer = setTimeout(() => {
-        // Only clear the entry if it is still the one this timer belongs to
-        // — a later `expect` call for the same requestId already cleared
-        // and replaced it.
-        if (this.pending.get(requestId)?.timer === timer) this.pending.delete(requestId);
-        reject(new Error(`audio-source port delivery for ${requestId} timed out after ${timeoutMs}ms`));
-      }, timeoutMs);
-      this.pending.set(requestId, { resolve, reject, timer });
+      this.pending.set(requestId, { resolve, reject, timer: undefined });
     });
+  }
+
+  /**
+   * Arms (or restarts) the delivery deadline for a still-pending waiter,
+   * bounding the sub-second relay of the port itself rather than the wait
+   * that preceded it. A no-op if `requestId` is not pending (already
+   * delivered, superseded, or cancelled).
+   */
+  armDeadline(requestId: string, timeoutMs: number = PORT_DELIVERY_TIMEOUT_MS): void {
+    const waiter = this.pending.get(requestId);
+    if (!waiter) return;
+    if (waiter.timer) clearTimeout(waiter.timer);
+    const timer = setTimeout(() => {
+      // Only clear the entry if it is still the one this timer belongs to
+      // — a later `armDeadline`/`expect` call for the same requestId already
+      // cleared and replaced it.
+      const current = this.pending.get(requestId);
+      if (current?.timer !== timer) return;
+      this.pending.delete(requestId);
+      current.reject(new Error(`audio-source port delivery for ${requestId} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+    waiter.timer = timer;
+  }
+
+  /**
+   * Cancels a still-pending waiter (the invoke answered `null`, or threw):
+   * clears any armed timer and rejects, so a delivery that races in for
+   * this id anyway lands on `onOrphan` instead of resolving a call the
+   * caller has already given up on.
+   */
+  cancel(requestId: string): void {
+    const waiter = this.pending.get(requestId);
+    if (!waiter) return;
+    if (waiter.timer) clearTimeout(waiter.timer);
+    this.pending.delete(requestId);
+    waiter.reject(new Error(`audio-source port expectation for ${requestId} cancelled`));
   }
 
   handleMessage(event: MessageEvent): void {
@@ -71,7 +108,7 @@ export class AudioSourcePortReceiver {
       return;
     }
     this.pending.delete(delivery.requestId);
-    clearTimeout(waiter.timer);
+    if (waiter.timer) clearTimeout(waiter.timer);
     if (!port) {
       waiter.reject(new Error(`audio-source port delivery for ${delivery.requestId} arrived without a port`));
       return;

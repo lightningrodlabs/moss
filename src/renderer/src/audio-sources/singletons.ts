@@ -19,4 +19,6 @@ export const audioSourceGrantsClient = new AudioSourceGrantsClient({
   requestAudioSources: (req) => window.electronAPI.requestAudioSources(req),
   stopAudioSources: (grantId, reason) => window.electronAPI.stopAudioSources(grantId, reason),
   expectPort: (requestId) => audioSourcePortReceiver.expect(requestId),
+  armPortDeadline: (requestId) => audioSourcePortReceiver.armDeadline(requestId),
+  cancelPortExpectation: (requestId) => audioSourcePortReceiver.cancel(requestId),
 });
