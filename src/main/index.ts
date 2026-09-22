@@ -1418,8 +1418,16 @@ if (!RUNNING_WITH_COMMAND) {
       deliverPort: (targetId, payload, port2) => {
         const target = webContents.fromId(targetId);
         if (!target || target.isDestroyed()) return false;
-        target.postMessage('audio-source-port', payload, [port2 as MessagePortMain]);
-        return true;
+        // A disposed frame can still throw on postMessage even past the
+        // isDestroyed() check above, and postMessage after the far end is
+        // gone is otherwise silent — the grant engine's pump has no other
+        // way to learn the delivery failed.
+        try {
+          target.postMessage('audio-source-port', payload, [port2 as MessagePortMain]);
+          return true;
+        } catch {
+          return false;
+        }
       },
       scheduler: {
         setInterval: (fn, ms) => setInterval(fn, ms),
