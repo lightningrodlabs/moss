@@ -43,6 +43,20 @@ export class PersistedStore {
   };
 
   /**
+   * Whether Tools may ask for audio playing on this machine. A kill switch: each
+   * request still opens the picker, which is the actual consent.
+   */
+  audioSourcesEnabled: SubStore<boolean, boolean, []> = {
+    value: () => {
+      const enabled = this.store.getItem<boolean>('audioSourcesEnabled');
+      return enabled === undefined ? true : enabled;
+    },
+    set: (value) => {
+      this.store.setItem<boolean>('audioSourcesEnabled', value);
+    },
+  };
+
+  /**
    * Whether the applet sidebar is in collapsed mode or not
    */
   appletSidebarCollapsed: SubStore<boolean, boolean, []> = {
