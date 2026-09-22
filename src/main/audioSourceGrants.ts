@@ -1,0 +1,297 @@
+import type { JsAudioChunk, JsProcessInfo, JsStreamEvent, OpenOptions } from '@lightningrodlabs/flexaudio';
+import type {
+  AudioSourceEndReason,
+  AudioSourceGrantCounters,
+  AudioSourceGrantInfo,
+  AudioSourcePortDelivery,
+  AudioSourceRequestResult,
+  AudioSourceRow,
+} from '@theweave/moss-types';
+import { AudioCaptureBackend, probeAudioCapabilities } from './audioCapture';
+import { FRAME_MS, mixToInt16, takeFrameInputs } from './audioMixer';
+
+export const SYSTEM_ROW_ID = 'system';
+export const SYSTEM_ROW_NAME = 'All system output (except Moss)';
+
+/** The main-process end of a grant's MessageChannel (structurally `MessagePortMain`). */
+export interface GrantPort {
+  postMessage(data: unknown): void;
+  on(event: 'message', listener: (event: { data: unknown }) => void): void;
+  start(): void;
+  close(): void;
+}
+
+export interface AudioSourceGrantsBindings {
+  backend: () => AudioCaptureBackend | undefined;
+  platform: NodeJS.Platform;
+  /** Shows the picker; resolves the chosen row ids, or null on cancel/close. */
+  picker: (rows: AudioSourceRow[]) => Promise<string[] | null>;
+  /** Every pid in this app's process tree — the Chromium audio service, not `process.pid`, emits sound. */
+  excludePids: () => number[];
+  openChannel: () => { port1: GrantPort; port2: unknown };
+  /** Hands `port2` to the requesting window; false when that window is gone. */
+  deliverPort: (targetId: number, payload: AudioSourcePortDelivery, port2: unknown) => boolean;
+  scheduler: {
+    setInterval(fn: () => void, ms: number): unknown;
+    clearInterval(handle: unknown): void;
+  };
+  now: () => number;
+  newId: () => string;
+  onGrantsChanged: (grants: AudioSourceGrantInfo[]) => void;
+}
+
+export interface AudioSourceRequest {
+  /** Renderer-chosen correlation id, echoed in the port delivery. */
+  requestId: string;
+  toolName: string;
+  /** `webContents.id` of the requesting window. */
+  targetId: number;
+}
+
+interface OpenStream {
+  id: string;
+  kind: 'system' | 'app';
+  handle: { stop(): Promise<void> };
+  queue: Float32Array[];
+}
+
+interface Grant {
+  info: AudioSourceGrantInfo;
+  targetId: number;
+  port1: GrantPort;
+  streams: Map<string, OpenStream>;
+  timer: unknown;
+}
+
+const STREAM_FORMAT = { outputRate: 48000, outputChannels: 1, chunkMs: FRAME_MS } as const;
+
+/**
+ * Picker rows from the addon's process list: the all-output row first, then
+ * apps with currently-playing ones ahead, silent next, unknown last, each group
+ * by name. Processes in this app's own tree are not offered (they are excluded
+ * from capture anyway). Row ids are positional and opaque; `pidById` is the
+ * only place a pid is associated with a row and it never leaves main.
+ */
+export function buildAudioSourceRows(
+  processes: JsProcessInfo[],
+  excludePids: number[],
+): { rows: AudioSourceRow[]; pidById: Map<string, number> } {
+  const rank = (p: JsProcessInfo) => (p.isOutputActive === true ? 0 : p.isOutputActive === false ? 1 : 2);
+  const excluded = new Set(excludePids);
+  const apps = processes
+    .filter((p) => !excluded.has(p.pid))
+    .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
+  const pidById = new Map<string, number>();
+  const rows: AudioSourceRow[] = [
+    { id: SYSTEM_ROW_ID, kind: 'system', name: SYSTEM_ROW_NAME, playing: null },
+  ];
+  apps.forEach((p, i) => {
+    const id = `app-${i}`;
+    pidById.set(id, p.pid);
+    rows.push({ id, kind: 'app', name: p.name, playing: p.isOutputActive ?? null });
+  });
+  return { rows, pidById };
+}
+
+export function describeSelection(system: boolean, appNames: string[]): string {
+  const parts = system ? ['System audio', ...appNames] : appNames;
+  return parts.join(', ');
+}
+
+function reasonForEvent(type: string, kind: 'system' | 'app'): AudioSourceEndReason | null {
+  switch (type) {
+    case 'deviceLost':
+      return kind === 'app' ? 'app-quit' : 'stream-lost';
+    case 'permissionDenied':
+      return 'permission-denied';
+    case 'error':
+      return 'stream-error';
+    default:
+      return null;
+  }
+}
+
+/**
+ * Owns every active audio-source grant: the capture streams, the 20 ms mixer
+ * pump and the main end of the port. Every way a grant can end funnels through
+ * `endGrant`, which is idempotent.
+ */
+export class AudioSourceGrants {
+  private grants = new Map<string, Grant>();
+  private pickerOpen = false;
+
+  constructor(private readonly b: AudioSourceGrantsBindings) {}
+
+  list(): AudioSourceGrantInfo[] {
+    return [...this.grants.values()].map((g) => ({
+      ...g.info,
+      counters: { ...g.info.counters },
+    }));
+  }
+
+  async request(req: AudioSourceRequest): Promise<AudioSourceRequestResult | null> {
+    const backend = this.b.backend();
+    const caps = await probeAudioCapabilities(backend, this.b.platform);
+    if (!backend || !caps.supported) return null;
+
+    const excludePids = this.b.excludePids();
+    const processes = caps.perApp ? await backend.processes().catch(() => [] as JsProcessInfo[]) : [];
+    const { rows, pidById } = buildAudioSourceRows(processes, excludePids);
+
+    if (this.pickerOpen) throw new Error('Only one audio source picker may be open at a time.');
+    this.pickerOpen = true;
+    let chosen: string[] | null;
+    try {
+      chosen = await this.b.picker(rows);
+    } finally {
+      this.pickerOpen = false;
+    }
+    if (!chosen || chosen.length === 0) return null;
+
+    const chosenSet = new Set(chosen);
+    const wantSystem = chosenSet.has(SYSTEM_ROW_ID);
+    const wantApps = rows.filter((r) => r.kind === 'app' && chosenSet.has(r.id));
+    if (!wantSystem && wantApps.length === 0) return null;
+
+    const grantId = this.b.newId();
+    const { port1, port2 } = this.b.openChannel();
+    const grant: Grant = {
+      info: {
+        grantId,
+        toolName: req.toolName,
+        label: '',
+        canExcludeSelf: caps.canExcludeSelf,
+        startedAt: this.b.now(),
+        counters: { chunksDropped: 0, backlogDropped: 0, stalls: 0, recoveries: 0, framesSent: 0 },
+      },
+      targetId: req.targetId,
+      port1,
+      streams: new Map(),
+      timer: undefined,
+    };
+    this.grants.set(grantId, grant);
+
+    const openedNames: string[] = [];
+    let openedSystem = false;
+    if (wantSystem) {
+      openedSystem = this.openStream(grant, backend, 'system', {
+        kind: 'system',
+        excludeSelf: true,
+        excludePids,
+        ...STREAM_FORMAT,
+      });
+    }
+    for (const row of wantApps) {
+      const pid = pidById.get(row.id);
+      if (pid === undefined) continue;
+      if (this.openStream(grant, backend, 'app', { kind: 'process', processId: pid, ...STREAM_FORMAT })) {
+        openedNames.push(row.name);
+      }
+    }
+    if (grant.streams.size === 0) {
+      this.grants.delete(grantId);
+      port1.close();
+      throw new Error('Failed to open audio capture for the chosen sources.');
+    }
+    grant.info.label = describeSelection(openedSystem, openedNames);
+
+    port1.on('message', (e) => {
+      const data = e.data as { type?: unknown } | null | undefined;
+      if (data && typeof data === 'object' && data.type === 'close') void this.endGrant(grantId, 'tool-closed');
+    });
+    port1.start();
+    grant.timer = this.b.scheduler.setInterval(() => this.pump(grant), FRAME_MS);
+
+    if (!this.b.deliverPort(req.targetId, { requestId: req.requestId, grantId }, port2)) {
+      await this.endGrant(grantId, 'window-closed');
+      return null;
+    }
+    this.notify();
+    return { grantId, label: grant.info.label, canExcludeSelf: caps.canExcludeSelf };
+  }
+
+  async endGrant(grantId: string, reason: AudioSourceEndReason): Promise<void> {
+    const grant = this.grants.get(grantId);
+    if (!grant) return;
+    this.grants.delete(grantId);
+    this.b.scheduler.clearInterval(grant.timer);
+    const stops = [...grant.streams.values()].map((s) => s.handle.stop().catch(() => undefined));
+    grant.streams.clear();
+    try {
+      grant.port1.postMessage({ type: 'ended', reason });
+    } catch {
+      // The port may already be closed by the other side; the grant still ends.
+    }
+    grant.port1.close();
+    this.notify();
+    await Promise.all(stops);
+  }
+
+  async endGrantsForTarget(targetId: number, reason: AudioSourceEndReason): Promise<void> {
+    const ids = [...this.grants.values()].filter((g) => g.targetId === targetId).map((g) => g.info.grantId);
+    await Promise.all(ids.map((id) => this.endGrant(id, reason)));
+  }
+
+  private openStream(
+    grant: Grant,
+    backend: AudioCaptureBackend,
+    kind: 'system' | 'app',
+    options: OpenOptions,
+  ): boolean {
+    const id = `${kind}-${grant.streams.size}`;
+    const stream: OpenStream = { id, kind, handle: { stop: async () => {} }, queue: [] };
+    const onChunk = (chunk: JsAudioChunk) => {
+      if (chunk.frames === 0) return;
+      stream.queue.push(chunk.data);
+    };
+    const onEvent = (ev: JsStreamEvent) => this.onStreamEvent(grant, stream, ev);
+    try {
+      stream.handle = backend.openStream(options, onChunk, onEvent);
+    } catch (e) {
+      console.warn(`[audio-sources] could not open ${kind} stream: ${(e as Error).message}`);
+      return false;
+    }
+    grant.streams.set(id, stream);
+    return true;
+  }
+
+  private onStreamEvent(grant: Grant, stream: OpenStream, ev: JsStreamEvent): void {
+    const c: AudioSourceGrantCounters = grant.info.counters;
+    switch (ev.type) {
+      case 'chunkDropped':
+        c.chunksDropped += ev.count ?? 1;
+        return;
+      case 'stalled':
+        c.stalls += 1;
+        return;
+      case 'recovered':
+        c.recoveries += 1;
+        return;
+      default: {
+        const reason = reasonForEvent(ev.type, stream.kind);
+        if (reason) void this.closeStream(grant, stream, reason);
+      }
+    }
+  }
+
+  private async closeStream(grant: Grant, stream: OpenStream, reason: AudioSourceEndReason): Promise<void> {
+    if (!grant.streams.delete(stream.id)) return;
+    await stream.handle.stop().catch(() => undefined);
+    if (grant.streams.size === 0) await this.endGrant(grant.info.grantId, reason);
+  }
+
+  private pump(grant: Grant): void {
+    const { inputs, dropped } = takeFrameInputs([...grant.streams.values()].map((s) => s.queue));
+    grant.info.counters.backlogDropped += dropped;
+    try {
+      grant.port1.postMessage(mixToInt16(inputs));
+      grant.info.counters.framesSent += 1;
+    } catch {
+      void this.endGrant(grant.info.grantId, 'tool-closed');
+    }
+  }
+
+  private notify(): void {
+    this.b.onGrantsChanged(this.list());
+  }
+}
