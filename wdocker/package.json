@@ -21,7 +21,7 @@
     "@folder/xdg": "4.0.1",
     "@holochain-open-dev/profiles": "^0.701.0",
     "@holochain/client": "^0.21.0",
-    "@lightningrodlabs/we-rust-utils": "^0.700.0-dev.0",
+    "@lightningrodlabs/we-rust-utils": "^0.700.1",
     "@theweave/api": "^0.7.0-dev.2",
     "@theweave/group-client": "^0.7.0-dev.1",
     "@theweave/moss-types": "^0.7.0-dev.1",
