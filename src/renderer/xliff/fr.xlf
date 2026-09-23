@@ -2926,6 +2926,56 @@ commence maintenant</target>
 <trans-unit id="s7b25cd71849bf7c8">
   <source>This group is no longer listed on the local network.</source>
   <target>Ce groupe n'est plus listé sur le réseau local.</target>
+<trans-unit id="s9cb6bbd85daeb51f">
+  <source>No capabilities reported.</source>
+</trans-unit>
+<trans-unit id="s8c36545f724b9460">
+  <source>(none)</source>
+</trans-unit>
+<trans-unit id="sbfd12d4d878216c6">
+  <source>Available:</source>
+</trans-unit>
+<trans-unit id="sa36aa646efe3b5e0">
+  <source>Model:</source>
+</trans-unit>
+<trans-unit id="s10c1286464b46257">
+  <source>Streaming partials:</source>
+</trans-unit>
+<trans-unit id="s538c8ca77f9b59e3">
+  <source>Latency tier:</source>
+</trans-unit>
+<trans-unit id="s14db09395fd05086">
+  <source>Languages:</source>
+</trans-unit>
+<trans-unit id="s6f87b8dc56fff501">
+  <source>No tools have been granted local transcription access yet. The first time a tool asks, you will be prompted.</source>
+</trans-unit>
+<trans-unit id="s3be7f9e932f476a3">
+  <source>Allowed</source>
+</trans-unit>
+<trans-unit id="s93390561e1afc0b6">
+  <source>Denied</source>
+</trans-unit>
+<trans-unit id="s0e871352ba4b17d3">
+  <source>Revoke</source>
+</trans-unit>
+<trans-unit id="s71a069951bcde0c0">
+  <source>Speech recognition</source>
+</trans-unit>
+<trans-unit id="sbf497b11ae31fcfd">
+  <source>Capabilities info</source>
+</trans-unit>
+<trans-unit id="sa32eea12a8fcb38b">
+  <source>Moss runs speech-to-text on this device. Tools request access the first time they need it; you can review and revoke those decisions below.</source>
+</trans-unit>
+<trans-unit id="sd0bce80972cf3be3">
+  <source>Tool permissions</source>
+</trans-unit>
+<trans-unit id="s8214d12128c7fa3f">
+  <source>Transcription</source>
+</trans-unit>
+<trans-unit id="s29ab9d572b687e7f">
+  <source>Starting local transcription model…</source>
 </trans-unit>
 </body>
 </file>

@@ -95,7 +95,7 @@ export interface AsrApi {
   /**
    * Bring the speech model up before it is needed, so a later
    * openSession() does not pay the cold start. Resolves once the model
-   * is serving; safe to call without awaiting. Requires Local AI to be
+   * is serving; safe to call without awaiting. Requires Transcription to be
    * enabled in Moss but no per-tool consent, since no audio is involved.
    */
   warmUp(): Promise<void>;

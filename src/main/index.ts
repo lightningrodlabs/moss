@@ -76,7 +76,6 @@ import { openAudioSourcePicker } from './audioSourcePicker';
 import { registerAudioSourceIpc } from './audioSourcesIpc';
 import { registerDeepLinkSchemes } from './deepLinkRegistration';
 import { repairLinuxHtmlDefault } from './linuxMimeapps';
-import { ConductorInfo, NetworkInfo, ToolWeaveConfig } from './sharedTypes';
 import {
   AppletHostResponse,
   ConductorInfo,
@@ -1440,7 +1439,7 @@ if (!RUNNING_WITH_COMMAND) {
           detail:
             'Moss will run the on-device speech-to-text model for this tool. ' +
             'Audio stays on this device and is never sent to an external service. ' +
-            'You can revoke this permission later from Settings → Local AI.',
+            'You can revoke this permission later from Settings → Services → Transcription.',
           buttons: ['Deny', 'Allow'],
           defaultId: 1,
           cancelId: 0,

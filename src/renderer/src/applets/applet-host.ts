@@ -500,7 +500,7 @@ export async function handleAppletIframeMessage(
       // so a tool that calls `capabilities()` gets one authoritative
       // answer for "can I call openSession right now?". Other fields
       // (model, languages, latencyTier) still reflect what IS configured,
-      // useful for UX that wants to tell the user "enable Local AI in
+      // useful for UX that wants to tell the user "enable Transcription in
       // Moss settings to use transcription."
       if (!mossStore.persistedStore.localAiEnabled.value()) {
         return { asr: { ...caps.asr, available: false } };
@@ -512,7 +512,7 @@ export async function handleAppletIframeMessage(
       // audio, so the global switch is the only gate; consent is asked
       // when a session is actually opened.
       if (!mossStore.persistedStore.localAiEnabled.value()) {
-        throw new Error('Local AI is disabled in Moss settings');
+        throw new Error('Transcription is disabled in Moss settings');
       }
       if (source.type !== 'applet') {
         throw new Error('Local ASR is only available from applet iframes');
@@ -527,12 +527,12 @@ export async function handleAppletIframeMessage(
       return { status: await window.electronAPI.asrStatus() };
     }
     case 'asr-open-session': {
-      // Gate order: global Local AI switch first, then per-tool consent.
+      // Gate order: global Transcription switch first, then per-tool consent.
       // Capability checks (`capabilities()`) are intentionally not gated —
       // advertising what Moss can do is not the same as giving a tool
       // permission to actually use it.
       if (!mossStore.persistedStore.localAiEnabled.value()) {
-        throw new Error('Local AI is disabled in Moss settings');
+        throw new Error('Transcription is disabled in Moss settings');
       }
       if (source.type !== 'applet') {
         throw new Error('Local ASR is only available from applet iframes');
@@ -562,11 +562,7 @@ export async function handleAppletIframeMessage(
       const origin: SessionOrigin =
         eventSource === 'wal-window'
           ? { walWebContentsId: senderWebContentsId }
-          : {
-              iframeId: (mossStore.iframeStore.appletIframes[appletId] ?? []).find(
-                (info) => info.source === eventSource,
-              )?.id,
-            };
+          : { iframeId: mossStore.iframeStore.findIframeIdBySource(eventSource) };
       getAsrRendererBridge().registerSession(result.sessionId, appletId, origin);
       return result;
     }

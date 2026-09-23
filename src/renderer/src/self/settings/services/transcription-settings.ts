@@ -1,4 +1,4 @@
-// "Local AI" settings tab. Lets the user control on-device speech
+// The Transcription service (Settings > Services > Transcription). Lets the user control on-device speech
 // recognition:
 //   - Global enable switch (persisted; default off). While off, tools
 //     cannot open ASR sessions regardless of per-tool consent.
@@ -22,12 +22,12 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import type { AppletId, LocalModelCapabilities } from '@theweave/api';
 import { decodeHashFromBase64 } from '@holochain/client';
 
-import { mossStoreContext } from '../../context.js';
-import { MossStore } from '../../moss-store.js';
-import { APPLET_ASR_CONSENT_CHANGED_EVENT } from '../../persisted-store.js';
-import { mossStyles } from '../../shared-styles.js';
-import { resolveAppletName } from '../../applets/applet-name.js';
-import { getAsrRendererBridge } from '../../applets/asr-bridge.js';
+import { mossStoreContext } from '../../../context.js';
+import { MossStore } from '../../../moss-store.js';
+import { APPLET_ASR_CONSENT_CHANGED_EVENT } from '../../../persisted-store.js';
+import { mossStyles } from '../../../shared-styles.js';
+import { resolveAppletName } from '../../../applets/applet-name.js';
+import { getAsrRendererBridge } from '../../../applets/asr-bridge.js';
 
 interface GrantRow {
   appletId: AppletId;
@@ -36,8 +36,8 @@ interface GrantRow {
 }
 
 @localized()
-@customElement('moss-local-ai-settings')
-export class MossLocalAiSettings extends LitElement {
+@customElement('moss-transcription-settings')
+export class MossTranscriptionSettings extends LitElement {
   @consume({ context: mossStoreContext, subscribe: true })
   mossStore!: MossStore;
 

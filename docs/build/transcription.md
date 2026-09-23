@@ -37,7 +37,7 @@ should degrade gracefully — typical strategies:
 - **Hide or disable** the transcription UI.
 - **Fall back to a remote endpoint** the user has configured for standalone
   builds of the Tool (Presence does this).
-- **Prompt the user** to enable Local AI in Moss settings.
+- **Prompt the user** to enable Transcription in Moss settings (Settings → Services → Transcription).
 
 ```ts
 const asr = weaveClient.localModels;
@@ -67,8 +67,8 @@ Use the fields like so:
 
 - **`available`** — if false, do not call `openSession()`; it will reject.
   `false` means the host has no model configured OR the user has disabled
-  Local AI in Moss settings. Either way, surface a message pointing the
-  user at Settings → Local AI.
+  Transcription in Moss settings. Either way, surface a message pointing the
+  user at Settings → Services → Transcription.
 - **`languages`** — gate your language picker to this list. A single-language
   model (e.g. `base.en`) returns `['en']`; a multilingual model returns the
   full whisper set (~99 codes).
@@ -80,8 +80,8 @@ Use the fields like so:
   prefer post-hoc transcripts; `'slow'` means avoid interactive use. This is
   a per-install setting today, not a benchmark. Treat it as advisory.
 
-Capabilities reflect the global Local AI switch, which the user can toggle
-at runtime from Settings → Local AI. If you cache the result, re-fetch
+Capabilities reflect the global Transcription switch, which the user can toggle
+at runtime from Settings → Services → Transcription. If you cache the result, re-fetch
 it when the user retries a transcription-dependent action so "enable me"
 prompts stay accurate.
 
@@ -211,9 +211,9 @@ void weaveClient.localModels?.asr.warmUp();
 const status = await weaveClient.localModels?.asr.status();
 ```
 
-`warmUp()` needs Local AI to be enabled in Moss but asks for no per-Tool
+`warmUp()` needs Transcription to be enabled in Moss but asks for no per-Tool
 consent, since no audio is involved; it resolves once the model is
-serving and rejects when Local AI is off. Moss also shows its own
+serving and rejects when Transcription is off. Moss also shows its own
 "Starting local transcription model…" notice during a cold start.
 
 ## Closing
