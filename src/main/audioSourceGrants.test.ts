@@ -150,6 +150,7 @@ function rig(overrides: Partial<AudioSourceGrantsBindings> = {}) {
     },
     scheduler,
     now: () => scheduler.now,
+    monotonicNow: () => scheduler.now,
     newId: () => `g${++ids}`,
     onGrantsChanged: (list) => changes.push(list.length),
     ...overrides,
@@ -494,6 +495,21 @@ describe('frame pump', () => {
     expect(r.ports[0].sent).toHaveLength(afterCatchUp + 1);
     r.scheduler.tick();
     expect(r.ports[0].sent).toHaveLength(afterCatchUp + 2);
+  });
+
+  it('a wall-clock step backwards does not stall the wire', async () => {
+    const monotonic = { now: 1_000 };
+    const wall = { now: 50_000 };
+    const r = rig({ now: () => wall.now, monotonicNow: () => monotonic.now });
+    await r.grants.request(REQ);
+    // Elapsed time keeps running while the wall clock is stepped back an hour.
+    wall.now -= 3_600_000;
+    for (let i = 0; i < 4; i++) {
+      monotonic.now += FRAME_MS;
+      r.scheduler.tickWithoutTime();
+    }
+    expect(r.ports[0].sent).toHaveLength(4);
+    expect(r.grants.list()[0].counters.framesSent).toBe(4);
   });
 
   it('with nothing queued the wire still carries exactly one silent frame per frame time', async () => {

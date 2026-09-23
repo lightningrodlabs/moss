@@ -50,7 +50,13 @@ export interface AudioSourceGrantsBindings {
     setInterval(fn: () => void, ms: number): unknown;
     clearInterval(handle: unknown): void;
   };
+  /** Wall clock, for timestamps the user sees (`startedAt`). */
   now: () => number;
+  /**
+   * Monotonic clock, for the pump's frame ledger: a wall-clock step backwards
+   * must not stall the wire.
+   */
+  monotonicNow: () => number;
   newId: () => string;
   onGrantsChanged: (grants: AudioSourceGrantInfo[]) => void;
 }
@@ -76,7 +82,7 @@ interface Grant {
   port1: GrantPort;
   streams: Map<string, OpenStream>;
   timer: unknown;
-  /** `now()` when the pump timer was armed; the origin of the frame clock. */
+  /** `monotonicNow()` when the pump timer was armed; the origin of the frame clock. */
   pumpStartedAt: number;
   /** Frames this grant has put on the wire, counted against that clock. */
   framesEmitted: number;
@@ -237,7 +243,7 @@ export class AudioSourceGrants {
     // never gets to send it — this is the backstop for that case.
     port1.on('close', () => void this.endGrant(grantId, 'tool-closed'));
     port1.start();
-    grant.pumpStartedAt = this.b.now();
+    grant.pumpStartedAt = this.b.monotonicNow();
     grant.timer = this.b.scheduler.setInterval(() => this.pump(grant), FRAME_MS);
 
     if (!this.b.deliverPort(req.targetId, { requestId: req.requestId, grantId }, port2)) {
@@ -342,23 +348,26 @@ export class AudioSourceGrants {
   }
 
   /**
-   * Emits the frames the wall clock says are due — never one frame per tick.
+   * Emits the frames elapsed time says are due.
    *
    * The Tool's ring (`libs/api/src/pcm-ring.ts`, 200 ms at 48 kHz) is drained
    * by an AudioWorklet at exactly 48 000 samples/s, so this side must put
-   * exactly 50 frames of `FRAME_SAMPLES` on the wire per wall-clock second.
-   * The previous rule — always one frame per tick, plus a catch-up frame
-   * whenever a queue was still non-empty — ratcheted above that rate: a tick
-   * that found every queue empty still emitted silence, so the catch-up frames
-   * were never paid back. Measured 2026-09-22 against a live grant: ~52
-   * frames/s sent with `backlogDropped` 0, and the Tool's ring discarding 4-6 %
-   * of samples with `underrunSamples` 0. Gating on elapsed time removes the
-   * ratchet: a late chunk is delayed by one tick rather than replaced by a
-   * silence frame, a tick that is not yet due emits nothing, and catch-up stays
-   * bounded by `PUMP_MAX_FRAMES_PER_TICK` per tick.
+   * exactly 50 frames of `FRAME_SAMPLES` on the wire per second of elapsed
+   * time — no more, or the ring discards audio; no fewer, or it underruns.
+   * Emission is therefore gated on the clock, not on the timer firing: a tick
+   * that is not yet due emits nothing, and a late chunk is delayed by a tick
+   * rather than replaced by a silence frame. Catch-up is bounded twice: at
+   * most `PUMP_MAX_FRAMES_PER_TICK` per tick, and at most `MAX_CATCHUP_FRAMES`
+   * of debt in total — older debt is stale silence and is skipped rather than
+   * replayed. Measured 2026-09-22 against a live grant on the ungated rule:
+   * ~52 frames/s sent with `backlogDropped` 0, and the Tool's ring discarding
+   * 4-6 % of samples with `underrunSamples` 0.
+   *
+   * The clock is `monotonicNow`: a wall-clock step backwards would make the
+   * elapsed time shrink and silence the pump until wall time caught up again.
    */
   private pump(grant: Grant): void {
-    const rawDue = Math.floor((this.b.now() - grant.pumpStartedAt) / FRAME_MS) - grant.framesEmitted;
+    const rawDue = Math.floor((this.b.monotonicNow() - grant.pumpStartedAt) / FRAME_MS) - grant.framesEmitted;
     // A stall leaves the ledger owing one frame per 20 ms it lasted. Replaying
     // all of it two frames per tick would run the wire at twice real time for
     // half the stall's length, so only `MAX_CATCHUP_FRAMES` are ever owed:

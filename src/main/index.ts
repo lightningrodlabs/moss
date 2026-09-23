@@ -1434,6 +1434,7 @@ if (!RUNNING_WITH_COMMAND) {
         clearInterval: (handle) => clearInterval(handle as NodeJS.Timeout),
       },
       now: () => Date.now(),
+      monotonicNow: () => performance.now(),
       newId: () => nanoid(8),
       onGrantsChanged: (list) => {
         if (MAIN_WINDOW && !MAIN_WINDOW.isDestroyed())
