@@ -73,7 +73,7 @@ string
 
 </td><td>
 
-_(Optional)_ Set once the grant has ended; `track.readyState` is `'ended'` when this is set.
+_(Optional)_ Why the grant ended, set only when the host or the platform ended it (the host's reason, or `'host-silent'` when frames stopped arriving); `track.readyState` is `'ended'` when this is set. It stays `undefined` after `stop()` — the Tool ended that grant itself, so there is nothing to report back to it.
 
 
 </td></tr>

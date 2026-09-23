@@ -36,6 +36,25 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[framesDroppedBeforeReady](./api.audiosourcecapturestats.framesdroppedbeforeready.md)
+
+
+</td><td>
+
+
+</td><td>
+
+number
+
+
+</td><td>
+
+Frames dropped from the pre-ready queue while the worklet module loaded.
+
+
+</td></tr>
+<tr><td>
+
 [framesReceived](./api.audiosourcecapturestats.framesreceived.md)
 
 

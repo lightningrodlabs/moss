@@ -137,7 +137,7 @@ Turns a host-delivered grant port into a live `MediaStreamTrack`<!-- -->. The re
 
 </td><td>
 
-Picks the context the audio graph lives in. Host frames are 48 kHz samples, so a context at any other rate would play them at the wrong pitch; a track built in a private 48 kHz context is still consumable from the Tool's own context.
+Picks the context the audio graph lives in. Host frames are 48 kHz samples, so a context at any other rate would play them at the wrong pitch; a track built in a private 48 kHz context is still consumable from the Tool's own context. A closed context keeps its `sampleRate`<!-- -->, so the rate alone is not enough to accept one: nothing can be built in it, and a private context is used instead.
 
 
 </td></tr>
