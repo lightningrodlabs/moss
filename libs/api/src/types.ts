@@ -410,6 +410,15 @@ export type AppletToParentRequest =
       type: 'user-select-screen';
     }
   | {
+      /**
+       * Ask the host for audio playing on the user's machine. The host shows its
+       * own picker. Reply: `{ label, canExcludeSelf }` with a MessagePort of
+       * 20 ms mono 48 kHz Int16 frames transferred alongside, or `null` when the
+       * user declined or the host cannot capture.
+       */
+      type: 'request-audio-sources';
+    }
+  | {
       type: 'toggle-pocket';
     }
   | {
