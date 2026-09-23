@@ -33,6 +33,7 @@ import {
 import { postMessage } from './utils.js';
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
+import type { AudioSourceCapture, CaptureAudioSourcesOptions } from './audio-source-capture.js';
 
 declare global {
   interface Window {
@@ -412,6 +413,13 @@ export interface WeaveServices {
    */
   userSelectScreen: () => Promise<string>;
   /**
+   * Asks the host for audio playing on the user's machine. The host shows its
+   * own picker. Resolves `null` when the user declines or the host cannot
+   * capture. Absent on hosts without the feature — feature-detect with
+   * `client.captureAudioSources?.`.
+   */
+  captureAudioSources?: (opts?: CaptureAudioSourcesOptions) => Promise<AudioSourceCapture | null>;
+  /**
    * Requests to close the containing window. Will only work if the applet is being run in its
    * own window
    */
@@ -478,7 +486,10 @@ export class WeaveClient implements WeaveServices {
         window.__WEAVE_APPLET_SERVICES__ = appletServices;
       }
       window.dispatchEvent(new CustomEvent('weave-client-connected'));
-      return new WeaveClient();
+      const client = new WeaveClient();
+      const hostCapture = window.__WEAVE_API__.captureAudioSources;
+      if (hostCapture) client.captureAudioSources = (opts) => hostCapture(opts);
+      return client;
     } else {
       await new Promise((resolve, _reject) => {
         const listener = () => {
@@ -491,7 +502,10 @@ export class WeaveClient implements WeaveServices {
         window.__WEAVE_APPLET_SERVICES__ = appletServices;
       }
       window.dispatchEvent(new CustomEvent('weave-client-connected'));
-      return new WeaveClient();
+      const client = new WeaveClient();
+      const hostCapture = window.__WEAVE_API__.captureAudioSources;
+      if (hostCapture) client.captureAudioSources = (opts) => hostCapture(opts);
+      return client;
     }
   }
 
@@ -570,6 +584,9 @@ export class WeaveClient implements WeaveServices {
     window.__WEAVE_API__.notifyFrame(notifications);
 
   userSelectScreen = () => window.__WEAVE_API__.userSelectScreen();
+
+  /** Present only when the host offers audio-source capture. */
+  captureAudioSources?: (opts?: CaptureAudioSourcesOptions) => Promise<AudioSourceCapture | null>;
 
   requestClose = () => window.__WEAVE_API__.requestClose();
 
