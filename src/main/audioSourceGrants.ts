@@ -70,6 +70,10 @@ interface Grant {
   port1: GrantPort;
   streams: Map<string, OpenStream>;
   timer: unknown;
+  /** `now()` when the pump timer was armed; the origin of the frame clock. */
+  pumpStartedAt: number;
+  /** Frames this grant has put on the wire, counted against that clock. */
+  framesEmitted: number;
   /**
    * True while `request` is still opening this grant's streams. A stream that
    * dies synchronously, mid-open, must not be allowed to end the grant on its
@@ -185,6 +189,8 @@ export class AudioSourceGrants {
       port1,
       streams: new Map(),
       timer: undefined,
+      pumpStartedAt: 0,
+      framesEmitted: 0,
       opening: true,
     };
     this.grants.set(grantId, grant);
@@ -225,6 +231,7 @@ export class AudioSourceGrants {
     // never gets to send it — this is the backstop for that case.
     port1.on('close', () => void this.endGrant(grantId, 'tool-closed'));
     port1.start();
+    grant.pumpStartedAt = this.b.now();
     grant.timer = this.b.scheduler.setInterval(() => this.pump(grant), FRAME_MS);
 
     if (!this.b.deliverPort(req.targetId, { requestId: req.requestId, grantId }, port2)) {
@@ -328,23 +335,38 @@ export class AudioSourceGrants {
     if (!grant.opening && grant.streams.size === 0) await this.endGrant(grant.info.grantId, reason);
   }
 
+  /**
+   * Emits the frames the wall clock says are due — never one frame per tick.
+   *
+   * The Tool's ring (`libs/api/src/pcm-ring.ts`, 200 ms at 48 kHz) is drained
+   * by an AudioWorklet at exactly 48 000 samples/s, so this side must put
+   * exactly 50 frames of `FRAME_SAMPLES` on the wire per wall-clock second.
+   * The previous rule — always one frame per tick, plus a catch-up frame
+   * whenever a queue was still non-empty — ratcheted above that rate: a tick
+   * that found every queue empty still emitted silence, so the catch-up frames
+   * were never paid back. Measured 2026-09-22 against a live grant: ~52
+   * frames/s sent with `backlogDropped` 0, and the Tool's ring discarding 4-6 %
+   * of samples with `underrunSamples` 0. Gating on elapsed time removes the
+   * ratchet: a late chunk is delayed by one tick rather than replaced by a
+   * silence frame, a tick that is not yet due emits nothing, and catch-up stays
+   * bounded by `PUMP_MAX_FRAMES_PER_TICK` per tick.
+   */
   private pump(grant: Grant): void {
+    const due = Math.floor((this.b.now() - grant.pumpStartedAt) / FRAME_MS) - grant.framesEmitted;
+    const count = Math.min(due, PUMP_MAX_FRAMES_PER_TICK);
+    if (count <= 0) return;
     const queues = [...grant.streams.values()].map((s) => s.queue);
-    // Always emit one frame (silence if nothing is queued); emit up to
-    // PUMP_MAX_FRAMES_PER_TICK - 1 more only while a backlog remains, so a
-    // backend that runs slightly ahead of this tick's timer gets drained
-    // instead of losing chunks to the backlog cap in takeFrameInputs.
-    for (let n = 0; n < PUMP_MAX_FRAMES_PER_TICK; n++) {
+    for (let n = 0; n < count; n++) {
       const { inputs, dropped } = takeFrameInputs(queues);
       grant.info.counters.backlogDropped += dropped;
       try {
         grant.port1.postMessage(mixToInt16(inputs));
+        grant.framesEmitted += 1;
         grant.info.counters.framesSent += 1;
       } catch {
         void this.endGrant(grant.info.grantId, 'tool-closed');
         return;
       }
-      if (!queues.some((q) => q.length > 0)) break;
     }
   }
 

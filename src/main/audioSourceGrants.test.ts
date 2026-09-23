@@ -9,7 +9,7 @@ import {
   buildAudioSourceRows,
   describeSelection,
 } from './audioSourceGrants';
-import { FRAME_SAMPLES, PUMP_MAX_FRAMES_PER_TICK } from './audioMixer';
+import { FRAME_MS, FRAME_SAMPLES, PUMP_MAX_FRAMES_PER_TICK } from './audioMixer';
 
 // ---------- fakes ----------
 
@@ -99,6 +99,11 @@ class FakePort implements GrantPort {
 class FakeScheduler {
   private fns = new Map<number, () => void>();
   private next = 1;
+  /**
+   * The rig's clock. The pump emits by elapsed wall time, so a tick that does
+   * not move this forward is a tick that is not due — `tickWithoutTime()`.
+   */
+  now = 1_000;
   setInterval(fn: () => void, _ms: number) {
     const h = this.next++;
     this.fns.set(h, fn);
@@ -107,8 +112,14 @@ class FakeScheduler {
   clearInterval(h: unknown) {
     this.fns.delete(h as number);
   }
-  tick() {
+  /** Advances the clock by `ms` (one frame by default), then runs the timers. */
+  tick(ms: number = FRAME_MS) {
+    this.now += ms;
     for (const fn of this.fns.values()) fn();
+  }
+  /** Runs the timers without moving the clock. */
+  tickWithoutTime() {
+    this.tick(0);
   }
   get active() {
     return this.fns.size;
@@ -138,7 +149,7 @@ function rig(overrides: Partial<AudioSourceGrantsBindings> = {}) {
       return true;
     },
     scheduler,
-    now: () => 1_000,
+    now: () => scheduler.now,
     newId: () => `g${++ids}`,
     onGrantsChanged: (list) => changes.push(list.length),
     ...overrides,
@@ -382,20 +393,23 @@ describe('frame pump', () => {
     expect(r.grants.list()[0].counters.backlogDropped).toBe(3);
   });
 
-  it('a small backlog is drained across extra frames within the tick, capped at PUMP_MAX_FRAMES_PER_TICK', async () => {
+  it('a backlog drains one frame per elapsed frame time, not one extra per tick', async () => {
     const r = rig();
     await r.grants.request(REQ);
     r.backend.chunk(0, 0.1);
     r.backend.chunk(0, 0.1);
     r.backend.chunk(0, 0.1);
+    // A backlog is no licence to run fast: 20 ms elapsed buys exactly one frame.
     r.scheduler.tick();
-    expect(PUMP_MAX_FRAMES_PER_TICK).toBe(2);
-    expect(r.ports[0].sent).toHaveLength(2);
+    expect(r.ports[0].sent).toHaveLength(1);
     expect(r.grants.list()[0].counters.backlogDropped).toBe(0);
-    expect(r.grants.list()[0].counters.framesSent).toBe(2);
-    // The third chunk is the leftover; the next tick drains it alone and stops.
-    r.scheduler.tick();
+    expect(r.grants.list()[0].counters.framesSent).toBe(1);
+    // Two frames' worth of time in one tick drains two, capped by
+    // PUMP_MAX_FRAMES_PER_TICK.
+    expect(PUMP_MAX_FRAMES_PER_TICK).toBe(2);
+    r.scheduler.tick(2 * FRAME_MS);
     expect(r.ports[0].sent).toHaveLength(3);
+    expect(r.grants.list()[0].counters.backlogDropped).toBe(0);
   });
 
   it('two streams with an uneven backlog: the leading frame mixes both, the extra carries only the deeper stream\'s leftover', async () => {
@@ -407,9 +421,59 @@ describe('frame pump', () => {
     r.backend.chunk(0, 0.25);
     r.backend.chunk(1, 0.5);
     r.scheduler.tick();
-    expect(r.ports[0].sent).toHaveLength(2);
+    expect(r.ports[0].sent).toHaveLength(1);
     expect((r.ports[0].sent[0] as Int16Array)[0]).toBe(24575);
+    // The deeper stream's leftover rides the next frame time, alone.
+    r.scheduler.tick();
+    expect(r.ports[0].sent).toHaveLength(2);
     expect((r.ports[0].sent[1] as Int16Array)[0]).toBe(8192);
+  });
+
+  // ---------- the frame clock ----------
+
+  it('a tick that does not advance the clock posts nothing', async () => {
+    const r = rig();
+    await r.grants.request(REQ);
+    r.backend.chunk(0, 0.5);
+    r.scheduler.tickWithoutTime();
+    expect(r.ports[0].sent).toHaveLength(0);
+    expect(r.grants.list()[0].counters.framesSent).toBe(0);
+  });
+
+  it('two frame times elapsed inside one tick post exactly two frames', async () => {
+    const r = rig();
+    await r.grants.request(REQ);
+    r.scheduler.tick(2 * FRAME_MS);
+    expect(r.ports[0].sent).toHaveLength(2);
+    expect(r.grants.list()[0].counters.framesSent).toBe(2);
+  });
+
+  it('a long stall is paid back at PUMP_MAX_FRAMES_PER_TICK per tick and then stops exactly on the debt', async () => {
+    const r = rig();
+    await r.grants.request(REQ);
+    // 100 ms with a single tick: five frames are due, two may go now.
+    r.scheduler.tick(5 * FRAME_MS);
+    expect(r.ports[0].sent).toHaveLength(2);
+    // Catch-up continues on ticks that add no time of their own, until the
+    // debt is paid — then nothing more goes out.
+    r.scheduler.tickWithoutTime();
+    expect(r.ports[0].sent).toHaveLength(4);
+    r.scheduler.tickWithoutTime();
+    expect(r.ports[0].sent).toHaveLength(5);
+    r.scheduler.tickWithoutTime();
+    expect(r.ports[0].sent).toHaveLength(5);
+    expect(r.grants.list()[0].counters.framesSent).toBe(5);
+  });
+
+  it('with nothing queued the wire still carries exactly one silent frame per frame time', async () => {
+    const r = rig();
+    await r.grants.request(REQ);
+    for (let i = 0; i < 10; i++) r.scheduler.tick();
+    expect(r.ports[0].sent).toHaveLength(10);
+    expect((r.ports[0].sent as Int16Array[]).every((f) => f.every((x) => x === 0))).toBe(true);
+    // 10 frame times elapsed, 10 frames sent: the rate the Tool's 48 kHz ring
+    // drains at, no faster.
+    expect(r.grants.list()[0].counters.framesSent).toBe(10);
   });
 });
 
