@@ -2,14 +2,23 @@
  * The Tool-side half of an audio-source grant's port protocol, kept free of
  * Web Audio so it can be table-tested: the host streams Int16 frames and
  * finally posts `{type:'ended', reason}`; the Tool may post `{type:'close'}`.
- * Frames that arrive before the worklet module has loaded are queued and
- * flushed in order. Because the host sends silence frames continuously, a
+ * Frames that arrive before the worklet module has loaded are queued, capped
+ * at MAX_PREREADY_FRAMES, and flushed in order. Because the host sends silence frames continuously, a
  * gap longer than FRAME_GAP_TIMEOUT_MS means the port is dead (the host
  * renderer crashed or the port was closed without a message — a bare port
  * close is not observable as an event in the Chromium this ships on).
  */
 
 export const FRAME_GAP_TIMEOUT_MS = 5000;
+
+/**
+ * How many pre-ready frames are held. It is the ring's own capacity (200 ms at
+ * 48 kHz, `RING_CAPACITY_SAMPLES` / `FRAME_SAMPLES`): audio older than that
+ * would be discarded by the ring on the flush anyway, so holding more only
+ * grows memory while a slow `addModule` is pending. The oldest are dropped, so
+ * what reaches the worklet is the newest audio.
+ */
+export const MAX_PREREADY_FRAMES = 10;
 
 export type CaptureState = 'starting' | 'live' | 'ended' | 'stopped';
 
@@ -25,6 +34,8 @@ export interface CaptureSessionBindings {
 export interface CaptureSessionStats {
   framesReceived: number;
   framesQueuedBeforeReady: number;
+  /** Queued frames dropped to keep the pre-ready queue at MAX_PREREADY_FRAMES. */
+  framesDroppedBeforeReady: number;
   unknownMessages: number;
 }
 
@@ -37,6 +48,7 @@ export class CaptureSession {
   private watchdog: unknown;
   private framesReceived = 0;
   private framesQueuedBeforeReady = 0;
+  private framesDroppedBeforeReady = 0;
   private unknownMessages = 0;
 
   constructor(private readonly b: CaptureSessionBindings) {}
@@ -45,6 +57,7 @@ export class CaptureSession {
     return {
       framesReceived: this.framesReceived,
       framesQueuedBeforeReady: this.framesQueuedBeforeReady,
+      framesDroppedBeforeReady: this.framesDroppedBeforeReady,
       unknownMessages: this.unknownMessages,
     };
   }
@@ -64,6 +77,10 @@ export class CaptureSession {
       if (this.state === 'starting') {
         this.framesQueuedBeforeReady += 1;
         this.queue.push(data);
+        while (this.queue.length > MAX_PREREADY_FRAMES) {
+          this.queue.shift();
+          this.framesDroppedBeforeReady += 1;
+        }
         return;
       }
       this.b.forwardFrame(data);

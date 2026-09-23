@@ -28,6 +28,14 @@ describe('selectContext (Review Focus 5)', () => {
     expect(create).toHaveBeenCalledWith(AUDIO_SOURCE_SAMPLE_RATE);
   });
 
+  it('creates a private 48 kHz context when the preferred one is closed', () => {
+    const created = ctx(48000);
+    const create = vi.fn(() => created);
+    const closed = { sampleRate: 48000, state: 'closed' } as unknown as AudioContext;
+    expect(selectContext(closed, create)).toEqual({ context: created, owned: true });
+    expect(create).toHaveBeenCalledWith(AUDIO_SOURCE_SAMPLE_RATE);
+  });
+
   it('creates a private context when none is preferred', () => {
     const created = ctx(48000);
     expect(selectContext(undefined, () => created)).toEqual({ context: created, owned: true });
@@ -292,5 +300,89 @@ describe('createAudioSourceCaptureWith', () => {
     addModule.mockImplementationOnce(async () => undefined);
     await expect(ensureWorkletModule(context)).resolves.toBeUndefined();
     expect(addModule).toHaveBeenCalledTimes(2);
+  });
+  it('releases the grant and rethrows when the destination cannot be built (Finding 1)', async () => {
+    const port = fakePort();
+    const err = new Error('InvalidStateError');
+    const { context } = fakeContext();
+    context.createMediaStreamDestination = () => {
+      throw err;
+    };
+    const env = fakeEnv({ createContext: vi.fn(() => context as unknown as AudioContext) });
+    const delivery: AudioSourceDelivery = { label: 'x', canExcludeSelf: true, port: port as unknown as MessagePort };
+
+    await expect(createAudioSourceCaptureWith(delivery, {}, env)).rejects.toThrow(err);
+
+    expect(port.postMessage).toHaveBeenCalledWith({ type: 'close' });
+    expect(port.close).toHaveBeenCalledTimes(1);
+    expect(context.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('releases the grant and rethrows when the worklet node cannot be built (Finding 1)', async () => {
+    const port = fakePort();
+    const { context, track } = fakeContext();
+    const err = new Error('NotSupportedError');
+    const env = fakeEnv({
+      createContext: vi.fn(() => context as unknown as AudioContext),
+      createNode: vi.fn(() => {
+        throw err;
+      }),
+    });
+    const delivery: AudioSourceDelivery = { label: 'x', canExcludeSelf: true, port: port as unknown as MessagePort };
+
+    await expect(createAudioSourceCaptureWith(delivery, {}, env)).rejects.toThrow(err);
+
+    expect(port.postMessage).toHaveBeenCalledWith({ type: 'close' });
+    expect(port.close).toHaveBeenCalledTimes(1);
+    expect(track.stop).toHaveBeenCalledTimes(1);
+    expect(context.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves already-ended when the host ends the grant and the load then fails (Finding 1)', async () => {
+    const port = fakePort();
+    const { context, track } = fakeContext();
+    const load = deferred();
+    const env = fakeEnv({
+      createContext: vi.fn(() => context as unknown as AudioContext),
+      loadWorkletModule: vi.fn(() => load.promise),
+    });
+    const delivery: AudioSourceDelivery = { label: 'x', canExcludeSelf: true, port: port as unknown as MessagePort };
+
+    const capturePromise = createAudioSourceCaptureWith(delivery, {}, env);
+
+    port.onmessage!({ data: { type: 'ended', reason: 'stream-lost' } });
+    load.reject(new Error('NotSupportedError'));
+    const capture = await capturePromise;
+
+    expect(track.readyState).toBe('ended');
+    expect(capture.endedReason).toBe('stream-lost');
+    // The host ended the grant itself; there is nothing left to close.
+    expect(port.postMessage).not.toHaveBeenCalledWith({ type: 'close' });
+
+    const onended = vi.fn();
+    capture.onended = onended;
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onended).toHaveBeenCalledTimes(1);
+  });
+
+  it('stats are current the moment the capture ends, without waiting for the interval (Finding 5)', async () => {
+    const port = fakePort();
+    const { context } = fakeContext();
+    const node = fakeNode();
+    const env = fakeEnv({
+      createContext: vi.fn(() => context as unknown as AudioContext),
+      createNode: vi.fn(() => node as unknown as AudioWorkletNode),
+    });
+    const delivery: AudioSourceDelivery = { label: 'x', canExcludeSelf: true, port: port as unknown as MessagePort };
+
+    const capture = await createAudioSourceCaptureWith(delivery, {}, env);
+    port.onmessage!({ data: new Int16Array([1]) });
+    port.onmessage!({ data: new Int16Array([2]) });
+    port.onmessage!({ data: new Int16Array([3]) });
+    expect(capture.stats.framesReceived).toBe(0);
+
+    capture.stop();
+
+    expect(capture.stats.framesReceived).toBe(3);
   });
 });

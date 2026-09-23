@@ -1,5 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
-import { CaptureSession, CaptureSessionBindings, FRAME_GAP_TIMEOUT_MS } from './capture-session.js';
+import {
+  CaptureSession,
+  CaptureSessionBindings,
+  FRAME_GAP_TIMEOUT_MS,
+  MAX_PREREADY_FRAMES,
+} from './capture-session.js';
 
 class FakeTimers {
   private timers = new Map<number, { fn: () => void; at: number }>();
@@ -56,7 +61,29 @@ describe('CaptureSession before ready', () => {
     r.session.ready();
     expect(r.session.state).toBe('live');
     expect(r.forwarded.map((f) => f[0])).toEqual([1, 2]);
-    expect(r.session.stats()).toEqual({ framesReceived: 2, framesQueuedBeforeReady: 2, unknownMessages: 0 });
+    expect(r.session.stats()).toEqual({
+      framesReceived: 2,
+      framesQueuedBeforeReady: 2,
+      framesDroppedBeforeReady: 0,
+      unknownMessages: 0,
+    });
+  });
+
+  it('caps the pre-ready queue at MAX_PREREADY_FRAMES, keeping the newest frames', () => {
+    const r = rig();
+    const total = MAX_PREREADY_FRAMES + 2;
+    for (let i = 1; i <= total; i++) r.session.handlePortMessage(frame(i));
+    r.session.ready();
+    expect(r.forwarded).toHaveLength(MAX_PREREADY_FRAMES);
+    expect(r.forwarded.map((f) => f[0])).toEqual(
+      Array.from({ length: MAX_PREREADY_FRAMES }, (_, i) => total - MAX_PREREADY_FRAMES + 1 + i),
+    );
+    expect(r.session.stats()).toEqual({
+      framesReceived: total,
+      framesQueuedBeforeReady: total,
+      framesDroppedBeforeReady: 2,
+      unknownMessages: 0,
+    });
   });
 
   it('an ended message before ready still ends the session and fires onended once', () => {

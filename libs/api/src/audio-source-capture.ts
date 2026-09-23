@@ -1,4 +1,4 @@
-import { CaptureSession } from './capture-session.js';
+import { CaptureSession, type CaptureSessionStats } from './capture-session.js';
 import { PcmRing, RING_CAPACITY_SAMPLES } from './pcm-ring.js';
 
 /**
@@ -20,13 +20,21 @@ export interface AudioSourceCapture {
   onended?: () => void;
   /** Diagnostics, refreshed roughly once per second while live. */
   readonly stats: AudioSourceCaptureStats;
-  /** Set once the grant has ended; `track.readyState` is `'ended'` when this is set. */
+  /**
+   * Why the grant ended, set only when the host or the platform ended it (the
+   * host's reason, or `'host-silent'` when frames stopped arriving);
+   * `track.readyState` is `'ended'` when this is set. It stays `undefined`
+   * after `stop()` — the Tool ended that grant itself, so there is nothing to
+   * report back to it.
+   */
   readonly endedReason?: string;
 }
 
 /** @public */
 export interface AudioSourceCaptureStats {
   framesReceived: number;
+  /** Frames dropped from the pre-ready queue while the worklet module loaded. */
+  framesDroppedBeforeReady: number;
   overflowDropped: number;
   underrunSamples: number;
   unknownMessages: number;
@@ -58,14 +66,16 @@ const STATS_INTERVAL_MS = 1000;
  * Picks the context the audio graph lives in. Host frames are 48 kHz samples,
  * so a context at any other rate would play them at the wrong pitch; a track
  * built in a private 48 kHz context is still consumable from the Tool's own
- * context.
+ * context. A closed context keeps its `sampleRate`, so the rate alone is not
+ * enough to accept one: nothing can be built in it, and a private context is
+ * used instead.
  * @public
  */
 export function selectContext(
   preferred: AudioContext | undefined,
   create: (sampleRate: number) => AudioContext,
 ): { context: AudioContext; owned: boolean } {
-  if (preferred && preferred.sampleRate === AUDIO_SOURCE_SAMPLE_RATE) {
+  if (preferred && preferred.sampleRate === AUDIO_SOURCE_SAMPLE_RATE && preferred.state !== 'closed') {
     return { context: preferred, owned: false };
   }
   return { context: create(AUDIO_SOURCE_SAMPLE_RATE), owned: true };
@@ -168,90 +178,128 @@ export async function createAudioSourceCaptureWith(
   env: CaptureEnv,
 ): Promise<AudioSourceCapture> {
   const { context, owned } = selectContext(opts.audioContext, env.createContext);
-  const destination = context.createMediaStreamDestination();
-  const track = destination.stream.getAudioTracks()[0];
-  const stats: AudioSourceCaptureStats = { framesReceived: 0, overflowDropped: 0, underrunSamples: 0, unknownMessages: 0 };
+  const stats: AudioSourceCaptureStats = {
+    framesReceived: 0,
+    framesDroppedBeforeReady: 0,
+    overflowDropped: 0,
+    underrunSamples: 0,
+    unknownMessages: 0,
+  };
 
   let node: AudioWorkletNode | undefined;
   let statsTimer: unknown;
-
-  const session = new CaptureSession({
-    forwardFrame: (frame) => node?.port.postMessage(frame, [frame.buffer]),
-    teardown: () => {
-      if (statsTimer !== undefined) env.clearInterval(statsTimer);
-      statsTimer = undefined;
-      node?.port.postMessage({ type: 'close' });
-      node?.disconnect();
-      node = undefined;
-      track.stop();
-      if (owned) void context.close().catch(() => undefined);
-    },
-    postToHost: (message) => delivery.port.postMessage(message),
-    closePort: () => delivery.port.close(),
-    setTimeout: (fn, ms) => env.setTimeout(fn, ms),
-    clearTimeout: (handle) => env.clearTimeout(handle),
-  });
-
-  const capture: AudioSourceCapture = {
-    track,
-    label: delivery.label,
-    canExcludeSelf: delivery.canExcludeSelf,
-    stats,
-    get endedReason() {
-      return session.endedReason;
-    },
-    stop: () => session.stop(),
-  };
-  session.onended = () => capture.onended?.();
-
-  // Frames may arrive while the module loads; the session queues them.
-  delivery.port.onmessage = (e) => session.handlePortMessage(e.data);
-  delivery.port.start();
+  // Held outside the try so the failure path can tell "the session owns the
+  // teardown" from "nothing owns the port yet".
+  let created: CaptureSession | undefined;
 
   try {
-    await env.loadWorkletModule(context);
+    const destination = context.createMediaStreamDestination();
+    const track = destination.stream.getAudioTracks()[0];
+
+    const session = new CaptureSession({
+      forwardFrame: (frame) => node?.port.postMessage(frame, [frame.buffer]),
+      teardown: () => {
+        // The interval is about to go: take a final reading so a Tool that
+        // looks at `stats` after the grant ended sees the whole session.
+        if (created) applySessionStats(stats, created.stats());
+        if (statsTimer !== undefined) env.clearInterval(statsTimer);
+        statsTimer = undefined;
+        node?.port.postMessage({ type: 'close' });
+        node?.disconnect();
+        node = undefined;
+        track.stop();
+        if (owned) void context.close().catch(() => undefined);
+      },
+      postToHost: (message) => delivery.port.postMessage(message),
+      closePort: () => delivery.port.close(),
+      setTimeout: (fn, ms) => env.setTimeout(fn, ms),
+      clearTimeout: (handle) => env.clearTimeout(handle),
+    });
+    created = session;
+
+    const capture: AudioSourceCapture = {
+      track,
+      label: delivery.label,
+      canExcludeSelf: delivery.canExcludeSelf,
+      stats,
+      get endedReason() {
+        return session.endedReason;
+      },
+      stop: () => session.stop(),
+    };
+    session.onended = () => capture.onended?.();
+
+    // Frames may arrive while the module loads; the session queues them.
+    delivery.port.onmessage = (e) => session.handlePortMessage(e.data);
+    delivery.port.start();
+
+    try {
+      await env.loadWorkletModule(context);
+    } catch (err) {
+      // A grant the host already ended has nothing left to fail at: the
+      // capture is handed over already-ended rather than as a failure.
+      if (session.state === 'ended') {
+        env.setTimeout(() => capture.onended?.(), 0);
+        return capture;
+      }
+      throw err;
+    }
+
+    if (session.state !== 'starting') {
+      if (session.state === 'ended') {
+        // The Tool's `await` continuation (a microtask) assigns `onended`
+        // before this macrotask runs, so scheduling here — rather than
+        // calling it inline — lets a callback set after resolution still
+        // fire exactly once.
+        env.setTimeout(() => capture.onended?.(), 0);
+      }
+      return capture;
+    }
+
+    node = env.createNode(context);
+    node.port.onmessage = (e) => {
+      const d = e.data as { type?: unknown; written?: number; overflowDropped?: number; underrunSamples?: number };
+      if (d && d.type === 'stats') {
+        stats.overflowDropped = d.overflowDropped ?? 0;
+        stats.underrunSamples = d.underrunSamples ?? 0;
+      }
+    };
+    node.connect(destination);
+    // Chromium may start a freshly created context suspended under its
+    // autoplay policy (this capture follows an async host round-trip, so it
+    // is never the direct result of a user gesture); a suspended context
+    // never runs `process()`, so the ring would overflow silently. Declared,
+    // not unit-tested here — it needs a real AudioContext.
+    if (context.state === 'suspended') void context.resume().catch(() => undefined);
+    statsTimer = env.setInterval(() => {
+      applySessionStats(stats, session.stats());
+      node?.port.postMessage({ type: 'stats' });
+    }, STATS_INTERVAL_MS);
+    session.ready();
+    return capture;
   } catch (err) {
-    // The grant is unusable without a working processor: tell the host to
-    // close, release the track and an owned context (via session.stop's
-    // teardown), then surface the failure to the caller.
-    session.stop();
+    // The host is capturing from the moment it hands the port over and only
+    // stops on `{type:'close'}` or a closed port. Every failure between here
+    // and a live capture must therefore release the grant before it leaves,
+    // or the user keeps paying for a capture nobody consumes.
+    if (created) {
+      // The session owns the whole release: close message, port, track,
+      // node and an owned context.
+      created.stop();
+    } else {
+      delivery.port.postMessage({ type: 'close' });
+      delivery.port.close();
+      if (owned) void context.close().catch(() => undefined);
+    }
     throw err;
   }
+}
 
-  if (session.state !== 'starting') {
-    if (session.state === 'ended') {
-      // The Tool's `await` continuation (a microtask) assigns `onended`
-      // before this macrotask runs, so scheduling here — rather than
-      // calling it inline — lets a callback set after resolution still
-      // fire exactly once.
-      env.setTimeout(() => capture.onended?.(), 0);
-    }
-    return capture;
-  }
-
-  node = env.createNode(context);
-  node.port.onmessage = (e) => {
-    const d = e.data as { type?: unknown; written?: number; overflowDropped?: number; underrunSamples?: number };
-    if (d && d.type === 'stats') {
-      stats.overflowDropped = d.overflowDropped ?? 0;
-      stats.underrunSamples = d.underrunSamples ?? 0;
-    }
-  };
-  node.connect(destination);
-  // Chromium may start a freshly created context suspended under its
-  // autoplay policy (this capture follows an async host round-trip, so it
-  // is never the direct result of a user gesture); a suspended context
-  // never runs `process()`, so the ring would overflow silently. Declared,
-  // not unit-tested here — it needs a real AudioContext.
-  if (context.state === 'suspended') void context.resume().catch(() => undefined);
-  statsTimer = env.setInterval(() => {
-    const s = session.stats();
-    stats.framesReceived = s.framesReceived;
-    stats.unknownMessages = s.unknownMessages;
-    node?.port.postMessage({ type: 'stats' });
-  }, STATS_INTERVAL_MS);
-  session.ready();
-  return capture;
+/** Copies the session's own counters onto the capture's public stats. */
+function applySessionStats(stats: AudioSourceCaptureStats, s: CaptureSessionStats): void {
+  stats.framesReceived = s.framesReceived;
+  stats.framesDroppedBeforeReady = s.framesDroppedBeforeReady;
+  stats.unknownMessages = s.unknownMessages;
 }
 
 /**
