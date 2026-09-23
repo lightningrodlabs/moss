@@ -25,6 +25,8 @@ class FakeBackend implements AudioCaptureBackend {
   processList: JsProcessInfo[] = [];
   devicesThrows = false;
   processesRejects = false;
+  /** How often the process list has been enumerated. */
+  processesCalls = 0;
   /** When set, openStream throws for options matching the predicate. */
   failOpen: (o: OpenOptions) => boolean = () => false;
   /** Per-call: when it returns an event, openStream fires it synchronously before returning the handle. */
@@ -35,6 +37,7 @@ class FakeBackend implements AudioCaptureBackend {
     return [];
   }
   async processes() {
+    this.processesCalls += 1;
     if (this.processesRejects) throw new Error('unsupported');
     return this.processList;
   }
@@ -340,6 +343,45 @@ describe('AudioSourceGrants.request', () => {
     await expect(r.grants.request({ ...REQ, requestId: 'r2' })).rejects.toThrow(/one audio source picker/);
     release(null);
     expect(await first).toBeNull();
+  });
+
+  it('enumerates the process list exactly once per request', async () => {
+    const r = rig();
+    r.backend.processList = [{ pid: 3, name: 'Firefox', isOutputActive: true }];
+    await r.grants.request(REQ);
+    expect(r.backend.processesCalls).toBe(1);
+  });
+
+  it('a dead stream\'s id is never reused, so a late event cannot tear down its successor', async () => {
+    const r = rig();
+    r.backend.processList = [
+      { pid: 3, name: 'Firefox', isOutputActive: true },
+      { pid: 4, name: 'Spotify', isOutputActive: true },
+    ];
+    // The first row dies inside openStream; the second opens normally.
+    r.backend.emitOnOpen = (o) => (o.processId === 3 ? { type: 'error', message: 'open failed' } : undefined);
+    r.picker.mockImplementationOnce(async (rows) => rows.filter((x) => x.kind === 'app').map((x) => x.id));
+    const result = await r.grants.request(REQ);
+    expect(result?.label).toBe('Spotify');
+    // The addon keeps the dead stream's callbacks and fires a late deviceLost.
+    r.backend.event(0, { type: 'deviceLost' });
+    await flush();
+    expect(r.grants.list()).toHaveLength(1);
+    expect(r.backend.opened[1].stop).not.toHaveBeenCalled();
+    r.scheduler.tick();
+    expect(r.ports[0].sent.at(-1)).toBeInstanceOf(Int16Array);
+  });
+
+  it('a late deviceLost for a live stream still ends the grant (negative control)', async () => {
+    const r = rig();
+    r.backend.processList = [{ pid: 4, name: 'Spotify', isOutputActive: true }];
+    r.picker.mockImplementationOnce(async (rows) => rows.filter((x) => x.kind === 'app').map((x) => x.id));
+    await r.grants.request(REQ);
+    r.backend.event(0, { type: 'deviceLost' });
+    await flush();
+    expect(r.grants.list()).toEqual([]);
+    expect(r.backend.opened[0].stop).toHaveBeenCalledTimes(1);
+    expect(r.ports[0].sent.at(-1)).toEqual({ type: 'ended', reason: 'app-quit' });
   });
 
   it('requesting window gone at delivery → grant ended, streams stopped, null (Review Focus 2)', async () => {

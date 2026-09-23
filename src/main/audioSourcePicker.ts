@@ -27,11 +27,12 @@ export function pickerSelected(ids: string[] | null): void {
 
 /**
  * Opens the audio-source picker and resolves the chosen row ids, or null when
- * the user cancels or closes the window. One picker at a time, like the
- * screen/window picker.
+ * the user cancels or closes the window. Callers serialise: `AudioSourceGrants`
+ * holds the one-picker-at-a-time authority (`pickerOpen` in its `request`), so
+ * this function assumes no picker is open and would orphan an earlier one's
+ * promise if called while one is.
  */
 export function openAudioSourcePicker(rows: AudioSourceRow[]): Promise<string[] | null> {
-  if (PICKER) return Promise.reject(new Error('Only one audio source picker may be open at a time.'));
   const window = new BrowserWindow({
     height: 620,
     width: 520,

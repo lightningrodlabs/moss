@@ -7,7 +7,7 @@ import type {
   AudioSourceRequestResult,
   AudioSourceRow,
 } from '@theweave/moss-types';
-import { AudioCaptureBackend, probeAudioCapabilities } from './audioCapture';
+import { AudioCaptureBackend, probeAudioSupport } from './audioCapture';
 import {
   FRAME_MS,
   MAX_CATCHUP_FRAMES,
@@ -94,6 +94,12 @@ interface Grant {
    * and the grant is either kept (streams > 0) or reported as failed.
    */
   opening: boolean;
+  /**
+   * Source of stream ids, monotonic for the life of the grant. Ids must never
+   * be reused: a stream that died keeps emitting events, and an event carrying
+   * a recycled id would tear down whichever stream now holds it.
+   */
+  nextStreamSeq: number;
 }
 
 const STREAM_FORMAT = { outputRate: 48000, outputChannels: 1, chunkMs: FRAME_MS } as const;
@@ -164,11 +170,12 @@ export class AudioSourceGrants {
 
   async request(req: AudioSourceRequest): Promise<AudioSourceRequestResult | null> {
     const backend = this.b.backend();
-    const caps = await probeAudioCapabilities(backend, this.b.platform);
+    // One probe answers both questions this request has for the addon: what
+    // the host can do, and which processes it may offer.
+    const { capabilities: caps, processes } = await probeAudioSupport(backend, this.b.platform);
     if (!backend || !caps.supported) return null;
 
     const excludePids = this.b.excludePids();
-    const processes = caps.perApp ? await backend.processes().catch(() => [] as JsProcessInfo[]) : [];
     const { rows, pidById } = buildAudioSourceRows(processes, excludePids);
 
     if (this.pickerOpen) throw new Error('Only one audio source picker may be open at a time.');
@@ -204,6 +211,7 @@ export class AudioSourceGrants {
       pumpStartedAt: 0,
       framesEmitted: 0,
       opening: true,
+      nextStreamSeq: 0,
     };
     this.grants.set(grantId, grant);
 
@@ -282,7 +290,7 @@ export class AudioSourceGrants {
     kind: 'system' | 'app',
     options: OpenOptions,
   ): boolean {
-    const id = `${kind}-${grant.streams.size}`;
+    const id = `${kind}-${grant.nextStreamSeq++}`;
     const stream: OpenStream = { id, kind, handle: { stop: async () => {} }, queue: [] };
     const onChunk = (chunk: JsAudioChunk) => {
       if (chunk.frames === 0) return;
@@ -293,9 +301,7 @@ export class AudioSourceGrants {
     // synchronously from inside openStream (permissionDenied/error at open
     // time) reaches onStreamEvent -> closeStream while the addon call is
     // still on the stack, and closeStream can only tear the stream down if
-    // it can find it in grant.streams. Registering after the call returned
-    // let such an event's teardown miss the entry, then this line inserted
-    // it anyway — a zombie stream the grant would never notice again.
+    // it can find it in grant.streams.
     grant.streams.set(id, stream);
     let handle: OpenStream['handle'];
     try {
@@ -359,9 +365,7 @@ export class AudioSourceGrants {
    * rather than replaced by a silence frame. Catch-up is bounded twice: at
    * most `PUMP_MAX_FRAMES_PER_TICK` per tick, and at most `MAX_CATCHUP_FRAMES`
    * of debt in total — older debt is stale silence and is skipped rather than
-   * replayed. Measured 2026-09-22 against a live grant on the ungated rule:
-   * ~52 frames/s sent with `backlogDropped` 0, and the Tool's ring discarding
-   * 4-6 % of samples with `underrunSamples` 0.
+   * replayed.
    *
    * The clock is `monotonicNow`: a wall-clock step backwards would make the
    * elapsed time shrink and silence the pump until wall time caught up again.

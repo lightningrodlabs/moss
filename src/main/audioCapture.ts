@@ -55,46 +55,68 @@ export function backendNameFor(platform: NodeJS.Platform): AudioBackendName {
 }
 
 /**
- * Derives what this host can do from the addon's own probes: `devices()` throwing
- * means no usable audio session at all; `processes()` rejecting means per-app
- * capture is unavailable (OS below the floor) while system capture still works.
- * Every backend the addon ships can exclude the host's own playback.
+ * Derives what this host can do from the addon's own probes, and hands back the
+ * process list the same probe already paid for: `devices()` throwing means no
+ * usable audio session at all; `processes()` rejecting means per-app capture is
+ * unavailable (OS below the floor) while system capture still works, and the
+ * list is then empty. Every backend the addon ships can exclude the host's own
+ * playback.
  */
-export async function probeAudioCapabilities(
+export async function probeAudioSupport(
   backend: AudioCaptureBackend | undefined,
   platform: NodeJS.Platform,
-): Promise<AudioCapabilities> {
+): Promise<{ capabilities: AudioCapabilities; processes: JsProcessInfo[] }> {
   const name = backendNameFor(platform);
   if (!backend) {
     return {
-      supported: false,
-      perApp: false,
-      canExcludeSelf: false,
-      backend: name,
-      reason: 'addon-unavailable',
+      capabilities: {
+        supported: false,
+        perApp: false,
+        canExcludeSelf: false,
+        backend: name,
+        reason: 'addon-unavailable',
+      },
+      processes: [],
     };
   }
   try {
     backend.devices();
   } catch (e) {
     return {
-      supported: false,
-      perApp: false,
-      canExcludeSelf: false,
-      backend: name,
-      reason: (e as Error).message,
+      capabilities: {
+        supported: false,
+        perApp: false,
+        canExcludeSelf: false,
+        backend: name,
+        reason: (e as Error).message,
+      },
+      processes: [],
     };
   }
   try {
-    await backend.processes();
+    const processes = await backend.processes();
+    return {
+      capabilities: { supported: true, perApp: true, canExcludeSelf: true, backend: name },
+      processes,
+    };
   } catch (e) {
     return {
-      supported: true,
-      perApp: false,
-      canExcludeSelf: true,
-      backend: name,
-      reason: (e as Error).message,
+      capabilities: {
+        supported: true,
+        perApp: false,
+        canExcludeSelf: true,
+        backend: name,
+        reason: (e as Error).message,
+      },
+      processes: [],
     };
   }
-  return { supported: true, perApp: true, canExcludeSelf: true, backend: name };
+}
+
+/** The capabilities half of `probeAudioSupport`, for callers with no use for the process list. */
+export async function probeAudioCapabilities(
+  backend: AudioCaptureBackend | undefined,
+  platform: NodeJS.Platform,
+): Promise<AudioCapabilities> {
+  return (await probeAudioSupport(backend, platform)).capabilities;
 }

@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   AudioCaptureBackend,
   backendNameFor,
   loadAudioCapture,
   probeAudioCapabilities,
+  probeAudioSupport,
 } from './audioCapture';
 
 const okBackend = (): AudioCaptureBackend => ({
@@ -90,5 +91,52 @@ describe('probeAudioCapabilities', () => {
   it('an empty processes() list is still perApp (nothing is playing, not unsupported)', async () => {
     const caps = await probeAudioCapabilities(okBackend(), 'linux');
     expect(caps.perApp).toBe(true);
+  });
+});
+
+describe('probeAudioSupport', () => {
+  it('returns the process list alongside the capabilities', async () => {
+    const processList = [{ pid: 3, name: 'Firefox', isOutputActive: true }];
+    const backend = { ...okBackend(), processes: async () => processList };
+    const out = await probeAudioSupport(backend, 'linux');
+    expect(out.processes).toEqual(processList);
+    expect(out.capabilities).toEqual({
+      supported: true,
+      perApp: true,
+      canExcludeSelf: true,
+      backend: 'pipewire',
+    });
+  });
+
+  it('processes() rejecting → no list and no perApp', async () => {
+    const backend = {
+      ...okBackend(),
+      processes: async () => {
+        throw new Error('unsupported OS version');
+      },
+    };
+    const out = await probeAudioSupport(backend, 'win32');
+    expect(out.processes).toEqual([]);
+    expect(out.capabilities.perApp).toBe(false);
+  });
+
+  it('no addon → no list, unsupported', async () => {
+    const out = await probeAudioSupport(undefined, 'linux');
+    expect(out.processes).toEqual([]);
+    expect(out.capabilities.supported).toBe(false);
+  });
+
+  it('devices() throwing → no list, and processes() is never asked', async () => {
+    const processes = vi.fn(async () => []);
+    const backend = {
+      ...okBackend(),
+      devices: () => {
+        throw new Error('no pipewire session');
+      },
+      processes,
+    };
+    const out = await probeAudioSupport(backend, 'linux');
+    expect(out.processes).toEqual([]);
+    expect(processes).not.toHaveBeenCalled();
   });
 });
