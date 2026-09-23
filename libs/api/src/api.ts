@@ -487,7 +487,7 @@ export class WeaveClient implements WeaveServices {
       }
       window.dispatchEvent(new CustomEvent('weave-client-connected'));
       const client = new WeaveClient();
-      const hostCapture = window.__WEAVE_API__.captureAudioSources;
+      const hostCapture = window.__WEAVE_API__?.captureAudioSources;
       if (hostCapture) client.captureAudioSources = (opts) => hostCapture(opts);
       return client;
     } else {
@@ -503,7 +503,7 @@ export class WeaveClient implements WeaveServices {
       }
       window.dispatchEvent(new CustomEvent('weave-client-connected'));
       const client = new WeaveClient();
-      const hostCapture = window.__WEAVE_API__.captureAudioSources;
+      const hostCapture = window.__WEAVE_API__?.captureAudioSources;
       if (hostCapture) client.captureAudioSources = (opts) => hostCapture(opts);
       return client;
     }

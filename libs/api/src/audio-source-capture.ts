@@ -20,6 +20,8 @@ export interface AudioSourceCapture {
   onended?: () => void;
   /** Diagnostics, refreshed roughly once per second while live. */
   readonly stats: AudioSourceCaptureStats;
+  /** Set once the grant has ended; `track.readyState` is `'ended'` when this is set. */
+  readonly endedReason?: string;
 }
 
 /** @public */
@@ -104,51 +106,90 @@ class MossAudioSourceProcessor extends AudioWorkletProcessor {
 registerProcessor(${JSON.stringify(WORKLET_PROCESSOR_NAME)}, MossAudioSourceProcessor);
 `;
 
-/** One module registration per context; `addModule` twice would throw. */
-const registeredContexts = new WeakSet<AudioContext>();
+/**
+ * In-flight or completed worklet-module loads, keyed by context. Two capture
+ * calls that share a context share the in-flight load rather than calling
+ * `addModule` twice (which throws on the second registration of the same
+ * name); a failed load is removed so a later call can retry.
+ */
+const moduleLoads = new WeakMap<AudioContext, Promise<void>>();
 
-async function ensureWorkletModule(context: AudioContext): Promise<void> {
-  if (registeredContexts.has(context)) return;
-  const url = URL.createObjectURL(new Blob([WORKLET_SOURCE], { type: 'application/javascript' }));
+/**
+ * Loads the worklet module into `context`, memoizing per context so
+ * concurrent callers share one `addModule` call and a failed load can be
+ * retried by a later call.
+ * @internal
+ */
+export async function ensureWorkletModule(context: AudioContext): Promise<void> {
+  const existing = moduleLoads.get(context);
+  if (existing) return existing;
+  const load = (async () => {
+    const url = URL.createObjectURL(new Blob([WORKLET_SOURCE], { type: 'application/javascript' }));
+    try {
+      await context.audioWorklet.addModule(url);
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  })();
+  moduleLoads.set(context, load);
   try {
-    await context.audioWorklet.addModule(url);
-  } finally {
-    URL.revokeObjectURL(url);
+    await load;
+  } catch (err) {
+    moduleLoads.delete(context);
+    throw err;
   }
-  registeredContexts.add(context);
 }
 
 /**
- * Turns a host-delivered grant port into a live `MediaStreamTrack`.
- * @public
+ * The Web Audio and timer primitives `createAudioSourceCaptureWith` needs.
+ * Production supplies real `AudioContext`/`AudioWorkletNode`/globals; tests
+ * supply fakes so the decision logic runs without a DOM.
+ * @internal
  */
-export async function createAudioSourceCapture(
+export interface CaptureEnv {
+  createContext(sampleRate: number): AudioContext;
+  loadWorkletModule(context: AudioContext): Promise<void>;
+  createNode(context: AudioContext): AudioWorkletNode;
+  setTimeout(fn: () => void, ms: number): unknown;
+  clearTimeout(handle: unknown): void;
+  setInterval(fn: () => void, ms: number): unknown;
+  clearInterval(handle: unknown): void;
+}
+
+/**
+ * Turns a host-delivered grant port into a live `MediaStreamTrack`, driven by
+ * an injected `env` so it is testable without a DOM. Exported for tests only;
+ * `createAudioSourceCapture` is the public entry point.
+ * @internal
+ */
+export async function createAudioSourceCaptureWith(
   delivery: AudioSourceDelivery,
-  opts: CaptureAudioSourcesOptions = {},
+  opts: CaptureAudioSourcesOptions,
+  env: CaptureEnv,
 ): Promise<AudioSourceCapture> {
-  const { context, owned } = selectContext(opts.audioContext, (rate) => new AudioContext({ sampleRate: rate }));
+  const { context, owned } = selectContext(opts.audioContext, env.createContext);
   const destination = context.createMediaStreamDestination();
   const track = destination.stream.getAudioTracks()[0];
   const stats: AudioSourceCaptureStats = { framesReceived: 0, overflowDropped: 0, underrunSamples: 0, unknownMessages: 0 };
 
   let node: AudioWorkletNode | undefined;
-  let statsTimer: ReturnType<typeof setInterval> | undefined;
+  let statsTimer: unknown;
 
   const session = new CaptureSession({
     forwardFrame: (frame) => node?.port.postMessage(frame, [frame.buffer]),
     teardown: () => {
-      if (statsTimer !== undefined) clearInterval(statsTimer);
+      if (statsTimer !== undefined) env.clearInterval(statsTimer);
       statsTimer = undefined;
       node?.port.postMessage({ type: 'close' });
       node?.disconnect();
       node = undefined;
       track.stop();
-      if (owned) void context.close();
+      if (owned) void context.close().catch(() => undefined);
     },
     postToHost: (message) => delivery.port.postMessage(message),
     closePort: () => delivery.port.close(),
-    setTimeout: (fn, ms) => setTimeout(fn, ms),
-    clearTimeout: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
+    setTimeout: (fn, ms) => env.setTimeout(fn, ms),
+    clearTimeout: (handle) => env.clearTimeout(handle),
   });
 
   const capture: AudioSourceCapture = {
@@ -156,6 +197,9 @@ export async function createAudioSourceCapture(
     label: delivery.label,
     canExcludeSelf: delivery.canExcludeSelf,
     stats,
+    get endedReason() {
+      return session.endedReason;
+    },
     stop: () => session.stop(),
   };
   session.onended = () => capture.onended?.();
@@ -164,14 +208,28 @@ export async function createAudioSourceCapture(
   delivery.port.onmessage = (e) => session.handlePortMessage(e.data);
   delivery.port.start();
 
-  await ensureWorkletModule(context);
-  if (session.state !== 'starting') return capture;
+  try {
+    await env.loadWorkletModule(context);
+  } catch (err) {
+    // The grant is unusable without a working processor: tell the host to
+    // close, release the track and an owned context (via session.stop's
+    // teardown), then surface the failure to the caller.
+    session.stop();
+    throw err;
+  }
 
-  node = new AudioWorkletNode(context, WORKLET_PROCESSOR_NAME, {
-    numberOfInputs: 0,
-    numberOfOutputs: 1,
-    outputChannelCount: [1],
-  });
+  if (session.state !== 'starting') {
+    if (session.state === 'ended') {
+      // The Tool's `await` continuation (a microtask) assigns `onended`
+      // before this macrotask runs, so scheduling here — rather than
+      // calling it inline — lets a callback set after resolution still
+      // fire exactly once.
+      env.setTimeout(() => capture.onended?.(), 0);
+    }
+    return capture;
+  }
+
+  node = env.createNode(context);
   node.port.onmessage = (e) => {
     const d = e.data as { type?: unknown; written?: number; overflowDropped?: number; underrunSamples?: number };
     if (d && d.type === 'stats') {
@@ -180,7 +238,13 @@ export async function createAudioSourceCapture(
     }
   };
   node.connect(destination);
-  statsTimer = setInterval(() => {
+  // Chromium may start a freshly created context suspended under its
+  // autoplay policy (this capture follows an async host round-trip, so it
+  // is never the direct result of a user gesture); a suspended context
+  // never runs `process()`, so the ring would overflow silently. Declared,
+  // not unit-tested here — it needs a real AudioContext.
+  if (context.state === 'suspended') void context.resume().catch(() => undefined);
+  statsTimer = env.setInterval(() => {
     const s = session.stats();
     stats.framesReceived = s.framesReceived;
     stats.unknownMessages = s.unknownMessages;
@@ -188,4 +252,33 @@ export async function createAudioSourceCapture(
   }, STATS_INTERVAL_MS);
   session.ready();
   return capture;
+}
+
+/**
+ * Turns a host-delivered grant port into a live `MediaStreamTrack`. The
+ * returned capture may already be ended: a host end-of-grant message that
+ * arrives while the worklet module is still loading resolves with
+ * `track.readyState === 'ended'` and `endedReason` set, and `onended` still
+ * fires once, asynchronously, even though the Tool could not have assigned
+ * it before this promise resolved.
+ * @public
+ */
+export async function createAudioSourceCapture(
+  delivery: AudioSourceDelivery,
+  opts: CaptureAudioSourcesOptions = {},
+): Promise<AudioSourceCapture> {
+  return createAudioSourceCaptureWith(delivery, opts, {
+    createContext: (sampleRate) => new AudioContext({ sampleRate }),
+    loadWorkletModule: ensureWorkletModule,
+    createNode: (context) =>
+      new AudioWorkletNode(context, WORKLET_PROCESSOR_NAME, {
+        numberOfInputs: 0,
+        numberOfOutputs: 1,
+        outputChannelCount: [1],
+      }),
+    setTimeout: (fn, ms) => setTimeout(fn, ms),
+    clearTimeout: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
+    setInterval: (fn, ms) => setInterval(fn, ms),
+    clearInterval: (handle) => clearInterval(handle as ReturnType<typeof setInterval>),
+  });
 }
