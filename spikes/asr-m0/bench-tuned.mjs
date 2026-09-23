@@ -52,11 +52,15 @@ for (const [modelName, modelPath] of Object.entries(MODELS)) {
     const t0 = performance.now();
     const task = await whisper.transcribe(audio, { language: 'en', ...cfg });
     let text = '';
-    task.on('transcribed', (s) => { text += s.text; });
+    task.on('transcribed', (s) => {
+      text += s.text;
+    });
     await task.result;
     const dt = performance.now() - t0;
     const rtf = dt / audioMs;
-    console.log(`  ${cfg.label.padEnd(46)} ${dt.toFixed(0).padStart(6)} ms  RTF ${rtf.toFixed(3)}  (${(1/rtf).toFixed(1)}× RT)`);
+    console.log(
+      `  ${cfg.label.padEnd(46)} ${dt.toFixed(0).padStart(6)} ms  RTF ${rtf.toFixed(3)}  (${(1 / rtf).toFixed(1)}× RT)`,
+    );
   }
   await whisper.free();
   console.log();

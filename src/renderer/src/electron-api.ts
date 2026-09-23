@@ -216,10 +216,15 @@ declare global {
         requestId: string;
         toolName: string;
       }) => Promise<AudioSourceRequestResult | null>;
-      stopAudioSources: (grantId: string, reason: 'user-stopped' | 'iframe-unloaded') => Promise<void>;
+      stopAudioSources: (
+        grantId: string,
+        reason: 'user-stopped' | 'iframe-unloaded',
+      ) => Promise<void>;
       listAudioSourceGrants: () => Promise<AudioSourceGrantInfo[]>;
       getAudioCapabilities: () => Promise<AudioCapabilities>;
-      onAudioSourceGrantsChanged: (callback: (e: any, grants: AudioSourceGrantInfo[]) => any) => void;
+      onAudioSourceGrantsChanged: (
+        callback: (e: any, grants: AudioSourceGrantInfo[]) => any,
+      ) => void;
       captureScreen: () => Promise<string>;
       getFeedbackWorkerUrl: () => Promise<string>;
       saveFeedback: (feedback: {
@@ -497,7 +502,10 @@ export async function selectScreenOrWindow(): Promise<string> {
 export async function requestAudioSources(req: { requestId: string; toolName: string }) {
   return window.electronAPI.requestAudioSources(req);
 }
-export async function stopAudioSources(grantId: string, reason: 'user-stopped' | 'iframe-unloaded') {
+export async function stopAudioSources(
+  grantId: string,
+  reason: 'user-stopped' | 'iframe-unloaded',
+) {
   return window.electronAPI.stopAudioSources(grantId, reason);
 }
 export async function listAudioSourceGrants() {

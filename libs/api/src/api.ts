@@ -589,7 +589,6 @@ export class WeaveClient implements WeaveServices {
     return window.__WEAVE_API__.toolInstaller(appletHash, effectiveGroupHash);
   };
 
-
   /**
    * Local on-device models. Reads through to the host implementation
    * set up in the applet iframe, which proxies over postMessage to

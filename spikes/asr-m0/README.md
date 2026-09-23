@@ -59,15 +59,15 @@ check of the whole pipeline without needing ffmpeg.
 
 ## Output protocol (JSON lines on stdout)
 
-| field          | type    | notes                                                     |
-| -------------- | ------- | --------------------------------------------------------- |
-| `type`         | string  | `"partial"` \| `"final"` \| `"error"` \| `"capabilities"` |
-| `text`         | string  | for partial/final                                         |
-| `tStart`       | number  | ms relative to session start                              |
-| `tEnd`         | number  | ms relative to session start                              |
-| `confidence?`  | number  | 0.0–1.0 if available                                      |
-| `lang?`        | string  | ISO 639-1, if auto-detected                               |
-| `error?`       | string  | for type=error                                            |
+| field         | type   | notes                                                     |
+| ------------- | ------ | --------------------------------------------------------- |
+| `type`        | string | `"partial"` \| `"final"` \| `"error"` \| `"capabilities"` |
+| `text`        | string | for partial/final                                         |
+| `tStart`      | number | ms relative to session start                              |
+| `tEnd`        | number | ms relative to session start                              |
+| `confidence?` | number | 0.0–1.0 if available                                      |
+| `lang?`       | string | ISO 639-1, if auto-detected                               |
+| `error?`      | string | for type=error                                            |
 
 This is intentionally close to the public `AsrPartialEvent` /
 `AsrFinalEvent` interfaces in the plan — the M1 broker will translate
@@ -82,4 +82,4 @@ between this stdout protocol and the in-process IPC channel.
 
 That's it. M0 doesn't validate Mac/Win (that's M1's portability pass)
 and doesn't validate the public API (that's M2). It just answers:
-*does the runtime we picked actually work?*
+_does the runtime we picked actually work?_

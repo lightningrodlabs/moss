@@ -105,9 +105,10 @@ export async function readAll(stream) {
  * Otherwise treat it as raw PCM16 mono @ 16 kHz (the contract for stdin).
  */
 export function bufferToFloat32(buf, opts = {}) {
-  const looksLikeWav = buf.length >= 12
-    && buf.toString('ascii', 0, 4) === 'RIFF'
-    && buf.toString('ascii', 8, 12) === 'WAVE';
+  const looksLikeWav =
+    buf.length >= 12 &&
+    buf.toString('ascii', 0, 4) === 'RIFF' &&
+    buf.toString('ascii', 8, 12) === 'WAVE';
   if (looksLikeWav) {
     const { sampleRate, channels, dataOffset, dataLength } = parseWavHeader(buf);
     const audio = new Int16Array(buf.buffer, buf.byteOffset + dataOffset, dataLength / 2);

@@ -18,7 +18,9 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const MODEL = process.env.MOSS_ASR_MODEL ?? resolve(HERE, 'models/ggml-base.en.bin');
 const PORT = 8765;
 
-function emit(o) { process.stdout.write(JSON.stringify(o) + '\n'); }
+function emit(o) {
+  process.stdout.write(JSON.stringify(o) + '\n');
+}
 
 async function waitForServer(url, timeoutMs = 30_000) {
   const t0 = performance.now();
@@ -43,11 +45,18 @@ async function main() {
   const proc = spawn(
     'nix',
     [
-      'shell', 'nixpkgs#whisper-cpp', '-c', 'whisper-server',
-      '-m', MODEL,
-      '--host', '127.0.0.1',
-      '--port', String(PORT),
-      '-t', '4',
+      'shell',
+      'nixpkgs#whisper-cpp',
+      '-c',
+      'whisper-server',
+      '-m',
+      MODEL,
+      '--host',
+      '127.0.0.1',
+      '--port',
+      String(PORT),
+      '-t',
+      '4',
     ],
     { stdio: ['ignore', 'pipe', 'pipe'] },
   );

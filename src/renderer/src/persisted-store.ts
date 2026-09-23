@@ -305,11 +305,7 @@ export class PersistedStore {
    * any open UI (the Local AI settings pane) can refresh without
    * polling. Tabs / windows on the same origin all see it.
    */
-  appletAsrConsent: SubStore<
-    'granted' | 'denied' | undefined,
-    'granted' | 'denied',
-    [AppletId]
-  > = {
+  appletAsrConsent: SubStore<'granted' | 'denied' | undefined, 'granted' | 'denied', [AppletId]> = {
     value: (appletId: AppletId) =>
       this.store.getItem<'granted' | 'denied'>(`appletAsrConsent#${appletId}`),
     set: (value: 'granted' | 'denied', appletId: AppletId) => {

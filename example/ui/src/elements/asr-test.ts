@@ -19,12 +19,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { localized } from '@lit/localize';
 import { sharedStyles } from '@holochain-open-dev/elements';
 
-import {
-  AsrFinalEvent,
-  AsrSession,
-  LocalModelCapabilities,
-  WeaveClient,
-} from '@theweave/api';
+import { AsrFinalEvent, AsrSession, LocalModelCapabilities, WeaveClient } from '@theweave/api';
 
 interface TranscriptLine {
   text: string;
@@ -231,9 +226,8 @@ export class AsrTest extends LitElement {
       return html`
         <div class="warn">
           <b>weaveClient.localModels?.asr is undefined.</b>
-          The host has no ASR surface. Run Moss with the ASR feature
-          enabled (it should be on by default in dev — check the main
-          process logs for sidecar startup messages).
+          The host has no ASR surface. Run Moss with the ASR feature enabled (it should be on by
+          default in dev — check the main process logs for sidecar startup messages).
         </div>
       `;
     }
@@ -242,10 +236,7 @@ export class AsrTest extends LitElement {
       <div class="column">
         <div><b>Capabilities:</b></div>
         <div class="row">
-          <button
-            @click=${() => this.refreshCapabilities()}
-            ?disabled=${this.capabilitiesLoading}
-          >
+          <button @click=${() => this.refreshCapabilities()} ?disabled=${this.capabilitiesLoading}>
             ${this.capabilitiesLoading ? 'Loading…' : 'Refresh capabilities'}
           </button>
         </div>
@@ -259,9 +250,7 @@ export class AsrTest extends LitElement {
                   <span class="k">available:</span>
                   <b>${String(this.capabilities.asr.available)}</b>
                 </div>
-                <div>
-                  <span class="k">model:</span> ${this.capabilities.asr.model || '(none)'}
-                </div>
+                <div><span class="k">model:</span> ${this.capabilities.asr.model || '(none)'}</div>
                 <div>
                   <span class="k">streaming:</span>
                   ${String(this.capabilities.asr.streaming)}
@@ -272,8 +261,8 @@ export class AsrTest extends LitElement {
                 </div>
                 <div>
                   <span class="k">languages (${this.capabilities.asr.languages.length}):</span>
-                  ${this.capabilities.asr.languages.slice(0, 20).join(', ')}${this
-                    .capabilities.asr.languages.length > 20
+                  ${this.capabilities.asr.languages.slice(0, 20).join(', ')}${this.capabilities.asr
+                    .languages.length > 20
                     ? ` …+${this.capabilities.asr.languages.length - 20} more`
                     : ''}
                 </div>
@@ -284,25 +273,17 @@ export class AsrTest extends LitElement {
         <hr />
 
         <div><b>Smoke test (no audio):</b></div>
-        <button @click=${() => this.runSmokeTest()}>
-          Open + close session
-        </button>
+        <button @click=${() => this.runSmokeTest()}>Open + close session</button>
         <div class="status">status: ${this.status}</div>
 
         <hr />
 
         <div><b>Microphone capture:</b></div>
         <div class="row">
-          <button
-            @click=${() => this.startMicCapture()}
-            ?disabled=${this.capturing}
-          >
+          <button @click=${() => this.startMicCapture()} ?disabled=${this.capturing}>
             Start mic
           </button>
-          <button
-            @click=${() => this.stopMicCapture(true)}
-            ?disabled=${!this.capturing}
-          >
+          <button @click=${() => this.stopMicCapture(true)} ?disabled=${!this.capturing}>
             Stop &amp; commit
           </button>
         </div>
@@ -312,9 +293,7 @@ export class AsrTest extends LitElement {
             : html`not capturing`}
         </div>
 
-        ${this.lastError
-          ? html`<div class="error">error: ${this.lastError}</div>`
-          : ''}
+        ${this.lastError ? html`<div class="error">error: ${this.lastError}</div>` : ''}
 
         <div class="transcript">
           ${this.transcript.length === 0
@@ -323,8 +302,8 @@ export class AsrTest extends LitElement {
                 (line) => html`
                   <div class="line">
                     <span class="t"
-                      >[${(line.tStart / 1000).toFixed(2)}s
-                      → ${(line.tEnd / 1000).toFixed(2)}s]</span
+                      >[${(line.tStart / 1000).toFixed(2)}s →
+                      ${(line.tEnd / 1000).toFixed(2)}s]</span
                     >
                     ${line.text}
                   </div>

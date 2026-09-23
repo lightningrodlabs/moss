@@ -9,15 +9,15 @@ Presence's bench numbers and reproducing the gap. Move to M1.
 
 All numbers on the bundled JFK sample (11.0 s of clean speech).
 
-| runtime                          | model    | threads | strategy | ms    | RTF   | × realtime |
-| -------------------------------- | -------- | ------- | -------- | ----- | ----- | ---------- |
-| whisper-cli (nixpkgs#whisper-cpp)| tiny.en  |       4 | greedy   | 484   | 0.044 | **23×**    |
-| whisper-cli (nixpkgs#whisper-cpp)| base.en  |       4 | greedy   | 920   | 0.084 | **12×**    |
-| whisper-server (sidecar over HTTP)| base.en |       4 | greedy   | 1559  | 0.142 | **7×**     |
-| smart-whisper (npm prebuilt)     | tiny.en  |  default| beam     | 4098  | 0.373 | 2.7×       |
-| smart-whisper (npm prebuilt)     | tiny.en  |       8 | greedy   | 2000  | 0.182 | 5.5×       |
-| smart-whisper (npm prebuilt)     | base.en  |  default| beam     | 9314  | 0.847 | 1.2×       |
-| smart-whisper (locally rebuilt)  | base.en  |       8 | greedy   | 4830  | 0.439 | 2.3×       |
+| runtime                            | model   | threads | strategy | ms   | RTF   | × realtime |
+| ---------------------------------- | ------- | ------- | -------- | ---- | ----- | ---------- |
+| whisper-cli (nixpkgs#whisper-cpp)  | tiny.en | 4       | greedy   | 484  | 0.044 | **23×**    |
+| whisper-cli (nixpkgs#whisper-cpp)  | base.en | 4       | greedy   | 920  | 0.084 | **12×**    |
+| whisper-server (sidecar over HTTP) | base.en | 4       | greedy   | 1559 | 0.142 | **7×**     |
+| smart-whisper (npm prebuilt)       | tiny.en | default | beam     | 4098 | 0.373 | 2.7×       |
+| smart-whisper (npm prebuilt)       | tiny.en | 8       | greedy   | 2000 | 0.182 | 5.5×       |
+| smart-whisper (npm prebuilt)       | base.en | default | beam     | 9314 | 0.847 | 1.2×       |
+| smart-whisper (locally rebuilt)    | base.en | 8       | greedy   | 4830 | 0.439 | 2.3×       |
 
 Cross-checks:
 

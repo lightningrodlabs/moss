@@ -99,7 +99,9 @@ const candidates = [
 ];
 const builtBinary = candidates.find((p) => existsSync(p));
 if (!builtBinary) {
-  throw new Error(`built whisper-server binary not found; looked in:\n  ${candidates.join('\n  ')}`);
+  throw new Error(
+    `built whisper-server binary not found; looked in:\n  ${candidates.join('\n  ')}`,
+  );
 }
 
 cpSync(builtBinary, TARGET_PATH);

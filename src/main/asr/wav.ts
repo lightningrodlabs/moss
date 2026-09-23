@@ -33,8 +33,8 @@ export function pcm16ToWav(pcm: Int16Array, shape: PcmShape): Buffer {
   buf.write('WAVE', 8, 'ascii');
   // fmt sub-chunk
   buf.write('fmt ', 12, 'ascii');
-  buf.writeUInt32LE(16, 16);            // PCM fmt chunk size
-  buf.writeUInt16LE(1, 20);             // PCM format code
+  buf.writeUInt32LE(16, 16); // PCM fmt chunk size
+  buf.writeUInt16LE(1, 20); // PCM format code
   buf.writeUInt16LE(channels, 22);
   buf.writeUInt32LE(sampleRate, 24);
   buf.writeUInt32LE(byteRate, 28);

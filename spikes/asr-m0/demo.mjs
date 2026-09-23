@@ -97,8 +97,14 @@ const stream = await runStream();
 for (const ev of stream) console.log(JSON.stringify(ev));
 
 const batchStats = batch.find((e) => e.type === 'stats');
-const batchFinals = batch.filter((e) => e.type === 'final').map((e) => e.text).join(' ');
-const streamFinals = stream.filter((e) => e.type === 'final').map((e) => e.text).join(' ');
+const batchFinals = batch
+  .filter((e) => e.type === 'final')
+  .map((e) => e.text)
+  .join(' ');
+const streamFinals = stream
+  .filter((e) => e.type === 'final')
+  .map((e) => e.text)
+  .join(' ');
 
 console.log('\n--- summary ---');
 console.log(`Batch transcript:    ${batchFinals}`);

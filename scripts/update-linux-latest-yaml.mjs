@@ -151,8 +151,8 @@ const debSha512 = crypto.createHash('sha512').update(debFileBytes).digest('base6
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 if (process.env.SKIP_LATEST_YAML) {
-    console.log('SKIP_LATEST_YAML set — AppImage + deb patched, skipping latest-linux.yml update.');
-    process.exit(0);
+  console.log('SKIP_LATEST_YAML set — AppImage + deb patched, skipping latest-linux.yml update.');
+  process.exit(0);
 }
 
 // Modify sha512 hashes of latest-linux.yaml

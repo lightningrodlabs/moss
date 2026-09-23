@@ -71,7 +71,7 @@ async function main() {
     type: 'stats',
     inferMs: Math.round(tInferEnd - tInferStart),
     realtimeFactor:
-      Math.round(((audio.length / SAMPLE_RATE) * 1000) / (tInferEnd - tInferStart) * 100) / 100,
+      Math.round((((audio.length / SAMPLE_RATE) * 1000) / (tInferEnd - tInferStart)) * 100) / 100,
   });
 
   await whisper.free();
