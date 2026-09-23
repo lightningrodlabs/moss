@@ -6,6 +6,8 @@ import {
   AsrTransport,
   fetchAsrCapabilities,
   openAsrSession,
+  fetchAsrStatus,
+  warmUpAsr,
 } from '../asr';
 
 interface FakeTransport extends AsrTransport {
@@ -295,5 +297,26 @@ describe('AsrSession id isolation', () => {
 
     // Avoid the unused-variable warning for vi (kept as a hook for future tests)
     vi.fn();
+  });
+});
+
+describe('warmUpAsr / fetchAsrStatus', () => {
+  it('sends asr-warm-up and resolves on any reply', async () => {
+    const t = makeTransport();
+    await warmUpAsr(t);
+    expect(t.sent.at(-1)).toEqual({ type: 'asr-warm-up' });
+  });
+
+  it('sends asr-status and returns a validated status', async () => {
+    const t = makeTransport({
+      sendImpl: async (req) => (req.type === 'asr-status' ? { status: 'starting' } : undefined),
+    });
+    expect(await fetchAsrStatus(t)).toBe('starting');
+    expect(t.sent.at(-1)).toEqual({ type: 'asr-status' });
+  });
+
+  it('rejects a malformed status reply', async () => {
+    const t = makeTransport({ sendImpl: async () => ({ status: 'warm' }) });
+    await expect(fetchAsrStatus(t)).rejects.toThrow(/asr-status/);
   });
 });

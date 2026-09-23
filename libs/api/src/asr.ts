@@ -21,6 +21,7 @@
 
 import type {
   AsrFinalEvent,
+  AsrHostStatus,
   AsrSessionOptions,
   LocalAsrCapabilities,
   LocalModelCapabilities,
@@ -30,6 +31,7 @@ import type {
 // from a single namespace.
 export type {
   AsrFinalEvent,
+  AsrHostStatus,
   AsrSessionOptions,
   LocalAsrCapabilities,
   LocalModelCapabilities,
@@ -90,6 +92,15 @@ export type UnsubscribeFn = () => void;
 
 export interface AsrApi {
   openSession(opts?: AsrSessionOptions): Promise<AsrSession>;
+  /**
+   * Bring the speech model up before it is needed, so a later
+   * openSession() does not pay the cold start. Resolves once the model
+   * is serving; safe to call without awaiting. Requires Local AI to be
+   * enabled in Moss but no per-tool consent, since no audio is involved.
+   */
+  warmUp(): Promise<void>;
+  /** Whether the model is down, coming up, or serving right now. */
+  status(): Promise<AsrHostStatus>;
 }
 
 export interface LocalModelsApi {
@@ -121,6 +132,8 @@ export interface AsrTransport {
 
 export type AsrSessionRequest =
   | { type: 'asr-capabilities' }
+  | { type: 'asr-warm-up' }
+  | { type: 'asr-status' }
   | { type: 'asr-open-session'; opts?: AsrSessionOptions }
   | {
       type: 'asr-push-audio';
@@ -158,6 +171,19 @@ export async function fetchAsrCapabilities(
 ): Promise<LocalModelCapabilities> {
   const reply = await transport.send({ type: 'asr-capabilities' });
   return extractCapabilities(reply);
+}
+
+/** Ask the host to start the speech model; resolves once it is serving. */
+export async function warmUpAsr(transport: AsrTransport): Promise<void> {
+  await transport.send({ type: 'asr-warm-up' });
+}
+
+/** Ask the host whether the speech model is down, coming up, or serving. */
+export async function fetchAsrStatus(transport: AsrTransport): Promise<AsrHostStatus> {
+  const reply = await transport.send({ type: 'asr-status' });
+  const status = isObject(reply) ? reply.status : undefined;
+  if (status === 'idle' || status === 'starting' || status === 'ready') return status;
+  throw new Error(`Bad asr-status reply: ${JSON.stringify(reply)}`);
 }
 
 function extractCapabilities(reply: unknown): LocalModelCapabilities {

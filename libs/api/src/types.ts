@@ -533,6 +533,12 @@ export type AppletToParentRequest =
       type: 'asr-capabilities';
     }
   | {
+      type: 'asr-warm-up';
+    }
+  | {
+      type: 'asr-status';
+    }
+  | {
       type: 'asr-open-session';
       opts?: AsrSessionOptions;
     }
@@ -626,6 +632,9 @@ export interface LocalAsrCapabilities {
    */
   latencyTier: 'fast' | 'ok' | 'slow';
 }
+
+/** Whether the host's speech model is down, coming up, or serving. */
+export type AsrHostStatus = 'idle' | 'starting' | 'ready';
 
 export interface AsrFinalEvent {
   text: string;

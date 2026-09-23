@@ -12,7 +12,12 @@ import {
   WAL,
   WeaveLocation,
 } from '@theweave/api';
-import type { AsrIncomingEvent, AsrSessionOptions, LocalModelCapabilities } from '@theweave/api';
+import type {
+  AsrIncomingEvent,
+  AsrSessionOptions,
+  LocalModelCapabilities,
+  AsrHostStatus,
+} from '@theweave/api';
 import type { AppletHostResponse } from '../main/sharedTypes';
 import {
   AppHashes,
@@ -265,6 +270,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Channel contract is defined in src/main/asr/ipcHandlers.ts.
   asrRequestConsent: (req: { appletName: string; senderWebContentsId?: number }) =>
     ipcRenderer.invoke('asr-request-consent', req) as Promise<'granted' | 'denied'>,
+  asrWarmUp: () => ipcRenderer.invoke('asr-warm-up') as Promise<void>,
+  asrStatus: () => ipcRenderer.invoke('asr-status') as Promise<AsrHostStatus>,
+  onAsrStatus: (callback: (e: Electron.IpcRendererEvent, status: AsrHostStatus) => void) =>
+    ipcRenderer.on('asr-status', callback),
   asrCapabilities: () => ipcRenderer.invoke('asr-capabilities') as Promise<LocalModelCapabilities>,
   asrOpenSession: (opts: AsrSessionOptions) =>
     ipcRenderer.invoke('asr-open-session', opts) as Promise<{ sessionId: string }>,

@@ -30,6 +30,8 @@ import {
   asrGetCapabilities,
   asrOpenSession,
   asrPushAudio,
+  asrStatus,
+  asrWarmUp,
 } from './ipcHandlers';
 import { SessionRegistry } from './sessionRegistry';
 
@@ -103,6 +105,13 @@ export function registerAsrIpc(config: AsrWireUpConfig): void {
     idleTimeoutMs: config.idleTimeoutMs,
     onLog: config.onLog ?? defaultOnLog,
     latencyTier,
+    // Every window may be hosting an applet that is waiting on the
+    // sidecar, so the status goes to all of them.
+    onStatusChange: (status) => {
+      for (const w of BrowserWindow.getAllWindows()) {
+        if (!w.isDestroyed()) w.webContents.send('asr-status', status);
+      }
+    },
   });
 
   const registry = new SessionRegistry();
@@ -127,6 +136,8 @@ export function registerAsrIpc(config: AsrWireUpConfig): void {
   };
 
   ipcMain.handle('asr-capabilities', () => asrGetCapabilities(ctx));
+  ipcMain.handle('asr-warm-up', () => asrWarmUp(ctx));
+  ipcMain.handle('asr-status', () => asrStatus(ctx));
   ipcMain.handle('asr-open-session', (e, req: AsrOpenSessionRequest) =>
     asrOpenSession(ctx, e.sender.id, req),
   );

@@ -18,7 +18,7 @@
 
 import type { AsrIncomingEvent, AsrSessionOptions, LocalModelCapabilities } from '@theweave/api';
 
-import type { AsrBroker } from './broker';
+import type { AsrBroker, AsrHostStatus } from './broker';
 import type { SessionRegistry } from './sessionRegistry';
 
 /** Event fan-out target. The wire-up implements this with webContents.send. */
@@ -80,6 +80,20 @@ export async function asrGetCapabilities(
   ctx: AsrIpcHandlerContext,
 ): Promise<LocalModelCapabilities> {
   return ctx.getCapabilities();
+}
+
+/** Start the sidecar ahead of a session; resolves once it is serving. */
+export async function asrWarmUp(ctx: AsrIpcHandlerContext): Promise<void> {
+  await ctx.getBroker().warmUp();
+}
+
+/** Down, coming up, or serving; 'idle' when no broker could be created. */
+export async function asrStatus(ctx: AsrIpcHandlerContext): Promise<AsrHostStatus> {
+  try {
+    return ctx.getBroker().status;
+  } catch {
+    return 'idle';
+  }
 }
 
 export async function asrOpenSession(

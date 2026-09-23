@@ -18,7 +18,12 @@ import {
   WAL,
   WeaveLocation,
 } from '@theweave/api';
-import type { AsrIncomingEvent, AsrSessionOptions, LocalModelCapabilities } from '@theweave/api';
+import type {
+  AsrIncomingEvent,
+  AsrSessionOptions,
+  LocalModelCapabilities,
+  AsrHostStatus,
+} from '@theweave/api';
 import {
   AppAssetsInfo,
   AppHashes,
@@ -318,6 +323,11 @@ declare global {
         appletName: string;
         senderWebContentsId?: number;
       }) => Promise<'granted' | 'denied'>;
+      asrWarmUp: () => Promise<void>;
+      asrStatus: () => Promise<AsrHostStatus>;
+      onAsrStatus: (
+        callback: (e: Electron.IpcRendererEvent, status: AsrHostStatus) => void,
+      ) => void;
       asrCapabilities: () => Promise<LocalModelCapabilities>;
       asrOpenSession: (opts: AsrSessionOptions) => Promise<{ sessionId: string }>;
       asrPushAudio: (req: {

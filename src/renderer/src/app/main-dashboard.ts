@@ -625,6 +625,13 @@ export class MainDashboard extends LitElement {
     // 'asr-event' IPC pushes from main reach every iframe hosting the
     // session's applet (main-window iframes and WAL windows).
     initAsrRendererBridge(this._mossStore);
+    // The speech model's cold start can take several seconds and is
+    // otherwise invisible; say so while it happens.
+    window.electronAPI.onAsrStatus((_e, status) => {
+      if (status === 'starting') {
+        notify(msg('Starting local transcription model…'), 'primary', undefined, 8000);
+      }
+    });
     window.electronAPI.onAppletToParentMessage(async (_e, payload) => {
       // Always send SOMETHING back — the main process waits up to 60s
       // on this response, so any uncaught throw here would surface in

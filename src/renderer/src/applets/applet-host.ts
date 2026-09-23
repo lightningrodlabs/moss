@@ -507,6 +507,25 @@ export async function handleAppletIframeMessage(
       }
       return caps;
     }
+    case 'asr-warm-up': {
+      // Warming loads the model on the tool's behalf but touches no
+      // audio, so the global switch is the only gate; consent is asked
+      // when a session is actually opened.
+      if (!mossStore.persistedStore.localAiEnabled.value()) {
+        throw new Error('Local AI is disabled in Moss settings');
+      }
+      if (source.type !== 'applet') {
+        throw new Error('Local ASR is only available from applet iframes');
+      }
+      await window.electronAPI.asrWarmUp();
+      return undefined;
+    }
+    case 'asr-status': {
+      if (!mossStore.persistedStore.localAiEnabled.value()) {
+        return { status: 'idle' };
+      }
+      return { status: await window.electronAPI.asrStatus() };
+    }
     case 'asr-open-session': {
       // Gate order: global Local AI switch first, then per-tool consent.
       // Capability checks (`capabilities()`) are intentionally not gated —

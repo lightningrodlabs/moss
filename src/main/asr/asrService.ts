@@ -18,7 +18,7 @@ import path from 'node:path';
 
 import type { LocalModelCapabilities } from '@theweave/api';
 
-import { AsrBroker } from './broker';
+import { AsrBroker, type AsrHostStatus } from './broker';
 import { resolveWhisperServerCommand, WhisperCommandResolveError } from './binaryResolver';
 import { computeAsrCapabilities } from './capabilities';
 
@@ -46,6 +46,8 @@ export interface AsrServiceConfig {
   onLog?: (stream: 'stdout' | 'stderr', chunk: string) => void;
   /** Override the capabilities `latencyTier` reported to applets. */
   latencyTier?: 'fast' | 'ok' | 'slow';
+  /** Receives sidecar status transitions for the shell's indicator. */
+  onStatusChange?: (status: AsrHostStatus) => void;
 }
 
 let broker: AsrBroker | null = null;
@@ -90,6 +92,7 @@ export function initAsrService(config: AsrServiceConfig): AsrBroker | null {
         startTimeoutMs: resolved.startTimeoutMs,
       },
       idleTimeoutMs: config.idleTimeoutMs,
+      onStatusChange: config.onStatusChange,
     });
     capabilities = computeAsrCapabilities({
       modelPath: config.modelPath,

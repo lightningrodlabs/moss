@@ -196,6 +196,26 @@ Finals arrive **in order** per session and each represents one committed
 utterance. Don't assume a maximum length — a long run-on sentence may
 arrive as a single event if the speaker never pauses.
 
+## Warming up and the start phase
+
+The first `openSession()` after Moss starts, and the first after a few
+minutes of inactivity, waits for the speech model to load, typically one to
+ten seconds. Two calls let a Tool make that visible or avoid it:
+
+```ts
+// When the user enters a place where transcription is likely, start the
+// model now so a later openSession() returns at once.
+void weaveClient.localModels?.asr.warmUp();
+
+// 'idle' | 'starting' | 'ready' — for a "starting…" state in your own UI.
+const status = await weaveClient.localModels?.asr.status();
+```
+
+`warmUp()` needs Local AI to be enabled in Moss but asks for no per-Tool
+consent, since no audio is involved; it resolves once the model is
+serving and rejects when Local AI is off. Moss also shows its own
+"Starting local transcription model…" notice during a cold start.
+
 ## Closing
 
 Always close sessions. `close()` is idempotent and commits any buffered

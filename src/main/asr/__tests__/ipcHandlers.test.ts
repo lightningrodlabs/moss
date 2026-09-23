@@ -13,6 +13,8 @@ import {
   asrGetCapabilities,
   asrOpenSession,
   asrPushAudio,
+  asrStatus,
+  asrWarmUp,
 } from '../ipcHandlers';
 import { SessionRegistry } from '../sessionRegistry';
 import { FakeWhisperServer, asWhisperServer } from './fakeWhisperServer';
@@ -263,5 +265,16 @@ describe('asrGetCapabilities', () => {
     const caps = await asrGetCapabilities(h.ctx);
     expect(caps.asr.available).toBe(false);
     expect(caps.asr.languages).toEqual([]);
+  });
+});
+
+describe('asrWarmUp / asrStatus', () => {
+  it('warms the broker without registering a session and reports its status', async () => {
+    const h = makeHarness();
+    expect(await asrStatus(h.ctx)).toBe('idle');
+    await asrWarmUp(h.ctx);
+    expect(await asrStatus(h.ctx)).toBe('ready');
+    expect(h.registry.size).toBe(0);
+    expect(h.fakes).toHaveLength(1);
   });
 });

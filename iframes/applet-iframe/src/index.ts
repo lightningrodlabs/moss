@@ -56,7 +56,9 @@ import {
   LocalModelCapabilities,
   LocalModelsApi,
   fetchAsrCapabilities,
+  fetchAsrStatus,
   openAsrSession,
+  warmUpAsr,
 } from '@theweave/api';
 import { AsyncStatus, readable } from '@holochain-open-dev/stores';
 import { createAppWebsocket, instrumentZomeCallLogging, toOriginalCaseB64 } from '@theweave/utils';
@@ -416,6 +418,8 @@ const weaveApi: WeaveServices = {
       asr: {
         openSession: (opts?: AsrSessionOptions): Promise<AsrSession> =>
           openAsrSession(transport, opts),
+        warmUp: (): Promise<void> => warmUpAsr(transport),
+        status: () => fetchAsrStatus(transport),
       },
     };
   })(),

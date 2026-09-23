@@ -46,7 +46,16 @@ export interface AsrBrokerConfig {
    * the default.
    */
   serverFactory?: (config: WhisperServerConfig) => WhisperServer;
+
+  /**
+   * Called on every host status transition (idle → starting → ready →
+   * idle). The shell shows a "starting" indicator from this.
+   */
+  onStatusChange?: (status: AsrHostStatus) => void;
 }
+
+/** Whether the shared sidecar is down, coming up, or serving. */
+export type AsrHostStatus = 'idle' | 'starting' | 'ready';
 
 const DEFAULT_IDLE_TIMEOUT_MS = 5 * 60 * 1_000;
 
@@ -61,6 +70,7 @@ export class AsrBroker {
 
   private readonly idleTimeoutMs: number;
   private readonly factory: (config: WhisperServerConfig) => WhisperServer;
+  private lastStatus: AsrHostStatus = 'idle';
 
   constructor(private readonly config: AsrBrokerConfig) {
     this.idleTimeoutMs = config.idleTimeoutMs ?? DEFAULT_IDLE_TIMEOUT_MS;
@@ -78,6 +88,34 @@ export class AsrBroker {
     }
     const server = await this.acquire();
     return new AsrSession(server, () => this.release(), opts);
+  }
+
+  /**
+   * Bring the sidecar up without opening a session, so the cold start
+   * overlaps with whatever the user is doing before they need it. The
+   * idle timer reclaims it if no session follows.
+   */
+  async warmUp(): Promise<void> {
+    if (this.destroyed) {
+      throw new Error('AsrBroker is destroyed; cannot warm up');
+    }
+    await this.acquire();
+    await this.release();
+  }
+
+  /** Down, coming up, or serving. */
+  get status(): AsrHostStatus {
+    if (this.starting) return 'starting';
+    if (this.server && this.server.state === 'ready') return 'ready';
+    return 'idle';
+  }
+
+  /** Report the current status to the listener when it differs from the last report. */
+  private publishStatus(): void {
+    const next = this.status;
+    if (next === this.lastStatus) return;
+    this.lastStatus = next;
+    this.config.onStatusChange?.(next);
   }
 
   /** Number of currently-open sessions. Diagnostic / test helper. */
@@ -115,6 +153,7 @@ export class AsrBroker {
       this.server = null;
       await s.stop();
     }
+    this.publishStatus();
   }
 
   private async acquire(): Promise<WhisperServer> {
@@ -140,12 +179,15 @@ export class AsrBroker {
         await s.start();
       } catch (err) {
         this.starting = null;
+        this.publishStatus();
         throw err;
       }
       this.server = s;
       this.starting = null;
+      this.publishStatus();
       return s;
     })();
+    this.publishStatus();
     const s = await this.starting;
     this.assertAlive();
     this.sessionCount++;
@@ -192,6 +234,7 @@ export class AsrBroker {
     const s = this.server;
     if (!s) return;
     this.server = null;
+    this.publishStatus();
     this.unloading = s.stop().finally(() => {
       this.unloading = null;
     });

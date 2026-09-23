@@ -148,6 +148,52 @@ describe('AsrBroker', () => {
     expect(broker.isLoaded).toBe(false);
   });
 
+  it('warmUp() starts the server without a session and lets it idle out', async () => {
+    const { broker, fakes } = makeBroker({ idleTimeoutMs: 30 });
+    expect(broker.status).toBe('idle');
+    const warming = broker.warmUp();
+    expect(broker.status).toBe('starting');
+    await warming;
+    expect(broker.status).toBe('ready');
+    expect(fakes).toHaveLength(1);
+    expect(broker.openSessionCount).toBe(0);
+    // No session was opened, so the idle timer must reclaim the server.
+    await new Promise((r) => setTimeout(r, 60));
+    expect(broker.isLoaded).toBe(false);
+    expect(broker.status).toBe('idle');
+  });
+
+  it('a session opened during warmUp reuses the warming server', async () => {
+    const { broker, fakes } = makeBroker({ startDelayMs: 20 });
+    const warming = broker.warmUp();
+    const session = await broker.openSession();
+    await warming;
+    expect(fakes).toHaveLength(1);
+    expect(broker.openSessionCount).toBe(1);
+    await session.close();
+    await broker.destroy();
+  });
+
+  it('reports status transitions through onStatusChange', async () => {
+    const seen: string[] = [];
+    const fakes: FakeWhisperServer[] = [];
+    const broker = new AsrBroker({
+      server: { command: ['noop'], modelPath: '/dev/null' },
+      idleTimeoutMs: 0,
+      serverFactory: (cfg) => {
+        const fake = new FakeWhisperServer(cfg, { startDelayMs: 5 });
+        fakes.push(fake);
+        return asWhisperServer(fake);
+      },
+      onStatusChange: (s) => seen.push(s),
+    });
+    const session = await broker.openSession();
+    await session.close();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(seen).toEqual(['starting', 'ready', 'idle']);
+    await broker.destroy();
+  });
+
   it('rejects openSession() after destroy()', async () => {
     const { broker } = makeBroker();
     await broker.destroy();

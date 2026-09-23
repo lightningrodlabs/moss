@@ -504,6 +504,8 @@ export const AppletToParentRequest = Type.Union([
     },
     { additionalProperties: false },
   ),
+  Type.Object({ type: Type.Literal('asr-warm-up') }, { additionalProperties: false }),
+  Type.Object({ type: Type.Literal('asr-status') }, { additionalProperties: false }),
   Type.Object(
     {
       type: Type.Literal('asr-open-session'),
@@ -512,9 +514,7 @@ export const AppletToParentRequest = Type.Union([
           {
             language: Type.Optional(Type.String()),
             sampleRate: Type.Optional(Type.Number()),
-            channels: Type.Optional(
-              Type.Union([Type.Literal(1), Type.Literal(2)]),
-            ),
+            channels: Type.Optional(Type.Union([Type.Literal(1), Type.Literal(2)])),
             maxBufferMs: Type.Optional(Type.Number()),
             vad: Type.Optional(Type.Boolean()),
             vadSilenceRms: Type.Optional(Type.Number()),
