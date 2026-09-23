@@ -16,40 +16,50 @@ export declare function weaveUrlFromWal(wal: WAL, webPrefix?: boolean): string;
 
 Parameter
 
+
 </th><th>
 
 Type
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 wal
 
+
 </td><td>
 
 [WAL](./api.wal.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 webPrefix
 
+
 </td><td>
 
 boolean
 
+
 </td><td>
 
 _(Optional)_
+
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 string
+

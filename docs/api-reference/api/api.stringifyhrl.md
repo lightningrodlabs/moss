@@ -16,27 +16,34 @@ export declare function stringifyHrl(hrl: Hrl): string;
 
 Parameter
 
+
 </th><th>
 
 Type
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 hrl
 
+
 </td><td>
 
 [Hrl](./api.hrl.md)
 
+
 </td><td>
+
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 string
+

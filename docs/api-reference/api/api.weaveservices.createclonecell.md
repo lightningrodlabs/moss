@@ -9,6 +9,5 @@ Create a cloned cell and optionally have it be registered in the group DNA for o
 **Signature:**
 
 ```typescript
-createCloneCell: (req: CreateCloneCellRequest, publicToGroupMembers: boolean) =>
-  Promise<CreateCloneCellResponse>;
+createCloneCell: (req: CreateCloneCellRequest, publicToGroupMembers: boolean) => Promise<CreateCloneCellResponse>;
 ```
