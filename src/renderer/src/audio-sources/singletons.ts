@@ -22,3 +22,14 @@ export const audioSourceGrantsClient = new AudioSourceGrantsClient({
   armPortDeadline: (requestId) => audioSourcePortReceiver.armDeadline(requestId),
   cancelPortExpectation: (requestId) => audioSourcePortReceiver.cancel(requestId),
 });
+
+/**
+ * Releases an unloading iframe's grants without making the caller wait on
+ * main: an unregister must complete even when the stop fails, or the window
+ * keeps an iframe entry for a frame that is gone.
+ */
+export function releaseGrantsFor(iframeId: string): void {
+  void audioSourceGrantsClient
+    .endForIframe(iframeId)
+    .catch((e) => console.warn('[audio-sources] releasing grants for an unloading iframe failed', e));
+}

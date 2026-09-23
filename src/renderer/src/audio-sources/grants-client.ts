@@ -33,7 +33,16 @@ export class AudioSourceGrantsClient {
     return [...(this.byIframe.get(iframeKey) ?? [])];
   }
 
-  async request(req: { iframeKey: string; toolName: string }): Promise<AudioSourceGrantHandle | null> {
+  /**
+   * `iframeKey` is the iframe's registered id; an unregistered iframe is
+   * refused before main is asked, since no grant may be created that nothing
+   * can later release.
+   */
+  async request(req: { iframeKey: string | undefined; toolName: string }): Promise<AudioSourceGrantHandle | null> {
+    const iframeKey = req.iframeKey;
+    if (iframeKey === undefined) {
+      throw new Error('The requesting iframe is not registered with the host; call get-iframe-config first.');
+    }
     if (!this.b.isEnabled()) return null;
     const requestId = this.b.newRequestId();
     // Armed before the invoke: the port message and the invoke reply are
@@ -55,16 +64,48 @@ export class AudioSourceGrantsClient {
       this.b.cancelPortExpectation(requestId);
       return null;
     }
+    // Recorded as soon as main says the grant exists, not once the port has
+    // arrived: an iframe that unloads during the port relay must still find
+    // this grant to release it.
+    this.record(iframeKey, result.grantId);
     this.b.armPortDeadline(requestId);
     let port: MessagePort;
     try {
       port = await portPromise;
     } catch (e) {
-      await this.b.stopAudioSources(result.grantId, 'iframe-unloaded');
+      if (this.forget(iframeKey, result.grantId)) {
+        await this.b.stopAudioSources(result.grantId, 'iframe-unloaded');
+      }
       throw e;
     }
-    this.byIframe.set(req.iframeKey, [...(this.byIframe.get(req.iframeKey) ?? []), result.grantId]);
+    if (!this.holds(iframeKey, result.grantId)) {
+      // The iframe unloaded while the port was in flight, so there is nobody
+      // to hand it to. The stop is issued rather than assumed — an
+      // `endForIframe` pass that had already snapshotted its list would not
+      // have seen this id — and stopping twice is a no-op in main.
+      port.close();
+      await this.b.stopAudioSources(result.grantId, 'iframe-unloaded').catch(() => undefined);
+      return null;
+    }
     return { result, port };
+  }
+
+  private record(iframeKey: string, grantId: string): void {
+    this.byIframe.set(iframeKey, [...(this.byIframe.get(iframeKey) ?? []), grantId]);
+  }
+
+  private holds(iframeKey: string, grantId: string): boolean {
+    return this.byIframe.get(iframeKey)?.includes(grantId) ?? false;
+  }
+
+  /** Drops `grantId` from the iframe's list; false when it was already gone. */
+  private forget(iframeKey: string, grantId: string): boolean {
+    const ids = this.byIframe.get(iframeKey);
+    if (!ids || !ids.includes(grantId)) return false;
+    const rest = ids.filter((id) => id !== grantId);
+    if (rest.length > 0) this.byIframe.set(iframeKey, rest);
+    else this.byIframe.delete(iframeKey);
+    return true;
   }
 
   async endForIframe(iframeKey: string): Promise<void> {

@@ -32,7 +32,7 @@ import {
   selectScreenOrWindow,
   signZomeCallApplet,
 } from '../electron-api.js';
-import { audioSourceGrantsClient } from '../audio-sources/singletons.js';
+import { audioSourceGrantsClient, releaseGrantsFor } from '../audio-sources/singletons.js';
 import { TransferableReply } from '../transferable-reply.js';
 import { MossStore } from '../moss-store.js';
 // import { AppletNotificationSettings } from './types.js';
@@ -467,14 +467,14 @@ export async function handleAppletIframeMessage(
     case 'unregister-iframe':
       if (source.type === 'cross-group') {
         mossStore.iframeStore.unregisterCrossGroupIframe(source.toolCompatibilityId, message.id);
-        await audioSourceGrantsClient.endForIframe(message.id);
+        releaseGrantsFor(message.id);
         break;
       } else {
         mossStore.iframeStore.unregisterAppletIframe(
           encodeHashToBase64(source.appletHash),
           message.id,
         );
-        await audioSourceGrantsClient.endForIframe(message.id);
+        releaseGrantsFor(message.id);
         break;
       }
     case 'get-record-info': {
@@ -506,7 +506,7 @@ export async function handleAppletIframeMessage(
     case 'user-select-screen':
       return selectScreenOrWindow();
     case 'request-audio-sources': {
-      const iframeKey = mossStore.iframeStore.findIframeIdBySource(eventSource) ?? 'unregistered';
+      const iframeKey = mossStore.iframeStore.findIframeIdBySource(eventSource);
       let toolName: string;
       if (source.type === 'applet') {
         const appletStore = await toPromise(mossStore.appletStores.get(source.appletHash)!);

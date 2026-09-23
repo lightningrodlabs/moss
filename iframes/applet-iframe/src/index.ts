@@ -331,6 +331,10 @@ const weaveApi: WeaveServices = {
     const { result, ports } = await postMessageWithPorts({ type: 'request-audio-sources' });
     if (!result) return null;
     const port = ports[0];
+    // A Moss host attaches the port to the same reply that carries a non-null
+    // result (`TransferableReply`), so this branch is unreachable there; it
+    // guards a foreign host that answers the message without honouring the
+    // transfer.
     if (!port) throw new Error('The host granted audio sources but transferred no port.');
     return createAudioSourceCapture(
       { label: result.label, canExcludeSelf: result.canExcludeSelf, port },

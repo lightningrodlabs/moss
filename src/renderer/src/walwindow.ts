@@ -26,7 +26,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import { IframeStore } from './iframe-store';
 import { getIframeKind } from './applets/applet-host';
 import { deriveWalMessageSource } from './wal-message-source';
-import { audioSourceGrantsClient } from './audio-sources/singletons.js';
+import { audioSourceGrantsClient, releaseGrantsFor } from './audio-sources/singletons.js';
 import { TransferableReply } from './transferable-reply.js';
 
 // import { ipcRenderer } from 'electron';
@@ -227,7 +227,7 @@ export class WalWindow extends LitElement {
             // transferred `MessagePort` (see the TransferableReply below), and a
             // transferred port cannot cross the IPC hop to the main window.
             case 'request-audio-sources': {
-              const iframeKey = this.iframeStore.findIframeIdBySource(message.source) ?? 'unregistered';
+              const iframeKey = this.iframeStore.findIframeIdBySource(message.source);
               const toolName =
                 iframeKind.type === 'applet'
                   ? this.appletName ?? encodeHashToBase64(iframeKind.appletHash)
@@ -307,7 +307,7 @@ export class WalWindow extends LitElement {
                   request.request.id,
                 );
               }
-              await audioSourceGrantsClient.endForIframe(request.request.id);
+              releaseGrantsFor(request.request.id);
               return walWindow.electronAPI.appletMessageToParent({
                 request: request.request,
                 source: derivedSource,

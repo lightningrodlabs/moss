@@ -85,6 +85,36 @@ describe('AudioSourceGrantsClient.request', () => {
     expect(r.armPortDeadline).toHaveBeenCalledWith('r1');
   });
 
+  it('an unregistered iframe is refused before main is asked', async () => {
+    const r = rig();
+    await expect(r.client.request({ iframeKey: undefined, toolName: 'Presence' })).rejects.toThrow(
+      /not registered with the host/,
+    );
+    expect(r.requestAudioSources).not.toHaveBeenCalled();
+    expect(r.expectPort).not.toHaveBeenCalled();
+  });
+
+  it('records the grant before the port arrives, so an endForIframe in that window stops it', async () => {
+    let deliverPort!: (port: MessagePort) => void;
+    const port = { close: vi.fn() } as unknown as MessagePort;
+    const r = rig({
+      expectPort: vi.fn(() => new Promise<MessagePort>((res) => (deliverPort = res))),
+    });
+    const pending = r.client.request({ iframeKey: 'i1', toolName: 'Presence' });
+    // Let the invoke resolve; the port is still in flight.
+    await new Promise((res) => setTimeout(res, 0));
+    expect(r.client.grantIdsFor('i1')).toEqual(['g1']);
+
+    await r.client.endForIframe('i1');
+    expect(r.stopAudioSources).toHaveBeenCalledWith('g1', 'iframe-unloaded');
+
+    // The port arrives for a grant nobody holds any more.
+    deliverPort(port);
+    expect(await pending).toBeNull();
+    expect(port.close).toHaveBeenCalled();
+    expect(r.client.grantIdsFor('i1')).toEqual([]);
+  });
+
   it('records the grant under its iframe key', async () => {
     const r = rig();
     await r.client.request({ iframeKey: 'i1', toolName: 'Presence' });
