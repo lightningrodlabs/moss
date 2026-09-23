@@ -16,8 +16,9 @@ import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
-import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/details/details.js';
+import '../../../ui/moss-dialog.js';
+import type { MossDialog } from '../../../ui/moss-dialog.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import type { AppletId, LocalModelCapabilities } from '@theweave/api';
@@ -107,7 +108,7 @@ export class MossTranscriptionSettings extends LitElement {
   }
 
   @query('#about-dialog')
-  private _aboutDialog!: HTMLElement & { show: () => void; hide: () => void };
+  private _aboutDialog!: MossDialog;
 
   private renderTechnicalDetails() {
     if (this.capabilitiesError) {
@@ -204,8 +205,9 @@ export class MossTranscriptionSettings extends LitElement {
 
   private renderAboutDialog() {
     return html`
-      <sl-dialog id="about-dialog" class="moss-dialog" .label=${msg('About transcription')}>
-        <div class="column about" style="gap: 12px;">
+      <moss-dialog id="about-dialog" width="780px" headerAlign="left">
+        <span slot="header">${msg('About transcription')}</span>
+        <div slot="content" class="column about" style="gap: 16px;">
           <p>
             ${msg(
               'All transcription happens on this computer. Your audio is turned into text by a speech model that runs locally, and nothing is sent to a server for processing.',
@@ -231,7 +233,7 @@ export class MossTranscriptionSettings extends LitElement {
             ${this.renderTechnicalDetails()}
           </sl-details>
         </div>
-      </sl-dialog>
+      </moss-dialog>
     `;
   }
 
@@ -258,6 +260,7 @@ export class MossTranscriptionSettings extends LitElement {
       }
       .about p {
         margin: 0;
+        font-size: 16px;
         line-height: 1.5;
       }
       .about a {
