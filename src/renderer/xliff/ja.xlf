@@ -578,21 +578,9 @@
   <source>Error fetching the custom views</source>
   <target>カスタムビューの取得中にエラーが発生しました</target>
 </trans-unit>
-<trans-unit id="s9b21b1ade9a93f3b">
-  <source>Error creating the custom view</source>
-  <target>カスタムビューの作成中にエラーが発生しました</target>
-</trans-unit>
 <trans-unit id="sad75043f72f63552">
   <source>Custom View Name</source>
   <target>カスタムビュー名</target>
-</trans-unit>
-<trans-unit id="s57d1286dd70605a5">
-  <source>Create Custom View</source>
-  <target>カスタムビューを作成</target>
-</trans-unit>
-<trans-unit id="s55797f0c2b3b37a0">
-  <source>Error fetching the blocks for this group</source>
-  <target>このグループのブロックの取得中にエラーが発生しました</target>
 </trans-unit>
 <trans-unit id="s3111a346bb42ba2a">
   <source>Error updating the custom view</source>
@@ -2642,6 +2630,62 @@ starts now</source>
 <trans-unit id="s63f2ae9fc0f5f2e6">
   <source>This link was created by Moss <x id="0" equiv-text="${foundVersion}"/> and points to content Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> cannot open. Open it in Moss <x id="2" equiv-text="${foundVersion}"/>.</source>
   <target>このリンクは Moss <x id="0" equiv-text="${foundVersion}"/> で作成されており、Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> では開けないコンテンツを指しています。Moss <x id="2" equiv-text="${foundVersion}"/> で開いてください。</target>
+</trans-unit>
+<trans-unit id="sb53f7a197981b790">
+  <source>yes</source>
+  <target>はい</target>
+</trans-unit>
+<trans-unit id="s08b35907b5589afa">
+  <source>no</source>
+  <target>いいえ</target>
+</trans-unit>
+<trans-unit id="s929aa78311fb0a41">
+  <source>Audio capture is not available on this system.</source>
+  <target>このシステムでは音声キャプチャを利用できません。</target>
+</trans-unit>
+<trans-unit id="s23c9f3d826e8abef">
+  <source>Backend</source>
+  <target>バックエンド</target>
+</trans-unit>
+<trans-unit id="se97bef6f5749eb48">
+  <source>Per-app capture</source>
+  <target>アプリごとのキャプチャ</target>
+</trans-unit>
+<trans-unit id="s4d512fe36dae282d">
+  <source>Excludes Moss playback</source>
+  <target>Mossの再生を除外</target>
+</trans-unit>
+<trans-unit id="sb3481132c0f2224e">
+  <source>No tool is using audio sources.</source>
+  <target>音声ソースを使用しているツールはありません。</target>
+</trans-unit>
+<trans-unit id="s3fd6bd99e3f6a5be">
+  <source>Started</source>
+  <target>開始</target>
+</trans-unit>
+<trans-unit id="sd9ad53251f2330a5">
+  <source>Stop</source>
+  <target>停止</target>
+</trans-unit>
+<trans-unit id="s3c11d2b2e0023e1f">
+  <source>Allow tools to request audio sources</source>
+  <target>ツールによる音声ソースの要求を許可する</target>
+</trans-unit>
+<trans-unit id="s7bea63b4e5175162">
+  <source>Active grants</source>
+  <target>有効な許可</target>
+</trans-unit>
+<trans-unit id="s9ced6a79ff861137">
+  <source>Audio Sources</source>
+  <target>音声ソース</target>
+</trans-unit>
+<trans-unit id="s694017afa8d626ff">
+  <source>Capabilities</source>
+  <target>機能</target>
+</trans-unit>
+<trans-unit id="s1edca2261e109e6e">
+  <source><x id="0" equiv-text="${g.toolName}"/> is using system audio</source>
+  <target><x id="0" equiv-text="${g.toolName}"/> がシステム音声を使用しています</target>
 </trans-unit>
 </body>
 </file>
