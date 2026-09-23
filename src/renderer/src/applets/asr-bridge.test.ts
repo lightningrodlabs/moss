@@ -159,3 +159,47 @@ describe('AsrRendererBridge.closeAllSessions', () => {
     expect(revoked.map((e) => e.forApplets[0]).sort()).toEqual(['appletA', 'appletB']);
   });
 });
+
+describe('AsrRendererBridge session origins', () => {
+  it('closes only the sessions opened from an iframe that unregistered', async () => {
+    const { bridge, emitted, closeSession } = makeBridge();
+    bridge.registerSession('s-main', 'applet-a' as AppletId, { iframeId: 'iframe-1' });
+    bridge.registerSession('s-other', 'applet-a' as AppletId, { iframeId: 'iframe-2' });
+    bridge.registerSession('s-wal', 'applet-a' as AppletId, { walWebContentsId: 7 });
+
+    await bridge.closeSessionsForIframe('iframe-1');
+
+    expect(closeSession).toHaveBeenCalledTimes(1);
+    expect(closeSession).toHaveBeenCalledWith('s-main');
+    expect(bridge.appletIdForSession('s-main')).toBeUndefined();
+    expect(bridge.appletIdForSession('s-other')).toBe('applet-a');
+    expect(bridge.appletIdForSession('s-wal')).toBe('applet-a');
+    expect(emitted).toHaveLength(1);
+    expect(emitted[0].message).toMatchObject({
+      type: 'asr-event',
+      event: { sessionId: 's-main', eventType: 'error' },
+    });
+  });
+
+  it('closes only the sessions opened from a WAL window that closed', async () => {
+    const { bridge, closeSession } = makeBridge();
+    bridge.registerSession('s-main', 'applet-a' as AppletId, { iframeId: 'iframe-1' });
+    bridge.registerSession('s-wal-7', 'applet-a' as AppletId, { walWebContentsId: 7 });
+    bridge.registerSession('s-wal-9', 'applet-b' as AppletId, { walWebContentsId: 9 });
+
+    await bridge.closeSessionsForWalWindow(7);
+
+    expect(closeSession.mock.calls.map((c) => c[0])).toEqual(['s-wal-7']);
+    expect(bridge.appletIdForSession('s-main')).toBe('applet-a');
+    expect(bridge.appletIdForSession('s-wal-9')).toBe('applet-b');
+  });
+
+  it('leaves sessions with no recorded origin alone on iframe and window closes', async () => {
+    const { bridge, closeSession } = makeBridge();
+    bridge.registerSession('s-unknown', 'applet-a' as AppletId);
+    await bridge.closeSessionsForIframe('iframe-1');
+    await bridge.closeSessionsForWalWindow(7);
+    expect(closeSession).not.toHaveBeenCalled();
+    expect(bridge.appletIdForSession('s-unknown')).toBe('applet-a');
+  });
+});

@@ -272,6 +272,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('asr-push-audio', req) as Promise<void>,
   asrCloseSession: (req: { sessionId: string }) =>
     ipcRenderer.invoke('asr-close-session', req) as Promise<void>,
+  onWalWindowClosed: (
+    callback: (e: Electron.IpcRendererEvent, info: { webContentsId: number }) => void,
+  ) => ipcRenderer.on('wal-window-closed', callback),
   onAsrEvent: (callback: (e: Electron.IpcRendererEvent, event: AsrIncomingEvent) => void) =>
     ipcRenderer.on('asr-event', callback),
 });

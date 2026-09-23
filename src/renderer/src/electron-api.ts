@@ -326,6 +326,9 @@ declare global {
         endOfUtterance?: boolean;
       }) => Promise<void>;
       asrCloseSession: (req: { sessionId: string }) => Promise<void>;
+      onWalWindowClosed: (
+        callback: (e: Electron.IpcRendererEvent, info: { webContentsId: number }) => void,
+      ) => void;
       onAsrEvent: (
         callback: (e: Electron.IpcRendererEvent, event: AsrIncomingEvent) => void,
       ) => void;

@@ -45,7 +45,7 @@ import {
 } from '../utils.js';
 import { AppletToParentRequest as AppletToParentRequestSchema } from '../validationSchemas.js';
 import { AppletStore } from './applet-store.js';
-import { getAsrRendererBridge } from './asr-bridge.js';
+import { getAsrRendererBridge, type SessionOrigin } from './asr-bridge.js';
 import { resolveAppletName } from './applet-name.js';
 import { Value } from '@sinclair/typebox/value';
 import { GroupRemoteSignal, Accountability } from '@theweave/group-client';
@@ -484,6 +484,7 @@ export async function handleAppletIframeMessage(
           message.id,
         );
         releaseGrantsFor(message.id);
+        void getAsrRendererBridge().closeSessionsForIframe(message.id);
         break;
       }
     // ── Local ASR (whisper.cpp via Moss main) ────────────────────
@@ -535,9 +536,19 @@ export async function handleAppletIframeMessage(
         throw new Error('Local ASR access denied by user');
       }
       const result = await window.electronAPI.asrOpenSession(message.opts ?? {});
-      // Register sessionId→appletId so final/error events can be routed
-      // to every iframe (main-window AND WAL windows) hosting the applet.
-      getAsrRendererBridge().registerSession(result.sessionId, appletId);
+      // Register the session with its applet, for event routing and
+      // ownership checks, and with the view that opened it, so the
+      // session is released when that iframe or WAL window goes away
+      // even if the tool never calls close().
+      const origin: SessionOrigin =
+        eventSource === 'wal-window'
+          ? { walWebContentsId: senderWebContentsId }
+          : {
+              iframeId: (mossStore.iframeStore.appletIframes[appletId] ?? []).find(
+                (info) => info.source === eventSource,
+              )?.id,
+            };
+      getAsrRendererBridge().registerSession(result.sessionId, appletId, origin);
       return result;
     }
     case 'asr-push-audio': {

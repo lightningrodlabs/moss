@@ -34,8 +34,8 @@ An eight-angle review produced 40 candidates. The ones below were verified again
 ### Verified but deferred
 
 - **Permission enforcement is renderer-only.** Main's handlers key ownership on webContents id, which is the main renderer for every applet. A compromised renderer bypasses consent. Fixing this needs main to know the applet identity behind a request; it intersects the applet trust-boundary work and the services abstraction, so it belongs there rather than as a patch here.
-- **Sessions outlive their iframe.** Applet iframes are not separate webContents, so the main-process cleanup on `destroyed` never fires for an applet being closed. Sessions held by a tool that forgot to call `close()` keep the sidecar resident until Moss quits. The clean fix is for `applet-host` to close sessions on `unregister-iframe`; it is a modest change but touches the iframe lifecycle, so it was left for a dedicated pass.
-- **WAL-window relay timeout versus the consent dialog.** The 60-second relay timeout can fire while the user is still looking at the native consent dialog; a late Allow then opens a session nobody owns. The consent flow should not run inside the relay's timeout window.
+- **Sessions outlive their iframe.** Fixed 2026-09-23: the renderer bridge records which main-window iframe or WAL window opened each session, `unregister-iframe` releases that iframe's sessions, and main tells the renderer when a WAL window closes so its sessions are released too. Sessions with no recorded origin still rely on the tool's own `close()`.
+- **WAL-window relay timeout versus the consent dialog.** Fixed 2026-09-23: `relayTimeoutMs` in `src/main/appletRelayPolicy.ts` gives `asr-open-session` no deadline, since the native dialog it waits on always resolves.
 - **Per-frame IPC cost.** Every 10 ms audio frame is a separate postMessage, validation pass, and IPC invoke, roughly 100 per second per session. Coalescing to 100 to 200 ms batches in the applet-side session would cut that by an order of magnitude with no VAD impact. Worth doing before Presence runs many concurrent sessions.
 - **The renderer bridge singleton.** Events go main → main renderer → bridge → back through main to WAL windows. Keying the registry by applet id in main would remove the bridge and a round trip; this falls out naturally from the services abstraction registry.
 - **Consent store is separate from the existing tool permissions.** ASR consent lives in renderer localStorage keyed by applet hash, while camera and mic grants live in main's `ToolUserPreferences` keyed by tool id. The services plan already argues for a structured consent key; when that lands, this store should fold into it.
@@ -83,10 +83,9 @@ Sequencing question for you: whether to land `ai-transcription` first and refact
 ## 5. Ordered next steps
 
 1. Decide the sequencing above.
-2. Close the iframe-lifecycle leak (sessions closed on `unregister-iframe`) and take the consent dialog out of the WAL relay's timeout window. Both are small and independent of the abstraction.
-3. Batch audio pushes in `AppletAsrSession` to 100 to 200 ms.
-4. Services abstraction M0 and M1 (envelope, transport, registry, ASR port). Done when the example applet's ASR panel works unchanged and the existing main/asr suites pass.
-5. M2: generalized consent keys and Services settings pane, with the consent store folded toward `ToolUserPreferences`.
-6. M3: extract acorn's harness pieces into a shared package; `HarnessServiceHost` as a multi-backend broker with reverse RPC and resumable sessions.
-7. M4: `weaveClient.harness` facade, fill in acorn's `MossHarnessClient`, a harness panel in the example applet, and a services developer guide generalizing `docs/build/transcription.md`.
-8. Main-process permission enforcement and `utilityProcess` isolation, once main knows applet identity.
+2. Batch audio pushes in `AppletAsrSession` to 100 to 200 ms.
+3. Services abstraction M0 and M1 (envelope, transport, registry, ASR port). Done when the example applet's ASR panel works unchanged and the existing main/asr suites pass.
+4. M2: generalized consent keys and Services settings pane, with the consent store folded toward `ToolUserPreferences`.
+5. M3: extract acorn's harness pieces into a shared package; `HarnessServiceHost` as a multi-backend broker with reverse RPC and resumable sessions.
+6. M4: `weaveClient.harness` facade, fill in acorn's `MossHarnessClient`, a harness panel in the example applet, and a services developer guide generalizing `docs/build/transcription.md`.
+7. Main-process permission enforcement and `utilityProcess` isolation, once main knows applet identity.
