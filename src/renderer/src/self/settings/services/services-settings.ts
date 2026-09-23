@@ -4,22 +4,22 @@ import { localized, msg } from '@lit/localize';
 import { mossStyles } from '../../../shared-styles.js';
 import './audio-sources-settings.js';
 
-enum CapabilityTab {
+enum ServiceTab {
   AudioSources,
 }
 
 /**
- * Host capabilities Tools can be granted, one sub-tab each. Audio Sources is
- * the first; the Local AI tab joins here when that branch lands.
+ * Host services Tools can be granted access to, one sub-tab each. Audio
+ * Sources is the first; the Local AI tab joins here when that branch lands.
  */
 @localized()
-@customElement('moss-capabilities-settings')
-export class MossCapabilitiesSettings extends LitElement {
-  @state() tab: CapabilityTab = CapabilityTab.AudioSources;
+@customElement('moss-services-settings')
+export class MossServicesSettings extends LitElement {
+  @state() tab: ServiceTab = ServiceTab.AudioSources;
 
   renderContent() {
     switch (this.tab) {
-      case CapabilityTab.AudioSources:
+      case ServiceTab.AudioSources:
         return html`<moss-audio-sources-settings></moss-audio-sources-settings>`;
     }
   }
@@ -27,7 +27,7 @@ export class MossCapabilitiesSettings extends LitElement {
   render() {
     return html`
       <div class="row items-center sub-tab-bar">
-        <button class="tab ${this.tab === CapabilityTab.AudioSources ? 'tab-selected' : ''}" @click=${() => (this.tab = CapabilityTab.AudioSources)}>
+        <button class="tab ${this.tab === ServiceTab.AudioSources ? 'tab-selected' : ''}" @click=${() => (this.tab = ServiceTab.AudioSources)}>
           ${msg('Audio Sources')}
         </button>
       </div>

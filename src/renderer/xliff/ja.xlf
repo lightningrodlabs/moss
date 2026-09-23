@@ -2679,13 +2679,13 @@ starts now</source>
   <source>Audio Sources</source>
   <target>音声ソース</target>
 </trans-unit>
-<trans-unit id="s694017afa8d626ff">
-  <source>Capabilities</source>
-  <target>機能</target>
-</trans-unit>
 <trans-unit id="s1edca2261e109e6e">
   <source><x id="0" equiv-text="${g.toolName}"/> is using system audio</source>
   <target><x id="0" equiv-text="${g.toolName}"/> がシステム音声を使用しています</target>
+</trans-unit>
+<trans-unit id="sf55d634dcc743595">
+  <source>Services</source>
+  <target>サービス</target>
 </trans-unit>
 </body>
 </file>

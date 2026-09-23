@@ -12,7 +12,7 @@ import '../profile/profile-settings.js';
 import './language-settings.js';
 import './notification-settings.js';
 import './danger-zone-settings.js';
-import './capabilities/capabilities-settings.js';
+import './services/services-settings.js';
 
 type FeedbackRecord = {
   id: string;
@@ -27,7 +27,7 @@ enum TabsState {
   Profile,
   Language,
   Notifications,
-  Capabilities,
+  Services,
   Feedback,
   DangerZone,
 }
@@ -118,8 +118,8 @@ export class MossSettings extends LitElement {
     return html`<moss-notification-sound-settings></moss-notification-sound-settings>`;
   }
 
-  renderCapabilities() {
-    return html`<moss-capabilities-settings></moss-capabilities-settings>`;
+  renderServices() {
+    return html`<moss-services-settings></moss-services-settings>`;
   }
 
   renderFeedback() {
@@ -202,8 +202,8 @@ export class MossSettings extends LitElement {
         return this.renderLanguage();
       case TabsState.Notifications:
         return this.renderNotifications();
-      case TabsState.Capabilities:
-        return this.renderCapabilities();
+      case TabsState.Services:
+        return this.renderServices();
       case TabsState.Feedback:
         return this.renderFeedback();
       case TabsState.DangerZone:
@@ -239,12 +239,12 @@ export class MossSettings extends LitElement {
           ${msg('Notifications')}
         </button>
         <button
-          class="tab ${this.tabsState === TabsState.Capabilities ? 'tab-selected' : ''}"
+          class="tab ${this.tabsState === TabsState.Services ? 'tab-selected' : ''}"
           @click=${() => {
-            this.tabsState = TabsState.Capabilities;
+            this.tabsState = TabsState.Services;
           }}
         >
-          ${msg('Capabilities')}
+          ${msg('Services')}
         </button>
         <button
           class="tab ${this.tabsState === TabsState.Feedback ? 'tab-selected' : ''}"

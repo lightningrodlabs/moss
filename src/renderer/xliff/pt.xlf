@@ -2679,13 +2679,13 @@ começa agora</target>
   <source>Audio Sources</source>
   <target>Fontes de áudio</target>
 </trans-unit>
-<trans-unit id="s694017afa8d626ff">
-  <source>Capabilities</source>
-  <target>Capacidades</target>
-</trans-unit>
 <trans-unit id="s1edca2261e109e6e">
   <source><x id="0" equiv-text="${g.toolName}"/> is using system audio</source>
   <target><x id="0" equiv-text="${g.toolName}"/> está a usar o áudio do sistema</target>
+</trans-unit>
+<trans-unit id="sf55d634dcc743595">
+  <source>Services</source>
+  <target>Serviços</target>
 </trans-unit>
 </body>
 </file>

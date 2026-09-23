@@ -12,7 +12,7 @@ import { getAudioCapabilities, stopAudioSources } from '../../../electron-api.js
 import { audioSourceGrants } from '../../../audio-sources/grants-store.js';
 import { formatGrantSummary } from '../../../audio-sources/grant-summary.js';
 
-/** The Audio Sources capability: kill switch, what this host can do, and who is capturing right now. */
+/** The Audio Sources service: kill switch, what this host can do, and who is capturing right now. */
 @localized()
 @customElement('moss-audio-sources-settings')
 export class MossAudioSourcesSettings extends LitElement {
