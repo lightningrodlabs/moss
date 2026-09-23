@@ -49,6 +49,7 @@ import {
 } from './peerToolAssets';
 import { BINARIES_DIRECTORY, LAIR_BINARY, RESOURCES_DIRECTORY } from './const';
 import { registerAsrIpc } from './asr/wireUp';
+import { relayTimeoutMs } from './appletRelayPolicy';
 import { MOSS_CONFIG } from './mossConfig';
 import { createLanBeaconService, type BeaconDiagnostics } from './lanBeacon';
 // import { AdminWebsocket } from '@holochain/client';
@@ -1384,12 +1385,12 @@ if (!RUNNING_WITH_COMMAND) {
         senderWebContentsId: e.sender.id,
       });
       return new Promise((resolve, reject) => {
-        const timeoutMs = 60000;
+        const timeoutMs = relayTimeoutMs(message.request.type);
         // The main renderer answers with an AppletHostResponse envelope
         // so a handler failure rejects the WAL window's request right
         // away instead of surfacing as a timeout.
         const onResponse = (response: unknown) => {
-          clearTimeout(timeout);
+          if (timeout !== null) clearTimeout(timeout);
           if (!isAppletHostResponse(response)) {
             return reject(new Error('Malformed applet-host response envelope'));
           }
@@ -1398,10 +1399,13 @@ if (!RUNNING_WITH_COMMAND) {
           }
           return resolve(response.result);
         };
-        const timeout = setTimeout(() => {
-          WE_EMITTER.off(messageId, onResponse);
-          return reject(`Cross-window AppletToParentRequest timed out in ${timeoutMs}ms`);
-        }, timeoutMs);
+        const timeout =
+          timeoutMs === null
+            ? null
+            : setTimeout(() => {
+                WE_EMITTER.off(messageId, onResponse);
+                return reject(`Cross-window AppletToParentRequest timed out in ${timeoutMs}ms`);
+              }, timeoutMs);
         WE_EMITTER.once(messageId, onResponse);
       });
     });
@@ -1619,8 +1623,14 @@ if (!RUNNING_WITH_COMMAND) {
           newWalWindow.hide();
           emitToWindow(newWalWindow, 'window-closing', null);
         });
+        // The main renderer owns the ASR sessions this window's applet
+        // opened through the relay; it needs to hear the window is gone.
+        const walWebContentsId = newWalWindow.webContents.id;
         newWalWindow.on('closed', () => {
           delete WAL_WINDOWS[src];
+          if (MAIN_WINDOW && !MAIN_WINDOW.isDestroyed()) {
+            emitToWindow(MAIN_WINDOW, 'wal-window-closed', { webContentsId: walWebContentsId });
+          }
         });
         WAL_WINDOWS[src] = {
           window: newWalWindow,
