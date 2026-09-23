@@ -8,7 +8,13 @@ import type {
   AudioSourceRow,
 } from '@theweave/moss-types';
 import { AudioCaptureBackend, probeAudioCapabilities } from './audioCapture';
-import { FRAME_MS, PUMP_MAX_FRAMES_PER_TICK, mixToInt16, takeFrameInputs } from './audioMixer';
+import {
+  FRAME_MS,
+  MAX_CATCHUP_FRAMES,
+  PUMP_MAX_FRAMES_PER_TICK,
+  mixToInt16,
+  takeFrameInputs,
+} from './audioMixer';
 
 export const SYSTEM_ROW_ID = 'system';
 export const SYSTEM_ROW_NAME = 'All system output (except Moss)';
@@ -352,7 +358,14 @@ export class AudioSourceGrants {
    * bounded by `PUMP_MAX_FRAMES_PER_TICK` per tick.
    */
   private pump(grant: Grant): void {
-    const due = Math.floor((this.b.now() - grant.pumpStartedAt) / FRAME_MS) - grant.framesEmitted;
+    const rawDue = Math.floor((this.b.now() - grant.pumpStartedAt) / FRAME_MS) - grant.framesEmitted;
+    // A stall leaves the ledger owing one frame per 20 ms it lasted. Replaying
+    // all of it two frames per tick would run the wire at twice real time for
+    // half the stall's length, so only `MAX_CATCHUP_FRAMES` are ever owed:
+    // the rest is written off into `framesEmitted` (stale silence, skipped, not
+    // replayed) and the ledger comes back in step with the wall clock.
+    if (rawDue > MAX_CATCHUP_FRAMES) grant.framesEmitted += rawDue - MAX_CATCHUP_FRAMES;
+    const due = Math.min(rawDue, MAX_CATCHUP_FRAMES);
     const count = Math.min(due, PUMP_MAX_FRAMES_PER_TICK);
     if (count <= 0) return;
     const queues = [...grant.streams.values()].map((s) => s.queue);

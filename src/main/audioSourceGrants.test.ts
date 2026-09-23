@@ -9,7 +9,7 @@ import {
   buildAudioSourceRows,
   describeSelection,
 } from './audioSourceGrants';
-import { FRAME_MS, FRAME_SAMPLES, PUMP_MAX_FRAMES_PER_TICK } from './audioMixer';
+import { FRAME_MS, FRAME_SAMPLES, MAX_CATCHUP_FRAMES, PUMP_MAX_FRAMES_PER_TICK } from './audioMixer';
 
 // ---------- fakes ----------
 
@@ -463,6 +463,37 @@ describe('frame pump', () => {
     r.scheduler.tickWithoutTime();
     expect(r.ports[0].sent).toHaveLength(5);
     expect(r.grants.list()[0].counters.framesSent).toBe(5);
+  });
+
+  it('a multi-second stall is not replayed: catch-up is capped at MAX_CATCHUP_FRAMES', async () => {
+    const r = rig();
+    await r.grants.request(REQ);
+    // 2 s of starved event loop: 100 frames' worth of time, 5 frames of debt.
+    expect(MAX_CATCHUP_FRAMES).toBe(5);
+    r.scheduler.tick(2_000);
+    expect(r.ports[0].sent).toHaveLength(2);
+    r.scheduler.tickWithoutTime();
+    expect(r.ports[0].sent).toHaveLength(4);
+    r.scheduler.tickWithoutTime();
+    expect(r.ports[0].sent).toHaveLength(5);
+    r.scheduler.tickWithoutTime();
+    expect(r.ports[0].sent).toHaveLength(5);
+    expect(r.grants.list()[0].counters.framesSent).toBe(5);
+  });
+
+  it('after a capped stall the ledger is back in step: the next frame time posts exactly one', async () => {
+    const r = rig();
+    await r.grants.request(REQ);
+    r.scheduler.tick(2_000);
+    r.scheduler.tickWithoutTime();
+    r.scheduler.tickWithoutTime();
+    const afterCatchUp = r.ports[0].sent.length;
+    expect(afterCatchUp).toBe(5);
+    // No residual debt: one frame time buys one frame, not a replay burst.
+    r.scheduler.tick();
+    expect(r.ports[0].sent).toHaveLength(afterCatchUp + 1);
+    r.scheduler.tick();
+    expect(r.ports[0].sent).toHaveLength(afterCatchUp + 2);
   });
 
   it('with nothing queued the wire still carries exactly one silent frame per frame time', async () => {

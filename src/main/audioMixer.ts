@@ -20,6 +20,17 @@ export const MAX_BACKLOG_CHUNKS = 5;
  * stays the hard cap for a pump that cannot keep up at all.
  */
 export const PUMP_MAX_FRAMES_PER_TICK = 2;
+/**
+ * The most owed frames the pump will ever replay after a stall. If the event
+ * loop or the grant's timer is starved for seconds, the frame ledger falls that
+ * far behind, and replaying the whole debt at `PUMP_MAX_FRAMES_PER_TICK` per
+ * tick would put the wire back at twice real time for the length of the
+ * recovery — the very over-emission the elapsed-time pump exists to prevent.
+ * Five frames matches `MAX_BACKLOG_CHUNKS` and is well inside the 200 ms the
+ * Tool's ring can absorb; debt older than that is stale silence, so it is
+ * skipped rather than replayed, and the ledger is written forward to match.
+ */
+export const MAX_CATCHUP_FRAMES = 5;
 
 /**
  * Removes one chunk from the head of every non-empty queue and returns them.
