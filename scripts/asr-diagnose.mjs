@@ -94,12 +94,17 @@ function defaultModel() {
   return found;
 }
 
+// Same pinned revision as src/main/asr/binaryResolver.ts, so the reference
+// transcriber matches the sidecar and never re-resolves a channel.
+const NIX_WHISPER_FLAKE_REF =
+  'github:NixOS/nixpkgs/8825bebf6324e0579d012936eff73379af284b6d#whisper-cpp';
+
 function transcribeReference(wavPath, model, cli, outPrefix) {
   const command = cli
     ? cli.split(' ')
     : process.env.MOSS_WHISPER_CLI
       ? process.env.MOSS_WHISPER_CLI.split(' ')
-      : ['nix', 'shell', 'nixpkgs#whisper-cpp', '-c', 'whisper-cli'];
+      : ['nix', 'shell', NIX_WHISPER_FLAKE_REF, '-c', 'whisper-cli'];
   const [cmd, ...lead] = command;
   // Short word-aligned segments so each commit window gets its own slice
   // of the reference instead of one sentence spanning the whole file.

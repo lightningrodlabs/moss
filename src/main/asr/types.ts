@@ -38,7 +38,7 @@ export interface WhisperServerConfig {
   /**
    * The argv-zero (and optional leading args) that launches the whisper
    * server. e.g. `['whisper-server']` for a binary on PATH, or
-   * `['nix', 'shell', 'nixpkgs#whisper-cpp', '-c', 'whisper-server']`
+   * `['nix', 'shell', '<pinned nixpkgs>#whisper-cpp', '-c', 'whisper-server']`
    * to run via nix in dev. Required because Moss has no global default
    * for "where is whisper-server"; the broker resolves this from
    * settings + bundled binaries.
