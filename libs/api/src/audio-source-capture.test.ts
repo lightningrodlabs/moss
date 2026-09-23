@@ -3,6 +3,7 @@ import {
   AUDIO_SOURCE_SAMPLE_RATE,
   WORKLET_PROCESSOR_NAME,
   WORKLET_SOURCE,
+  buildWorkletSource,
   selectContext,
   createAudioSourceCaptureWith,
   ensureWorkletModule,
@@ -42,11 +43,35 @@ describe('selectContext (Review Focus 5)', () => {
   });
 });
 
+type WorkletProcessorInstance = {
+  process: (inputs: unknown, outputs: Float32Array[][]) => boolean;
+  port: { onmessage: ((e: { data: unknown }) => void) | null; postMessage: (m: unknown) => void };
+};
+
+/**
+ * Runs a worklet module with stub `AudioWorkletProcessor`/`registerProcessor`
+ * globals and hands back the class it registered, so the processor can be
+ * exercised without an audio thread.
+ */
+function evaluateWorklet(source: string): new () => WorkletProcessorInstance {
+  const registered: Record<string, new () => WorkletProcessorInstance> = {};
+  class AudioWorkletProcessor {
+    port = { onmessage: null as ((e: { data: unknown }) => void) | null, postMessage: vi.fn() };
+  }
+  const registerProcessor = (name: string, cls: new () => WorkletProcessorInstance) => {
+    registered[name] = cls;
+  };
+  new Function('AudioWorkletProcessor', 'registerProcessor', source)(AudioWorkletProcessor, registerProcessor);
+  const Processor = registered[WORKLET_PROCESSOR_NAME];
+  expect(Processor).toBeDefined();
+  return Processor;
+}
+
 describe('WORKLET_SOURCE', () => {
   it('embeds PcmRing verbatim and registers the processor under the shared name', () => {
     expect(WORKLET_SOURCE).toContain(PcmRing.toString());
     expect(WORKLET_SOURCE).toContain(`registerProcessor(${JSON.stringify(WORKLET_PROCESSOR_NAME)}`);
-    expect(WORKLET_SOURCE).toContain(`new ${PcmRing.name}(${RING_CAPACITY_SAMPLES})`);
+    expect(WORKLET_SOURCE).toContain(`new Ring(${RING_CAPACITY_SAMPLES})`);
   });
 
   it('is self-contained module code (no imports, no helpers)', () => {
@@ -54,18 +79,7 @@ describe('WORKLET_SOURCE', () => {
   });
 
   it('defines a processor that pulls from the ring and stops when told to close', () => {
-    // Evaluate the module with a stub AudioWorkletProcessor/registerProcessor to
-    // exercise the processor class without an audio thread.
-    const registered: Record<string, new () => { process: (i: unknown, o: Float32Array[][]) => boolean; port: { onmessage: ((e: { data: unknown }) => void) | null; postMessage: (m: unknown) => void } }> = {};
-    class AudioWorkletProcessor {
-      port = { onmessage: null as ((e: { data: unknown }) => void) | null, postMessage: vi.fn() };
-    }
-    const registerProcessor = (name: string, cls: (typeof registered)[string]) => {
-      registered[name] = cls;
-    };
-    new Function('AudioWorkletProcessor', 'registerProcessor', WORKLET_SOURCE)(AudioWorkletProcessor, registerProcessor);
-    const Processor = registered[WORKLET_PROCESSOR_NAME];
-    expect(Processor).toBeDefined();
+    const Processor = evaluateWorklet(WORKLET_SOURCE);
     const p = new Processor();
     p.port.onmessage!({ data: new Int16Array(256).fill(16384) });
     const out = [[new Float32Array(128)]];
@@ -80,6 +94,29 @@ describe('WORKLET_SOURCE', () => {
     });
     p.port.onmessage!({ data: { type: 'close' } });
     expect(p.process([], out)).toBe(false);
+  });
+
+  // A bundler may rename or anonymise the emitted ring class (esbuild's
+  // `keepNames` keeps `.name` while the body reads `class X {`), so the module
+  // must name the ring itself rather than borrow the class's own binding.
+  describe.each([
+    ['an anonymous class', PcmRing.toString().replace(/^class\s+\w+/, 'class')],
+    ['a renamed class', PcmRing.toString().replace(/^class\s+\w+/, 'class Q')],
+  ])('built from %s', (_label, ringSource) => {
+    const source = buildWorkletSource(ringSource);
+
+    it('does not reference the ring by any emitted class name', () => {
+      expect(/\bnew PcmRing\b|\bnew Q\b/.test(source)).toBe(false);
+    });
+
+    it('still registers a processor that pulls from the ring', () => {
+      const Processor = evaluateWorklet(source);
+      const p = new Processor();
+      p.port.onmessage!({ data: new Int16Array(256).fill(16384) });
+      const out = [[new Float32Array(128)]];
+      expect(p.process([], out)).toBe(true);
+      expect(out[0][0][0]).toBe(0.5);
+    });
   });
 });
 

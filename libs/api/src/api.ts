@@ -480,16 +480,25 @@ export class WeaveClient implements WeaveServices {
 
   private constructor() {}
 
+  /**
+   * A client carrying the optional features this host offers. `captureAudioSources`
+   * is only present when the host exposes it, so Tools feature-detect it on the
+   * client rather than on the host object.
+   */
+  private static fromHost(): WeaveClient {
+    const client = new WeaveClient();
+    const hostCapture = window.__WEAVE_API__?.captureAudioSources;
+    if (hostCapture) client.captureAudioSources = (opts) => hostCapture(opts);
+    return client;
+  }
+
   static async connect(appletServices?: AppletServices): Promise<WeaveClient> {
     if (window.__WEAVE_RENDER_INFO__) {
       if (appletServices) {
         window.__WEAVE_APPLET_SERVICES__ = appletServices;
       }
       window.dispatchEvent(new CustomEvent('weave-client-connected'));
-      const client = new WeaveClient();
-      const hostCapture = window.__WEAVE_API__?.captureAudioSources;
-      if (hostCapture) client.captureAudioSources = (opts) => hostCapture(opts);
-      return client;
+      return WeaveClient.fromHost();
     } else {
       await new Promise((resolve, _reject) => {
         const listener = () => {
@@ -502,10 +511,7 @@ export class WeaveClient implements WeaveServices {
         window.__WEAVE_APPLET_SERVICES__ = appletServices;
       }
       window.dispatchEvent(new CustomEvent('weave-client-connected'));
-      const client = new WeaveClient();
-      const hostCapture = window.__WEAVE_API__?.captureAudioSources;
-      if (hostCapture) client.captureAudioSources = (opts) => hostCapture(opts);
-      return client;
+      return WeaveClient.fromHost();
     }
   }
 

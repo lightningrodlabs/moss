@@ -82,18 +82,25 @@ export function selectContext(
 }
 
 /**
- * The worklet module, assembled from the ring's own source so there is one
- * ring implementation. It runs on the audio thread: host frames arrive on the
- * node port, each render quantum pulls from the ring, `{type:'stats'}` asks
- * for the counters and `{type:'close'}` retires the processor.
- * @public
+ * Builds the worklet module text around a copy of the ring's source, so there
+ * is one ring implementation. The source is bound to a fixed local name rather
+ * than referenced by its own: a bundler is free to rename or anonymise the
+ * class it emits, and the module text must work whatever name the class body
+ * carries. A class declaration's text is a valid class expression on the
+ * right-hand side, named or not.
+ *
+ * The result runs on the audio thread: host frames arrive on the node port,
+ * each render quantum pulls from the ring, `{type:'stats'}` asks for the
+ * counters and `{type:'close'}` retires the processor.
+ * @internal
  */
-export const WORKLET_SOURCE = `
-${PcmRing.toString()}
+export function buildWorkletSource(ringClassSource: string): string {
+  return `
+const Ring = ${ringClassSource};
 class MossAudioSourceProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
-    this.ring = new ${PcmRing.name}(${RING_CAPACITY_SAMPLES});
+    this.ring = new Ring(${RING_CAPACITY_SAMPLES});
     this.closed = false;
     this.port.onmessage = (e) => {
       const d = e.data;
@@ -115,6 +122,13 @@ class MossAudioSourceProcessor extends AudioWorkletProcessor {
 }
 registerProcessor(${JSON.stringify(WORKLET_PROCESSOR_NAME)}, MossAudioSourceProcessor);
 `;
+}
+
+/**
+ * The worklet module this package loads into an `AudioContext`.
+ * @public
+ */
+export const WORKLET_SOURCE = buildWorkletSource(PcmRing.toString());
 
 /**
  * In-flight or completed worklet-module loads, keyed by context. Two capture

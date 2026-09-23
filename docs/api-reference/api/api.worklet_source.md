@@ -4,7 +4,7 @@
 
 ## WORKLET\_SOURCE variable
 
-The worklet module, assembled from the ring's own source so there is one ring implementation. It runs on the audio thread: host frames arrive on the node port, each render quantum pulls from the ring, `{type:'stats'}` asks for the counters and `{type:'close'}` retires the processor.
+The worklet module this package loads into an `AudioContext`<!-- -->.
 
 **Signature:**
 
