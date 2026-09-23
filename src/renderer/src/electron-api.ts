@@ -22,6 +22,9 @@ import {
 import {
   AppAssetsInfo,
   AppHashes,
+  AudioCapabilities,
+  AudioSourceGrantInfo,
+  AudioSourceRequestResult,
   DistributionInfo,
   ResourceLocation,
   ToolCompatibilityId,
@@ -176,6 +179,14 @@ declare global {
         appletName: string | undefined,
       ) => Promise<void>;
       selectScreenOrWindow: () => Promise<string>;
+      requestAudioSources: (req: {
+        requestId: string;
+        toolName: string;
+      }) => Promise<AudioSourceRequestResult | null>;
+      stopAudioSources: (grantId: string, reason: 'user-stopped' | 'iframe-unloaded') => Promise<void>;
+      listAudioSourceGrants: () => Promise<AudioSourceGrantInfo[]>;
+      getAudioCapabilities: () => Promise<AudioCapabilities>;
+      onAudioSourceGrantsChanged: (callback: (e: any, grants: AudioSourceGrantInfo[]) => any) => void;
       captureScreen: () => Promise<string>;
       getFeedbackWorkerUrl: () => Promise<string>;
       saveFeedback: (feedback: {
@@ -401,6 +412,22 @@ export async function appletDevConfig(): Promise<WeaveDevConfig | undefined> {
 
 export async function selectScreenOrWindow(): Promise<string> {
   return window.electronAPI.selectScreenOrWindow();
+}
+
+export async function requestAudioSources(req: { requestId: string; toolName: string }) {
+  return window.electronAPI.requestAudioSources(req);
+}
+export async function stopAudioSources(grantId: string, reason: 'user-stopped' | 'iframe-unloaded') {
+  return window.electronAPI.stopAudioSources(grantId, reason);
+}
+export async function listAudioSourceGrants() {
+  return window.electronAPI.listAudioSourceGrants();
+}
+export async function getAudioCapabilities() {
+  return window.electronAPI.getAudioCapabilities();
+}
+export function onAudioSourceGrantsChanged(callback: (grants: AudioSourceGrantInfo[]) => void) {
+  window.electronAPI.onAudioSourceGrantsChanged((_e, grants) => callback(grants));
 }
 
 export async function fetchAndValidateHappOrWebhapp(url: string) {

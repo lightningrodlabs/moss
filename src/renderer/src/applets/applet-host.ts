@@ -32,6 +32,8 @@ import {
   selectScreenOrWindow,
   signZomeCallApplet,
 } from '../electron-api.js';
+import { audioSourceGrantsClient, releaseGrantsFor } from '../audio-sources/singletons.js';
+import { TransferableReply } from '../transferable-reply.js';
 import { MossStore } from '../moss-store.js';
 // import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId, stringifyWal } from '@theweave/api';
@@ -93,6 +95,10 @@ export function appletMessageHandler(
 ): (message: MessageEvent<AppletToParentMessage>) => Promise<void> {
   return async (message) => {
     try {
+      // The preload relays grant ports into this page with window.postMessage;
+      // those are this window's own messages, never an applet's.
+      if (message.source === window) return;
+
       let receivedFromSource = getIframeKind(message, mossStore.isAppletDev);
       if (!receivedFromSource) return; // This is the case for the 'default-app://' protocol which needs to be handled elsewhere
 
@@ -103,7 +109,11 @@ export function appletMessageHandler(
         message.data.request,
         message.source,
       );
-      message.ports[0].postMessage({ type: 'success', result });
+      if (result instanceof TransferableReply) {
+        message.ports[0].postMessage({ type: 'success', result: result.result }, result.transfer);
+      } else {
+        message.ports[0].postMessage({ type: 'success', result });
+      }
     } catch (e) {
       console.error('Error while handling applet iframe message. Error: ', e, 'Message: ', message);
       console.log(
@@ -457,12 +467,14 @@ export async function handleAppletIframeMessage(
     case 'unregister-iframe':
       if (source.type === 'cross-group') {
         mossStore.iframeStore.unregisterCrossGroupIframe(source.toolCompatibilityId, message.id);
+        releaseGrantsFor(message.id);
         break;
       } else {
         mossStore.iframeStore.unregisterAppletIframe(
           encodeHashToBase64(source.appletHash),
           message.id,
         );
+        releaseGrantsFor(message.id);
         break;
       }
     case 'get-record-info': {
@@ -493,6 +505,22 @@ export async function handleAppletIframeMessage(
       }
     case 'user-select-screen':
       return selectScreenOrWindow();
+    case 'request-audio-sources': {
+      const iframeKey = mossStore.iframeStore.findIframeIdBySource(eventSource);
+      let toolName: string;
+      if (source.type === 'applet') {
+        const appletStore = await toPromise(mossStore.appletStores.get(source.appletHash)!);
+        toolName = appletStore?.applet.custom_name ?? encodeHashToBase64(source.appletHash);
+      } else {
+        toolName = source.toolCompatibilityId;
+      }
+      const grant = await audioSourceGrantsClient.request({ iframeKey, toolName });
+      if (!grant) return null;
+      return new TransferableReply(
+        { label: grant.result.label, canExcludeSelf: grant.result.canExcludeSelf },
+        [grant.port],
+      );
+    }
     case 'toggle-pocket':
       return openViews.toggleClipboard();
     case 'notify-frame': {

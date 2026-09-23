@@ -15,6 +15,9 @@ import {
   Notification,
   systemPreferences,
   MediaAccessPermissionRequest,
+  MessageChannelMain,
+  MessagePortMain,
+  webContents,
 } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -56,6 +59,10 @@ import {
   signZomeCall,
 } from './utils';
 import { createWalWindow } from './windows';
+import { AudioCaptureBackend, loadAudioCapture, probeAudioCapabilities } from './audioCapture';
+import { AudioSourceGrants } from './audioSourceGrants';
+import { openAudioSourcePicker } from './audioSourcePicker';
+import { registerAudioSourceIpc } from './audioSourcesIpc';
 import { ConductorInfo, NetworkInfo, ToolWeaveConfig } from './sharedTypes';
 import {
   AppAssetsInfo,
@@ -1401,6 +1408,54 @@ if (!RUNNING_WITH_COMMAND) {
         };
       });
     });
+    // The addon dlopens `libpipewire-0.3.so.0` (and its platform equivalents)
+    // at require time, so it is loaded on the first request that needs it
+    // rather than during startup. The flag keeps that to one attempt: a host
+    // without the native library warns once, not on every request.
+    let audioBackend: AudioCaptureBackend | undefined;
+    let audioBackendLoaded = false;
+    const audioBackendThunk = (): AudioCaptureBackend | undefined => {
+      if (!audioBackendLoaded) {
+        audioBackend = loadAudioCapture();
+        audioBackendLoaded = true;
+      }
+      return audioBackend;
+    };
+    const audioSourceGrants = new AudioSourceGrants({
+      backend: audioBackendThunk,
+      platform: process.platform,
+      picker: openAudioSourcePicker,
+      excludePids: () => app.getAppMetrics().map((m) => m.pid),
+      openChannel: () => new MessageChannelMain(),
+      deliverPort: (targetId, payload, port2) => {
+        const target = webContents.fromId(targetId);
+        if (!target || target.isDestroyed()) return false;
+        // A disposed frame can still throw on postMessage even past the
+        // isDestroyed() check above, and postMessage after the far end is
+        // gone is otherwise silent — the grant engine's pump has no other
+        // way to learn the delivery failed.
+        try {
+          target.postMessage('audio-source-port', payload, [port2 as MessagePortMain]);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      scheduler: {
+        setInterval: (fn, ms) => setInterval(fn, ms),
+        clearInterval: (handle) => clearInterval(handle as NodeJS.Timeout),
+      },
+      now: () => Date.now(),
+      monotonicNow: () => performance.now(),
+      newId: () => nanoid(8),
+      onGrantsChanged: (list) => {
+        if (MAIN_WINDOW && !MAIN_WINDOW.isDestroyed())
+          emitToWindow(MAIN_WINDOW, 'audio-source-grants-changed', list);
+      },
+    });
+    registerAudioSourceIpc(audioSourceGrants, () =>
+      probeAudioCapabilities(audioBackendThunk(), process.platform),
+    );
     ipcMain.handle('select-screen-or-window', async () => {
       if (SELECT_SCREEN_OR_WINDOW_WINDOW)
         return Promise.reject('Cannot select multiple screens/windows at once.');

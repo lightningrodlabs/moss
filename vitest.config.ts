@@ -8,6 +8,7 @@ export default defineConfig({
     include: [
       'src/**/*.test.ts',
       'shared/**/src/**/*.test.ts',
+      'libs/api/src/**/*.test.ts',
       'scripts/**/*.test.ts',
       'wdocker/src/**/*.test.ts',
     ],

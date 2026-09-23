@@ -119,6 +119,16 @@ export class IframeStore {
     this.crossGroupIframes[toolCompatibilityId] = iframes.filter(({ id }) => id !== idToRemove);
   }
 
+  /** The registered id of the iframe whose window is `source`, across applet and cross-group iframes. */
+  findIframeIdBySource(source: MessageEventSource | null | 'wal-window'): string | undefined {
+    if (!source) return undefined;
+    for (const iframes of [...Object.values(this.appletIframes), ...Object.values(this.crossGroupIframes)]) {
+      const hit = iframes.find((i) => i.source === source);
+      if (hit) return hit.id;
+    }
+    return undefined;
+  }
+
   appletIframesTotalCount(): number {
     return Object.values(this.appletIframes).flat().length;
   }

@@ -7,15 +7,13 @@
 **Signature:**
 
 ```typescript
-export type RenderView =
-  | {
-      type: 'applet-view';
-      view: AppletView;
-    }
-  | {
-      type: 'cross-group-view';
-      view: CrossGroupView;
-    };
+export type RenderView = {
+    type: 'applet-view';
+    view: AppletView;
+} | {
+    type: 'cross-group-view';
+    view: CrossGroupView;
+};
 ```
-
 **References:** [AppletView](./api.appletview.md)<!-- -->, [CrossGroupView](./api.crossgroupview.md)
+

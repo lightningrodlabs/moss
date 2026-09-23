@@ -317,6 +317,12 @@ export const AppletToParentRequest = Type.Union([
   ),
   Type.Object(
     {
+      type: Type.Literal('request-audio-sources'),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
       type: Type.Literal('toggle-pocket'),
     },
     { additionalProperties: false },

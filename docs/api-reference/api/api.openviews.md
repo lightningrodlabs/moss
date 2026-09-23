@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface OpenViews
+export interface OpenViews 
 ```
 
 ## Methods
@@ -16,30 +16,38 @@ export interface OpenViews
 
 Method
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 [openAppletMain(appletHash, wal)](./api.openviews.openappletmain.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [openCrossGroupMain(toolCompatibilityId)](./api.openviews.opencrossgroupmain.md)
 
+
 </td><td>
+
 
 </td></tr>
 <tr><td>
 
 [openWal(wal)](./api.openviews.openwal.md)
 
+
 </td><td>
+
 
 </td></tr>
 </tbody></table>

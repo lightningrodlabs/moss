@@ -19,6 +19,8 @@ import {
 } from '@theweave/api';
 import {
   AppHashes,
+  AudioSourceGrantInfo,
+  AudioSourcePortDelivery,
   DistributionInfo,
   ResourceLocation,
   ToolCompatibilityId,
@@ -151,6 +153,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
       appletName,
     ),
   selectScreenOrWindow: () => ipcRenderer.invoke('select-screen-or-window'),
+  requestAudioSources: (req: { requestId: string; toolName: string }) =>
+    ipcRenderer.invoke('request-audio-sources', req),
+  stopAudioSources: (grantId: string, reason: 'user-stopped' | 'iframe-unloaded') =>
+    ipcRenderer.invoke('stop-audio-sources', grantId, reason),
+  listAudioSourceGrants: () => ipcRenderer.invoke('list-audio-source-grants'),
+  getAudioCapabilities: () => ipcRenderer.invoke('get-audio-capabilities'),
+  onAudioSourceGrantsChanged: (
+    callback: (e: Electron.IpcRendererEvent, grants: AudioSourceGrantInfo[]) => any,
+  ) => ipcRenderer.on('audio-source-grants-changed', callback),
   captureScreen: () => ipcRenderer.invoke('capture-screen'),
   getFeedbackWorkerUrl: () => ipcRenderer.invoke('get-feedback-worker-url'),
   saveFeedback: (feedback: {
@@ -227,3 +238,10 @@ declare global {
     electronAPI: unknown;
   }
 }
+
+// A grant's MessagePort arrives from main on this channel; it cannot be
+// proxied through the context bridge, so it is re-posted into the page where
+// the applet host forwards it to the requesting Tool.
+ipcRenderer.on('audio-source-port', (event, payload: AudioSourcePortDelivery) => {
+  window.postMessage({ type: 'audio-source-port', ...payload }, '*', event.ports);
+});

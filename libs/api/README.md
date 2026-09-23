@@ -16,6 +16,26 @@ The differences between a Weave Tool and a normal Holochain App are:
 **Definition**: An "Asset" is anything that a) can be identified with an HRL plus arbitrary context and b) has an associated
 "asset-view", i.e. it can be displayed by the applet if requested.
 
+### Capturing system audio (Moss 0.16+)
+
+A Tool can ask the host for audio playing on the user's machine — music, a
+video, another app. The host shows its own picker; the Tool never sees the
+list of applications.
+
+```ts
+const capture = await weaveClient.captureAudioSources?.({ audioContext: myContext });
+if (!capture) return; // host lacks the feature, or the user declined
+myMixer.connect(capture.track); // a live mono 48 kHz MediaStreamTrack
+capture.onended = () => myMixer.disconnect(); // the host or the user ended it
+// later:
+capture.stop();
+```
+
+`captureAudioSources` is absent on hosts without the feature — feature-detect
+it. `capture.canExcludeSelf` is `false` when the host could not exclude its
+own playback; tell the user echo is possible. `capture.stats` carries frame
+and buffer counters for diagnostics.
+
 ### Implementing a most basic applet UI
 
 ```typescript=

@@ -7,21 +7,18 @@
 **Signature:**
 
 ```typescript
-export type OpenViewRequest =
-  | {
-      type: 'applet-main';
-      appletHash: EntryHash;
-      wal?: WAL;
-    }
-  | {
-      type: 'cross-group-main';
-      appletBundleId: string;
-    }
-  | {
-      type: 'asset';
-      wal: WAL;
-      mode?: OpenAssetMode;
-    };
+export type OpenViewRequest = {
+    type: 'applet-main';
+    appletHash: EntryHash;
+    wal?: WAL;
+} | {
+    type: 'cross-group-main';
+    appletBundleId: string;
+} | {
+    type: 'asset';
+    wal: WAL;
+    mode?: OpenAssetMode;
+};
 ```
-
 **References:** [WAL](./api.wal.md)<!-- -->, [OpenAssetMode](./api.openassetmode.md)
+

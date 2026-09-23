@@ -9,10 +9,5 @@ Search in this Applet
 **Signature:**
 
 ```typescript
-search: (
-  appletClient: AppClient,
-  appletHash: AppletHash,
-  weaveServices: WeaveServices,
-  searchFilter: string,
-) => Promise<Array<WAL>>;
+search: (appletClient: AppClient, appletHash: AppletHash, weaveServices: WeaveServices, searchFilter: string) => Promise<Array<WAL>>;
 ```

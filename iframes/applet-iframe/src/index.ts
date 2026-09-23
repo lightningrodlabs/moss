@@ -46,6 +46,9 @@ import {
   AssetStoreContent,
   stringifyWal,
   IframeKind,
+  createAudioSourceCapture,
+  CaptureAudioSourcesOptions,
+  AudioSourceCapture,
 } from '@theweave/api';
 import { AsyncStatus, readable } from '@holochain-open-dev/stores';
 import { createAppWebsocket, instrumentZomeCallLogging, toOriginalCaseB64 } from '@theweave/utils';
@@ -321,6 +324,23 @@ const weaveApi: WeaveServices = {
     postMessage({
       type: 'user-select-screen',
     }),
+
+  captureAudioSources: async (
+    opts?: CaptureAudioSourcesOptions,
+  ): Promise<AudioSourceCapture | null> => {
+    const { result, ports } = await postMessageWithPorts({ type: 'request-audio-sources' });
+    if (!result) return null;
+    const port = ports[0];
+    // A Moss host attaches the port to the same reply that carries a non-null
+    // result (`TransferableReply`), so this branch is unreachable there; it
+    // guards a foreign host that answers the message without honouring the
+    // transfer.
+    if (!port) throw new Error('The host granted audio sources but transferred no port.');
+    return createAudioSourceCapture(
+      { label: result.label, canExcludeSelf: result.canExcludeSelf, port },
+      opts,
+    );
+  },
 
   requestClose: () =>
     postMessage({
@@ -659,8 +679,14 @@ const handleParentMessageGeneral = async (
   }
 };
 
-/** Send a message to Parent */
-async function postMessage(request: AppletToParentRequest): Promise<any> {
+/**
+ * Sends a request to the host and resolves with the reply and any ports the
+ * host transferred alongside it. Every request goes through here; only
+ * `request-audio-sources` carries a port today.
+ */
+async function postMessageWithPorts(
+  request: AppletToParentRequest,
+): Promise<{ result: any; ports: readonly MessagePort[] }> {
   return new Promise((resolve, reject) => {
     const channel = new MessageChannel();
 
@@ -689,12 +715,17 @@ async function postMessage(request: AppletToParentRequest): Promise<any> {
 
     channel.port1.onmessage = (m) => {
       if (m.data.type === 'success') {
-        resolve(m.data.result);
+        resolve({ result: m.data.result, ports: m.ports });
       } else if (m.data.type === 'error') {
         reject(m.data.error);
       }
     };
   });
+}
+
+/** Send a message to Parent */
+async function postMessage(request: AppletToParentRequest): Promise<any> {
+  return (await postMessageWithPorts(request)).result;
 }
 
 async function setupAppClient(appPort: number, token: AppAuthenticationToken) {

@@ -8,10 +8,10 @@
 
 ```typescript
 export type GroupRole = {
-  name: string;
-  defaultMandateDuration: number;
-  privileges: MossPrivilege[];
+    name: string;
+    defaultMandateDuration: number;
+    privileges: MossPrivilege[];
 };
 ```
-
 **References:** [MossPrivilege](./api.mossprivilege.md)
+

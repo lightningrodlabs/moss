@@ -2137,6 +2137,48 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@lightningrodlabs/flexaudio-darwin-arm64@0.3.0-lrl.1":
+  version "0.3.0-lrl.1"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/flexaudio-darwin-arm64/-/flexaudio-darwin-arm64-0.3.0-lrl.1.tgz#bceee7cb79abe48cb3c1d6d60b7256becb8b91a2"
+  integrity sha512-ryEdi2uIAWbYGdotzh0eTs/UkKckADlRaAcqR3J2SYj2mjYodVEWKkacHYaX3zKSTJIC6fr+5B5l3x3MRNRYPg==
+
+"@lightningrodlabs/flexaudio-darwin-x64@0.3.0-lrl.1":
+  version "0.3.0-lrl.1"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/flexaudio-darwin-x64/-/flexaudio-darwin-x64-0.3.0-lrl.1.tgz#99d6149461eb394f3e80db95086f7bbf9760849f"
+  integrity sha512-/GKaN4wCvdt5QmwnrP72x59f03I4eAXPpe9JdDoB08JTMokgCBXu4bdlS7XsYfCRQn00IYWTO2Vob7zkyhSGiA==
+
+"@lightningrodlabs/flexaudio-linux-arm64-gnu@0.3.0-lrl.1":
+  version "0.3.0-lrl.1"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/flexaudio-linux-arm64-gnu/-/flexaudio-linux-arm64-gnu-0.3.0-lrl.1.tgz#5f2ae9cb005aa2d0c2ec33191d41e6751ee0f53c"
+  integrity sha512-7Lc9TDT1xFFmH6F2fCQEl8BBpNYNIoVsrP4rhjRnAB0+AJ4qlAcJZqj+ek1mNmr1TSlQH+ewyRBFApXpSqAi5A==
+
+"@lightningrodlabs/flexaudio-linux-x64-gnu@0.3.0-lrl.1":
+  version "0.3.0-lrl.1"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/flexaudio-linux-x64-gnu/-/flexaudio-linux-x64-gnu-0.3.0-lrl.1.tgz#e766144b124ada8fc8f73775fc0d5312e4e082ab"
+  integrity sha512-KGXFb6WwNDs3EbYcGa+2i2J4dVmA7zueoD0OkUd69ryQPURSWaubBkR5Y31N0KE+/dI4erSLN7VOFxmWajRU+g==
+
+"@lightningrodlabs/flexaudio-win32-arm64-msvc@0.3.0-lrl.1":
+  version "0.3.0-lrl.1"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/flexaudio-win32-arm64-msvc/-/flexaudio-win32-arm64-msvc-0.3.0-lrl.1.tgz#d594026342ade27880464f1dc85fd21dc9b12d1f"
+  integrity sha512-k7hdkFKP78SsoUMflDxNC8kcA8gd908KvNBu7OgW1qqhqgMN6eJkG1Eic7x0mKBdyM43Lil78uHyFlj4xwAqQA==
+
+"@lightningrodlabs/flexaudio-win32-x64-msvc@0.3.0-lrl.1":
+  version "0.3.0-lrl.1"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/flexaudio-win32-x64-msvc/-/flexaudio-win32-x64-msvc-0.3.0-lrl.1.tgz#7bf4442646e59fd0eb0a1da10e5ba1da2fd11e82"
+  integrity sha512-bAE2Z+wRNNcZ6Ip1V4iEob8R8Ea9zINmnRwghjATWSe6MYM+S2v40aTVrGhNKWns1tvXUEYOfpfiNvmmBErVsw==
+
+"@lightningrodlabs/flexaudio@0.3.0-lrl.1":
+  version "0.3.0-lrl.1"
+  resolved "https://registry.yarnpkg.com/@lightningrodlabs/flexaudio/-/flexaudio-0.3.0-lrl.1.tgz#7d480da30c39b76f5b0935f3409ace7fca3cf74c"
+  integrity sha512-5040l4OSnvP2i6vqhKaCHjWQDTfVb+VVsJPXWca30fKZ9AvCnWrNoq0MDw6O55my3r2lJPpWro4PoE9Od4g+PA==
+  optionalDependencies:
+    "@lightningrodlabs/flexaudio-darwin-arm64" "0.3.0-lrl.1"
+    "@lightningrodlabs/flexaudio-darwin-x64" "0.3.0-lrl.1"
+    "@lightningrodlabs/flexaudio-linux-arm64-gnu" "0.3.0-lrl.1"
+    "@lightningrodlabs/flexaudio-linux-x64-gnu" "0.3.0-lrl.1"
+    "@lightningrodlabs/flexaudio-win32-arm64-msvc" "0.3.0-lrl.1"
+    "@lightningrodlabs/flexaudio-win32-x64-msvc" "0.3.0-lrl.1"
+
 "@lightningrodlabs/we-rust-utils-darwin-arm64@0.700.1":
   version "0.700.1"
   resolved "https://registry.yarnpkg.com/@lightningrodlabs/we-rust-utils-darwin-arm64/-/we-rust-utils-darwin-arm64-0.700.1.tgz#77a1c845ccb9c92cfec90f4ed868491b3d2d48dc"
