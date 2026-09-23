@@ -223,6 +223,9 @@ export class WalWindow extends LitElement {
             }
             case 'user-select-screen':
               return window.electronAPI.selectScreenOrWindow();
+            // Must resolve locally, never `handleDefault()`: the reply carries a
+            // transferred `MessagePort` (see the TransferableReply below), and a
+            // transferred port cannot cross the IPC hop to the main window.
             case 'request-audio-sources': {
               const iframeKey = this.iframeStore.findIframeIdBySource(message.source) ?? 'unregistered';
               const toolName =
