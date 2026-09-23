@@ -2928,70 +2928,92 @@ begint nu</target>
   <target>Deze groep staat niet meer vermeld op het lokale netwerk.</target>
 <trans-unit id="s9cb6bbd85daeb51f">
   <source>No capabilities reported.</source>
+  <target>Geen mogelijkheden gemeld.</target>
 </trans-unit>
 <trans-unit id="s8c36545f724b9460">
   <source>(none)</source>
+  <target>(geen)</target>
 </trans-unit>
 <trans-unit id="sbfd12d4d878216c6">
   <source>Available:</source>
+  <target>Beschikbaar:</target>
 </trans-unit>
 <trans-unit id="sa36aa646efe3b5e0">
   <source>Model:</source>
+  <target>Model:</target>
 </trans-unit>
 <trans-unit id="s10c1286464b46257">
   <source>Streaming partials:</source>
+  <target>Tussentijdse resultaten (streaming):</target>
 </trans-unit>
 <trans-unit id="s538c8ca77f9b59e3">
   <source>Latency tier:</source>
+  <target>Latentieniveau:</target>
 </trans-unit>
 <trans-unit id="s14db09395fd05086">
   <source>Languages:</source>
+  <target>Talen:</target>
 </trans-unit>
 <trans-unit id="s6f87b8dc56fff501">
   <source>No tools have been granted local transcription access yet. The first time a tool asks, you will be prompted.</source>
+  <target>Nog geen enkele tool heeft toegang tot lokale transcriptie gekregen. De eerste keer dat een tool erom vraagt, wordt het je gevraagd.</target>
 </trans-unit>
 <trans-unit id="s3be7f9e932f476a3">
   <source>Allowed</source>
+  <target>Toegestaan</target>
 </trans-unit>
 <trans-unit id="s93390561e1afc0b6">
   <source>Denied</source>
+  <target>Geweigerd</target>
 </trans-unit>
 <trans-unit id="s0e871352ba4b17d3">
   <source>Revoke</source>
+  <target>Intrekken</target>
 </trans-unit>
 <trans-unit id="s71a069951bcde0c0">
   <source>Speech recognition</source>
+  <target>Spraakherkenning</target>
 </trans-unit>
 <trans-unit id="sa32eea12a8fcb38b">
   <source>Moss runs speech-to-text on this device. Tools request access the first time they need it; you can review and revoke those decisions below.</source>
+  <target>Moss zet spraak om in tekst op dit apparaat. Tools vragen toegang de eerste keer dat ze die nodig hebben; hieronder kun je die beslissingen bekijken en intrekken.</target>
 </trans-unit>
 <trans-unit id="sd0bce80972cf3be3">
   <source>Tool permissions</source>
+  <target>Toolrechten</target>
 </trans-unit>
 <trans-unit id="s8214d12128c7fa3f">
   <source>Transcription</source>
+  <target>Transcriptie</target>
 </trans-unit>
 <trans-unit id="s29ab9d572b687e7f">
   <source>Starting local transcription model…</source>
+  <target>Lokaal transcriptiemodel wordt gestart…</target>
 </trans-unit>
 <trans-unit id="sd3035ae80e950c83">
   <source>Runtime:</source>
+  <target>Runtime:</target>
 </trans-unit>
 <trans-unit id="s4836f1bc154d67ce">
   <source>About transcription</source>
+  <target>Over transcriptie</target>
 </trans-unit>
 <trans-unit id="se2fe09d12c92afea">
   <source>All transcription happens on this computer. Your audio is turned into text by a speech model that runs locally, and nothing is sent to a server for processing.</source>
+  <target>Alle transcriptie gebeurt op deze computer. Je audio wordt door een lokaal draaiend spraakmodel omgezet in tekst, en er wordt niets naar een server gestuurd voor verwerking.</target>
 </trans-unit>
 <trans-unit id="h609db4d1e0221068">
   <source>Moss uses
                 <x id="0" equiv-text="&lt;a href=&quot;https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>Whisper<x id="1" equiv-text="&lt;/a&gt;"/>, an open speech recognition model, running through whisper.cpp.</source>
+  <target>Moss gebruikt <x id="0" equiv-text="&lt;a href=&quot;https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>Whisper<x id="1" equiv-text="&lt;/a&gt;"/>, een open spraakherkenningsmodel, uitgevoerd via whisper.cpp.</target>
 </trans-unit>
 <trans-unit id="s55b7e7ecf7286f55">
   <source>A tool only gets access after you allow it, the first time it asks. You can withdraw that under Tool permissions, and turning the switch off stops every tool at once.</source>
+  <target>Een tool krijgt pas toegang nadat je dat toestaat, de eerste keer dat hij erom vraagt. Je kunt dat intrekken onder Toolrechten, en met de schakelaar uit stoppen alle tools tegelijk.</target>
 </trans-unit>
 <trans-unit id="sadf9ac04abb2c03e">
   <source>Technical details</source>
+  <target>Technische details</target>
 </trans-unit>
 </body>
 </file>

@@ -2928,70 +2928,92 @@ starts now</source>
   <target>このグループはローカルネットワークに掲載されなくなりました。</target>
 <trans-unit id="s9cb6bbd85daeb51f">
   <source>No capabilities reported.</source>
+  <target>機能は報告されていません。</target>
 </trans-unit>
 <trans-unit id="s8c36545f724b9460">
   <source>(none)</source>
+  <target>（なし）</target>
 </trans-unit>
 <trans-unit id="sbfd12d4d878216c6">
   <source>Available:</source>
+  <target>利用可能:</target>
 </trans-unit>
 <trans-unit id="sa36aa646efe3b5e0">
   <source>Model:</source>
+  <target>モデル:</target>
 </trans-unit>
 <trans-unit id="s10c1286464b46257">
   <source>Streaming partials:</source>
+  <target>ストリーミングの途中結果:</target>
 </trans-unit>
 <trans-unit id="s538c8ca77f9b59e3">
   <source>Latency tier:</source>
+  <target>レイテンシ階層:</target>
 </trans-unit>
 <trans-unit id="s14db09395fd05086">
   <source>Languages:</source>
+  <target>言語:</target>
 </trans-unit>
 <trans-unit id="s6f87b8dc56fff501">
   <source>No tools have been granted local transcription access yet. The first time a tool asks, you will be prompted.</source>
+  <target>まだどのツールにもローカル文字起こしへのアクセスは許可されていません。ツールが最初に要求したときに確認されます。</target>
 </trans-unit>
 <trans-unit id="s3be7f9e932f476a3">
   <source>Allowed</source>
+  <target>許可</target>
 </trans-unit>
 <trans-unit id="s93390561e1afc0b6">
   <source>Denied</source>
+  <target>拒否</target>
 </trans-unit>
 <trans-unit id="s0e871352ba4b17d3">
   <source>Revoke</source>
+  <target>取り消す</target>
 </trans-unit>
 <trans-unit id="s71a069951bcde0c0">
   <source>Speech recognition</source>
+  <target>音声認識</target>
 </trans-unit>
 <trans-unit id="sa32eea12a8fcb38b">
   <source>Moss runs speech-to-text on this device. Tools request access the first time they need it; you can review and revoke those decisions below.</source>
+  <target>Moss はこのデバイス上で音声をテキストに変換します。ツールは最初に必要になったときにアクセスを要求します。その判断は下で確認・取り消しできます。</target>
 </trans-unit>
 <trans-unit id="sd0bce80972cf3be3">
   <source>Tool permissions</source>
+  <target>ツールの権限</target>
 </trans-unit>
 <trans-unit id="s8214d12128c7fa3f">
   <source>Transcription</source>
+  <target>文字起こし</target>
 </trans-unit>
 <trans-unit id="s29ab9d572b687e7f">
   <source>Starting local transcription model…</source>
+  <target>ローカル文字起こしモデルを起動しています…</target>
 </trans-unit>
 <trans-unit id="sd3035ae80e950c83">
   <source>Runtime:</source>
+  <target>ランタイム:</target>
 </trans-unit>
 <trans-unit id="s4836f1bc154d67ce">
   <source>About transcription</source>
+  <target>文字起こしについて</target>
 </trans-unit>
 <trans-unit id="se2fe09d12c92afea">
   <source>All transcription happens on this computer. Your audio is turned into text by a speech model that runs locally, and nothing is sent to a server for processing.</source>
+  <target>文字起こしはすべてこのコンピューター上で行われます。音声はローカルで動作する音声モデルによってテキストに変換され、処理のためにサーバーへ送信されることはありません。</target>
 </trans-unit>
 <trans-unit id="h609db4d1e0221068">
   <source>Moss uses
                 <x id="0" equiv-text="&lt;a href=&quot;https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>Whisper<x id="1" equiv-text="&lt;/a&gt;"/>, an open speech recognition model, running through whisper.cpp.</source>
+  <target>Moss は whisper.cpp を通じて動作するオープンな音声認識モデル <x id="0" equiv-text="&lt;a href=&quot;https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>Whisper<x id="1" equiv-text="&lt;/a&gt;"/> を使用します。</target>
 </trans-unit>
 <trans-unit id="s55b7e7ecf7286f55">
   <source>A tool only gets access after you allow it, the first time it asks. You can withdraw that under Tool permissions, and turning the switch off stops every tool at once.</source>
+  <target>ツールは最初に要求したときにあなたが許可して初めてアクセスできます。ツールの権限からいつでも取り消せますし、スイッチをオフにすればすべてのツールを一度に停止できます。</target>
 </trans-unit>
 <trans-unit id="sadf9ac04abb2c03e">
   <source>Technical details</source>
+  <target>技術的な詳細</target>
 </trans-unit>
 </body>
 </file>
