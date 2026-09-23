@@ -68,13 +68,17 @@ class FakePort implements GrantPort {
   sent: unknown[] = [];
   closed = false;
   started = false;
-  private listeners: Array<(e: { data: unknown }) => void> = [];
+  private messageListeners: Array<(e: { data: unknown }) => void> = [];
+  private closeListeners: Array<() => void> = [];
   postMessage(data: unknown) {
     if (this.closed) throw new Error('port closed');
     this.sent.push(data);
   }
-  on(_event: 'message', l: (e: { data: unknown }) => void) {
-    this.listeners.push(l);
+  on(event: 'message', l: (e: { data: unknown }) => void): void;
+  on(event: 'close', l: () => void): void;
+  on(event: 'message' | 'close', l: ((e: { data: unknown }) => void) | (() => void)) {
+    if (event === 'message') this.messageListeners.push(l as (e: { data: unknown }) => void);
+    else this.closeListeners.push(l as () => void);
   }
   start() {
     this.started = true;
@@ -84,7 +88,11 @@ class FakePort implements GrantPort {
   }
   /** The Tool's end of the channel speaking. */
   receive(data: unknown) {
-    this.listeners.forEach((l) => l({ data }));
+    this.messageListeners.forEach((l) => l({ data }));
+  }
+  /** Electron's `MessagePortMain` 'close' event: the remote end disconnected. */
+  remoteClose() {
+    this.closeListeners.forEach((l) => l());
   }
 }
 
@@ -414,6 +422,29 @@ describe('ending a grant', () => {
     await flush();
     expect(r.grants.list()).toEqual([]);
     expect(r.ports[0].sent.at(-1)).toEqual({ type: 'ended', reason: 'tool-closed' });
+  });
+
+  it('the remote end closing the port ends the grant as tool-closed', async () => {
+    const r = rig();
+    await r.grants.request(REQ);
+    r.ports[0].remoteClose();
+    await flush();
+    expect(r.grants.list()).toEqual([]);
+    expect(r.backend.opened[0].stop).toHaveBeenCalledTimes(1);
+    expect(r.scheduler.active).toBe(0);
+    expect(r.ports[0].sent.at(-1)).toEqual({ type: 'ended', reason: 'tool-closed' });
+  });
+
+  it('remoteClose on an already-ended grant is a no-op (negative control)', async () => {
+    const r = rig();
+    await r.grants.request(REQ);
+    await r.grants.endGrant('g1', 'user-stopped');
+    r.ports[0].remoteClose();
+    await flush();
+    expect(r.ports[0].sent.filter((m) => (m as { type?: string }).type === 'ended')).toEqual([
+      { type: 'ended', reason: 'user-stopped' },
+    ]);
+    expect(r.backend.opened[0].stop).toHaveBeenCalledTimes(1);
   });
 
   it('an unrelated port message is ignored', async () => {

@@ -17,6 +17,15 @@ export const SYSTEM_ROW_NAME = 'All system output (except Moss)';
 export interface GrantPort {
   postMessage(data: unknown): void;
   on(event: 'message', listener: (event: { data: unknown }) => void): void;
+  /**
+   * `MessagePortMain` emits this when the remote end disconnects (electron.d.ts,
+   * `class MessagePortMain`: "Emitted when the remote end of a MessagePortMain
+   * object becomes disconnected."), which is how a detached Tool iframe's port
+   * is noticed: Chromium does not dispatch `beforeunload` for a detached
+   * iframe, so the renderer's own `unregister-iframe` teardown message never
+   * arrives.
+   */
+  on(event: 'close', listener: () => void): void;
   start(): void;
   close(): void;
 }
@@ -211,6 +220,10 @@ export class AudioSourceGrants {
       const data = e.data as { type?: unknown } | null | undefined;
       if (data && typeof data === 'object' && data.type === 'close') void this.endGrant(grantId, 'tool-closed');
     });
+    // The Tool's own `{type: 'close'}` message covers a normal teardown, but a
+    // detached iframe (Tool disabled/uninstalled, group left, view torn down)
+    // never gets to send it — this is the backstop for that case.
+    port1.on('close', () => void this.endGrant(grantId, 'tool-closed'));
     port1.start();
     grant.timer = this.b.scheduler.setInterval(() => this.pump(grant), FRAME_MS);
 
