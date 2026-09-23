@@ -19,11 +19,12 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { AsrSession } from '../session';
+import { NIX_WHISPER_FLAKE_REF } from '../binaryResolver';
 import { WhisperServer } from '../whisperServer';
 
 const REPO_ROOT = resolve(__dirname, '../../../..');
 const DEFAULT_MODEL = resolve(REPO_ROOT, 'resources/models/ggml-base.en.bin');
-const DEFAULT_CMD = 'nix shell nixpkgs#whisper-cpp -c whisper-server';
+const DEFAULT_CMD = `nix shell ${NIX_WHISPER_FLAKE_REF} -c whisper-server`;
 const FRAME_MS = 10;
 
 function readPcm16Wav(path: string): { sampleRate: number; channels: 1 | 2; pcm: Int16Array } {

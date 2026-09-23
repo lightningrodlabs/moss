@@ -5,6 +5,8 @@ import {
   WhisperCommandResolveError,
   resolveWhisperServerCommand,
   whisperServerBinaryName,
+  NIX_SHELL_START_TIMEOUT_MS,
+  NIX_WHISPER_FLAKE_REF,
 } from '../binaryResolver';
 
 describe('whisperServerBinaryName', () => {
@@ -80,14 +82,28 @@ describe('resolveWhisperServerCommand', () => {
       platform: 'linux',
     });
     expect(out.source).toBe('nixShell');
-    expect(out.command).toEqual([
-      'nix',
-      'shell',
-      'nixpkgs#whisper-cpp',
-      '-c',
-      'whisper-server',
-    ]);
+    expect(out.command).toEqual(['nix', 'shell', NIX_WHISPER_FLAKE_REF, '-c', 'whisper-server']);
+    // A floating channel reference would re-download nixpkgs on every
+    // channel bump; the pin must name an exact revision.
+    expect(NIX_WHISPER_FLAKE_REF).toMatch(/^github:NixOS\/nixpkgs\/[0-9a-f]{40}#whisper-cpp$/);
+    // First use may fetch the whole closure, which the default 60 s
+    // readiness budget does not cover.
+    expect(out.startTimeoutMs).toBe(NIX_SHELL_START_TIMEOUT_MS);
+    expect(NIX_SHELL_START_TIMEOUT_MS).toBeGreaterThanOrEqual(5 * 60_000);
     expect(out.resolvedPath).toBeUndefined();
+  });
+
+  it('gives bundled and env binaries no extra start budget', () => {
+    const out = resolveWhisperServerCommand({
+      binariesDir: '/bins',
+      whisperServerVersion: '1.8.4',
+      isPackaged: true,
+      env: {},
+      fileExists: () => true,
+      platform: 'linux',
+    });
+    expect(out.source).toBe('bundled');
+    expect(out.startTimeoutMs).toBeUndefined();
   });
 
   it('throws with an informative message when packaged and nothing resolves', () => {

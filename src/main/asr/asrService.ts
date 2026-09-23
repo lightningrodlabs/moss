@@ -87,6 +87,7 @@ export function initAsrService(config: AsrServiceConfig): AsrBroker | null {
         command: resolved.command,
         modelPath: config.modelPath,
         onLog: config.onLog,
+        startTimeoutMs: resolved.startTimeoutMs,
       },
       idleTimeoutMs: config.idleTimeoutMs,
     });

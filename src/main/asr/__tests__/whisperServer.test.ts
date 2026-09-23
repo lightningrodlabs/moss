@@ -8,9 +8,9 @@
 //
 // Required state to run end-to-end:
 //   - `whisper-server` reachable via $MOSS_WHISPER_SERVER_CMD (space-
-//      separated, e.g. `nix shell nixpkgs#whisper-cpp -c whisper-server`)
+//      separated, e.g. `nix shell <pinned nixpkgs>#whisper-cpp -c whisper-server`)
 //      OR available via the default fallback
-//      `nix shell nixpkgs#whisper-cpp -c whisper-server`
+//      `nix shell <pinned nixpkgs>#whisper-cpp -c whisper-server`
 //   - A ggml model file at $MOSS_WHISPER_MODEL or the M0 spike default
 //      `spikes/asr-m0/models/ggml-base.en.bin`
 //   - A WAV sample at $MOSS_WHISPER_SAMPLE or `spikes/asr-m0/samples/jfk.wav`
@@ -19,12 +19,13 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+import { NIX_WHISPER_FLAKE_REF } from '../binaryResolver';
 import { buildInferenceBody, WhisperServer, WhisperServerStartError } from '../whisperServer';
 
 const REPO_ROOT = resolve(__dirname, '../../../..');
 const DEFAULT_MODEL = resolve(REPO_ROOT, 'spikes/asr-m0/models/ggml-base.en.bin');
 const DEFAULT_SAMPLE = resolve(REPO_ROOT, 'spikes/asr-m0/samples/jfk.wav');
-const DEFAULT_CMD = 'nix shell nixpkgs#whisper-cpp -c whisper-server';
+const DEFAULT_CMD = `nix shell ${NIX_WHISPER_FLAKE_REF} -c whisper-server`;
 
 function resolveCommand(): readonly string[] {
   const raw = process.env.MOSS_WHISPER_SERVER_CMD ?? DEFAULT_CMD;

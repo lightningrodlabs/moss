@@ -10,7 +10,7 @@
 //      Matches the moss pattern for holochain / lair / kitsune2-
 //      bootstrap-srv. Will be populated by fetch-binaries.mjs once the
 //      whisper binary fetch pipeline lands; absent today.
-//   3. `nix shell nixpkgs#whisper-cpp -c whisper-server` dev fallback.
+//   3. `nix shell <pinned nixpkgs>#whisper-cpp -c whisper-server` dev fallback.
 //      Only active when isPackaged === false. Production installs must
 //      never shell out to nix.
 //
@@ -29,7 +29,29 @@ export interface ResolvedWhisperCommand {
   source: WhisperBinarySource;
   /** Absolute path to the resolved binary, when applicable. */
   resolvedPath?: string;
+  /**
+   * Readiness budget for this command, when it needs more than the
+   * default. Undefined means the WhisperServer default applies.
+   */
+  startTimeoutMs?: number;
 }
+
+/**
+ * The dev fallback names an exact nixpkgs revision. A floating channel
+ * reference re-resolves on every channel bump, and that download plus
+ * evaluation on a cold start is long enough to miss the readiness
+ * deadline and fail the applet's first session for no visible reason.
+ * Bump the revision deliberately, together with the whisper-cpp version
+ * it provides.
+ */
+export const NIX_WHISPER_FLAKE_REF =
+  'github:NixOS/nixpkgs/8825bebf6324e0579d012936eff73379af284b6d#whisper-cpp';
+
+/**
+ * First use of the nix fallback may fetch the whole whisper-cpp closure
+ * (a few hundred MB) before the server can even start.
+ */
+export const NIX_SHELL_START_TIMEOUT_MS = 10 * 60_000;
 
 export interface ResolveWhisperCommandOptions {
   /** Absolute path to the resources/bins directory. */
@@ -96,8 +118,9 @@ export function resolveWhisperServerCommand(
   // 3. Nix-shell dev fallback.
   if (!opts.isPackaged) {
     return {
-      command: ['nix', 'shell', 'nixpkgs#whisper-cpp', '-c', 'whisper-server'],
+      command: ['nix', 'shell', NIX_WHISPER_FLAKE_REF, '-c', 'whisper-server'],
       source: 'nixShell',
+      startTimeoutMs: NIX_SHELL_START_TIMEOUT_MS,
     };
   }
 
