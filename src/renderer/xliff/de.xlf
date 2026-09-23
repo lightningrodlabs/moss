@@ -2962,9 +2962,6 @@ beginnt jetzt</target>
 <trans-unit id="s71a069951bcde0c0">
   <source>Speech recognition</source>
 </trans-unit>
-<trans-unit id="sbf497b11ae31fcfd">
-  <source>Capabilities info</source>
-</trans-unit>
 <trans-unit id="sa32eea12a8fcb38b">
   <source>Moss runs speech-to-text on this device. Tools request access the first time they need it; you can review and revoke those decisions below.</source>
 </trans-unit>
@@ -2976,6 +2973,25 @@ beginnt jetzt</target>
 </trans-unit>
 <trans-unit id="s29ab9d572b687e7f">
   <source>Starting local transcription model…</source>
+</trans-unit>
+<trans-unit id="sd3035ae80e950c83">
+  <source>Runtime:</source>
+</trans-unit>
+<trans-unit id="s4836f1bc154d67ce">
+  <source>About transcription</source>
+</trans-unit>
+<trans-unit id="se2fe09d12c92afea">
+  <source>All transcription happens on this computer. Your audio is turned into text by a speech model that runs locally, and nothing is sent to a server for processing.</source>
+</trans-unit>
+<trans-unit id="h609db4d1e0221068">
+  <source>Moss uses
+                <x id="0" equiv-text="&lt;a href=&quot;https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>Whisper<x id="1" equiv-text="&lt;/a&gt;"/>, an open speech recognition model, running through whisper.cpp.</source>
+</trans-unit>
+<trans-unit id="s55b7e7ecf7286f55">
+  <source>A tool only gets access after you allow it, the first time it asks. You can withdraw that under Tool permissions, and turning the switch off stops every tool at once.</source>
+</trans-unit>
+<trans-unit id="sadf9ac04abb2c03e">
+  <source>Technical details</source>
 </trans-unit>
 </body>
 </file>

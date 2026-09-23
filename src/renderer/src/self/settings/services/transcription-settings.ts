@@ -12,11 +12,12 @@
 
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { customElement, query, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
-import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
+import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
+import '@shoelace-style/shoelace/dist/components/details/details.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import type { AppletId, LocalModelCapabilities } from '@theweave/api';
@@ -105,7 +106,10 @@ export class MossTranscriptionSettings extends LitElement {
     void this.refreshGrants();
   }
 
-  private renderCapabilitiesTooltip() {
+  @query('#about-dialog')
+  private _aboutDialog!: HTMLElement & { show: () => void; hide: () => void };
+
+  private renderTechnicalDetails() {
     if (this.capabilitiesError) {
       return html`<div class="error">${this.capabilitiesError}</div>`;
     }
@@ -117,12 +121,13 @@ export class MossTranscriptionSettings extends LitElement {
         : caps.languages.slice(0, 20).join(', ') +
           (caps.languages.length > 20 ? ` …+${caps.languages.length - 20} more` : '');
     return html`
-      <div class="caps-tooltip">
+      <div class="caps-table">
+        <div><b>${msg('Runtime:')}</b> whisper.cpp (whisper-server)</div>
         <div><b>${msg('Available:')}</b> ${caps.available ? msg('yes') : msg('no')}</div>
         <div><b>${msg('Model:')}</b> ${caps.model || msg('(none)')}</div>
         <div><b>${msg('Streaming partials:')}</b> ${caps.streaming ? msg('yes') : msg('no')}</div>
         <div><b>${msg('Latency tier:')}</b> ${caps.latencyTier}</div>
-        <div><b>${msg('Languages:')}</b> ${langs}</div>
+        <div><b>${msg('Languages:')}</b> ${caps.languages.length} — ${langs}</div>
       </div>
     `;
   }
@@ -162,16 +167,17 @@ export class MossTranscriptionSettings extends LitElement {
         <section>
           <div class="row" style="align-items: center; gap: 12px;">
             <h3 style="margin: 0; flex: 1;">${msg('Speech recognition')}</h3>
-            <sl-tooltip placement="left">
-              <div slot="content">${this.renderCapabilitiesTooltip()}</div>
-              <span
-                class="info-icon"
-                tabindex="0"
-                role="button"
-                aria-label=${msg('Capabilities info')}
-                >ⓘ</span
-              >
-            </sl-tooltip>
+            <span
+              class="info-icon"
+              tabindex="0"
+              role="button"
+              aria-label=${msg('About transcription')}
+              @click=${() => this._aboutDialog.show()}
+              @keypress=${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') this._aboutDialog.show();
+              }}
+              >ⓘ</span
+            >
             <sl-switch
               ?checked=${this.enabled}
               @sl-change=${(e: Event) =>
@@ -192,6 +198,40 @@ export class MossTranscriptionSettings extends LitElement {
           ${this.renderGrants()}
         </section>
       </div>
+      ${this.renderAboutDialog()}
+    `;
+  }
+
+  private renderAboutDialog() {
+    return html`
+      <sl-dialog id="about-dialog" class="moss-dialog" .label=${msg('About transcription')}>
+        <div class="column about" style="gap: 12px;">
+          <p>
+            ${msg(
+              'All transcription happens on this computer. Your audio is turned into text by a speech model that runs locally, and nothing is sent to a server for processing.',
+            )}
+          </p>
+          <p>
+            ${msg(
+              html`Moss uses
+                <a
+                  href="https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >Whisper</a
+                >, an open speech recognition model, running through whisper.cpp.`,
+            )}
+          </p>
+          <p>
+            ${msg(
+              'A tool only gets access after you allow it, the first time it asks. You can withdraw that under Tool permissions, and turning the switch off stops every tool at once.',
+            )}
+          </p>
+          <sl-details summary=${msg('Technical details')}>
+            ${this.renderTechnicalDetails()}
+          </sl-details>
+        </div>
+      </sl-dialog>
     `;
   }
 
@@ -209,18 +249,26 @@ export class MossTranscriptionSettings extends LitElement {
         height: 20px;
         border-radius: 50%;
         font-size: 14px;
-        cursor: help;
+        cursor: pointer;
         color: var(--sl-color-neutral-600, #666);
         user-select: none;
       }
       .info-icon:hover {
         color: var(--moss-purple, #6200ea);
       }
-      .caps-tooltip {
+      .about p {
+        margin: 0;
+        line-height: 1.5;
+      }
+      .about a {
+        color: var(--moss-purple, #6200ea);
+      }
+      .caps-table {
         font-family: monospace;
         font-size: 12px;
         line-height: 1.6;
         text-align: left;
+        padding: 8px 0 0 0;
       }
       .subtle {
         opacity: 0.7;
