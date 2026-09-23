@@ -8,7 +8,7 @@ import type {
   AudioSourceRow,
 } from '@theweave/moss-types';
 import { AudioCaptureBackend, probeAudioCapabilities } from './audioCapture';
-import { FRAME_MS, mixToInt16, takeFrameInputs } from './audioMixer';
+import { FRAME_MS, PUMP_MAX_FRAMES_PER_TICK, mixToInt16, takeFrameInputs } from './audioMixer';
 
 export const SYSTEM_ROW_ID = 'system';
 export const SYSTEM_ROW_NAME = 'All system output (except Moss)';
@@ -329,13 +329,22 @@ export class AudioSourceGrants {
   }
 
   private pump(grant: Grant): void {
-    const { inputs, dropped } = takeFrameInputs([...grant.streams.values()].map((s) => s.queue));
-    grant.info.counters.backlogDropped += dropped;
-    try {
-      grant.port1.postMessage(mixToInt16(inputs));
-      grant.info.counters.framesSent += 1;
-    } catch {
-      void this.endGrant(grant.info.grantId, 'tool-closed');
+    const queues = [...grant.streams.values()].map((s) => s.queue);
+    // Always emit one frame (silence if nothing is queued); emit up to
+    // PUMP_MAX_FRAMES_PER_TICK - 1 more only while a backlog remains, so a
+    // backend that runs slightly ahead of this tick's timer gets drained
+    // instead of losing chunks to the backlog cap in takeFrameInputs.
+    for (let n = 0; n < PUMP_MAX_FRAMES_PER_TICK; n++) {
+      const { inputs, dropped } = takeFrameInputs(queues);
+      grant.info.counters.backlogDropped += dropped;
+      try {
+        grant.port1.postMessage(mixToInt16(inputs));
+        grant.info.counters.framesSent += 1;
+      } catch {
+        void this.endGrant(grant.info.grantId, 'tool-closed');
+        return;
+      }
+      if (!queues.some((q) => q.length > 0)) break;
     }
   }
 

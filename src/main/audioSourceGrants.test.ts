@@ -9,7 +9,7 @@ import {
   buildAudioSourceRows,
   describeSelection,
 } from './audioSourceGrants';
-import { FRAME_SAMPLES } from './audioMixer';
+import { FRAME_SAMPLES, PUMP_MAX_FRAMES_PER_TICK } from './audioMixer';
 
 // ---------- fakes ----------
 
@@ -357,10 +357,11 @@ describe('frame pump', () => {
     expect(r.grants.list()[0].counters.framesSent).toBe(1);
   });
 
-  it('no chunks queued → a silent frame still goes out', async () => {
+  it('no chunks queued → exactly one silent frame goes out (unchanged behaviour)', async () => {
     const r = rig();
     await r.grants.request(REQ);
     r.scheduler.tick();
+    expect(r.ports[0].sent).toHaveLength(1);
     const frame = r.ports[0].sent[0] as Int16Array;
     expect(frame.every((s) => s === 0)).toBe(true);
   });
@@ -379,6 +380,36 @@ describe('frame pump', () => {
     for (let i = 0; i < 8; i++) r.backend.chunk(0, 0.1);
     r.scheduler.tick();
     expect(r.grants.list()[0].counters.backlogDropped).toBe(3);
+  });
+
+  it('a small backlog is drained across extra frames within the tick, capped at PUMP_MAX_FRAMES_PER_TICK', async () => {
+    const r = rig();
+    await r.grants.request(REQ);
+    r.backend.chunk(0, 0.1);
+    r.backend.chunk(0, 0.1);
+    r.backend.chunk(0, 0.1);
+    r.scheduler.tick();
+    expect(PUMP_MAX_FRAMES_PER_TICK).toBe(2);
+    expect(r.ports[0].sent).toHaveLength(2);
+    expect(r.grants.list()[0].counters.backlogDropped).toBe(0);
+    expect(r.grants.list()[0].counters.framesSent).toBe(2);
+    // The third chunk is the leftover; the next tick drains it alone and stops.
+    r.scheduler.tick();
+    expect(r.ports[0].sent).toHaveLength(3);
+  });
+
+  it('two streams with an uneven backlog: the leading frame mixes both, the extra carries only the deeper stream\'s leftover', async () => {
+    const r = rig();
+    r.backend.processList = [{ pid: 3, name: 'Firefox', isOutputActive: true }];
+    r.picker.mockImplementationOnce(async (rows) => rows.map((x) => x.id));
+    await r.grants.request(REQ);
+    r.backend.chunk(0, 0.25);
+    r.backend.chunk(0, 0.25);
+    r.backend.chunk(1, 0.5);
+    r.scheduler.tick();
+    expect(r.ports[0].sent).toHaveLength(2);
+    expect((r.ports[0].sent[0] as Int16Array)[0]).toBe(24575);
+    expect((r.ports[0].sent[1] as Int16Array)[0]).toBe(8192);
   });
 });
 

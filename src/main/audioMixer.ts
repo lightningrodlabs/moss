@@ -10,6 +10,16 @@ export const FRAME_MS = 20;
 export const FRAME_SAMPLES = 960;
 /** At most 100 ms of audio may wait per stream before the oldest is discarded. */
 export const MAX_BACKLOG_CHUNKS = 5;
+/**
+ * Extra frames the pump may emit within one tick while a backlog remains, on
+ * top of the one it always emits. A `setInterval(FRAME_MS)` timer runs
+ * slightly slower than a backend that hands over a chunk every `FRAME_MS`, so
+ * queues creep up and `takeFrameInputs` would otherwise discard whole chunks
+ * to `MAX_BACKLOG_CHUNKS` well before the backlog is actually large. Bounding
+ * the catch-up at 2 keeps added latency within ~40 ms; `MAX_BACKLOG_CHUNKS`
+ * stays the hard cap for a pump that cannot keep up at all.
+ */
+export const PUMP_MAX_FRAMES_PER_TICK = 2;
 
 /**
  * Removes one chunk from the head of every non-empty queue and returns them.
