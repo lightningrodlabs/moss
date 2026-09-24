@@ -1,61 +1,66 @@
-import { BrowserWindow } from 'electron';
-import { is } from '@electron-toolkit/utils';
-import path from 'path';
-import type { AudioSourceRow } from '@theweave/moss-types';
+import type { AudioSourcePickerRequest, AudioSourceRow } from '@theweave/moss-types';
+import type { PickerRequester } from './audioSourceGrants';
 
-type PickerState = {
-  window: BrowserWindow;
-  rows: AudioSourceRow[];
-  resolve: (ids: string[] | null) => void;
-};
-
-let PICKER: PickerState | null = null;
-
-/** Rows for the open picker page (empty when none is open). */
-export function pickerRows(): AudioSourceRow[] {
-  return PICKER?.rows ?? [];
+/** The requesting window, as the picker sees it (structurally a `WebContents` wrapper). */
+export interface PickerWindow {
+  isDestroyed(): boolean;
+  showPicker(request: AudioSourcePickerRequest): void;
+  focus(): void;
+  /** Calls `listener` once the window's page is gone; returns an unsubscribe. */
+  onGone(listener: () => void): () => void;
 }
 
-/** The picker page confirmed (`ids`) or cancelled (`null`). */
-export function pickerSelected(ids: string[] | null): void {
-  if (!PICKER) return;
-  const picker = PICKER;
-  PICKER = null;
-  picker.resolve(ids);
-  picker.window.close();
+export interface InWindowAudioSourcePickerDeps {
+  lookup: (targetId: number) => PickerWindow | undefined;
+  newId: () => string;
+}
+
+interface Pending {
+  pickerId: string;
+  targetId: number;
+  offered: Set<string>;
+  settle: (ids: string[] | null) => void;
 }
 
 /**
- * Opens the audio-source picker and resolves the chosen row ids, or null when
- * the user cancels or closes the window. Callers serialise: `AudioSourceGrants`
- * holds the one-picker-at-a-time authority (`pickerOpen` in its `request`), so
- * this function assumes no picker is open and would orphan an earlier one's
- * promise if called while one is.
+ * Shows the audio-source picker as a dialog inside the window that asked for
+ * audio, so it appears over the Tool that asked rather than in a window the
+ * user may not be looking at. Only that window can answer, and only with ids
+ * it was offered.
  */
-export function openAudioSourcePicker(rows: AudioSourceRow[]): Promise<string[] | null> {
-  const window = new BrowserWindow({
-    height: 620,
-    width: 520,
-    minimizable: false,
-    autoHideMenuBar: true,
-    title: 'Share audio from',
-    webPreferences: {
-      preload: path.resolve(__dirname, '../preload/selectaudiosources.js'),
-      safeDialogs: true,
-    },
-  });
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    window.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/selectaudiosources.html`);
-  } else {
-    window.loadFile(path.join(__dirname, '../renderer/selectaudiosources.html'));
-  }
-  return new Promise((resolve) => {
-    PICKER = { window, rows, resolve };
-    window.on('closed', () => {
-      if (PICKER && PICKER.window === window) {
-        PICKER = null;
-        resolve(null);
-      }
+export class InWindowAudioSourcePicker {
+  private pending: Pending | null = null;
+
+  constructor(private readonly deps: InWindowAudioSourcePickerDeps) {}
+
+  open(rows: AudioSourceRow[], requester: PickerRequester): Promise<string[] | null> {
+    const window = this.deps.lookup(requester.targetId);
+    if (!window || window.isDestroyed()) return Promise.resolve(null);
+
+    const pickerId = this.deps.newId();
+    return new Promise((resolve) => {
+      const stopWatching = window.onGone(() => settle(null));
+      const settle = (ids: string[] | null) => {
+        if (this.pending?.pickerId !== pickerId) return;
+        this.pending = null;
+        stopWatching();
+        resolve(ids);
+      };
+      this.pending = {
+        pickerId,
+        targetId: requester.targetId,
+        offered: new Set(rows.map((r) => r.id)),
+        settle,
+      };
+      window.showPicker({ pickerId, toolName: requester.toolName, rows });
+      window.focus();
     });
-  });
+  }
+
+  /** The dialog in window `senderId` confirmed (`ids`) or cancelled (`null`). */
+  answer(senderId: number, pickerId: string, ids: string[] | null): void {
+    const p = this.pending;
+    if (!p || p.pickerId !== pickerId || p.targetId !== senderId) return;
+    p.settle(ids ? ids.filter((id) => p.offered.has(id)) : null);
+  }
 }

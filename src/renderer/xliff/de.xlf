@@ -3047,6 +3047,30 @@ beginnt jetzt</target>
   <source>Turning the switch off stops tools from asking at all, and a capture that is already running can be stopped under Active permissions.</source>
   <target>Wenn du den Schalter ausschaltest, können Tools gar nicht mehr fragen, und eine bereits laufende Aufnahme lässt sich unter „Aktive Berechtigungen“ beenden.</target>
 </trans-unit>
+<trans-unit id="s3e58e7d8979a34db">
+  <source>All system audio (except Moss)</source>
+  <target>Gesamte Systemausgabe (außer Moss)</target>
+</trans-unit>
+<trans-unit id="sb9e464752a8fd655">
+  <source>playing</source>
+  <target>spielt</target>
+</trans-unit>
+<trans-unit id="s598af2cac71b6764">
+  <source>silent</source>
+  <target>stumm</target>
+</trans-unit>
+<trans-unit id="sbd2faa0a5f99ce98">
+  <source>Share audio with <x id="0" equiv-text="${toolName}"/></source>
+  <target>Audio mit <x id="0" equiv-text="${toolName}"/> teilen</target>
+</trans-unit>
+<trans-unit id="s438d605febf22fef">
+  <source>Choose what this Tool can hear. Sound from Moss itself is never shared.</source>
+  <target>Wähle aus, was dieses Tool hören darf. Ton von Moss selbst wird nie geteilt.</target>
+</trans-unit>
+<trans-unit id="s4c9d128b1348f3b7">
+  <source>No applications with audio output were found.</source>
+  <target>Keine Anwendungen mit Audioausgabe gefunden.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

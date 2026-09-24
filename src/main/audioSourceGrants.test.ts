@@ -7,6 +7,7 @@ import type {
 } from '@lightningrodlabs/flexaudio';
 import type { AudioSourceRow } from '@theweave/moss-types';
 import type { AudioCaptureBackend } from './audioCapture';
+import type { PickerRequester } from './audioSourceGrants';
 import {
   AudioSourceGrants,
   AudioSourceGrantsBindings,
@@ -150,7 +151,11 @@ function rig(overrides: Partial<AudioSourceGrantsBindings> = {}) {
   const delivered: Array<{ targetId: number; requestId: string; grantId: string }> = [];
   const changes: number[] = [];
   let ids = 0;
-  const picker = vi.fn(async (_rows: AudioSourceRow[]): Promise<string[] | null> => ['system']);
+  const picker = vi.fn(
+    async (_rows: AudioSourceRow[], _requester: PickerRequester): Promise<string[] | null> => [
+      'system',
+    ],
+  );
   const bindings: AudioSourceGrantsBindings = {
     backend: () => backend,
     platform: 'linux',
@@ -257,6 +262,12 @@ describe('AudioSourceGrants.request', () => {
     r.backend.devicesThrows = true;
     expect(await r.grants.request(REQ)).toBeNull();
     expect(r.picker).not.toHaveBeenCalled();
+  });
+
+  it('the picker is told which window and Tool are asking', async () => {
+    const r = rig();
+    await r.grants.request(REQ);
+    expect(r.picker.mock.calls[0][1]).toEqual({ targetId: 7, toolName: 'Presence' });
   });
 
   it('picker cancelled → null, nothing opened', async () => {

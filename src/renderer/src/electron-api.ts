@@ -30,6 +30,7 @@ import {
   AssetSource,
   AudioCapabilities,
   AudioSourceGrantInfo,
+  AudioSourcePickerRequest,
   AudioSourceRequestResult,
   DistributionInfo,
   LocalToolInfo,
@@ -222,6 +223,10 @@ declare global {
       ) => Promise<void>;
       listAudioSourceGrants: () => Promise<AudioSourceGrantInfo[]>;
       getAudioCapabilities: () => Promise<AudioCapabilities>;
+      onShowAudioSourcePicker: (
+        callback: (e: any, request: AudioSourcePickerRequest) => any,
+      ) => void;
+      audioSourcesSelected: (pickerId: string, ids: string[] | null) => Promise<void>;
       onAudioSourceGrantsChanged: (
         callback: (e: any, grants: AudioSourceGrantInfo[]) => any,
       ) => void;

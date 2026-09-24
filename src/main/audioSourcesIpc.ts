@@ -1,8 +1,42 @@
-import { ipcMain } from 'electron';
+import { BrowserWindow, ipcMain, webContents } from 'electron';
 import type { Event, WebContents, WebContentsDidStartNavigationEventParams } from 'electron';
 import type { AudioCapabilities } from '@theweave/moss-types';
 import { AudioSourceGrants } from './audioSourceGrants';
-import { pickerRows, pickerSelected } from './audioSourcePicker';
+import { InWindowAudioSourcePicker, type PickerWindow } from './audioSourcePicker';
+
+/**
+ * A renderer window as the picker needs it. Its page counts as gone when it is
+ * destroyed, crashes, or navigates away, because a dialog shown to the old
+ * page can no longer be answered.
+ */
+export function pickerWindowFor(targetId: number): PickerWindow | undefined {
+  const wc = webContents.fromId(targetId);
+  if (!wc) return undefined;
+  return {
+    isDestroyed: () => wc.isDestroyed(),
+    showPicker: (request) => wc.send('show-audio-source-picker', request),
+    focus: () => {
+      const window = BrowserWindow.fromWebContents(wc);
+      if (!window) return;
+      if (window.isMinimized()) window.restore();
+      window.focus();
+    },
+    onGone: (listener) => {
+      const onNavigated = (details: Event<WebContentsDidStartNavigationEventParams>): void => {
+        if (details.isMainFrame && !details.isSameDocument) listener();
+      };
+      wc.on('did-start-navigation', onNavigated);
+      wc.on('render-process-gone', listener);
+      wc.on('destroyed', listener);
+      return () => {
+        if (wc.isDestroyed()) return;
+        wc.off('did-start-navigation', onNavigated);
+        wc.off('render-process-gone', listener);
+        wc.off('destroyed', listener);
+      };
+    },
+  };
+}
 
 /**
  * The renderer↔main surface of the audio-source feature. Channel names are
@@ -15,6 +49,7 @@ import { pickerRows, pickerSelected } from './audioSourcePicker';
  */
 export function registerAudioSourceIpc(
   grants: AudioSourceGrants,
+  picker: InWindowAudioSourcePicker,
   capabilities: () => Promise<AudioCapabilities>,
 ): void {
   const watched = new Set<number>();
@@ -66,6 +101,7 @@ export function registerAudioSourceIpc(
   );
   ipcMain.handle('list-audio-source-grants', () => grants.list());
   ipcMain.handle('get-audio-capabilities', () => capabilities());
-  ipcMain.handle('get-audio-source-rows', () => pickerRows());
-  ipcMain.handle('audio-sources-selected', (_e, ids: string[] | null) => pickerSelected(ids));
+  ipcMain.handle('audio-sources-selected', (event, pickerId: string, ids: string[] | null) =>
+    picker.answer(event.sender.id, pickerId, ids),
+  );
 }

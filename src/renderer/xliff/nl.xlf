@@ -3047,6 +3047,30 @@ begint nu</target>
   <source>Turning the switch off stops tools from asking at all, and a capture that is already running can be stopped under Active permissions.</source>
   <target>De schakelaar uitzetten voorkomt dat tools het überhaupt vragen, en een al lopende opname kun je stoppen onder ‘Actieve rechten’.</target>
 </trans-unit>
+<trans-unit id="s3e58e7d8979a34db">
+  <source>All system audio (except Moss)</source>
+  <target>Alle systeemaudio (behalve Moss)</target>
+</trans-unit>
+<trans-unit id="sb9e464752a8fd655">
+  <source>playing</source>
+  <target>speelt af</target>
+</trans-unit>
+<trans-unit id="s598af2cac71b6764">
+  <source>silent</source>
+  <target>stil</target>
+</trans-unit>
+<trans-unit id="sbd2faa0a5f99ce98">
+  <source>Share audio with <x id="0" equiv-text="${toolName}"/></source>
+  <target>Audio delen met <x id="0" equiv-text="${toolName}"/></target>
+</trans-unit>
+<trans-unit id="s438d605febf22fef">
+  <source>Choose what this Tool can hear. Sound from Moss itself is never shared.</source>
+  <target>Kies wat deze tool mag horen. Geluid van Moss zelf wordt nooit gedeeld.</target>
+</trans-unit>
+<trans-unit id="s4c9d128b1348f3b7">
+  <source>No applications with audio output were found.</source>
+  <target>Er zijn geen toepassingen met audio-uitvoer gevonden.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

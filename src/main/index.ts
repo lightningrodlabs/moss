@@ -72,8 +72,8 @@ import {
 import { createWalWindow } from './windows';
 import { AudioCaptureBackend, loadAudioCapture, probeAudioCapabilities } from './audioCapture';
 import { AudioSourceGrants } from './audioSourceGrants';
-import { openAudioSourcePicker } from './audioSourcePicker';
-import { registerAudioSourceIpc } from './audioSourcesIpc';
+import { InWindowAudioSourcePicker } from './audioSourcePicker';
+import { pickerWindowFor, registerAudioSourceIpc } from './audioSourcesIpc';
 import { registerDeepLinkSchemes } from './deepLinkRegistration';
 import { repairLinuxHtmlDefault } from './linuxMimeapps';
 import {
@@ -1503,10 +1503,14 @@ if (!RUNNING_WITH_COMMAND) {
       }
       return audioBackend;
     };
+    const audioSourcePicker = new InWindowAudioSourcePicker({
+      lookup: pickerWindowFor,
+      newId: () => nanoid(8),
+    });
     const audioSourceGrants = new AudioSourceGrants({
       backend: audioBackendThunk,
       platform: process.platform,
-      picker: openAudioSourcePicker,
+      picker: (rows, requester) => audioSourcePicker.open(rows, requester),
       excludePids: () => app.getAppMetrics().map((m) => m.pid),
       openChannel: () => new MessageChannelMain(),
       deliverPort: (targetId, payload, port2) => {
@@ -1535,7 +1539,7 @@ if (!RUNNING_WITH_COMMAND) {
           emitToWindow(MAIN_WINDOW, 'audio-source-grants-changed', list);
       },
     });
-    registerAudioSourceIpc(audioSourceGrants, () =>
+    registerAudioSourceIpc(audioSourceGrants, audioSourcePicker, () =>
       probeAudioCapabilities(audioBackendThunk(), process.platform),
     );
     ipcMain.handle('select-screen-or-window', async () => {

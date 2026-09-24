@@ -3047,6 +3047,30 @@ starts now</source>
   <source>Turning the switch off stops tools from asking at all, and a capture that is already running can be stopped under Active permissions.</source>
   <target>Anahtarı kapatmak araçların hiç sormasını engeller ve halihazırda süren bir yakalama „Etkin izinler“ altından durdurulabilir.</target>
 </trans-unit>
+<trans-unit id="s3e58e7d8979a34db">
+  <source>All system audio (except Moss)</source>
+  <target>Tüm sistem sesi (Moss hariç)</target>
+</trans-unit>
+<trans-unit id="sb9e464752a8fd655">
+  <source>playing</source>
+  <target>çalıyor</target>
+</trans-unit>
+<trans-unit id="s598af2cac71b6764">
+  <source>silent</source>
+  <target>sessiz</target>
+</trans-unit>
+<trans-unit id="sbd2faa0a5f99ce98">
+  <source>Share audio with <x id="0" equiv-text="${toolName}"/></source>
+  <target>Sesi <x id="0" equiv-text="${toolName}"/> ile paylaş</target>
+</trans-unit>
+<trans-unit id="s438d605febf22fef">
+  <source>Choose what this Tool can hear. Sound from Moss itself is never shared.</source>
+  <target>Bu aracın neyi duyabileceğini seçin. Moss'un kendi sesi asla paylaşılmaz.</target>
+</trans-unit>
+<trans-unit id="s4c9d128b1348f3b7">
+  <source>No applications with audio output were found.</source>
+  <target>Ses çıkışı olan uygulama bulunamadı.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

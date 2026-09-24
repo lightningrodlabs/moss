@@ -44,8 +44,11 @@ export interface GrantPort {
 export interface AudioSourceGrantsBindings {
   backend: () => AudioCaptureBackend | undefined;
   platform: NodeJS.Platform;
-  /** Shows the picker; resolves the chosen row ids, or null on cancel/close. */
-  picker: (rows: AudioSourceRow[]) => Promise<string[] | null>;
+  /**
+   * Shows the picker in the requesting window; resolves the chosen row ids,
+   * or null on cancel/close.
+   */
+  picker: (rows: AudioSourceRow[], requester: PickerRequester) => Promise<string[] | null>;
   /** Every pid in this app's process tree — the Chromium audio service, not `process.pid`, emits sound. */
   excludePids: () => number[];
   openChannel: () => { port1: GrantPort; port2: unknown };
@@ -64,6 +67,12 @@ export interface AudioSourceGrantsBindings {
   monotonicNow: () => number;
   newId: () => string;
   onGrantsChanged: (grants: AudioSourceGrantInfo[]) => void;
+}
+
+/** The window that asked for audio, and the Tool it asked for. */
+export interface PickerRequester {
+  targetId: number;
+  toolName: string;
 }
 
 export interface AudioSourceRequest {
@@ -198,7 +207,7 @@ export class AudioSourceGrants {
     this.pickerOpen = true;
     let chosen: string[] | null;
     try {
-      chosen = await this.b.picker(rows);
+      chosen = await this.b.picker(rows, { targetId: req.targetId, toolName: req.toolName });
     } finally {
       this.pickerOpen = false;
     }

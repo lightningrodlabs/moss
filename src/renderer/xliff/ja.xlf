@@ -3047,6 +3047,30 @@ starts now</source>
   <source>Turning the switch off stops tools from asking at all, and a capture that is already running can be stopped under Active permissions.</source>
   <target>スイッチをオフにすると、ツールは要求すらできなくなります。すでに実行中のキャプチャは「有効な権限」から停止できます。</target>
 </trans-unit>
+<trans-unit id="s3e58e7d8979a34db">
+  <source>All system audio (except Moss)</source>
+  <target>システムの全音声（Moss を除く）</target>
+</trans-unit>
+<trans-unit id="sb9e464752a8fd655">
+  <source>playing</source>
+  <target>再生中</target>
+</trans-unit>
+<trans-unit id="s598af2cac71b6764">
+  <source>silent</source>
+  <target>無音</target>
+</trans-unit>
+<trans-unit id="sbd2faa0a5f99ce98">
+  <source>Share audio with <x id="0" equiv-text="${toolName}"/></source>
+  <target><x id="0" equiv-text="${toolName}"/> と音声を共有</target>
+</trans-unit>
+<trans-unit id="s438d605febf22fef">
+  <source>Choose what this Tool can hear. Sound from Moss itself is never shared.</source>
+  <target>このツールが聞ける音声を選んでください。Moss 自体の音声は共有されません。</target>
+</trans-unit>
+<trans-unit id="s4c9d128b1348f3b7">
+  <source>No applications with audio output were found.</source>
+  <target>音声出力のあるアプリケーションが見つかりませんでした。</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
