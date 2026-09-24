@@ -80,7 +80,6 @@
     "test:e2e:ui": "yarn workspace tests test:e2e:ui",
     "test:e2e:headed": "yarn workspace tests test:e2e:headed",
     "test:e2e:clean": "yarn workspace tests test:e2e:clean",
-    "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "update-server": "node scripts/update-server.mjs",
     "gen-update-meta": "node scripts/generate-update-yml.mjs",
