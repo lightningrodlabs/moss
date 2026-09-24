@@ -2,8 +2,9 @@
 // recognition:
 //   - Global enable switch (persisted; default off). While off, tools
 //     cannot open ASR sessions regardless of per-tool consent.
-//   - Info icon reveals the current ASR capabilities (model, languages,
-//     latency tier) on hover, for diagnosing a setup.
+//   - Info icon opens an about dialog: what runs locally, and the
+//     current capabilities (model, languages, latency tier) behind a
+//     technical-details turn-down.
 //   - Lists per-tool consent decisions with Revoke buttons.
 //
 // Turning the switch off or revoking a tool's consent also closes any
@@ -28,6 +29,7 @@ import { mossStoreContext } from '../../../context.js';
 import { MossStore } from '../../../moss-store.js';
 import { APPLET_ASR_CONSENT_CHANGED_EVENT } from '../../../persisted-store.js';
 import { mossStyles } from '../../../shared-styles.js';
+import { serviceStyles } from './service-styles.js';
 import { resolveAppletName } from '../../../applets/applet-name.js';
 import { getAsrRendererBridge } from '../../../applets/asr-bridge.js';
 
@@ -112,7 +114,7 @@ export class MossTranscriptionSettings extends LitElement {
 
   private renderTechnicalDetails() {
     if (this.capabilitiesError) {
-      return html`<div class="error">${this.capabilitiesError}</div>`;
+      return html`<div class="service-error">${this.capabilitiesError}</div>`;
     }
     const caps = this.capabilities?.asr;
     if (!caps) return html`<div>${msg('No capabilities reported.')}</div>`;
@@ -122,7 +124,7 @@ export class MossTranscriptionSettings extends LitElement {
         : caps.languages.slice(0, 20).join(', ') +
           (caps.languages.length > 20 ? ` …+${caps.languages.length - 20} more` : '');
     return html`
-      <div class="caps-table">
+      <div class="service-details">
         <div><b>${msg('Runtime:')}</b> whisper.cpp (whisper-server)</div>
         <div><b>${msg('Available:')}</b> ${caps.available ? msg('yes') : msg('no')}</div>
         <div><b>${msg('Model:')}</b> ${caps.model || msg('(none)')}</div>
@@ -135,20 +137,20 @@ export class MossTranscriptionSettings extends LitElement {
 
   private renderGrants() {
     if (this.grants.length === 0) {
-      return html`<p class="subtle">
+      return html`<p class="service-empty">
         ${msg(
           'No tools have been granted local transcription access yet. The first time a tool asks, you will be prompted.',
         )}
       </p>`;
     }
     return html`
-      <div class="column grants">
+      <div class="column service-rows">
         ${this.grants.map(
           (g) => html`
-            <div class="row grant-row">
+            <div class="row service-row">
               <div class="column" style="flex: 1; min-width: 0;">
-                <span class="grant-name">${g.name}</span>
-                <span class="grant-meta"
+                <span class="service-row-name">${g.name}</span>
+                <span class="service-row-meta"
                   >${g.value === 'granted' ? msg('Allowed') : msg('Denied')}</span
                 >
               </div>
@@ -164,10 +166,10 @@ export class MossTranscriptionSettings extends LitElement {
 
   render() {
     return html`
-      <div class="column" style="padding: 0 20px; gap: 24px;">
+      <div class="column service-pane">
         <section>
-          <div class="row" style="align-items: center; gap: 12px;">
-            <h3 style="margin: 0; flex: 1;">${msg('Speech recognition')}</h3>
+          <div class="row service-heading">
+            <h3>${msg('Speech recognition')}</h3>
             <span
               class="info-icon"
               tabindex="0"
@@ -187,7 +189,7 @@ export class MossTranscriptionSettings extends LitElement {
               ${this.enabled ? msg('Enabled') : msg('Disabled')}
             </sl-switch>
           </div>
-          <p class="subtle" style="margin: 8px 0 0 0;">
+          <p class="service-note">
             ${msg(
               'Moss runs speech-to-text on this device. Tools request access the first time they need it; you can review and revoke those decisions below.',
             )}
@@ -207,7 +209,7 @@ export class MossTranscriptionSettings extends LitElement {
     return html`
       <moss-dialog id="about-dialog" width="780px" headerAlign="left">
         <span slot="header">${msg('About transcription')}</span>
-        <div slot="content" class="column about" style="gap: 16px;">
+        <div slot="content" class="column service-about" style="gap: 16px;">
           <p>
             ${msg(
               'All transcription happens on this computer. Your audio is turned into text by a speech model that runs locally, and nothing is sent to a server for processing.',
@@ -239,64 +241,10 @@ export class MossTranscriptionSettings extends LitElement {
 
   static styles = [
     mossStyles,
+    serviceStyles,
     css`
       :host {
         display: flex;
-      }
-      .info-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        font-size: 14px;
-        cursor: pointer;
-        color: var(--sl-color-neutral-600, #666);
-        user-select: none;
-      }
-      .info-icon:hover {
-        color: var(--moss-purple, #6200ea);
-      }
-      .about p {
-        margin: 0;
-        font-size: 16px;
-        line-height: 1.5;
-      }
-      .about a {
-        color: var(--moss-purple, #6200ea);
-      }
-      .caps-table {
-        font-family: monospace;
-        font-size: 12px;
-        line-height: 1.6;
-        text-align: left;
-        padding: 8px 0 0 0;
-      }
-      .subtle {
-        opacity: 0.7;
-        font-size: 13px;
-      }
-      .error {
-        color: var(--sl-color-danger-600, #b00);
-        font-family: monospace;
-      }
-      .grants {
-        gap: 8px;
-      }
-      .grant-row {
-        padding: 10px 12px;
-        border-radius: 6px;
-        background: rgba(0, 0, 0, 0.04);
-        align-items: center;
-        gap: 12px;
-      }
-      .grant-name {
-        font-weight: 500;
-      }
-      .grant-meta {
-        font-size: 12px;
-        opacity: 0.6;
       }
     `,
   ];

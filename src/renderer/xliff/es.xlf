@@ -2643,37 +2643,9 @@ comienza ahora</target>
   <source>Audio capture is not available on this system.</source>
   <target>La captura de audio no está disponible en este sistema.</target>
 </trans-unit>
-<trans-unit id="s23c9f3d826e8abef">
-  <source>Backend</source>
-  <target>Motor</target>
-</trans-unit>
-<trans-unit id="se97bef6f5749eb48">
-  <source>Per-app capture</source>
-  <target>Captura por aplicación</target>
-</trans-unit>
-<trans-unit id="s4d512fe36dae282d">
-  <source>Excludes Moss playback</source>
-  <target>Excluye la reproducción de Moss</target>
-</trans-unit>
-<trans-unit id="sb3481132c0f2224e">
-  <source>No tool is using audio sources.</source>
-  <target>Ninguna herramienta está usando fuentes de audio.</target>
-</trans-unit>
-<trans-unit id="s3fd6bd99e3f6a5be">
-  <source>Started</source>
-  <target>Iniciado</target>
-</trans-unit>
 <trans-unit id="sd9ad53251f2330a5">
   <source>Stop</source>
   <target>Detener</target>
-</trans-unit>
-<trans-unit id="s3c11d2b2e0023e1f">
-  <source>Allow tools to request audio sources</source>
-  <target>Permitir que las herramientas soliciten fuentes de audio</target>
-</trans-unit>
-<trans-unit id="s7bea63b4e5175162">
-  <source>Active grants</source>
-  <target>Permisos activos</target>
 </trans-unit>
 <trans-unit id="s9ced6a79ff861137">
   <source>Audio Sources</source>
@@ -3014,6 +2986,66 @@ comienza ahora</target>
 <trans-unit id="sadf9ac04abb2c03e">
   <source>Technical details</source>
   <target>Detalles técnicos</target>
+</trans-unit>
+<trans-unit id="sb8d52d4a1d5bfaef">
+  <source>Backend:</source>
+  <target>Motor:</target>
+</trans-unit>
+<trans-unit id="s07834c31529b12b6">
+  <source>Per-app capture:</source>
+  <target>Captura por aplicación:</target>
+</trans-unit>
+<trans-unit id="s0f1c76735eee1f15">
+  <source>Excludes Moss playback:</source>
+  <target>Excluye el audio de Moss:</target>
+</trans-unit>
+<trans-unit id="sf49b5528bbd4ff20">
+  <source>No tool is capturing audio right now. Each time a tool asks, you pick the source it may capture.</source>
+  <target>Ningún tool está capturando audio ahora mismo. Cada vez que un tool lo pide, eliges la fuente que puede capturar.</target>
+</trans-unit>
+<trans-unit id="s4851f8219fef1d32">
+  <source>Capturing</source>
+  <target>Capturando desde hace</target>
+</trans-unit>
+<trans-unit id="sc732f2e2fbe9f15e">
+  <source>started</source>
+  <target>iniciado</target>
+</trans-unit>
+<trans-unit id="s79ea20c686c765c5">
+  <source>dropped</source>
+  <target>descartados</target>
+</trans-unit>
+<trans-unit id="s0cccb96d9646233e">
+  <source>stalls</source>
+  <target>interrupciones</target>
+</trans-unit>
+<trans-unit id="s4d088d8ab006d443">
+  <source>Audio capture</source>
+  <target>Captura de audio</target>
+</trans-unit>
+<trans-unit id="s421dbeafa6c159ce">
+  <source>About audio capture</source>
+  <target>Acerca de la captura de audio</target>
+</trans-unit>
+<trans-unit id="s493a0e3177112cbd">
+  <source>Tools can ask to capture audio playing on this computer. You choose the source each time a tool asks, and you can stop a capture below while it runs.</source>
+  <target>Los tools pueden pedir capturar el audio que suena en este ordenador. Tú eliges la fuente cada vez que lo piden, y abajo puedes detener una captura en curso.</target>
+</trans-unit>
+<trans-unit id="s0300a7b778a3485b">
+  <source>Active permissions</source>
+  <target>Permisos activos</target>
+</trans-unit>
+<trans-unit id="s77f0fa1e262cd813">
+  <source>Moss can pass audio that is playing on this computer to a tool — the sound of a meeting app, for example, or everything coming out of your speakers.</source>
+  <target>Moss puede pasar a un tool el audio que suena en este ordenador — el sonido de una app de reuniones, por ejemplo, o todo lo que sale de tus altavoces.</target>
+</trans-unit>
+<trans-unit id="s74b7cab081fc7b15">
+  <source>Every request opens a picker where you choose exactly which source that tool may capture. Moss does not send the audio anywhere itself; what a tool does with the audio it receives is up to that tool.</source>
+  <target>Cada solicitud abre un selector donde eliges exactamente qué fuente puede capturar el tool. Moss no envía el audio a ninguna parte; lo que el tool haga con el audio que recibe depende de ese tool.</target>
+</trans-unit>
+<trans-unit id="s2840dee6319616ff">
+  <source>Turning the switch off stops tools from asking at all, and a capture that is already running can be stopped under Active permissions.</source>
+  <target>Apagar el interruptor impide que los tools pregunten siquiera, y una captura que ya está en marcha se puede detener en «Permisos activos».</target>
 </trans-unit>
 </body>
 </file>
