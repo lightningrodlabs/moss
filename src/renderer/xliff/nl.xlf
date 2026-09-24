@@ -2775,10 +2775,6 @@ begint nu</target>
   <source>Details unavailable because the curation lists could not be loaded.</source>
   <target>Details niet beschikbaar omdat de curatielijsten niet konden worden geladen.</target>
 </trans-unit>
-<trans-unit id="sd9ad53251f2330a5">
-  <source>Stop</source>
-  <target>Stoppen</target>
-</trans-unit>
 <trans-unit id="sff4fe7fc56e5b224">
   <source>Two groups are showing this name — ask which is which.</source>
   <target>Twee groepen tonen deze naam — vraag welke welke is.</target>

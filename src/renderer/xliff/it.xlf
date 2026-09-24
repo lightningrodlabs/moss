@@ -2775,10 +2775,6 @@ inizia ora</target>
   <source>Details unavailable because the curation lists could not be loaded.</source>
   <target>Dettagli non disponibili perché non è stato possibile caricare le liste di curatela.</target>
 </trans-unit>
-<trans-unit id="sd9ad53251f2330a5">
-  <source>Stop</source>
-  <target>Interrompi</target>
-</trans-unit>
 <trans-unit id="sff4fe7fc56e5b224">
   <source>Two groups are showing this name — ask which is which.</source>
   <target>Due gruppi mostrano questo nome — chiedi quale sia quale.</target>

@@ -2775,10 +2775,6 @@ comienza ahora</target>
   <source>Details unavailable because the curation lists could not be loaded.</source>
   <target>Detalles no disponibles porque no se pudieron cargar las listas de curación.</target>
 </trans-unit>
-<trans-unit id="sd9ad53251f2330a5">
-  <source>Stop</source>
-  <target>Detener</target>
-</trans-unit>
 <trans-unit id="sff4fe7fc56e5b224">
   <source>Two groups are showing this name — ask which is which.</source>
   <target>Dos grupos muestran este nombre — pregunta cuál es cuál.</target>

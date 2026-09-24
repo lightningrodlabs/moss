@@ -2775,10 +2775,6 @@ starts now</source>
   <source>Details unavailable because the curation lists could not be loaded.</source>
   <target>キュレーションリストを読み込めなかったため、詳細を表示できません。</target>
 </trans-unit>
-<trans-unit id="sd9ad53251f2330a5">
-  <source>Stop</source>
-  <target>停止</target>
-</trans-unit>
 <trans-unit id="sff4fe7fc56e5b224">
   <source>Two groups are showing this name — ask which is which.</source>
   <target>この名前を表示しているグループが2つあります — どちらがどちらか確認してください。</target>

@@ -2775,10 +2775,6 @@ starts now</source>
   <source>Details unavailable because the curation lists could not be loaded.</source>
   <target>Derleme listeleri yüklenemediği için ayrıntılar kullanılamıyor.</target>
 </trans-unit>
-<trans-unit id="sd9ad53251f2330a5">
-  <source>Stop</source>
-  <target>Durdur</target>
-</trans-unit>
 <trans-unit id="sff4fe7fc56e5b224">
   <source>Two groups are showing this name — ask which is which.</source>
   <target>Bu adı gösteren iki grup var — hangisinin hangisi olduğunu sorun.</target>
