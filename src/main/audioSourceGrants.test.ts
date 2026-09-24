@@ -1,5 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { JsAudioChunk, JsProcessInfo, JsStreamEvent, OpenOptions } from '@lightningrodlabs/flexaudio';
+import type {
+  JsAudioChunk,
+  JsProcessInfo,
+  JsStreamEvent,
+  OpenOptions,
+} from '@lightningrodlabs/flexaudio';
 import type { AudioSourceRow } from '@theweave/moss-types';
 import type { AudioCaptureBackend } from './audioCapture';
 import {
@@ -9,7 +14,12 @@ import {
   buildAudioSourceRows,
   describeSelection,
 } from './audioSourceGrants';
-import { FRAME_MS, FRAME_SAMPLES, MAX_CATCHUP_FRAMES, PUMP_MAX_FRAMES_PER_TICK } from './audioMixer';
+import {
+  FRAME_MS,
+  FRAME_SAMPLES,
+  MAX_CATCHUP_FRAMES,
+  PUMP_MAX_FRAMES_PER_TICK,
+} from './audioMixer';
 
 // ---------- fakes ----------
 
@@ -41,7 +51,11 @@ class FakeBackend implements AudioCaptureBackend {
     if (this.processesRejects) throw new Error('unsupported');
     return this.processList;
   }
-  openStream(options: OpenOptions, onChunk: (c: JsAudioChunk) => void, onEvent?: (e: JsStreamEvent) => void) {
+  openStream(
+    options: OpenOptions,
+    onChunk: (c: JsAudioChunk) => void,
+    onEvent?: (e: JsStreamEvent) => void,
+  ) {
     if (this.failOpen(options)) throw new Error(`cannot open ${options.kind}`);
     const stop = vi.fn(async () => {});
     const s: OpenedStream = { options, onChunk, onEvent, stop };
@@ -186,7 +200,12 @@ describe('buildAudioSourceRows', () => {
       'Zoom',
       'Alpha',
     ]);
-    expect(rows[0]).toEqual({ id: 'system', kind: 'system', name: 'All system output (except Moss)', playing: null });
+    expect(rows[0]).toEqual({
+      id: 'system',
+      kind: 'system',
+      name: 'All system output (except Moss)',
+      playing: null,
+    });
     expect(rows[1].playing).toBe(true);
     expect(rows[3].playing).toBe(false);
     expect(rows[4].playing).toBeNull();
@@ -265,7 +284,9 @@ describe('AudioSourceGrants.request', () => {
     });
     expect(r.delivered).toEqual([{ targetId: 7, requestId: 'r1', grantId: 'g1' }]);
     expect(r.ports[0].started).toBe(true);
-    expect(r.grants.list()).toMatchObject([{ grantId: 'g1', toolName: 'Presence', label: 'System audio', startedAt: 1_000 }]);
+    expect(r.grants.list()).toMatchObject([
+      { grantId: 'g1', toolName: 'Presence', label: 'System audio', startedAt: 1_000 },
+    ]);
     expect(r.changes).toEqual([1]);
   });
 
@@ -275,7 +296,9 @@ describe('AudioSourceGrants.request', () => {
       { pid: 3, name: 'Firefox', isOutputActive: true },
       { pid: 4, name: 'Spotify', isOutputActive: true },
     ];
-    r.picker.mockImplementationOnce(async (rows) => rows.filter((x) => x.kind === 'app').map((x) => x.id));
+    r.picker.mockImplementationOnce(async (rows) =>
+      rows.filter((x) => x.kind === 'app').map((x) => x.id),
+    );
     const result = await r.grants.request(REQ);
     expect(result?.label).toBe('Firefox, Spotify');
     expect(r.backend.opened.map((s) => s.options)).toEqual([
@@ -291,7 +314,9 @@ describe('AudioSourceGrants.request', () => {
       { pid: 4, name: 'Spotify', isOutputActive: true },
     ];
     r.backend.failOpen = (o) => o.processId === 3;
-    r.picker.mockImplementationOnce(async (rows) => rows.filter((x) => x.kind === 'app').map((x) => x.id));
+    r.picker.mockImplementationOnce(async (rows) =>
+      rows.filter((x) => x.kind === 'app').map((x) => x.id),
+    );
     const result = await r.grants.request(REQ);
     expect(result?.label).toBe('Spotify');
     expect(r.backend.opened).toHaveLength(1);
@@ -321,8 +346,11 @@ describe('AudioSourceGrants.request', () => {
       { pid: 3, name: 'Firefox', isOutputActive: true },
       { pid: 4, name: 'Spotify', isOutputActive: true },
     ];
-    r.backend.emitOnOpen = (o) => (o.processId === 3 ? { type: 'error', message: 'open failed' } : undefined);
-    r.picker.mockImplementationOnce(async (rows) => rows.filter((x) => x.kind === 'app').map((x) => x.id));
+    r.backend.emitOnOpen = (o) =>
+      o.processId === 3 ? { type: 'error', message: 'open failed' } : undefined;
+    r.picker.mockImplementationOnce(async (rows) =>
+      rows.filter((x) => x.kind === 'app').map((x) => x.id),
+    );
     const result = await r.grants.request(REQ);
     expect(result?.label).toBe('Spotify');
     expect(r.backend.opened).toHaveLength(2);
@@ -340,7 +368,9 @@ describe('AudioSourceGrants.request', () => {
     r.picker.mockImplementationOnce(() => new Promise<string[] | null>((res) => (release = res)));
     const first = r.grants.request(REQ);
     await flush();
-    await expect(r.grants.request({ ...REQ, requestId: 'r2' })).rejects.toThrow(/one audio source picker/);
+    await expect(r.grants.request({ ...REQ, requestId: 'r2' })).rejects.toThrow(
+      /one audio source picker/,
+    );
     release(null);
     expect(await first).toBeNull();
   });
@@ -352,15 +382,18 @@ describe('AudioSourceGrants.request', () => {
     expect(r.backend.processesCalls).toBe(1);
   });
 
-  it('a dead stream\'s id is never reused, so a late event cannot tear down its successor', async () => {
+  it("a dead stream's id is never reused, so a late event cannot tear down its successor", async () => {
     const r = rig();
     r.backend.processList = [
       { pid: 3, name: 'Firefox', isOutputActive: true },
       { pid: 4, name: 'Spotify', isOutputActive: true },
     ];
     // The first row dies inside openStream; the second opens normally.
-    r.backend.emitOnOpen = (o) => (o.processId === 3 ? { type: 'error', message: 'open failed' } : undefined);
-    r.picker.mockImplementationOnce(async (rows) => rows.filter((x) => x.kind === 'app').map((x) => x.id));
+    r.backend.emitOnOpen = (o) =>
+      o.processId === 3 ? { type: 'error', message: 'open failed' } : undefined;
+    r.picker.mockImplementationOnce(async (rows) =>
+      rows.filter((x) => x.kind === 'app').map((x) => x.id),
+    );
     const result = await r.grants.request(REQ);
     expect(result?.label).toBe('Spotify');
     // The addon keeps the dead stream's callbacks and fires a late deviceLost.
@@ -375,7 +408,9 @@ describe('AudioSourceGrants.request', () => {
   it('a late deviceLost for a live stream still ends the grant (negative control)', async () => {
     const r = rig();
     r.backend.processList = [{ pid: 4, name: 'Spotify', isOutputActive: true }];
-    r.picker.mockImplementationOnce(async (rows) => rows.filter((x) => x.kind === 'app').map((x) => x.id));
+    r.picker.mockImplementationOnce(async (rows) =>
+      rows.filter((x) => x.kind === 'app').map((x) => x.id),
+    );
     await r.grants.request(REQ);
     r.backend.event(0, { type: 'deviceLost' });
     await flush();
@@ -455,7 +490,7 @@ describe('frame pump', () => {
     expect(r.grants.list()[0].counters.backlogDropped).toBe(0);
   });
 
-  it('two streams with an uneven backlog: the leading frame mixes both, the extra carries only the deeper stream\'s leftover', async () => {
+  it("two streams with an uneven backlog: the leading frame mixes both, the extra carries only the deeper stream's leftover", async () => {
     const r = rig();
     r.backend.processList = [{ pid: 3, name: 'Firefox', isOutputActive: true }];
     r.picker.mockImplementationOnce(async (rows) => rows.map((x) => x.id));
@@ -640,7 +675,7 @@ describe('ending a grant', () => {
     expect(r.grants.list()).toHaveLength(1);
   });
 
-  it('endGrantsForTarget ends only that window\'s grants', async () => {
+  it("endGrantsForTarget ends only that window's grants", async () => {
     const r = rig();
     await r.grants.request(REQ);
     await r.grants.request({ requestId: 'r2', toolName: 'Other', targetId: 8 });
@@ -665,7 +700,11 @@ describe('stream events', () => {
     r.backend.event(0, { type: 'chunkDropped', count: 4 });
     r.backend.event(0, { type: 'stalled' });
     r.backend.event(0, { type: 'recovered' });
-    expect(r.grants.list()[0].counters).toMatchObject({ chunksDropped: 4, stalls: 1, recoveries: 1 });
+    expect(r.grants.list()[0].counters).toMatchObject({
+      chunksDropped: 4,
+      stalls: 1,
+      recoveries: 1,
+    });
     expect(r.grants.list()).toHaveLength(1);
   });
 
@@ -697,7 +736,9 @@ describe('stream events', () => {
     const r = rig();
     if (kind === 'process') {
       r.backend.processList = [{ pid: 3, name: 'Firefox' }];
-      r.picker.mockImplementationOnce(async (rows) => rows.filter((x) => x.kind === 'app').map((x) => x.id));
+      r.picker.mockImplementationOnce(async (rows) =>
+        rows.filter((x) => x.kind === 'app').map((x) => x.id),
+      );
     }
     await r.grants.request(REQ);
     r.backend.event(0, { type });

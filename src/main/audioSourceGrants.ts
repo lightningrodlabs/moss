@@ -1,4 +1,9 @@
-import type { JsAudioChunk, JsProcessInfo, JsStreamEvent, OpenOptions } from '@lightningrodlabs/flexaudio';
+import type {
+  JsAudioChunk,
+  JsProcessInfo,
+  JsStreamEvent,
+  OpenOptions,
+} from '@lightningrodlabs/flexaudio';
 import type {
   AudioSourceEndReason,
   AudioSourceGrantCounters,
@@ -115,7 +120,8 @@ export function buildAudioSourceRows(
   processes: JsProcessInfo[],
   excludePids: number[],
 ): { rows: AudioSourceRow[]; pidById: Map<string, number> } {
-  const rank = (p: JsProcessInfo) => (p.isOutputActive === true ? 0 : p.isOutputActive === false ? 1 : 2);
+  const rank = (p: JsProcessInfo) =>
+    p.isOutputActive === true ? 0 : p.isOutputActive === false ? 1 : 2;
   const excluded = new Set(excludePids);
   const apps = processes
     .filter((p) => !excluded.has(p.pid))
@@ -228,7 +234,13 @@ export class AudioSourceGrants {
     for (const row of wantApps) {
       const pid = pidById.get(row.id);
       if (pid === undefined) continue;
-      if (this.openStream(grant, backend, 'app', { kind: 'process', processId: pid, ...STREAM_FORMAT })) {
+      if (
+        this.openStream(grant, backend, 'app', {
+          kind: 'process',
+          processId: pid,
+          ...STREAM_FORMAT,
+        })
+      ) {
         openedNames.push(row.name);
       }
     }
@@ -244,7 +256,8 @@ export class AudioSourceGrants {
 
     port1.on('message', (e) => {
       const data = e.data as { type?: unknown } | null | undefined;
-      if (data && typeof data === 'object' && data.type === 'close') void this.endGrant(grantId, 'tool-closed');
+      if (data && typeof data === 'object' && data.type === 'close')
+        void this.endGrant(grantId, 'tool-closed');
     });
     // The Tool's own `{type: 'close'}` message covers a normal teardown, but a
     // detached iframe (Tool disabled/uninstalled, group left, view torn down)
@@ -280,7 +293,9 @@ export class AudioSourceGrants {
   }
 
   async endGrantsForTarget(targetId: number, reason: AudioSourceEndReason): Promise<void> {
-    const ids = [...this.grants.values()].filter((g) => g.targetId === targetId).map((g) => g.info.grantId);
+    const ids = [...this.grants.values()]
+      .filter((g) => g.targetId === targetId)
+      .map((g) => g.info.grantId);
     await Promise.all(ids.map((id) => this.endGrant(id, reason)));
   }
 
@@ -344,7 +359,11 @@ export class AudioSourceGrants {
     }
   }
 
-  private async closeStream(grant: Grant, stream: OpenStream, reason: AudioSourceEndReason): Promise<void> {
+  private async closeStream(
+    grant: Grant,
+    stream: OpenStream,
+    reason: AudioSourceEndReason,
+  ): Promise<void> {
     if (!grant.streams.delete(stream.id)) return;
     await stream.handle.stop().catch(() => undefined);
     // While the grant is still being assembled (see `opening`), an empty
@@ -371,7 +390,8 @@ export class AudioSourceGrants {
    * elapsed time shrink and silence the pump until wall time caught up again.
    */
   private pump(grant: Grant): void {
-    const rawDue = Math.floor((this.b.monotonicNow() - grant.pumpStartedAt) / FRAME_MS) - grant.framesEmitted;
+    const rawDue =
+      Math.floor((this.b.monotonicNow() - grant.pumpStartedAt) / FRAME_MS) - grant.framesEmitted;
     // A stall leaves the ledger owing one frame per 20 ms it lasted. Replaying
     // all of it two frames per tick would run the wire at twice real time for
     // half the stall's length, so only `MAX_CATCHUP_FRAMES` are ever owed:

@@ -31,5 +31,7 @@ export const audioSourceGrantsClient = new AudioSourceGrantsClient({
 export function releaseGrantsFor(iframeId: string): void {
   void audioSourceGrantsClient
     .endForIframe(iframeId)
-    .catch((e) => console.warn('[audio-sources] releasing grants for an unloading iframe failed', e));
+    .catch((e) =>
+      console.warn('[audio-sources] releasing grants for an unloading iframe failed', e),
+    );
 }
