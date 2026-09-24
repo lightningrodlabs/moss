@@ -1,7 +1,15 @@
 # LAN invite: keep the multicast transport, or move to mDNS?
 
-Status: DECISION NOTE. Written 2026-09-07, after two-machine testing of the
+Status: DECIDED 2026-09-24. Written 2026-09-07, after two-machine testing of the
 feature on `feat/lan-invite-exchange`.
+
+## Decision
+
+The LAN invite ships on the UDP multicast transport, in 0.16.0-dev.7 and after.
+The move to mDNS is deferred. The trigger to revisit it is one of these: the
+Rust (Tauri) implementation needs to interoperate with Moss, or testers report
+that the invite finds no peers on gateway-style networks. The rest of this note
+gives the reasons.
 
 The question: the local-network invite exchange in Moss is built on a raw UDP
 multicast transport of our own. The main runtime for this feature going forward
