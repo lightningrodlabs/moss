@@ -98,6 +98,24 @@ export const LANGUAGE_NAMES: Record<SupportedLocale, string> = {
 };
 
 /**
+ * A flag per locale, for picking a language at a glance before you can read
+ * the interface. A flag names a country rather than a language — Portuguese is
+ * spoken in more places than Portugal — so the native name is always shown
+ * beside it and carries the actual meaning.
+ */
+export const LANGUAGE_FLAGS: Record<SupportedLocale, string> = {
+  en: '🇬🇧',
+  de: '🇩🇪',
+  fr: '🇫🇷',
+  es: '🇪🇸',
+  tr: '🇹🇷',
+  it: '🇮🇹',
+  pt: '🇵🇹',
+  ja: '🇯🇵',
+  nl: '🇳🇱',
+};
+
+/**
  * Get a TimeAgo instance configured for the current locale
  */
 export function getLocalizedTimeAgo(): TimeAgo {

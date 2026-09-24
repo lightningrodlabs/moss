@@ -23,9 +23,11 @@ import './ui/moss-select-avatar-fancy.js';
 import { defaultIcons } from './ui/defaultIcons.js';
 // import { GroupProfile } from '@theweave/api';
 import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
+import './app/dialogs/local-network-join.js';
+import './ui/language-picker.js';
 import { partialModifiersFromInviteString } from '@theweave/utils';
 import { inviteErrorMessage } from './invite-error.js';
-import { notifyError } from '@holochain-open-dev/elements';
+import { notify, notifyError } from '@holochain-open-dev/elements';
 import { safeSetInterval, SafeIntervalHandle } from './utils.js';
 import { buildHeadlessWeaveClient } from './applets/applet-host.js';
 import SlRadioGroup from '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
@@ -75,6 +77,23 @@ export class MossApp extends LitElement {
 
   @state()
   private inviteLink: string = '';
+
+  /**
+   * Which way in the visitor is looking at. The local-network pane is only
+   * rendered while it is chosen, so nothing binds a socket — and on macOS
+   * nothing asks for local network permission — until someone picks it.
+   */
+  @state()
+  private _setupPane: 'invite' | 'network' | 'create' = 'invite';
+
+  /**
+   * Whether the local-network answer has been opened. It stays mounted after
+   * that, hidden behind the other answers: someone who has announced themselves
+   * and then looks at another answer should still be announced when they come
+   * back, and should still see the same countdown.
+   */
+  @state()
+  private _networkVisited = false;
 
   /**
    * Used if group is created as part of initial setup
@@ -669,88 +688,158 @@ export class MossApp extends LitElement {
     `;
   }
 
+  private renderSetupSwitch() {
+    const tab = (pane: 'invite' | 'network' | 'create', label: string) => html`
+      <button
+        type="button"
+        class="mode ${this._setupPane === pane ? 'selected' : ''}"
+        @click=${() => {
+          this._setupPane = pane;
+          if (pane === 'network') this._networkVisited = true;
+        }}
+      >
+        ${label}
+      </button>
+    `;
+    return html`
+      <div class="row mode-switch" style="margin-bottom: 20px;">
+        ${tab('invite', msg('Invitation'))}${tab('network', msg('Local Network'))}${tab(
+          'create',
+          msg('Start a Group'),
+        )}
+      </div>
+    `;
+  }
+
+  /** The title of the answer now showing. */
+  private setupTitle(): string {
+    switch (this._setupPane) {
+      case 'network':
+        return msg('I want to join a group on the local network');
+      case 'create':
+        return msg('I want to start a space for my group');
+      default:
+        return msg('I have an invite to join a group');
+    }
+  }
+
+  /** The body of the answer now showing. It brings content, never layout. */
+  private setupBody() {
+    switch (this._setupPane) {
+      case 'network':
+        // Rendered outside this switch, so that it survives a change of answer.
+        return html``;
+      case 'create':
+        return html`
+          <button
+            class="moss-button"
+            style="align-self: center;"
+            ?disabled=${this.creatingGroup}
+            @click=${() => {
+              this.state = MossAppState.CreateGroupStep1;
+            }}
+          >
+            <div class="row center-content">
+              ${createGroupIcon(20)}
+              <div style="margin-left: 10px;">${msg('Create new group space')}</div>
+            </div>
+          </button>
+        `;
+      default:
+        return html`
+          <div class="column center-content hint" style="margin-bottom: 16px; align-self: center;">
+            <div style="margin-bottom: 3px;">${msg('An invite looks like:')}</div>
+            <div class="">${WEAVE_WEB_PREFIX}${WEAVE_URL_PREFIX}invite...</div>
+            <div class="">${msg('or')} moss-${WEAVE_PROTOCOL_VERSION}-...</div>
+          </div>
+
+          <div class="row items-center">
+            <sl-input
+              class="moss-input"
+              id="invite-link-input"
+              placeholder=${msg('paste invite link or code here')}
+              label=${msg('invite')}
+              style="margin-right: 12px; flex: 1;"
+              @input=${() => {
+                const inviteLinkInput = this.shadowRoot?.getElementById(
+                  'invite-link-input',
+                ) as HTMLInputElement;
+                this.inviteLink = inviteLinkInput.value;
+              }}
+            ></sl-input>
+            <button
+              id="join-group-btn"
+              class="moss-button"
+              ?disabled=${this.inviteLink === '' || this.creatingGroup}
+              @click=${() => this.joinGroupAndHeadToMain()}
+              style="width: 80px;"
+            >
+              ${this.creatingGroup
+                ? html`<div class="column center-content">
+                    <div class="dot-carousel" style="margin: 5px 0;"></div>
+                  </div>`
+                : html`${msg('Join')}`}
+            </button>
+          </div>
+        `;
+    }
+  }
+
   renderInitialSetup() {
     return html`
-      <div class="column center-content flex-1 launch-bg">
-        <div class="column items-center" style="margin-bottom: 52px;">
-          <div style="margin-bottom: 28px;">${mossIcon(58)}</div>
+      <div class="column items-center flex-1 launch-bg setup-page">
+        <div class="column items-center" style="margin-bottom: 28px;">
+          <div style="margin-bottom: 20px;">${mossIcon(58)}</div>
           <div class="dialog-title">${msg('Welcome to Moss.')}</div>
           <div class="dialog-title">${msg('What brought you here today?')}</div>
         </div>
 
-        <div class="row">
-          <div class="moss-card column items-center" style="margin: 6px; width: 430px;">
-            <div class="dialog-title" style="width: 300px; margin-bottom: 28px; margin-top: 40px;">
-              ${msg('I have an invite to join a group')}
-            </div>
+        ${this.renderSetupSwitch()}
 
-            <div class="column center-content hint" style="margin-bottom: 12px;">
-              <div style="margin-bottom: 3px;">${msg('An invite looks like:')}</div>
-              <div class="">${WEAVE_WEB_PREFIX}${WEAVE_URL_PREFIX}invite...</div>
-              <div class="">${msg('or')} moss-${WEAVE_PROTOCOL_VERSION}-...</div>
-            </div>
-
-            <div class="row items-center justify-center" style="margin-bottom: 28px;">
-              <sl-input
-                class="moss-input"
-                id="invite-link-input"
-                placeholder=${msg('paste invite link or code here')}
-                label=${msg('invite')}
-                style="margin-right: 12px; width: 258px;"
-                @input=${() => {
-                  const inviteLinkInput = this.shadowRoot?.getElementById(
-                    'invite-link-input',
-                  ) as HTMLInputElement;
-                  this.inviteLink = inviteLinkInput.value;
-                }}
-              ></sl-input>
-              <button
-                id="join-group-btn"
-                class="moss-button"
-                ?disabled=${this.inviteLink === '' || this.creatingGroup}
-                @click=${() => this.joinGroupAndHeadToMain()}
-                style="width: 40px;"
-              >
-                ${this.creatingGroup
-                  ? html`<div class="column center-content">
-                      <div class="dot-carousel" style="margin: 5px 0;"></div>
-                    </div>`
-                  : html`${msg('Join')}`}
-              </button>
-            </div>
-          </div>
-
-          <div class="moss-card column items-center" style="margin: 6px; width: 430px;">
-            <div class="dialog-title" style="width: 300px; margin-top: 40px;">
-              ${msg('I want to start a space for my group')}
-            </div>
-            <span class="flex flex-1"></span>
-            <button
-              class="moss-button"
-              style="width: 310px; margin-bottom: 28px;"
-              ?disabled=${this.creatingGroup}
-              @click=${() => {
-                this.state = MossAppState.CreateGroupStep1;
-              }}
-            >
-              <div class="row center-content">
-                ${createGroupIcon(20)}
-                <div style="margin-left: 10px;">${msg('Create new group space')}</div>
-              </div>
-            </button>
+        <div class="setup-card column">
+          <div class="dialog-title setup-card-header">${this.setupTitle()}</div>
+          <div class="setup-card-body column">
+            ${this.setupBody()}
+            ${this._networkVisited
+              ? html`<local-network-join
+                  ?hidden=${this._setupPane !== 'network'}
+                  @local-invite-received=${(
+                    e: CustomEvent<{ code: string; groupName: string }>,
+                  ) => {
+                    this.inviteLink = e.detail.code;
+                    void this.joinGroupAndHeadToMain();
+                  }}
+                ></local-network-join>`
+              : html``}
           </div>
         </div>
 
-        <button
-          @click=${() => {
-            window.localStorage.removeItem('isFirstLaunch');
-            this.state = MossAppState.Running;
-          }}
-          class="skip-button"
-          style="position: absolute; bottom: 10px;"
-        >
-          ${msg('Skip Setup')}
-        </button>
+        <div class="row items-center" style="margin-top: 16px; gap: 12px;">
+          <button
+            @click=${() => {
+              const pane = this.shadowRoot?.querySelector('local-network-join') as {
+                announcing: boolean;
+              } | null;
+              if (pane?.announcing) {
+                notify(msg('You are no longer announcing yourself on this network.'));
+              }
+              window.localStorage.removeItem('isFirstLaunch');
+              this.state = MossAppState.Running;
+            }}
+            class="skip-button"
+          >
+            ${msg('Skip Setup')}
+          </button>
+          <language-picker
+            @locale-changed=${() => {
+              // @localized() should redraw this page on its own when the locale
+              // changes. Asking for it explicitly costs nothing and means the
+              // page cannot be left in the old language if that subscription
+              // ever misses.
+              this.requestUpdate();
+            }}
+          ></language-picker>
+        </div>
       </div>
     `;
   }
@@ -867,6 +956,39 @@ export class MossApp extends LitElement {
         :host {
           flex: 1;
           display: flex;
+        }
+
+        /* The welcome page. One card, one header, one body: an answer supplies
+           content and never layout, so nothing about the page can differ
+           between the three of them. */
+
+        .setup-page {
+          padding-top: 100px;
+          padding-bottom: 40px;
+          overflow-y: auto;
+          /* Reserve the scrollbar's width always, or a taller answer brings one
+             in and shifts the whole centred page sideways. */
+          scrollbar-gutter: stable both-edges;
+        }
+
+        .setup-card {
+          width: 560px;
+          min-height: 220px;
+          flex-shrink: 0;
+          box-sizing: border-box;
+          background: white;
+          border-radius: 20px;
+        }
+
+        .setup-card-header {
+          padding: 32px 32px 0;
+          text-align: center;
+        }
+
+        .setup-card-body {
+          padding: 24px 42px 32px;
+          gap: 12px;
+          align-items: stretch;
         }
 
         .hint {
