@@ -7,25 +7,13 @@ import { DnaHashB64, InstalledAppId } from '@holochain/client';
 import { ToolUserPreferences } from './sharedTypes';
 import { app, dialog, session, shell } from 'electron';
 import { platform } from '@electron-toolkit/utils';
-import { AppAssetsInfo, DistributionInfo } from '@theweave/moss-types';
+import { AppAssetsInfo, AssetSource, DistributionInfo } from '@theweave/moss-types';
 import AdmZip from 'adm-zip';
 import { GroupProfile } from '@theweave/api';
 import { toolCompatibilityIdFromDistInfo } from '@theweave/utils';
 
 export type Profile = string;
 export type UiIdentifier = string;
-
-export type AssetSource =
-  | {
-      type: 'https';
-      url: string;
-    }
-  | {
-      type: 'filesystem'; // Installed from filesystem
-    }
-  | {
-      type: 'default-app'; // Shipped with the We executable by default
-    };
 
 export class MossFileSystem {
   public profileDataDir: string;
@@ -681,15 +669,13 @@ export function deriveAppAssetsInfo(
   sha256Webhapp?: string,
   sha256Ui?: string,
   uiPort?: number,
+  assetSource: AssetSource = { type: 'https', url: happOrWebHappUrl },
 ): AppAssetsInfo {
   return sha256Webhapp
     ? {
         type: 'webhapp',
         sha256: sha256Webhapp,
-        assetSource: {
-          type: 'https',
-          url: happOrWebHappUrl,
-        },
+        assetSource,
         distributionInfo,
         happ: {
           sha256: sha256Happ,
@@ -704,10 +690,7 @@ export function deriveAppAssetsInfo(
     : uiPort
       ? {
           type: 'webhapp',
-          assetSource: {
-            type: 'https',
-            url: happOrWebHappUrl,
-          },
+          assetSource,
           distributionInfo,
           happ: {
             sha256: sha256Happ,
@@ -722,10 +705,7 @@ export function deriveAppAssetsInfo(
       : {
           type: 'happ',
           sha256: sha256Happ,
-          assetSource: {
-            type: 'https',
-            url: happOrWebHappUrl,
-          },
+          assetSource,
           distributionInfo,
         };
 }
