@@ -107,13 +107,23 @@ interface Grant {
   nextStreamSeq: number;
 }
 
+/**
+ * Name prefixes of system services that hold an audio stream open but never
+ * play anything a user would want to share (speech-dispatcher keeps a corked
+ * stream per output module).
+ */
+const HIDDEN_PROCESS_PREFIXES = ['speech-dispatcher'];
+
+const isHiddenProcess = (name: string) => HIDDEN_PROCESS_PREFIXES.some((p) => name.startsWith(p));
+
 const STREAM_FORMAT = { outputRate: 48000, outputChannels: 1, chunkMs: FRAME_MS } as const;
 
 /**
  * Picker rows from the addon's process list: the all-output row first, then
  * apps with currently-playing ones ahead, silent next, unknown last, each group
  * by name. Processes in this app's own tree are not offered (they are excluded
- * from capture anyway). Row ids are positional and opaque; `pidById` is the
+ * from capture anyway), and neither are known silent system services. Row
+ * ids are positional and opaque; `pidById` is the
  * only place a pid is associated with a row and it never leaves main.
  */
 export function buildAudioSourceRows(
@@ -124,7 +134,7 @@ export function buildAudioSourceRows(
     p.isOutputActive === true ? 0 : p.isOutputActive === false ? 1 : 2;
   const excluded = new Set(excludePids);
   const apps = processes
-    .filter((p) => !excluded.has(p.pid))
+    .filter((p) => !excluded.has(p.pid) && !isHiddenProcess(p.name))
     .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
   const pidById = new Map<string, number>();
   const rows: AudioSourceRow[] = [

@@ -217,6 +217,19 @@ describe('buildAudioSourceRows', () => {
     const { rows } = buildAudioSourceRows(procs, []);
     for (const r of rows.filter((r) => r.kind === 'app')) expect(r.id).not.toMatch(/^\d+$/);
   });
+
+  it('system services that never play user audio are not offered', () => {
+    const { rows, pidById } = buildAudioSourceRows(
+      [
+        { pid: 7, name: 'speech-dispatcher-dummy', isOutputActive: false },
+        { pid: 8, name: 'speech-dispatcher-espeak-ng', isOutputActive: false },
+        { pid: 3, name: 'Firefox', isOutputActive: true },
+      ],
+      [],
+    );
+    expect(rows.map((r) => r.name)).toEqual(['All system output (except Moss)', 'Firefox']);
+    expect([...pidById.values()]).toEqual([3]);
+  });
 });
 
 describe('describeSelection', () => {
