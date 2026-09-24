@@ -2898,6 +2898,7 @@ comienza ahora</target>
 <trans-unit id="s7b25cd71849bf7c8">
   <source>This group is no longer listed on the local network.</source>
   <target>Este grupo ya no está listado en la red local.</target>
+</trans-unit>
 <trans-unit id="s9cb6bbd85daeb51f">
   <source>No capabilities reported.</source>
   <target>No se informaron capacidades.</target>
