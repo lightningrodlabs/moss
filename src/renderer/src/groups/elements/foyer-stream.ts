@@ -31,6 +31,8 @@ import { mdiChat, mdiMessageCog, mdiSofa } from '@mdi/js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { mossStyles } from '../../shared-styles.js';
 import { sendIcon } from '../../ui/icons.js';
+import '../../asr/dictation-button.js';
+import { appendTranscript } from '../../asr/dictation.js';
 import {
   FoyerNotificationSettings,
   FoyerMessageUrgency,
@@ -193,6 +195,12 @@ export class FoyerStream extends LitElement {
     this._msgInput.value = '';
     this.disabled = true;
     this._msgInput.focus();
+  };
+
+  /** Dictated text goes into the input for the user to edit and send. */
+  appendDictation = (text: string) => {
+    this._msgInput.value = appendTranscript(this._msgInput.value, text);
+    this.disabled = !this._msgInput.value;
   };
 
   getAckCount = (acks: { [key: number]: HoloHashMap<Uint8Array, boolean> }, msgId): number => {
@@ -515,6 +523,9 @@ export class FoyerStream extends LitElement {
             }}
             placeholder=${msg('my message')}
           ></sl-input>
+          <moss-dictation-button
+            @dictation-text=${(e: CustomEvent<string>) => this.appendDictation(e.detail)}
+          ></moss-dictation-button>
           <button
             class="moss-button send-button"
             ?disabled=${this.disabled}

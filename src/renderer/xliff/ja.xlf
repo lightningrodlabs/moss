@@ -3072,6 +3072,18 @@ starts now</source>
   <source>No applications with audio output were found.</source>
   <target>音声出力のあるアプリケーションが見つかりませんでした。</target>
 </trans-unit>
+<trans-unit id="s195ea6ac7058cd45">
+  <source>Dictation stopped: <x id="0" equiv-text="${message}"/></source>
+  <target>音声入力が停止しました: <x id="0" equiv-text="${message}"/></target>
+</trans-unit>
+<trans-unit id="s54df5e313a2bcd74">
+  <source>Stop dictation</source>
+  <target>音声入力を停止</target>
+</trans-unit>
+<trans-unit id="s10ba4bb16a8e43cf">
+  <source>Dictate a message</source>
+  <target>メッセージを音声入力</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

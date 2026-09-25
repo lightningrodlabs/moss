@@ -3072,6 +3072,18 @@ begint nu</target>
   <source>No applications with audio output were found.</source>
   <target>Er zijn geen toepassingen met audio-uitvoer gevonden.</target>
 </trans-unit>
+<trans-unit id="s195ea6ac7058cd45">
+  <source>Dictation stopped: <x id="0" equiv-text="${message}"/></source>
+  <target>Dicteren gestopt: <x id="0" equiv-text="${message}"/></target>
+</trans-unit>
+<trans-unit id="s54df5e313a2bcd74">
+  <source>Stop dictation</source>
+  <target>Dicteren stoppen</target>
+</trans-unit>
+<trans-unit id="s10ba4bb16a8e43cf">
+  <source>Dictate a message</source>
+  <target>Een bericht dicteren</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
