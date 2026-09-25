@@ -12,6 +12,15 @@ import './local-network-invite.js';
 import { modifiersToInviteCode, modifiersToInviteUrl } from '../../../invite-link.js';
 import { mossStyles } from '../../../shared-styles.js';
 import { MossDialog } from '../../../ui/moss-dialog.js';
+import {
+  closeInviteDialog,
+  initialInviteDialog,
+  InviteDialogState,
+  InviteTab,
+  openInviteDialog,
+  selectInviteTab,
+  visibleInvitePanes,
+} from './invite-dialog-state.js';
 
 @localized()
 @customElement('invite-people-dialog')
@@ -26,31 +35,15 @@ export class InvitePeopleDialog extends LitElement {
   _dialog!: MossDialog;
 
   /**
-   * Whether the local-network pane should exist at all. Hiding a moss-dialog
-   * leaves its slotted content mounted and connected, so a pane that opens a
-   * UDP socket on connection would bind it — and raise the macOS local-network
-   * and Windows firewall prompts — the moment a group is entered. Mounting the
-   * pane only while the dialog is genuinely open is what keeps the socket, the
-   * ephemeral keys and any running beacon scoped to the dialog.
+   * Which tab is showing and whether the local-network pane exists. Hiding a
+   * moss-dialog leaves its slotted content mounted and connected, so a pane that
+   * opens a UDP socket on connection would bind it, and raise the macOS
+   * local-network and Windows firewall prompts, the moment a group is entered.
+   * The pane is therefore mounted only while the dialog is open and after its
+   * tab has been chosen. See invite-dialog-state.ts.
    */
   @state()
-  _paneOpen = false;
-
-  /**
-   * Which way of inviting is showing. The local-network pane is mounted only
-   * in 'network' mode, so this also decides whether this computer is on the
-   * network at all.
-   */
-  @state()
-  _mode: 'code' | 'network' = 'code';
-
-  /**
-   * Whether the network pane has been opened while this dialog has been up. It
-   * stays mounted afterwards, hidden behind the other tab, so a listing is not
-   * stopped and its countdown not reset by switching tabs.
-   */
-  @state()
-  _networkVisited = false;
+  _state: InviteDialogState = initialInviteDialog();
 
   render() {
     if (!this.groupProfile || !this.modifiers) {
@@ -74,8 +67,7 @@ export class InvitePeopleDialog extends LitElement {
             listing: boolean;
           } | null;
           if (pane?.listing) notify(msg('This group is no longer listed on the local network.'));
-          this._paneOpen = false;
-          this._networkVisited = false;
+          this._state = closeInviteDialog(this._state);
         }}
       >
         <span slot="header">${msg('Invite People')}</span>
@@ -90,7 +82,9 @@ export class InvitePeopleDialog extends LitElement {
           </div>
           <div class="column" style="max-width: 440px;">
             ${this.renderModeSwitch()} ${this.renderLocalNetwork(invitationCode)}
-            ${this._mode === 'code' ? this.renderInviteCode(invitationUrl, invitationCode) : html``}
+            ${visibleInvitePanes(this._state).inviteCode
+              ? this.renderInviteCode(invitationUrl, invitationCode)
+              : html``}
           </div>
         </div>
       </moss-dialog>
@@ -98,13 +92,12 @@ export class InvitePeopleDialog extends LitElement {
   }
 
   private renderModeSwitch() {
-    const tab = (mode: 'code' | 'network', label: string) => html`
+    const tab = (mode: InviteTab, label: string) => html`
       <button
         type="button"
-        class="mode ${this._mode === mode ? 'selected' : ''}"
+        class="mode ${this._state.tab === mode ? 'selected' : ''}"
         @click=${() => {
-          this._mode = mode;
-          if (mode === 'network') this._networkVisited = true;
+          this._state = selectInviteTab(this._state, mode);
         }}
       >
         ${label}
@@ -119,10 +112,10 @@ export class InvitePeopleDialog extends LitElement {
 
   private renderLocalNetwork(invitationCode: string) {
     return html`
-      ${this._paneOpen && this._networkVisited
+      ${visibleInvitePanes(this._state).networkPane
         ? html`<local-network-invite
             style="margin-bottom: 24px;"
-            ?hidden=${this._mode !== 'network'}
+            ?hidden=${this._state.tab !== 'network'}
             .inviteCode=${invitationCode}
             .groupName=${this.groupProfile.name}
           ></local-network-invite>`
@@ -200,7 +193,7 @@ export class InvitePeopleDialog extends LitElement {
   }
 
   async show() {
-    this._paneOpen = true;
+    this._state = openInviteDialog(this._state);
     // moss-dialog documents that racing sl-dialog's animated show() against a
     // Lit re-render of its content can leave it half-mounted, so the pane is
     // in the DOM before the dialog is told to appear.
