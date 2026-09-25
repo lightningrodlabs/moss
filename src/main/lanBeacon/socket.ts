@@ -41,28 +41,26 @@ export type BeaconSocket = {
 
 export type Ipv4Interface = { name: string; address: string; broadcast: string };
 
+/**
+ * Two sockets. The listening socket binds the shared LAN_INVITE_PORT and
+ * receives beacons. Everything this agent sends goes out from a second socket
+ * on a port of its own, and replies come back to that port. Several agents on
+ * one machine all bind LAN_INVITE_PORT, and the kernel hands a unicast
+ * datagram for a shared port to only one of them, so a reply addressed to
+ * LAN_INVITE_PORT would often reach the wrong agent.
+ */
 export async function openBeaconSocket(onDatagram: DatagramHandler): Promise<BeaconSocket> {
-  const socket = dgram.createSocket({ type: 'udp4', reuseAddr: true });
+  const listener = await bindSocket(LAN_INVITE_PORT, true, onDatagram);
+  let socket: dgram.Socket;
+  try {
+    socket = await bindSocket(0, false, onDatagram);
+  } catch (error) {
+    listener.close();
+    throw error;
+  }
   const joined: string[] = [];
   let closed = false;
   let pending: Promise<void> = Promise.resolve();
-
-  socket.on('message', (message, rinfo) => {
-    onDatagram(new Uint8Array(message), rinfo.address, rinfo.port);
-  });
-  // A hostile or merely noisy network should not be able to take the app down,
-  // but a discarded error here is the only trace of why the socket went quiet.
-  socket.on('error', (error) => {
-    console.warn(`[lan-beacon] socket error: ${error}`);
-  });
-
-  await new Promise<void>((resolve, reject) => {
-    socket.once('error', reject);
-    socket.bind(LAN_INVITE_PORT, () => {
-      socket.removeListener('error', reject);
-      resolve();
-    });
-  });
 
   socket.setBroadcast(true);
   socket.setMulticastTTL(1);
@@ -73,7 +71,7 @@ export async function openBeaconSocket(onDatagram: DatagramHandler): Promise<Bea
   // with a VPN, a docker bridge, or both ethernet and wifi up.
   for (const iface of ipv4Interfaces()) {
     try {
-      socket.addMembership(LAN_INVITE_MULTICAST_ADDRESS, iface.address);
+      listener.addMembership(LAN_INVITE_MULTICAST_ADDRESS, iface.address);
       joined.push(iface.name);
     } catch (error) {
       // An interface that refuses the group is not a reason to give up on the rest,
@@ -112,9 +110,37 @@ export async function openBeaconSocket(onDatagram: DatagramHandler): Promise<Bea
     close() {
       if (closed) return Promise.resolve();
       closed = true;
-      return new Promise<void>((resolve) => socket.close(() => resolve()));
+      return Promise.all([closeSocket(listener), closeSocket(socket)]).then(() => undefined);
     },
   };
+}
+
+async function bindSocket(
+  port: number,
+  reuseAddr: boolean,
+  onDatagram: DatagramHandler,
+): Promise<dgram.Socket> {
+  const socket = dgram.createSocket({ type: 'udp4', reuseAddr });
+  socket.on('message', (message, rinfo) => {
+    onDatagram(new Uint8Array(message), rinfo.address, rinfo.port);
+  });
+  // A hostile or merely noisy network should not be able to take the app down,
+  // but a discarded error here is the only trace of why the socket went quiet.
+  socket.on('error', (error) => {
+    console.warn(`[lan-beacon] socket error: ${error}`);
+  });
+  await new Promise<void>((resolve, reject) => {
+    socket.once('error', reject);
+    socket.bind(port, () => {
+      socket.removeListener('error', reject);
+      resolve();
+    });
+  });
+  return socket;
+}
+
+function closeSocket(socket: dgram.Socket): Promise<void> {
+  return new Promise<void>((resolve) => socket.close(() => resolve()));
 }
 
 function sendOnce(

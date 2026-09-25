@@ -13,35 +13,22 @@ beacon, runs on any build, and needs no bootstrap or relay to be reachable.
 Machine A only needs a group it can already invite into; nothing here
 requires taking the network offline the way the mDNS recipe does.
 
-## Read this first: two Moss instances on ONE machine cannot complete flow A
+## Two Moss instances on one machine
 
-**Do not attempt this recipe with two dev agents on a single machine.** Two
-Moss instances on one machine both bind UDP 47654 with `reuseAddr`, and on a
-shared port the kernel hands a **unicast** datagram to the **last socket
-bound** and to that one only. Multicast and subnet broadcast are delivered to
-both.
+Two Moss instances on one machine both bind UDP 47654 with `reuseAddr`. On a
+shared port the kernel hands a unicast datagram to the last socket bound, and
+to that one only. Multicast and subnet broadcast reach both. So each instance
+also sends from a second socket on a port of its own, and every reply goes to
+that port. `socket.test.ts` covers this with two sockets on one machine.
 
-Measured on Linux, three runs, deterministic: two `reuseAddr` sockets on
-47654, one sender; the first-bound socket received only the multicast copy,
-the last-bound socket received both the multicast copy and the unicast.
+A same-machine run therefore exercises both flows. It does not exercise
+Wi-Fi, access-point client isolation, or a host firewall, so the two-machine
+gate below is still the real test.
 
-What that means for each flow:
-
-- **Flow A never completes between two agents on one machine.** The
-  `group-offer` beacon is multicast and reaches both, so the group _does_
-  appear in the joiner's list. The `invite-request` that Join sends is a
-  unicast back to the offering agent, and it is swallowed by whichever agent
-  bound last. If that is not the agent that made the offer, nothing answers
-  and the joiner now sees "No reply" (which is correct, and is not a network
-  fault).
-- **Flow B works only by luck of ordering.** The `join-intent` beacon is
-  multicast and always arrives; the sealed reply is a unicast and only lands
-  if the newcomer's agent happens to be the last-bound socket.
-
-So a same-machine run tests nothing reliable about either flow, and a failure
-there says nothing about the network. **Both flows need two machines.** This
-is a limitation of the single fixed port, not of the protocol; the manual gate
-below is the only way these paths get exercised for real.
+Firewall note: replies arrive on the random sending port, not on 47654. A
+Linux host firewall that allows only UDP 47654 inbound blocks the replies.
+The macOS and Windows firewalls allow by application, so they are not
+affected.
 
 ## Preparation (both machines)
 
@@ -131,8 +118,9 @@ appears under "Groups on this local network" → _Join_.
   the multicast beacon arrived but the unicast `invite-request` or the sealed
   reply did not. On two real machines that is AP client isolation or a
   firewall between them; check `received` on A to see whether the request
-  reached it at all. On one machine it is the same-port limitation at the top
-  of this file, and means nothing.
+  reached it at all. On two machines, also check for a host firewall that
+  allows only UDP 47654: replies arrive on a random port (see the top of this
+  file).
 
 **Flow B (ask to be let in).** On B: Join Group → _Ask to be let in_ →
 read the three-word name shown ("You are visible on this network as
