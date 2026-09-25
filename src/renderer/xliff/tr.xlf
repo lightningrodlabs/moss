@@ -3084,6 +3084,10 @@ starts now</source>
   <source>Dictate a message</source>
   <target>Mesaj dikte et</target>
 </trans-unit>
+<trans-unit id="s4440cf98fd6b4cfe">
+  <source>Finishing transcription</source>
+  <target>Transkripsiyon tamamlanıyor</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

@@ -14,6 +14,7 @@ import { notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiMicrophone } from '@mdi/js';
 
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
+import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 
 import { mossStoreContext } from '../context.js';
 import type { MossStore } from '../moss-store.js';
@@ -92,17 +93,26 @@ export class MossDictationButton extends LitElement {
   render() {
     if (!this.available) return html``;
     const active = this.dictationState === 'starting' || this.dictationState === 'listening';
-    const label = active ? msg('Stop dictation') : msg('Dictate a message');
+    // After stop, the last audio is still being transcribed; its text
+    // lands in the input when this state ends.
+    const finishing = this.dictationState === 'stopping';
+    const label = finishing
+      ? msg('Finishing transcription')
+      : active
+        ? msg('Stop dictation')
+        : msg('Dictate a message');
     return html`
       <button
-        class="moss-button mic-button ${active ? 'listening' : ''}"
+        class="moss-button mic-button ${active ? 'listening' : ''} ${finishing ? 'finishing' : ''}"
         title=${label}
         aria-label=${label}
         aria-pressed=${active ? 'true' : 'false'}
-        ?disabled=${this.dictationState === 'stopping'}
+        ?disabled=${finishing}
         @click=${() => this.toggle()}
       >
-        <sl-icon .src=${wrapPathInSvg(mdiMicrophone)}></sl-icon>
+        ${finishing
+          ? html`<sl-spinner></sl-spinner>`
+          : html`<sl-icon .src=${wrapPathInSvg(mdiMicrophone)}></sl-icon>`}
       </button>
     `;
   }
@@ -119,6 +129,15 @@ export class MossDictationButton extends LitElement {
         font-size: 20px;
         display: flex;
         align-items: center;
+      }
+      .mic-button.finishing:disabled {
+        opacity: 1;
+        background: black;
+      }
+      .mic-button sl-spinner {
+        font-size: 20px;
+        --indicator-color: white;
+        --track-color: rgba(255, 255, 255, 0.3);
       }
       .mic-button.listening {
         background: #c0392b;

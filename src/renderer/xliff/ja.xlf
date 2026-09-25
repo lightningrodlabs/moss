@@ -3084,6 +3084,10 @@ starts now</source>
   <source>Dictate a message</source>
   <target>メッセージを音声入力</target>
 </trans-unit>
+<trans-unit id="s4440cf98fd6b4cfe">
+  <source>Finishing transcription</source>
+  <target>文字起こしを完了しています</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
