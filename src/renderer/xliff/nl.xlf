@@ -2643,37 +2643,9 @@ begint nu</target>
   <source>Audio capture is not available on this system.</source>
   <target>Audio-opname is niet beschikbaar op dit systeem.</target>
 </trans-unit>
-<trans-unit id="s23c9f3d826e8abef">
-  <source>Backend</source>
-  <target>Backend</target>
-</trans-unit>
-<trans-unit id="se97bef6f5749eb48">
-  <source>Per-app capture</source>
-  <target>Opname per app</target>
-</trans-unit>
-<trans-unit id="s4d512fe36dae282d">
-  <source>Excludes Moss playback</source>
-  <target>Sluit Moss-weergave uit</target>
-</trans-unit>
-<trans-unit id="sb3481132c0f2224e">
-  <source>No tool is using audio sources.</source>
-  <target>Geen enkele tool gebruikt audiobronnen.</target>
-</trans-unit>
-<trans-unit id="s3fd6bd99e3f6a5be">
-  <source>Started</source>
-  <target>Gestart</target>
-</trans-unit>
 <trans-unit id="sd9ad53251f2330a5">
   <source>Stop</source>
   <target>Stoppen</target>
-</trans-unit>
-<trans-unit id="s3c11d2b2e0023e1f">
-  <source>Allow tools to request audio sources</source>
-  <target>Tools toestaan audiobronnen aan te vragen</target>
-</trans-unit>
-<trans-unit id="s7bea63b4e5175162">
-  <source>Active grants</source>
-  <target>Actieve toestemmingen</target>
 </trans-unit>
 <trans-unit id="s9ced6a79ff861137">
   <source>Audio Sources</source>
@@ -2926,6 +2898,179 @@ begint nu</target>
 <trans-unit id="s7b25cd71849bf7c8">
   <source>This group is no longer listed on the local network.</source>
   <target>Deze groep staat niet meer vermeld op het lokale netwerk.</target>
+</trans-unit>
+<trans-unit id="s9cb6bbd85daeb51f">
+  <source>No capabilities reported.</source>
+  <target>Geen mogelijkheden gemeld.</target>
+</trans-unit>
+<trans-unit id="s8c36545f724b9460">
+  <source>(none)</source>
+  <target>(geen)</target>
+</trans-unit>
+<trans-unit id="sbfd12d4d878216c6">
+  <source>Available:</source>
+  <target>Beschikbaar:</target>
+</trans-unit>
+<trans-unit id="sa36aa646efe3b5e0">
+  <source>Model:</source>
+  <target>Model:</target>
+</trans-unit>
+<trans-unit id="s10c1286464b46257">
+  <source>Streaming partials:</source>
+  <target>Tussentijdse resultaten (streaming):</target>
+</trans-unit>
+<trans-unit id="s538c8ca77f9b59e3">
+  <source>Latency tier:</source>
+  <target>Latentieniveau:</target>
+</trans-unit>
+<trans-unit id="s14db09395fd05086">
+  <source>Languages:</source>
+  <target>Talen:</target>
+</trans-unit>
+<trans-unit id="s6f87b8dc56fff501">
+  <source>No tools have been granted local transcription access yet. The first time a tool asks, you will be prompted.</source>
+  <target>Nog geen enkele tool heeft toegang tot lokale transcriptie gekregen. De eerste keer dat een tool erom vraagt, wordt het je gevraagd.</target>
+</trans-unit>
+<trans-unit id="s3be7f9e932f476a3">
+  <source>Allowed</source>
+  <target>Toegestaan</target>
+</trans-unit>
+<trans-unit id="s93390561e1afc0b6">
+  <source>Denied</source>
+  <target>Geweigerd</target>
+</trans-unit>
+<trans-unit id="s0e871352ba4b17d3">
+  <source>Revoke</source>
+  <target>Intrekken</target>
+</trans-unit>
+<trans-unit id="s71a069951bcde0c0">
+  <source>Speech recognition</source>
+  <target>Spraakherkenning</target>
+</trans-unit>
+<trans-unit id="sa32eea12a8fcb38b">
+  <source>Moss runs speech-to-text on this device. Tools request access the first time they need it; you can review and revoke those decisions below.</source>
+  <target>Moss zet spraak om in tekst op dit apparaat. Tools vragen toegang de eerste keer dat ze die nodig hebben; hieronder kun je die beslissingen bekijken en intrekken.</target>
+</trans-unit>
+<trans-unit id="sd0bce80972cf3be3">
+  <source>Tool permissions</source>
+  <target>Toolrechten</target>
+</trans-unit>
+<trans-unit id="s8214d12128c7fa3f">
+  <source>Transcription</source>
+  <target>Transcriptie</target>
+</trans-unit>
+<trans-unit id="s29ab9d572b687e7f">
+  <source>Starting local transcription model…</source>
+  <target>Lokaal transcriptiemodel wordt gestart…</target>
+</trans-unit>
+<trans-unit id="sd3035ae80e950c83">
+  <source>Runtime:</source>
+  <target>Runtime:</target>
+</trans-unit>
+<trans-unit id="s4836f1bc154d67ce">
+  <source>About transcription</source>
+  <target>Over transcriptie</target>
+</trans-unit>
+<trans-unit id="se2fe09d12c92afea">
+  <source>All transcription happens on this computer. Your audio is turned into text by a speech model that runs locally, and nothing is sent to a server for processing.</source>
+  <target>Alle transcriptie gebeurt op deze computer. Je audio wordt door een lokaal draaiend spraakmodel omgezet in tekst, en er wordt niets naar een server gestuurd voor verwerking.</target>
+</trans-unit>
+<trans-unit id="h609db4d1e0221068">
+  <source>Moss uses
+                <x id="0" equiv-text="&lt;a href=&quot;https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>Whisper<x id="1" equiv-text="&lt;/a&gt;"/>, an open speech recognition model, running through whisper.cpp.</source>
+  <target>Moss gebruikt <x id="0" equiv-text="&lt;a href=&quot;https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>Whisper<x id="1" equiv-text="&lt;/a&gt;"/>, een open spraakherkenningsmodel, uitgevoerd via whisper.cpp.</target>
+</trans-unit>
+<trans-unit id="s55b7e7ecf7286f55">
+  <source>A tool only gets access after you allow it, the first time it asks. You can withdraw that under Tool permissions, and turning the switch off stops every tool at once.</source>
+  <target>Een tool krijgt pas toegang nadat je dat toestaat, de eerste keer dat hij erom vraagt. Je kunt dat intrekken onder Toolrechten, en met de schakelaar uit stoppen alle tools tegelijk.</target>
+</trans-unit>
+<trans-unit id="sadf9ac04abb2c03e">
+  <source>Technical details</source>
+  <target>Technische details</target>
+</trans-unit>
+<trans-unit id="sb8d52d4a1d5bfaef">
+  <source>Backend:</source>
+  <target>Backend:</target>
+</trans-unit>
+<trans-unit id="s07834c31529b12b6">
+  <source>Per-app capture:</source>
+  <target>Opname per app:</target>
+</trans-unit>
+<trans-unit id="s0f1c76735eee1f15">
+  <source>Excludes Moss playback:</source>
+  <target>Sluit Moss-audio uit:</target>
+</trans-unit>
+<trans-unit id="sf49b5528bbd4ff20">
+  <source>No tool is capturing audio right now. Each time a tool asks, you pick the source it may capture.</source>
+  <target>Op dit moment neemt geen enkele tool audio op. Elke keer dat een tool het vraagt, kies jij de bron die hij mag opnemen.</target>
+</trans-unit>
+<trans-unit id="s4851f8219fef1d32">
+  <source>Capturing</source>
+  <target>Neemt op sinds</target>
+</trans-unit>
+<trans-unit id="sc732f2e2fbe9f15e">
+  <source>started</source>
+  <target>gestart</target>
+</trans-unit>
+<trans-unit id="s79ea20c686c765c5">
+  <source>dropped</source>
+  <target>verworpen</target>
+</trans-unit>
+<trans-unit id="s0cccb96d9646233e">
+  <source>stalls</source>
+  <target>haperingen</target>
+</trans-unit>
+<trans-unit id="s4d088d8ab006d443">
+  <source>Audio capture</source>
+  <target>Audio-opname</target>
+</trans-unit>
+<trans-unit id="s421dbeafa6c159ce">
+  <source>About audio capture</source>
+  <target>Over audio-opname</target>
+</trans-unit>
+<trans-unit id="s493a0e3177112cbd">
+  <source>Tools can ask to capture audio playing on this computer. You choose the source each time a tool asks, and you can stop a capture below while it runs.</source>
+  <target>Tools kunnen vragen om audio op te nemen die op deze computer wordt afgespeeld. Je kiest bij elke aanvraag de bron, en een lopende opname kun je hieronder stoppen.</target>
+</trans-unit>
+<trans-unit id="s0300a7b778a3485b">
+  <source>Active permissions</source>
+  <target>Actieve rechten</target>
+</trans-unit>
+<trans-unit id="s77f0fa1e262cd813">
+  <source>Moss can pass audio that is playing on this computer to a tool — the sound of a meeting app, for example, or everything coming out of your speakers.</source>
+  <target>Moss kan audio die op deze computer wordt afgespeeld doorgeven aan een tool — bijvoorbeeld het geluid van een vergaderapp, of alles wat uit je luidsprekers komt.</target>
+</trans-unit>
+<trans-unit id="s74b7cab081fc7b15">
+  <source>Every request opens a picker where you choose exactly which source that tool may capture. Moss does not send the audio anywhere itself; what a tool does with the audio it receives is up to that tool.</source>
+  <target>Elke aanvraag opent een kiezer waarin je precies bepaalt welke bron de tool mag opnemen. Moss stuurt de audio zelf nergens heen; wat een tool doet met de ontvangen audio is aan die tool.</target>
+</trans-unit>
+<trans-unit id="s2840dee6319616ff">
+  <source>Turning the switch off stops tools from asking at all, and a capture that is already running can be stopped under Active permissions.</source>
+  <target>De schakelaar uitzetten voorkomt dat tools het überhaupt vragen, en een al lopende opname kun je stoppen onder ‘Actieve rechten’.</target>
+</trans-unit>
+<trans-unit id="s3e58e7d8979a34db">
+  <source>All system audio (except Moss)</source>
+  <target>Alle systeemaudio (behalve Moss)</target>
+</trans-unit>
+<trans-unit id="sb9e464752a8fd655">
+  <source>playing</source>
+  <target>speelt af</target>
+</trans-unit>
+<trans-unit id="s598af2cac71b6764">
+  <source>silent</source>
+  <target>stil</target>
+</trans-unit>
+<trans-unit id="sbd2faa0a5f99ce98">
+  <source>Share audio with <x id="0" equiv-text="${toolName}"/></source>
+  <target>Audio delen met <x id="0" equiv-text="${toolName}"/></target>
+</trans-unit>
+<trans-unit id="s438d605febf22fef">
+  <source>Choose what this Tool can hear. Sound from Moss itself is never shared.</source>
+  <target>Kies wat deze tool mag horen. Geluid van Moss zelf wordt nooit gedeeld.</target>
+</trans-unit>
+<trans-unit id="s4c9d128b1348f3b7">
+  <source>No applications with audio output were found.</source>
+  <target>Er zijn geen toepassingen met audio-uitvoer gevonden.</target>
 </trans-unit>
 </body>
 </file>

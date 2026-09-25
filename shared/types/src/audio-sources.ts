@@ -28,6 +28,14 @@ export interface AudioSourceRow {
   playing: boolean | null;
 }
 
+/** Sent from main to the requesting window to show the audio-source picker dialog. */
+export interface AudioSourcePickerRequest {
+  /** Echoed back with the answer, so a stale dialog cannot answer a newer request. */
+  pickerId: string;
+  toolName: string;
+  rows: AudioSourceRow[];
+}
+
 export interface AudioSourceRequestResult {
   grantId: string;
   /** Human-readable summary of the chosen sources, e.g. "System audio" or "Spotify, Firefox". */

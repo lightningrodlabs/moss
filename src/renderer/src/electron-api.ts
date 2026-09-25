@@ -18,13 +18,19 @@ import {
   WAL,
   WeaveLocation,
 } from '@theweave/api';
-
+import type {
+  AsrIncomingEvent,
+  AsrSessionOptions,
+  LocalModelCapabilities,
+  AsrHostStatus,
+} from '@theweave/api';
 import {
   AppAssetsInfo,
   AppHashes,
   AssetSource,
   AudioCapabilities,
   AudioSourceGrantInfo,
+  AudioSourcePickerRequest,
   AudioSourceRequestResult,
   DistributionInfo,
   LocalToolInfo,
@@ -34,7 +40,7 @@ import {
   ToolTransferRequest,
   WeaveDevConfig,
 } from '@theweave/moss-types';
-import { ToolWeaveConfig } from './types';
+import { AppletHostResponse, ToolWeaveConfig } from './types';
 
 // IPC_CHANGE_HERE
 
@@ -57,7 +63,7 @@ declare global {
         request: CallZomeRequest,
         callerAppletIds: string[],
       ) => Promise<CallZomeRequestSigned>;
-      appletMessageToParentResponse: (response: any, id: string) => Promise<void>;
+      appletMessageToParentResponse: (response: AppletHostResponse, id: string) => Promise<void>;
       parentToAppletMessage: (
         message: ParentToAppletMessage,
         forApplets: AppletId[],
@@ -86,7 +92,14 @@ declare global {
       openLogs: () => Promise<void>;
       exportLogs: () => Promise<void>;
       onAppletToParentMessage: (
-        callback: (e: any, payload: { message: AppletToParentMessage; id: string }) => void,
+        callback: (
+          e: any,
+          payload: {
+            message: AppletToParentMessage;
+            id: string;
+            senderWebContentsId?: number;
+          },
+        ) => void,
       ) => void;
       onDeepLinkReceived: (callback: (e: any, payload: string) => any) => void;
       onSwitchToWeaveLocation: (callback: (e: any, payload: WeaveLocation) => any) => void;
@@ -204,10 +217,19 @@ declare global {
         requestId: string;
         toolName: string;
       }) => Promise<AudioSourceRequestResult | null>;
-      stopAudioSources: (grantId: string, reason: 'user-stopped' | 'iframe-unloaded') => Promise<void>;
+      stopAudioSources: (
+        grantId: string,
+        reason: 'user-stopped' | 'iframe-unloaded',
+      ) => Promise<void>;
       listAudioSourceGrants: () => Promise<AudioSourceGrantInfo[]>;
       getAudioCapabilities: () => Promise<AudioCapabilities>;
-      onAudioSourceGrantsChanged: (callback: (e: any, grants: AudioSourceGrantInfo[]) => any) => void;
+      onShowAudioSourcePicker: (
+        callback: (e: any, request: AudioSourcePickerRequest) => any,
+      ) => void;
+      audioSourcesSelected: (pickerId: string, ids: string[] | null) => Promise<void>;
+      onAudioSourceGrantsChanged: (
+        callback: (e: any, grants: AudioSourceGrantInfo[]) => any,
+      ) => void;
       captureScreen: () => Promise<string>;
       getFeedbackWorkerUrl: () => Promise<string>;
       saveFeedback: (feedback: {
@@ -305,6 +327,30 @@ declare global {
           e: unknown,
           payload: { bytes: Uint8Array; address: string; port: number },
         ) => unknown,
+      ) => void;
+      // ── Local ASR (whisper.cpp via Moss main) ──
+      asrRequestConsent: (req: {
+        appletName: string;
+        senderWebContentsId?: number;
+      }) => Promise<'granted' | 'denied'>;
+      asrWarmUp: () => Promise<void>;
+      asrStatus: () => Promise<AsrHostStatus>;
+      onAsrStatus: (
+        callback: (e: Electron.IpcRendererEvent, status: AsrHostStatus) => void,
+      ) => void;
+      asrCapabilities: () => Promise<LocalModelCapabilities>;
+      asrOpenSession: (opts: AsrSessionOptions) => Promise<{ sessionId: string }>;
+      asrPushAudio: (req: {
+        sessionId: string;
+        pcm: Uint8Array;
+        endOfUtterance?: boolean;
+      }) => Promise<void>;
+      asrCloseSession: (req: { sessionId: string }) => Promise<void>;
+      onWalWindowClosed: (
+        callback: (e: Electron.IpcRendererEvent, info: { webContentsId: number }) => void,
+      ) => void;
+      onAsrEvent: (
+        callback: (e: Electron.IpcRendererEvent, event: AsrIncomingEvent) => void,
       ) => void;
     };
     __ZOME_CALL_LOGGING_ENABLED__: boolean;
@@ -461,7 +507,10 @@ export async function selectScreenOrWindow(): Promise<string> {
 export async function requestAudioSources(req: { requestId: string; toolName: string }) {
   return window.electronAPI.requestAudioSources(req);
 }
-export async function stopAudioSources(grantId: string, reason: 'user-stopped' | 'iframe-unloaded') {
+export async function stopAudioSources(
+  grantId: string,
+  reason: 'user-stopped' | 'iframe-unloaded',
+) {
   return window.electronAPI.stopAudioSources(grantId, reason);
 }
 export async function listAudioSourceGrants() {

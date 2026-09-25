@@ -1,0 +1,280 @@
+import { describe, expect, it, vi } from 'vitest';
+
+import type { LocalModelCapabilities } from '@theweave/api';
+
+import { AsrBroker } from '../broker';
+import { computeAsrCapabilities } from '../capabilities';
+import {
+  AsrIpcError,
+  AsrIpcEvent,
+  AsrIpcHandlerContext,
+  asrCloseAllForOwner,
+  asrCloseSession,
+  asrGetCapabilities,
+  asrOpenSession,
+  asrPushAudio,
+  asrStatus,
+  asrWarmUp,
+} from '../ipcHandlers';
+import { SessionRegistry } from '../sessionRegistry';
+import { FakeWhisperServer, asWhisperServer } from './fakeWhisperServer';
+
+interface Harness {
+  ctx: AsrIpcHandlerContext;
+  events: Array<{ ownerId: number; event: AsrIpcEvent }>;
+  fakes: FakeWhisperServer[];
+  registry: SessionRegistry;
+}
+
+function makeHarness(
+  opts: {
+    transcribeText?: string;
+    idGen?: () => string;
+    capabilities?: LocalModelCapabilities;
+  } = {},
+): Harness {
+  const fakes: FakeWhisperServer[] = [];
+  const broker = new AsrBroker({
+    server: { command: ['noop'], modelPath: '/dev/null' },
+    serverFactory: (cfg) => {
+      const fake = new FakeWhisperServer(cfg, {
+        transcribe: opts.transcribeText
+          ? () => ({
+              segments: [{ text: opts.transcribeText!, tStart: 0, tEnd: 0 }],
+              inferMs: 1,
+            })
+          : undefined,
+      });
+      fakes.push(fake);
+      return asWhisperServer(fake);
+    },
+  });
+  const registry = new SessionRegistry(opts.idGen);
+  const events: Harness['events'] = [];
+  const capabilities =
+    opts.capabilities ?? computeAsrCapabilities({ modelPath: '/tmp/ggml-base.en.bin' });
+  return {
+    ctx: {
+      getBroker: () => broker,
+      registry,
+      emitEvent: (ownerId, event) => events.push({ ownerId, event }),
+      getCapabilities: () => capabilities,
+    },
+    events,
+    fakes,
+    registry,
+  };
+}
+
+function silentBytes(samples: number): Uint8Array {
+  return new Uint8Array(samples * 2);
+}
+
+describe('asrOpenSession', () => {
+  it('registers a session under the owner and returns a fresh id', async () => {
+    let n = 0;
+    const h = makeHarness({ idGen: () => `id-${n++}` });
+    const { sessionId } = await asrOpenSession(h.ctx, 100, {});
+    expect(sessionId).toBe('id-0');
+    expect(h.registry.size).toBe(1);
+    expect(h.registry.get(sessionId)?.ownerId).toBe(100);
+  });
+
+  it('forwards final events to the owner via emitEvent', async () => {
+    const h = makeHarness({ transcribeText: 'hello there' });
+    const { sessionId } = await asrOpenSession(h.ctx, 42, {});
+    await asrPushAudio(h.ctx, 42, {
+      sessionId,
+      pcm: silentBytes(16_000),
+      endOfUtterance: true,
+    });
+    expect(h.events).toHaveLength(1);
+    const ev = h.events[0];
+    expect(ev.ownerId).toBe(42);
+    expect(ev.event.eventType).toBe('final');
+    if (ev.event.eventType === 'final') {
+      expect(ev.event.text).toBe('hello there');
+      expect(ev.event.sessionId).toBe(sessionId);
+    }
+  });
+});
+
+describe('asrPushAudio', () => {
+  it('routes PCM bytes through to the AsrSession', async () => {
+    const h = makeHarness();
+    const { sessionId } = await asrOpenSession(h.ctx, 1, {});
+    await asrPushAudio(h.ctx, 1, {
+      sessionId,
+      pcm: silentBytes(16_000),
+      endOfUtterance: true,
+    });
+    expect(h.fakes[0].transcribeCalls).toHaveLength(1);
+  });
+
+  it('throws not_found for an unknown session id', async () => {
+    const h = makeHarness();
+    await expect(
+      asrPushAudio(h.ctx, 1, { sessionId: 'nope', pcm: silentBytes(16) }),
+    ).rejects.toMatchObject({ kind: 'not_found' });
+  });
+
+  it('throws forbidden when a different owner tries to push', async () => {
+    const h = makeHarness();
+    const { sessionId } = await asrOpenSession(h.ctx, 100, {});
+    await expect(
+      asrPushAudio(h.ctx, 200, { sessionId, pcm: silentBytes(16) }),
+    ).rejects.toMatchObject({ kind: 'forbidden' });
+  });
+
+  it('throws invalid for an odd-length PCM payload', async () => {
+    const h = makeHarness();
+    const { sessionId } = await asrOpenSession(h.ctx, 1, {});
+    await expect(
+      asrPushAudio(h.ctx, 1, { sessionId, pcm: new Uint8Array(3) }),
+    ).rejects.toMatchObject({ kind: 'invalid' });
+  });
+
+  it('drops the registry entry once the session reports an error', async () => {
+    const h = makeHarness();
+    const { sessionId } = await asrOpenSession(h.ctx, 7, {});
+    h.fakes[0].opts = {
+      transcribe: () => {
+        throw new Error('boom');
+      },
+    };
+    await asrPushAudio(h.ctx, 7, { sessionId, pcm: new Uint8Array(32_000), endOfUtterance: true });
+    await h.registry.get(sessionId)?.session.settle();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(h.events.some((e) => e.event.eventType === 'error')).toBe(true);
+    expect(h.registry.get(sessionId)).toBeUndefined();
+    expect(h.registry.size).toBe(0);
+  });
+
+  it('closes the session and throws when the owner died during open', async () => {
+    const h = makeHarness();
+    h.ctx.isOwnerAlive = () => false;
+    await expect(asrOpenSession(h.ctx, 7, {})).rejects.toThrow(/owner/);
+    expect(h.registry.size).toBe(0);
+    expect(h.ctx.getBroker().openSessionCount).toBe(0);
+  });
+
+  it('emits an error event when the underlying session throws', async () => {
+    const fakes: FakeWhisperServer[] = [];
+    const broker = new AsrBroker({
+      server: { command: ['noop'], modelPath: '/dev/null' },
+      serverFactory: (cfg) => {
+        const fake = new FakeWhisperServer(cfg, {
+          transcribe: () => {
+            throw new Error('boom');
+          },
+        });
+        fakes.push(fake);
+        return asWhisperServer(fake);
+      },
+    });
+    const registry = new SessionRegistry();
+    const events: Array<{ ownerId: number; event: AsrIpcEvent }> = [];
+    const ctx: AsrIpcHandlerContext = {
+      getBroker: () => broker,
+      registry,
+      emitEvent: (ownerId, event) => events.push({ ownerId, event }),
+      getCapabilities: () => computeAsrCapabilities({ modelPath: '/tmp/ggml-base.en.bin' }),
+    };
+    const { sessionId } = await asrOpenSession(ctx, 1, {});
+    const entry = registry.get(sessionId)!;
+    await asrPushAudio(ctx, 1, { sessionId, pcm: silentBytes(16_000), endOfUtterance: true });
+    await entry.session.settle();
+    expect(events).toHaveLength(1);
+    expect(events[0].event.eventType).toBe('error');
+    if (events[0].event.eventType === 'error') {
+      expect(events[0].event.error).toMatch(/boom/);
+    }
+  });
+});
+
+describe('asrCloseSession', () => {
+  it('removes the entry and closes the session', async () => {
+    const h = makeHarness();
+    const { sessionId } = await asrOpenSession(h.ctx, 1, {});
+    expect(h.registry.size).toBe(1);
+    await asrCloseSession(h.ctx, 1, { sessionId });
+    expect(h.registry.size).toBe(0);
+  });
+
+  it('is a no-op for an unknown session id', async () => {
+    const h = makeHarness();
+    await asrCloseSession(h.ctx, 1, { sessionId: 'nope' });
+    // no throw, no change
+    expect(h.registry.size).toBe(0);
+  });
+
+  it('throws forbidden when a different owner tries to close', async () => {
+    const h = makeHarness();
+    const { sessionId } = await asrOpenSession(h.ctx, 100, {});
+    await expect(asrCloseSession(h.ctx, 200, { sessionId })).rejects.toMatchObject({
+      kind: 'forbidden',
+    });
+  });
+});
+
+describe('asrCloseAllForOwner', () => {
+  it('closes every session of the owner and leaves others alone', async () => {
+    const h = makeHarness();
+    await asrOpenSession(h.ctx, 100, {});
+    await asrOpenSession(h.ctx, 100, {});
+    await asrOpenSession(h.ctx, 200, {});
+    expect(h.registry.size).toBe(3);
+
+    await asrCloseAllForOwner(h.ctx, 100);
+    expect(h.registry.size).toBe(1);
+    expect(h.registry.idsForOwner(100)).toEqual([]);
+    expect(h.registry.idsForOwner(200)).toHaveLength(1);
+  });
+
+  it('swallows errors from individual close() calls', async () => {
+    const h = makeHarness();
+    const { sessionId } = await asrOpenSession(h.ctx, 100, {});
+    const entry = h.registry.get(sessionId)!;
+    vi.spyOn(entry.session, 'close').mockRejectedValue(new Error('cleanup boom'));
+    await expect(asrCloseAllForOwner(h.ctx, 100)).resolves.toBeUndefined();
+  });
+});
+
+describe('AsrIpcError', () => {
+  it('preserves the kind tag', () => {
+    const err = new AsrIpcError('x', 'forbidden');
+    expect(err.kind).toBe('forbidden');
+    expect(err.name).toBe('AsrIpcError');
+  });
+});
+
+describe('asrGetCapabilities', () => {
+  it('returns whatever the context reports without touching the broker', async () => {
+    const h = makeHarness();
+    const caps = await asrGetCapabilities(h.ctx);
+    expect(caps.asr.available).toBe(true);
+    expect(caps.asr.model).toBe('base.en');
+    expect(caps.asr.languages).toEqual(['en']);
+    // Broker was never asked for a session, so no fake should exist.
+    expect(h.fakes).toHaveLength(0);
+  });
+
+  it('honors an unavailable capabilities value', async () => {
+    const unavailable = computeAsrCapabilities({ modelPath: null });
+    const h = makeHarness({ capabilities: unavailable });
+    const caps = await asrGetCapabilities(h.ctx);
+    expect(caps.asr.available).toBe(false);
+    expect(caps.asr.languages).toEqual([]);
+  });
+});
+
+describe('asrWarmUp / asrStatus', () => {
+  it('warms the broker without registering a session and reports its status', async () => {
+    const h = makeHarness();
+    expect(await asrStatus(h.ctx)).toBe('idle');
+    await asrWarmUp(h.ctx);
+    expect(await asrStatus(h.ctx)).toBe('ready');
+    expect(h.registry.size).toBe(0);
+    expect(h.fakes).toHaveLength(1);
+  });
+});

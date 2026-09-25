@@ -315,6 +315,13 @@ export type ParentToAppletMessage =
   | {
       type: 'locale-change';
       locale: string;
+    }
+  // ── Local ASR (sessionId-routed events from main → applet iframe) ──
+  | {
+      type: 'asr-event';
+      event:
+        | (AsrFinalEvent & { sessionId: string; eventType: 'final' })
+        | { sessionId: string; eventType: 'error'; error: string };
     };
 
 export type IframeKind =
@@ -520,7 +527,123 @@ export type AppletToParentRequest =
   | {
       type: 'unsubscribe-from-asset-store';
       wal: WAL;
+    }
+  // ── Local ASR (whisper.cpp sidecar via WeaveClient.localModels.asr) ──
+  | {
+      type: 'asr-capabilities';
+    }
+  | {
+      type: 'asr-warm-up';
+    }
+  | {
+      type: 'asr-status';
+    }
+  | {
+      type: 'asr-open-session';
+      opts?: AsrSessionOptions;
+    }
+  | {
+      type: 'asr-push-audio';
+      sessionId: string;
+      /** PCM16 mono bytes (Int16Array.buffer view), little-endian. */
+      pcm: Uint8Array;
+      endOfUtterance?: boolean;
+    }
+  | {
+      type: 'asr-close-session';
+      sessionId: string;
     };
+
+export interface AsrSessionOptions {
+  /** ISO 639-1 code, or omit for auto-detect. */
+  language?: string;
+  /** Sample rate of pushed PCM. Defaults to 16000. */
+  sampleRate?: number;
+  channels?: 1 | 2;
+  /** Force-flush threshold for unbounded pushes. Default 30_000 ms. */
+  maxBufferMs?: number;
+  /**
+   * Enable Moss-side silence-based VAD. When true (default), the
+   * session commits an utterance whenever it sees `vadSilenceMs` of
+   * continuous silence after at least one speech chunk. When false,
+   * only `endOfUtterance` on `pushAudio` and `maxBufferMs` trigger
+   * commits — caller is fully in control.
+   *
+   * While VAD is on and no speech has been detected yet, Moss keeps
+   * only a short pre-roll of audio (about two seconds) and never sends
+   * pure silence to the model. Tools whose audio may sit below
+   * `vadSilenceRms` (very quiet voices, heavily attenuated input) and
+   * that segment utterances themselves should set `vad: false` so
+   * every pushed sample reaches the model.
+   */
+  vad?: boolean;
+  /**
+   * Silence threshold as RMS in normalized [-1, 1]. Audio chunks with
+   * RMS below this are treated as silence. Default 0.01 — typical
+   * room noise sits 0.001–0.005, normal speech sits 0.05–0.3. Bump
+   * higher in noisy environments; lower for quiet voices.
+   */
+  vadSilenceRms?: number;
+  /**
+   * How much continuous post-speech silence (ms) triggers a commit.
+   * Default 500 — roughly the inter-sentence pause in conversational
+   * English. Lower for more, smaller finals (better for long
+   * continuous speech where whisper drops content in long decode
+   * windows); raise to coalesce into larger utterances.
+   */
+  vadSilenceMs?: number;
+}
+
+/**
+ * Introspection result for `WeaveClient.localModels.capabilities()`.
+ * Tools call this once before deciding whether to offer transcription-
+ * dependent UI. The shape is intentionally small; richer telemetry
+ * (benchmark numbers, memory footprint) can slot in later without
+ * breaking changes.
+ */
+export interface LocalModelCapabilities {
+  asr: LocalAsrCapabilities;
+}
+
+export interface LocalAsrCapabilities {
+  /**
+   * True when the host has a model configured. False means the applet
+   * should not attempt `openSession()` — it will reject. Note that
+   * `weaveClient.localModels` may itself be undefined when the applet
+   * lacks the permission; this field only flips false when the host is
+   * present but unconfigured.
+   */
+  available: boolean;
+  /** ISO 639-1 codes the loaded model can transcribe. */
+  languages: string[];
+  /**
+   * True if the runtime emits partials mid-utterance. v1 is false —
+   * whisper.cpp is batch; Moss presents a streaming-shaped session by
+   * emitting one final per VAD-committed utterance.
+   */
+  streaming: boolean;
+  /** Tool-facing model identifier, for telemetry / UI only. Moss is authoritative. */
+  model: string;
+  /**
+   * Rough perf tier on this user's hardware + model combo. Tools use
+   * this to decide whether to offer latency-sensitive features (live
+   * captions) or only offline use (post-hoc transcript). Not a
+   * benchmark — configured per Moss install, defaults to 'ok'.
+   */
+  latencyTier: 'fast' | 'ok' | 'slow';
+}
+
+/** Whether the host's speech model is down, coming up, or serving. */
+export type AsrHostStatus = 'idle' | 'starting' | 'ready';
+
+export interface AsrFinalEvent {
+  text: string;
+  /** ms from session start */
+  tStart: number;
+  tEnd: number;
+  confidence?: number;
+  lang?: string;
+}
 
 export type OpenViewRequest =
   | {

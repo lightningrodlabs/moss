@@ -2643,37 +2643,9 @@ commence maintenant</target>
   <source>Audio capture is not available on this system.</source>
   <target>La capture audio n'est pas disponible sur ce système.</target>
 </trans-unit>
-<trans-unit id="s23c9f3d826e8abef">
-  <source>Backend</source>
-  <target>Moteur</target>
-</trans-unit>
-<trans-unit id="se97bef6f5749eb48">
-  <source>Per-app capture</source>
-  <target>Capture par application</target>
-</trans-unit>
-<trans-unit id="s4d512fe36dae282d">
-  <source>Excludes Moss playback</source>
-  <target>Exclut la lecture de Moss</target>
-</trans-unit>
-<trans-unit id="sb3481132c0f2224e">
-  <source>No tool is using audio sources.</source>
-  <target>Aucun outil n'utilise de sources audio.</target>
-</trans-unit>
-<trans-unit id="s3fd6bd99e3f6a5be">
-  <source>Started</source>
-  <target>Démarré</target>
-</trans-unit>
 <trans-unit id="sd9ad53251f2330a5">
   <source>Stop</source>
   <target>Arrêter</target>
-</trans-unit>
-<trans-unit id="s3c11d2b2e0023e1f">
-  <source>Allow tools to request audio sources</source>
-  <target>Autoriser les outils à demander des sources audio</target>
-</trans-unit>
-<trans-unit id="s7bea63b4e5175162">
-  <source>Active grants</source>
-  <target>Autorisations actives</target>
 </trans-unit>
 <trans-unit id="s9ced6a79ff861137">
   <source>Audio Sources</source>
@@ -2926,6 +2898,179 @@ commence maintenant</target>
 <trans-unit id="s7b25cd71849bf7c8">
   <source>This group is no longer listed on the local network.</source>
   <target>Ce groupe n'est plus listé sur le réseau local.</target>
+</trans-unit>
+<trans-unit id="s9cb6bbd85daeb51f">
+  <source>No capabilities reported.</source>
+  <target>Aucune capacité signalée.</target>
+</trans-unit>
+<trans-unit id="s8c36545f724b9460">
+  <source>(none)</source>
+  <target>(aucun)</target>
+</trans-unit>
+<trans-unit id="sbfd12d4d878216c6">
+  <source>Available:</source>
+  <target>Disponible :</target>
+</trans-unit>
+<trans-unit id="sa36aa646efe3b5e0">
+  <source>Model:</source>
+  <target>Modèle :</target>
+</trans-unit>
+<trans-unit id="s10c1286464b46257">
+  <source>Streaming partials:</source>
+  <target>Résultats partiels en continu :</target>
+</trans-unit>
+<trans-unit id="s538c8ca77f9b59e3">
+  <source>Latency tier:</source>
+  <target>Niveau de latence :</target>
+</trans-unit>
+<trans-unit id="s14db09395fd05086">
+  <source>Languages:</source>
+  <target>Langues :</target>
+</trans-unit>
+<trans-unit id="s6f87b8dc56fff501">
+  <source>No tools have been granted local transcription access yet. The first time a tool asks, you will be prompted.</source>
+  <target>Aucun outil n'a encore reçu l'accès à la transcription locale. La première fois qu'un outil le demandera, vous serez consulté.</target>
+</trans-unit>
+<trans-unit id="s3be7f9e932f476a3">
+  <source>Allowed</source>
+  <target>Autorisé</target>
+</trans-unit>
+<trans-unit id="s93390561e1afc0b6">
+  <source>Denied</source>
+  <target>Refusé</target>
+</trans-unit>
+<trans-unit id="s0e871352ba4b17d3">
+  <source>Revoke</source>
+  <target>Révoquer</target>
+</trans-unit>
+<trans-unit id="s71a069951bcde0c0">
+  <source>Speech recognition</source>
+  <target>Reconnaissance vocale</target>
+</trans-unit>
+<trans-unit id="sa32eea12a8fcb38b">
+  <source>Moss runs speech-to-text on this device. Tools request access the first time they need it; you can review and revoke those decisions below.</source>
+  <target>Moss convertit la parole en texte sur cet appareil. Les outils demandent l’accès la première fois qu’ils en ont besoin ; vous pouvez revoir et révoquer ces décisions ci-dessous.</target>
+</trans-unit>
+<trans-unit id="sd0bce80972cf3be3">
+  <source>Tool permissions</source>
+  <target>Autorisations des outils</target>
+</trans-unit>
+<trans-unit id="s8214d12128c7fa3f">
+  <source>Transcription</source>
+  <target>Transcription</target>
+</trans-unit>
+<trans-unit id="s29ab9d572b687e7f">
+  <source>Starting local transcription model…</source>
+  <target>Démarrage du modèle de transcription local…</target>
+</trans-unit>
+<trans-unit id="sd3035ae80e950c83">
+  <source>Runtime:</source>
+  <target>Moteur :</target>
+</trans-unit>
+<trans-unit id="s4836f1bc154d67ce">
+  <source>About transcription</source>
+  <target>À propos de la transcription</target>
+</trans-unit>
+<trans-unit id="se2fe09d12c92afea">
+  <source>All transcription happens on this computer. Your audio is turned into text by a speech model that runs locally, and nothing is sent to a server for processing.</source>
+  <target>Toute la transcription se fait sur cet ordinateur. Votre audio est converti en texte par un modèle vocal qui s’exécute localement, et rien n’est envoyé à un serveur pour traitement.</target>
+</trans-unit>
+<trans-unit id="h609db4d1e0221068">
+  <source>Moss uses
+                <x id="0" equiv-text="&lt;a href=&quot;https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>Whisper<x id="1" equiv-text="&lt;/a&gt;"/>, an open speech recognition model, running through whisper.cpp.</source>
+  <target>Moss utilise <x id="0" equiv-text="&lt;a href=&quot;https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>Whisper<x id="1" equiv-text="&lt;/a&gt;"/>, un modèle ouvert de reconnaissance vocale, exécuté via whisper.cpp.</target>
+</trans-unit>
+<trans-unit id="s55b7e7ecf7286f55">
+  <source>A tool only gets access after you allow it, the first time it asks. You can withdraw that under Tool permissions, and turning the switch off stops every tool at once.</source>
+  <target>Un outil n’obtient l’accès qu’après votre accord, la première fois qu’il le demande. Vous pouvez le retirer sous Autorisations des outils, et désactiver l’interrupteur arrête tous les outils d’un coup.</target>
+</trans-unit>
+<trans-unit id="sadf9ac04abb2c03e">
+  <source>Technical details</source>
+  <target>Détails techniques</target>
+</trans-unit>
+<trans-unit id="sb8d52d4a1d5bfaef">
+  <source>Backend:</source>
+  <target>Moteur :</target>
+</trans-unit>
+<trans-unit id="s07834c31529b12b6">
+  <source>Per-app capture:</source>
+  <target>Capture par application :</target>
+</trans-unit>
+<trans-unit id="s0f1c76735eee1f15">
+  <source>Excludes Moss playback:</source>
+  <target>Exclut le son de Moss :</target>
+</trans-unit>
+<trans-unit id="sf49b5528bbd4ff20">
+  <source>No tool is capturing audio right now. Each time a tool asks, you pick the source it may capture.</source>
+  <target>Aucun outil ne capture d’audio pour le moment. Chaque fois qu’un outil le demande, vous choisissez la source qu’il peut capturer.</target>
+</trans-unit>
+<trans-unit id="s4851f8219fef1d32">
+  <source>Capturing</source>
+  <target>Capture depuis</target>
+</trans-unit>
+<trans-unit id="sc732f2e2fbe9f15e">
+  <source>started</source>
+  <target>démarré</target>
+</trans-unit>
+<trans-unit id="s79ea20c686c765c5">
+  <source>dropped</source>
+  <target>perdus</target>
+</trans-unit>
+<trans-unit id="s0cccb96d9646233e">
+  <source>stalls</source>
+  <target>interruptions</target>
+</trans-unit>
+<trans-unit id="s4d088d8ab006d443">
+  <source>Audio capture</source>
+  <target>Capture audio</target>
+</trans-unit>
+<trans-unit id="s421dbeafa6c159ce">
+  <source>About audio capture</source>
+  <target>À propos de la capture audio</target>
+</trans-unit>
+<trans-unit id="s493a0e3177112cbd">
+  <source>Tools can ask to capture audio playing on this computer. You choose the source each time a tool asks, and you can stop a capture below while it runs.</source>
+  <target>Les outils peuvent demander à capturer l’audio qui joue sur cet ordinateur. Vous choisissez la source à chaque demande, et vous pouvez arrêter ci-dessous une capture en cours.</target>
+</trans-unit>
+<trans-unit id="s0300a7b778a3485b">
+  <source>Active permissions</source>
+  <target>Autorisations actives</target>
+</trans-unit>
+<trans-unit id="s77f0fa1e262cd813">
+  <source>Moss can pass audio that is playing on this computer to a tool — the sound of a meeting app, for example, or everything coming out of your speakers.</source>
+  <target>Moss peut transmettre à un outil l’audio qui joue sur cet ordinateur — le son d’une application de réunion, par exemple, ou tout ce qui sort de vos haut-parleurs.</target>
+</trans-unit>
+<trans-unit id="s74b7cab081fc7b15">
+  <source>Every request opens a picker where you choose exactly which source that tool may capture. Moss does not send the audio anywhere itself; what a tool does with the audio it receives is up to that tool.</source>
+  <target>Chaque demande ouvre un sélecteur où vous choisissez précisément la source que l’outil peut capturer. Moss n’envoie lui-même l’audio nulle part ; ce que l’outil fait de l’audio reçu ne dépend que de lui.</target>
+</trans-unit>
+<trans-unit id="s2840dee6319616ff">
+  <source>Turning the switch off stops tools from asking at all, and a capture that is already running can be stopped under Active permissions.</source>
+  <target>Désactiver l’interrupteur empêche les outils de demander quoi que ce soit, et une capture déjà en cours peut être arrêtée sous « Autorisations actives ».</target>
+</trans-unit>
+<trans-unit id="s3e58e7d8979a34db">
+  <source>All system audio (except Moss)</source>
+  <target>Tout le son du système (sauf Moss)</target>
+</trans-unit>
+<trans-unit id="sb9e464752a8fd655">
+  <source>playing</source>
+  <target>en lecture</target>
+</trans-unit>
+<trans-unit id="s598af2cac71b6764">
+  <source>silent</source>
+  <target>silencieux</target>
+</trans-unit>
+<trans-unit id="sbd2faa0a5f99ce98">
+  <source>Share audio with <x id="0" equiv-text="${toolName}"/></source>
+  <target>Partager l'audio avec <x id="0" equiv-text="${toolName}"/></target>
+</trans-unit>
+<trans-unit id="s438d605febf22fef">
+  <source>Choose what this Tool can hear. Sound from Moss itself is never shared.</source>
+  <target>Choisissez ce que cet outil peut entendre. Le son de Moss lui-même n'est jamais partagé.</target>
+</trans-unit>
+<trans-unit id="s4c9d128b1348f3b7">
+  <source>No applications with audio output were found.</source>
+  <target>Aucune application avec sortie audio n'a été trouvée.</target>
 </trans-unit>
 </body>
 </file>

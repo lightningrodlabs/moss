@@ -100,6 +100,12 @@ jobs:
           rustup target add wasm32-unknown-unknown
           yarn build:zomes
 
+      # yarn build:* invokes electron-builder without --publish, which
+      # in CI defaults to auto-publish and expects a draft release at
+      # tag v<pkg.version>. Our dev tag (v<pkg.version>-test.<run>)
+      # doesn't match, so we expand the inner chain here and append
+      # `--publish never`. gh release upload handles uploads explicitly.
+
       - name: build the app (macOS arm64)
         if: matrix.platform == 'macos-latest'
         env:
@@ -110,7 +116,8 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           DEBUG: electron-osx-sign*,electron-notarize*
         run: |
-          yarn build:mac-arm64
+          yarn build
+          npx electron-builder --mac --arm64 --config --publish never
           ls dist
 
       - name: build the app (macOS x86)
@@ -123,7 +130,8 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           DEBUG: electron-osx-sign*,electron-notarize*
         run: |
-          yarn build:mac-x64
+          yarn build
+          npx electron-builder --mac --x64 --config --publish never
           ls dist
 
       - name: Install FUSE
@@ -136,18 +144,28 @@ jobs:
         if: matrix.platform == 'ubuntu-22.04'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SKIP_LATEST_YAML: '1'
         run: |
-          yarn build:linux
+          yarn build
+          npx electron-builder --linux --config --publish never
+          # Patch AppRun (AppImage) + postinst (deb) so the sandbox
+          # works on modern desktops. Production uses this same script;
+          # SKIP_LATEST_YAML suppresses the auto-updater yml write that
+          # dev-release intentionally doesn't publish.
+          node ./scripts/update-linux-latest-yaml.mjs
 
       - name: build (Ubuntu 22.04 aarch64)
         if: matrix.platform == 'ubuntu-22.04-arm'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SKIP_LATEST_YAML: '1'
         run: |
           sudo apt-get install ruby-dev build-essential
           sudo gem install fpm
           export USE_SYSTEM_FPM=true
-          yarn build:linux
+          yarn build
+          npx electron-builder --linux --config --publish never
+          node ./scripts/update-linux-latest-yaml.mjs
 
       - name: build (Windows)
         shell: bash
@@ -156,7 +174,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Retry 5 times on Windows due to weird flaky issue
-          yarn build:win || yarn build:win || yarn build:win || yarn build:win || yarn build:win
+          yarn build
+          npx electron-builder --win --config --publish never \
+            || npx electron-builder --win --config --publish never \
+            || npx electron-builder --win --config --publish never \
+            || npx electron-builder --win --config --publish never \
+            || npx electron-builder --win --config --publish never
 
       - name: sign the app (Windows)
         if: matrix.platform == 'windows-2022'

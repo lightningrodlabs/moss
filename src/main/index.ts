@@ -47,7 +47,9 @@ import {
   storeToolAssetsFromPeer,
   ToolAssetDirs,
 } from './peerToolAssets';
-import { LAIR_BINARY } from './const';
+import { BINARIES_DIRECTORY, LAIR_BINARY, RESOURCES_DIRECTORY } from './const';
+import { registerAsrIpc } from './asr/wireUp';
+import { relayTimeoutMs } from './appletRelayPolicy';
 import { MOSS_CONFIG } from './mossConfig';
 import { createLanBeaconService, type BeaconDiagnostics } from './lanBeacon';
 // import { AdminWebsocket } from '@holochain/client';
@@ -70,11 +72,17 @@ import {
 import { createWalWindow } from './windows';
 import { AudioCaptureBackend, loadAudioCapture, probeAudioCapabilities } from './audioCapture';
 import { AudioSourceGrants } from './audioSourceGrants';
-import { openAudioSourcePicker } from './audioSourcePicker';
-import { registerAudioSourceIpc } from './audioSourcesIpc';
+import { InWindowAudioSourcePicker } from './audioSourcePicker';
+import { pickerWindowFor, registerAudioSourceIpc } from './audioSourcesIpc';
 import { registerDeepLinkSchemes } from './deepLinkRegistration';
 import { repairLinuxHtmlDefault } from './linuxMimeapps';
-import { ConductorInfo, NetworkInfo, ToolWeaveConfig } from './sharedTypes';
+import {
+  AppletHostResponse,
+  ConductorInfo,
+  NetworkInfo,
+  ToolWeaveConfig,
+  isAppletHostResponse,
+} from './sharedTypes';
 import {
   AppAssetsInfo,
   AppHashes,
@@ -1085,6 +1093,22 @@ if (!RUNNING_WITH_COMMAND) {
 
     registerIPCHandlers(notificationIcon);
 
+    // Local ASR (whisper.cpp sidecar). Lazy — sidecar doesn't actually
+    // launch until an applet opens its first AsrSession. See
+    // plans/local-models-asr.md for context. Sidecar output goes through
+    // WE_EMITTER so it lands in the same log file as lair and holochain.
+    registerAsrIpc({
+      binariesDir: BINARIES_DIRECTORY,
+      resourcesPath: RESOURCES_DIRECTORY,
+      whisperServerVersion: MOSS_CONFIG.whisperServer,
+      repoRoot: app.getAppPath(),
+      onLog: (stream, chunk) => {
+        const line = `[whisper-server] ${chunk.trimEnd()}`;
+        if (stream === 'stderr') WE_EMITTER.emitMossError(line);
+        else WE_EMITTER.emitMossLog(line);
+      },
+    });
+
     WE_EMITTER.emitMossLog(`RUN_OPTIONS on startup: ${formatUpdaterArg(RUN_OPTIONS)}`);
 
     MAIN_WINDOW = createOrShowMainWindow();
@@ -1345,32 +1369,85 @@ if (!RUNNING_WITH_COMMAND) {
     );
     // Forward the message to the main window with a unique nano id and waits for the response
     // that should get sent via IPC ('applet-message-to-parent-response')
-    ipcMain.handle('applet-message-to-parent', (_e, message: AppletToParentMessage) => {
+    ipcMain.handle('applet-message-to-parent', (e, message: AppletToParentMessage) => {
       if (!MAIN_WINDOW) throw new Error('Main window does not exists.');
       const messageId = nanoid(5);
       if (message.request.type === 'open-view') {
         MAIN_WINDOW.show();
       }
+      // Include the sender's webContents id so the main renderer can
+      // route UI that needs to attach to the originating window (e.g.
+      // the native ASR consent dialog) back to that WAL window.
       emitToWindow(MAIN_WINDOW!, 'applet-to-parent-message', {
         message,
         id: messageId,
+        senderWebContentsId: e.sender.id,
       });
       return new Promise((resolve, reject) => {
-        const timeoutMs = 60000;
-        const onResponse = (response: any) => {
-          clearTimeout(timeout);
-          return resolve(response);
+        const timeoutMs = relayTimeoutMs(message.request.type);
+        // The main renderer answers with an AppletHostResponse envelope
+        // so a handler failure rejects the WAL window's request right
+        // away instead of surfacing as a timeout.
+        const onResponse = (response: unknown) => {
+          if (timeout !== null) clearTimeout(timeout);
+          if (!isAppletHostResponse(response)) {
+            return reject(new Error('Malformed applet-host response envelope'));
+          }
+          if (response.type === 'error') {
+            return reject(new Error(response.error));
+          }
+          return resolve(response.result);
         };
-        const timeout = setTimeout(() => {
-          WE_EMITTER.off(messageId, onResponse);
-          return reject(`Cross-window AppletToParentRequest timed out in ${timeoutMs}ms`);
-        }, timeoutMs);
+        const timeout =
+          timeoutMs === null
+            ? null
+            : setTimeout(() => {
+                WE_EMITTER.off(messageId, onResponse);
+                return reject(`Cross-window AppletToParentRequest timed out in ${timeoutMs}ms`);
+              }, timeoutMs);
         WE_EMITTER.once(messageId, onResponse);
       });
     });
-    ipcMain.handle('applet-message-to-parent-response', (_e, response: any, id: string) => {
-      WE_EMITTER.emit(id, response);
-    });
+    ipcMain.handle(
+      'applet-message-to-parent-response',
+      (_e, response: AppletHostResponse, id: string) => {
+        WE_EMITTER.emit(id, response);
+      },
+    );
+    // Native first-use consent dialog for the local ASR feature. Shown
+    // attached to the BrowserWindow that actually initiated the request
+    // (WAL windows have their own window; applet iframes live inside
+    // the main window) so it can't hide behind another surface.
+    ipcMain.handle(
+      'asr-request-consent',
+      async (
+        _e,
+        { appletName, senderWebContentsId }: { appletName: string; senderWebContentsId?: number },
+      ): Promise<'granted' | 'denied'> => {
+        let targetWindow: BrowserWindow | null = null;
+        if (typeof senderWebContentsId === 'number') {
+          const wc = webContents.fromId(senderWebContentsId);
+          if (wc && !wc.isDestroyed()) {
+            targetWindow = BrowserWindow.fromWebContents(wc);
+          }
+        }
+        if (!targetWindow) targetWindow = MAIN_WINDOW!;
+        const { response } = await dialog.showMessageBox(targetWindow, {
+          type: 'question',
+          title: 'Allow local transcription?',
+          message: `${appletName} wants to transcribe audio locally`,
+          detail:
+            'Moss will run the on-device speech-to-text model for this tool. ' +
+            'Audio stays on this device and is never sent to an external service. ' +
+            'You can revoke this permission later from Settings → Services → Transcription.',
+          buttons: ['Deny', 'Allow'],
+          defaultId: 1,
+          cancelId: 0,
+          noLink: true,
+        });
+        return response === 1 ? 'granted' : 'denied';
+      },
+    );
     ipcMain.handle(
       'parent-to-applet-message',
       (_e, message: ParentToAppletMessage, forApplets: AppletId[]) => {
@@ -1426,10 +1503,14 @@ if (!RUNNING_WITH_COMMAND) {
       }
       return audioBackend;
     };
+    const audioSourcePicker = new InWindowAudioSourcePicker({
+      lookup: pickerWindowFor,
+      newId: () => nanoid(8),
+    });
     const audioSourceGrants = new AudioSourceGrants({
       backend: audioBackendThunk,
       platform: process.platform,
-      picker: openAudioSourcePicker,
+      picker: (rows, requester) => audioSourcePicker.open(rows, requester),
       excludePids: () => app.getAppMetrics().map((m) => m.pid),
       openChannel: () => new MessageChannelMain(),
       deliverPort: (targetId, payload, port2) => {
@@ -1458,7 +1539,7 @@ if (!RUNNING_WITH_COMMAND) {
           emitToWindow(MAIN_WINDOW, 'audio-source-grants-changed', list);
       },
     });
-    registerAudioSourceIpc(audioSourceGrants, () =>
+    registerAudioSourceIpc(audioSourceGrants, audioSourcePicker, () =>
       probeAudioCapabilities(audioBackendThunk(), process.platform),
     );
     ipcMain.handle('select-screen-or-window', async () => {
@@ -1545,8 +1626,14 @@ if (!RUNNING_WITH_COMMAND) {
           newWalWindow.hide();
           emitToWindow(newWalWindow, 'window-closing', null);
         });
+        // The main renderer owns the ASR sessions this window's applet
+        // opened through the relay; it needs to hear the window is gone.
+        const walWebContentsId = newWalWindow.webContents.id;
         newWalWindow.on('closed', () => {
           delete WAL_WINDOWS[src];
+          if (MAIN_WINDOW && !MAIN_WINDOW.isDestroyed()) {
+            emitToWindow(MAIN_WINDOW, 'wal-window-closed', { webContentsId: walWebContentsId });
+          }
         });
         WAL_WINDOWS[src] = {
           window: newWalWindow,

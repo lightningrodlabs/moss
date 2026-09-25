@@ -12,10 +12,18 @@ import {
   WAL,
   WeaveLocation,
 } from '@theweave/api';
+import type {
+  AsrIncomingEvent,
+  AsrSessionOptions,
+  LocalModelCapabilities,
+  AsrHostStatus,
+} from '@theweave/api';
+import type { AppletHostResponse } from '../main/sharedTypes';
 import {
   AppHashes,
   AssetSource,
   AudioSourceGrantInfo,
+  AudioSourcePickerRequest,
   AudioSourcePortDelivery,
   DistributionInfo,
   ResourceLocation,
@@ -32,7 +40,7 @@ contextBridge.exposeInMainWorld('__HC_ZOME_CALL_SIGNER__', {
 contextBridge.exposeInMainWorld('electronAPI', {
   signZomeCallApplet: (request: CallZomeRequest, callerAppletIds: string[]) =>
     ipcRenderer.invoke('sign-zome-call-applet', request, callerAppletIds),
-  appletMessageToParentResponse: (response: any, id: string) =>
+  appletMessageToParentResponse: (response: AppletHostResponse, id: string) =>
     ipcRenderer.invoke('applet-message-to-parent-response', response, id),
   parentToAppletMessage: (message: ParentToAppletMessage, forApplet: AppletId) =>
     ipcRenderer.invoke('parent-to-applet-message', message, forApplet),
@@ -167,6 +175,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('request-audio-sources', req),
   stopAudioSources: (grantId: string, reason: 'user-stopped' | 'iframe-unloaded') =>
     ipcRenderer.invoke('stop-audio-sources', grantId, reason),
+  onShowAudioSourcePicker: (
+    callback: (e: Electron.IpcRendererEvent, request: AudioSourcePickerRequest) => any,
+  ) => ipcRenderer.on('show-audio-source-picker', callback),
+  audioSourcesSelected: (pickerId: string, ids: string[] | null) =>
+    ipcRenderer.invoke('audio-sources-selected', pickerId, ids),
   listAudioSourceGrants: () => ipcRenderer.invoke('list-audio-source-grants'),
   getAudioCapabilities: () => ipcRenderer.invoke('get-audio-capabilities'),
   onAudioSourceGrantsChanged: (
@@ -256,6 +269,29 @@ contextBridge.exposeInMainWorld('electronAPI', {
       payload: { bytes: Uint8Array; address: string; port: number },
     ) => unknown,
   ) => ipcRenderer.on('lan-beacon-datagram', callback),
+
+  // ── Local ASR (whisper.cpp sidecar) ──────────────────────────
+  // The renderer-side bridge in applet-host.ts is the only intended
+  // caller; applets reach this via WeaveClient.localModels.asr.
+  // Channel contract is defined in src/main/asr/ipcHandlers.ts.
+  asrRequestConsent: (req: { appletName: string; senderWebContentsId?: number }) =>
+    ipcRenderer.invoke('asr-request-consent', req) as Promise<'granted' | 'denied'>,
+  asrWarmUp: () => ipcRenderer.invoke('asr-warm-up') as Promise<void>,
+  asrStatus: () => ipcRenderer.invoke('asr-status') as Promise<AsrHostStatus>,
+  onAsrStatus: (callback: (e: Electron.IpcRendererEvent, status: AsrHostStatus) => void) =>
+    ipcRenderer.on('asr-status', callback),
+  asrCapabilities: () => ipcRenderer.invoke('asr-capabilities') as Promise<LocalModelCapabilities>,
+  asrOpenSession: (opts: AsrSessionOptions) =>
+    ipcRenderer.invoke('asr-open-session', opts) as Promise<{ sessionId: string }>,
+  asrPushAudio: (req: { sessionId: string; pcm: Uint8Array; endOfUtterance?: boolean }) =>
+    ipcRenderer.invoke('asr-push-audio', req) as Promise<void>,
+  asrCloseSession: (req: { sessionId: string }) =>
+    ipcRenderer.invoke('asr-close-session', req) as Promise<void>,
+  onWalWindowClosed: (
+    callback: (e: Electron.IpcRendererEvent, info: { webContentsId: number }) => void,
+  ) => ipcRenderer.on('wal-window-closed', callback),
+  onAsrEvent: (callback: (e: Electron.IpcRendererEvent, event: AsrIncomingEvent) => void) =>
+    ipcRenderer.on('asr-event', callback),
 });
 
 declare global {

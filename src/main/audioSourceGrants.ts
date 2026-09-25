@@ -1,4 +1,9 @@
-import type { JsAudioChunk, JsProcessInfo, JsStreamEvent, OpenOptions } from '@lightningrodlabs/flexaudio';
+import type {
+  JsAudioChunk,
+  JsProcessInfo,
+  JsStreamEvent,
+  OpenOptions,
+} from '@lightningrodlabs/flexaudio';
 import type {
   AudioSourceEndReason,
   AudioSourceGrantCounters,
@@ -39,8 +44,11 @@ export interface GrantPort {
 export interface AudioSourceGrantsBindings {
   backend: () => AudioCaptureBackend | undefined;
   platform: NodeJS.Platform;
-  /** Shows the picker; resolves the chosen row ids, or null on cancel/close. */
-  picker: (rows: AudioSourceRow[]) => Promise<string[] | null>;
+  /**
+   * Shows the picker in the requesting window; resolves the chosen row ids,
+   * or null on cancel/close.
+   */
+  picker: (rows: AudioSourceRow[], requester: PickerRequester) => Promise<string[] | null>;
   /** Every pid in this app's process tree — the Chromium audio service, not `process.pid`, emits sound. */
   excludePids: () => number[];
   openChannel: () => { port1: GrantPort; port2: unknown };
@@ -59,6 +67,12 @@ export interface AudioSourceGrantsBindings {
   monotonicNow: () => number;
   newId: () => string;
   onGrantsChanged: (grants: AudioSourceGrantInfo[]) => void;
+}
+
+/** The window that asked for audio, and the Tool it asked for. */
+export interface PickerRequester {
+  targetId: number;
+  toolName: string;
 }
 
 export interface AudioSourceRequest {
@@ -102,23 +116,34 @@ interface Grant {
   nextStreamSeq: number;
 }
 
+/**
+ * Name prefixes of system services that hold an audio stream open but never
+ * play anything a user would want to share (speech-dispatcher keeps a corked
+ * stream per output module).
+ */
+const HIDDEN_PROCESS_PREFIXES = ['speech-dispatcher'];
+
+const isHiddenProcess = (name: string) => HIDDEN_PROCESS_PREFIXES.some((p) => name.startsWith(p));
+
 const STREAM_FORMAT = { outputRate: 48000, outputChannels: 1, chunkMs: FRAME_MS } as const;
 
 /**
  * Picker rows from the addon's process list: the all-output row first, then
  * apps with currently-playing ones ahead, silent next, unknown last, each group
  * by name. Processes in this app's own tree are not offered (they are excluded
- * from capture anyway). Row ids are positional and opaque; `pidById` is the
+ * from capture anyway), and neither are known silent system services. Row
+ * ids are positional and opaque; `pidById` is the
  * only place a pid is associated with a row and it never leaves main.
  */
 export function buildAudioSourceRows(
   processes: JsProcessInfo[],
   excludePids: number[],
 ): { rows: AudioSourceRow[]; pidById: Map<string, number> } {
-  const rank = (p: JsProcessInfo) => (p.isOutputActive === true ? 0 : p.isOutputActive === false ? 1 : 2);
+  const rank = (p: JsProcessInfo) =>
+    p.isOutputActive === true ? 0 : p.isOutputActive === false ? 1 : 2;
   const excluded = new Set(excludePids);
   const apps = processes
-    .filter((p) => !excluded.has(p.pid))
+    .filter((p) => !excluded.has(p.pid) && !isHiddenProcess(p.name))
     .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
   const pidById = new Map<string, number>();
   const rows: AudioSourceRow[] = [
@@ -182,7 +207,7 @@ export class AudioSourceGrants {
     this.pickerOpen = true;
     let chosen: string[] | null;
     try {
-      chosen = await this.b.picker(rows);
+      chosen = await this.b.picker(rows, { targetId: req.targetId, toolName: req.toolName });
     } finally {
       this.pickerOpen = false;
     }
@@ -228,7 +253,13 @@ export class AudioSourceGrants {
     for (const row of wantApps) {
       const pid = pidById.get(row.id);
       if (pid === undefined) continue;
-      if (this.openStream(grant, backend, 'app', { kind: 'process', processId: pid, ...STREAM_FORMAT })) {
+      if (
+        this.openStream(grant, backend, 'app', {
+          kind: 'process',
+          processId: pid,
+          ...STREAM_FORMAT,
+        })
+      ) {
         openedNames.push(row.name);
       }
     }
@@ -244,7 +275,8 @@ export class AudioSourceGrants {
 
     port1.on('message', (e) => {
       const data = e.data as { type?: unknown } | null | undefined;
-      if (data && typeof data === 'object' && data.type === 'close') void this.endGrant(grantId, 'tool-closed');
+      if (data && typeof data === 'object' && data.type === 'close')
+        void this.endGrant(grantId, 'tool-closed');
     });
     // The Tool's own `{type: 'close'}` message covers a normal teardown, but a
     // detached iframe (Tool disabled/uninstalled, group left, view torn down)
@@ -280,7 +312,9 @@ export class AudioSourceGrants {
   }
 
   async endGrantsForTarget(targetId: number, reason: AudioSourceEndReason): Promise<void> {
-    const ids = [...this.grants.values()].filter((g) => g.targetId === targetId).map((g) => g.info.grantId);
+    const ids = [...this.grants.values()]
+      .filter((g) => g.targetId === targetId)
+      .map((g) => g.info.grantId);
     await Promise.all(ids.map((id) => this.endGrant(id, reason)));
   }
 
@@ -344,7 +378,11 @@ export class AudioSourceGrants {
     }
   }
 
-  private async closeStream(grant: Grant, stream: OpenStream, reason: AudioSourceEndReason): Promise<void> {
+  private async closeStream(
+    grant: Grant,
+    stream: OpenStream,
+    reason: AudioSourceEndReason,
+  ): Promise<void> {
     if (!grant.streams.delete(stream.id)) return;
     await stream.handle.stop().catch(() => undefined);
     // While the grant is still being assembled (see `opening`), an empty
@@ -371,7 +409,8 @@ export class AudioSourceGrants {
    * elapsed time shrink and silence the pump until wall time caught up again.
    */
   private pump(grant: Grant): void {
-    const rawDue = Math.floor((this.b.monotonicNow() - grant.pumpStartedAt) / FRAME_MS) - grant.framesEmitted;
+    const rawDue =
+      Math.floor((this.b.monotonicNow() - grant.pumpStartedAt) / FRAME_MS) - grant.framesEmitted;
     // A stall leaves the ledger owing one frame per 20 ms it lasted. Replaying
     // all of it two frames per tick would run the wire at twice real time for
     // half the stall's length, so only `MAX_CATCHUP_FRAMES` are ever owed:

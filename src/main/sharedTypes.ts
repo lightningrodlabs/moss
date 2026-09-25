@@ -47,3 +47,21 @@ export type ToolUserPreferences = {
   microphoneAccessGranted?: boolean;
   fullMediaAccessGranted?: boolean;
 };
+
+// CHANGE ALSO IN src/renderer/src/types.ts
+/**
+ * Reply envelope the main renderer sends back for an AppletToParentRequest
+ * relayed from a WAL window. Carrying the error explicitly lets the
+ * relaying side reject right away instead of waiting out its timeout.
+ */
+export type AppletHostResponse =
+  | { type: 'success'; result: unknown }
+  | { type: 'error'; error: string };
+
+/** Runtime check for an envelope that crossed IPC as an untyped value. */
+export function isAppletHostResponse(value: unknown): value is AppletHostResponse {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as { type?: unknown; error?: unknown };
+  if (v.type === 'success') return 'result' in v;
+  return v.type === 'error' && typeof v.error === 'string';
+}

@@ -4,7 +4,7 @@
 import { CallZomeRequest } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
 import { AppletId, AppletToParentMessage, ParentToAppletMessage } from '@theweave/api';
-import { AudioSourcePortDelivery } from '@theweave/moss-types';
+import { AudioSourcePickerRequest, AudioSourcePortDelivery } from '@theweave/moss-types';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   appletMessageToParent: (message: AppletToParentMessage) =>
@@ -34,6 +34,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('request-audio-sources', req),
   stopAudioSources: (grantId: string, reason: 'user-stopped' | 'iframe-unloaded') =>
     ipcRenderer.invoke('stop-audio-sources', grantId, reason),
+  onShowAudioSourcePicker: (
+    callback: (e: Electron.IpcRendererEvent, request: AudioSourcePickerRequest) => any,
+  ) => ipcRenderer.on('show-audio-source-picker', callback),
+  audioSourcesSelected: (pickerId: string, ids: string[] | null) =>
+    ipcRenderer.invoke('audio-sources-selected', pickerId, ids),
   setMyIcon: (icon: string) => ipcRenderer.invoke('set-my-icon', icon),
   setMyTitle: (title: string) => ipcRenderer.invoke('set-my-title', title),
   signZomeCallApplet: (request: CallZomeRequest, callerAppletIds: string[]) =>
