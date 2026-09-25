@@ -511,7 +511,7 @@ export class FoyerStream extends LitElement {
         <div class="send-controls">
           <sl-input
             id="msg-input"
-            style="flex: 1;"
+            style="flex: 1; min-width: 0;"
             @sl-input=${() => {
               this.disabled = !this._msgInput?.value;
             }}
@@ -542,6 +542,11 @@ export class FoyerStream extends LitElement {
     sharedStyles,
     mossStyles,
     css`
+      /* Fill the column the parent gives the foyer; the send row must not
+         widen it past a narrow foyer width. */
+      :host {
+        min-width: 0;
+      }
       .info:hover {
         opacity: 0.7;
       }
