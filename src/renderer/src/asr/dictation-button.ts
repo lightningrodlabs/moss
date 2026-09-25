@@ -85,6 +85,12 @@ export class MossDictationButton extends LitElement {
     if (!this.available) void this.dictation.stop();
   }
 
+  // Take no space at all when there is no button to show, so a parent
+  // layout (for example a stacked column) leaves no gap for it.
+  protected updated(): void {
+    this.toggleAttribute('hidden', !this.available);
+  }
+
   private toggle(): void {
     if (this.dictationState === 'idle') void this.dictation.start();
     else void this.dictation.stop();
@@ -122,6 +128,9 @@ export class MossDictationButton extends LitElement {
     css`
       :host {
         display: flex;
+      }
+      :host([hidden]) {
+        display: none;
       }
       .mic-button {
         padding: 0 9px;
