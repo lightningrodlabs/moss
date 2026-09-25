@@ -142,7 +142,7 @@ jobs:
           DEBUG: electron-osx-sign*,electron-notarize*
         run: |
           yarn build
-          npx electron-builder --mac --arm64 --config --publish never
+          npx electron-builder --mac --arm64 -c.productName=Moss --publish never
           ls dist
 
       - name: build the app (macOS x86)
@@ -156,7 +156,7 @@ jobs:
           DEBUG: electron-osx-sign*,electron-notarize*
         run: |
           yarn build
-          npx electron-builder --mac --x64 --config --publish never
+          npx electron-builder --mac --x64 -c.productName=Moss --publish never
           ls dist
 
       - name: Install FUSE
