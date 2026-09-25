@@ -24,6 +24,7 @@ import fs from 'fs';
 import os from 'os';
 import url from 'url';
 import { validateMediaUrl, MediaUrlResult } from './mediaUrlProbe';
+import { isMossUiMicrophoneRequest } from './mossUiMediaPolicy';
 import mime from 'mime';
 import * as childProcess from 'child_process';
 import { createHash } from 'crypto';
@@ -946,6 +947,21 @@ if (!RUNNING_WITH_COMMAND) {
                 }
               }
             }
+          }
+
+          // A Moss control asked for the microphone because the user pressed
+          // it; that press is the consent (see mossUiMediaPolicy).
+          if (
+            MAIN_WINDOW &&
+            isMossUiMicrophoneRequest({
+              fromMainWindow: requestingWindow === MAIN_WINDOW,
+              requestingUrl: details.requestingUrl,
+              mainWindowUrl: MAIN_WINDOW.webContents.getURL(),
+              mediaTypes: (details as MediaAccessPermissionRequest).mediaTypes,
+            })
+          ) {
+            callback(true);
+            return;
           }
 
           // Check existing settings and only show dialog if necessary

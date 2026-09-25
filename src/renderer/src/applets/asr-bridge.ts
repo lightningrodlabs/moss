@@ -20,6 +20,10 @@
 //
 // Cross-group views aren't supported here — applet-host only registers
 // sessions whose source is an applet (see the asr-open-session case).
+//
+// Moss's own UI (for example foyer dictation) opens sessions too. Those
+// are registered as local sessions with a listener instead of an applet,
+// so their events stay in the renderer and no applet can drive them.
 
 import type { AppletId, AsrIncomingEvent } from '@theweave/api';
 
@@ -49,8 +53,12 @@ interface SessionRecord extends SessionOrigin {
   appletId: AppletId;
 }
 
+/** Receives the events of a session that Moss's own UI opened. */
+export type LocalAsrListener = (event: AsrIncomingEvent) => void;
+
 export class AsrRendererBridge {
   private sessions = new Map<string, SessionRecord>();
+  private localSessions = new Map<string, LocalAsrListener>();
 
   constructor(
     private readonly mossStore: MossStore,
@@ -61,8 +69,14 @@ export class AsrRendererBridge {
     this.sessions.set(sessionId, { appletId, ...origin });
   }
 
+  /** Register a session opened by Moss's own UI; its events go to `listener`. */
+  registerLocalSession(sessionId: string, listener: LocalAsrListener): void {
+    this.localSessions.set(sessionId, listener);
+  }
+
   unregisterSession(sessionId: string): void {
     this.sessions.delete(sessionId);
+    this.localSessions.delete(sessionId);
   }
 
   /** The applet that opened the session, or undefined if the session is unknown. */
@@ -72,6 +86,13 @@ export class AsrRendererBridge {
 
   /** Forward an event from main to every iframe/window hosting the session's applet. */
   forwardEvent(event: AsrIncomingEvent): void {
+    const local = this.localSessions.get(event.sessionId);
+    if (local) {
+      // Main closes a session once it has errored, so the id is dead.
+      if (event.eventType === 'error') this.localSessions.delete(event.sessionId);
+      local(event);
+      return;
+    }
     const record = this.sessions.get(event.sessionId);
     if (!record) return; // unknown or already-closed session
     void this.mossStore.emitParentToAppletMessage({ type: 'asr-event', event }, [record.appletId]);
@@ -85,9 +106,12 @@ export class AsrRendererBridge {
     await this.closeMatching((r) => r.appletId === appletId, ASR_ACCESS_REVOKED_MESSAGE);
   }
 
-  /** Tear down every open session, telling each applet why. */
+  /** Tear down every open session, applet or local, telling each owner why. */
   async closeAllSessions(): Promise<void> {
-    await this.closeMatching(() => true, ASR_ACCESS_REVOKED_MESSAGE);
+    await Promise.all([
+      this.closeMatching(() => true, ASR_ACCESS_REVOKED_MESSAGE),
+      this.closeLocalSessions(ASR_ACCESS_REVOKED_MESSAGE),
+    ]);
   }
 
   /** The iframe that opened these sessions is gone; release them. */
@@ -110,6 +134,17 @@ export class AsrRendererBridge {
     );
   }
 
+  private async closeLocalSessions(reason: string): Promise<void> {
+    const targets = [...this.localSessions.entries()];
+    this.localSessions.clear();
+    await Promise.all(
+      targets.map(async ([sessionId, listener]) => {
+        listener({ sessionId, eventType: 'error', error: reason });
+        await this.closeQuietly(sessionId);
+      }),
+    );
+  }
+
   private async revokeSession(
     sessionId: string,
     appletId: AppletId,
@@ -120,6 +155,10 @@ export class AsrRendererBridge {
       { type: 'asr-event', event: { sessionId, eventType: 'error', error: reason } },
       [appletId],
     );
+    await this.closeQuietly(sessionId);
+  }
+
+  private async closeQuietly(sessionId: string): Promise<void> {
     // Main may already have dropped the session (idle timeout, error);
     // the goal is that it is gone, so a rejection here is not a failure.
     try {
@@ -131,7 +170,7 @@ export class AsrRendererBridge {
 
   /** Diagnostic. */
   get size(): number {
-    return this.sessions.size;
+    return this.sessions.size + this.localSessions.size;
   }
 }
 

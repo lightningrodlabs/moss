@@ -21,6 +21,13 @@ function emitAsrConsentChanged(): void {
 }
 
 /**
+ * Event name dispatched on `window` whenever the Transcription switch
+ * (`localAiEnabled`) changes. UI that shows transcription controls
+ * listens for it to show or hide them.
+ */
+export const LOCAL_AI_ENABLED_CHANGED_EVENT = 'local-ai-enabled-changed';
+
+/**
  * A store that's persisted.
  */
 export class PersistedStore {
@@ -292,7 +299,13 @@ export class PersistedStore {
    */
   localAiEnabled: SubStore<boolean, boolean, []> = {
     value: () => this.store.getItem<boolean>('localAiEnabled') ?? false,
-    set: (value: boolean) => this.store.setItem('localAiEnabled', value),
+    set: (value: boolean) => {
+      this.store.setItem('localAiEnabled', value);
+      // Guarded for non-DOM test environments.
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(LOCAL_AI_ENABLED_CHANGED_EVENT));
+      }
+    },
   };
 
   /**

@@ -863,7 +863,7 @@ export class GroupHome extends LitElement {
 
   renderFoyer() {
     return html`
-      <div class="foyer-panel" style="display: flex; flex: 1;">
+      <div class="foyer-panel" style="display: flex; flex: 1; min-width: 0;">
         <foyer-stream style="display: flex; flex: 1;"></foyer-stream>
       </div>
     `;

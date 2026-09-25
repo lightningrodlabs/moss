@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { AppletId, ParentToAppletMessage } from '@theweave/api';
+import type { AppletId, AsrIncomingEvent, ParentToAppletMessage } from '@theweave/api';
 
 import { AsrRendererBridge } from './asr-bridge.js';
 import type { MossStore } from '../moss-store.js';
@@ -201,5 +201,76 @@ describe('AsrRendererBridge session origins', () => {
     await bridge.closeSessionsForWalWindow(7);
     expect(closeSession).not.toHaveBeenCalled();
     expect(bridge.appletIdForSession('s-unknown')).toBe('applet-a');
+  });
+});
+
+describe('AsrRendererBridge local sessions', () => {
+  it('gives a local session its events and sends nothing to applets', () => {
+    const { bridge, emitted } = makeBridge();
+    const received: AsrIncomingEvent[] = [];
+    bridge.registerLocalSession('local-1', (ev) => received.push(ev));
+    bridge.forwardEvent(finalEvent('local-1'));
+    expect(received).toEqual([finalEvent('local-1')]);
+    expect(emitted).toHaveLength(0);
+  });
+
+  it('keeps routing applet sessions to their applet', () => {
+    const { bridge, emitted } = makeBridge();
+    const received: AsrIncomingEvent[] = [];
+    bridge.registerLocalSession('local-1', (ev) => received.push(ev));
+    bridge.registerSession('s1', 'appletA');
+    bridge.forwardEvent(finalEvent('s1'));
+    expect(received).toHaveLength(0);
+    expect(emitted).toHaveLength(1);
+    expect(emitted[0].forApplets).toEqual(['appletA']);
+  });
+
+  it('does not treat a local session as owned by an applet', () => {
+    const { bridge } = makeBridge();
+    bridge.registerLocalSession('local-1', () => undefined);
+    expect(bridge.appletIdForSession('local-1')).toBeUndefined();
+  });
+
+  it('removes a local session after its error event', () => {
+    const { bridge } = makeBridge();
+    const received: AsrIncomingEvent[] = [];
+    bridge.registerLocalSession('local-1', (ev) => received.push(ev));
+    bridge.forwardEvent(errorEvent('local-1'));
+    bridge.forwardEvent(finalEvent('local-1'));
+    expect(received).toEqual([errorEvent('local-1')]);
+    expect(bridge.size).toBe(0);
+  });
+
+  it('stops delivering after unregister', () => {
+    const { bridge } = makeBridge();
+    const received: AsrIncomingEvent[] = [];
+    bridge.registerLocalSession('local-1', (ev) => received.push(ev));
+    bridge.unregisterSession('local-1');
+    bridge.forwardEvent(finalEvent('local-1'));
+    expect(received).toHaveLength(0);
+  });
+
+  it('closes local sessions when every session is closed, and tells the listener', async () => {
+    const { bridge, closeSession } = makeBridge();
+    const received: AsrIncomingEvent[] = [];
+    bridge.registerLocalSession('local-1', (ev) => received.push(ev));
+    bridge.registerSession('a1', 'appletA');
+
+    await bridge.closeAllSessions();
+
+    expect(closeSession.mock.calls.map((c) => c[0]).sort()).toEqual(['a1', 'local-1']);
+    expect(received).toEqual([
+      { sessionId: 'local-1', eventType: 'error', error: 'Local ASR access revoked by user' },
+    ]);
+    expect(bridge.size).toBe(0);
+  });
+
+  it('leaves local sessions open when one applet is revoked', async () => {
+    const { bridge, closeSession } = makeBridge();
+    bridge.registerLocalSession('local-1', () => undefined);
+    bridge.registerSession('a1', 'appletA');
+    await bridge.closeSessionsForApplet('appletA');
+    expect(closeSession.mock.calls.map((c) => c[0])).toEqual(['a1']);
+    expect(bridge.size).toBe(1);
   });
 });
