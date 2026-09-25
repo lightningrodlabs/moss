@@ -2,7 +2,9 @@
 // Each final transcript segment is dispatched as a `dictation-text` event;
 // the parent decides what to do with it. The button hides itself while
 // the Transcription switch is off or no model is available, and stops
-// dictation when it leaves the DOM.
+// dictation when it leaves the DOM or is hidden. Group views stay mounted
+// and are hidden with `display: none` when the user moves elsewhere, so
+// visibility, not only disconnection, ends a dictation.
 
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
@@ -57,15 +59,21 @@ export class MossDictationButton extends LitElement {
     void this.refreshAvailability();
   };
 
+  private visibility = new IntersectionObserver((entries) => {
+    if (entries.some((e) => !e.isIntersecting)) void this.dictation.stop();
+  });
+
   connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener(LOCAL_AI_ENABLED_CHANGED_EVENT, this.onSwitchChanged);
+    this.visibility.observe(this);
     void this.refreshAvailability();
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     window.removeEventListener(LOCAL_AI_ENABLED_CHANGED_EVENT, this.onSwitchChanged);
+    this.visibility.disconnect();
     void this.dictation.stop();
   }
 
