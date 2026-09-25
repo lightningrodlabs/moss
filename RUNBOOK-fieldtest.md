@@ -1,7 +1,7 @@
 # RUNBOOK — hello/PoK field test build
 
 **Branch:** `feat/hello-pok-fieldtest` (off `main-0.7`)
-**Version:** `0.16.0-dev.5`
+**Version:** `0.16.0-dev.7`
 **Status:** FIELD-TEST-ONLY. Do not merge into `main-0.7`.
 
 This branch bundles a **patched** Holochain 0.7.0 into Moss so we can field-test the
@@ -46,16 +46,27 @@ placeholders are hard failures by design (§8.2).
 
 ## 2. What changed on this branch
 
-No application code. Build tooling only:
+The branch itself changes build tooling only. From dev.7 it also carries the
+application work from `main-0.7`, merged in one way (from `main-0.7` into this
+branch, never back):
 
-| File                                 | Change                                                                                                                                                                                                                                                                                                                                                  |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `scripts/fetch-fns.mjs`              | Added `sha256OfFile()`; made `downloadFile()` skip the download when the target already hashes to the expected sha256, so a locally built binary can be pre-placed. **dev.5:** added the `binarySources` indirection (§8.1), unified the asset/checksum key into one `ASSET_TARGET` constant (§8.3), and made a missing checksum a hard failure (§8.2). |
-| `holochain-checksums.json`           | `holochain` and `hc` repointed at the fork release via `binarySources`, plus the `_FIELD_TEST_ONLY` and `_TODO_hello_0` note blocks. `lair-keystore` and `kitsune2-bootstrap-srv` untouched and still stock.                                                                                                                                            |
-| `scripts/check-resources.mjs`        | New. Asserts every packaged path under `resources/` exists and matches its expected sha256, so a half-populated worktree fails at build time instead of shipping. Chained into `check:binaries`. **dev.5:** shares `ASSET_TARGET` with the fetch, and an unpinned artifact now fails rather than warns.                                                 |
-| `scripts/install-local-binaries.mjs` | Copies locally built patched binaries into `resources/bins/`, verifying each against `holochain-checksums.json`. Refuses to run on non-Linux-x64. **Local-dev convenience only — deliberately not in any CI path**, since CI fetches from the fork release.                                                                                             |
-| `package.json`                       | Added `install:local-binaries` and `check:resources`; `check:binaries` now also runs `check:resources`. **dev.5:** version `0.16.0-dev.5`, added the missing `homepage` field (§6), and added `yarn fetch:hc` to `setup:release` (§8.5).                                                                                                                |
-| `.github/workflows/release-dev.yaml` | **dev.5:** the network-partition warning is appended to every release body unconditionally (§8.7).                                                                                                                                                                                                                                                      |
+- Local transcription (#249): `WeaveClient.localModels.asr`, backed by a bundled
+  `whisper-server` sidecar and the `ggml-base.en` model (English only). It is off by
+  default. Testers turn it on in Settings > Services > Transcription.
+- The audio-source picker for tools (#248, #249).
+- Peer tool transfer (#241) and the LAN invite (#242).
+- Side-by-side installs and no text/html takeover on Linux (#246).
+
+The tooling changes:
+
+| File                                 | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scripts/fetch-fns.mjs`              | Added `sha256OfFile()`; made `downloadFile()` skip the download when the target already hashes to the expected sha256, so a locally built binary can be pre-placed. **dev.5:** added the `binarySources` indirection (§8.1), unified the asset/checksum key into one `ASSET_TARGET` constant (§8.3), and made a missing checksum a hard failure (§8.2).                                                                                                              |
+| `holochain-checksums.json`           | `holochain` and `hc` repointed at the fork release via `binarySources`, plus the `_FIELD_TEST_ONLY` and `_TODO_hello_0` note blocks. `lair-keystore` and `kitsune2-bootstrap-srv` untouched and still stock.                                                                                                                                                                                                                                                         |
+| `scripts/check-resources.mjs`        | New. Asserts every packaged path under `resources/` exists and matches its expected sha256, so a half-populated worktree fails at build time instead of shipping. Chained into `check:binaries`. **dev.5:** shares `ASSET_TARGET` with the fetch, and an unpinned artifact now fails rather than warns. **dev.7:** with `MOSS_REQUIRE_ASR=1`, it also asserts the `whisper-server` binary (presence only, because each runner compiles it) and the pinned ASR model. |
+| `scripts/install-local-binaries.mjs` | Copies locally built patched binaries into `resources/bins/`, verifying each against `holochain-checksums.json`. Refuses to run on non-Linux-x64. **Local-dev convenience only — deliberately not in any CI path**, since CI fetches from the fork release.                                                                                                                                                                                                          |
+| `package.json`                       | Added `install:local-binaries` and `check:resources`; `check:binaries` now also runs `check:resources`. **dev.5:** version `0.16.0-dev.5`, added the missing `homepage` field (§6), and added `yarn fetch:hc` to `setup:release` (§8.5). **dev.7:** version `0.16.0-dev.7`. `setup:release` also runs `build:whisper-server` and `fetch:asr-model`, and ends with `check:binaries:release`, which runs both checks with `MOSS_REQUIRE_ASR=1`.                        |
+| `.github/workflows/release-dev.yaml` | **dev.5:** the network-partition warning is appended to every release body unconditionally (§8.7). **dev.7:** the macOS builds pass `-c.productName=Moss`, like the `build:mac-*` scripts.                                                                                                                                                                                                                                                                           |
 
 ### Which binaries come from where
 
@@ -154,6 +165,8 @@ The complete inventory of non-tracked artifacts:
 | `resources/bins/lair-keystore-v0.7.0`                    | `yarn fetch:binaries` (stock)                                     | yes                                  |
 | `resources/bins/kitsune2-bootstrap-srv-v0.7.0`           | `yarn fetch:binaries` (stock)                                     | yes                                  |
 | `resources/default-apps/group.happ`                      | `yarn fetch:group-happ`                                           | yes                                  |
+| `resources/bins/whisper-server-v1.8.4`                   | `yarn build:whisper-server` (needs cmake and a C++17 toolchain)   | yes (release builds)                 |
+| `resources/models/ggml-base.en.bin`                      | `yarn fetch:asr-model` (about 141 MB)                             | yes (release builds)                 |
 | `target/wasm32-unknown-unknown/release/hrl_locator.wasm` | `yarn build:zomes`                                                | no, inlined into the renderer bundle |
 | `out/`, `cli/dist/`                                      | `yarn build`                                                      | yes (`out/`)                         |
 
@@ -180,7 +193,9 @@ yarn build:zomes                 # produces hrl_locator.wasm; required by yarn b
 yarn fetch:binaries              # patched holochain + hc from the fork release; stock lair + bootstrap-srv
 yarn fetch:hc                    # resources/bins/hc -- separate from fetch:binaries
 yarn fetch:group-happ            # resources/default-apps/group.happ -- DO NOT SKIP
-yarn check:binaries              # now also runs check:resources over the full inventory
+yarn build:whisper-server        # resources/bins/whisper-server-v<version>
+yarn fetch:asr-model             # resources/models/ggml-base.en.bin
+yarn check:binaries:release      # check:binaries + check:resources, with the ASR artifacts required
 yarn build                       # typecheck + iframes + electron-vite + cli
 yarn build:linux                 # AppImage + deb
 ```
@@ -206,8 +221,8 @@ workflow — see §8.1.
 `scripts/check-resources.mjs` (new on this branch) asserts every packaged path under
 `resources/` exists **and** matches its expected sha256 — binaries against
 `holochain-checksums.json`, `group.happ` against `moss.config.json`. It is chained into
-`yarn check:binaries`, which every `build:*` script already invokes, so the assertion is
-picked up at all existing call sites without touching them.
+`yarn check:binaries`. `yarn check:binaries:release` runs it too, with the ASR
+artifacts required, and every `build:*` script invokes `check:binaries:release`.
 
 `scripts/check-binaries.mjs` was left as-is; it only ever checked `holochain` and
 `lair-keystore`, which is why it did not catch the missing `group.happ`. Run the pair
