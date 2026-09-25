@@ -15,6 +15,9 @@ import {
   Notification,
   systemPreferences,
   MediaAccessPermissionRequest,
+  MessageChannelMain,
+  MessagePortMain,
+  webContents,
 } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -36,8 +39,19 @@ import {
   importLegacyProfileData,
   LegacyProfileInfo,
 } from './filesystem';
-import { LAIR_BINARY } from './const';
+import { listLocalTools } from './localTools';
+import {
+  readToolAssetsChunk,
+  readToolAssetsManifest,
+  toolAssetsPresent,
+  storeToolAssetsFromPeer,
+  ToolAssetDirs,
+} from './peerToolAssets';
+import { BINARIES_DIRECTORY, LAIR_BINARY, RESOURCES_DIRECTORY } from './const';
+import { registerAsrIpc } from './asr/wireUp';
+import { relayTimeoutMs } from './appletRelayPolicy';
 import { MOSS_CONFIG } from './mossConfig';
+import { createLanBeaconService, type BeaconDiagnostics } from './lanBeacon';
 // import { AdminWebsocket } from '@holochain/client';
 import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
 import { HolochainManager } from './holochainManager';
@@ -56,15 +70,31 @@ import {
   signZomeCall,
 } from './utils';
 import { createWalWindow } from './windows';
-import { ConductorInfo, NetworkInfo, ToolWeaveConfig } from './sharedTypes';
+import { AudioCaptureBackend, loadAudioCapture, probeAudioCapabilities } from './audioCapture';
+import { AudioSourceGrants } from './audioSourceGrants';
+import { InWindowAudioSourcePicker } from './audioSourcePicker';
+import { pickerWindowFor, registerAudioSourceIpc } from './audioSourcesIpc';
+import { registerDeepLinkSchemes } from './deepLinkRegistration';
+import { repairLinuxHtmlDefault } from './linuxMimeapps';
+import {
+  AppletHostResponse,
+  ConductorInfo,
+  NetworkInfo,
+  ToolWeaveConfig,
+  isAppletHostResponse,
+} from './sharedTypes';
 import {
   AppAssetsInfo,
   AppHashes,
+  AssetSource,
   DeveloperCollectiveToolList,
   DistributionInfo,
+  LocalToolInfo,
   ResourceLocation,
   ToolCompatibilityId,
   ToolInfoAndVersions,
+  ToolTransferManifest,
+  ToolTransferRequest,
   WeaveDevConfig,
   WEAVE_PROTOCOL_VERSION,
   WEAVE_URL_SCHEME,
@@ -181,27 +211,16 @@ console.log('MOSS VERSION: ', appVersion);
 
 // console.log('process.argv: ', process.argv);
 
-// Claim this Moss version's own deep link scheme, so that links made by a Moss
-// version with an incompatible group DNA are routed to the version that can open them.
-if (process.defaultApp) {
-  if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient(WEAVE_URL_SCHEME, process.execPath, [
-      path.resolve(process.argv[1]),
-    ]);
-  }
-} else {
-  app.setAsDefaultProtocolClient(WEAVE_URL_SCHEME);
-}
-
-// Earlier builds of this Moss version claimed the previous version's scheme. Hand it
-// back so that its links reach the Moss version that made them. This is a no-op unless
-// this executable is the currently registered handler, and unimplemented on Linux.
-for (const scheme of SUPERSEDED_URL_SCHEMES) {
-  try {
-    app.removeAsDefaultProtocolClient(scheme);
-  } catch (e) {
-    console.warn(`Failed to release protocol scheme ${scheme}: `, e);
-  }
+registerDeepLinkSchemes(app, {
+  platform: process.platform,
+  scheme: WEAVE_URL_SCHEME,
+  supersededSchemes: SUPERSEDED_URL_SCHEMES,
+  defaultApp: !!process.defaultApp,
+  execPath: process.execPath,
+  argv: process.argv,
+});
+if (process.platform === 'linux') {
+  repairLinuxHtmlDefault(process.env, os.homedir());
 }
 
 const ranViaCli = process.argv[3] && process.argv[3].endsWith('weave');
@@ -534,6 +553,7 @@ if (!RUNNING_WITH_COMMAND) {
   let SYSTRAY: Tray | undefined = undefined;
   let isAppQuitting = false;
   let LOCAL_SERVICES_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
+  const LAN_BEACON = createLanBeaconService();
   // A custom --profile normally means the user wants a fresh, dedicated data
   // store, so we skip the legacy-import prompt. The exception is --fork: forking
   // imported seeds only makes sense as part of the import flow, so when --fork
@@ -1073,6 +1093,22 @@ if (!RUNNING_WITH_COMMAND) {
 
     registerIPCHandlers(notificationIcon);
 
+    // Local ASR (whisper.cpp sidecar). Lazy — sidecar doesn't actually
+    // launch until an applet opens its first AsrSession. See
+    // plans/local-models-asr.md for context. Sidecar output goes through
+    // WE_EMITTER so it lands in the same log file as lair and holochain.
+    registerAsrIpc({
+      binariesDir: BINARIES_DIRECTORY,
+      resourcesPath: RESOURCES_DIRECTORY,
+      whisperServerVersion: MOSS_CONFIG.whisperServer,
+      repoRoot: app.getAppPath(),
+      onLog: (stream, chunk) => {
+        const line = `[whisper-server] ${chunk.trimEnd()}`;
+        if (stream === 'stderr') WE_EMITTER.emitMossError(line);
+        else WE_EMITTER.emitMossLog(line);
+      },
+    });
+
     WE_EMITTER.emitMossLog(`RUN_OPTIONS on startup: ${formatUpdaterArg(RUN_OPTIONS)}`);
 
     MAIN_WINDOW = createOrShowMainWindow();
@@ -1333,32 +1369,85 @@ if (!RUNNING_WITH_COMMAND) {
     );
     // Forward the message to the main window with a unique nano id and waits for the response
     // that should get sent via IPC ('applet-message-to-parent-response')
-    ipcMain.handle('applet-message-to-parent', (_e, message: AppletToParentMessage) => {
+    ipcMain.handle('applet-message-to-parent', (e, message: AppletToParentMessage) => {
       if (!MAIN_WINDOW) throw new Error('Main window does not exists.');
       const messageId = nanoid(5);
       if (message.request.type === 'open-view') {
         MAIN_WINDOW.show();
       }
+      // Include the sender's webContents id so the main renderer can
+      // route UI that needs to attach to the originating window (e.g.
+      // the native ASR consent dialog) back to that WAL window.
       emitToWindow(MAIN_WINDOW!, 'applet-to-parent-message', {
         message,
         id: messageId,
+        senderWebContentsId: e.sender.id,
       });
       return new Promise((resolve, reject) => {
-        const timeoutMs = 60000;
-        const onResponse = (response: any) => {
-          clearTimeout(timeout);
-          return resolve(response);
+        const timeoutMs = relayTimeoutMs(message.request.type);
+        // The main renderer answers with an AppletHostResponse envelope
+        // so a handler failure rejects the WAL window's request right
+        // away instead of surfacing as a timeout.
+        const onResponse = (response: unknown) => {
+          if (timeout !== null) clearTimeout(timeout);
+          if (!isAppletHostResponse(response)) {
+            return reject(new Error('Malformed applet-host response envelope'));
+          }
+          if (response.type === 'error') {
+            return reject(new Error(response.error));
+          }
+          return resolve(response.result);
         };
-        const timeout = setTimeout(() => {
-          WE_EMITTER.off(messageId, onResponse);
-          return reject(`Cross-window AppletToParentRequest timed out in ${timeoutMs}ms`);
-        }, timeoutMs);
+        const timeout =
+          timeoutMs === null
+            ? null
+            : setTimeout(() => {
+                WE_EMITTER.off(messageId, onResponse);
+                return reject(`Cross-window AppletToParentRequest timed out in ${timeoutMs}ms`);
+              }, timeoutMs);
         WE_EMITTER.once(messageId, onResponse);
       });
     });
-    ipcMain.handle('applet-message-to-parent-response', (_e, response: any, id: string) => {
-      WE_EMITTER.emit(id, response);
-    });
+    ipcMain.handle(
+      'applet-message-to-parent-response',
+      (_e, response: AppletHostResponse, id: string) => {
+        WE_EMITTER.emit(id, response);
+      },
+    );
+    // Native first-use consent dialog for the local ASR feature. Shown
+    // attached to the BrowserWindow that actually initiated the request
+    // (WAL windows have their own window; applet iframes live inside
+    // the main window) so it can't hide behind another surface.
+    ipcMain.handle(
+      'asr-request-consent',
+      async (
+        _e,
+        { appletName, senderWebContentsId }: { appletName: string; senderWebContentsId?: number },
+      ): Promise<'granted' | 'denied'> => {
+        let targetWindow: BrowserWindow | null = null;
+        if (typeof senderWebContentsId === 'number') {
+          const wc = webContents.fromId(senderWebContentsId);
+          if (wc && !wc.isDestroyed()) {
+            targetWindow = BrowserWindow.fromWebContents(wc);
+          }
+        }
+        if (!targetWindow) targetWindow = MAIN_WINDOW!;
+        const { response } = await dialog.showMessageBox(targetWindow, {
+          type: 'question',
+          title: 'Allow local transcription?',
+          message: `${appletName} wants to transcribe audio locally`,
+          detail:
+            'Moss will run the on-device speech-to-text model for this tool. ' +
+            'Audio stays on this device and is never sent to an external service. ' +
+            'You can revoke this permission later from Settings → Services → Transcription.',
+          buttons: ['Deny', 'Allow'],
+          defaultId: 1,
+          cancelId: 0,
+          noLink: true,
+        });
+        return response === 1 ? 'granted' : 'denied';
+      },
+    );
     ipcMain.handle(
       'parent-to-applet-message',
       (_e, message: ParentToAppletMessage, forApplets: AppletId[]) => {
@@ -1401,6 +1490,58 @@ if (!RUNNING_WITH_COMMAND) {
         };
       });
     });
+    // The addon dlopens `libpipewire-0.3.so.0` (and its platform equivalents)
+    // at require time, so it is loaded on the first request that needs it
+    // rather than during startup. The flag keeps that to one attempt: a host
+    // without the native library warns once, not on every request.
+    let audioBackend: AudioCaptureBackend | undefined;
+    let audioBackendLoaded = false;
+    const audioBackendThunk = (): AudioCaptureBackend | undefined => {
+      if (!audioBackendLoaded) {
+        audioBackend = loadAudioCapture();
+        audioBackendLoaded = true;
+      }
+      return audioBackend;
+    };
+    const audioSourcePicker = new InWindowAudioSourcePicker({
+      lookup: pickerWindowFor,
+      newId: () => nanoid(8),
+    });
+    const audioSourceGrants = new AudioSourceGrants({
+      backend: audioBackendThunk,
+      platform: process.platform,
+      picker: (rows, requester) => audioSourcePicker.open(rows, requester),
+      excludePids: () => app.getAppMetrics().map((m) => m.pid),
+      openChannel: () => new MessageChannelMain(),
+      deliverPort: (targetId, payload, port2) => {
+        const target = webContents.fromId(targetId);
+        if (!target || target.isDestroyed()) return false;
+        // A disposed frame can still throw on postMessage even past the
+        // isDestroyed() check above, and postMessage after the far end is
+        // gone is otherwise silent — the grant engine's pump has no other
+        // way to learn the delivery failed.
+        try {
+          target.postMessage('audio-source-port', payload, [port2 as MessagePortMain]);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      scheduler: {
+        setInterval: (fn, ms) => setInterval(fn, ms),
+        clearInterval: (handle) => clearInterval(handle as NodeJS.Timeout),
+      },
+      now: () => Date.now(),
+      monotonicNow: () => performance.now(),
+      newId: () => nanoid(8),
+      onGrantsChanged: (list) => {
+        if (MAIN_WINDOW && !MAIN_WINDOW.isDestroyed())
+          emitToWindow(MAIN_WINDOW, 'audio-source-grants-changed', list);
+      },
+    });
+    registerAudioSourceIpc(audioSourceGrants, audioSourcePicker, () =>
+      probeAudioCapabilities(audioBackendThunk(), process.platform),
+    );
     ipcMain.handle('select-screen-or-window', async () => {
       if (SELECT_SCREEN_OR_WINDOW_WINDOW)
         return Promise.reject('Cannot select multiple screens/windows at once.');
@@ -1485,8 +1626,14 @@ if (!RUNNING_WITH_COMMAND) {
           newWalWindow.hide();
           emitToWindow(newWalWindow, 'window-closing', null);
         });
+        // The main renderer owns the ASR sessions this window's applet
+        // opened through the relay; it needs to hear the window is gone.
+        const walWebContentsId = newWalWindow.webContents.id;
         newWalWindow.on('closed', () => {
           delete WAL_WINDOWS[src];
+          if (MAIN_WINDOW && !MAIN_WINDOW.isDestroyed()) {
+            emitToWindow(MAIN_WINDOW, 'wal-window-closed', { webContentsId: walWebContentsId });
+          }
         });
         WAL_WINDOWS[src] = {
           window: newWalWindow,
@@ -2443,6 +2590,75 @@ if (!RUNNING_WITH_COMMAND) {
         return appInfo;
       },
     );
+    const toolAssetDirs = (): ToolAssetDirs => ({
+      happsDir: WE_FILE_SYSTEM.happsDir,
+      uisDir: WE_FILE_SYSTEM.uisDir,
+      toolsDir: WE_FILE_SYSTEM.toolsDir,
+    });
+    ipcMain.handle(
+      'read-tool-assets-manifest',
+      async (
+        _e,
+        request: ToolTransferRequest,
+        chunkSize: number,
+      ): Promise<ToolTransferManifest | undefined> =>
+        readToolAssetsManifest(toolAssetDirs(), request, chunkSize),
+    );
+    ipcMain.handle(
+      'list-local-tools',
+      async (): Promise<LocalToolInfo[]> =>
+        listLocalTools({ ...toolAssetDirs(), appsDir: WE_FILE_SYSTEM.appsDir }),
+    );
+    ipcMain.handle(
+      'are-tool-assets-present',
+      async (_e, request: ToolTransferRequest): Promise<boolean> =>
+        toolAssetsPresent(toolAssetDirs(), request),
+    );
+    ipcMain.handle(
+      'read-tool-assets-chunk',
+      async (
+        _e,
+        request: ToolTransferRequest,
+        index: number,
+        chunkSize: number,
+      ): Promise<Uint8Array> => readToolAssetsChunk(toolAssetDirs(), request, index, chunkSize),
+    );
+    ipcMain.handle(
+      'store-tool-assets-from-peer',
+      async (
+        _e,
+        manifest: ToolTransferManifest,
+        bytes: Uint8Array,
+        expected: ToolTransferRequest,
+      ): Promise<void> => storeToolAssetsFromPeer(toolAssetDirs(), manifest, bytes, expected),
+    );
+    ipcMain.handle('lan-beacon-set-listening', async (_e, listening: boolean): Promise<void> => {
+      await LAN_BEACON.setListening(listening, (bytes, address, port) => {
+        if (MAIN_WINDOW) emitToWindow(MAIN_WINDOW, 'lan-beacon-datagram', { bytes, address, port });
+      });
+    });
+    ipcMain.handle(
+      'lan-beacon-start-advertising',
+      async (_e, payload: Uint8Array, durationMs: number): Promise<number | undefined> =>
+        LAN_BEACON.startAdvertising(payload, durationMs),
+    );
+    ipcMain.handle(
+      'lan-beacon-set-hello',
+      async (_e, payload: Uint8Array): Promise<void> => LAN_BEACON.setHello(payload),
+    );
+    ipcMain.handle(
+      'lan-beacon-stop-advertising',
+      async (_e, id?: number): Promise<void> => LAN_BEACON.stopAdvertising(id),
+    );
+    ipcMain.handle(
+      'lan-beacon-unicast',
+      async (_e, payload: Uint8Array, address: string, port: number): Promise<void> =>
+        LAN_BEACON.unicast(payload, address, port),
+    );
+    ipcMain.handle(
+      'lan-beacon-diagnostics',
+      async (): Promise<BeaconDiagnostics> => LAN_BEACON.diagnostics(),
+    );
     ipcMain.handle('fetch-and-validate-happ-or-webhapp', async (_e, url: string): Promise<any> => {
       let byteArray;
       if (url.startsWith('file://')) {
@@ -2825,6 +3041,7 @@ if (!RUNNING_WITH_COMMAND) {
         appHashes: AppHashes,
         uiPort?: number,
         roles_settings?: RoleSettingsMap,
+        assetSource?: AssetSource,
       ): Promise<AppInfo> => {
         const apps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
         const alreadyInstalledAppInfo = apps.find((appInfo) => appInfo.installed_app_id === appId);
@@ -3014,6 +3231,7 @@ if (!RUNNING_WITH_COMMAND) {
           sha256Webhapp,
           sha256Ui,
           uiPort,
+          assetSource,
         );
         WE_FILE_SYSTEM.storeAppAssetsInfo(appId, appAssetsInfo);
 
@@ -3183,5 +3401,8 @@ if (!RUNNING_WITH_COMMAND) {
     if (LOCAL_SERVICES_HANDLE) {
       LOCAL_SERVICES_HANDLE.kill();
     }
+    // This handler is not async, and the app is already on its way out by the
+    // time it fires, so the socket close is best-effort rather than awaited.
+    void LAN_BEACON.shutdown();
   });
 }

@@ -38,6 +38,7 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 
 import './group-peers-status.js';
+import './applet-install-progress.js';
 import './group-applets.js';
 import './looking-for-peers.js';
 import '../../custom-views/elements/all-custom-views.js';
@@ -207,11 +208,18 @@ export class GroupHome extends LitElement {
               const distributionInfo: DistributionInfo = JSON.parse(appletEntry.distribution_info);
               Value.Assert(TDistributionInfo, distributionInfo);
               if (distributionInfo.type === 'web2-tool-list') {
-                toolInfoAndVersions = await this.mossStore.toolInfoFromRemote(
-                  distributionInfo.info.toolListUrl,
-                  distributionInfo.info.toolId,
-                  distributionInfo.info.versionBranch,
-                );
+                // The tool library only decorates the card (title, icon, subtitle).
+                // Without it the card still renders from the Applet entry, so an
+                // unreachable library must not keep the applet from being listed.
+                try {
+                  toolInfoAndVersions = await this.mossStore.toolInfoFromRemote(
+                    distributionInfo.info.toolListUrl,
+                    distributionInfo.info.toolId,
+                    distributionInfo.info.versionBranch,
+                  );
+                } catch (e) {
+                  console.warn('@group-home @unjoined-applets: tool library unavailable: ', e);
+                }
               }
             }
             let joinedMembers: AppletAgent[] = [];
@@ -711,9 +719,9 @@ export class GroupHome extends LitElement {
                                   .toolInfoAndVersions?.title
                                   ? ''
                                   : 'opacity: 0.6;'}"
-                                >${info.toolInfoAndVersions
-                                  ? info.toolInfoAndVersions.title
-                                  : 'unknown'}&nbsp;
+                                >${info.toolInfoAndVersions?.title ??
+                                info.appletEntry?.custom_name ??
+                                msg('unknown Tool')}&nbsp;
                               </span>
                             </div>
                             <div
@@ -770,6 +778,13 @@ export class GroupHome extends LitElement {
                                   >
                                 `}
                           </div>
+                          ${this._joiningNewApplet === encodeHashToBase64(info.appletHash)
+                            ? html`<applet-install-progress
+                                style="margin-top: 10px;"
+                                .appletHash=${info.appletHash}
+                                .groupStore=${this._groupStore}
+                              ></applet-install-progress>`
+                            : html``}
                         </div>
                       </sl-card>
                     `,

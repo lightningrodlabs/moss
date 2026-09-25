@@ -1,12 +1,7 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 // IPC_CHANGE_HERE
-import {
-  AgentPubKeyB64,
-  CallZomeRequest,
-  DnaHashB64,
-  RoleSettingsMap,
-} from '@holochain/client';
+import { AgentPubKeyB64, CallZomeRequest, DnaHashB64, RoleSettingsMap } from '@holochain/client';
 import { contextBridge, ipcRenderer } from 'electron';
 import {
   AppletId,
@@ -17,11 +12,24 @@ import {
   WAL,
   WeaveLocation,
 } from '@theweave/api';
+import type {
+  AsrIncomingEvent,
+  AsrSessionOptions,
+  LocalModelCapabilities,
+  AsrHostStatus,
+} from '@theweave/api';
+import type { AppletHostResponse } from '../main/sharedTypes';
 import {
   AppHashes,
+  AssetSource,
+  AudioSourceGrantInfo,
+  AudioSourcePickerRequest,
+  AudioSourcePortDelivery,
   DistributionInfo,
   ResourceLocation,
   ToolCompatibilityId,
+  ToolTransferManifest,
+  ToolTransferRequest,
 } from '@theweave/moss-types';
 import { ProgressInfo } from 'electron-updater';
 
@@ -32,7 +40,7 @@ contextBridge.exposeInMainWorld('__HC_ZOME_CALL_SIGNER__', {
 contextBridge.exposeInMainWorld('electronAPI', {
   signZomeCallApplet: (request: CallZomeRequest, callerAppletIds: string[]) =>
     ipcRenderer.invoke('sign-zome-call-applet', request, callerAppletIds),
-  appletMessageToParentResponse: (response: any, id: string) =>
+  appletMessageToParentResponse: (response: AppletHostResponse, id: string) =>
     ipcRenderer.invoke('applet-message-to-parent-response', response, id),
   parentToAppletMessage: (message: ParentToAppletMessage, forApplet: AppletId) =>
     ipcRenderer.invoke('parent-to-applet-message', message, forApplet),
@@ -104,24 +112,36 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installAppletBundle: (
     appId: string,
     networkSeed: string,
-    agentPubKey: AgentPubKeyB64,
     happOrWebHappUrl: string,
     distributionInfo: DistributionInfo,
     appHashes: AppHashes,
     uiPort?: number,
     roles_settings?: RoleSettingsMap,
+    assetSource?: AssetSource,
   ) =>
     ipcRenderer.invoke(
       'install-applet-bundle',
       appId,
       networkSeed,
-      agentPubKey,
       happOrWebHappUrl,
       distributionInfo,
       appHashes,
       uiPort,
       roles_settings,
+      assetSource,
     ),
+  readToolAssetsManifest: (request: ToolTransferRequest, chunkSize: number) =>
+    ipcRenderer.invoke('read-tool-assets-manifest', request, chunkSize),
+  listLocalTools: () => ipcRenderer.invoke('list-local-tools'),
+  areToolAssetsPresent: (request: ToolTransferRequest) =>
+    ipcRenderer.invoke('are-tool-assets-present', request),
+  readToolAssetsChunk: (request: ToolTransferRequest, index: number, chunkSize: number) =>
+    ipcRenderer.invoke('read-tool-assets-chunk', request, index, chunkSize),
+  storeToolAssetsFromPeer: (
+    manifest: ToolTransferManifest,
+    bytes: Uint8Array,
+    expected: ToolTransferRequest,
+  ) => ipcRenderer.invoke('store-tool-assets-from-peer', manifest, bytes, expected),
   uninstallAppletBundle: (appId: string) => ipcRenderer.invoke('uninstall-applet-bundle', appId),
   isDevModeEnabled: () => ipcRenderer.invoke('is-dev-mode-enabled'),
   isMainWindowFocused: () => ipcRenderer.invoke('is-main-window-focused'),
@@ -151,6 +171,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
       appletName,
     ),
   selectScreenOrWindow: () => ipcRenderer.invoke('select-screen-or-window'),
+  requestAudioSources: (req: { requestId: string; toolName: string }) =>
+    ipcRenderer.invoke('request-audio-sources', req),
+  stopAudioSources: (grantId: string, reason: 'user-stopped' | 'iframe-unloaded') =>
+    ipcRenderer.invoke('stop-audio-sources', grantId, reason),
+  onShowAudioSourcePicker: (
+    callback: (e: Electron.IpcRendererEvent, request: AudioSourcePickerRequest) => any,
+  ) => ipcRenderer.on('show-audio-source-picker', callback),
+  audioSourcesSelected: (pickerId: string, ids: string[] | null) =>
+    ipcRenderer.invoke('audio-sources-selected', pickerId, ids),
+  listAudioSourceGrants: () => ipcRenderer.invoke('list-audio-source-grants'),
+  getAudioCapabilities: () => ipcRenderer.invoke('get-audio-capabilities'),
+  onAudioSourceGrantsChanged: (
+    callback: (e: Electron.IpcRendererEvent, grants: AudioSourceGrantInfo[]) => any,
+  ) => ipcRenderer.on('audio-source-grants-changed', callback),
   captureScreen: () => ipcRenderer.invoke('capture-screen'),
   getFeedbackWorkerUrl: () => ipcRenderer.invoke('get-feedback-worker-url'),
   saveFeedback: (feedback: {
@@ -220,6 +254,44 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('set-dev-ui-override', appId, webhappPath),
   clearDevUiOverride: (appId: string) => ipcRenderer.invoke('clear-dev-ui-override', appId),
   getDevUiOverride: (appId: string) => ipcRenderer.invoke('get-dev-ui-override', appId),
+  lanBeaconSetListening: (listening: boolean) =>
+    ipcRenderer.invoke('lan-beacon-set-listening', listening),
+  lanBeaconStartAdvertising: (payload: Uint8Array, durationMs: number) =>
+    ipcRenderer.invoke('lan-beacon-start-advertising', payload, durationMs),
+  lanBeaconSetHello: (payload: Uint8Array) => ipcRenderer.invoke('lan-beacon-set-hello', payload),
+  lanBeaconStopAdvertising: (id?: number) => ipcRenderer.invoke('lan-beacon-stop-advertising', id),
+  lanBeaconUnicast: (payload: Uint8Array, address: string, port: number) =>
+    ipcRenderer.invoke('lan-beacon-unicast', payload, address, port),
+  lanBeaconDiagnostics: () => ipcRenderer.invoke('lan-beacon-diagnostics'),
+  onLanBeaconDatagram: (
+    callback: (
+      e: Electron.IpcRendererEvent,
+      payload: { bytes: Uint8Array; address: string; port: number },
+    ) => unknown,
+  ) => ipcRenderer.on('lan-beacon-datagram', callback),
+
+  // ── Local ASR (whisper.cpp sidecar) ──────────────────────────
+  // The renderer-side bridge in applet-host.ts is the only intended
+  // caller; applets reach this via WeaveClient.localModels.asr.
+  // Channel contract is defined in src/main/asr/ipcHandlers.ts.
+  asrRequestConsent: (req: { appletName: string; senderWebContentsId?: number }) =>
+    ipcRenderer.invoke('asr-request-consent', req) as Promise<'granted' | 'denied'>,
+  asrWarmUp: () => ipcRenderer.invoke('asr-warm-up') as Promise<void>,
+  asrStatus: () => ipcRenderer.invoke('asr-status') as Promise<AsrHostStatus>,
+  onAsrStatus: (callback: (e: Electron.IpcRendererEvent, status: AsrHostStatus) => void) =>
+    ipcRenderer.on('asr-status', callback),
+  asrCapabilities: () => ipcRenderer.invoke('asr-capabilities') as Promise<LocalModelCapabilities>,
+  asrOpenSession: (opts: AsrSessionOptions) =>
+    ipcRenderer.invoke('asr-open-session', opts) as Promise<{ sessionId: string }>,
+  asrPushAudio: (req: { sessionId: string; pcm: Uint8Array; endOfUtterance?: boolean }) =>
+    ipcRenderer.invoke('asr-push-audio', req) as Promise<void>,
+  asrCloseSession: (req: { sessionId: string }) =>
+    ipcRenderer.invoke('asr-close-session', req) as Promise<void>,
+  onWalWindowClosed: (
+    callback: (e: Electron.IpcRendererEvent, info: { webContentsId: number }) => void,
+  ) => ipcRenderer.on('wal-window-closed', callback),
+  onAsrEvent: (callback: (e: Electron.IpcRendererEvent, event: AsrIncomingEvent) => void) =>
+    ipcRenderer.on('asr-event', callback),
 });
 
 declare global {
@@ -227,3 +299,10 @@ declare global {
     electronAPI: unknown;
   }
 }
+
+// A grant's MessagePort arrives from main on this channel; it cannot be
+// proxied through the context bridge, so it is re-posted into the page where
+// the applet host forwards it to the requesting Tool.
+ipcRenderer.on('audio-source-port', (event, payload: AudioSourcePortDelivery) => {
+  window.postMessage({ type: 'audio-source-port', ...payload }, '*', event.ports);
+});

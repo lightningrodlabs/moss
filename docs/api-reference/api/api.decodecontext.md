@@ -16,27 +16,34 @@ export declare function decodeContext(contextStringified: string): any;
 
 Parameter
 
+
 </th><th>
 
 Type
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 contextStringified
 
+
 </td><td>
 
 string
 
+
 </td><td>
+
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 any
+

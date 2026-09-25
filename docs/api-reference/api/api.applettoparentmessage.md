@@ -8,9 +8,9 @@
 
 ```typescript
 export type AppletToParentMessage = {
-  request: AppletToParentRequest;
-  source: IframeKind;
+    request: AppletToParentRequest;
+    source: IframeKind;
 };
 ```
-
 **References:** [AppletToParentRequest](./api.applettoparentrequest.md)<!-- -->, [IframeKind](./api.iframekind.md)
+

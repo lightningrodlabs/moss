@@ -8,6 +8,6 @@
 
 ```typescript
 export type CrossGroupView = {
-  type: 'main';
+    type: 'main';
 };
 ```

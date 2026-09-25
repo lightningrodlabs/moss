@@ -10,6 +10,10 @@ import { purgeConductor } from './commands/purge.js';
 import { info } from './commands/info.js';
 import { listApps } from './commands/conductor/list-apps.js';
 import { joinGroup } from './commands/conductor/join-group.js';
+import {
+  describeJoinGroupError,
+  shouldWarnAboutQuoting,
+} from './commands/conductor/inviteInput.js';
 import { disableGroup } from './commands/conductor/disable-group.js';
 import { enableGroup } from './commands/conductor/enable-group.js';
 import { listGroups } from './commands/conductor/list-groups.js';
@@ -121,20 +125,24 @@ wDocker
   .command('join-group')
   .description('Join a Moss group with a conductor')
   .argument('<conductor-name>', 'id (name) of the conductor in which to install the group')
-  .argument('<invite-link-in-quotes>', 'invite link to the group, MUST BE WRAPPED in quotes ""')
-  .action(async (conductorId, inviteLink) => {
-    if (!inviteLink.includes('&progenitor')) {
+  .argument(
+    '<invite-in-quotes>',
+    'invite link or invite code for the group. An invite link MUST BE WRAPPED in quotes ""',
+  )
+  .action(async (conductorId, invite) => {
+    if (shouldWarnAboutQuoting(invite)) {
       console.warn(
         'WARNING: It looks like you may not have wrapped the <invite-link> argument in quotes "". This is required for the command to work.',
       );
     }
-    console.log(
-      'Got join-group command with conductorId and inviteLink: ',
-      conductorId,
-      inviteLink,
-    );
-    const response = await joinGroup(conductorId, inviteLink);
-    if (response) console.log('Joined group:\n', response);
+    console.log('Got join-group command with conductorId and invite: ', conductorId, invite);
+    try {
+      const response = await joinGroup(conductorId, invite);
+      if (response) console.log('Joined group:\n', response);
+    } catch (e) {
+      console.error('ERROR:', describeJoinGroupError(e));
+      process.exit(1);
+    }
     process.exit(0);
   });
 

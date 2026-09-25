@@ -1,6 +1,7 @@
 import psList from 'ps-list';
 import { WDockerFilesystem } from '../filesystem.js';
 import { HOLOCHAIN_BINARY_NAME } from '../const.js';
+import { isWdaemonProcess } from '../helpers/processMatching.js';
 
 /**
  * Stops a running conductor and the associated wdaemon
@@ -27,12 +28,8 @@ export async function stopConductor(id: string): Promise<void> {
       process.kill(conductorPid);
     }
   }
-  if (daemonProcess) {
-    // console.log('daemonProcess: ', daemonProcess);
-    const cmdParts = daemonProcess.cmd?.split(' ');
-    if (cmdParts && cmdParts[1] && cmdParts[1].endsWith('wdaemon')) {
-      process.kill(daemonPid);
-    }
+  if (daemonProcess && isWdaemonProcess(daemonProcess)) {
+    process.kill(daemonPid);
   }
   wDockerFs.clearRunningFile();
   wDockerFs.clearRunningSecretFile();

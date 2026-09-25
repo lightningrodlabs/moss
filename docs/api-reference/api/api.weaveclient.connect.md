@@ -16,29 +16,36 @@ static connect(appletServices?: AppletServices): Promise<WeaveClient>;
 
 Parameter
 
+
 </th><th>
 
 Type
 
+
 </th><th>
 
 Description
+
 
 </th></tr></thead>
 <tbody><tr><td>
 
 appletServices
 
+
 </td><td>
 
 [AppletServices](./api.appletservices.md)
 
+
 </td><td>
 
 _(Optional)_
+
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 Promise&lt;[WeaveClient](./api.weaveclient.md)<!-- -->&gt;
+

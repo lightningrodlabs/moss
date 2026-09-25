@@ -1,5 +1,10 @@
 appId: org.lightningrodlabs.moss-0.16
-productName: Moss
+# Installed artifacts carry the breaking version so that Moss versions with incompatible
+# group DNAs install side by side: the deb's /opt directory and the Windows executable
+# metadata derive from productName. It doubles as a path segment, hence no spaces or
+# punctuation; the labels people see are set per platform below. The running app presents
+# itself as plain "Moss" via app.setName(). Guarded by a unit test.
+productName: moss-0.16
 directories:
   buildResources: build
 files:
@@ -19,20 +24,29 @@ win:
   executableName: moss
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
-  shortcutName: ${productName}
-  uninstallDisplayName: ${productName}
+  shortcutName: Moss 0.16
+  uninstallDisplayName: Moss 0.16
   createDesktopShortcut: always
 mac:
+  # macOS shows CFBundleName in the menu bar and Electron locates its helper bundles by
+  # it, and both derive from productName, so the mac build scripts pass
+  # `-c.productName=Moss`. The bundle name comes from executableName instead and keeps
+  # the version so that two Moss versions can sit in /Applications together.
+  executableName: moss-0.16
   entitlementsInherit: build/entitlements.mac.plist
+  # Merged into Info.plist key by key, so this must be a map rather than a list of maps.
   extendInfo:
-    - NSCameraUsageDescription: Application requests access to the device's camera.
-    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
-    - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
-    - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+    NSCameraUsageDescription: Application requests access to the device's camera.
+    NSMicrophoneUsageDescription: Application requests access to the device's microphone.
+    NSAudioCaptureUsageDescription: Application requests permission to capture audio playing on this computer when a tool asks to share it.
+    NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
+    NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false
 dmg:
   artifactName: ${name}-${version}-${arch}.${ext}
 linux:
+  desktop:
+    Name: Moss 0.16
   target:
     - AppImage
     - deb

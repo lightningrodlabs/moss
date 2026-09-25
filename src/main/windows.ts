@@ -2,6 +2,7 @@ import { BrowserWindow, nativeImage, net, session } from 'electron';
 import path from 'path';
 import url from 'url';
 import { MossFileSystem } from './filesystem';
+import { withUtf8ContentType } from './assetCharset';
 import { setLinkOpenHandlers } from './utils';
 import { is } from '@electron-toolkit/utils';
 import { ICONS_DIRECTORY } from './paths';
@@ -109,7 +110,9 @@ export const createHappWindow = (
     const filePath = request.url.slice('file://'.length);
     console.log('filePath: ', filePath);
     if (!filePath.endsWith('index.html')) {
-      return net.fetch(url.pathToFileURL(path.join(uiAssetsDir, filePath)).toString());
+      return withUtf8ContentType(
+        await net.fetch(url.pathToFileURL(path.join(uiAssetsDir, filePath)).toString()),
+      );
     } else {
       const indexHtmlResponse = await net.fetch(request.url);
       const content = await indexHtmlResponse.text();
@@ -119,7 +122,7 @@ export const createHappWindow = (
       );
       // remove title attribute to be able to set title to app id later
       modifiedContent = modifiedContent.replace(/<title>.*?<\/title>/i, '');
-      return new Response(modifiedContent, indexHtmlResponse);
+      return withUtf8ContentType(new Response(modifiedContent, indexHtmlResponse));
     }
   });
 

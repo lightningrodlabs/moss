@@ -20,7 +20,7 @@ export const PRODUCTION_BOOTSTRAP_URLS = [
 // trailing-dot FQDN is the iroh relay URL convention.
 export const PRODUCTION_RELAY_URLS = [
   'https://bootstrap-relay.moss.social./',
-  'https://use1-1.relay.n0.iroh-canary.iroh.link./',
+  'https://use1-1.relay.n0.iroh.link./',
 ];
 export const DEFAULT_ICE_URLS = ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'];
 

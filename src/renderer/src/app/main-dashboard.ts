@@ -28,6 +28,7 @@ import { InviteParseError, invitePropsToPartialModifiers, weaveLinkVersion } fro
 import { WEAVE_PROTOCOL_VERSION } from '@theweave/moss-types';
 import { foreignVersionLinkMessage, inviteErrorMessage } from '../invite-error.js';
 import { releaseSeriesFromVersion } from '../release-series.js';
+import type { AppletHostResponse } from '../types.js';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -56,6 +57,8 @@ import '../ui/moss-dialog.js';
 import '../self/settings/moss-settings.js';
 import './design-feedback/design-feedback-controller.js';
 import './dialogs/tool-info-dialog.js';
+import '../audio-sources/audio-source-chips.js';
+import { initAudioSourceGrantsStore } from '../audio-sources/grants-store.js';
 import { ToolInfoDialog, ToolInfoInput } from './dialogs/tool-info-dialog.js';
 import './dialogs/reenable-tool-dialog.js';
 import { ReenableToolDialog, ReenableToolInput } from './dialogs/reenable-tool-dialog.js';
@@ -73,6 +76,7 @@ import '../assets/creatables/creatable-palette.js';
 import { MossPocket } from '../assets/pocket/pocket.js';
 import { CreatablePalette } from '../assets/creatables/creatable-palette.js';
 import { appletMessageHandler, handleAppletIframeMessage } from '../applets/applet-host.js';
+import { initAsrRendererBridge } from '../applets/asr-bridge.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
 import { progenitorFromProperties } from '../utils.js';
@@ -616,17 +620,43 @@ export class MainDashboard extends LitElement {
 
     this._appletMessageListener = appletMessageHandler(this._mossStore, this.openViews);
     window.addEventListener('message', this._appletMessageListener);
-    window.electronAPI.onAppletToParentMessage(async (_e, payload) => {
-      if (!payload.message.source) throw new Error('source not defined in AppletToParentMessage');
-      const response = await handleAppletIframeMessage(
-        this._mossStore,
-        this.openViews,
-        payload.message.source,
-        payload.message.request,
-        'wal-window',
-      );
-      await window.electronAPI.appletMessageToParentResponse(response, payload.id);
+
+    // Wire window.electronAPI.onAsrEvent → AsrRendererBridge so that
+    // 'asr-event' IPC pushes from main reach every iframe hosting the
+    // session's applet (main-window iframes and WAL windows).
+    initAsrRendererBridge(this._mossStore);
+    // The speech model's cold start can take several seconds and is
+    // otherwise invisible; say so while it happens.
+    window.electronAPI.onAsrStatus((_e, status) => {
+      if (status === 'starting') {
+        notify(msg('Starting local transcription model…'), 'primary', undefined, 8000);
+      }
     });
+    window.electronAPI.onAppletToParentMessage(async (_e, payload) => {
+      // Always send SOMETHING back — the main process waits up to 60s
+      // on this response, so any uncaught throw here would surface in
+      // the WAL window as a 60s timeout instead of the real error.
+      try {
+        if (!payload.message.source) {
+          throw new Error('source not defined in AppletToParentMessage');
+        }
+        const result = await handleAppletIframeMessage(
+          this._mossStore,
+          this.openViews,
+          payload.message.source,
+          payload.message.request,
+          'wal-window',
+          payload.senderWebContentsId,
+        );
+        const response: AppletHostResponse = { type: 'success', result };
+        await window.electronAPI.appletMessageToParentResponse(response, payload.id);
+      } catch (e) {
+        const error = e instanceof Error ? e.message : String(e);
+        const response: AppletHostResponse = { type: 'error', error };
+        await window.electronAPI.appletMessageToParentResponse(response, payload.id);
+      }
+    });
+    void initAudioSourceGrantsStore();
 
     // Received from WAL windows on request when the main window is reloaded
     window.electronAPI.onIframeStoreSync((_e, payload) => {
@@ -1415,13 +1445,14 @@ export class MainDashboard extends LitElement {
         src="turing-pattern-bottom-left.svg"
         style="position: fixed; bottom: 0; left: 0; height: 250px;"
       />
-      <moss-dialog id="settings-dialog" width="800px">
+      <moss-dialog id="settings-dialog" width="900px">
         <span slot="header">${msg('Settings')}</span>
         <div slot="content">
           <moss-settings></moss-settings>
         </div>
       </moss-dialog>
       <design-feedback-controller></design-feedback-controller>
+      <moss-audio-source-chips></moss-audio-source-chips>
       <tag-selection-dialog
         id="tag-selection-dialog"
         @asset-relation-tag-selected=${(e) => {

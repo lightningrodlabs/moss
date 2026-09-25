@@ -8,9 +8,9 @@
 
 ```typescript
 export type WAL = {
-  hrl: Hrl;
-  context?: any;
+    hrl: Hrl;
+    context?: any;
 };
 ```
-
 **References:** [Hrl](./api.hrl.md)
+

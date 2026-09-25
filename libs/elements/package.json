@@ -18,7 +18,8 @@
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch --preserveWatchOutput",
-    "prepublish": "yarn build"
+    "prepublish": "yarn build",
+    "prepublishOnly": "node ../../scripts/publish-staleness.mjs"
   },
   "type": "module",
   "dependencies": {

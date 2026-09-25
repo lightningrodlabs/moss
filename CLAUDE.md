@@ -36,7 +36,15 @@ nix develop
 yarn setup
 ```
 
-This command installs dependencies, builds libraries, compiles Rust zomes, fetches Holochain/lair binaries, and links packages.
+This command installs dependencies, builds the libraries and iframes, fetches the group happ and the Holochain/lair binaries, and links packages.
+
+It does **not** compile the Rust zomes. Run `yarn build:zomes` separately before
+any `yarn build:*` distributable: the renderer imports
+`target/wasm32-unknown-unknown/release/hrl_locator.wasm` directly, so without it
+the renderer build fails with `Could not resolve ... hrl_locator.wasm`. That wasm
+is built from `crates/hrl_locator` in this repo and is not published anywhere, so
+it cannot be fetched. The release workflow runs `yarn build:zomes` as its own step
+after `yarn setup:release`.
 
 ### Development Modes
 

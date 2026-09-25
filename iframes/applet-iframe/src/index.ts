@@ -46,6 +46,19 @@ import {
   AssetStoreContent,
   stringifyWal,
   IframeKind,
+  createAudioSourceCapture,
+  CaptureAudioSourcesOptions,
+  AudioSourceCapture,
+  AsrIncomingEvent,
+  AsrSession,
+  AsrSessionOptions,
+  AsrTransport,
+  LocalModelCapabilities,
+  LocalModelsApi,
+  fetchAsrCapabilities,
+  fetchAsrStatus,
+  openAsrSession,
+  warmUpAsr,
 } from '@theweave/api';
 import { AsyncStatus, readable } from '@holochain-open-dev/stores';
 import { createAppWebsocket, instrumentZomeCallLogging, toOriginalCaseB64 } from '@theweave/utils';
@@ -78,6 +91,7 @@ declare global {
     }>;
     'remote-signal-received': CustomEvent<Uint8Array>;
     'locale-change': CustomEvent<string>;
+    'asr-event': CustomEvent<AsrIncomingEvent>;
   }
 }
 
@@ -322,6 +336,23 @@ const weaveApi: WeaveServices = {
       type: 'user-select-screen',
     }),
 
+  captureAudioSources: async (
+    opts?: CaptureAudioSourcesOptions,
+  ): Promise<AudioSourceCapture | null> => {
+    const { result, ports } = await postMessageWithPorts({ type: 'request-audio-sources' });
+    if (!result) return null;
+    const port = ports[0];
+    // A Moss host attaches the port to the same reply that carries a non-null
+    // result (`TransferableReply`), so this branch is unreachable there; it
+    // guards a foreign host that answers the message without honouring the
+    // transfer.
+    if (!port) throw new Error('The host granted audio sources but transferred no port.');
+    return createAudioSourceCapture(
+      { label: result.label, canExcludeSelf: result.canExcludeSelf, port },
+      opts,
+    );
+  },
+
   requestClose: () =>
     postMessage({
       type: 'request-close',
@@ -368,6 +399,30 @@ const weaveApi: WeaveServices = {
       type: 'disable-clone-cell',
       req,
     }),
+
+  // Local on-device models. Backed by Moss main process's ASR broker
+  // via postMessage → renderer → IPC. See libs/api/src/asr.ts for the
+  // session shape; the transport here is just a thin adapter from
+  // AsrTransport to applet-iframe's postMessage + window CustomEvents.
+  localModels: ((): LocalModelsApi => {
+    const transport: AsrTransport = {
+      send: (request) => postMessage(request),
+      subscribe: (callback) => {
+        const listener = (e: CustomEvent<AsrIncomingEvent>) => callback(e.detail);
+        window.addEventListener('asr-event', listener as EventListener);
+        return () => window.removeEventListener('asr-event', listener as EventListener);
+      },
+    };
+    return {
+      capabilities: (): Promise<LocalModelCapabilities> => fetchAsrCapabilities(transport),
+      asr: {
+        openSession: (opts?: AsrSessionOptions): Promise<AsrSession> =>
+          openAsrSession(transport, opts),
+        warmUp: (): Promise<void> => warmUpAsr(transport),
+        status: () => fetchAsrStatus(transport),
+      },
+    };
+  })(),
 };
 
 (async () => {
@@ -637,6 +692,15 @@ const handleParentMessageGeneral = async (
         }),
       );
       break;
+    case 'asr-event':
+      // Re-emit as a window CustomEvent. The AsrSession instance(s)
+      // listen for this and filter by sessionId.
+      window.dispatchEvent(
+        new CustomEvent('asr-event', {
+          detail: message.event,
+        }),
+      );
+      break;
     case 'remote-signal-received': {
       window.dispatchEvent(
         new CustomEvent('remote-signal-received', {
@@ -659,8 +723,14 @@ const handleParentMessageGeneral = async (
   }
 };
 
-/** Send a message to Parent */
-async function postMessage(request: AppletToParentRequest): Promise<any> {
+/**
+ * Sends a request to the host and resolves with the reply and any ports the
+ * host transferred alongside it. Every request goes through here; only
+ * `request-audio-sources` carries a port today.
+ */
+async function postMessageWithPorts(
+  request: AppletToParentRequest,
+): Promise<{ result: any; ports: readonly MessagePort[] }> {
   return new Promise((resolve, reject) => {
     const channel = new MessageChannel();
 
@@ -689,12 +759,17 @@ async function postMessage(request: AppletToParentRequest): Promise<any> {
 
     channel.port1.onmessage = (m) => {
       if (m.data.type === 'success') {
-        resolve(m.data.result);
+        resolve({ result: m.data.result, ports: m.ports });
       } else if (m.data.type === 'error') {
         reject(m.data.error);
       }
     };
   });
+}
+
+/** Send a message to Parent */
+async function postMessage(request: AppletToParentRequest): Promise<any> {
+  return (await postMessageWithPorts(request)).result;
 }
 
 async function setupAppClient(appPort: number, token: AppAuthenticationToken) {

@@ -1,6 +1,6 @@
 {
   "name": "@theweave/moss-types",
-  "version": "0.7.0-dev.1",
+  "version": "0.7.0-dev.2",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
@@ -13,7 +13,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "build:watch": "tsc --watch --preserveWatchOutput"
+    "build:watch": "tsc --watch --preserveWatchOutput",
+    "prepublishOnly": "node ../../scripts/publish-staleness.mjs"
   },
   "type": "module",
   "dependencies": {

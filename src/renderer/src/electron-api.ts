@@ -18,16 +18,29 @@ import {
   WAL,
   WeaveLocation,
 } from '@theweave/api';
-
+import type {
+  AsrIncomingEvent,
+  AsrSessionOptions,
+  LocalModelCapabilities,
+  AsrHostStatus,
+} from '@theweave/api';
 import {
   AppAssetsInfo,
   AppHashes,
+  AssetSource,
+  AudioCapabilities,
+  AudioSourceGrantInfo,
+  AudioSourcePickerRequest,
+  AudioSourceRequestResult,
   DistributionInfo,
+  LocalToolInfo,
   ResourceLocation,
   ToolCompatibilityId,
+  ToolTransferManifest,
+  ToolTransferRequest,
   WeaveDevConfig,
 } from '@theweave/moss-types';
-import { ToolWeaveConfig } from './types';
+import { AppletHostResponse, ToolWeaveConfig } from './types';
 
 // IPC_CHANGE_HERE
 
@@ -50,7 +63,7 @@ declare global {
         request: CallZomeRequest,
         callerAppletIds: string[],
       ) => Promise<CallZomeRequestSigned>;
-      appletMessageToParentResponse: (response: any, id: string) => Promise<void>;
+      appletMessageToParentResponse: (response: AppletHostResponse, id: string) => Promise<void>;
       parentToAppletMessage: (
         message: ParentToAppletMessage,
         forApplets: AppletId[],
@@ -79,7 +92,14 @@ declare global {
       openLogs: () => Promise<void>;
       exportLogs: () => Promise<void>;
       onAppletToParentMessage: (
-        callback: (e: any, payload: { message: AppletToParentMessage; id: string }) => void,
+        callback: (
+          e: any,
+          payload: {
+            message: AppletToParentMessage;
+            id: string;
+            senderWebContentsId?: number;
+          },
+        ) => void,
       ) => void;
       onDeepLinkReceived: (callback: (e: any, payload: string) => any) => void;
       onSwitchToWeaveLocation: (callback: (e: any, payload: WeaveLocation) => any) => void;
@@ -155,8 +175,25 @@ declare global {
         appHashes: AppHashes,
         uiPort?: number,
         roles_settings?: RoleSettingsMap,
+        assetSource?: AssetSource,
       ) => Promise<AppInfo>;
       uninstallAppletBundle: (appId: string) => Promise<void>;
+      readToolAssetsManifest: (
+        request: ToolTransferRequest,
+        chunkSize: number,
+      ) => Promise<ToolTransferManifest | undefined>;
+      listLocalTools: () => Promise<LocalToolInfo[]>;
+      areToolAssetsPresent: (request: ToolTransferRequest) => Promise<boolean>;
+      readToolAssetsChunk: (
+        request: ToolTransferRequest,
+        index: number,
+        chunkSize: number,
+      ) => Promise<Uint8Array>;
+      storeToolAssetsFromPeer: (
+        manifest: ToolTransferManifest,
+        bytes: Uint8Array,
+        expected: ToolTransferRequest,
+      ) => Promise<void>;
       isMainWindowFocused: () => Promise<boolean | undefined>;
       isDevModeEnabled: () => Promise<boolean>;
       joinGroup: (networkSeed: string, progenitor: AgentPubKeyB64 | null) => Promise<AppInfo>;
@@ -176,6 +213,23 @@ declare global {
         appletName: string | undefined,
       ) => Promise<void>;
       selectScreenOrWindow: () => Promise<string>;
+      requestAudioSources: (req: {
+        requestId: string;
+        toolName: string;
+      }) => Promise<AudioSourceRequestResult | null>;
+      stopAudioSources: (
+        grantId: string,
+        reason: 'user-stopped' | 'iframe-unloaded',
+      ) => Promise<void>;
+      listAudioSourceGrants: () => Promise<AudioSourceGrantInfo[]>;
+      getAudioCapabilities: () => Promise<AudioCapabilities>;
+      onShowAudioSourcePicker: (
+        callback: (e: any, request: AudioSourcePickerRequest) => any,
+      ) => void;
+      audioSourcesSelected: (pickerId: string, ids: string[] | null) => Promise<void>;
+      onAudioSourceGrantsChanged: (
+        callback: (e: any, grants: AudioSourceGrantInfo[]) => any,
+      ) => void;
       captureScreen: () => Promise<string>;
       getFeedbackWorkerUrl: () => Promise<string>;
       saveFeedback: (feedback: {
@@ -251,6 +305,53 @@ declare global {
       ) => Promise<{ uiSha256: string; happSha256: string; happHashMatch: boolean }>;
       clearDevUiOverride: (appId: string) => Promise<void>;
       getDevUiOverride: (appId: string) => Promise<{ active: boolean; uiSha256?: string }>;
+      lanBeaconSetListening: (listening: boolean) => Promise<void>;
+      lanBeaconStartAdvertising: (
+        payload: Uint8Array,
+        durationMs: number,
+      ) => Promise<number | undefined>;
+      lanBeaconSetHello: (payload: Uint8Array) => Promise<void>;
+      lanBeaconStopAdvertising: (id?: number) => Promise<void>;
+      lanBeaconUnicast: (payload: Uint8Array, address: string, port: number) => Promise<void>;
+      lanBeaconDiagnostics: () => Promise<{
+        bound: boolean;
+        interfaces: string[];
+        advertising: boolean;
+        advertisementId: number | undefined;
+        sent: number;
+        received: number;
+        dropped: number;
+      }>;
+      onLanBeaconDatagram: (
+        callback: (
+          e: unknown,
+          payload: { bytes: Uint8Array; address: string; port: number },
+        ) => unknown,
+      ) => void;
+      // ── Local ASR (whisper.cpp via Moss main) ──
+      asrRequestConsent: (req: {
+        appletName: string;
+        senderWebContentsId?: number;
+      }) => Promise<'granted' | 'denied'>;
+      asrWarmUp: () => Promise<void>;
+      asrStatus: () => Promise<AsrHostStatus>;
+      onAsrStatus: (
+        callback: (e: Electron.IpcRendererEvent, status: AsrHostStatus) => void,
+      ) => void;
+      asrCapabilities: () => Promise<LocalModelCapabilities>;
+      asrOpenSession: (opts: AsrSessionOptions) => Promise<{ sessionId: string }>;
+      asrPushAudio: (req: {
+        sessionId: string;
+        pcm: Uint8Array;
+        endOfUtterance?: boolean;
+      }) => Promise<void>;
+      asrCloseSession: (req: { sessionId: string }) => Promise<void>;
+      onWalWindowClosed: (
+        callback: (e: Electron.IpcRendererEvent, info: { webContentsId: number }) => void,
+      ) => void;
+      onAsrEvent: (
+        callback: (e: Electron.IpcRendererEvent, event: AsrIncomingEvent) => void,
+      ) => void;
     };
     __ZOME_CALL_LOGGING_ENABLED__: boolean;
   }
@@ -401,6 +502,25 @@ export async function appletDevConfig(): Promise<WeaveDevConfig | undefined> {
 
 export async function selectScreenOrWindow(): Promise<string> {
   return window.electronAPI.selectScreenOrWindow();
+}
+
+export async function requestAudioSources(req: { requestId: string; toolName: string }) {
+  return window.electronAPI.requestAudioSources(req);
+}
+export async function stopAudioSources(
+  grantId: string,
+  reason: 'user-stopped' | 'iframe-unloaded',
+) {
+  return window.electronAPI.stopAudioSources(grantId, reason);
+}
+export async function listAudioSourceGrants() {
+  return window.electronAPI.listAudioSourceGrants();
+}
+export async function getAudioCapabilities() {
+  return window.electronAPI.getAudioCapabilities();
+}
+export function onAudioSourceGrantsChanged(callback: (grants: AudioSourceGrantInfo[]) => void) {
+  window.electronAPI.onAudioSourceGrantsChanged((_e, grants) => callback(grants));
 }
 
 export async function fetchAndValidateHappOrWebhapp(url: string) {

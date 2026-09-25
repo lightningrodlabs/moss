@@ -15,6 +15,7 @@ import fs from 'fs';
 import { startConductor } from './start.js';
 import { WDockerFilesystem } from '../filesystem.js';
 import { getAdminWsAndAppPort, getAppWs, getWeRustHandler } from '../helpers/helpers.js';
+import { LONG_LIVED_APP_AUTH_TOKEN_PARAMS, withAppWs } from '../helpers/appWsLifecycle.js';
 import { ProfilesClient } from '@holochain-open-dev/profiles/dist/profiles-client.js';
 import {
   ALWAYS_ONLINE_TAG,
@@ -129,8 +130,19 @@ setTimeout(async () => {
 
   const tzOffset = new Date().getTimezoneOffset();
   // TODO wrap in try catch blocks
+  // These sockets stay open for the lifetime of the daemon: they carry the
+  // peer-status signal handler and the ping/profile intervals below. The
+  // sticky auth token from createAppWebsocket is what keeps them usable across
+  // transient reconnects, and the token it replays has to stay redeemable for
+  // as long as the socket lives.
   for (const groupApp of enabledGroupApps) {
-    const groupAppWs = await getAppWs(adminWs, appPort, groupApp.installed_app_id, weRustHandler);
+    const groupAppWs = await getAppWs(
+      adminWs,
+      appPort,
+      groupApp.installed_app_id,
+      weRustHandler,
+      LONG_LIVED_APP_AUTH_TOKEN_PARAMS,
+    );
     const peerStatusClient = new PeerStatusClient(groupAppWs, 'group');
     peerStatusClient.onSignal(async (signal: SignalPayloadPeerStatus) => {
       if (signal.type == 'Ping') {
@@ -209,69 +221,90 @@ async function checkForNewGroupsAndApplets(
   // Check for unjoined applets and try to install them
   for (const groupApp of enabledGroupApps) {
     try {
-      const groupAppWs = await getAppWs(adminWs, appPort, groupApp.installed_app_id, weRustHandler);
-      const groupClient = new GroupClient(groupAppWs, [], 'group');
+      await withAppWs(
+        () => getAppWs(adminWs, appPort, groupApp.installed_app_id, weRustHandler),
+        async (groupAppWs) => {
+          const groupClient = new GroupClient(groupAppWs, [], 'group');
 
-      console.log('Checking for Tools to join in group ', groupApp.installed_app_id);
-      const unjoinedDefaultApplets = await checkForUnjoinedAppletsToJoin(groupClient);
-      if (unjoinedDefaultApplets.length === 0) {
-        console.log('No new tools found.');
-        continue;
-      }
-
-      for (const unjoinedApplet of unjoinedDefaultApplets) {
-        console.log('Joining Tool', unjoinedApplet);
-        try {
-          await tryJoinApplet(decodeHashFromBase64(unjoinedApplet), adminWs, groupClient);
-        } catch (e) {
-          console.error('Failed to activate Tool: ', e);
-        }
-        console.log('Tool Activated.');
-      }
-
-      // Check for unjoined cloned cells
-      try {
-        const allAppletHashes = await groupClient.getGroupApplets();
-        for (const appletHash of allAppletHashes) {
-          const unjoinedClonedCellEntryhashes =
-            await groupClient.getUnjoinedClonedCellsForApplet(appletHash);
-          for (const unjoinedCloneHash of unjoinedClonedCellEntryhashes) {
-            console.log(
-              'Joining cloned cell with entry hash',
-              encodeHashToBase64(unjoinedCloneHash),
-            );
-            try {
-              const appletClone = await groupClient.getAppletClonedCell(unjoinedCloneHash);
-              if (appletClone) {
-                const appletAppId = appIdFromAppletHash(appletHash);
-                const appletAppWs = await getAppWs(adminWs, appPort, appletAppId, weRustHandler);
-                await appletAppWs.createCloneCell({
-                  role_name: appletClone.role_name,
-                  modifiers: {
-                    network_seed: appletClone.network_seed,
-                    properties: appletClone.properties,
-                  },
-                });
-              } else {
-                console.warn(
-                  `No AppletClonedCell entry found for the given hash (${encodeHashToBase64(unjoinedCloneHash)}).`,
-                );
+          console.log('Checking for Tools to join in group ', groupApp.installed_app_id);
+          const unjoinedDefaultApplets = await checkForUnjoinedAppletsToJoin(groupClient);
+          if (unjoinedDefaultApplets.length > 0) {
+            for (const unjoinedApplet of unjoinedDefaultApplets) {
+              console.log('Joining Tool', unjoinedApplet);
+              try {
+                await tryJoinApplet(decodeHashFromBase64(unjoinedApplet), adminWs, groupClient);
+                console.log('Tool Activated.');
+              } catch (e) {
+                console.error('Failed to activate Tool: ', e);
               }
-            } catch (e) {
-              console.error(
-                `Failed to create clone cell for applet with hash ${encodeHashToBase64(appletHash)} and AppletClonedCell with hash ${encodeHashToBase64(unjoinedCloneHash)}`,
-              );
             }
+          } else {
+            console.log('No new tools found.');
           }
-        }
-      } catch (e) {
-        console.error(
-          `Failed to check for unjoined cloned cells in group with app id ${groupApp.installed_app_id}`,
-        );
-      }
+
+          await checkForUnjoinedClonedCells(
+            groupClient,
+            groupApp.installed_app_id,
+            adminWs,
+            appPort,
+            weRustHandler,
+          );
+        },
+      );
     } catch (e) {
-      console.error('Failed to check for Tools in group ', groupApp.installed_app_id);
+      console.error('Failed to check for Tools in group ', groupApp.installed_app_id, ': ', e);
     }
+  }
+}
+
+async function checkForUnjoinedClonedCells(
+  groupClient: GroupClient,
+  groupAppId: InstalledAppId,
+  adminWs: AdminWebsocket,
+  appPort: number,
+  weRustHandler: WeRustHandler,
+): Promise<void> {
+  try {
+    const allAppletHashes = await groupClient.getGroupApplets();
+    for (const appletHash of allAppletHashes) {
+      const unjoinedClonedCellEntryhashes =
+        await groupClient.getUnjoinedClonedCellsForApplet(appletHash);
+      for (const unjoinedCloneHash of unjoinedClonedCellEntryhashes) {
+        console.log('Joining cloned cell with entry hash', encodeHashToBase64(unjoinedCloneHash));
+        try {
+          const appletClone = await groupClient.getAppletClonedCell(unjoinedCloneHash);
+          if (!appletClone) {
+            console.warn(
+              `No AppletClonedCell entry found for the given hash (${encodeHashToBase64(unjoinedCloneHash)}).`,
+            );
+            continue;
+          }
+          const appletAppId = appIdFromAppletHash(appletHash);
+          await withAppWs(
+            () => getAppWs(adminWs, appPort, appletAppId, weRustHandler),
+            async (appletAppWs) => {
+              await appletAppWs.createCloneCell({
+                role_name: appletClone.role_name,
+                modifiers: {
+                  network_seed: appletClone.network_seed,
+                  properties: appletClone.properties,
+                },
+              });
+            },
+          );
+        } catch (e) {
+          console.error(
+            `Failed to create clone cell for applet with hash ${encodeHashToBase64(appletHash)} and AppletClonedCell with hash ${encodeHashToBase64(unjoinedCloneHash)}: `,
+            e,
+          );
+        }
+      }
+    }
+  } catch (e) {
+    console.error(
+      `Failed to check for unjoined cloned cells in group with app id ${groupAppId}: `,
+      e,
+    );
   }
 }
 

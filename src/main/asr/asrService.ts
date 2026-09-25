@@ -1,0 +1,197 @@
+// Singleton accessor for the AsrBroker. Sits between the wire-up code
+// in src/main/index.ts (which knows about Electron paths and lifecycle)
+// and the broker itself (which is Electron-free).
+//
+// The wire-up code calls initAsrService(...) once at app start with
+// Electron-derived inputs; everything else (IPC handlers, etc) just
+// asks for the broker via getAsrBroker(). On app quit, shutdown() is
+// called to stop the sidecar cleanly.
+//
+// We keep this a plain singleton instead of routing through an
+// existing moss store because:
+//   - the broker has its own lifecycle (lazy load, idle unload) that
+//     doesn't fit the reactive-store shape
+//   - the sidecar process is owned by main, not the renderer
+
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+
+import type { LocalModelCapabilities } from '@theweave/api';
+
+import { AsrBroker, type AsrHostStatus } from './broker';
+import { resolveWhisperServerCommand, WhisperCommandResolveError } from './binaryResolver';
+import { computeAsrCapabilities } from './capabilities';
+
+export const BUNDLED_ASR_MODEL_FILENAME = 'ggml-base.en.bin';
+
+export interface AsrServiceConfig {
+  /** Absolute path to the directory holding bundled binaries (resources/bins). */
+  binariesDir: string;
+  /** Version string used to locate the bundled whisper-server binary. */
+  whisperServerVersion: string;
+  /** True when running inside a packaged app.asar; disables nix fallback. */
+  isPackaged: boolean;
+  /**
+   * Absolute path to the ggml model file (.bin), or null when no model
+   * is present on this install. Without a model the service reports
+   * `available: false` and refuses to hand out a broker.
+   */
+  modelPath: string | null;
+  /**
+   * Idle timeout before the sidecar unloads after the last session
+   * closes. Defaults to AsrBroker's default (5 min).
+   */
+  idleTimeoutMs?: number;
+  /** Optional log sink for sidecar stdout/stderr. */
+  onLog?: (stream: 'stdout' | 'stderr', chunk: string) => void;
+  /** Override the capabilities `latencyTier` reported to applets. */
+  latencyTier?: 'fast' | 'ok' | 'slow';
+  /** Receives sidecar status transitions for the shell's indicator. */
+  onStatusChange?: (status: AsrHostStatus) => void;
+}
+
+let broker: AsrBroker | null = null;
+let initialized = false;
+let capabilities: LocalModelCapabilities = computeAsrCapabilities({ modelPath: null });
+let initError: Error | null = null;
+
+/**
+ * Wire up the broker with everything it needs. Idempotent — second
+ * call is a no-op.
+ *
+ * If whisper-server can't be resolved (no bundled binary, no env
+ * override, and nix fallback disabled in packaged builds), init
+ * completes without a broker: capabilities reports `available: false`
+ * and getAsrBroker() throws the resolver error. This keeps the app
+ * startable from a `yarn build:linux` (which doesn't build the sidecar)
+ * while still surfacing the real problem when an applet tries to use
+ * ASR.
+ */
+export function initAsrService(config: AsrServiceConfig): AsrBroker | null {
+  if (initialized) return broker;
+  initialized = true;
+  if (config.modelPath === null) {
+    initError = new Error(
+      'No ASR model is installed. Set $MOSS_ASR_MODEL or bundle resources/models/' +
+        BUNDLED_ASR_MODEL_FILENAME,
+    );
+    capabilities = computeAsrCapabilities({ modelPath: null, latencyTier: config.latencyTier });
+    return null;
+  }
+  try {
+    const resolved = resolveWhisperServerCommand({
+      binariesDir: config.binariesDir,
+      whisperServerVersion: config.whisperServerVersion,
+      isPackaged: config.isPackaged,
+    });
+    broker = new AsrBroker({
+      server: {
+        command: resolved.command,
+        modelPath: config.modelPath,
+        onLog: config.onLog,
+        startTimeoutMs: resolved.startTimeoutMs,
+      },
+      idleTimeoutMs: config.idleTimeoutMs,
+      onStatusChange: config.onStatusChange,
+    });
+    capabilities = computeAsrCapabilities({
+      modelPath: config.modelPath,
+      latencyTier: config.latencyTier,
+    });
+    return broker;
+  } catch (err) {
+    if (err instanceof WhisperCommandResolveError) {
+      initError = err;
+      capabilities = computeAsrCapabilities({
+        modelPath: null,
+        latencyTier: config.latencyTier,
+      });
+      return null;
+    }
+    throw err;
+  }
+}
+
+/**
+ * Static capabilities for the currently-configured model. Safe to call
+ * before / after initAsrService(); returns an unavailable shape when
+ * the service hasn't been wired up yet.
+ */
+export function getAsrCapabilities(): LocalModelCapabilities {
+  return capabilities;
+}
+
+/**
+ * Look up the singleton broker. Throws if initAsrService() hasn't
+ * been called yet — this is intentional: silently lazy-initing here
+ * would hide wiring bugs in main. Also throws if init ran but
+ * whisper-server couldn't be located (re-throws the stored resolver
+ * error so callers get the helpful "tried X, Y, Z" message).
+ */
+export function getAsrBroker(): AsrBroker {
+  if (initError) {
+    throw initError;
+  }
+  if (!broker) {
+    throw new Error('AsrBroker not initialized; call initAsrService() first');
+  }
+  return broker;
+}
+
+/** True if initAsrService() has run. */
+export function isAsrServiceInitialized(): boolean {
+  return initialized;
+}
+
+/**
+ * Tear down the broker, free the sidecar process. Safe to call from
+ * an Electron `before-quit` handler. Idempotent.
+ */
+export async function shutdownAsrService(): Promise<void> {
+  if (!broker) {
+    initialized = false;
+    initError = null;
+    return;
+  }
+  const b = broker;
+  broker = null;
+  initialized = false;
+  initError = null;
+  await b.destroy();
+}
+
+/**
+ * Test-only: forget the singleton state without going through
+ * shutdown. Used by unit tests to start clean between cases.
+ * Production code should not call this.
+ */
+export function _resetAsrServiceForTests(): void {
+  broker = null;
+  initialized = false;
+  initError = null;
+  capabilities = computeAsrCapabilities({ modelPath: null });
+}
+
+/**
+ * Resolve the default ggml model file for this install. Lookup order:
+ *   1. $MOSS_ASR_MODEL — absolute override for CI / tool authors.
+ *   2. <resourcesPath>/models/ggml-base.en.bin — bundled in release
+ *      installers by scripts/fetch-asr-model.mjs.
+ *   3. <repoRoot>/spikes/asr-m0/models/ggml-base.en.bin — dev fallback
+ *      populated manually via spikes/asr-m0/fetch-model.mjs.
+ *
+ * Returns null when none of these exist, so capabilities can report
+ * the truth instead of advertising a model that fails at spawn time.
+ * The env override is trusted as given so a misconfigured path fails
+ * loudly at first use rather than silently disabling the feature.
+ */
+export function defaultModelPath(repoRoot: string, resourcesPath?: string): string | null {
+  const fromEnv = process.env.MOSS_ASR_MODEL;
+  if (fromEnv && fromEnv.trim().length > 0) return fromEnv.trim();
+  const candidates: string[] = [];
+  if (resourcesPath) {
+    candidates.push(path.join(resourcesPath, 'models', BUNDLED_ASR_MODEL_FILENAME));
+  }
+  candidates.push(path.join(repoRoot, 'spikes/asr-m0/models', BUNDLED_ASR_MODEL_FILENAME));
+  return candidates.find((c) => existsSync(c)) ?? null;
+}

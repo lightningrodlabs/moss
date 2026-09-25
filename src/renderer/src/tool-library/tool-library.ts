@@ -52,6 +52,12 @@ enum ToolDetailView {
   //PublisherInfo,
 }
 
+/**
+ * Marks the synthetic tag for Tools already on this computer. It is not a
+ * developer-supplied tag, so it carries a name no tool list would use.
+ */
+const ON_THIS_COMPUTER_TAG = '__on_this_computer__';
+
 @localized()
 @customElement('tool-library')
 export class ToolLibrary extends LitElement {
@@ -104,6 +110,9 @@ export class ToolLibrary extends LitElement {
   classification = 'all';
 
   @state()
+  libraryReachable = true;
+
+  @state()
   sortMode: 'releaseDesc' | 'releaseAsc' | 'alphaAsc' | 'alphaDesc' = 'releaseDesc';
 
   // Empty string means "all tags" (no tag filtering).
@@ -150,6 +159,7 @@ export class ToolLibrary extends LitElement {
       this.mossStore.devModeToolLibrary,
     );
     this.unifiedTools = result.unifiedTools;
+    this.libraryReachable = result.libraryReachable;
     this.allDeveloperCollectives = result.developerCollectives;
     this.availableTools = result.availableTools;
     this.curationLists = result.curationLists;
@@ -178,13 +188,26 @@ export class ToolLibrary extends LitElement {
     const availableTags = Array.from(
       new Set(classificationFiltered.flatMap((entry) => entry.tags)),
     ).sort((a, b) => a.localeCompare(b));
+    // Offered as one more tag rather than its own control, so it appears only
+    // when there is something to select and disappears when there is not.
+    if (
+      classificationFiltered.some(
+        (entry) => getPrimaryVersionBranch(entry)?.installedOnThisComputer,
+      )
+    ) {
+      availableTags.push(ON_THIS_COMPUTER_TAG);
+    }
     // If the selected tag is no longer offered (e.g. classification changed),
     // fall back to showing all tools rather than an empty list.
     const activeTag =
       this.selectedTag && availableTags.includes(this.selectedTag) ? this.selectedTag : '';
-    const filteredUnifiedTools = activeTag
-      ? classificationFiltered.filter((entry) => entry.tags.includes(activeTag))
-      : classificationFiltered;
+    const filteredUnifiedTools = !activeTag
+      ? classificationFiltered
+      : activeTag === ON_THIS_COMPUTER_TAG
+        ? classificationFiltered.filter(
+            (entry) => getPrimaryVersionBranch(entry)?.installedOnThisComputer,
+          )
+        : classificationFiltered.filter((entry) => entry.tags.includes(activeTag));
     return html`
       <div class="column" style="display: flex; margin: 16px; flex: 1;">
         <div class="row items-center" style="gap: 12px; justify-content: center;">
@@ -223,7 +246,9 @@ export class ToolLibrary extends LitElement {
                     <option value="" ?selected=${activeTag === ''}>${msg('All tags')}</option>
                     ${availableTags.map(
                       (tag) =>
-                        html`<option value=${tag} ?selected=${activeTag === tag}>${tag}</option>`,
+                        html`<option value=${tag} ?selected=${activeTag === tag}>
+                          ${tag === ON_THIS_COMPUTER_TAG ? msg('on this computer') : tag}
+                        </option>`,
                     )}
                   </select>
                 </label>
@@ -266,6 +291,7 @@ export class ToolLibrary extends LitElement {
           style="display: flex; flex: 1;"
           .devCollectives=${this.allDeveloperCollectives}
           .unifiedTools=${filteredUnifiedTools}
+          .libraryReachable=${this.libraryReachable}
           .sortMode=${this.sortMode}
           @install-tool-to-group=${(e) => {
             // Handle both old format (tool) and new format (unifiedTool + versionBranch)

@@ -1,4 +1,10 @@
-import { ActionHashB64, AgentPubKeyB64, DnaHashB64, EntryHashB64 } from '@holochain/client';
+import {
+  ActionHashB64,
+  AgentPubKey,
+  AgentPubKeyB64,
+  DnaHashB64,
+  EntryHashB64,
+} from '@holochain/client';
 import { Type, Static } from '@sinclair/typebox';
 
 export type PartialModifiers = {
@@ -185,7 +191,81 @@ export type AssetSource =
     }
   | {
       type: 'default-app'; // Shipped with the We executable by default
+    }
+  | {
+      type: 'peer'; // Received from another member of a group
+    }
+  | {
+      type: 'local'; // Reused assets that were already on this computer
     };
+
+/**
+ * ==================================================================
+ * Peer tool transfer: fetching a Tool's assets from a group member
+ * ==================================================================
+ */
+
+export type ToolTransferFile = {
+  /** Relative posix path under uis/<sha256>/assets */
+  path: string;
+  size: number;
+  sha256: string;
+};
+
+export type ToolTransferManifest = {
+  happ: { sha256: string; size: number };
+  ui: { sha256: string; files: ToolTransferFile[] };
+  /** The icon file contents exactly as stored under tools/<toolCompatibilityId>/icon */
+  icon: string;
+  chunkSize: number;
+};
+
+/**
+ * A Tool this computer can install without downloading anything, assembled
+ * from what an earlier install already recorded on disk.
+ */
+export type LocalToolInfo = {
+  toolCompatibilityId: string;
+  distributionInfo: DistributionInfo;
+  happSha256: string;
+  uiSha256: string;
+  webhappSha256?: string;
+  /** The icon as stored under tools/<toolCompatibilityId>/icon. */
+  icon: string;
+  /** When the happ landed on disk; the library sorts by it. */
+  installedAt: number;
+};
+
+export type ToolTransferRequest = {
+  happSha256: string;
+  uiSha256: string;
+  toolCompatibilityId: string;
+};
+
+export type ToolTransferMessage =
+  | ({ kind: 'request'; requestId: string; from: AgentPubKey } & ToolTransferRequest)
+  | { kind: 'offer'; requestId: string; manifest: ToolTransferManifest }
+  | { kind: 'unavailable'; requestId: string; reason: string }
+  | ({
+      kind: 'chunk-request';
+      requestId: string;
+      from: AgentPubKey;
+      index: number;
+    } & ToolTransferRequest)
+  | { kind: 'chunk'; requestId: string; index: number; bytes: Uint8Array };
+
+export type AppletInstallProgress =
+  | { phase: 'library' }
+  | { phase: 'library-failed'; error: string }
+  | { phase: 'local' }
+  | { phase: 'peer-search' }
+  | { phase: 'peer-none' }
+  | { phase: 'peer-request'; peer: AgentPubKeyB64 }
+  | { phase: 'peer-download'; peer: AgentPubKeyB64; chunksDone: number; chunksTotal: number }
+  | { phase: 'peer-failed'; peer: AgentPubKeyB64; error: string }
+  | { phase: 'installing' }
+  | { phase: 'done' }
+  | { phase: 'failed'; error: string };
 
 /**
  * ==================================================================

@@ -546,21 +546,9 @@
   <source>Error fetching the custom views</source>
   <target>Fehler beim Abrufen der benutzerdefinierten Ansichten</target>
 </trans-unit>
-<trans-unit id="s9b21b1ade9a93f3b">
-  <source>Error creating the custom view</source>
-  <target>Fehler beim Erstellen der benutzerdefinierten Ansicht</target>
-</trans-unit>
 <trans-unit id="sad75043f72f63552">
   <source>Custom View Name</source>
   <target>Name der benutzerdefinierten Ansicht</target>
-</trans-unit>
-<trans-unit id="s57d1286dd70605a5">
-  <source>Create Custom View</source>
-  <target>Benutzerdefinierte Ansicht erstellen</target>
-</trans-unit>
-<trans-unit id="s55797f0c2b3b37a0">
-  <source>Error fetching the blocks for this group</source>
-  <target>Fehler beim Abrufen der Blocke fürdiese Gruppe</target>
 </trans-unit>
 <trans-unit id="s3111a346bb42ba2a">
   <source>Error updating the custom view</source>
@@ -2642,6 +2630,447 @@ beginnt jetzt</target>
 <trans-unit id="s63f2ae9fc0f5f2e6">
   <source>This link was created by Moss <x id="0" equiv-text="${foundVersion}"/> and points to content Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> cannot open. Open it in Moss <x id="2" equiv-text="${foundVersion}"/>.</source>
   <target>Dieser Link wurde von Moss <x id="0" equiv-text="${foundVersion}"/> erstellt und verweist auf Inhalte, die Moss <x id="1" equiv-text="${WEAVE_PROTOCOL_VERSION}"/> nicht öffnen kann. Öffne ihn in Moss <x id="2" equiv-text="${foundVersion}"/>.</target>
+</trans-unit>
+<trans-unit id="sb53f7a197981b790">
+  <source>yes</source>
+  <target>ja</target>
+</trans-unit>
+<trans-unit id="s08b35907b5589afa">
+  <source>no</source>
+  <target>nein</target>
+</trans-unit>
+<trans-unit id="s929aa78311fb0a41">
+  <source>Audio capture is not available on this system.</source>
+  <target>Audioaufnahme ist auf diesem System nicht verfügbar.</target>
+</trans-unit>
+<trans-unit id="sd9ad53251f2330a5">
+  <source>Stop</source>
+  <target>Stopp</target>
+</trans-unit>
+<trans-unit id="s9ced6a79ff861137">
+  <source>Audio Sources</source>
+  <target>Audioquellen</target>
+</trans-unit>
+<trans-unit id="s1edca2261e109e6e">
+  <source><x id="0" equiv-text="${g.toolName}"/> is using system audio</source>
+  <target><x id="0" equiv-text="${g.toolName}"/> verwendet Systemaudio</target>
+</trans-unit>
+<trans-unit id="sf55d634dcc743595">
+  <source>Services</source>
+  <target>Dienste</target>
+</trans-unit>
+<trans-unit id="s6a6bfaa591000ddf">
+  <source>Downloading from the tool library…</source>
+  <target>Wird aus der Tool-Bibliothek heruntergeladen…</target>
+</trans-unit>
+<trans-unit id="sd6607463accdcb14">
+  <source>Tool library unreachable. Looking for group members who have this Tool…</source>
+  <target>Tool-Bibliothek nicht erreichbar. Suche nach Gruppenmitgliedern mit diesem Tool…</target>
+</trans-unit>
+<trans-unit id="s9c6afced36071fdf">
+  <source>Looking for group members who have this Tool…</source>
+  <target>Suche nach Gruppenmitgliedern mit diesem Tool…</target>
+</trans-unit>
+<trans-unit id="s4726647ef1c65574">
+  <source>No online group member has this Tool.</source>
+  <target>Kein Gruppenmitglied online hat dieses Tool.</target>
+</trans-unit>
+<trans-unit id="s357ea71ff9c644e0">
+  <source>Requesting Tool from <x id="0" equiv-text="${name}"/>…</source>
+  <target>Tool wird von <x id="0" equiv-text="${name}"/> angefordert…</target>
+</trans-unit>
+<trans-unit id="s83260653bcf91fc9">
+  <source>Receiving from <x id="0" equiv-text="${name}"/>…</source>
+  <target>Empfang von <x id="0" equiv-text="${name}"/>…</target>
+</trans-unit>
+<trans-unit id="s665341cbbc550bc0">
+  <source>Transfer from <x id="0" equiv-text="${name}"/> failed. Trying the next member…</source>
+  <target>Übertragung von <x id="0" equiv-text="${name}"/> fehlgeschlagen. Nächstes Mitglied wird versucht…</target>
+</trans-unit>
+<trans-unit id="s954986670870010a">
+  <source>Installing…</source>
+  <target>Wird installiert…</target>
+</trans-unit>
+<trans-unit id="s5bef5fe0927d40c4">
+  <source>Installation failed.</source>
+  <target>Installation fehlgeschlagen.</target>
+</trans-unit>
+<trans-unit id="s81a2bbcbcbd48c75">
+  <source>unknown Tool</source>
+  <target>unbekanntes Tool</target>
+</trans-unit>
+<trans-unit id="s806a286e5e7162db">
+  <source>Using the copy already on this computer…</source>
+  <target>Die bereits auf diesem Computer vorhandene Kopie wird verwendet…</target>
+</trans-unit>
+<trans-unit id="s4d3f766e12322a7d">
+  <source>Looking up Tool details…</source>
+  <target>Tool-Details werden abgerufen…</target>
+</trans-unit>
+<trans-unit id="s9ac726b2f8f057a7">
+  <source>Tool library unavailable — showing the details this group has.</source>
+  <target>Tool-Bibliothek nicht verfügbar — es werden die in dieser Gruppe vorhandenen Angaben gezeigt.</target>
+</trans-unit>
+<trans-unit id="sb9b472448ad4baf5">
+  <source>On this computer</source>
+  <target>Auf diesem Computer</target>
+</trans-unit>
+<trans-unit id="sf64f5ebf325b6b15">
+  <source>on this computer</source>
+  <target>auf diesem Computer</target>
+</trans-unit>
+<trans-unit id="sb1f4c2480652efaf">
+  <source>Offered because it is installed on this computer. No curation list offers it.</source>
+  <target>Wird angeboten, weil es auf diesem Computer installiert ist. Keine Kurationsliste führt es.</target>
+</trans-unit>
+<trans-unit id="s964e40feacd6905e">
+  <source>Offered because it is installed on this computer. The tool library is unavailable, so it cannot be checked against a curation list.</source>
+  <target>Wird angeboten, weil es auf diesem Computer installiert ist. Die Tool-Bibliothek ist nicht verfügbar, ein Abgleich mit einer Kurationsliste ist daher nicht möglich.</target>
+</trans-unit>
+<trans-unit id="sc26825262c847fa5">
+  <source>Only on this computer</source>
+  <target>Nur auf diesem Computer</target>
+</trans-unit>
+<trans-unit id="sa60442ebb9f76461">
+  <source>Already on this computer, so installing it needs no download.</source>
+  <target>Bereits auf diesem Computer, die Installation erfordert keinen Download.</target>
+</trans-unit>
+<trans-unit id="s4f73472b397d6c4a">
+  <source>The tool library is unavailable, and no Tools are installed on this computer yet.</source>
+  <target>Die Tool-Bibliothek ist nicht verfügbar, und auf diesem Computer sind noch keine Tools installiert.</target>
+</trans-unit>
+<trans-unit id="s03ee935aee948c28">
+  <source>Details unavailable because this Tool is not in any curation list.</source>
+  <target>Details nicht verfügbar, da dieses Tool in keiner Kurationsliste steht.</target>
+</trans-unit>
+<trans-unit id="sa6315e99a05e1c82">
+  <source>Details unavailable because the curation lists could not be loaded.</source>
+  <target>Details nicht verfügbar, da die Kurationslisten nicht geladen werden konnten.</target>
+</trans-unit>
+<trans-unit id="sff4fe7fc56e5b224">
+  <source>Two groups are showing this name — ask which is which.</source>
+  <target>Zwei Gruppen zeigen diesen Namen an — fragen Sie nach, welche welche ist.</target>
+</trans-unit>
+<trans-unit id="s3dfc7829a2c51f7f">
+  <source>Invite sent to <x id="0" equiv-text="${admitted.length}"/> of <x id="1" equiv-text="${sids.length}"/>. The rest may have just become ambiguous — ask them to start again.</source>
+  <target>Einladung an <x id="0" equiv-text="${admitted.length}"/> von <x id="1" equiv-text="${sids.length}"/> gesendet. Die übrigen könnten gerade mehrdeutig geworden sein — bitten Sie sie, erneut zu beginnen.</target>
+</trans-unit>
+<trans-unit id="sac319fa554b9562c">
+  <source>Invite sent over the local network.</source>
+  <target>Einladung über das lokale Netzwerk gesendet.</target>
+</trans-unit>
+<trans-unit id="s49732b4064dac3db">
+  <source>Two people are showing this name — ask one of them to start again.</source>
+  <target>Zwei Personen zeigen diesen Namen an — bitten Sie eine davon, erneut zu beginnen.</target>
+</trans-unit>
+<trans-unit id="sa8a156adfa72e196">
+  <source>Visible for</source>
+  <target>Sichtbar für</target>
+</trans-unit>
+<trans-unit id="sc2b5b8f281fd3a60">
+  <source>No reply. This network may be blocking it — try again, or ask for an invite link.</source>
+  <target>Keine Antwort. Dieses Netzwerk blockiert sie möglicherweise — versuche es erneut oder bitte um einen Einladungslink.</target>
+</trans-unit>
+<trans-unit id="s0674c894d663cc90">
+  <source>Request access</source>
+  <target>Zugang anfragen</target>
+</trans-unit>
+<trans-unit id="sd4e09fbf1d56c054">
+  <source>Looking for groups on this network…</source>
+  <target>Suche nach Gruppen in diesem Netzwerk…</target>
+</trans-unit>
+<trans-unit id="sb1974522c98cd941">
+  <source>You are already in this group — opening it.</source>
+  <target>Du bist bereits in dieser Gruppe — sie wird geöffnet.</target>
+</trans-unit>
+<trans-unit id="sfbb361265a8a03eb">
+  <source>None found</source>
+  <target>Keine gefunden</target>
+</trans-unit>
+<trans-unit id="s1ffad027e503cf09">
+  <source>Scan Local Network</source>
+  <target>Lokales Netzwerk durchsuchen</target>
+</trans-unit>
+<trans-unit id="s200c2ff34504514f">
+  <source>Local Network Scan</source>
+  <target>Lokale Netzwerksuche</target>
+</trans-unit>
+<trans-unit id="s1993a85877e9873c">
+  <source>seen <x id="0" equiv-text="${this.secondsAgo(offer.lastSeen)}"/>s ago</source>
+  <target>zuletzt vor <x id="0" equiv-text="${this.secondsAgo(offer.lastSeen)}"/>s</target>
+</trans-unit>
+<trans-unit id="s9265b4d3d8a32c33">
+  <source>Use Invitation</source>
+  <target>Einladung verwenden</target>
+</trans-unit>
+<trans-unit id="s65466b58996b7efe">
+  <source>Invitation</source>
+  <target>Einladung</target>
+</trans-unit>
+<trans-unit id="sa93f553e92ea609a">
+  <source>You are announced on this network as</source>
+  <target>Du bist in diesem Netzwerk angekündigt als</target>
+</trans-unit>
+<trans-unit id="sc2f4d0e526a6642a">
+  <source>Announce Myself</source>
+  <target>Mich ankündigen</target>
+</trans-unit>
+<trans-unit id="s2072b414bfad9c88">
+  <source>You have been invited to</source>
+  <target>Du wurdest eingeladen zu</target>
+</trans-unit>
+<trans-unit id="s1379be55894c79ed">
+  <source>No invite was sent — a selected name may have just become ambiguous. Ask them to start again.</source>
+  <target>Es wurde keine Einladung gesendet — ein ausgewählter Name ist möglicherweise gerade mehrdeutig geworden. Bitte sie, neu zu beginnen.</target>
+</trans-unit>
+<trans-unit id="sf48048f9784a8124">
+  <source>Let people join on their own</source>
+  <target>Andere selbst beitreten lassen</target>
+</trans-unit>
+<trans-unit id="s8c2b2d3f709af64e">
+  <source>Admit people yourself</source>
+  <target>Personen selbst aufnehmen</target>
+</trans-unit>
+<trans-unit id="s5c1513edb89970fb">
+  <source>Ask people to announce themselves.</source>
+  <target>Bitte andere, sich anzukündigen.</target>
+</trans-unit>
+<trans-unit id="s2470a123452c0e6a">
+  <source>Nobody is announcing themselves currently.</source>
+  <target>Derzeit kündigt sich niemand an.</target>
+</trans-unit>
+<trans-unit id="s96efe6c3124479ce">
+  <source>Invite sent</source>
+  <target>Einladung gesendet</target>
+</trans-unit>
+<trans-unit id="s6b6b60a387cd2bf8">
+  <source>Send Invite</source>
+  <target>Einladung senden</target>
+</trans-unit>
+<trans-unit id="sf6ad9ebbb41ab17e">
+  <source>Local Network</source>
+  <target>Lokales Netzwerk</target>
+</trans-unit>
+<trans-unit id="s7d96ecbd48dfb33f">
+  <source>Start a Group</source>
+  <target>Gruppe starten</target>
+</trans-unit>
+<trans-unit id="s75f4d7f6f8c9d0a4">
+  <source>I want to join a group on the local network</source>
+  <target>Ich möchte einer Gruppe im lokalen Netzwerk beitreten</target>
+</trans-unit>
+<trans-unit id="s744b1ac4e27c20de">
+  <source>Tell the person adding you this name, so they can add you to the group.</source>
+  <target>Nenne der Person, die dich hinzufügt, diesen Namen, damit sie dich in die Gruppe aufnehmen kann.</target>
+</trans-unit>
+<trans-unit id="sbddd8b1c272af3e8">
+  <source>Listed Groups</source>
+  <target>Gelistete Gruppen</target>
+</trans-unit>
+<trans-unit id="s9e11be547aa1db5d">
+  <source>Unlisted Groups</source>
+  <target>Nicht gelistete Gruppen</target>
+</trans-unit>
+<trans-unit id="s4fcf92ebb98ef1c4">
+  <source>If someone in an unlisted group is adding you, announce yourself here and tell them the name that appears.</source>
+  <target>Wenn dich jemand aus einer nicht gelisteten Gruppe hinzufügt, kündige dich hier an und nenne ihm den angezeigten Namen.</target>
+</trans-unit>
+<trans-unit id="s4c0642ad128f2bd5">
+  <source>Listing this group on the local network</source>
+  <target>Diese Gruppe wird im lokalen Netzwerk gelistet</target>
+</trans-unit>
+<trans-unit id="s6af7d7a8ea6dbbda">
+  <source>auto-stopping listing in <x id="0" equiv-text="${this.remaining}"/></source>
+  <target>Listung stoppt automatisch in <x id="0" equiv-text="${this.remaining}"/></target>
+</trans-unit>
+<trans-unit id="s1361b85868b07f4a">
+  <source>List Group</source>
+  <target>Gruppe listen</target>
+</trans-unit>
+<trans-unit id="s44c63095bdf6ece5">
+  <source>While listing, anyone on this network can join the group.</source>
+  <target>Während der Listung kann jeder in diesem Netzwerk der Gruppe beitreten.</target>
+</trans-unit>
+<trans-unit id="s245dad45a65c3fe0">
+  <source>You are no longer announcing yourself on this network.</source>
+  <target>Du kündigst dich in diesem Netzwerk nicht mehr an.</target>
+</trans-unit>
+<trans-unit id="s7b25cd71849bf7c8">
+  <source>This group is no longer listed on the local network.</source>
+  <target>Diese Gruppe ist im lokalen Netzwerk nicht mehr gelistet.</target>
+</trans-unit>
+<trans-unit id="s9cb6bbd85daeb51f">
+  <source>No capabilities reported.</source>
+  <target>Keine Fähigkeiten gemeldet.</target>
+</trans-unit>
+<trans-unit id="s8c36545f724b9460">
+  <source>(none)</source>
+  <target>(keine)</target>
+</trans-unit>
+<trans-unit id="sbfd12d4d878216c6">
+  <source>Available:</source>
+  <target>Verfügbar:</target>
+</trans-unit>
+<trans-unit id="sa36aa646efe3b5e0">
+  <source>Model:</source>
+  <target>Modell:</target>
+</trans-unit>
+<trans-unit id="s10c1286464b46257">
+  <source>Streaming partials:</source>
+  <target>Zwischenergebnisse im Stream:</target>
+</trans-unit>
+<trans-unit id="s538c8ca77f9b59e3">
+  <source>Latency tier:</source>
+  <target>Latenzstufe:</target>
+</trans-unit>
+<trans-unit id="s14db09395fd05086">
+  <source>Languages:</source>
+  <target>Sprachen:</target>
+</trans-unit>
+<trans-unit id="s6f87b8dc56fff501">
+  <source>No tools have been granted local transcription access yet. The first time a tool asks, you will be prompted.</source>
+  <target>Bisher hat kein Tool Zugriff auf die lokale Transkription erhalten. Wenn ein Tool zum ersten Mal danach fragt, wirst du gefragt.</target>
+</trans-unit>
+<trans-unit id="s3be7f9e932f476a3">
+  <source>Allowed</source>
+  <target>Erlaubt</target>
+</trans-unit>
+<trans-unit id="s93390561e1afc0b6">
+  <source>Denied</source>
+  <target>Abgelehnt</target>
+</trans-unit>
+<trans-unit id="s0e871352ba4b17d3">
+  <source>Revoke</source>
+  <target>Widerrufen</target>
+</trans-unit>
+<trans-unit id="s71a069951bcde0c0">
+  <source>Speech recognition</source>
+  <target>Spracherkennung</target>
+</trans-unit>
+<trans-unit id="sa32eea12a8fcb38b">
+  <source>Moss runs speech-to-text on this device. Tools request access the first time they need it; you can review and revoke those decisions below.</source>
+  <target>Moss wandelt Sprache auf diesem Gerät in Text um. Tools bitten beim ersten Bedarf um Zugriff; die Entscheidungen kannst du unten einsehen und widerrufen.</target>
+</trans-unit>
+<trans-unit id="sd0bce80972cf3be3">
+  <source>Tool permissions</source>
+  <target>Tool-Berechtigungen</target>
+</trans-unit>
+<trans-unit id="s8214d12128c7fa3f">
+  <source>Transcription</source>
+  <target>Transkription</target>
+</trans-unit>
+<trans-unit id="s29ab9d572b687e7f">
+  <source>Starting local transcription model…</source>
+  <target>Lokales Transkriptionsmodell wird gestartet…</target>
+</trans-unit>
+<trans-unit id="sd3035ae80e950c83">
+  <source>Runtime:</source>
+  <target>Laufzeit:</target>
+</trans-unit>
+<trans-unit id="s4836f1bc154d67ce">
+  <source>About transcription</source>
+  <target>Über die Transkription</target>
+</trans-unit>
+<trans-unit id="se2fe09d12c92afea">
+  <source>All transcription happens on this computer. Your audio is turned into text by a speech model that runs locally, and nothing is sent to a server for processing.</source>
+  <target>Die gesamte Transkription findet auf diesem Computer statt. Dein Audio wird von einem lokal laufenden Sprachmodell in Text umgewandelt, und nichts wird zur Verarbeitung an einen Server geschickt.</target>
+</trans-unit>
+<trans-unit id="h609db4d1e0221068">
+  <source>Moss uses
+                <x id="0" equiv-text="&lt;a href=&quot;https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>Whisper<x id="1" equiv-text="&lt;/a&gt;"/>, an open speech recognition model, running through whisper.cpp.</source>
+  <target>Moss verwendet <x id="0" equiv-text="&lt;a href=&quot;https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;"/>Whisper<x id="1" equiv-text="&lt;/a&gt;"/>, ein offenes Spracherkennungsmodell, ausgeführt über whisper.cpp.</target>
+</trans-unit>
+<trans-unit id="s55b7e7ecf7286f55">
+  <source>A tool only gets access after you allow it, the first time it asks. You can withdraw that under Tool permissions, and turning the switch off stops every tool at once.</source>
+  <target>Ein Tool erhält erst Zugriff, wenn du es beim ersten Anfragen erlaubst. Unter Tool-Berechtigungen kannst du das zurücknehmen, und mit dem Schalter stoppst du alle Tools auf einmal.</target>
+</trans-unit>
+<trans-unit id="sadf9ac04abb2c03e">
+  <source>Technical details</source>
+  <target>Technische Details</target>
+</trans-unit>
+<trans-unit id="sb8d52d4a1d5bfaef">
+  <source>Backend:</source>
+  <target>Backend:</target>
+</trans-unit>
+<trans-unit id="s07834c31529b12b6">
+  <source>Per-app capture:</source>
+  <target>Aufnahme einzelner Apps:</target>
+</trans-unit>
+<trans-unit id="s0f1c76735eee1f15">
+  <source>Excludes Moss playback:</source>
+  <target>Schließt Moss-Wiedergabe aus:</target>
+</trans-unit>
+<trans-unit id="sf49b5528bbd4ff20">
+  <source>No tool is capturing audio right now. Each time a tool asks, you pick the source it may capture.</source>
+  <target>Derzeit nimmt kein Tool Audio auf. Jedes Mal, wenn ein Tool fragt, wählst du die Quelle aus, die es aufnehmen darf.</target>
+</trans-unit>
+<trans-unit id="s4851f8219fef1d32">
+  <source>Capturing</source>
+  <target>Nimmt auf seit</target>
+</trans-unit>
+<trans-unit id="sc732f2e2fbe9f15e">
+  <source>started</source>
+  <target>gestartet</target>
+</trans-unit>
+<trans-unit id="s79ea20c686c765c5">
+  <source>dropped</source>
+  <target>verworfen</target>
+</trans-unit>
+<trans-unit id="s0cccb96d9646233e">
+  <source>stalls</source>
+  <target>Aussetzer</target>
+</trans-unit>
+<trans-unit id="s4d088d8ab006d443">
+  <source>Audio capture</source>
+  <target>Audioaufnahme</target>
+</trans-unit>
+<trans-unit id="s421dbeafa6c159ce">
+  <source>About audio capture</source>
+  <target>Über die Audioaufnahme</target>
+</trans-unit>
+<trans-unit id="s493a0e3177112cbd">
+  <source>Tools can ask to capture audio playing on this computer. You choose the source each time a tool asks, and you can stop a capture below while it runs.</source>
+  <target>Tools können darum bitten, Audio aufzunehmen, das auf diesem Computer abgespielt wird. Du wählst die Quelle jedes Mal selbst, und eine laufende Aufnahme kannst du unten beenden.</target>
+</trans-unit>
+<trans-unit id="s0300a7b778a3485b">
+  <source>Active permissions</source>
+  <target>Aktive Berechtigungen</target>
+</trans-unit>
+<trans-unit id="s77f0fa1e262cd813">
+  <source>Moss can pass audio that is playing on this computer to a tool — the sound of a meeting app, for example, or everything coming out of your speakers.</source>
+  <target>Moss kann Audio, das auf diesem Computer abgespielt wird, an ein Tool weitergeben — etwa den Ton einer Meeting-App oder alles, was aus deinen Lautsprechern kommt.</target>
+</trans-unit>
+<trans-unit id="s74b7cab081fc7b15">
+  <source>Every request opens a picker where you choose exactly which source that tool may capture. Moss does not send the audio anywhere itself; what a tool does with the audio it receives is up to that tool.</source>
+  <target>Bei jeder Anfrage öffnet sich ein Auswahlfenster, in dem du genau bestimmst, welche Quelle das Tool aufnehmen darf. Moss selbst sendet das Audio nirgendwohin; was ein Tool mit dem empfangenen Audio macht, liegt bei diesem Tool.</target>
+</trans-unit>
+<trans-unit id="s2840dee6319616ff">
+  <source>Turning the switch off stops tools from asking at all, and a capture that is already running can be stopped under Active permissions.</source>
+  <target>Wenn du den Schalter ausschaltest, können Tools gar nicht mehr fragen, und eine bereits laufende Aufnahme lässt sich unter „Aktive Berechtigungen“ beenden.</target>
+</trans-unit>
+<trans-unit id="s3e58e7d8979a34db">
+  <source>All system audio (except Moss)</source>
+  <target>Gesamte Systemausgabe (außer Moss)</target>
+</trans-unit>
+<trans-unit id="sb9e464752a8fd655">
+  <source>playing</source>
+  <target>spielt</target>
+</trans-unit>
+<trans-unit id="s598af2cac71b6764">
+  <source>silent</source>
+  <target>stumm</target>
+</trans-unit>
+<trans-unit id="sbd2faa0a5f99ce98">
+  <source>Share audio with <x id="0" equiv-text="${toolName}"/></source>
+  <target>Audio mit <x id="0" equiv-text="${toolName}"/> teilen</target>
+</trans-unit>
+<trans-unit id="s438d605febf22fef">
+  <source>Choose what this Tool can hear. Sound from Moss itself is never shared.</source>
+  <target>Wähle aus, was dieses Tool hören darf. Ton von Moss selbst wird nie geteilt.</target>
+</trans-unit>
+<trans-unit id="s4c9d128b1348f3b7">
+  <source>No applications with audio output were found.</source>
+  <target>Keine Anwendungen mit Audioausgabe gefunden.</target>
 </trans-unit>
 </body>
 </file>

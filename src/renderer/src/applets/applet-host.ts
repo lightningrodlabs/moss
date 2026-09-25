@@ -32,6 +32,8 @@ import {
   selectScreenOrWindow,
   signZomeCallApplet,
 } from '../electron-api.js';
+import { audioSourceGrantsClient, releaseGrantsFor } from '../audio-sources/singletons.js';
+import { TransferableReply } from '../transferable-reply.js';
 import { MossStore } from '../moss-store.js';
 // import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId, stringifyWal } from '@theweave/api';
@@ -43,6 +45,8 @@ import {
 } from '../utils.js';
 import { AppletToParentRequest as AppletToParentRequestSchema } from '../validationSchemas.js';
 import { AppletStore } from './applet-store.js';
+import { getAsrRendererBridge, type SessionOrigin } from './asr-bridge.js';
+import { resolveAppletName } from './applet-name.js';
 import { Value } from '@sinclair/typebox/value';
 import { GroupRemoteSignal, Accountability } from '@theweave/group-client';
 import { appIdFromAppletHash, toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
@@ -93,6 +97,10 @@ export function appletMessageHandler(
 ): (message: MessageEvent<AppletToParentMessage>) => Promise<void> {
   return async (message) => {
     try {
+      // The preload relays grant ports into this page with window.postMessage;
+      // those are this window's own messages, never an applet's.
+      if (message.source === window) return;
+
       let receivedFromSource = getIframeKind(message, mossStore.isAppletDev);
       if (!receivedFromSource) return; // This is the case for the 'default-app://' protocol which needs to be handled elsewhere
 
@@ -103,7 +111,11 @@ export function appletMessageHandler(
         message.data.request,
         message.source,
       );
-      message.ports[0].postMessage({ type: 'success', result });
+      if (result instanceof TransferableReply) {
+        message.ports[0].postMessage({ type: 'success', result: result.result }, result.transfer);
+      } else {
+        message.ports[0].postMessage({ type: 'success', result });
+      }
     } catch (e) {
       console.error('Error while handling applet iframe message. Error: ', e, 'Message: ', message);
       console.log(
@@ -379,6 +391,13 @@ export async function handleAppletIframeMessage(
   source: IframeKind,
   message: AppletToParentRequest,
   eventSource: MessageEventSource | null | 'wal-window',
+  /**
+   * webContents id of the BrowserWindow that originated the request
+   * when it arrived via the WAL-window relay. Undefined for messages
+   * coming directly from a main-window iframe. Used to attach native
+   * dialogs to the correct window.
+   */
+  senderWebContentsId?: number,
 ) {
   if (!validateRequest(message)) return;
 
@@ -457,14 +476,111 @@ export async function handleAppletIframeMessage(
     case 'unregister-iframe':
       if (source.type === 'cross-group') {
         mossStore.iframeStore.unregisterCrossGroupIframe(source.toolCompatibilityId, message.id);
+        releaseGrantsFor(message.id);
         break;
       } else {
         mossStore.iframeStore.unregisterAppletIframe(
           encodeHashToBase64(source.appletHash),
           message.id,
         );
+        releaseGrantsFor(message.id);
+        void getAsrRendererBridge().closeSessionsForIframe(message.id);
         break;
       }
+    // ── Local ASR (whisper.cpp via Moss main) ────────────────────
+    // Open / push / close are forwarded directly to the main IPC
+    // handlers in src/main/asr/ipcHandlers.ts. The renderer-side
+    // bridge tracks sessionId → appletId so that the 'asr-event' IPC
+    // pushed back from main can be routed to the applet that opened
+    // the session, and so push/close can be refused for sessions the
+    // calling applet does not own.
+    case 'asr-capabilities': {
+      const caps = await window.electronAPI.asrCapabilities();
+      // Fold the renderer-side global enable switch into `available`,
+      // so a tool that calls `capabilities()` gets one authoritative
+      // answer for "can I call openSession right now?". Other fields
+      // (model, languages, latencyTier) still reflect what IS configured,
+      // useful for UX that wants to tell the user "enable Transcription in
+      // Moss settings to use transcription."
+      if (!mossStore.persistedStore.localAiEnabled.value()) {
+        return { asr: { ...caps.asr, available: false } };
+      }
+      return caps;
+    }
+    case 'asr-warm-up': {
+      // Warming loads the model on the tool's behalf but touches no
+      // audio, so the global switch is the only gate; consent is asked
+      // when a session is actually opened.
+      if (!mossStore.persistedStore.localAiEnabled.value()) {
+        throw new Error('Transcription is disabled in Moss settings');
+      }
+      if (source.type !== 'applet') {
+        throw new Error('Local ASR is only available from applet iframes');
+      }
+      await window.electronAPI.asrWarmUp();
+      return undefined;
+    }
+    case 'asr-status': {
+      if (!mossStore.persistedStore.localAiEnabled.value()) {
+        return { status: 'idle' };
+      }
+      return { status: await window.electronAPI.asrStatus() };
+    }
+    case 'asr-open-session': {
+      // Gate order: global Transcription switch first, then per-tool consent.
+      // Capability checks (`capabilities()`) are intentionally not gated —
+      // advertising what Moss can do is not the same as giving a tool
+      // permission to actually use it.
+      if (!mossStore.persistedStore.localAiEnabled.value()) {
+        throw new Error('Transcription is disabled in Moss settings');
+      }
+      if (source.type !== 'applet') {
+        throw new Error('Local ASR is only available from applet iframes');
+      }
+      const appletId = encodeHashToBase64(source.appletHash);
+      let decision = mossStore.persistedStore.appletAsrConsent.value(appletId);
+      if (decision === undefined) {
+        const appletName = await resolveAppletName(mossStore, source.appletHash);
+        // Native dialog — the main process attaches it to the
+        // BrowserWindow that initiated the request (a WAL window if
+        // the call came from one). That way it isn't hidden behind
+        // whatever the user is actually looking at.
+        decision = await window.electronAPI.asrRequestConsent({
+          appletName,
+          senderWebContentsId,
+        });
+        mossStore.persistedStore.appletAsrConsent.set(decision, appletId);
+      }
+      if (decision === 'denied') {
+        throw new Error('Local ASR access denied by user');
+      }
+      const result = await window.electronAPI.asrOpenSession(message.opts ?? {});
+      // Register the session with its applet, for event routing and
+      // ownership checks, and with the view that opened it, so the
+      // session is released when that iframe or WAL window goes away
+      // even if the tool never calls close().
+      const origin: SessionOrigin =
+        eventSource === 'wal-window'
+          ? { walWebContentsId: senderWebContentsId }
+          : { iframeId: mossStore.iframeStore.findIframeIdBySource(eventSource) };
+      getAsrRendererBridge().registerSession(result.sessionId, appletId, origin);
+      return result;
+    }
+    case 'asr-push-audio': {
+      assertAsrSessionOwner(source, message.sessionId);
+      await window.electronAPI.asrPushAudio({
+        sessionId: message.sessionId,
+        pcm: message.pcm,
+        endOfUtterance: message.endOfUtterance,
+      });
+      return undefined;
+    }
+    case 'asr-close-session': {
+      assertAsrSessionOwner(source, message.sessionId);
+      await window.electronAPI.asrCloseSession({ sessionId: message.sessionId });
+      getAsrRendererBridge().unregisterSession(message.sessionId);
+      return undefined;
+    }
     case 'get-record-info': {
       const location = await toPromise(
         mossStore.hrlLocations.get(message.hrl[0])!.get(message.hrl[1])!,
@@ -493,6 +609,22 @@ export async function handleAppletIframeMessage(
       }
     case 'user-select-screen':
       return selectScreenOrWindow();
+    case 'request-audio-sources': {
+      const iframeKey = mossStore.iframeStore.findIframeIdBySource(eventSource);
+      let toolName: string;
+      if (source.type === 'applet') {
+        const appletStore = await toPromise(mossStore.appletStores.get(source.appletHash)!);
+        toolName = appletStore?.applet.custom_name ?? encodeHashToBase64(source.appletHash);
+      } else {
+        toolName = source.toolCompatibilityId;
+      }
+      const grant = await audioSourceGrantsClient.request({ iframeKey, toolName });
+      if (!grant) return null;
+      return new TransferableReply(
+        { label: grant.result.label, canExcludeSelf: grant.result.canExcludeSelf },
+        [grant.port],
+      );
+    }
     case 'toggle-pocket':
       return openViews.toggleClipboard();
     case 'notify-frame': {
@@ -1153,4 +1285,20 @@ async function getFirstGroupStoreForHrl(
     return undefined;
   }
   return Array.from(groupsForApplet.values())[0];
+}
+
+/**
+ * Only the applet that opened an ASR session may push audio to it or
+ * close it; session ids are opaque strings that any iframe could guess
+ * or observe, so ownership is checked here rather than trusted.
+ */
+function assertAsrSessionOwner(source: IframeKind, sessionId: string): void {
+  const owner = getAsrRendererBridge().appletIdForSession(sessionId);
+  if (
+    source.type !== 'applet' ||
+    owner === undefined ||
+    owner !== encodeHashToBase64(source.appletHash)
+  ) {
+    throw new Error('ASR session not owned by this applet');
+  }
 }

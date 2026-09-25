@@ -26,6 +26,8 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import { IframeStore } from './iframe-store';
 import { getIframeKind } from './applets/applet-host';
 import { deriveWalMessageSource } from './wal-message-source';
+import { audioSourceGrantsClient, releaseGrantsFor } from './audio-sources/singletons.js';
+import { TransferableReply } from './transferable-reply.js';
 
 // import { ipcRenderer } from 'electron';
 
@@ -91,6 +93,9 @@ export class WalWindow extends LitElement {
 
   @state()
   groupHash: DnaHash | undefined;
+
+  @state()
+  appletName: string | undefined;
 
   @state()
   loading: string | undefined = msg('loading...');
@@ -168,6 +173,10 @@ export class WalWindow extends LitElement {
     window.addEventListener('message', async (message: MessageEvent<AppletToParentMessage>) => {
       const request = message.data;
 
+      // The preload relays grant ports into this page with window.postMessage;
+      // those are this window's own messages, never an applet's.
+      if (message.source === window) return;
+
       // Derive the sender's identity from its iframe origin — never from the
       // message — and, like the main window's `if (!receivedFromSource) return`,
       // skip without responding when the window is not yet initialised or the
@@ -214,6 +223,22 @@ export class WalWindow extends LitElement {
             }
             case 'user-select-screen':
               return window.electronAPI.selectScreenOrWindow();
+            // Must resolve locally, never `handleDefault()`: the reply carries a
+            // transferred `MessagePort` (see the TransferableReply below), and a
+            // transferred port cannot cross the IPC hop to the main window.
+            case 'request-audio-sources': {
+              const iframeKey = this.iframeStore.findIframeIdBySource(message.source);
+              const toolName =
+                iframeKind.type === 'applet'
+                  ? this.appletName ?? encodeHashToBase64(iframeKind.appletHash)
+                  : iframeKind.toolCompatibilityId;
+              const grant = await audioSourceGrantsClient.request({ iframeKey, toolName });
+              if (!grant) return null;
+              return new TransferableReply(
+                { label: grant.result.label, canExcludeSelf: grant.result.canExcludeSelf },
+                [grant.port],
+              );
+            }
             case 'request-close':
               return walWindow.electronAPI.closeWindow();
             case 'user-select-asset': {
@@ -282,6 +307,7 @@ export class WalWindow extends LitElement {
                   request.request.id,
                 );
               }
+              releaseGrantsFor(request.request.id);
               return walWindow.electronAPI.appletMessageToParent({
                 request: request.request,
                 source: derivedSource,
@@ -295,7 +321,11 @@ export class WalWindow extends LitElement {
       };
       try {
         const result = await handleRequest(request);
-        message.ports[0].postMessage({ type: 'success', result });
+        if (result instanceof TransferableReply) {
+          message.ports[0].postMessage({ type: 'success', result: result.result }, result.transfer);
+        } else {
+          message.ports[0].postMessage({ type: 'success', result });
+        }
       } catch (e) {
         console.error(
           'Error while handling applet iframe message. Error: ',
@@ -326,6 +356,7 @@ export class WalWindow extends LitElement {
           subType: 'wal-window',
         },
       });
+      this.appletName = appletInfo.appletName;
       let assetLocationAndInfo: AssetLocationAndInfo | undefined;
       console.log('Getting global asset info for WAL: ', appletSrcInfo.wal);
       try {

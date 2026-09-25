@@ -12,6 +12,7 @@ import '../profile/profile-settings.js';
 import './language-settings.js';
 import './notification-settings.js';
 import './danger-zone-settings.js';
+import './services/services-settings.js';
 
 type FeedbackRecord = {
   id: string;
@@ -26,6 +27,7 @@ enum TabsState {
   Profile,
   Language,
   Notifications,
+  Services,
   Feedback,
   DangerZone,
 }
@@ -116,6 +118,10 @@ export class MossSettings extends LitElement {
     return html`<moss-notification-sound-settings></moss-notification-sound-settings>`;
   }
 
+  renderServices() {
+    return html`<moss-services-settings></moss-services-settings>`;
+  }
+
   renderFeedback() {
     return html`
       <div class="column" style="padding: 0 20px; gap: 16px;">
@@ -196,6 +202,8 @@ export class MossSettings extends LitElement {
         return this.renderLanguage();
       case TabsState.Notifications:
         return this.renderNotifications();
+      case TabsState.Services:
+        return this.renderServices();
       case TabsState.Feedback:
         return this.renderFeedback();
       case TabsState.DangerZone:
@@ -229,6 +237,14 @@ export class MossSettings extends LitElement {
           }}
         >
           ${msg('Notifications')}
+        </button>
+        <button
+          class="tab ${this.tabsState === TabsState.Services ? 'tab-selected' : ''}"
+          @click=${() => {
+            this.tabsState = TabsState.Services;
+          }}
+        >
+          ${msg('Services')}
         </button>
         <button
           class="tab ${this.tabsState === TabsState.Feedback ? 'tab-selected' : ''}"

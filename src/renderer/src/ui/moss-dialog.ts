@@ -52,6 +52,10 @@ export class MossDialog extends LitElement {
   @property()
   headerAlign = 'left';
 
+  /** CSS padding around the header and content; narrow dialogs need less than the default. */
+  @property()
+  contentPadding = '40px 100px';
+
   /** Private properties */
   @query('#dialog')
   _dialog!: SlDialog;
@@ -85,7 +89,7 @@ export class MossDialog extends LitElement {
             ${closeIcon(24)}
           </button>
         </div>
-        <div class="column flex-1 dialog-content" style="padding: 40px 100px;">
+        <div class="column flex-1 dialog-content" style="padding: ${this.contentPadding};">
           ${this.noHeader
             ? ''
             : html`<div class="dialog-title" style="text-align: ${this.headerAlign}; margin-bottom: 20px;"><slot name="header"><slot></div>`}

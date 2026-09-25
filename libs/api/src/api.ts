@@ -31,8 +31,10 @@ import {
   MossAccountability,
 } from './types';
 import { postMessage } from './utils.js';
+import type { LocalModelsApi } from './asr.js';
 import { decode, encode } from '@msgpack/msgpack';
 import { fromUint8Array, toUint8Array } from 'js-base64';
+import type { AudioSourceCapture, CaptureAudioSourcesOptions } from './audio-source-capture.js';
 
 declare global {
   interface Window {
@@ -315,6 +317,14 @@ export interface AssetServices {
 export interface WeaveServices {
   assets: AssetServices;
   /**
+   * On-device model access. Optional — undefined when the host has
+   * no local models configured or when the applet doesn't have the
+   * (future) `localModels` permission. Currently only ASR is exposed;
+   * additional sub-namespaces (translation, embeddings) may be added
+   * later without breaking changes.
+   */
+  localModels?: LocalModelsApi;
+  /**
    *
    * @returns Version of Moss within which this method is being called in
    */
@@ -412,6 +422,13 @@ export interface WeaveServices {
    */
   userSelectScreen: () => Promise<string>;
   /**
+   * Asks the host for audio playing on the user's machine. The host shows its
+   * own picker. Resolves `null` when the user declines or the host cannot
+   * capture. Absent on hosts without the feature — feature-detect with
+   * `client.captureAudioSources?.`.
+   */
+  captureAudioSources?: (opts?: CaptureAudioSourcesOptions) => Promise<AudioSourceCapture | null>;
+  /**
    * Requests to close the containing window. Will only work if the applet is being run in its
    * own window
    */
@@ -472,13 +489,25 @@ export class WeaveClient implements WeaveServices {
 
   private constructor() {}
 
+  /**
+   * A client carrying the optional features this host offers. `captureAudioSources`
+   * is only present when the host exposes it, so Tools feature-detect it on the
+   * client rather than on the host object.
+   */
+  private static fromHost(): WeaveClient {
+    const client = new WeaveClient();
+    const hostCapture = window.__WEAVE_API__?.captureAudioSources;
+    if (hostCapture) client.captureAudioSources = (opts) => hostCapture(opts);
+    return client;
+  }
+
   static async connect(appletServices?: AppletServices): Promise<WeaveClient> {
     if (window.__WEAVE_RENDER_INFO__) {
       if (appletServices) {
         window.__WEAVE_APPLET_SERVICES__ = appletServices;
       }
       window.dispatchEvent(new CustomEvent('weave-client-connected'));
-      return new WeaveClient();
+      return WeaveClient.fromHost();
     } else {
       await new Promise((resolve, _reject) => {
         const listener = () => {
@@ -491,7 +520,7 @@ export class WeaveClient implements WeaveServices {
         window.__WEAVE_APPLET_SERVICES__ = appletServices;
       }
       window.dispatchEvent(new CustomEvent('weave-client-connected'));
-      return new WeaveClient();
+      return WeaveClient.fromHost();
     }
   }
 
@@ -560,6 +589,16 @@ export class WeaveClient implements WeaveServices {
     return window.__WEAVE_API__.toolInstaller(appletHash, effectiveGroupHash);
   };
 
+  /**
+   * Local on-device models. Reads through to the host implementation
+   * set up in the applet iframe, which proxies over postMessage to
+   * Moss main. Undefined when the host has no localModels surface
+   * configured.
+   */
+  get localModels(): LocalModelsApi | undefined {
+    return window.__WEAVE_API__.localModels;
+  }
+
   bootstrapUrls = (groupHash?: DnaHash) => window.__WEAVE_API__.bootstrapUrls(groupHash);
 
   groupProfile = (groupHash: DnaHash) => window.__WEAVE_API__.groupProfile(groupHash);
@@ -570,6 +609,9 @@ export class WeaveClient implements WeaveServices {
     window.__WEAVE_API__.notifyFrame(notifications);
 
   userSelectScreen = () => window.__WEAVE_API__.userSelectScreen();
+
+  /** Present only when the host offers audio-source capture. */
+  captureAudioSources?: (opts?: CaptureAudioSourcesOptions) => Promise<AudioSourceCapture | null>;
 
   requestClose = () => window.__WEAVE_API__.requestClose();
 

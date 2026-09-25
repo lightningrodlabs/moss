@@ -1,0 +1,177 @@
+import { describe, it, expect, vi } from 'vitest';
+import { AudioSourceGrantsClient, AudioSourceGrantsClientBindings } from './grants-client';
+
+function rig(overrides: Partial<AudioSourceGrantsClientBindings> = {}) {
+  const port = { close: vi.fn() } as unknown as MessagePort;
+  const requestAudioSources = vi.fn(async () => ({ grantId: 'g1', label: 'System audio', canExcludeSelf: true }));
+  const stopAudioSources = vi.fn(async () => {});
+  const expectPort = vi.fn(async (_requestId: string) => port);
+  const armPortDeadline = vi.fn();
+  const cancelPortExpectation = vi.fn();
+  const b: AudioSourceGrantsClientBindings = {
+    isEnabled: () => true,
+    newRequestId: () => 'r1',
+    requestAudioSources,
+    stopAudioSources,
+    expectPort,
+    armPortDeadline,
+    cancelPortExpectation,
+    ...overrides,
+  };
+  // Return the bindings' own (possibly overridden) functions, not the
+  // pre-override locals: an override passed to rig() must be the thing
+  // assertions observe. The cast back to the concrete mock type is truthful
+  // because every override supplied by a test below is itself a vi.fn().
+  return {
+    client: new AudioSourceGrantsClient(b),
+    port,
+    requestAudioSources: b.requestAudioSources as unknown as typeof requestAudioSources,
+    stopAudioSources: b.stopAudioSources as unknown as typeof stopAudioSources,
+    expectPort: b.expectPort as unknown as typeof expectPort,
+    armPortDeadline: b.armPortDeadline as unknown as typeof armPortDeadline,
+    cancelPortExpectation: b.cancelPortExpectation as unknown as typeof cancelPortExpectation,
+  };
+}
+
+describe('AudioSourceGrantsClient.request', () => {
+  it('switch off → null without touching main', async () => {
+    const r = rig({ isEnabled: () => false });
+    expect(await r.client.request({ iframeKey: 'i1', toolName: 'Presence' })).toBeNull();
+    expect(r.requestAudioSources).not.toHaveBeenCalled();
+    expect(r.expectPort).not.toHaveBeenCalled();
+  });
+
+  it('arms the port expectation BEFORE invoking main, arms the deadline only AFTER, then returns result + port', async () => {
+    const order: string[] = [];
+    const r = rig({
+      expectPort: vi.fn(async () => {
+        order.push('expect');
+        return { close: vi.fn() } as unknown as MessagePort;
+      }),
+      requestAudioSources: vi.fn(async () => {
+        order.push('invoke');
+        return { grantId: 'g1', label: 'System audio', canExcludeSelf: true };
+      }),
+      armPortDeadline: vi.fn(() => {
+        order.push('armDeadline');
+      }),
+    });
+    const out = await r.client.request({ iframeKey: 'i1', toolName: 'Presence' });
+    expect(order).toEqual(['expect', 'invoke', 'armDeadline']);
+    expect(out?.result.grantId).toBe('g1');
+    expect(r.requestAudioSources).toHaveBeenCalledWith({ requestId: 'r1', toolName: 'Presence' });
+  });
+
+  it('main returns null (cancelled/unsupported) → null, expectation cancelled, deadline never armed', async () => {
+    const r = rig({ requestAudioSources: vi.fn(async () => null) });
+    expect(await r.client.request({ iframeKey: 'i1', toolName: 'Presence' })).toBeNull();
+    expect(r.client.grantIdsFor('i1')).toEqual([]);
+    expect(r.cancelPortExpectation).toHaveBeenCalledWith('r1');
+    expect(r.armPortDeadline).not.toHaveBeenCalled();
+  });
+
+  it('invoking main throws → cancels the port expectation and rethrows, deadline never armed', async () => {
+    const failure = new Error('admin websocket down');
+    const r = rig({ requestAudioSources: vi.fn(async () => { throw failure; }) });
+    await expect(r.client.request({ iframeKey: 'i1', toolName: 'Presence' })).rejects.toBe(failure);
+    expect(r.cancelPortExpectation).toHaveBeenCalledWith('r1');
+    expect(r.armPortDeadline).not.toHaveBeenCalled();
+  });
+
+  it('port never arrives → stops the grant in main and rethrows', async () => {
+    const r = rig({ expectPort: vi.fn(async () => { throw new Error('timed out'); }) });
+    await expect(r.client.request({ iframeKey: 'i1', toolName: 'Presence' })).rejects.toThrow(/timed out/);
+    expect(r.stopAudioSources).toHaveBeenCalledWith('g1', 'iframe-unloaded');
+    expect(r.armPortDeadline).toHaveBeenCalledWith('r1');
+  });
+
+  it('an unregistered iframe is refused before main is asked', async () => {
+    const r = rig();
+    await expect(r.client.request({ iframeKey: undefined, toolName: 'Presence' })).rejects.toThrow(
+      /not registered with the host/,
+    );
+    expect(r.requestAudioSources).not.toHaveBeenCalled();
+    expect(r.expectPort).not.toHaveBeenCalled();
+  });
+
+  it('records the grant before the port arrives, so an endForIframe in that window stops it', async () => {
+    let deliverPort!: (port: MessagePort) => void;
+    const port = { close: vi.fn() } as unknown as MessagePort;
+    const r = rig({
+      expectPort: vi.fn(() => new Promise<MessagePort>((res) => (deliverPort = res))),
+    });
+    const pending = r.client.request({ iframeKey: 'i1', toolName: 'Presence' });
+    // Let the invoke resolve; the port is still in flight.
+    await new Promise((res) => setTimeout(res, 0));
+    expect(r.client.grantIdsFor('i1')).toEqual(['g1']);
+
+    await r.client.endForIframe('i1');
+    expect(r.stopAudioSources).toHaveBeenCalledWith('g1', 'iframe-unloaded');
+
+    // The port arrives for a grant nobody holds any more.
+    deliverPort(port);
+    expect(await pending).toBeNull();
+    expect(port.close).toHaveBeenCalled();
+    expect(r.client.grantIdsFor('i1')).toEqual([]);
+  });
+
+  it('records the grant under its iframe key', async () => {
+    const r = rig();
+    await r.client.request({ iframeKey: 'i1', toolName: 'Presence' });
+    expect(r.client.grantIdsFor('i1')).toEqual(['g1']);
+  });
+});
+
+describe('AudioSourceGrantsClient.endForIframe', () => {
+  it("stops every grant of that iframe with reason iframe-unloaded and forgets them", async () => {
+    let n = 0;
+    const r = rig({
+      newRequestId: () => `r${++n}`,
+      requestAudioSources: vi.fn(async ({ requestId }) => ({ grantId: `g-${requestId}`, label: 'x', canExcludeSelf: true })),
+    });
+    await r.client.request({ iframeKey: 'i1', toolName: 'A' });
+    await r.client.request({ iframeKey: 'i1', toolName: 'A' });
+    await r.client.request({ iframeKey: 'i2', toolName: 'B' });
+    await r.client.endForIframe('i1');
+    expect(r.stopAudioSources.mock.calls).toEqual([
+      ['g-r1', 'iframe-unloaded'],
+      ['g-r2', 'iframe-unloaded'],
+    ]);
+    expect(r.client.grantIdsFor('i1')).toEqual([]);
+    expect(r.client.grantIdsFor('i2')).toEqual(['g-r3']);
+  });
+
+  it('is a no-op for an unknown iframe', async () => {
+    const r = rig();
+    await r.client.endForIframe('nope');
+    expect(r.stopAudioSources).not.toHaveBeenCalled();
+  });
+
+  it('attempts every id even when one stop fails, keeps the failed id, and rethrows', async () => {
+    let n = 0;
+    const failure = new Error('stop failed');
+    const stopAudioSources = vi.fn(async (grantId: string) => {
+      if (grantId === 'g-r2') throw failure;
+    });
+    const r = rig({
+      newRequestId: () => `r${++n}`,
+      requestAudioSources: vi.fn(async ({ requestId }) => ({ grantId: `g-${requestId}`, label: 'x', canExcludeSelf: true })),
+      stopAudioSources,
+    });
+    await r.client.request({ iframeKey: 'i1', toolName: 'A' });
+    await r.client.request({ iframeKey: 'i1', toolName: 'A' });
+    await r.client.request({ iframeKey: 'i1', toolName: 'A' });
+
+    await expect(r.client.endForIframe('i1')).rejects.toBe(failure);
+    expect(stopAudioSources.mock.calls).toEqual([
+      ['g-r1', 'iframe-unloaded'],
+      ['g-r2', 'iframe-unloaded'],
+      ['g-r3', 'iframe-unloaded'],
+    ]);
+    expect(r.client.grantIdsFor('i1')).toEqual(['g-r2']);
+
+    stopAudioSources.mockImplementation(async () => {});
+    await r.client.endForIframe('i1');
+    expect(r.client.grantIdsFor('i1')).toEqual([]);
+  });
+});

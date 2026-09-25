@@ -7,9 +7,9 @@
 **Signature:**
 
 ```typescript
-initializeHotReload: () => Promise<void>;
+initializeHotReload: () => Promise<void>
 ```
-
 **Returns:**
 
 Promise&lt;void&gt;
+
