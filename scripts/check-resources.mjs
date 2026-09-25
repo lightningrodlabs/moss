@@ -33,8 +33,9 @@ const bootstrapSrvVersion = mossConfig.kitsune2BootstrapSrv ?? checksums.version
 
 /**
  * Each entry: the path that must exist, and the sha256 it must have.
- * `presenceOnly: true` means the file is tracked in git, so its content is the
- * repo's business rather than a fetch step's and only its presence is asserted.
+ * `presenceOnly: true` means only the file's presence is asserted: either it is
+ * tracked in git, so its content is the repo's business rather than a fetch step's,
+ * or it is compiled on the build machine and has no fixed hash.
  * Every other entry MUST resolve to a real sha256: an absent or placeholder
  * checksum fails the check rather than downgrading it to a presence check.
  */
@@ -103,6 +104,25 @@ const REQUIRED = [
     source: 'git',
   },
 ];
+
+// The ASR sidecar and its model are packaged only by release builds, which set
+// MOSS_REQUIRE_ASR=1 (`yarn check:binaries:release`). A dev setup does not build
+// whisper-server, so these entries are not required there.
+if (process.env.MOSS_REQUIRE_ASR === '1') {
+  REQUIRED.push(
+    {
+      file: path.join('resources', 'bins', `whisper-server-v${mossConfig.whisperServer}${exe}`),
+      presenceOnly: true,
+      source: 'yarn build:whisper-server',
+    },
+    {
+      file: path.join('resources', 'models', 'ggml-base.en.bin'),
+      // Same pin as EXPECTED_SHA256 in scripts/fetch-asr-model.mjs.
+      sha256: 'a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002',
+      source: 'yarn fetch:asr-model',
+    },
+  );
+}
 
 const missing = [];
 const mismatched = [];
