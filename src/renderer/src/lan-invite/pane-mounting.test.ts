@@ -42,7 +42,7 @@ describe('local-network panes are mounted only while their dialog is open', () =
       'groups/elements/invite/invite-people-dialog.ts',
       '<local-network-invite',
     );
-    expect(guard).toContain('_paneOpen');
+    expect(guard).toContain('visibleInvitePanes(this._state).networkPane');
     expect(guard).toContain('?');
   });
 
@@ -54,12 +54,12 @@ describe('local-network panes are mounted only while their dialog is open', () =
 
   it('clears each dialog’s open flag when the dialog itself finishes hiding', () => {
     for (const [file, flag] of [
-      ['groups/elements/invite/invite-people-dialog.ts', '_paneOpen'],
-      ['app/dialogs/join-group-dialog.ts', '_dialogOpen'],
+      ['groups/elements/invite/invite-people-dialog.ts', 'this._state = closeInviteDialog'],
+      ['app/dialogs/join-group-dialog.ts', '_dialogOpen = false'],
     ] as const) {
       const source = fs.readFileSync(path.join(RENDERER_SRC, file), 'utf8');
       expect(source, `${file} never handles sl-after-hide`).toMatch(
-        new RegExp(`sl-after-hide[\\s\\S]{0,900}${flag} = false`),
+        new RegExp(`sl-after-hide[\\s\\S]{0,900}${flag}`),
       );
     }
   });

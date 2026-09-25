@@ -62,6 +62,31 @@ describe('openBeaconSocket', () => {
     expect(await inbox.promise).toEqual(payload);
   });
 
+  it('delivers a reply to the sender of a beacon when two agents share this machine', async () => {
+    // Two Moss profiles on one machine both listen on LAN_INVITE_PORT. A reply
+    // goes to the port the beacon came from, so it must reach the agent that
+    // sent the beacon, whichever of the two bound last.
+    const beacon = new Uint8Array([1]);
+    const reply = new Uint8Array([2]);
+    const repliesToFirst = firstDatagram();
+    const first = await open((payload) => {
+      if (payload[0] === reply[0]) repliesToFirst.handler(payload);
+    });
+    const repliesToSecond: Uint8Array[] = [];
+    let second: BeaconSocket | undefined;
+    let answered = false;
+    second = await open((payload, address, port) => {
+      if (payload[0] === reply[0]) repliesToSecond.push(payload);
+      if (payload[0] === beacon[0] && !answered) {
+        answered = true;
+        second?.unicast(reply, address, port);
+      }
+    });
+    first.broadcast(beacon);
+    expect(await repliesToFirst.promise).toEqual(reply);
+    expect(repliesToSecond).toEqual([]);
+  });
+
   it('closes cleanly, and closing twice is not an error', async () => {
     const socket = await open(() => {});
     await socket.close();

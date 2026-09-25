@@ -213,11 +213,11 @@ export class LocalNetworkJoin extends LitElement {
             >`
           : html`<div class="column" style="align-items: flex-end; gap: 4px;">
               <button
-                class="moss-button"
+                class="moss-button request"
                 .disabled=${pending}
                 @click=${() => this.session.requestInvite(offer.sid)}
               >
-                ${pending ? html`<sl-spinner></sl-spinner>` : msg('Request access')}
+                ${pending ? html`<sl-spinner></sl-spinner>` : html``}${msg('Request access')}
               </button>
               ${noReply
                 ? html`<span class="hint"
@@ -343,6 +343,11 @@ export class LocalNetworkJoin extends LitElement {
         font-size: 22px;
         font-weight: 600;
         letter-spacing: 0.02em;
+      }
+      .request {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
       }
       .offer {
         align-items: center;
