@@ -4,6 +4,7 @@ import type { AsrIncomingEvent, AsrSessionOptions } from '@theweave/api';
 
 import {
   appendTranscript,
+  cleanTranscript,
   Dictation,
   type DictationHost,
   type DictationState,
@@ -246,5 +247,40 @@ describe('appendTranscript', () => {
   it('joins with one space', () => {
     expect(appendTranscript('hello', 'world')).toBe('hello world');
     expect(appendTranscript('hello ', 'world')).toBe('hello world');
+  });
+});
+
+describe('cleanTranscript', () => {
+  it('drops a segment that is only a non-speech marker', () => {
+    for (const t of [
+      '[BLANK_AUDIO]',
+      ' [BLANK_AUDIO] ',
+      '[ Silence ]',
+      '(upbeat music)',
+      '[MUSIC].',
+    ]) {
+      expect(cleanTranscript(t)).toBe('');
+    }
+  });
+
+  it('removes markers inside spoken text and tidies spacing', () => {
+    expect(cleanTranscript('hello [BLANK_AUDIO] there')).toBe('hello there');
+    expect(cleanTranscript(' (coughs) Hello, world. ')).toBe('Hello, world.');
+  });
+
+  it('keeps ordinary text unchanged apart from trimming', () => {
+    expect(cleanTranscript('  This is a question. ')).toBe('This is a question.');
+  });
+});
+
+describe('Dictation marker filtering', () => {
+  it('does not report a final that is only a marker', async () => {
+    const { host, listeners } = makeHost();
+    const { dictation, texts } = makeDictation(host);
+    await dictation.start();
+    const emit = listeners.get('s1')!;
+    emit({ sessionId: 's1', eventType: 'final', text: '[BLANK_AUDIO]', tStart: 0, tEnd: 1 });
+    emit({ sessionId: 's1', eventType: 'final', text: 'hi [BLANK_AUDIO]', tStart: 1, tEnd: 2 });
+    expect(texts).toEqual(['hi']);
   });
 });

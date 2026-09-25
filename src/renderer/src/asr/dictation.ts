@@ -132,7 +132,7 @@ export class Dictation {
 
   private onEvent(sessionId: string, event: AsrIncomingEvent): void {
     if (event.eventType === 'final') {
-      const text = event.text.trim();
+      const text = cleanTranscript(event.text);
       if (text) this.callbacks.onText(text);
       return;
     }
@@ -155,6 +155,19 @@ export class Dictation {
     this.state = state;
     this.callbacks.onStateChange(state);
   }
+}
+
+/**
+ * Remove whisper's non-speech markers, such as `[BLANK_AUDIO]` or
+ * `(upbeat music)`, so only spoken words reach the input. Returns an
+ * empty string when nothing spoken is left.
+ */
+export function cleanTranscript(text: string): string {
+  return text
+    .replace(/\[[^\]]*\]|\([^)]*\)/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/^[\s.]+$/, '')
+    .trim();
 }
 
 /** Append a transcript segment to existing input text, separated by one space. */
