@@ -3072,6 +3072,22 @@ comienza ahora</target>
   <source>No applications with audio output were found.</source>
   <target>No se encontraron aplicaciones con salida de audio.</target>
 </trans-unit>
+<trans-unit id="s195ea6ac7058cd45">
+  <source>Dictation stopped: <x id="0" equiv-text="${message}"/></source>
+  <target>Dictado detenido: <x id="0" equiv-text="${message}"/></target>
+</trans-unit>
+<trans-unit id="s54df5e313a2bcd74">
+  <source>Stop dictation</source>
+  <target>Detener el dictado</target>
+</trans-unit>
+<trans-unit id="s10ba4bb16a8e43cf">
+  <source>Dictate a message</source>
+  <target>Dictar un mensaje</target>
+</trans-unit>
+<trans-unit id="s4440cf98fd6b4cfe">
+  <source>Finishing transcription</source>
+  <target>Finalizando la transcripción</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

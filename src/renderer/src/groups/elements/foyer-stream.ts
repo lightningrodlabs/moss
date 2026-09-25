@@ -8,11 +8,11 @@ import '@holochain-open-dev/profiles/dist/elements/profiles-context.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
-import '@shoelace-style/shoelace/dist/components/input/input.js';
+import '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 import '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
 import '@shoelace-style/shoelace/dist/components/menu/menu.js';
 import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
-import SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
+import SlTextarea from '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
 import { groupStoreContext } from '../context.js';
@@ -31,6 +31,9 @@ import { mdiChat, mdiMessageCog, mdiSofa } from '@mdi/js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { mossStyles } from '../../shared-styles.js';
 import { sendIcon } from '../../ui/icons.js';
+import '../../asr/dictation-button.js';
+import { appendTranscript } from '../../asr/dictation.js';
+import { foyerMessageHtml } from './foyer-text.js';
 import {
   FoyerNotificationSettings,
   FoyerMessageUrgency,
@@ -56,12 +59,40 @@ export class FoyerStream extends LitElement {
   stream: Stream | undefined;
 
   @query('#msg-input')
-  private _msgInput!: SlInput;
+  private _msgInput!: SlTextarea;
 
   @query('#stream')
   private _conversationContainer!: HTMLElement;
 
+  // Once the message wraps past one line, the mic and send buttons stack
+  // in a column so the text keeps more width. They go back side by side
+  // only when the input is empty, because stacking widens the input and
+  // could otherwise unwrap the text and flip the layout back and forth.
+  @state()
+  _stackButtons = false;
+
+  private _singleLineInputHeight = 0;
+
+  private _inputResize = new ResizeObserver(() => this._updateButtonStacking());
+
+  private _updateButtonStacking() {
+    const height = this._msgInput?.getBoundingClientRect().height ?? 0;
+    if (height === 0) return; // hidden; nothing to measure
+    if (!this._msgInput.value) {
+      this._singleLineInputHeight = height;
+      this._stackButtons = false;
+    } else if (this._singleLineInputHeight && height > this._singleLineInputHeight + 4) {
+      this._stackButtons = true;
+    }
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    if (this._msgInput) this._inputResize.observe(this._msgInput);
+  }
+
   async firstUpdated() {
+    this._inputResize.observe(this._msgInput);
     console.log('this.groupStore.foyerStore', this.groupStore.foyerStore);
     // Load notification settings
     this._notificationSettings = this.groupStore.getFoyerNotificationSettingsValue();
@@ -127,6 +158,7 @@ export class FoyerStream extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    this._inputResize.disconnect();
     document.removeEventListener('click', this._boundCloseOnOutsideClick);
   }
 
@@ -169,17 +201,7 @@ export class FoyerStream extends LitElement {
     return agents;
   }
 
-  convertMessageText = (text: string): string => {
-    let cleaned = text.replace(/&/g, '&amp;');
-    cleaned = cleaned.replace(/</g, '&lt;');
-    cleaned = cleaned.replace(/>/g, '&gt;');
-    cleaned = cleaned.replace(/https:\/\/theweave\.social\/wal\?weave/g, 'weave');
-    let formatted = cleaned.replace(
-      /([a-z0-9-.]+:\/\/[^\s]+)/g,
-      '<a style="text-decoration: underline;" href="$1">$1</a>',
-    );
-    return formatted;
-  };
+  convertMessageText = (text: string): string => foyerMessageHtml(text);
 
   sendMessage = async () => {
     const payload: Payload = {
@@ -193,6 +215,12 @@ export class FoyerStream extends LitElement {
     this._msgInput.value = '';
     this.disabled = true;
     this._msgInput.focus();
+  };
+
+  /** Dictated text goes into the input for the user to edit and send. */
+  appendDictation = (text: string) => {
+    this._msgInput.value = appendTranscript(this._msgInput.value, text);
+    this.disabled = !this._msgInput.value;
   };
 
   getAckCount = (acks: { [key: number]: HoloHashMap<Uint8Array, boolean> }, msgId): number => {
@@ -501,27 +529,37 @@ export class FoyerStream extends LitElement {
             </div>`
           : html``}
         <div class="send-controls">
-          <sl-input
+          <sl-textarea
             id="msg-input"
-            style="flex: 1;"
+            class="msg-input"
+            rows="1"
+            resize="auto"
             @sl-input=${() => {
               this.disabled = !this._msgInput?.value;
             }}
             @keydown=${(e: KeyboardEvent) => {
-              if (e.key === 'Enter') {
+              // Enter sends; Shift+Enter starts a new line; Enter that
+              // confirms an IME composition belongs to the IME.
+              if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+                e.preventDefault();
                 this.sendMessage();
                 e.stopPropagation();
               }
             }}
             placeholder=${msg('my message')}
-          ></sl-input>
-          <button
-            class="moss-button send-button"
-            ?disabled=${this.disabled}
-            @click=${() => this.sendMessage()}
-          >
-            <div class="column center-content" style="padding-top: 2px;">${sendIcon(18)}</div>
-          </button>
+          ></sl-textarea>
+          <div class="send-buttons ${this._stackButtons ? 'stacked' : ''}">
+            <moss-dictation-button
+              @dictation-text=${(e: CustomEvent<string>) => this.appendDictation(e.detail)}
+            ></moss-dictation-button>
+            <button
+              class="moss-button send-button"
+              ?disabled=${this.disabled}
+              @click=${() => this.sendMessage()}
+            >
+              <div class="column center-content" style="padding-top: 2px;">${sendIcon(18)}</div>
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -531,6 +569,11 @@ export class FoyerStream extends LitElement {
     sharedStyles,
     mossStyles,
     css`
+      /* Fill the column the parent gives the foyer; the send row must not
+         widen it past a narrow foyer width. */
+      :host {
+        min-width: 0;
+      }
       .info:hover {
         opacity: 0.7;
       }
@@ -609,10 +652,37 @@ export class FoyerStream extends LitElement {
       .send-controls {
         display: flex;
         justify-content: flex-end;
+        /* The input grows upward with its text; the buttons stay one line
+           tall at the bottom. */
+        align-items: flex-end;
         padding: 5px;
         gap: 8px;
       }
 
+      .send-buttons {
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
+        flex-shrink: 0;
+      }
+      /* One line of the input tall, whether side by side or stacked. */
+      .send-buttons > moss-dictation-button,
+      .send-buttons > .send-button {
+        height: 40px;
+        box-sizing: border-box;
+      }
+      .send-buttons.stacked {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .msg-input {
+        flex: 1;
+        min-width: 0;
+      }
+      .msg-input::part(textarea) {
+        max-height: 9em;
+        overflow-y: auto;
+      }
       .send-button {
         padding: 0 11px;
         border-radius: 9px;
