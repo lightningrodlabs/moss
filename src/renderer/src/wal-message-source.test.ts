@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { deriveWalMessageSource } from './wal-message-source';
+import { deriveWalMessageSource, walZomeCallSigning } from './wal-message-source';
+import { encodeHashToBase64 } from '@holochain/client';
 import type { IframeKind } from '@theweave/api';
 
 const APPLET_HASH = new Uint8Array([1, 2, 3]);
@@ -58,5 +59,25 @@ describe('deriveWalMessageSource', () => {
       subType: 'main',
     };
     expect(deriveWalMessageSource(kind, 'asset', FALLBACK_GROUP).subType).toBe('asset');
+  });
+});
+
+describe('walZomeCallSigning', () => {
+  it('signs locally for an applet iframe, scoped to that applet alone', () => {
+    const kind: IframeKind = {
+      type: 'applet',
+      appletHash: APPLET_HASH,
+      groupHash: IFRAME_GROUP,
+      subType: 'main',
+    };
+    expect(walZomeCallSigning(kind)).toEqual({
+      route: 'local',
+      callerAppletIds: [encodeHashToBase64(APPLET_HASH)],
+    });
+  });
+
+  it('relays a cross-group view to the main window, which knows every applet of the tool', () => {
+    const kind: IframeKind = { type: 'cross-group', toolCompatibilityId: 'tool-x', subType: 'main' };
+    expect(walZomeCallSigning(kind)).toEqual({ route: 'relay' });
   });
 });

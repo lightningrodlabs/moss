@@ -25,7 +25,7 @@ import { localized, msg } from '@lit/localize';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import { IframeStore } from './iframe-store';
 import { getIframeKind } from './applets/applet-host';
-import { deriveWalMessageSource } from './wal-message-source';
+import { deriveWalMessageSource, walZomeCallSigning } from './wal-message-source';
 import { audioSourceGrantsClient, releaseGrantsFor } from './audio-sources/singletons.js';
 import { TransferableReply } from './transferable-reply.js';
 
@@ -212,14 +212,12 @@ export class WalWindow extends LitElement {
         if (request) {
           switch (request.request.type) {
             case 'sign-zome-call': {
-              if (iframeKind.type !== 'applet') {
-                throw new Error(
-                  'Signing zome calls from a cross-group iframe is not supported in a WAL window.',
-                );
-              }
-              return window.electronAPI.signZomeCallApplet(request.request.request, [
-                encodeHashToBase64(iframeKind.appletHash),
-              ]);
+              const signing = walZomeCallSigning(iframeKind);
+              if (signing.route === 'relay') return handleDefault();
+              return window.electronAPI.signZomeCallApplet(
+                request.request.request,
+                signing.callerAppletIds,
+              );
             }
             case 'user-select-screen':
               return window.electronAPI.selectScreenOrWindow();
