@@ -43,11 +43,10 @@ import {
   openWalInWindow,
   validateNotifications,
 } from '../utils.js';
-import { AppletToParentRequest as AppletToParentRequestSchema } from '../validationSchemas.js';
+import { assertValidRequest } from './request-validation.js';
 import { AppletStore } from './applet-store.js';
 import { getAsrRendererBridge, type SessionOrigin } from './asr-bridge.js';
 import { resolveAppletName } from './applet-name.js';
-import { Value } from '@sinclair/typebox/value';
 import { GroupRemoteSignal, Accountability } from '@theweave/group-client';
 import { appIdFromAppletHash, toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
 import { GroupStore } from '../groups/group-store.js';
@@ -367,23 +366,6 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
   };
 }
 
-// Needs to be in a separate function, otherwise typescript will be confused
-// in the switch statement
-function validateRequest(request: AppletToParentRequest): boolean {
-  // Validate the format of the iframe message
-  try {
-    Value.Assert(AppletToParentRequestSchema, request);
-    return true;
-  } catch (e) {
-    console.error(
-      'Got invalid AppletToParentRequest format. Got request ',
-      request,
-      '\n\nError: ',
-      e,
-    );
-  }
-  return false;
-}
 
 export async function handleAppletIframeMessage(
   mossStore: MossStore,
@@ -399,7 +381,7 @@ export async function handleAppletIframeMessage(
    */
   senderWebContentsId?: number,
 ) {
-  if (!validateRequest(message)) return;
+  assertValidRequest(message);
 
   const weaveServices = buildHeadlessWeaveClient(mossStore);
 
