@@ -44,6 +44,7 @@ import {
   validateNotifications,
 } from '../utils.js';
 import { assertValidRequest } from './request-validation.js';
+import { hostTimeoutMessage, type IframeReadiness } from './host-timeout.js';
 import { AppletStore } from './applet-store.js';
 import { getAsrRendererBridge, type SessionOrigin } from './asr-bridge.js';
 import { resolveAppletName } from './applet-name.js';
@@ -1201,6 +1202,7 @@ export class AppletHost {
   constructor(
     public source: MessageEventSource,
     appletId: AppletId,
+    public readiness: IframeReadiness,
   ) {
     this.appletId = appletId;
   }
@@ -1234,10 +1236,7 @@ export class AppletHost {
       const timeout = setTimeout(() => {
         port1.close();
         reject(
-          new Error(
-            `postMessage '${message.type}' to applet ${this.appletId} timed out after ${timeoutMs}ms. ` +
-              `The iframe reported that it can answer messages, so the request most likely stalled inside the Tool's own handler.`,
-          ),
+          new Error(hostTimeoutMessage(message.type, this.appletId, timeoutMs, this.readiness)),
         );
       }, timeoutMs);
 
