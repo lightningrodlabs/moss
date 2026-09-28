@@ -35,7 +35,7 @@ Knowledge of the host-to-frame message protocol is spread across about ten modul
 | Q13 | The WAL adapter signs Applet iframe zome calls locally, with scope "this Applet". It forwards Cross-group view `sign-zome-call` to the main dispatcher. |
 | Q14 | An unrecognized origin gets an error reply in both windows. `default-app://` is ignored in both. |
 | Q15 | The pre-ready queue keeps every message in order, up to a fixed cap per frame. Past the cap, the oldest message is dropped with a warning. `on-before-unload` is never queued: a frame that is not ready has nothing to save, so it counts as answered at once. Messages are not coalesced by type, because `remote-signal-received`, `asr-event` and `asset-store-update` are event streams, and coalescing them would lose events. |
-| Q16 | PR 2, optional: move the main-process per-type relay timeout table (`relayTimeoutMs`) into a shared module used by the main process, the host channel and the applet channel. Interactive requests have no timeout. |
+| Q16 | PR 2, optional: move the main-process per-type relay timeout table (`relayTimeoutMs` in `src/main/appletRelayPolicy.ts`) into a shared module used by the main process, the host channel and the applet channel. Interactive requests get no timeout. Today only `asr-open-session` is exempt, so the WAL-window relay of `user-select-asset` and `user-select-asset-relation-tag` times out after 60 s while the person is still choosing. |
 | Q17 | PR 1 is one PR with ordered commits, each green: (1) channel and its tests in isolation, (2) main window uses the channel, (3) WAL window uses the channel as the second adapter, (4) outbound paths and readiness move into the channel, (5) delete the timer guesses and the duplicate WAL dispatcher. Handler bodies stay in `applet-host.ts` as the main-window handler table. |
 
 ## PR 0: local defect fixes
@@ -75,4 +75,4 @@ Checked 2026-09-28 unless marked open.
 
 - Both ends of the wire ship inside Moss. The applet-iframe script is served by Moss and injected into every Applet. A Tool's `WeaveClient` only reads `window.__WEAVE_API__`. The `get-applet-iframe-script` request must keep working for older `WeaveClient` builds.
 - The applet side already rejects its promise on an `{type: 'error'}` reply.
-- The main-process relay for WAL-window requests already uses the success/error envelope and a per-type timeout.
+- The main-process relay for WAL-window requests already uses the success/error envelope and a per-type timeout, 60 s for every type except `asr-open-session`.
