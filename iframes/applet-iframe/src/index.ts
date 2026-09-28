@@ -707,6 +707,7 @@ const handleParentMessageGeneral = async (
           detail: message.payload,
         }),
       );
+      break;
     }
     case 'on-before-unload': {
       // This case is handled in handleParentMessageAppletView

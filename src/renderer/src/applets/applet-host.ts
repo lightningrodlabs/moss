@@ -43,11 +43,11 @@ import {
   openWalInWindow,
   validateNotifications,
 } from '../utils.js';
-import { AppletToParentRequest as AppletToParentRequestSchema } from '../validationSchemas.js';
+import { assertValidRequest } from './request-validation.js';
+import { hostTimeoutMessage, type IframeReadiness } from './host-timeout.js';
 import { AppletStore } from './applet-store.js';
 import { getAsrRendererBridge, type SessionOrigin } from './asr-bridge.js';
 import { resolveAppletName } from './applet-name.js';
-import { Value } from '@sinclair/typebox/value';
 import { GroupRemoteSignal, Accountability } from '@theweave/group-client';
 import { appIdFromAppletHash, toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
 import { GroupStore } from '../groups/group-store.js';
@@ -367,23 +367,6 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
   };
 }
 
-// Needs to be in a separate function, otherwise typescript will be confused
-// in the switch statement
-function validateRequest(request: AppletToParentRequest): boolean {
-  // Validate the format of the iframe message
-  try {
-    Value.Assert(AppletToParentRequestSchema, request);
-    return true;
-  } catch (e) {
-    console.error(
-      'Got invalid AppletToParentRequest format. Got request ',
-      request,
-      '\n\nError: ',
-      e,
-    );
-  }
-  return false;
-}
 
 export async function handleAppletIframeMessage(
   mossStore: MossStore,
@@ -399,7 +382,7 @@ export async function handleAppletIframeMessage(
    */
   senderWebContentsId?: number,
 ) {
-  if (!validateRequest(message)) return;
+  assertValidRequest(message);
 
   const weaveServices = buildHeadlessWeaveClient(mossStore);
 
@@ -1219,6 +1202,7 @@ export class AppletHost {
   constructor(
     public source: MessageEventSource,
     appletId: AppletId,
+    public readiness: IframeReadiness,
   ) {
     this.appletId = appletId;
   }
@@ -1252,10 +1236,7 @@ export class AppletHost {
       const timeout = setTimeout(() => {
         port1.close();
         reject(
-          new Error(
-            `postMessage '${message.type}' to applet ${this.appletId} timed out after ${timeoutMs}ms. ` +
-              `The iframe reported that it can answer messages, so the request most likely stalled inside the Tool's own handler.`,
-          ),
+          new Error(hostTimeoutMessage(message.type, this.appletId, timeoutMs, this.readiness)),
         );
       }, timeoutMs);
 

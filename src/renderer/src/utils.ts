@@ -21,7 +21,6 @@ import {
   FrameNotification,
   AppletHash,
   AppletId,
-  ParentToAppletMessage,
   IframeKind,
 } from '@theweave/api';
 import { GroupDnaProperties } from '@theweave/group-client';
@@ -1152,27 +1151,6 @@ export function localTimeFromUtcOffset(offsetMinutes: number, ampm: boolean = tr
 
   // Format the time in HH:MM format
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}${ampm ? (pm ? ' p.m.' : ' a.m.') : ''}`;
-}
-
-export async function postMessageToIframe<T>(
-  iframe: HTMLIFrameElement,
-  message: ParentToAppletMessage,
-) {
-  return new Promise<T>((resolve, reject) => {
-    const { port1, port2 } = new MessageChannel();
-
-    if (iframe.contentWindow) {
-      iframe.contentWindow!.postMessage(message, '*', [port2]);
-
-      port1.onmessage = (m) => {
-        if (m.data.type === 'success') {
-          resolve(m.data.result);
-        } else if (m.data.type === 'error') {
-          reject(m.data.error);
-        }
-      };
-    }
-  });
 }
 
 /**
