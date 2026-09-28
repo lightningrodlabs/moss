@@ -25,7 +25,8 @@ import { localized, msg } from '@lit/localize';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import { IframeStore } from './iframe-store';
 import { getIframeKind } from './applets/applet-host';
-import { deriveWalMessageSource } from './wal-message-source';
+import { deriveWalMessageSource, walZomeCallSigning } from './wal-message-source';
+import { replyWithError } from './applets/reply-envelope';
 import { audioSourceGrantsClient, releaseGrantsFor } from './audio-sources/singletons.js';
 import { TransferableReply } from './transferable-reply.js';
 
@@ -177,21 +178,19 @@ export class WalWindow extends LitElement {
       // those are this window's own messages, never an applet's.
       if (message.source === window) return;
 
-      // Derive the sender's identity from its iframe origin — never from the
-      // message — and, like the main window's `if (!receivedFromSource) return`,
-      // skip without responding when the window is not yet initialised or the
-      // origin is unrecognised. Skipping (rather than replying) keeps such a
-      // message from resolving as a spurious `{ success, undefined }`.
+      // Derive the sender's identity from its iframe origin, never from the
+      // message. Skip without responding while the window is not yet
+      // initialised, and for `default-app://`, which has its own listener.
       if (this.isAppletDev === undefined) return;
       // getIframeKind throws for an origin matching none of its branches (e.g. an
-      // embedded remote iframe). Fail closed and log, rather than letting it
-      // escape the async listener as an unhandled rejection (the main window
-      // catches this in its own try/catch).
+      // embedded remote iframe). Fail closed with an error reply, as the main
+      // window does, so the sender's request rejects instead of waiting forever.
       let iframeKind: ReturnType<typeof getIframeKind>;
       try {
         iframeKind = getIframeKind(message, this.isAppletDev);
       } catch (e) {
-        console.warn('WAL window: ignoring message from an unrecognized iframe origin.', e);
+        console.warn('WAL window: rejecting message from an unrecognized iframe origin.', e);
+        replyWithError(message.ports, e);
         return;
       }
       if (!iframeKind) return;
@@ -212,14 +211,12 @@ export class WalWindow extends LitElement {
         if (request) {
           switch (request.request.type) {
             case 'sign-zome-call': {
-              if (iframeKind.type !== 'applet') {
-                throw new Error(
-                  'Signing zome calls from a cross-group iframe is not supported in a WAL window.',
-                );
-              }
-              return window.electronAPI.signZomeCallApplet(request.request.request, [
-                encodeHashToBase64(iframeKind.appletHash),
-              ]);
+              const signing = walZomeCallSigning(iframeKind);
+              if (signing.route === 'relay') return handleDefault();
+              return window.electronAPI.signZomeCallApplet(
+                request.request.request,
+                signing.callerAppletIds,
+              );
             }
             case 'user-select-screen':
               return window.electronAPI.selectScreenOrWindow();

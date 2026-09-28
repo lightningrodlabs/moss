@@ -41,7 +41,7 @@ export class AppletStore {
       IFRAME_READY_TIMEOUT_MS,
     );
     if (readyIframe && readyIframe.source && readyIframe.source !== 'wal-window') {
-      return new AppletHost(readyIframe.source, appletHashBase64);
+      return new AppletHost(readyIframe.source, appletHashBase64, 'reported');
     }
 
     // An iframe that never reports readiness should still be reachable, so fall
@@ -52,7 +52,7 @@ export class AppletStore {
       console.warn(
         `Applet ${appletHashBase64} did not report readiness within ${IFRAME_READY_TIMEOUT_MS}ms. Falling back to its iframe in the DOM.`,
       );
-      return new AppletHost(relevantIframe.contentWindow, appletHashBase64);
+      return new AppletHost(relevantIframe.contentWindow, appletHashBase64, 'assumed');
     }
 
     console.warn(

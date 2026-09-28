@@ -1,5 +1,5 @@
 import { IframeKind } from '@theweave/api';
-import { DnaHash } from '@holochain/client';
+import { DnaHash, encodeHashToBase64 } from '@holochain/client';
 
 /**
  * The `source` a WAL window stamps on a message it forwards to the main process
@@ -29,4 +29,19 @@ export function deriveWalMessageSource(
     groupHash: iframeKind.groupHash ?? fallbackGroupHash,
     subType,
   };
+}
+
+export type WalZomeCallSigning =
+  | { route: 'local'; callerAppletIds: string[] }
+  | { route: 'relay' };
+
+/**
+ * Where a WAL window gets a zome call signed for an embedded iframe. An applet
+ * iframe may sign for its own applet only, which the WAL window can do itself.
+ * A cross-group view may sign for every applet of its tool, and only the main
+ * window knows that set, so the request is relayed there.
+ */
+export function walZomeCallSigning(iframeKind: IframeKind): WalZomeCallSigning {
+  if (iframeKind.type === 'cross-group') return { route: 'relay' };
+  return { route: 'local', callerAppletIds: [encodeHashToBase64(iframeKind.appletHash)] };
 }
