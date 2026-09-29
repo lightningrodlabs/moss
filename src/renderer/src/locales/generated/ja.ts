@@ -9,7 +9,8 @@
     /* eslint-disable @typescript-eslint/no-explicit-any */
 
     export const templates = {
-      'h609db4d1e0221068': html`Moss は whisper.cpp を通じて動作するオープンな音声認識モデル <a href="https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)" target="_blank" rel="noopener noreferrer">Whisper</a> を使用します。`,
+      'h195e3d05d7fbb8c8': html`<a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">ツールの公開</a>と独自のキュレーションリストの作成について詳しく見る。`,
+'h609db4d1e0221068': html`Moss は whisper.cpp を通じて動作するオープンな音声認識モデル <a href="https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)" target="_blank" rel="noopener noreferrer">Whisper</a> を使用します。`,
 's0015d648b3decb5a': `権限タイプを確認中...`,
 's007a5e0a003f5515': `ポケット内:`,
 's016f5be842987ba5': `参加者 `,
@@ -427,6 +428,7 @@
 P2Pの世界！`,
 's81850fd21bd71f71': `ツールハッシュ`,
 's81a2bbcbcbd48c75': `不明なツール`,
+'s81eaaa52fa445197': `有効化するツールが見つかりませんでした。`,
 's81f150afaf1a4483': `代替テキスト`,
 's8213840a0f7d2644': `いいえ、保持します`,
 's8214d12128c7fa3f': `文字起こし`,
@@ -518,6 +520,7 @@ P2Pの世界！`,
 's9e25ce9db7de5dbf': `ホワイエ(チャット)`,
 's9f5a5f23312798f0': `メンバー`,
 'sa001c7eb0d28aaec': `このスクリーンショットとテキスト、およびMossのバージョンとOS情報は、公開GitHub issueとして`,
+'sa063e5108554c361': `有効化ダイアログを開けませんでした。`,
 'sa0ca791d0f13f0e5': `アーカイブ`,
 'sa15f8a12d82a7390': `新しいグループの名前を入力してください。同じツールで作成されますが、データはコピーされません。`,
 'sa17c38293a901a5e': `グループホームを編集する権限がありません。`,
@@ -780,10 +783,5 @@ P2Pの世界！`,
 'sff4fe7fc56e5b224': `この名前を表示しているグループが2つあります — どちらがどちらか確認してください。`,
 'sff553f4a093c366f': `参加済み (プロファイル未同期)`,
 'sff696c02c0929f45': `Holochainの起動に失敗しました :(`,
-'h195e3d05d7fbb8c8': html`Learn more about
-              <a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">publishing a Tool</a>
-              and how to create your own curation list.`,
-'s81eaaa52fa445197': `Could not find the Tool to activate.`,
-'sa063e5108554c361': `Could not open the activate dialog.`,
     };
   
