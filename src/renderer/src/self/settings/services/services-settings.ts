@@ -61,8 +61,10 @@ export class MossServicesSettings extends LitElement {
   static styles = [
     mossStyles,
     css`
+      /* Wrap rather than scroll: a scrolled tab bar shifts the pane below it. */
       .sub-tab-bar {
         gap: 4px;
+        flex-wrap: wrap;
       }
     `,
   ];
