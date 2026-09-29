@@ -65,6 +65,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setNetworkOverrides: (overrides: { bootstrapUrl?: string; relayUrl?: string }) =>
     ipcRenderer.invoke('set-network-overrides', overrides),
   clearNetworkOverrides: () => ipcRenderer.invoke('clear-network-overrides'),
+  getLanDiscovery: () => ipcRenderer.invoke('get-lan-discovery'),
+  setLanDiscovery: (enabled: boolean) => ipcRenderer.invoke('set-lan-discovery', enabled),
+  relaunchMoss: () => ipcRenderer.invoke('relaunch-moss'),
   openLogs: () => ipcRenderer.invoke('open-logs'),
   exportLogs: () => ipcRenderer.invoke('export-logs'),
   onMossUpdateProgress: (callback: (e: Electron.IpcRendererEvent, payload: ProgressInfo) => any) =>

@@ -65,10 +65,12 @@ export interface RunOptions {
   disableOsNotifications: boolean;
   dev: boolean;
   toolCurationUrl: string | undefined;
+  /** Whether this launch was started with --disable-mdns. */
+  mdnsDisabledByFlag: boolean;
   /**
    * Whether the conductor should discover peers on the local network over mDNS.
-   * On by default; --disable-mdns is the opt-out for a tester who does not want
-   * Moss announcing itself on the LAN.
+   * Resolved at startup, once the profile is known, from the saved Local
+   * Discovery setting and --disable-mdns (see resolveMdnsEnabled).
    */
   mdnsEnabled: boolean;
 }
@@ -191,7 +193,8 @@ export function validateArgs(args: CliOpts): RunOptions {
     disableOsNotifications: args.disableOsNotifications ? true : false,
     dev: args.dev ? true : false,
     toolCurationUrl: args.toolCurationUrl,
-    mdnsEnabled: !args.disableMdns,
+    mdnsDisabledByFlag: !!args.disableMdns,
+    mdnsEnabled: false,
   };
 }
 

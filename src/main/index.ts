@@ -40,6 +40,8 @@ import {
   importLegacyProfileData,
   LegacyProfileInfo,
 } from './filesystem';
+import { resolveMdnsEnabled } from './conductorNetworkConfig';
+import { readLanDiscoverySetting, writeLanDiscoverySetting } from './lanDiscoverySetting';
 import { listLocalTools } from './localTools';
 import {
   readToolAssetsChunk,
@@ -350,7 +352,7 @@ program
   .option('--disable-os-notifications', 'Disables all notifications to the Operating System')
   .option(
     '--disable-mdns',
-    'Disables discovery of peers on the local network via mDNS for this launch (not persisted across restarts). mDNS is on by default, so Moss finds peers on the same LAN even when the bootstrap and relay servers are unreachable; launching again without the flag turns it back on.',
+    'Disables discovery of peers on the local network via mDNS for this launch, even if Local Discovery is turned on in Settings > Services. The saved setting is left unchanged.',
   )
   .option(
     '--tool-curation-url <url>',
@@ -1111,6 +1113,11 @@ if (!RUNNING_WITH_COMMAND) {
       }
     }
 
+    RUN_OPTIONS.mdnsEnabled = resolveMdnsEnabled({
+      saved: readLanDiscoverySetting(WE_FILE_SYSTEM.profileConfigDir),
+      disabledByFlag: RUN_OPTIONS.mdnsDisabledByFlag,
+    });
+
     registerIPCHandlers(notificationIcon);
 
     // Local ASR (whisper.cpp sidecar). Lazy — sidecar doesn't actually
@@ -1227,6 +1234,28 @@ if (!RUNNING_WITH_COMMAND) {
    * -------------------------------------------------------
    */
 
+  /**
+   * Close every window, stop lair and the conductor, and start Moss again with
+   * the same arguments. Used when a setting only takes effect at launch.
+   */
+  function shutDownAndRelaunch() {
+    if (MAIN_WINDOW) MAIN_WINDOW.close();
+    if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
+    for (const window of Object.values(WAL_WINDOWS)) {
+      window.window.close();
+    }
+    if (LAIR_HANDLE) LAIR_HANDLE.kill();
+    if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.shutdown();
+    const options: Electron.RelaunchOptions = { args: process.argv };
+    // https://github.com/electron-userland/electron-builder/issues/1727#issuecomment-769896927
+    if (process.env.APPIMAGE) {
+      options.args!.unshift('--appimage-extract-and-run');
+      options.execPath = process.env.APPIMAGE;
+    }
+    app.relaunch(options);
+    app.quit();
+  }
+
   function registerIPCHandlers(notificationIcon: Electron.NativeImage) {
     ipcMain.handle('exit', () => {
       // app.exit(0) skips the before-quit handler, so stop the subprocesses here
@@ -1312,41 +1341,29 @@ if (!RUNNING_WITH_COMMAND) {
       'set-network-overrides',
       async (_e, overrides: { bootstrapUrl?: string; relayUrl?: string }) => {
         WE_FILE_SYSTEM.setNetworkOverrides(overrides);
-        // Relaunch Moss
-        if (MAIN_WINDOW) MAIN_WINDOW.close();
-        if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
-        for (const window of Object.values(WAL_WINDOWS)) {
-          window.window.close();
-        }
-        if (LAIR_HANDLE) LAIR_HANDLE.kill();
-        if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.shutdown();
-        const options: Electron.RelaunchOptions = { args: process.argv };
-        if (process.env.APPIMAGE) {
-          options.args!.unshift('--appimage-extract-and-run');
-          options.execPath = process.env.APPIMAGE;
-        }
-        app.relaunch(options);
-        app.quit();
+        shutDownAndRelaunch();
       },
     );
     ipcMain.handle('clear-network-overrides', async () => {
       WE_FILE_SYSTEM.clearNetworkOverrides();
-      // Relaunch Moss
-      if (MAIN_WINDOW) MAIN_WINDOW.close();
-      if (SPLASH_SCREEN_WINDOW) SPLASH_SCREEN_WINDOW.close();
-      for (const window of Object.values(WAL_WINDOWS)) {
-        window.window.close();
-      }
-      if (LAIR_HANDLE) LAIR_HANDLE.kill();
-      if (HOLOCHAIN_MANAGER) HOLOCHAIN_MANAGER.shutdown();
-      const options: Electron.RelaunchOptions = { args: process.argv };
-      if (process.env.APPIMAGE) {
-        options.args!.unshift('--appimage-extract-and-run');
-        options.execPath = process.env.APPIMAGE;
-      }
-      app.relaunch(options);
-      app.quit();
+      shutDownAndRelaunch();
     });
+    ipcMain.handle(
+      'get-lan-discovery',
+      (): { saved: boolean; running: boolean; disabledByFlag: boolean } => ({
+        saved: resolveMdnsEnabled({
+          saved: readLanDiscoverySetting(WE_FILE_SYSTEM.profileConfigDir),
+          disabledByFlag: false,
+        }),
+        running: RUN_OPTIONS.mdnsEnabled,
+        disabledByFlag: RUN_OPTIONS.mdnsDisabledByFlag,
+      }),
+    );
+    ipcMain.handle('set-lan-discovery', (_e, enabled: unknown) => {
+      if (typeof enabled !== 'boolean') throw new Error('set-lan-discovery expects a boolean');
+      writeLanDiscoverySetting(WE_FILE_SYSTEM.profileConfigDir, enabled);
+    });
+    ipcMain.handle('relaunch-moss', () => shutDownAndRelaunch());
     ipcMain.handle('is-main-window-focused', (): boolean | undefined => MAIN_WINDOW?.isFocused());
     ipcMain.handle(
       'notification',

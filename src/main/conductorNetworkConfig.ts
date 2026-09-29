@@ -49,8 +49,8 @@ export type AdvancedSettingsOptions = {
  * turns up. Both are written on every launch, `false` included, from the run
  * options of that launch: the config file is rewritten each time, so a node that
  * once ran with mDNS on would keep announcing if the keys were merely omitted
- * when it is off. It is a per-launch switch, not a stored preference -- the next
- * launch without the flag turns discovery back on.
+ * when it is off. Whether it is on for a launch is decided by
+ * {@link resolveMdnsEnabled}.
  *
  * These are module keys that only a kitsune2 build carrying the mDNS bootstrap
  * module understands. Unknown module keys are ignored rather than rejected, so
@@ -75,4 +75,26 @@ export function composeAdvancedSettings(
   advanced.coreSpace = { reSignExpireTimeMs: 30000, reSignFreqMs: 30000 };
 
   return advanced;
+}
+
+/**
+ * LAN discovery announces this device on the local network, so it stays off
+ * until the user turns it on under Settings > Services > Local Discovery.
+ */
+export const LAN_DISCOVERY_DEFAULT = false;
+
+export type MdnsEnabledInputs = {
+  /** The user's saved choice, or `undefined` if they have never made one. */
+  saved: boolean | undefined;
+  /** Whether this launch was started with `--disable-mdns`. */
+  disabledByFlag: boolean;
+};
+
+/**
+ * Whether this launch runs LAN discovery: the saved setting, which
+ * `--disable-mdns` can switch off for a single launch without changing it.
+ */
+export function resolveMdnsEnabled({ saved, disabledByFlag }: MdnsEnabledInputs): boolean {
+  if (disabledByFlag) return false;
+  return saved ?? LAN_DISCOVERY_DEFAULT;
 }

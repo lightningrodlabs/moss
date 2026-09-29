@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { composeAdvancedSettings, type AdvancedSettings } from './conductorNetworkConfig';
+import {
+  composeAdvancedSettings,
+  LAN_DISCOVERY_DEFAULT,
+  resolveMdnsEnabled,
+  type AdvancedSettings,
+} from './conductorNetworkConfig';
 
 const PACKAGED_MDNS_ON = { isPackaged: true, mdnsEnabled: true };
 const PACKAGED_MDNS_OFF = { isPackaged: true, mdnsEnabled: false };
@@ -68,5 +73,21 @@ describe('composeAdvancedSettings', () => {
     const advanced = composeAdvancedSettings(undefined, PACKAGED_MDNS_ON);
     expect(advanced.coreBootstrap).toEqual({ backoffMaxMs: 30000 });
     expect(advanced.coreSpace).toEqual({ reSignExpireTimeMs: 30000, reSignFreqMs: 30000 });
+  });
+});
+
+describe('resolveMdnsEnabled', () => {
+  it('is off when the user has never chosen', () => {
+    expect(LAN_DISCOVERY_DEFAULT).toBe(false);
+    expect(resolveMdnsEnabled({ saved: undefined, disabledByFlag: false })).toBe(false);
+  });
+
+  it('follows the saved setting', () => {
+    expect(resolveMdnsEnabled({ saved: true, disabledByFlag: false })).toBe(true);
+    expect(resolveMdnsEnabled({ saved: false, disabledByFlag: false })).toBe(false);
+  });
+
+  it('lets --disable-mdns override a saved "on" for one launch', () => {
+    expect(resolveMdnsEnabled({ saved: true, disabledByFlag: true })).toBe(false);
   });
 });
