@@ -208,6 +208,27 @@ describe('AppletChannel: readiness', () => {
     expect(await waiting).toBe(frame);
   });
 
+  it('resolves at once when the view is already ready', async () => {
+    const frame = new FakeFrame();
+    const channel = newChannel(
+      registryWith([{ appletId: APPLET_ID, subType: 'main', source: frame }]),
+    );
+    channel.markReady(frame as unknown as MessageEventSource);
+    expect(await channel.waitForReadyAppletFrame(APPLET_ID, 'main', 0)).toBe(frame);
+  });
+
+  it('does not satisfy a wait for one applet with another applet becoming ready', async () => {
+    vi.useFakeTimers();
+    const other = new FakeFrame();
+    const channel = newChannel(
+      registryWith([{ appletId: 'other', subType: 'main', source: other }]),
+    );
+    const waiting = channel.waitForReadyAppletFrame(APPLET_ID, 'main', 1000);
+    channel.markReady(other as unknown as MessageEventSource);
+    await vi.advanceTimersByTimeAsync(1001);
+    expect(await waiting).toBeUndefined();
+  });
+
   it('does not satisfy a wait for the main view with a ready asset view', async () => {
     vi.useFakeTimers();
     const asset = new FakeFrame();
