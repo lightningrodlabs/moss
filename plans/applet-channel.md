@@ -61,11 +61,20 @@ Checked 2026-09-28 unless marked open.
 - Size: PR 1 must fit in about one week. If commit 1 takes more than two days, cut scope before continuing.
 - Structural bugs reach users: open. The readiness race was a field bug before. Whether field-test users hit the WAL-window readiness key or pre-ready broadcasts is not measured.
 
+## Refinements found while building PR 1
+
+- Q8: each window tracks readiness only for the frames it hosts, keyed by the frame's window object. The main window never uses readiness for WAL-window frames, so a WAL window no longer relays `ready` to it. The main window's registry still lists WAL-window frames, for counts and for broadcast targets.
+- Q9: the DOM fallback stays in `AppletStore.host`, because it queries the DOM. The channel decides the timeout message from its own readiness state, so the fallback path no longer claims a ready report.
+- Q3: frame registration stays in the handlers, which need store data to answer `get-iframe-config`. The channel forgets a frame when it passes on `unregister-iframe`.
+- The unload broadcast never waited for applet callbacks, because it was posted without a reply port. PR 1 sends it as a request to every ready frame with an 8 s timeout. The start-up delay before the unload listener is registered is gone, because frames that are not ready count as answered.
+- The locale change sent to WAL windows named no applets, so it never reached their frames. It now names every applet in the main window's registry.
+
 ## PR 2 scope (applet side)
 
 - Merge the applet iframe's two listeners and two dispatchers into one.
 - Add the applet-side request timeout from the shared table (Q16).
 - Send a terminal "not installed" signal, then delete the host DOM fallback (Q9).
+- Reply to `on-before-unload` only after the unload callbacks finish. Today the applet-view listener replies success at once, so the host's wait in PR 1 ends before the callbacks do.
 
 ## Follow-up
 
