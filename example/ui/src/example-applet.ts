@@ -44,7 +44,15 @@ export class ExampleApplet extends LitElement {
       // Uncomment below to test that unloading after force reload timeout works
       // console.log('Unloading in 10 seconds');
       // await new Promise((resolve) => setTimeout(resolve, 10000));
+      await this.runE2eSlowUnload();
       console.log('Unloading now.');
+    });
+    // why: the E2E suite asserts that a locale change reaches every view of the
+    // applet, including views in WAL windows. The host element carries the
+    // locale the view currently holds.
+    this.dataset.weaveLocale = this.weaveClient.getLocale();
+    this.weaveClient.onLocaleChange((locale) => {
+      this.dataset.weaveLocale = locale;
     });
     // To test whether applet iframe properly gets removed after disabling applet.
     // setInterval(() => {
@@ -60,6 +68,18 @@ export class ExampleApplet extends LitElement {
         console.log('Got network stats update: ', payload);
       },
     );
+  }
+
+  /**
+   * E2E hook for the unload wait. When the suite stores a delay under
+   * `weave-e2e-slow-unload`, the unload callback takes that long and then
+   * records when it finished, so the suite can tell whether Moss waited for it.
+   */
+  async runE2eSlowUnload() {
+    const delayMs = Number(window.localStorage.getItem('weave-e2e-slow-unload') ?? 0);
+    if (!delayMs) return;
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    window.localStorage.setItem('weave-e2e-unload-done', String(Date.now()));
   }
 
   async notifyWe(notifications: FrameNotification[]) {
