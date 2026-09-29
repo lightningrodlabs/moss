@@ -24,7 +24,7 @@ import { localized, msg } from '@lit/localize';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import { IframeStore } from './iframe-store';
-import { AppletChannel } from './applets/applet-channel/applet-channel';
+import { AppletChannel, UNLOAD_TIMEOUT_MS } from './applets/applet-channel/applet-channel';
 import { deriveWalMessageSource, walZomeCallSigning } from './wal-message-source';
 import { audioSourceGrantsClient, releaseGrantsFor } from './audio-sources/singletons.js';
 import { TransferableReply } from './transferable-reply.js';
@@ -142,10 +142,7 @@ export class WalWindow extends LitElement {
       this.slowReloadTimeout = window.setTimeout(() => {
         this.slowLoading = true;
       }, 4500);
-      await this.iframeStore.postMessageToAppletIframes(
-        { type: 'all' },
-        { type: 'on-before-unload' },
-      );
+      await this.appletChannel.requestAll('all', { type: 'on-before-unload' }, UNLOAD_TIMEOUT_MS);
       console.log('on-before-unload callbacks finished.');
       window.removeEventListener('beforeunload', this.beforeUnloadListener);
       // The logic to set this variable lives in walwindow.html
@@ -159,15 +156,10 @@ export class WalWindow extends LitElement {
   };
 
   async firstUpdated() {
-    // add the beforeunload listener only 5 seconds later as there won't be anything
-    // meaningful to save by applets before and it will ensure that the iframes
-    // are ready to respond to the on-before-reload event
-    setTimeout(() => {
-      window.addEventListener('beforeunload', this.beforeUnloadListener);
-    }, 5000);
+    window.addEventListener('beforeunload', this.beforeUnloadListener);
 
     walWindow.electronAPI.onParentToAppletMessage(async (_e, { message, forApplets }) => {
-      await this.iframeStore.postMessageToAppletIframes({ type: 'some', ids: forApplets }, message);
+      this.appletChannel.broadcast(forApplets, message);
     });
 
     walWindow.electronAPI.onRequestIframeStoreSync(async () => {

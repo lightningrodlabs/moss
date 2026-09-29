@@ -76,6 +76,7 @@ import '../assets/creatables/creatable-palette.js';
 import { MossPocket } from '../assets/pocket/pocket.js';
 import { CreatablePalette } from '../assets/creatables/creatable-palette.js';
 import { handleAppletIframeMessage } from '../applets/applet-host.js';
+import { UNLOAD_TIMEOUT_MS } from '../applets/applet-channel/applet-channel.js';
 import { assertValidRequest } from '../applets/applet-channel/request-validation.js';
 import { initAsrRendererBridge } from '../applets/asr-bridge.js';
 import { openViewsContext } from '../layout/context.js';
@@ -575,9 +576,10 @@ export class MainDashboard extends LitElement {
       this.slowReloadTimeout = window.setTimeout(() => {
         this.slowLoading = true;
       }, 4500);
-      await this._mossStore.iframeStore.postMessageToAppletIframes(
-        { type: 'all' },
+      await this._mossStore.appletChannel.requestAll(
+        'all',
         { type: 'on-before-unload' },
+        UNLOAD_TIMEOUT_MS,
       );
       console.log('on-before-unload callbacks finished.');
       window.removeEventListener('beforeunload', this.beforeUnloadListener);
@@ -612,12 +614,7 @@ export class MainDashboard extends LitElement {
 
   async firstUpdated() {
     if (this.initialGroup) this.openGroup(this.initialGroup);
-    // add the beforeunload listener only 10 seconds later as there won't be anything
-    // meaningful to save by applets before and it will ensure that the iframes
-    // are ready to respond to the on-before-reload event
-    setTimeout(() => {
-      window.addEventListener('beforeunload', this.beforeUnloadListener);
-    }, 10000);
+    window.addEventListener('beforeunload', this.beforeUnloadListener);
 
     this._stopAppletChannel = this._mossStore.appletChannel.listen(
       window,

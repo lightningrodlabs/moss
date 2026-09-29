@@ -2165,7 +2165,7 @@ export class MossStore {
 
   async emitParentToAppletMessage(message: ParentToAppletMessage, forApplets: AppletId[]) {
     // Send to iframes of main window
-    this.iframeStore.postMessageToAppletIframes({ type: 'some', ids: forApplets }, message);
+    this.appletChannel.broadcast(forApplets, message);
     // Send to iframes of WAL windows
     return window.electronAPI.parentToAppletMessage(message, forApplets);
   }
@@ -2175,8 +2175,12 @@ export class MossStore {
    */
   broadcastLocaleChange(locale: string) {
     // Send to all applet iframes in main window
-    this.iframeStore.postMessageToAppletIframes({ type: 'all' }, { type: 'locale-change', locale });
-    // Also broadcast to WAL windows
-    window.electronAPI.parentToAppletMessage({ type: 'locale-change', locale }, []);
+    this.appletChannel.broadcast('all', { type: 'locale-change', locale });
+    // Also broadcast to WAL windows. The main window's registry lists the
+    // applets of their frames too, so name every one of them.
+    window.electronAPI.parentToAppletMessage(
+      { type: 'locale-change', locale },
+      Object.keys(this.iframeStore.appletIframes),
+    );
   }
 }

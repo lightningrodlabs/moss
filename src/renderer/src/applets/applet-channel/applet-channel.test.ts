@@ -52,9 +52,19 @@ async function sendRequest(
       resolve(m.data);
     };
   });
-  const claimed: IframeKind = { type: 'applet', appletHash: APPLET_HASH, groupHash: null, subType: 'main' };
+  const claimed: IframeKind = {
+    type: 'applet',
+    appletHash: APPLET_HASH,
+    groupHash: null,
+    subType: 'main',
+  };
   await channel.receive(
-    { origin, source: frame, ports: [port2], data: { request, source: claimed } } as unknown as MessageEvent,
+    {
+      origin,
+      source: frame,
+      ports: [port2],
+      data: { request, source: claimed },
+    } as unknown as MessageEvent,
     handle,
   );
   return reply;
@@ -142,11 +152,19 @@ describe('AppletChannel: requests from frames', () => {
   });
 
   it('ignores messages while the window does not yet know whether it runs in applet dev mode', async () => {
-    const channel = new AppletChannel({ registry: { appletIframes: {} }, isAppletDev: () => undefined });
+    const channel = new AppletChannel({
+      registry: { appletIframes: {} },
+      isAppletDev: () => undefined,
+    });
     const handle = vi.fn(echoType);
     const { port2 } = new MessageChannel();
     await channel.receive(
-      { origin: APPLET_ORIGIN, source: new FakeFrame(), ports: [port2], data: {} } as unknown as MessageEvent,
+      {
+        origin: APPLET_ORIGIN,
+        source: new FakeFrame(),
+        ports: [port2],
+        data: {},
+      } as unknown as MessageEvent,
       handle,
     );
     expect(handle).not.toHaveBeenCalled();
@@ -182,7 +200,9 @@ describe('AppletChannel: readiness', () => {
 
   it('resolves a wait for an applet view once that view reports ready', async () => {
     const frame = new FakeFrame();
-    const channel = newChannel(registryWith([{ appletId: APPLET_ID, subType: 'main', source: frame }]));
+    const channel = newChannel(
+      registryWith([{ appletId: APPLET_ID, subType: 'main', source: frame }]),
+    );
     const waiting = channel.waitForReadyAppletFrame(APPLET_ID, 'main', 1000);
     await sendRequest(channel, echoType, frame, { type: 'ready' });
     expect(await waiting).toBe(frame);
@@ -191,7 +211,9 @@ describe('AppletChannel: readiness', () => {
   it('does not satisfy a wait for the main view with a ready asset view', async () => {
     vi.useFakeTimers();
     const asset = new FakeFrame();
-    const channel = newChannel(registryWith([{ appletId: APPLET_ID, subType: 'asset', source: asset }]));
+    const channel = newChannel(
+      registryWith([{ appletId: APPLET_ID, subType: 'asset', source: asset }]),
+    );
     const waiting = channel.waitForReadyAppletFrame(APPLET_ID, 'main', 1000);
     channel.markReady(asset as unknown as MessageEventSource);
     await vi.advanceTimersByTimeAsync(1001);
@@ -214,7 +236,9 @@ describe('AppletChannel: broadcasts', () => {
 
   it('posts at once to a ready frame', () => {
     const frame = new FakeFrame();
-    const channel = newChannel(registryWith([{ appletId: APPLET_ID, subType: 'main', source: frame }]));
+    const channel = newChannel(
+      registryWith([{ appletId: APPLET_ID, subType: 'main', source: frame }]),
+    );
     channel.markReady(frame as unknown as MessageEventSource);
     channel.broadcast('all', locale);
     expect(frame.posted).toEqual([locale]);
@@ -222,9 +246,17 @@ describe('AppletChannel: broadcasts', () => {
 
   it('holds messages for a frame that is not ready and sends them in order when it reports ready', () => {
     const frame = new FakeFrame();
-    const channel = newChannel(registryWith([{ appletId: APPLET_ID, subType: 'main', source: frame }]));
-    const signal1: ParentToAppletMessage = { type: 'remote-signal-received', payload: new Uint8Array([1]) } as ParentToAppletMessage;
-    const signal2: ParentToAppletMessage = { type: 'remote-signal-received', payload: new Uint8Array([2]) } as ParentToAppletMessage;
+    const channel = newChannel(
+      registryWith([{ appletId: APPLET_ID, subType: 'main', source: frame }]),
+    );
+    const signal1: ParentToAppletMessage = {
+      type: 'remote-signal-received',
+      payload: new Uint8Array([1]),
+    } as ParentToAppletMessage;
+    const signal2: ParentToAppletMessage = {
+      type: 'remote-signal-received',
+      payload: new Uint8Array([2]),
+    } as ParentToAppletMessage;
     channel.broadcast([APPLET_ID], signal1);
     channel.broadcast([APPLET_ID], signal2);
     expect(frame.posted).toEqual([]);
@@ -234,7 +266,9 @@ describe('AppletChannel: broadcasts', () => {
 
   it('does not hold the unload message for a frame that is not ready', () => {
     const frame = new FakeFrame();
-    const channel = newChannel(registryWith([{ appletId: APPLET_ID, subType: 'main', source: frame }]));
+    const channel = newChannel(
+      registryWith([{ appletId: APPLET_ID, subType: 'main', source: frame }]),
+    );
     channel.broadcast('all', { type: 'on-before-unload' });
     channel.markReady(frame as unknown as MessageEventSource);
     expect(frame.posted).toEqual([]);
@@ -279,7 +313,12 @@ describe('AppletChannel: requests to frames', () => {
     const frame = new FakeFrame();
     frame.answer = (_m, port) => port.postMessage({ type: 'success', result: 42 });
     const channel = newChannel();
-    expect(await channel.request(frame as unknown as MessageEventSource, { type: 'search', filter: 'x' })).toBe(42);
+    expect(
+      await channel.request(frame as unknown as MessageEventSource, {
+        type: 'search',
+        filter: 'x',
+      }),
+    ).toBe(42);
   });
 
   it('rejects with the frame error', async () => {
@@ -294,7 +333,10 @@ describe('AppletChannel: requests to frames', () => {
   it('times out and says the frame never reported ready when it did not', async () => {
     const channel = newChannel();
     await expect(
-      channel.request(new FakeFrame() as unknown as MessageEventSource, { type: 'search', filter: 'x' }),
+      channel.request(new FakeFrame() as unknown as MessageEventSource, {
+        type: 'search',
+        filter: 'x',
+      }),
     ).rejects.toThrow('never reported that it was ready');
   });
 

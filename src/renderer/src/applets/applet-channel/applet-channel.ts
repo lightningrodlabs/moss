@@ -58,6 +58,9 @@ type ReadyWaiter = {
 const DEFAULT_REQUEST_TIMEOUT_MS = 20000;
 const DEFAULT_QUEUE_CAP = 100;
 
+/** How long a window waits for its frames to finish their unload callbacks. */
+export const UNLOAD_TIMEOUT_MS = 8000;
+
 /**
  * The message link between one window of Moss and the applet frames it hosts.
  * It derives each sender's identity from its origin, checks each request
@@ -183,7 +186,9 @@ export class AppletChannel {
       const { port1, port2 } = new MessageChannel();
       const timeout = setTimeout(() => {
         port1.close();
-        reject(new Error(hostTimeoutMessage(message.type, frameName(source), timeoutMs, readiness)));
+        reject(
+          new Error(hostTimeoutMessage(message.type, frameName(source), timeoutMs, readiness)),
+        );
       }, timeoutMs);
       port1.onmessage = (m) => {
         clearTimeout(timeout);
@@ -256,7 +261,11 @@ function isHostedSource(
   return !!source && source !== 'wal-window';
 }
 
-function post(source: MessageEventSource, message: ParentToAppletMessage, transfer?: Transferable[]) {
+function post(
+  source: MessageEventSource,
+  message: ParentToAppletMessage,
+  transfer?: Transferable[],
+) {
   (source as Window).postMessage(message, { targetOrigin: '*', transfer });
 }
 
