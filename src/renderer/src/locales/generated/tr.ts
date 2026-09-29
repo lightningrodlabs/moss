@@ -9,7 +9,8 @@
     /* eslint-disable @typescript-eslint/no-explicit-any */
 
     export const templates = {
-      'h609db4d1e0221068': html`Moss, whisper.cpp üzerinden çalışan açık bir konuşma tanıma modeli olan <a href="https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)" target="_blank" rel="noopener noreferrer">Whisper</a> kullanır.`,
+      'h195e3d05d7fbb8c8': html`<a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">Araç yayınlama</a> ve kendi küratörlük listenizi oluşturma hakkında daha fazla bilgi edinin.`,
+'h609db4d1e0221068': html`Moss, whisper.cpp üzerinden çalışan açık bir konuşma tanıma modeli olan <a href="https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)" target="_blank" rel="noopener noreferrer">Whisper</a> kullanır.`,
 's0015d648b3decb5a': `İzin türü kontrol ediliyor...`,
 's007a5e0a003f5515': `Cebinizde:`,
 's016f5be842987ba5': `Katılımcılar `,
@@ -436,6 +437,7 @@ güzel insan!`,
 P2P dünyası!`,
 's81850fd21bd71f71': `araç hash'i`,
 's81a2bbcbcbd48c75': `bilinmeyen araç`,
+'s81eaaa52fa445197': `Etkinleştirilecek araç bulunamadı.`,
 's81f150afaf1a4483': `Alt metin`,
 's8213840a0f7d2644': `Hayır, kalsın`,
 's8214d12128c7fa3f': `Transkripsiyon`,
@@ -528,6 +530,7 @@ P2P dünyası!`,
 's9e25ce9db7de5dbf': `Fuaye (sohbet)`,
 's9f5a5f23312798f0': `Üyeler`,
 'sa001c7eb0d28aaec': `Bu ekran görüntüsü ve metin, Moss sürümü ve işletim sistemi bilgileriyle birlikte, herkese açık bir GitHub issue olarak`,
+'sa063e5108554c361': `Etkinleştirme penceresi açılamadı.`,
 'sa0ca791d0f13f0e5': `Arşivle`,
 'sa15f8a12d82a7390': `Yeni grup için bir ad girin. Aynı araçlarla oluşturulacak ancak veriler kopyalanmayacak.`,
 'sa17c38293a901a5e': `Grup ana sayfasını düzenleme izni yok.`,
@@ -796,10 +799,5 @@ erken kalkan kuş!`,
 'sff4fe7fc56e5b224': `Bu adı gösteren iki grup var — hangisinin hangisi olduğunu sorun.`,
 'sff553f4a093c366f': `Katıldı (profil henüz eşitlenmedi)`,
 'sff696c02c0929f45': `Holochain başlatılamadı :(`,
-'h195e3d05d7fbb8c8': html`Learn more about
-              <a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">publishing a Tool</a>
-              and how to create your own curation list.`,
-'s81eaaa52fa445197': `Could not find the Tool to activate.`,
-'sa063e5108554c361': `Could not open the activate dialog.`,
     };
   

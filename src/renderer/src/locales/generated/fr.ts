@@ -9,7 +9,8 @@
     /* eslint-disable @typescript-eslint/no-explicit-any */
 
     export const templates = {
-      'h609db4d1e0221068': html`Moss utilise <a href="https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)" target="_blank" rel="noopener noreferrer">Whisper</a>, un modèle ouvert de reconnaissance vocale, exécuté via whisper.cpp.`,
+      'h195e3d05d7fbb8c8': html`En savoir plus sur la <a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">publication d’un outil</a> et la création de votre propre liste de curation.`,
+'h609db4d1e0221068': html`Moss utilise <a href="https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)" target="_blank" rel="noopener noreferrer">Whisper</a>, un modèle ouvert de reconnaissance vocale, exécuté via whisper.cpp.`,
 's0015d648b3decb5a': `Vérification du type d'autorisation...`,
 's007a5e0a003f5515': `Dans votre Poche :`,
 's016f5be842987ba5': `Participants `,
@@ -436,6 +437,7 @@ commence maintenant`,
 monde P2P !`,
 's81850fd21bd71f71': `hash de l'outil`,
 's81a2bbcbcbd48c75': `outil inconnu`,
+'s81eaaa52fa445197': `Impossible de trouver l’outil à activer.`,
 's81f150afaf1a4483': `Texte alternatif`,
 's8213840a0f7d2644': `Non, gardez-le`,
 's8214d12128c7fa3f': `Transcription`,
@@ -528,6 +530,7 @@ monde P2P !`,
 's9e25ce9db7de5dbf': `Hall (chat)`,
 's9f5a5f23312798f0': `Membres`,
 'sa001c7eb0d28aaec': `Cette capture d'écran et ce texte, ainsi que la version de Moss et les informations sur l'OS, seront ajoutés en tant qu'issue GitHub publique au`,
+'sa063e5108554c361': `Impossible d’ouvrir la boîte de dialogue d’activation.`,
 'sa0ca791d0f13f0e5': `Archiver`,
 'sa15f8a12d82a7390': `Saisissez un nom pour le nouveau groupe. Il sera créé avec les mêmes outils mais les données ne seront pas copiées.`,
 'sa17c38293a901a5e': `Pas d'autorisation pour modifier l'accueil du groupe.`,
@@ -796,10 +799,5 @@ lève-tôt !`,
 'sff4fe7fc56e5b224': `Deux groupes affichent ce nom — demandez lequel est lequel.`,
 'sff553f4a093c366f': `Rejoint (profil non encore synchronisé)`,
 'sff696c02c0929f45': `Holochain n'a pas pu démarrer :(`,
-'h195e3d05d7fbb8c8': html`Learn more about
-              <a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">publishing a Tool</a>
-              and how to create your own curation list.`,
-'s81eaaa52fa445197': `Could not find the Tool to activate.`,
-'sa063e5108554c361': `Could not open the activate dialog.`,
     };
   
