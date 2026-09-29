@@ -51,6 +51,7 @@ jobs:
           # Moss that nobody else is on. It must not be possible to forget.
           gh release create "${{ steps.tag.outputs.TAG }}" \
             --title "Moss ${{ steps.tag.outputs.APP_VERSION }} (test ${{ github.run_number }})" \
+            --target "${{ github.sha }}" \
             --prerelease \
             --notes "${RELEASE_NOTES}
 
