@@ -24,9 +24,8 @@ import { localized, msg } from '@lit/localize';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import { IframeStore } from './iframe-store';
-import { getIframeKind } from './applets/applet-channel/frame-identity';
+import { AppletChannel } from './applets/applet-channel/applet-channel';
 import { deriveWalMessageSource, walZomeCallSigning } from './wal-message-source';
-import { replyWithError } from './applets/applet-channel/reply-envelope';
 import { audioSourceGrantsClient, releaseGrantsFor } from './audio-sources/singletons.js';
 import { TransferableReply } from './transferable-reply.js';
 
@@ -83,6 +82,12 @@ const walWindow = window as unknown as WALWindow;
 @customElement('wal-window')
 export class WalWindow extends LitElement {
   iframeStore = new IframeStore();
+
+  appletChannel = new AppletChannel({
+    registry: this.iframeStore,
+    isAppletDev: () => this.isAppletDev,
+    ownWindow: window,
+  });
 
   isAppletDev: boolean | undefined;
 
@@ -170,167 +175,115 @@ export class WalWindow extends LitElement {
       await walWindow.electronAPI.iframeStoreSync(storeContent);
     });
 
-    // set up handler to handle iframe messages
-    window.addEventListener('message', async (message: MessageEvent<AppletToParentMessage>) => {
-      const request = message.data;
+    // Requests from the frames this window hosts. Requests that need the main
+    // window's stores are relayed there under the frame's own identity.
+    this.appletChannel.listen(window, async (request, { kind: iframeKind, source }) => {
+      const derivedSource = deriveWalMessageSource(iframeKind, iframeKind.subType, this.groupHash!);
 
-      // The preload relays grant ports into this page with window.postMessage;
-      // those are this window's own messages, never an applet's.
-      if (message.source === window) return;
-
-      // Derive the sender's identity from its iframe origin, never from the
-      // message. Skip without responding while the window is not yet
-      // initialised, and for `default-app://`, which has its own listener.
-      if (this.isAppletDev === undefined) return;
-      // getIframeKind throws for an origin matching none of its branches (e.g. an
-      // embedded remote iframe). Fail closed with an error reply, as the main
-      // window does, so the sender's request rejects instead of waiting forever.
-      let iframeKind: ReturnType<typeof getIframeKind>;
-      try {
-        iframeKind = getIframeKind(message.origin, message.data.source, this.isAppletDev);
-      } catch (e) {
-        console.warn('WAL window: rejecting message from an unrecognized iframe origin.', e);
-        replyWithError(message.ports, e);
-        return;
-      }
-      if (!iframeKind) return;
-
-      const handleRequest = async (request: AppletToParentMessage) => {
-        const derivedSource = deriveWalMessageSource(
-          iframeKind,
-          request.source.subType,
-          this.groupHash!,
-        );
-
-        const handleDefault = () => {
+      const handleDefault = () => {
+        return walWindow.electronAPI.appletMessageToParent({
+          request,
+          source: derivedSource,
+        });
+      };
+      switch (request.type) {
+        case 'sign-zome-call': {
+          const signing = walZomeCallSigning(iframeKind);
+          if (signing.route === 'relay') return handleDefault();
+          return window.electronAPI.signZomeCallApplet(request.request, signing.callerAppletIds);
+        }
+        case 'user-select-screen':
+          return window.electronAPI.selectScreenOrWindow();
+        // Must resolve locally, never `handleDefault()`: the reply carries a
+        // transferred `MessagePort` (see the TransferableReply below), and a
+        // transferred port cannot cross the IPC hop to the main window.
+        case 'request-audio-sources': {
+          const iframeKey = this.iframeStore.findIframeIdBySource(source);
+          const toolName =
+            iframeKind.type === 'applet'
+              ? (this.appletName ?? encodeHashToBase64(iframeKind.appletHash))
+              : iframeKind.toolCompatibilityId;
+          const grant = await audioSourceGrantsClient.request({ iframeKey, toolName });
+          if (!grant) return null;
+          return new TransferableReply(
+            { label: grant.result.label, canExcludeSelf: grant.result.canExcludeSelf },
+            [grant.port],
+          );
+        }
+        case 'request-close':
+          return walWindow.electronAPI.closeWindow();
+        case 'user-select-asset': {
+          await walWindow.electronAPI.focusMainWindow();
+          let error;
+          let response;
+          const appletToParentMessage: AppletToParentMessage = {
+            request,
+            source: derivedSource,
+          };
+          try {
+            response = await walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
+          } catch (e) {
+            error = e;
+          }
+          await walWindow.electronAPI.focusMyWindow();
+          if (error) return Promise.reject(`Failed to select WAL: ${error}`);
+          return response;
+        }
+        case 'user-select-asset-relation-tag': {
+          await walWindow.electronAPI.focusMainWindow();
+          let error;
+          let response;
+          const appletToParentMessage: AppletToParentMessage = {
+            request,
+            source: derivedSource,
+          };
+          try {
+            response = await walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
+          } catch (e) {
+            error = e;
+          }
+          await walWindow.electronAPI.focusMyWindow();
+          if (error) return Promise.reject(`Failed to select asset relation tag: ${error}`);
+          return response;
+        }
+        case 'get-iframe-config': {
+          if (iframeKind.type === 'cross-group') {
+            this.iframeStore.registerCrossGroupIframe(iframeKind.toolCompatibilityId, {
+              id: request.id,
+              subType: request.subType,
+              source: source,
+            });
+          } else {
+            this.iframeStore.registerAppletIframe(encodeHashToBase64(iframeKind.appletHash), {
+              id: request.id,
+              subType: request.subType,
+              source: source,
+            });
+          }
+          // Forward under the child iframe's own identity, not this window's.
           return walWindow.electronAPI.appletMessageToParent({
-            request: request.request,
+            request,
             source: derivedSource,
           });
-        };
-        if (request) {
-          switch (request.request.type) {
-            case 'sign-zome-call': {
-              const signing = walZomeCallSigning(iframeKind);
-              if (signing.route === 'relay') return handleDefault();
-              return window.electronAPI.signZomeCallApplet(
-                request.request.request,
-                signing.callerAppletIds,
-              );
-            }
-            case 'user-select-screen':
-              return window.electronAPI.selectScreenOrWindow();
-            // Must resolve locally, never `handleDefault()`: the reply carries a
-            // transferred `MessagePort` (see the TransferableReply below), and a
-            // transferred port cannot cross the IPC hop to the main window.
-            case 'request-audio-sources': {
-              const iframeKey = this.iframeStore.findIframeIdBySource(message.source);
-              const toolName =
-                iframeKind.type === 'applet'
-                  ? this.appletName ?? encodeHashToBase64(iframeKind.appletHash)
-                  : iframeKind.toolCompatibilityId;
-              const grant = await audioSourceGrantsClient.request({ iframeKey, toolName });
-              if (!grant) return null;
-              return new TransferableReply(
-                { label: grant.result.label, canExcludeSelf: grant.result.canExcludeSelf },
-                [grant.port],
-              );
-            }
-            case 'request-close':
-              return walWindow.electronAPI.closeWindow();
-            case 'user-select-asset': {
-              await walWindow.electronAPI.focusMainWindow();
-              let error;
-              let response;
-              const appletToParentMessage: AppletToParentMessage = {
-                request: message.data.request,
-                source: derivedSource,
-              };
-              try {
-                response = await walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
-              } catch (e) {
-                error = e;
-              }
-              await walWindow.electronAPI.focusMyWindow();
-              if (error) return Promise.reject(`Failed to select WAL: ${error}`);
-              return response;
-            }
-            case 'user-select-asset-relation-tag': {
-              await walWindow.electronAPI.focusMainWindow();
-              let error;
-              let response;
-              const appletToParentMessage: AppletToParentMessage = {
-                request: message.data.request,
-                source: derivedSource,
-              };
-              try {
-                response = await walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
-              } catch (e) {
-                error = e;
-              }
-              await walWindow.electronAPI.focusMyWindow();
-              if (error) return Promise.reject(`Failed to select asset relation tag: ${error}`);
-              return response;
-            }
-            case 'get-iframe-config': {
-              if (iframeKind.type === 'cross-group') {
-                this.iframeStore.registerCrossGroupIframe(iframeKind.toolCompatibilityId, {
-                  id: request.request.id,
-                  subType: request.request.subType,
-                  source: message.source,
-                });
-              } else {
-                this.iframeStore.registerAppletIframe(encodeHashToBase64(iframeKind.appletHash), {
-                  id: request.request.id,
-                  subType: request.request.subType,
-                  source: message.source,
-                });
-              }
-              // Forward under the child iframe's own identity, not this window's.
-              return walWindow.electronAPI.appletMessageToParent({
-                request: request.request,
-                source: derivedSource,
-              });
-            }
-            case 'unregister-iframe': {
-              if (iframeKind.type === 'cross-group') {
-                this.iframeStore.unregisterCrossGroupIframe(
-                  iframeKind.toolCompatibilityId,
-                  request.request.id,
-                );
-              } else {
-                this.iframeStore.unregisterAppletIframe(
-                  encodeHashToBase64(iframeKind.appletHash),
-                  request.request.id,
-                );
-              }
-              releaseGrantsFor(request.request.id);
-              return walWindow.electronAPI.appletMessageToParent({
-                request: request.request,
-                source: derivedSource,
-              });
-            }
-
-            default:
-              return handleDefault();
+        }
+        case 'unregister-iframe': {
+          if (iframeKind.type === 'cross-group') {
+            this.iframeStore.unregisterCrossGroupIframe(iframeKind.toolCompatibilityId, request.id);
+          } else {
+            this.iframeStore.unregisterAppletIframe(
+              encodeHashToBase64(iframeKind.appletHash),
+              request.id,
+            );
           }
+          releaseGrantsFor(request.id);
+          return walWindow.electronAPI.appletMessageToParent({
+            request,
+            source: derivedSource,
+          });
         }
-      };
-      try {
-        const result = await handleRequest(request);
-        if (result instanceof TransferableReply) {
-          message.ports[0].postMessage({ type: 'success', result: result.result }, result.transfer);
-        } else {
-          message.ports[0].postMessage({ type: 'success', result });
-        }
-      } catch (e) {
-        console.error(
-          'Error while handling applet iframe message. Error: ',
-          e,
-          'Message: ',
-          message,
-        );
-        message.ports[0].postMessage({ type: 'error', error: (e as any).message });
+
+        default:
+          return handleDefault();
       }
     });
 
