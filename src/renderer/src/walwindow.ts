@@ -24,7 +24,7 @@ import { localized, msg } from '@lit/localize';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import { IframeStore } from './iframe-store';
-import { getIframeKind } from './applets/applet-host';
+import { getIframeKind } from './applets/applet-channel/frame-identity';
 import { deriveWalMessageSource, walZomeCallSigning } from './wal-message-source';
 import { replyWithError } from './applets/applet-channel/reply-envelope';
 import { audioSourceGrantsClient, releaseGrantsFor } from './audio-sources/singletons.js';
@@ -187,7 +187,7 @@ export class WalWindow extends LitElement {
       // window does, so the sender's request rejects instead of waiting forever.
       let iframeKind: ReturnType<typeof getIframeKind>;
       try {
-        iframeKind = getIframeKind(message, this.isAppletDev);
+        iframeKind = getIframeKind(message.origin, message.data.source, this.isAppletDev);
       } catch (e) {
         console.warn('WAL window: rejecting message from an unrecognized iframe origin.', e);
         replyWithError(message.ports, e);

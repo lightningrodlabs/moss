@@ -75,7 +75,8 @@ import '../assets/pocket/pocket-drop.js';
 import '../assets/creatables/creatable-palette.js';
 import { MossPocket } from '../assets/pocket/pocket.js';
 import { CreatablePalette } from '../assets/creatables/creatable-palette.js';
-import { appletMessageHandler, handleAppletIframeMessage } from '../applets/applet-host.js';
+import { handleAppletIframeMessage } from '../applets/applet-host.js';
+import { assertValidRequest } from '../applets/applet-channel/request-validation.js';
 import { initAsrRendererBridge } from '../applets/asr-bridge.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
@@ -268,7 +269,7 @@ export class MainDashboard extends LitElement {
   _reloadingApplets: Array<AppletId> = [];
 
   // Listener references for cleanup in disconnectedCallback
-  private _appletMessageListener: ((event: MessageEvent) => void) | undefined;
+  private _stopAppletChannel: (() => void) | undefined;
   private _keydownListener: ((event: KeyboardEvent) => void) | undefined;
   private _openAssetUnsub: (() => void) | undefined;
 
@@ -618,8 +619,11 @@ export class MainDashboard extends LitElement {
       window.addEventListener('beforeunload', this.beforeUnloadListener);
     }, 10000);
 
-    this._appletMessageListener = appletMessageHandler(this._mossStore, this.openViews);
-    window.addEventListener('message', this._appletMessageListener);
+    this._stopAppletChannel = this._mossStore.appletChannel.listen(
+      window,
+      (request, { kind, source }) =>
+        handleAppletIframeMessage(this._mossStore, this.openViews, kind, request, source),
+    );
 
     // Wire window.electronAPI.onAsrEvent → AsrRendererBridge so that
     // 'asr-event' IPC pushes from main reach every iframe hosting the
@@ -640,6 +644,7 @@ export class MainDashboard extends LitElement {
         if (!payload.message.source) {
           throw new Error('source not defined in AppletToParentMessage');
         }
+        assertValidRequest(payload.message.request);
         const result = await handleAppletIframeMessage(
           this._mossStore,
           this.openViews,
@@ -855,9 +860,9 @@ export class MainDashboard extends LitElement {
     super.disconnectedCallback();
     this.removeEventListener('open-tool-info', this._toolInfoListener);
     this.removeEventListener('open-reenable-tool', this._reenableToolListener);
-    if (this._appletMessageListener) {
-      window.removeEventListener('message', this._appletMessageListener);
-      this._appletMessageListener = undefined;
+    if (this._stopAppletChannel) {
+      this._stopAppletChannel();
+      this._stopAppletChannel = undefined;
     }
     if (this._keydownListener) {
       window.removeEventListener('keydown', this._keydownListener);

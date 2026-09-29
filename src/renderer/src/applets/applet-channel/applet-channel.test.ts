@@ -62,7 +62,9 @@ async function sendRequest(
 
 const echoType: RequestHandler = async (request) => `handled ${request.type}`;
 
-afterEach(() => vi.useRealTimers());
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('AppletChannel: requests from frames', () => {
   it('replies success with the handler result, and passes the identity derived from the origin', async () => {

@@ -128,6 +128,7 @@ import { AssetViewerState, DashboardState } from './app/main-dashboard.js';
 import { PersistedStore, SectionReadStates } from './persisted-store.js';
 import { MossCache } from './cache.js';
 import { compareVersions } from 'compare-versions';
+import { AppletChannel } from './applets/applet-channel/applet-channel.js';
 import { IframeStore } from './iframe-store.js';
 import { notificationAudio } from './services/notification-audio.js';
 
@@ -254,6 +255,12 @@ export class MossStore {
    */
 
   iframeStore = new IframeStore();
+
+  appletChannel = new AppletChannel({
+    registry: this.iframeStore,
+    isAppletDev: () => this.isAppletDev,
+    ownWindow: window,
+  });
 
   /**
    * --------------------------------------------------------------------------
@@ -1731,7 +1738,7 @@ export class MossStore {
           this.conductorInfo,
           token,
           this.isAppletDev,
-          this.iframeStore,
+          this.appletChannel,
         ),
       );
     }),
