@@ -9,7 +9,8 @@
     /* eslint-disable @typescript-eslint/no-explicit-any */
 
     export const templates = {
-      'h609db4d1e0221068': html`Moss gebruikt <a href="https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)" target="_blank" rel="noopener noreferrer">Whisper</a>, een open spraakherkenningsmodel, uitgevoerd via whisper.cpp.`,
+      'h195e3d05d7fbb8c8': html`Meer informatie over <a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">het publiceren van een tool</a> en het maken van je eigen curatielijst.`,
+'h609db4d1e0221068': html`Moss gebruikt <a href="https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)" target="_blank" rel="noopener noreferrer">Whisper</a>, een open spraakherkenningsmodel, uitgevoerd via whisper.cpp.`,
 's0015d648b3decb5a': `Permissietype controleren...`,
 's007a5e0a003f5515': `In je Pocket:`,
 's016f5be842987ba5': `Deelnemers `,
@@ -427,6 +428,7 @@ begint nu`,
 P2P-wereld!`,
 's81850fd21bd71f71': `tool-hash`,
 's81a2bbcbcbd48c75': `onbekende tool`,
+'s81eaaa52fa445197': `De te activeren tool is niet gevonden.`,
 's81f150afaf1a4483': `Alt-tekst`,
 's8213840a0f7d2644': `Nee, behouden`,
 's8214d12128c7fa3f': `Transcriptie`,
@@ -518,6 +520,7 @@ P2P-wereld!`,
 's9e25ce9db7de5dbf': `Foyer (chat)`,
 's9f5a5f23312798f0': `Leden`,
 'sa001c7eb0d28aaec': `Deze schermafbeelding en tekst, samen met Moss-versie en OS-info, worden als publieke GitHub-issue toegevoegd aan de`,
+'sa063e5108554c361': `Het activeringsvenster kon niet worden geopend.`,
 'sa0ca791d0f13f0e5': `Archiveren`,
 'sa15f8a12d82a7390': `Voer een naam in voor de nieuwe groep. Deze wordt aangemaakt met dezelfde tools, maar de gegevens worden niet meegekopieerd.`,
 'sa17c38293a901a5e': `Geen toestemming om de groepspagina te bewerken.`,
@@ -780,10 +783,5 @@ vroege vogel!`,
 'sff4fe7fc56e5b224': `Twee groepen tonen deze naam — vraag welke welke is.`,
 'sff553f4a093c366f': `Toegetreden (profiel nog niet gesynchroniseerd)`,
 'sff696c02c0929f45': `Holochain kon niet opstarten :(`,
-'h195e3d05d7fbb8c8': html`Learn more about
-              <a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">publishing a Tool</a>
-              and how to create your own curation list.`,
-'s81eaaa52fa445197': `Could not find the Tool to activate.`,
-'sa063e5108554c361': `Could not open the activate dialog.`,
     };
   
