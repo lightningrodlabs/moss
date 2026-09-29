@@ -44,6 +44,7 @@ jobs:
           # body is editable after the run.
           gh release create "${{ steps.tag.outputs.TAG }}" \
             --title "Moss ${{ steps.tag.outputs.APP_VERSION }} (test ${{ github.run_number }})" \
+            --target "${{ github.sha }}" \
             --prerelease \
             --notes "${{ github.event.inputs.release_notes }}
 

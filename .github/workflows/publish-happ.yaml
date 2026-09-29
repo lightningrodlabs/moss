@@ -54,5 +54,6 @@ jobs:
           body: 'See assets below to download and install this version.'
           name: Group happ v${{ steps.version.outputs.APP_VERSION }}-${{ steps.version.outputs.HOLOCHAIN_VERSION }}
           tag: group-happ-v${{ steps.version.outputs.APP_VERSION }}
+          commit: ${{ github.sha }}
           prerelease: true
           draft: true
