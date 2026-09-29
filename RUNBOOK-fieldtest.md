@@ -1,7 +1,7 @@
 # RUNBOOK — hello/PoK field test build
 
-**Branch:** `feat/hello-pok-fieldtest` (off `main-0.7`)
-**Version:** `0.16.0-dev.7`
+**Branch:** `feat/moss-0.16-dev.8` (off `feat/hello-pok-fieldtest`, which is off `main-0.7`)
+**Version:** `0.16.0-dev.8` — see §10 for what dev.8 consolidates
 **Status:** FIELD-TEST-ONLY. Do not merge into `main-0.7`.
 
 This branch bundles a **patched** Holochain 0.7.0 into Moss so we can field-test the
@@ -608,7 +608,7 @@ notes after the run, leave that block in place.
 
 ---
 
-## 9. The mDNS LAN-discovery build (`holochain-0.7.0-mdns.0`)
+## 9. The mDNS LAN-discovery build (`holochain-0.7.0-mdns.*`)
 
 The `feat/mdns-dev-build-0.7` branch adds LAN peer discovery on top of the hello/PoK
 build. It is **additive**: the hello/PoK access module and the
@@ -645,19 +645,22 @@ existence alone cannot tell a stale binary from the pinned one.
 
 ### 9.2 The switch
 
-mDNS discovery is **on by default**. To turn it off:
+From dev.8, LAN discovery is a **saved setting, off by default**:
+**Settings > Services > Local Discovery**. It is stored per profile in
+`<profile>/config/lan-discovery.json`, kept separate from `network-overrides.json`
+so that "Reset to Defaults" on the network overrides does not touch it. The conductor
+reads it only at launch, so the pane offers **Relaunch now** while the saved value and
+the running one differ.
 
-```bash
-moss --disable-mdns
-```
+`--disable-mdns` still exists and switches discovery off **for one launch** without
+changing the saved setting. The pane says so when it is in effect.
 
-It is a **per-launch switch, not a stored preference**: the next launch without the
-flag has mDNS on again. The flag sets `network.advanced.mdnsBootstrap.enabled` and
-`network.advanced.irohTransport.enableLanDiscovery` in `conductor-config.yaml`, and
-both are always written explicitly, `false` included — the config file is rewritten
-from the run options on every launch, and a node that once ran with mDNS on needs
-that explicit `false` to stop announcing. Composition lives in
-`src/main/conductorNetworkConfig.ts` (`composeAdvancedSettings`).
+Either way, the resolved value (`resolveMdnsEnabled` in
+`src/main/conductorNetworkConfig.ts`) sets `network.advanced.mdnsBootstrap.enabled`
+and `network.advanced.irohTransport.enableLanDiscovery` in `conductor-config.yaml`.
+Both are always written explicitly, `false` included — the config file is rewritten on
+every launch, and a node that once ran with mDNS on needs that explicit `false` to
+stop announcing. Composition is `composeAdvancedSettings` in the same file.
 
 Both keys are kitsune2 _module_ config, and kitsune2 ignores module keys it does not
 recognise, so a config written by this build is still loadable by a stock holochain
@@ -704,3 +707,56 @@ Connection established … direct=true
 through the iroh relay. The offline test is exactly this with the bootstrap server
 and relay unreachable: pull the uplink, restart both nodes, and confirm all three
 signals above.
+
+---
+
+## 10. 0.16.0-dev.8: one set of fork branches
+
+dev.8 retires the stacked field-test branches in favour of one branch per repo,
+named for the Moss line they serve:
+
+| Repo                         | Branch                 | Replaces                                                                          |
+| ---------------------------- | ---------------------- | --------------------------------------------------------------------------------- |
+| `lightningrodlabs/kitsune2`  | `moss-0.16`            | `feat/hello-pok-access`, `feat/hello-pok-access-qad`, `feat/mdns-bootstrap-hello` |
+| `lightningrodlabs/holochain` | `moss-0.16`            | `feat/hello-pok-access-0.7`, `feat/mdns-bootstrap-0.7.0-hello`                    |
+| `lightningrodlabs/moss`      | `feat/moss-0.16-dev.8` | `feat/hello-pok-fieldtest` + `feat/mdns-dev-build-0.7`                            |
+
+**kitsune2 `moss-0.16`** is the hello/PoK and mDNS work replayed onto current
+upstream `main` (after `c72da90`), instead of the `v0.6.0-dev.0` base the old
+branches sat on. That picks up upstream's simultaneous-open send preservation (the
+release-0.5 #628 fix, identical in `transport_iroh/src` to v0.5.2), the per-space
+relay/bootstrap override fixes, known-peer endpoint ordering by advertisement
+timestamp, and gossip-message attribution. The fork's own QAD relay re-insert commit
+is dropped; upstream carries the same fix.
+
+Upstream's reverted PR #641 (transport creation failing when no relay URL arrives
+within 10 s — fatal offline) is **not** in this base: `main` reverted it before
+`c72da90`. Do not rebase onto the `v0.6.0-dev.2` tag, which predates the revert.
+
+Rebase adaptations worth knowing when reviewing the branch:
+
+- `ensure_connection` / `dial` sit on upstream's `ConnectionRegistry`; the fork's
+  own tie-break adoption step is gone because `create_connection_and_context`
+  now registers the connection itself.
+- `mark_unresponsive` spares a peer only when the registry holds a **live** entry,
+  and a failed preflight removes its own dial from the registry before marking, so
+  the dial cannot spare itself.
+- Upstream's new `stale_endpoint_batch_preserves_peer_access` test asserts "not
+  blocked" rather than "granted": on this branch storing an agent info never grants
+  access, a hello proof does.
+
+**holochain `moss-0.16`** is `feat/mdns-bootstrap-0.7.0-hello` with every kitsune2
+pin moved to the `moss-0.16` rev. It builds the `holochain-0.7.0-mdns.3` release.
+`HCP2P_PROTO_VER` is still `1002`, so dev.8 nodes interoperate with dev.5–dev.7
+nodes. Holochain itself stays on 0.7.0: upstream 0.7.1 is still a release candidate
+(`holochain-0.7.1-rc.1`, kitsune2 0.5.1).
+
+Validation run for dev.8 before any packaged build:
+
+- kitsune2: `cargo fmt --check`, `cargo make clippy` (default and `mdns`),
+  `cargo make test` (default, metrics, mdns) — 1494 passed, 0 failed; plus
+  `KITSUNE2_LAN_TEST=1` for the two-node offline mDNS test and `offline_relay`.
+- holochain: `holochain` and `holochain_cli` build; `holochain_p2p` tests pass,
+  including `KITSUNE2_LAN_TEST=1` `mdns_discovery` (both nodes find each other with
+  bootstrap and relay unreachable, and across different relays).
+- Moss: `yarn typecheck`, `yarn test:unit`.
