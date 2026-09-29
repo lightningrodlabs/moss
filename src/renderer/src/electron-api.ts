@@ -89,6 +89,9 @@ declare global {
       getNetworkOverrides: () => Promise<NetworkOverridesInfo>;
       setNetworkOverrides: (overrides: NetworkOverrides) => Promise<void>;
       clearNetworkOverrides: () => Promise<void>;
+      getLanDiscovery: () => Promise<LanDiscoveryInfo>;
+      setLanDiscovery: (enabled: boolean) => Promise<void>;
+      relaunchMoss: () => Promise<void>;
       openLogs: () => Promise<void>;
       exportLogs: () => Promise<void>;
       onAppletToParentMessage: (
@@ -384,6 +387,17 @@ export interface NetworkOverridesInfo {
   overrides: NetworkOverrides;
   defaults: { bootstrapUrl: string; relayUrl: string };
   current: { bootstrapUrl: string; relayUrl: string };
+}
+
+/**
+ * Local Discovery (mDNS) state. `saved` is what the next launch will use,
+ * `running` is what this launch is using; they differ until Moss relaunches.
+ */
+export interface LanDiscoveryInfo {
+  saved: boolean;
+  running: boolean;
+  /** This launch was started with --disable-mdns, which overrides `saved`. */
+  disabledByFlag: boolean;
 }
 
 export interface ConductorInfo {

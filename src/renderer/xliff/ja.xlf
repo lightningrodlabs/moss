@@ -3088,6 +3088,70 @@ starts now</source>
   <source>Finishing transcription</source>
   <target>文字起こしを完了しています</target>
 </trans-unit>
+<trans-unit id="s2ed21785ecf02d99">
+  <source>Local discovery turns on when Moss relaunches.</source>
+  <target>ローカル検出は Moss の再起動時にオンになります。</target>
+</trans-unit>
+<trans-unit id="s4e37aca78eff9375">
+  <source>Local discovery turns off when Moss relaunches.</source>
+  <target>ローカル検出は Moss の再起動時にオフになります。</target>
+</trans-unit>
+<trans-unit id="sa69cb99f88779c1b">
+  <source>Relaunch now</source>
+  <target>今すぐ再起動</target>
+</trans-unit>
+<trans-unit id="sd5238eba4cd437a1">
+  <source>Moss was started with --disable-mdns, so local discovery is off for this launch whatever the switch says.</source>
+  <target>Moss は --disable-mdns 付きで起動されたため、スイッチの状態にかかわらず、今回の起動ではローカル検出はオフです。</target>
+</trans-unit>
+<trans-unit id="scbdeb13c101bd37c">
+  <source>Local network discovery</source>
+  <target>ローカルネットワーク検出</target>
+</trans-unit>
+<trans-unit id="s68593adda10b572b">
+  <source>About local discovery</source>
+  <target>ローカル検出について</target>
+</trans-unit>
+<trans-unit id="s8ec70c2c8fe82214">
+  <source>Find members of your groups on the same Wi-Fi or local network and connect to them directly, so you can keep working together when the internet or the Moss servers are unreachable. While this is on, this device announces itself on the local network.</source>
+  <target>同じ Wi-Fi やローカルネットワーク上にいるグループのメンバーを見つけて直接接続し、インターネットや Moss のサーバーに接続できないときも共同作業を続けられるようにします。オンの間、このデバイスはローカルネットワーク上で自身を告知します。</target>
+</trans-unit>
+<trans-unit id="s278bf148b2638c82">
+  <source>Normally Moss finds the other members of a group through a bootstrap server and connects to them through a relay server on the internet. Local discovery adds a second way: devices on the same local network find each other directly, using mDNS, the same mechanism printers and speakers use to show up on your network.</source>
+  <target>通常、Moss はブートストラップサーバーを通じてグループの他のメンバーを見つけ、インターネット上のリレーサーバーを経由して接続します。ローカル検出はもう一つの方法を加えます。同じローカルネットワーク上のデバイスが、プリンターやスピーカーをネットワーク上に表示するのと同じ仕組みである mDNS を使って、互いを直接見つけます。</target>
+</trans-unit>
+<trans-unit id="s0c064cfd548dfd33">
+  <source>Each group is announced by a fingerprint, not by its name. Only a device that already knows the group’s network identity can tell which group a fingerprint belongs to, and it must still prove that knowledge before any group data is exchanged.</source>
+  <target>各グループは名前ではなくフィンガープリントで告知されます。フィンガープリントがどのグループのものかを判別できるのは、そのグループのネットワーク上の識別情報をすでに知っているデバイスだけで、その場合もグループのデータを交換する前にその知識を証明する必要があります。</target>
+</trans-unit>
+<trans-unit id="se5eed50148694c3f">
+  <source>Other devices on the network can see that this device runs Moss and how to reach it. Leave this off on networks you do not trust.</source>
+  <target>ネットワーク上の他のデバイスは、このデバイスで Moss が動作していることと、その接続先を知ることができます。信頼できないネットワークではオフのままにしてください。</target>
+</trans-unit>
+<trans-unit id="s3882bc1206db08e6">
+  <source>Saved setting:</source>
+  <target>保存された設定:</target>
+</trans-unit>
+<trans-unit id="s08b05807b5566370">
+  <source>on</source>
+  <target>オン</target>
+</trans-unit>
+<trans-unit id="s1a249b1921e2bdea">
+  <source>off</source>
+  <target>オフ</target>
+</trans-unit>
+<trans-unit id="sa77d14560fdb6c92">
+  <source>This launch:</source>
+  <target>今回の起動:</target>
+</trans-unit>
+<trans-unit id="scc148a8ce75e32d5">
+  <source>Started with --disable-mdns:</source>
+  <target>--disable-mdns 付きで起動:</target>
+</trans-unit>
+<trans-unit id="s3b48790ff4652b3a">
+  <source>Local Discovery</source>
+  <target>ローカル検出</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

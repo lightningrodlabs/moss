@@ -3088,6 +3088,70 @@ beginnt jetzt</target>
   <source>Finishing transcription</source>
   <target>Transkription wird abgeschlossen</target>
 </trans-unit>
+<trans-unit id="s2ed21785ecf02d99">
+  <source>Local discovery turns on when Moss relaunches.</source>
+  <target>Die lokale Erkennung wird beim Neustart von Moss eingeschaltet.</target>
+</trans-unit>
+<trans-unit id="s4e37aca78eff9375">
+  <source>Local discovery turns off when Moss relaunches.</source>
+  <target>Die lokale Erkennung wird beim Neustart von Moss ausgeschaltet.</target>
+</trans-unit>
+<trans-unit id="sa69cb99f88779c1b">
+  <source>Relaunch now</source>
+  <target>Jetzt neu starten</target>
+</trans-unit>
+<trans-unit id="sd5238eba4cd437a1">
+  <source>Moss was started with --disable-mdns, so local discovery is off for this launch whatever the switch says.</source>
+  <target>Moss wurde mit --disable-mdns gestartet, daher ist die lokale Erkennung für diesen Start unabhängig vom Schalter aus.</target>
+</trans-unit>
+<trans-unit id="scbdeb13c101bd37c">
+  <source>Local network discovery</source>
+  <target>Erkennung im lokalen Netzwerk</target>
+</trans-unit>
+<trans-unit id="s68593adda10b572b">
+  <source>About local discovery</source>
+  <target>Über die lokale Erkennung</target>
+</trans-unit>
+<trans-unit id="s8ec70c2c8fe82214">
+  <source>Find members of your groups on the same Wi-Fi or local network and connect to them directly, so you can keep working together when the internet or the Moss servers are unreachable. While this is on, this device announces itself on the local network.</source>
+  <target>Finde Mitglieder deiner Gruppen im selben WLAN oder lokalen Netzwerk und verbinde dich direkt mit ihnen, damit ihr weiter zusammenarbeiten könnt, wenn das Internet oder die Moss-Server nicht erreichbar sind. Solange dies eingeschaltet ist, macht sich dieses Gerät im lokalen Netzwerk bekannt.</target>
+</trans-unit>
+<trans-unit id="s278bf148b2638c82">
+  <source>Normally Moss finds the other members of a group through a bootstrap server and connects to them through a relay server on the internet. Local discovery adds a second way: devices on the same local network find each other directly, using mDNS, the same mechanism printers and speakers use to show up on your network.</source>
+  <target>Normalerweise findet Moss die anderen Mitglieder einer Gruppe über einen Bootstrap-Server und verbindet sich über einen Relay-Server im Internet mit ihnen. Die lokale Erkennung fügt einen zweiten Weg hinzu: Geräte im selben lokalen Netzwerk finden sich direkt über mDNS – denselben Mechanismus, mit dem Drucker und Lautsprecher in deinem Netzwerk auftauchen.</target>
+</trans-unit>
+<trans-unit id="s0c064cfd548dfd33">
+  <source>Each group is announced by a fingerprint, not by its name. Only a device that already knows the group’s network identity can tell which group a fingerprint belongs to, and it must still prove that knowledge before any group data is exchanged.</source>
+  <target>Jede Gruppe wird mit einem Fingerabdruck angekündigt, nicht mit ihrem Namen. Nur ein Gerät, das die Netzwerkidentität der Gruppe bereits kennt, kann erkennen, zu welcher Gruppe ein Fingerabdruck gehört – und es muss dieses Wissen trotzdem nachweisen, bevor Gruppendaten ausgetauscht werden.</target>
+</trans-unit>
+<trans-unit id="se5eed50148694c3f">
+  <source>Other devices on the network can see that this device runs Moss and how to reach it. Leave this off on networks you do not trust.</source>
+  <target>Andere Geräte im Netzwerk können sehen, dass auf diesem Gerät Moss läuft und wie es erreichbar ist. Lass dies in Netzwerken, denen du nicht vertraust, ausgeschaltet.</target>
+</trans-unit>
+<trans-unit id="s3882bc1206db08e6">
+  <source>Saved setting:</source>
+  <target>Gespeicherte Einstellung:</target>
+</trans-unit>
+<trans-unit id="s08b05807b5566370">
+  <source>on</source>
+  <target>an</target>
+</trans-unit>
+<trans-unit id="s1a249b1921e2bdea">
+  <source>off</source>
+  <target>aus</target>
+</trans-unit>
+<trans-unit id="sa77d14560fdb6c92">
+  <source>This launch:</source>
+  <target>Dieser Start:</target>
+</trans-unit>
+<trans-unit id="scc148a8ce75e32d5">
+  <source>Started with --disable-mdns:</source>
+  <target>Mit --disable-mdns gestartet:</target>
+</trans-unit>
+<trans-unit id="s3b48790ff4652b3a">
+  <source>Local Discovery</source>
+  <target>Lokale Erkennung</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

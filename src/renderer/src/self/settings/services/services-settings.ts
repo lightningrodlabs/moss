@@ -4,14 +4,17 @@ import { localized, msg } from '@lit/localize';
 import { mossStyles } from '../../../shared-styles.js';
 import './audio-sources-settings.js';
 import './transcription-settings.js';
+import './lan-discovery-settings.js';
 
 enum ServiceTab {
   AudioSources,
   Transcription,
+  LocalDiscovery,
 }
 
 /**
- * Host services Tools can be granted access to, one sub-tab each.
+ * Services Moss provides on this device, one sub-tab each: those Tools can be
+ * granted access to, and Moss's own local network discovery.
  */
 @localized()
 @customElement('moss-services-settings')
@@ -24,6 +27,8 @@ export class MossServicesSettings extends LitElement {
         return html`<moss-audio-sources-settings></moss-audio-sources-settings>`;
       case ServiceTab.Transcription:
         return html`<moss-transcription-settings></moss-transcription-settings>`;
+      case ServiceTab.LocalDiscovery:
+        return html`<moss-lan-discovery-settings></moss-lan-discovery-settings>`;
     }
   }
 
@@ -41,6 +46,12 @@ export class MossServicesSettings extends LitElement {
           @click=${() => (this.tab = ServiceTab.Transcription)}
         >
           ${msg('Transcription')}
+        </button>
+        <button
+          class="tab ${this.tab === ServiceTab.LocalDiscovery ? 'tab-selected' : ''}"
+          @click=${() => (this.tab = ServiceTab.LocalDiscovery)}
+        >
+          ${msg('Local Discovery')}
         </button>
       </div>
       <div class="column" style="margin-top: 16px;">${this.renderContent()}</div>
