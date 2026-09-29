@@ -10,6 +10,7 @@ import { MossFileSystem } from './filesystem';
 import { app } from 'electron';
 import { AppAssetsInfo, DistributionInfo } from '@theweave/moss-types';
 import { CONDUCTOR_CONFIG_TEMPLATE } from './const';
+import { composeAdvancedSettings } from './conductorNetworkConfig';
 
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
@@ -70,6 +71,7 @@ export class HolochainManager {
     lairUrl: string,
     bootstrapUrl: string,
     relayUrl: string,
+    mdnsEnabled: boolean,
     rustLog?: string,
     wasmLog?: string,
   ): Promise<HolochainManager> {
@@ -120,22 +122,10 @@ export class HolochainManager {
     conductorConfig.network.bootstrap_url = bootstrapUrl;
     conductorConfig.network.relay_url = relayUrl;
 
-    // In dev mode, we have to allow http:// relay type urls
-    if (!app.isPackaged) {
-      const advancedSettings = conductorConfig.network.advanced
-        ? conductorConfig.network.advanced
-        : {};
-      advancedSettings['irohTransport'] = {
-        relayAllowPlainText: true,
-      };
-      conductorConfig.network.advanced = advancedSettings;
-    }
-    const advancedSettings = conductorConfig.network.advanced
-      ? conductorConfig.network.advanced
-      : {};
-    advancedSettings.coreBootstrap = { backoffMaxMs: 30000 };
-    advancedSettings.coreSpace = { reSignExpireTimeMs: 30000, reSignFreqMs: 30000 };
-    conductorConfig.network.advanced = advancedSettings;
+    conductorConfig.network.advanced = composeAdvancedSettings(conductorConfig.network.advanced, {
+      isPackaged: app.isPackaged,
+      mdnsEnabled,
+    });
 
     console.log('Writing conductor-config.yaml...', configPath, conductorConfig);
 

@@ -11,60 +11,68 @@
  *
  *   FfsIoError NotFound: .../app.asar.unpacked/resources/default-apps/group.happ
  *
- * check-binaries.mjs only covered two of the binaries, so it did not catch it.
- * This script covers the whole inventory. It is intentionally exhaustive rather
- * than clever: every packaged path is listed explicitly.
+ * This is the only pre-packaging check there is, so it covers the whole inventory
+ * rather than the handful of binaries an earlier check knew about. It is
+ * intentionally exhaustive rather than clever: every packaged path is listed
+ * explicitly.
  */
 
 import fs from 'fs';
 import path from 'path';
-import { ASSET_TARGET, assertSha256, sha256OfFile } from './fetch-fns.mjs';
+import {
+  MOSS_CONFIG,
+  assertSha256,
+  expectedSha256For,
+  resolvedBinaryName,
+  sha256OfFile,
+} from './fetch-fns.mjs';
+import { exeSuffix } from './binary-names.mjs';
 
-const mossConfig = JSON.parse(fs.readFileSync('moss.config.json', 'utf-8'));
-const checksums = JSON.parse(fs.readFileSync('holochain-checksums.json', 'utf-8'));
+const BINARIES_DIR = path.join('resources', 'bins');
 
-const exe = process.platform === 'win32' ? '.exe' : '';
-const holochainVersion = mossConfig.holochain;
-const bootstrapSrvVersion = mossConfig.kitsune2BootstrapSrv ?? checksums.version;
-
-// ASSET_TARGET is the single host->checksum-key mapping, shared with
-// fetch-fns.mjs so this check and the fetch can never disagree about which key
-// applies (they used to, on Windows).
+// Binary filenames come from the shared derivation so this check looks for the
+// same file the app will look for at runtime, fork release tag included.
+const bin = (name) => path.join(BINARIES_DIR, resolvedBinaryName(name));
 
 /**
- * Each entry: the path that must exist, and the sha256 it must have.
- * `presenceOnly: true` means only the file's presence is asserted: either it is
- * tracked in git, so its content is the repo's business rather than a fetch step's,
- * or it is compiled on the build machine and has no fixed hash.
- * Every other entry MUST resolve to a real sha256: an absent or placeholder
- * checksum fails the check rather than downgrading it to a presence check.
+ * Each entry: the path that must exist, and a thunk returning the sha256 it must
+ * have. `presenceOnly: true` means only the file's presence is asserted: either
+ * it is tracked in git, so its content is the repo's business rather than a
+ * fetch step's, or it is compiled on the build machine and has no fixed hash. Every other entry MUST resolve to a real sha256: an absent or
+ * placeholder checksum fails the check rather than downgrading it to a presence
+ * check. The lookup is a thunk so that failure is reported against the file it
+ * belongs to, and only for files that are actually there.
+ *
+ * expectedSha256For applies the single host->checksum-key mapping shared with
+ * the fetch, so this check and the fetch can never disagree about which key
+ * applies (they used to, on Windows).
  */
 const REQUIRED = [
   // --- binaries, from `yarn fetch:binaries` / `yarn fetch:hc` /
   //     `yarn install:local-binaries` (field-test branch only) ---
   {
-    file: path.join('resources', 'bins', `holochain-v${holochainVersion}${exe}`),
-    sha256: checksums.holochain?.[ASSET_TARGET],
+    file: bin('holochain'),
+    sha256: () => expectedSha256For('holochain'),
     source: 'yarn install:local-binaries (patched) / yarn fetch:binaries',
   },
   {
-    file: path.join('resources', 'bins', `lair-keystore-v${holochainVersion}${exe}`),
-    sha256: checksums['lair-keystore']?.[ASSET_TARGET],
+    file: bin('lair-keystore'),
+    sha256: () => expectedSha256For('lair-keystore'),
     source: 'yarn fetch:binaries',
   },
   {
-    file: path.join('resources', 'bins', `kitsune2-bootstrap-srv-v${bootstrapSrvVersion}${exe}`),
-    sha256: checksums['kitsune2-bootstrap-srv']?.[ASSET_TARGET],
+    file: bin('kitsune2-bootstrap-srv'),
+    sha256: () => expectedSha256For('kitsune2-bootstrap-srv'),
     source: 'yarn fetch:binaries',
   },
   {
-    file: path.join('resources', 'bins', `hc-v${holochainVersion}${exe}`),
-    sha256: checksums.hc?.[ASSET_TARGET],
+    file: bin('hc'),
+    sha256: () => expectedSha256For('hc'),
     source: 'yarn install:local-binaries (patched) / yarn fetch:binaries',
   },
   {
-    file: path.join('resources', 'bins', `hc${exe}`),
-    sha256: checksums.hc?.[ASSET_TARGET],
+    file: path.join(BINARIES_DIR, `hc${exeSuffix()}`),
+    sha256: () => expectedSha256For('hc'),
     source: 'yarn install:local-binaries (patched) / yarn fetch:hc',
   },
 
@@ -73,7 +81,7 @@ const REQUIRED = [
   // Missing this one packages cleanly and only fails when a user makes a group.
   {
     file: path.join('resources', 'default-apps', 'group.happ'),
-    sha256: mossConfig.groupHapp?.sha256 ?? null,
+    sha256: () => assertSha256(MOSS_CONFIG.groupHapp?.sha256, 'group.happ (moss.config.json)'),
     source: 'yarn fetch:group-happ',
   },
 
@@ -111,14 +119,14 @@ const REQUIRED = [
 if (process.env.MOSS_REQUIRE_ASR === '1') {
   REQUIRED.push(
     {
-      file: path.join('resources', 'bins', `whisper-server-v${mossConfig.whisperServer}${exe}`),
+      file: path.join(BINARIES_DIR, `whisper-server-v${MOSS_CONFIG.whisperServer}${exeSuffix()}`),
       presenceOnly: true,
       source: 'yarn build:whisper-server',
     },
     {
       file: path.join('resources', 'models', 'ggml-base.en.bin'),
       // Same pin as EXPECTED_SHA256 in scripts/fetch-asr-model.mjs.
-      sha256: 'a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002',
+      sha256: () => 'a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002',
       source: 'yarn fetch:asr-model',
     },
   );
@@ -134,17 +142,17 @@ for (const { file, sha256, source, presenceOnly } of REQUIRED) {
     continue;
   }
   if (presenceOnly) continue;
-  // Previously an absent checksum silently downgraded this to a presence check
-  // and merely warned. It is now a failure: an unpinned artifact is exactly the
-  // thing this check exists to keep out of a build.
+  // An unpinned artifact is a failure, not a downgrade to a presence check: it
+  // is exactly the thing this check exists to keep out of a build.
+  let expected;
   try {
-    assertSha256(sha256, file);
+    expected = sha256();
   } catch (error) {
     unpinned.push({ file, source, reason: error.message });
     continue;
   }
   const actual = sha256OfFile(file);
-  if (actual !== sha256) mismatched.push({ file, actual, expected: sha256, source });
+  if (actual !== expected) mismatched.push({ file, actual, expected, source });
 }
 
 if (missing.length > 0 || mismatched.length > 0 || unpinned.length > 0) {
@@ -152,11 +160,18 @@ if (missing.length > 0 || mismatched.length > 0 || unpinned.length > 0) {
   if (missing.length > 0) {
     msg += '\nMissing files:\n';
     for (const { file, source } of missing) msg += `  - ${file}\n      populate with: ${source}\n`;
+    // A stale binary from another branch is the usual reason a file is "missing"
+    // -- it is there under a different release tag. Show what is actually in the
+    // directory, once, rather than per entry.
+    const found = fs.existsSync(BINARIES_DIR) ? fs.readdirSync(BINARIES_DIR) : [];
+    msg += `\n  ${BINARIES_DIR} currently holds: [${found.join(', ')}]\n`;
   }
   if (mismatched.length > 0) {
     msg += '\nFiles present but with an unexpected sha256:\n';
     for (const { file, actual, expected, source } of mismatched) {
-      msg += `  - ${file}\n      got:      ${actual}\n      expected: ${expected}\n      re-run:   ${source}\n`;
+      msg +=
+        `  - ${file}\n      got:      ${actual}\n      expected: ${expected}\n` +
+        `      re-fetch: rm ${file}, then ${source}\n`;
     }
   }
   if (unpinned.length > 0) {
