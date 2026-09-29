@@ -26,7 +26,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import { IframeStore } from './iframe-store';
 import { getIframeKind } from './applets/applet-host';
 import { deriveWalMessageSource, walZomeCallSigning } from './wal-message-source';
-import { replyWithError } from './applets/reply-envelope';
+import { replyWithError } from './applets/applet-channel/reply-envelope';
 import { audioSourceGrantsClient, releaseGrantsFor } from './audio-sources/singletons.js';
 import { TransferableReply } from './transferable-reply.js';
 

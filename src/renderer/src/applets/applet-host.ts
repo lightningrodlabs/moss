@@ -43,8 +43,8 @@ import {
   openWalInWindow,
   validateNotifications,
 } from '../utils.js';
-import { assertValidRequest } from './request-validation.js';
-import { hostTimeoutMessage, type IframeReadiness } from './host-timeout.js';
+import { assertValidRequest } from './applet-channel/request-validation.js';
+import { hostTimeoutMessage, type IframeReadiness } from './applet-channel/host-timeout.js';
 import { AppletStore } from './applet-store.js';
 import { getAsrRendererBridge, type SessionOrigin } from './asr-bridge.js';
 import { resolveAppletName } from './applet-name.js';
