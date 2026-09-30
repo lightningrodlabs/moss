@@ -20,7 +20,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     callback: (
       e: Electron.IpcRendererEvent,
       message: ParentToAppletMessage,
-      forApplets: AppletId[],
+      forApplets: 'all' | AppletId[],
     ) => any,
   ) => ipcRenderer.on('parent-to-applet-message', callback),
   onWillNavigateExternal: (callback: (e: Electron.IpcRendererEvent) => any) =>

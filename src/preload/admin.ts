@@ -42,8 +42,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('sign-zome-call-applet', request, callerAppletIds),
   appletMessageToParentResponse: (response: AppletHostResponse, id: string) =>
     ipcRenderer.invoke('applet-message-to-parent-response', response, id),
-  parentToAppletMessage: (message: ParentToAppletMessage, forApplet: AppletId) =>
-    ipcRenderer.invoke('parent-to-applet-message', message, forApplet),
+  parentToAppletMessage: (message: ParentToAppletMessage, forApplets: 'all' | AppletId[]) =>
+    ipcRenderer.invoke('parent-to-applet-message', message, forApplets),
   dialogMessagebox: (options: Electron.MessageBoxOptions) =>
     ipcRenderer.invoke('dialog-messagebox', options),
   installApp: (filePath: string, appId: string, networkSeed?: string) =>

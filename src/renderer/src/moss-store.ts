@@ -2176,11 +2176,7 @@ export class MossStore {
   broadcastLocaleChange(locale: string) {
     // Send to all applet iframes in main window
     this.appletChannel.broadcast('all', { type: 'locale-change', locale });
-    // Also broadcast to WAL windows. The main window's registry lists the
-    // applets of their frames too, so name every one of them.
-    window.electronAPI.parentToAppletMessage(
-      { type: 'locale-change', locale },
-      Object.keys(this.iframeStore.appletIframes),
-    );
+    // Also broadcast to all applet iframes in WAL windows
+    window.electronAPI.parentToAppletMessage({ type: 'locale-change', locale }, 'all');
   }
 }
