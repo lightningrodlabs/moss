@@ -13,7 +13,6 @@ import {
   type RecordInfo,
   type PeerStatusUpdate,
   type IframeKind,
-  type AppletToParentMessage,
   MossAccountability,
   MossRole,
 } from '@theweave/api';
@@ -38,13 +37,10 @@ import { MossStore } from '../moss-store.js';
 // import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId, stringifyWal } from '@theweave/api';
 import {
-  getAppletIdFromOrigin,
-  getToolCompatibilityIdFromOrigin,
   openWalInWindow,
   validateNotifications,
 } from '../utils.js';
-import { assertValidRequest } from './request-validation.js';
-import { hostTimeoutMessage, type IframeReadiness } from './host-timeout.js';
+import type { AppletChannel } from './applet-channel/applet-channel.js';
 import { AppletStore } from './applet-store.js';
 import { getAsrRendererBridge, type SessionOrigin } from './asr-bridge.js';
 import { resolveAppletName } from './applet-name.js';
@@ -53,84 +49,6 @@ import { appIdFromAppletHash, toolCompatibilityIdFromDistInfoString } from '@the
 import { GroupStore } from '../groups/group-store.js';
 import { HrlLocation } from '../processes/hrl/locate-hrl.js';
 import { getLocale } from '../locales/localization.js';
-
-export function getIframeKind(
-  message: MessageEvent<AppletToParentMessage>,
-  isAppletDev: boolean,
-): IframeKind | undefined {
-  let receivedFromSource: IframeKind;
-
-  if (message.origin.startsWith('applet://')) {
-    const appletId = getAppletIdFromOrigin(message.origin);
-    receivedFromSource = {
-      type: 'applet',
-      appletHash: decodeHashFromBase64(appletId),
-      groupHash: message.data.source.type === 'applet' ? message.data.source.groupHash : null,
-      subType: message.data.source.subType,
-    };
-  } else if (message.origin.startsWith('cross-group://')) {
-    const toolCompatibilityId = getToolCompatibilityIdFromOrigin(message.origin);
-    receivedFromSource = {
-      type: 'cross-group',
-      toolCompatibilityId,
-      subType: message.data.source.subType,
-    };
-  } else if (
-    (message.origin.startsWith('http://127.0.0.1') ||
-      message.origin.startsWith('http://localhost')) &&
-    isAppletDev
-  ) {
-    // in dev mode trust the applet about what it claims
-    receivedFromSource = message.data.source;
-  } else if (message.origin.startsWith('default-app://')) {
-    // There is another message handler for those messages in moss-app.ts.
-    return undefined;
-  } else {
-    throw new Error(`Received message from applet with invalid origin: ${message.origin}`);
-  }
-  return receivedFromSource;
-}
-
-export function appletMessageHandler(
-  mossStore: MossStore,
-  openViews: AppOpenViews,
-): (message: MessageEvent<AppletToParentMessage>) => Promise<void> {
-  return async (message) => {
-    try {
-      // The preload relays grant ports into this page with window.postMessage;
-      // those are this window's own messages, never an applet's.
-      if (message.source === window) return;
-
-      let receivedFromSource = getIframeKind(message, mossStore.isAppletDev);
-      if (!receivedFromSource) return; // This is the case for the 'default-app://' protocol which needs to be handled elsewhere
-
-      const result = await handleAppletIframeMessage(
-        mossStore,
-        openViews,
-        receivedFromSource,
-        message.data.request,
-        message.source,
-      );
-      if (result instanceof TransferableReply) {
-        message.ports[0].postMessage({ type: 'success', result: result.result }, result.transfer);
-      } else {
-        message.ports[0].postMessage({ type: 'success', result });
-      }
-    } catch (e) {
-      console.error('Error while handling applet iframe message. Error: ', e, 'Message: ', message);
-      console.log(
-        'Source: ',
-        message.data.source.type === 'applet'
-          ? {
-              type: 'applet',
-              appletId: encodeHashToBase64(message.data.source.appletHash),
-            }
-          : message.data.source,
-      );
-      message.ports[0].postMessage({ type: 'error', error: (e as any).message });
-    }
-  };
-}
 
 export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
   return {
@@ -382,8 +300,6 @@ export async function handleAppletIframeMessage(
    */
   senderWebContentsId?: number,
 ) {
-  assertValidRequest(message);
-
   const weaveServices = buildHeadlessWeaveClient(mossStore);
 
   switch (message.type) {
@@ -1164,19 +1080,8 @@ export async function handleAppletIframeMessage(
       return;
     }
     case 'ready':
-      // The iframe reports readiness once its ParentToApplet handlers are
-      // registered, so the host can avoid posting into a window that is unable
-      // to answer yet.
-      if (eventSource) {
-        if (source.type === 'cross-group') {
-          mossStore.iframeStore.markCrossGroupIframeReady(source.toolCompatibilityId, eventSource);
-        } else {
-          mossStore.iframeStore.markAppletIframeReady(
-            encodeHashToBase64(source.appletHash),
-            eventSource,
-          );
-        }
-      }
+      // The applet channel of the window that hosts a frame consumes its ready
+      // report. A report relayed from a WAL window has no use here.
       return;
     case 'search':
       // Declared in AppletToParentRequest but not sent by any current applet, so
@@ -1202,7 +1107,7 @@ export class AppletHost {
   constructor(
     public source: MessageEventSource,
     appletId: AppletId,
-    public readiness: IframeReadiness,
+    private channel: AppletChannel,
   ) {
     this.appletId = appletId;
   }
@@ -1229,29 +1134,8 @@ export class AppletHost {
     });
   }
 
-  async postMessage<T>(message: ParentToAppletMessage, timeoutMs = 20000) {
-    return new Promise<T>((resolve, reject) => {
-      const { port1, port2 } = new MessageChannel();
-
-      const timeout = setTimeout(() => {
-        port1.close();
-        reject(
-          new Error(hostTimeoutMessage(message.type, this.appletId, timeoutMs, this.readiness)),
-        );
-      }, timeoutMs);
-
-      this.source.postMessage(message, { targetOrigin: '*', transfer: [port2] });
-
-      port1.onmessage = (m) => {
-        clearTimeout(timeout);
-        port1.close();
-        if (m.data.type === 'success') {
-          resolve(m.data.result);
-        } else if (m.data.type === 'error') {
-          reject(m.data.error);
-        }
-      };
-    });
+  postMessage<T>(message: ParentToAppletMessage): Promise<T> {
+    return this.channel.request<T>(this.source, message, { appletId: this.appletId });
   }
 }
 

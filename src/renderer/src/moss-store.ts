@@ -128,6 +128,7 @@ import { AssetViewerState, DashboardState } from './app/main-dashboard.js';
 import { PersistedStore, SectionReadStates } from './persisted-store.js';
 import { MossCache } from './cache.js';
 import { compareVersions } from 'compare-versions';
+import { AppletChannel } from './applets/applet-channel/applet-channel.js';
 import { IframeStore } from './iframe-store.js';
 import { notificationAudio } from './services/notification-audio.js';
 
@@ -254,6 +255,12 @@ export class MossStore {
    */
 
   iframeStore = new IframeStore();
+
+  appletChannel = new AppletChannel({
+    registry: this.iframeStore,
+    isAppletDev: () => this.isAppletDev,
+    ownWindow: window,
+  });
 
   /**
    * --------------------------------------------------------------------------
@@ -1731,7 +1738,7 @@ export class MossStore {
           this.conductorInfo,
           token,
           this.isAppletDev,
-          this.iframeStore,
+          this.appletChannel,
         ),
       );
     }),
@@ -2158,7 +2165,7 @@ export class MossStore {
 
   async emitParentToAppletMessage(message: ParentToAppletMessage, forApplets: AppletId[]) {
     // Send to iframes of main window
-    this.iframeStore.postMessageToAppletIframes({ type: 'some', ids: forApplets }, message);
+    this.appletChannel.broadcast(forApplets, message);
     // Send to iframes of WAL windows
     return window.electronAPI.parentToAppletMessage(message, forApplets);
   }
@@ -2168,8 +2175,8 @@ export class MossStore {
    */
   broadcastLocaleChange(locale: string) {
     // Send to all applet iframes in main window
-    this.iframeStore.postMessageToAppletIframes({ type: 'all' }, { type: 'locale-change', locale });
-    // Also broadcast to WAL windows
-    window.electronAPI.parentToAppletMessage({ type: 'locale-change', locale }, []);
+    this.appletChannel.broadcast('all', { type: 'locale-change', locale });
+    // Also broadcast to all applet iframes in WAL windows
+    window.electronAPI.parentToAppletMessage({ type: 'locale-change', locale }, 'all');
   }
 }

@@ -48,6 +48,16 @@ export default defineConfig({
           selectmediasource: resolve(__dirname, 'src/renderer/selectmediasource.html'),
           walwindow: resolve(__dirname, 'src/renderer/walwindow.html'),
         },
+        output: {
+          // why: index.html sets the locale before it imports moss-app, and
+          // moss-app imports the same localization module. Inlined into the
+          // admin entry chunk, that module makes moss-app import from an entry
+          // that is still waiting for moss-app, and the window never boots.
+          manualChunks(id) {
+            if (id.endsWith('/src/renderer/src/locales/localization.ts')) return 'localization';
+            return undefined;
+          },
+        },
       },
     },
     plugins: [

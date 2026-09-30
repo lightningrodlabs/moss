@@ -66,7 +66,7 @@ declare global {
       appletMessageToParentResponse: (response: AppletHostResponse, id: string) => Promise<void>;
       parentToAppletMessage: (
         message: ParentToAppletMessage,
-        forApplets: AppletId[],
+        forApplets: 'all' | AppletId[],
       ) => Promise<void>;
       dialogMessagebox: (
         options: Electron.MessageBoxOptions,
