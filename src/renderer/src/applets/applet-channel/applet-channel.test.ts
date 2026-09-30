@@ -22,6 +22,17 @@ class FakeFrame {
   }
 }
 
+/**
+ * An applet frame as the host sees it: cross-origin, so reading most of its
+ * properties throws, as Chromium does for a cross-origin WindowProxy.
+ */
+class CrossOriginFrame extends FakeFrame {
+  closed = false;
+  get name(): string {
+    throw new Error('SecurityError: Blocked a frame from accessing a cross-origin frame.');
+  }
+}
+
 function registryWith(frames: Array<{ appletId: string; subType: string; source: unknown }>) {
   const registry: FrameRegistry = { appletIframes: {} };
   for (const f of frames) {
@@ -285,14 +296,15 @@ describe('AppletChannel: broadcasts', () => {
     expect(frame.posted).toEqual([signal1, signal2]);
   });
 
-  it('does not hold the unload message for a frame that is not ready', () => {
-    const frame = new FakeFrame();
+  it('does not hold messages for a frame whose window was closed', () => {
+    const removed = new CrossOriginFrame();
+    removed.closed = true;
     const channel = newChannel(
-      registryWith([{ appletId: APPLET_ID, subType: 'main', source: frame }]),
+      registryWith([{ appletId: APPLET_ID, subType: 'main', source: removed }]),
     );
-    channel.broadcast('all', { type: 'on-before-unload' });
-    channel.markReady(frame as unknown as MessageEventSource);
-    expect(frame.posted).toEqual([]);
+    channel.broadcast('all', locale);
+    channel.markReady(removed as unknown as MessageEventSource);
+    expect(removed.posted).toEqual([]);
   });
 
   it('drops the oldest held message past the cap', () => {
@@ -335,10 +347,14 @@ describe('AppletChannel: requests to frames', () => {
     frame.answer = (_m, port) => port.postMessage({ type: 'success', result: 42 });
     const channel = newChannel();
     expect(
-      await channel.request(frame as unknown as MessageEventSource, {
-        type: 'search',
-        filter: 'x',
-      }),
+      await channel.request(
+        frame as unknown as MessageEventSource,
+        {
+          type: 'search',
+          filter: 'x',
+        },
+        { appletId: APPLET_ID },
+      ),
     ).toBe(42);
   });
 
@@ -347,17 +363,25 @@ describe('AppletChannel: requests to frames', () => {
     frame.answer = (_m, port) => port.postMessage({ type: 'error', error: 'boom' });
     const channel = newChannel();
     await expect(
-      channel.request(frame as unknown as MessageEventSource, { type: 'search', filter: 'x' }),
+      channel.request(
+        frame as unknown as MessageEventSource,
+        { type: 'search', filter: 'x' },
+        { appletId: APPLET_ID },
+      ),
     ).rejects.toThrow('boom');
   });
 
   it('times out and says the frame never reported ready when it did not', async () => {
     const channel = newChannel();
     await expect(
-      channel.request(new FakeFrame() as unknown as MessageEventSource, {
-        type: 'search',
-        filter: 'x',
-      }),
+      channel.request(
+        new FakeFrame() as unknown as MessageEventSource,
+        {
+          type: 'search',
+          filter: 'x',
+        },
+        { appletId: APPLET_ID },
+      ),
     ).rejects.toThrow('never reported that it was ready');
   });
 
@@ -366,8 +390,48 @@ describe('AppletChannel: requests to frames', () => {
     const channel = newChannel();
     channel.markReady(frame as unknown as MessageEventSource);
     await expect(
-      channel.request(frame as unknown as MessageEventSource, { type: 'search', filter: 'x' }),
+      channel.request(
+        frame as unknown as MessageEventSource,
+        { type: 'search', filter: 'x' },
+        { appletId: APPLET_ID },
+      ),
     ).rejects.toThrow("stalled inside the Tool's own handler");
+  });
+
+  it('rejects on timeout for a cross-origin frame, naming the applet', async () => {
+    const channel = newChannel();
+    await expect(
+      channel.request(
+        new CrossOriginFrame() as unknown as MessageEventSource,
+        { type: 'search', filter: 'x' },
+        { appletId: APPLET_ID },
+      ),
+    ).rejects.toThrow(`to applet ${APPLET_ID} timed out`);
+  });
+
+  it('finishes waiting for all frames when a ready cross-origin frame never answers', async () => {
+    const silent = new CrossOriginFrame();
+    const channel = newChannel(
+      registryWith([{ appletId: APPLET_ID, subType: 'main', source: silent }]),
+    );
+    channel.markReady(silent as unknown as MessageEventSource);
+    await expect(
+      channel.requestAll('all', { type: 'on-before-unload' }, 20),
+    ).resolves.toBeUndefined();
+  });
+
+  it('skips and forgets a ready frame whose window was closed, without waiting for it', async () => {
+    const removed = new CrossOriginFrame();
+    const channel = newChannel(
+      registryWith([{ appletId: APPLET_ID, subType: 'main', source: removed }]),
+    );
+    channel.markReady(removed as unknown as MessageEventSource);
+    removed.closed = true;
+    const started = Date.now();
+    await channel.requestAll('all', { type: 'on-before-unload' }, 1000);
+    expect(Date.now() - started).toBeLessThan(500);
+    expect(removed.posted).toEqual([]);
+    expect(channel.isReady(removed as unknown as MessageEventSource)).toBe(false);
   });
 
   it('waits for every ready frame to answer, and skips frames that are not ready', async () => {

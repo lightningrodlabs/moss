@@ -1135,7 +1135,7 @@ export class AppletHost {
   }
 
   postMessage<T>(message: ParentToAppletMessage): Promise<T> {
-    return this.channel.request<T>(this.source, message);
+    return this.channel.request<T>(this.source, message, { appletId: this.appletId });
   }
 }
 

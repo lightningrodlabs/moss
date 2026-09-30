@@ -162,33 +162,36 @@ export class AppletChannel {
 
   /**
    * Sends a message to every frame of the given applets that this window hosts.
-   * A frame that is not ready gets the message when it becomes ready, except
-   * the unload message: a frame that is not ready has nothing to save.
+   * A frame that is not ready gets the message when it becomes ready.
    */
   broadcast(appletIds: 'all' | AppletId[], message: ParentToAppletMessage): void {
-    for (const source of this.hostedFrames(appletIds)) {
+    for (const { source } of this.hostedFrames(appletIds)) {
       if (this.isReady(source)) {
         post(source, message);
-      } else if (message.type !== 'on-before-unload') {
+      } else {
         this.hold(source, message);
       }
     }
   }
 
-  /** Sends a request to one frame and resolves with its answer. */
+  /** Sends a request to one frame of the given applet and resolves with its answer. */
   request<T>(
     source: MessageEventSource,
     message: ParentToAppletMessage,
-    timeoutMs = this.requestTimeoutMs,
+    options: { appletId: AppletId; timeoutMs?: number },
   ): Promise<T> {
-    const readiness = this.isReady(source) ? 'reported' : 'assumed';
+    const timeoutMs = options.timeoutMs ?? this.requestTimeoutMs;
+    const timeoutText = hostTimeoutMessage(
+      message.type,
+      options.appletId,
+      timeoutMs,
+      this.isReady(source) ? 'reported' : 'assumed',
+    );
     return new Promise<T>((resolve, reject) => {
       const { port1, port2 } = new MessageChannel();
       const timeout = setTimeout(() => {
         port1.close();
-        reject(
-          new Error(hostTimeoutMessage(message.type, frameName(source), timeoutMs, readiness)),
-        );
+        reject(new Error(timeoutText));
       }, timeoutMs);
       port1.onmessage = (m) => {
         clearTimeout(timeout);
@@ -209,8 +212,10 @@ export class AppletChannel {
     message: ParentToAppletMessage,
     timeoutMs = this.requestTimeoutMs,
   ): Promise<void> {
-    const ready = this.hostedFrames(appletIds).filter((source) => this.isReady(source));
-    await Promise.allSettled(ready.map((source) => this.request(source, message, timeoutMs)));
+    const ready = this.hostedFrames(appletIds).filter(({ source }) => this.isReady(source));
+    await Promise.allSettled(
+      ready.map(({ source, appletId }) => this.request(source, message, { appletId, timeoutMs })),
+    );
   }
 
   private forget(source: MessageEventSource): void {
@@ -245,13 +250,28 @@ export class AppletChannel {
     return entry?.source as MessageEventSource | undefined;
   }
 
-  private hostedFrames(appletIds: 'all' | AppletId[]): MessageEventSource[] {
+  /**
+   * The frames of the given applets that this window hosts and that still
+   * exist. A frame removed from the page without unregistering keeps its
+   * registry entry, but its window reports closed; the channel forgets it.
+   */
+  private hostedFrames(
+    appletIds: 'all' | AppletId[],
+  ): Array<{ source: MessageEventSource; appletId: AppletId }> {
     const registry = this.options.registry.appletIframes;
     const ids = appletIds === 'all' ? Object.keys(registry) : appletIds;
-    return ids
-      .flatMap((id) => registry[id] ?? [])
-      .map((info) => info.source)
-      .filter(isHostedSource);
+    const frames: Array<{ source: MessageEventSource; appletId: AppletId }> = [];
+    for (const appletId of ids) {
+      for (const { source } of registry[appletId] ?? []) {
+        if (!isHostedSource(source)) continue;
+        if (isClosed(source)) {
+          this.forget(source);
+          continue;
+        }
+        frames.push({ source, appletId });
+      }
+    }
+    return frames;
   }
 }
 
@@ -269,6 +289,11 @@ function post(
   (source as Window).postMessage(message, { targetOrigin: '*', transfer });
 }
 
-function frameName(source: MessageEventSource): string {
-  return (source as { name?: string }).name || 'frame';
+/** Whether a frame's window is gone. `closed` is readable across origins. */
+function isClosed(source: MessageEventSource): boolean {
+  try {
+    return (source as Window).closed === true;
+  } catch {
+    return false;
+  }
 }
