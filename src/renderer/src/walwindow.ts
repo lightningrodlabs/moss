@@ -7,8 +7,10 @@ import {
   AppletId,
   AppletInfo,
   AppletToParentMessage,
+  AppletToParentRequest,
   AssetLocationAndInfo,
   GroupProfile,
+  IframeKind,
   ParentToAppletMessage,
   WAL,
 } from '@theweave/api';
@@ -33,7 +35,7 @@ import { TransferableReply } from './transferable-reply.js';
 
 type ParentToAppletMessagePayload = {
   message: ParentToAppletMessage;
-  forApplets: AppletId[];
+  forApplets: 'all' | AppletId[];
 };
 
 // IPC_CHANGE here
@@ -77,6 +79,25 @@ declare global {
 }
 
 const walWindow = window as unknown as WALWindow;
+
+/**
+ * Relays a request that the person answers in the main window: brings the main
+ * window forward for the choice, then returns focus to this WAL window.
+ */
+async function relayWithMainWindowFocus(
+  request: AppletToParentRequest,
+  source: IframeKind,
+  failureLabel: string,
+): Promise<unknown> {
+  await walWindow.electronAPI.focusMainWindow();
+  try {
+    return await walWindow.electronAPI.appletMessageToParent({ request, source });
+  } catch (e) {
+    throw new Error(`${failureLabel}: ${e}`);
+  } finally {
+    await walWindow.electronAPI.focusMyWindow();
+  }
+}
 
 @localized()
 @customElement('wal-window')
@@ -204,40 +225,14 @@ export class WalWindow extends LitElement {
         }
         case 'request-close':
           return walWindow.electronAPI.closeWindow();
-        case 'user-select-asset': {
-          await walWindow.electronAPI.focusMainWindow();
-          let error;
-          let response;
-          const appletToParentMessage: AppletToParentMessage = {
+        case 'user-select-asset':
+          return relayWithMainWindowFocus(request, derivedSource, 'Failed to select WAL');
+        case 'user-select-asset-relation-tag':
+          return relayWithMainWindowFocus(
             request,
-            source: derivedSource,
-          };
-          try {
-            response = await walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
-          } catch (e) {
-            error = e;
-          }
-          await walWindow.electronAPI.focusMyWindow();
-          if (error) return Promise.reject(`Failed to select WAL: ${error}`);
-          return response;
-        }
-        case 'user-select-asset-relation-tag': {
-          await walWindow.electronAPI.focusMainWindow();
-          let error;
-          let response;
-          const appletToParentMessage: AppletToParentMessage = {
-            request,
-            source: derivedSource,
-          };
-          try {
-            response = await walWindow.electronAPI.appletMessageToParent(appletToParentMessage);
-          } catch (e) {
-            error = e;
-          }
-          await walWindow.electronAPI.focusMyWindow();
-          if (error) return Promise.reject(`Failed to select asset relation tag: ${error}`);
-          return response;
-        }
+            derivedSource,
+            'Failed to select asset relation tag',
+          );
         case 'get-iframe-config': {
           if (iframeKind.type === 'cross-group') {
             this.iframeStore.registerCrossGroupIframe(iframeKind.toolCompatibilityId, {

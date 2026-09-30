@@ -14,11 +14,10 @@ import { FIXTURE_TOOL_TITLE } from '../fixtures/toolCuration';
 /**
  * Smoke #13 — A language change reaches applet views in WAL windows.
  *
- * why: Moss sends a locale change to the applet frames of the main window
- * directly and to WAL windows over IPC, naming the applets whose frames should
- * receive it. The WAL-window leg once named no applets, so frames in WAL
- * windows kept the old locale. The example applet shows the locale a view
- * holds on its host element (data-weave-locale).
+ * why: a locale change must reach every applet view, including views in WAL
+ * windows, which Moss reaches over IPC rather than directly. The example
+ * applet shows the locale a view holds on its host element
+ * (data-weave-locale).
  */
 const GROUP_NAME = 'WAL Locale';
 

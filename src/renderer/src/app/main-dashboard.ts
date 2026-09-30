@@ -584,7 +584,6 @@ export class MainDashboard extends LitElement {
       console.log('on-before-unload callbacks finished.');
       window.removeEventListener('beforeunload', this.beforeUnloadListener);
       // The logic to set this variable lives in index.html
-      window.location.reload();
       if ((window as any).__WINDOW_CLOSING__) {
         console.log('__WINDOW_CLOSING__ is true');
         window.electronAPI.closeMainWindow();
