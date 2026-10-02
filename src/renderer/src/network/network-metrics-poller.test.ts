@@ -106,4 +106,33 @@ describe('NetworkMetricsPoller', () => {
     await Promise.all([first, second]);
     expect(calls).toHaveLength(1);
   });
+
+  it('keeps polling other apps while one app is slow to answer', async () => {
+    const pending: Array<() => void> = [];
+    const calls: string[] = [];
+    const poller = new NetworkMetricsPoller(
+      async (appId) => ({
+        dumpNetworkMetrics: async () => {
+          calls.push(appId);
+          if (appId === 'slow') await new Promise<void>((r) => pending.push(r));
+          return DUMP;
+        },
+      }),
+      () => () => {},
+      2000,
+    );
+    const fast = vi.fn();
+    poller.subscribe('slow', { includeDhtSummary: false }, () => {});
+    poller.subscribe('fast', { includeDhtSummary: false }, fast);
+    const flush = () => new Promise<void>((r) => setTimeout(r, 0));
+    void poller.tick();
+    await flush();
+    expect(fast).toHaveBeenCalledTimes(1);
+    void poller.tick();
+    await flush();
+    expect(fast).toHaveBeenCalledTimes(2);
+    // The slow app is asked once, not again while its first call is open
+    expect(calls.filter((c) => c === 'slow')).toHaveLength(1);
+    pending.forEach((r) => r());
+  });
 });

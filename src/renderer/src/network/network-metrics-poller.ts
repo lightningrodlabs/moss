@@ -23,7 +23,8 @@ interface Subscription {
 export class NetworkMetricsPoller {
   private _subscriptions = new Map<InstalledAppId, Set<Subscription>>();
   private _stopTimer: (() => void) | undefined;
-  private _ticking: Promise<void> | undefined;
+  /** Apps whose call is still open; they sit out ticks until it returns. */
+  private _inFlight = new Set<InstalledAppId>();
 
   constructor(
     private _getSource: (appId: InstalledAppId) => Promise<MetricsSource>,
@@ -46,7 +47,11 @@ export class NetworkMetricsPoller {
     forApp.add(subscription);
     this._subscriptions.set(appId, forApp);
     if (!this._stopTimer) {
-      this._stopTimer = this._startTimer(() => this.tick(), this._intervalMs);
+      // The timer does not wait for slow apps, so one slow app never delays the others
+      this._stopTimer = this._startTimer(() => {
+        void this.tick();
+        return Promise.resolve();
+      }, this._intervalMs);
     }
     return () => {
       forApp.delete(subscription);
@@ -58,31 +63,31 @@ export class NetworkMetricsPoller {
     };
   }
 
-  /** Polls every watched app once. A tick requested while one runs joins it. */
+  /**
+   * Polls each watched app once, skipping any app whose previous call has
+   * not returned yet. Resolves when the calls started by this tick finish.
+   */
   tick(): Promise<void> {
-    if (!this._ticking) {
-      this._ticking = this._pollAll().finally(() => {
-        this._ticking = undefined;
-      });
-    }
-    return this._ticking;
+    const polls = Array.from(this._subscriptions.entries())
+      .filter(([appId]) => !this._inFlight.has(appId))
+      .map(([appId, forApp]) => this._pollApp(appId, forApp));
+    return Promise.all(polls).then(() => undefined);
   }
 
-  private async _pollAll(): Promise<void> {
-    await Promise.all(
-      Array.from(this._subscriptions.entries()).map(async ([appId, forApp]) => {
-        const includeDhtSummary = Array.from(forApp).some((s) => s.includeDhtSummary);
-        try {
-          const source = await this._getSource(appId);
-          const metrics = await source.dumpNetworkMetrics({
-            include_dht_summary: includeDhtSummary,
-          });
-          // Only views still subscribed when the answer arrives receive it
-          for (const s of Array.from(forApp)) s.onMetrics(metrics);
-        } catch (e) {
-          for (const s of Array.from(forApp)) s.onError?.(e);
-        }
-      }),
-    );
+  private async _pollApp(appId: InstalledAppId, forApp: Set<Subscription>): Promise<void> {
+    this._inFlight.add(appId);
+    const includeDhtSummary = Array.from(forApp).some((s) => s.includeDhtSummary);
+    try {
+      const source = await this._getSource(appId);
+      const metrics = await source.dumpNetworkMetrics({
+        include_dht_summary: includeDhtSummary,
+      });
+      // Only views still subscribed when the answer arrives receive it
+      for (const s of Array.from(forApp)) s.onMetrics(metrics);
+    } catch (e) {
+      for (const s of Array.from(forApp)) s.onError?.(e);
+    } finally {
+      this._inFlight.delete(appId);
+    }
   }
 }
