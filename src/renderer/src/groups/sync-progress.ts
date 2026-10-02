@@ -13,7 +13,6 @@ export type SyncStage = 'no-peers' | 'found' | 'unreachable' | 'connected';
 /** Gossip counters per peer at the first snapshot, so history from before this session is ignored. */
 interface PeerBaseline {
   rounds: number;
-  lastGossipAt: number | undefined;
 }
 
 interface SessionBaseline {
@@ -33,8 +32,8 @@ export interface SyncProgress {
   activeRounds: number;
   /** Failed sync attempts during this session (timeouts and errors). */
   failedAttempts: number;
-  /** Most recent gossip with any peer, in ms since epoch, including earlier sessions. */
-  lastGossipAt: number | undefined;
+  /** Most recent gossip attempt with any peer, in ms since epoch, successful or not. */
+  lastAttemptAt: number | undefined;
   /** Last time data visibly arrived during this session, in ms since epoch. */
   lastDataAt: number | undefined;
   /** Last time this session saw a successful round, in ms since epoch. */
@@ -73,13 +72,7 @@ export function deriveSyncProgress(input: {
           opCount: localOpCount,
           failures,
           peers: Object.fromEntries(
-            livePeers.map(([url, m]) => [
-              url,
-              {
-                rounds: m.completed_rounds ?? 0,
-                lastGossipAt: microsToMs(m.last_gossip_timestamp),
-              },
-            ]),
+            livePeers.map(([url, m]) => [url, { rounds: m.completed_rounds ?? 0 }]),
           ),
         }
       : undefined);
@@ -87,14 +80,8 @@ export function deriveSyncProgress(input: {
   // Only rounds a peer opened with us prove contact. Our own initiated round is
   // just an attempt: kitsune2 keeps one open for up to 15 s, even to a peer that is gone.
   const roundPeers = new Set((gossip?.accepted_rounds ?? []).map((r) => r.session_with_peer));
-  const contactedThisSession = (url: string, m: PeerMetaWithCounts) => {
-    const base = baseline?.peers[url];
-    const lastGossipAt = microsToMs(m.last_gossip_timestamp);
-    return (
-      (m.completed_rounds ?? 0) > (base?.rounds ?? 0) ||
-      (lastGossipAt !== undefined && lastGossipAt > (base?.lastGossipAt ?? 0))
-    );
-  };
+  const contactedThisSession = (url: string, m: PeerMetaWithCounts) =>
+    (m.completed_rounds ?? 0) > (baseline?.peers[url]?.rounds ?? 0);
   const peersConnected = livePeers.filter(
     ([url, m]) => roundPeers.has(url) || contactedThisSession(url, m),
   ).length;
@@ -103,13 +90,13 @@ export function deriveSyncProgress(input: {
   const gossipTimes = livePeers
     .map(([, m]) => microsToMs(m.last_gossip_timestamp))
     .filter((t): t is number => t !== undefined);
-  const lastGossipAt = gossipTimes.length > 0 ? Math.max(...gossipTimes) : undefined;
+  // kitsune2 stamps this when it starts a round, before knowing whether the peer answers
+  const lastAttemptAt = gossipTimes.length > 0 ? Math.max(...gossipTimes) : undefined;
 
-  // Successes and failures only count once they happen after the first snapshot
+  // Contact means a peer has a session open with us now, or a round completed
+  // after the first snapshot; earlier completed rounds are history
   const succeeded =
-    previous !== undefined &&
-    (totalRounds > previous.totalRounds ||
-      (lastGossipAt !== undefined && lastGossipAt > (previous.lastGossipAt ?? 0)));
+    roundPeers.size > 0 || (previous !== undefined && totalRounds > previous.totalRounds);
   const failed = previous !== undefined && failures > previous.totalFailures;
   const lastSuccessAt = succeeded ? now : previous?.lastSuccessAt;
   const lastFailureAt = failed ? now : previous?.lastFailureAt;
@@ -144,7 +131,7 @@ export function deriveSyncProgress(input: {
     pendingFetches,
     activeRounds,
     failedAttempts: baseline ? Math.max(0, failures - baseline.failures) : 0,
-    lastGossipAt,
+    lastAttemptAt,
     lastDataAt,
     lastSuccessAt,
     lastFailureAt,

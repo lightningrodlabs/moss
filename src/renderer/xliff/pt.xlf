@@ -3115,10 +3115,6 @@ começa agora</target>
   <source>Active sync sessions</source>
   <target>Sessões de sincronização ativas</target>
 </trans-unit>
-<trans-unit id="sb90cbaac002c7f8c">
-  <source>Last sync</source>
-  <target>Última sincronização</target>
-</trans-unit>
 <trans-unit id="sc11bb51cbf821afc">
   <source>Last data received <x id="0" equiv-text="${this.agoText(elapsedSince(p.lastDataAt, this._now))}"/></source>
   <target>Últimos dados recebidos <x id="0" equiv-text="${this.agoText(elapsed)}"/></target>
@@ -3178,6 +3174,14 @@ começa agora</target>
 <trans-unit id="s82a4e28ab5b56670">
   <source>Connected</source>
   <target>Conectado</target>
+</trans-unit>
+<trans-unit id="sb5c9eee686336a9d">
+  <source>Last contact</source>
+  <target>Último contato</target>
+</trans-unit>
+<trans-unit id="s43d27dde5ebe94c8">
+  <source>Last attempt</source>
+  <target>Última tentativa</target>
 </trans-unit>
 </body>
 </file>

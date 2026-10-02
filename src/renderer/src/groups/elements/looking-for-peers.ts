@@ -260,8 +260,11 @@ export class LookingForPeers extends LitElement {
           ${p.dataReceived !== undefined ? row(msg('Data received'), p.dataReceived) : ''}
           ${row(msg('Items downloading'), p.pendingFetches)}
           ${row(msg('Active sync sessions'), p.activeRounds)}
-          ${p.lastGossipAt !== undefined
-            ? row(msg('Last sync'), this.agoText(elapsedSince(p.lastGossipAt, this._now)))
+          ${p.lastSuccessAt !== undefined
+            ? row(msg('Last contact'), this.agoText(elapsedSince(p.lastSuccessAt, this._now)))
+            : ''}
+          ${p.lastAttemptAt !== undefined
+            ? row(msg('Last attempt'), this.agoText(elapsedSince(p.lastAttemptAt, this._now)))
             : ''}
           ${p.failedAttempts > 0 ? row(msg('Failed attempts'), p.failedAttempts) : ''}
         </div>

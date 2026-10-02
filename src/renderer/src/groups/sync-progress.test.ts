@@ -87,7 +87,7 @@ describe('deriveSyncProgress stages', () => {
     expect(p.peersConnected).toBe(1);
   });
 
-  it('is connected once the gossip time moves forward during this session', () => {
+  it('does not treat a newer gossip time as contact, since kitsune2 sets it on every attempt', () => {
     const first = step(
       undefined,
       metrics({ peers: { a: { last_gossip_timestamp: (NOW - 60_000) * 1000 } } }),
@@ -98,7 +98,16 @@ describe('deriveSyncProgress stages', () => {
       metrics({ peers: { a: { last_gossip_timestamp: (NOW + 1000) * 1000 } } }),
       NOW + 2000,
     );
-    expect(p.stage).toBe('connected');
+    expect(p.stage).toBe('found');
+    expect(p.peersConnected).toBe(0);
+    expect(p.lastSuccessAt).toBeUndefined();
+    expect(p.lastAttemptAt).toBe(NOW + 1000);
+  });
+
+  it('records contact time while a peer has a session open with us', () => {
+    const first = step(undefined, metrics({ peers: { a: {} } }), NOW);
+    const p = step(first, metrics({ peers: { a: {} }, roundsWith: ['a'] }), NOW + 2000);
+    expect(p.lastSuccessAt).toBe(NOW + 2000);
   });
 
   it('is unreachable when attempts this session fail and none succeed', () => {
@@ -204,7 +213,7 @@ describe('deriveSyncProgress data', () => {
       metrics({ peers: { a: { last_gossip_timestamp: (NOW - 9000) * 1000 } } }),
       NOW,
     );
-    expect(p.lastGossipAt).toBe(NOW - 9000);
+    expect(p.lastAttemptAt).toBe(NOW - 9000);
   });
 });
 
