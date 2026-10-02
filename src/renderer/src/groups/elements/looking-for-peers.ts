@@ -159,10 +159,11 @@ export class LookingForPeers extends LitElement {
       <sl-button
         variant="danger"
         @click=${() => this.dialog.show()}
-        style="position: absolute; top: 10px; right: 10px;"
+        style="position: absolute; top: 10px; right: 10px; z-index: 1;"
         >${msg('Leave Group')}
       </sl-button>
-      <div class="column center-content" style="flex: 1">
+      <div class="scroller">
+        <div class="column center-content content">
         ${telescopeIcon(120)}
         <div class="dot-carousel" style="margin-top: 20px; --carousel-color: black;"></div>
         ${this.renderStatus(withKnownPeers(this._progress, this._knownPeers.value ?? 0, this._now))}
@@ -171,6 +172,7 @@ export class LookingForPeers extends LitElement {
             this.groupStore.groupDnaHash,
           )}</pre></span
         >
+        </div>
       </div>
     `;
   }
@@ -263,6 +265,23 @@ export class LookingForPeers extends LitElement {
     mossStyles,
     serviceStyles,
     css`
+      :host {
+        position: relative;
+      }
+      /* Out of flow, so the screen never grows its ancestors; it scrolls
+         itself when the window is too short, for example with Details open */
+      .scroller {
+        position: absolute;
+        inset: 0;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      /* Centered while it fits; starts at the top once it scrolls */
+      .content {
+        margin: auto 0;
+        flex: none;
+      }
       .liveness {
         display: flex;
         align-items: center;
