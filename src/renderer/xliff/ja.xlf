@@ -3091,6 +3091,10 @@ starts now</source>
   <source>Finishing transcription</source>
   <target>文字起こしを完了しています</target>
 </trans-unit>
+<trans-unit id="sc989dc757c56431d">
+  <source>Enable Group</source>
+  <target>グループを有効にする</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

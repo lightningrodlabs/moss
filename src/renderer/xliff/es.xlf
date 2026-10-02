@@ -3091,6 +3091,10 @@ comienza ahora</target>
   <source>Finishing transcription</source>
   <target>Finalizando la transcripción</target>
 </trans-unit>
+<trans-unit id="sc989dc757c56431d">
+  <source>Enable Group</source>
+  <target>Activar grupo</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
