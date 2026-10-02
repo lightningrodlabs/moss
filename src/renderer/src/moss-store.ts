@@ -80,7 +80,9 @@ import {
   storeAppletNotifications,
   validateWal,
   onlineDebugLog,
+  safeSetInterval,
 } from './utils.js';
+import { NetworkMetricsPoller } from './network/network-metrics-poller.js';
 import { AppletStore } from './applets/applet-store.js';
 import { toolLibraryFetch } from './tool-library/library-fetch.js';
 import {
@@ -182,6 +184,21 @@ function getNotificationFeedEntryId({ source, notification }: MossNotification):
 }
 
 export class MossStore {
+  /** Shared dumpNetworkMetrics polling for the debugging panel and group sync screens. */
+  networkMetricsPoller = new NetworkMetricsPoller(
+    async (appId) => (await this.getAppClient(appId))[0],
+    (tick, intervalMs) => {
+      const handle = safeSetInterval({
+        name: 'networkMetricsPoller',
+        fn: tick,
+        intervalMs,
+        runImmediately: true,
+      });
+      return () => handle.cancel();
+    },
+    2000,
+  );
+
   constructor(
     public adminWebsocket: AdminWebsocket,
     public conductorInfo: ConductorInfo,

@@ -1,5 +1,5 @@
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
-import { pipe, StoreSubscriber } from '@holochain-open-dev/stores';
+import { pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
@@ -23,6 +23,12 @@ import { MossStore } from '../../moss-store.js';
 import { mossStyles } from '../../shared-styles.js';
 import { PersistedStore } from '../../persisted-store.js';
 import { plusIcon } from '../../ui/icons.js';
+import { amIPrivileged } from '../../groups/accountability-utils.js';
+import {
+  GroupContextAction,
+  groupContextMenuActions,
+  GroupSidebarStatus,
+} from './group-context-menu-items.js';
 
 @localized()
 @customElement('groups-sidebar')
@@ -61,7 +67,81 @@ export class GroupsSidebar extends LitElement {
   @state()
   dragged: DnaHashB64 | null = null;
 
+  @state()
+  _contextMenu:
+    | { groupDnaHash: DnaHash; actions: GroupContextAction[]; x: number; y: number }
+    | undefined;
+
   firstUpdated() {}
+
+  async openContextMenu(e: MouseEvent, groupDnaHash: DnaHash, status: GroupSidebarStatus) {
+    e.preventDefault();
+    const position = { x: e.clientX, y: e.clientY };
+    let privileged = false;
+    let hasMyProfile = false;
+    if (status === 'synced') {
+      try {
+        const groupStore = await this._mossStore.groupStore(groupDnaHash);
+        if (groupStore) {
+          hasMyProfile = !!(await toPromise(groupStore.profilesStore.myProfile));
+          privileged = amIPrivileged(await toPromise(groupStore.myAccountabilities));
+        }
+      } catch (err) {
+        console.warn('Failed to read my accountabilities for the group context menu: ', err);
+      }
+    }
+    const actions = groupContextMenuActions({ status, privileged, hasMyProfile });
+    if (actions.length === 0) return;
+    const menu = { groupDnaHash, actions, ...position };
+    this._contextMenu = menu;
+    const close = () => {
+      // A right-click on another group may already have replaced this menu
+      if (this._contextMenu === menu) this._contextMenu = undefined;
+      window.removeEventListener('click', close);
+      window.removeEventListener('contextmenu', close);
+    };
+    // Close on the next click or right-click anywhere
+    setTimeout(() => {
+      window.addEventListener('click', close);
+      window.addEventListener('contextmenu', close);
+    }, 0);
+  }
+
+  requestGroupAction(groupDnaHash: DnaHash, action: GroupContextAction) {
+    this._contextMenu = undefined;
+    this.dispatchEvent(
+      new CustomEvent('group-action-requested', {
+        detail: { groupDnaHash, action },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  renderContextMenu() {
+    if (!this._contextMenu) return html``;
+    const { groupDnaHash, actions, x, y } = this._contextMenu;
+    const labels: Record<GroupContextAction, string> = {
+      settings: msg('Settings'),
+      invite: msg('Invite People'),
+      leave: msg('Leave Group'),
+      enable: msg('Enable Group'),
+    };
+    return html`
+      <div class="context-menu" style="position: fixed; left: ${x}px; top: ${y}px; z-index: 10000;">
+        ${actions.map(
+          (action) => html`
+            <button
+              class="context-menu-item ${action === 'leave' ? 'danger' : ''}"
+              @click=${() => this.requestGroupAction(groupDnaHash, action)}
+            >
+              ${labels[action]}
+            </button>
+          `,
+        )}
+      </div>
+    `;
+  }
 
   renderGroups(
     groups: ReadonlyMap<DnaHash, GroupProfile | undefined>,
@@ -150,6 +230,7 @@ export class GroupsSidebar extends LitElement {
                   )}
                   .logoSrc=${groupProfile.icon_src}
                   .tooltipText=${groupProfile.name}
+                  @contextmenu=${(e: MouseEvent) => this.openContextMenu(e, groupDnaHash, 'synced')}
                   @click=${() => {
                     this.dispatchEvent(
                       new CustomEvent('group-selected', {
@@ -198,6 +279,7 @@ export class GroupsSidebar extends LitElement {
             .logoSrc=${wrapPathInSvg(mdiTimerSand)}
             .slIcon=${true}
             .tooltipText=${msg('Waiting for peers...')}
+            @contextmenu=${(e: MouseEvent) => this.openContextMenu(e, groupDnaHash, 'waiting')}
             @click=${() => {
               this.dispatchEvent(
                 new CustomEvent('group-selected', {
@@ -226,6 +308,7 @@ export class GroupsSidebar extends LitElement {
             .tooltipText=${groupProfile?.name
               ? `${groupProfile.name} (${msg('disabled')})`
               : msg('Disabled Group')}
+            @contextmenu=${(e: MouseEvent) => this.openContextMenu(e, groupDnaHash, 'disabled')}
             @click=${() => {
               this.dispatchEvent(
                 new CustomEvent('group-selected', {
@@ -287,7 +370,7 @@ export class GroupsSidebar extends LitElement {
   render() {
     return html`
       <div class="column sidebar">
-        ${this.renderGroupsLoading()}
+        ${this.renderGroupsLoading()} ${this.renderContextMenu()}
 
         <sl-tooltip placement="right" .content=${msg('Add Group')} hoist>
           <button class="add-group-button"
@@ -383,6 +466,34 @@ export class GroupsSidebar extends LitElement {
 
       .add-group-button:focus-visible {
         outline: 2px solid var(--moss-purple);
+      }
+
+      .context-menu {
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        padding: 4px 0;
+      }
+
+      .context-menu-item {
+        display: block;
+        width: 100%;
+        padding: 6px 16px;
+        border: none;
+        background: none;
+        text-align: left;
+        cursor: pointer;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .context-menu-item:hover {
+        background: #eff7ea;
+      }
+
+      .context-menu-item.danger {
+        color: var(--sl-color-danger-600);
       }
     `,
   ];

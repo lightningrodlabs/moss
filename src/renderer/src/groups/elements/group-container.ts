@@ -21,6 +21,7 @@ import { mdiPowerPlugOff } from '@mdi/js';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { AppletHash } from '@theweave/api';
 import { GroupHome } from './group-home.js';
+import type { GroupContextAction } from '../../app/navigation/group-context-menu-items.js';
 import { MyProfileSettings } from './settings/my-profile-settings.js';
 import { MossDialog } from '../../ui/moss-dialog.js';
 import '../../ui/moss-dialog.js';
@@ -57,6 +58,19 @@ export class GroupContainer extends LitElement {
       return this._dashboardState.value.appletHash;
     }
     return undefined;
+  }
+
+  public closeGroupActionDialogs(keep?: GroupContextAction): void {
+    this._groupHome?.closeGroupActionDialogs(keep);
+  }
+
+  public async requestGroupAction(action: GroupContextAction): Promise<void> {
+    await this.updateComplete;
+    if (action === 'enable') {
+      await this.enableGroup();
+      return;
+    }
+    await this._groupHome?.requestGroupAction(action);
   }
 
   async enableGroup() {

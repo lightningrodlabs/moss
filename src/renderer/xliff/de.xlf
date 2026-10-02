@@ -3091,6 +3091,98 @@ beginnt jetzt</target>
   <source>Finishing transcription</source>
   <target>Transkription wird abgeschlossen</target>
 </trans-unit>
+<trans-unit id="sc989dc757c56431d">
+  <source>Enable Group</source>
+  <target>Gruppe aktivieren</target>
+</trans-unit>
+<trans-unit id="s1d907d30387edf65">
+  <source>Found <x id="0" equiv-text="${p.peersFound}"/> peer(s). Connecting...</source>
+  <target><x id="0" equiv-text="${p.peersFound}"/> Peer(s) gefunden. Verbinde...</target>
+</trans-unit>
+<trans-unit id="s116925108bec4547">
+  <source>Receiving data</source>
+  <target>Daten werden empfangen</target>
+</trans-unit>
+<trans-unit id="s7ea1a45432c32726">
+  <source>Peers found</source>
+  <target>Gefundene Peers</target>
+</trans-unit>
+<trans-unit id="s8e7ed0951d15e54f">
+  <source>Items downloading</source>
+  <target>Elemente im Download</target>
+</trans-unit>
+<trans-unit id="s7d5343b68b6715db">
+  <source>Active sync sessions</source>
+  <target>Aktive Synchronisierungen</target>
+</trans-unit>
+<trans-unit id="sc11bb51cbf821afc">
+  <source>Last data received <x id="0" equiv-text="${this.agoText(elapsedSince(p.lastDataAt, this._now))}"/></source>
+  <target>Letzte Daten empfangen <x id="0" equiv-text="${this.agoText(elapsed)}"/></target>
+</trans-unit>
+<trans-unit id="s2cb9bcd31f9f4c0f">
+  <source><x id="0" equiv-text="${elapsed.value}"/>s ago</source>
+  <target>vor <x id="0" equiv-text="${elapsed.value}"/> s</target>
+</trans-unit>
+<trans-unit id="sd988a9395d37c0f8">
+  <source><x id="0" equiv-text="${elapsed.value}"/> min ago</source>
+  <target>vor <x id="0" equiv-text="${elapsed.value}"/> Min.</target>
+</trans-unit>
+<trans-unit id="saf2e0363e12de264">
+  <source><x id="0" equiv-text="${elapsed.value}"/> h ago</source>
+  <target>vor <x id="0" equiv-text="${elapsed.value}"/> Std.</target>
+</trans-unit>
+<trans-unit id="seefabaec75656974">
+  <source>Found <x id="0" equiv-text="${p.peersFound}"/> peer(s), but cannot reach them yet</source>
+  <target><x id="0" equiv-text="${p.peersFound}"/> Peer(s) gefunden, aber noch nicht erreichbar</target>
+</trans-unit>
+<trans-unit id="s3f98f7ff0de7a4ce">
+  <source>They may be offline, or a network or firewall setting may be blocking the connection. Moss keeps trying.</source>
+  <target>Sie sind vielleicht offline, oder eine Netzwerk- oder Firewall-Einstellung blockiert die Verbindung. Moss versucht es weiter.</target>
+</trans-unit>
+<trans-unit id="s4a0394fb54f76154">
+  <source>Connected to <x id="0" equiv-text="${Math.max(p.peersConnected, 1)}"/> peer(s). Syncing...</source>
+  <target>Mit <x id="0" equiv-text="${Math.max(p.peersConnected, 1)}"/> Peer(s) verbunden. Synchronisiere...</target>
+</trans-unit>
+<trans-unit id="s74ae8e9b3a53646f">
+  <source>No data received yet</source>
+  <target>Noch keine Daten empfangen</target>
+</trans-unit>
+<trans-unit id="sd9820ab9d5e81909">
+  <source>Peers connected</source>
+  <target>Verbundene Peers</target>
+</trans-unit>
+<trans-unit id="sd0471ead8b1083d0">
+  <source>Data received</source>
+  <target>Empfangene Daten</target>
+</trans-unit>
+<trans-unit id="sfbb1f6b888aed522">
+  <source>Failed attempts</source>
+  <target>Fehlgeschlagene Versuche</target>
+</trans-unit>
+<trans-unit id="s970de9ba0cf07677">
+  <source>Searching</source>
+  <target>Suche</target>
+</trans-unit>
+<trans-unit id="s4b052cb287d81da7">
+  <source>Connecting</source>
+  <target>Verbinde</target>
+</trans-unit>
+<trans-unit id="s9e24f6e023b24ca5">
+  <source>Cannot reach</source>
+  <target>Nicht erreichbar</target>
+</trans-unit>
+<trans-unit id="s82a4e28ab5b56670">
+  <source>Connected</source>
+  <target>Verbunden</target>
+</trans-unit>
+<trans-unit id="sb5c9eee686336a9d">
+  <source>Last contact</source>
+  <target>Letzter Kontakt</target>
+</trans-unit>
+<trans-unit id="s43d27dde5ebe94c8">
+  <source>Last attempt</source>
+  <target>Letzter Versuch</target>
+</trans-unit>
 <trans-unit id="s2ed21785ecf02d99">
   <source>Local discovery turns on when Moss relaunches.</source>
   <target>Die lokale Erkennung wird beim Neustart von Moss eingeschaltet.</target>

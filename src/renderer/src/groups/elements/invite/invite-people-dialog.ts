@@ -201,6 +201,10 @@ export class InvitePeopleDialog extends LitElement {
     await this._dialog?.show();
   }
 
+  async hide() {
+    await this._dialog?.hide();
+  }
+
   static styles = [
     mossStyles,
     css`
