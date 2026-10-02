@@ -3120,7 +3120,7 @@ begint nu</target>
   <target>Laatste synchronisatie</target>
 </trans-unit>
 <trans-unit id="sc11bb51cbf821afc">
-  <source>Last data received <x id="0" equiv-text="${this.agoText(elapsed)}"/></source>
+  <source>Last data received <x id="0" equiv-text="${this.agoText(elapsedSince(p.lastDataAt, this._now))}"/></source>
   <target>Laatste gegevens ontvangen <x id="0" equiv-text="${this.agoText(elapsed)}"/></target>
 </trans-unit>
 <trans-unit id="s2cb9bcd31f9f4c0f">
@@ -3162,6 +3162,34 @@ begint nu</target>
 <trans-unit id="sfbb1f6b888aed522">
   <source>Failed attempts</source>
   <target>Mislukte pogingen</target>
+</trans-unit>
+<trans-unit id="s8beefc1aae2a7ce9">
+  <source>Connecting to peers</source>
+  <target>Verbinden met peers</target>
+</trans-unit>
+<trans-unit id="se211cb4da8632f64">
+  <source>Cannot reach peers</source>
+  <target>Peers niet bereikbaar</target>
+</trans-unit>
+<trans-unit id="sffbaa0fa95aa2446">
+  <source>Connected, receiving data</source>
+  <target>Verbonden, gegevens ontvangen</target>
+</trans-unit>
+<trans-unit id="s3a6c6086bf3f06a8">
+  <source>Connected to peers</source>
+  <target>Verbonden met peers</target>
+</trans-unit>
+<trans-unit id="s0a857219d8ac0c29">
+  <source>Peer</source>
+  <target>Peer</target>
+</trans-unit>
+<trans-unit id="sa79b17587610b650">
+  <source><x id="0" equiv-text="${this.peers}"/> peers</source>
+  <target><x id="0" equiv-text="${this.peers}"/> peers</target>
+</trans-unit>
+<trans-unit id="scb6a9c1a1757adbc">
+  <source>You</source>
+  <target>Jij</target>
 </trans-unit>
 </body>
 </file>

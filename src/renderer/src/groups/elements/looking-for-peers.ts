@@ -21,6 +21,7 @@ import { dialogMessagebox } from '../../electron-api.js';
 import { telescopeIcon } from '../../ui/icons.js';
 import { mossStyles } from '../../shared-styles.js';
 import { groupModifiersToAppId } from '../../utils.js';
+import './peer-link-indicator.js';
 import { serviceStyles } from '../../self/settings/services/service-styles.js';
 import {
   deriveSyncProgress,
@@ -161,7 +162,6 @@ export class LookingForPeers extends LitElement {
       </sl-button>
       <div class="scroller">
         <div class="column center-content content">
-        ${telescopeIcon(120)}
         ${this.renderStatus(withKnownPeers(this._progress, this._knownPeers.value ?? 0, this._now))}
         <span style="max-width: 600px; text-align: center; margin-top: 40px;"
           >${msg('The group ID is: ')}<pre></pre>${encodeHashToBase64(
@@ -180,6 +180,17 @@ export class LookingForPeers extends LitElement {
   renderStatus(p: SyncProgress) {
     const waiting = p.stage === 'no-peers';
     return html`
+      ${waiting
+        ? telescopeIcon(120)
+        : html`<peer-link-indicator
+            .state=${p.stage === 'unreachable'
+              ? 'unreachable'
+              : p.stage === 'connected'
+                ? 'connected'
+                : 'found'}
+            .peers=${p.stage === 'connected' ? Math.max(p.peersConnected, 1) : p.peersFound}
+            .flowing=${this.isReceiving(p)}
+          ></peer-link-indicator>`}
       ${this.renderHeading(p)}
       <div class="column center-content" style=${waiting ? 'display: none;' : ''}>
         ${this.renderLiveness(p)} ${this.renderDetails(p)}
@@ -216,17 +227,21 @@ export class LookingForPeers extends LitElement {
     }
   }
 
+  /** Data arrived within the last few seconds. */
+  isReceiving(p: SyncProgress): boolean {
+    if (p.lastDataAt === undefined) return false;
+    const elapsed = elapsedSince(p.lastDataAt, this._now);
+    return elapsed.unit === 'seconds' && elapsed.value < 5;
+  }
+
   renderLiveness(p: SyncProgress) {
     if (p.lastDataAt === undefined) {
-      return html`<span class="liveness">
-        <span class="liveness-dot"></span>${msg('No data received yet')}
-      </span>`;
+      return html`<span class="liveness">${msg('No data received yet')}</span>`;
     }
-    const elapsed = elapsedSince(p.lastDataAt, this._now);
-    const active = elapsed.unit === 'seconds' && elapsed.value < 5;
     return html`<span class="liveness">
-      <span class="liveness-dot ${active ? 'active' : ''}"></span>
-      ${active ? msg('Receiving data') : msg(str`Last data received ${this.agoText(elapsed)}`)}
+      ${this.isReceiving(p)
+        ? msg('Receiving data')
+        : msg(str`Last data received ${this.agoText(elapsedSince(p.lastDataAt, this._now))}`)}
     </span>`;
   }
 
@@ -291,24 +306,6 @@ export class LookingForPeers extends LitElement {
         align-items: center;
         gap: 8px;
         opacity: 0.8;
-      }
-      /* Same look as the peer status indicator in group-peers-status */
-      .liveness-dot {
-        width: 11px;
-        height: 11px;
-        box-sizing: border-box;
-        border: 2px solid var(--moss-fishy-green);
-        border-radius: 50%;
-        background: #bfbfbf;
-      }
-      .liveness-dot.active {
-        background: #44d944;
-        animation: pulse 1.2s ease-in-out infinite;
-      }
-      @keyframes pulse {
-        50% {
-          opacity: 0.3;
-        }
       }
       .sync-details {
         margin-top: 16px;

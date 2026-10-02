@@ -3120,7 +3120,7 @@ inizia ora</target>
   <target>Ultima sincronizzazione</target>
 </trans-unit>
 <trans-unit id="sc11bb51cbf821afc">
-  <source>Last data received <x id="0" equiv-text="${this.agoText(elapsed)}"/></source>
+  <source>Last data received <x id="0" equiv-text="${this.agoText(elapsedSince(p.lastDataAt, this._now))}"/></source>
   <target>Ultimi dati ricevuti <x id="0" equiv-text="${this.agoText(elapsed)}"/></target>
 </trans-unit>
 <trans-unit id="s2cb9bcd31f9f4c0f">
@@ -3141,7 +3141,7 @@ inizia ora</target>
 </trans-unit>
 <trans-unit id="s3f98f7ff0de7a4ce">
   <source>They may be offline, or a network or firewall setting may be blocking the connection. Moss keeps trying.</source>
-  <target>Potrebbero essere offline, oppure un&apos;impostazione di rete o firewall blocca la connessione. Moss continua a provare.</target>
+  <target>Potrebbero essere offline, oppure un'impostazione di rete o firewall blocca la connessione. Moss continua a provare.</target>
 </trans-unit>
 <trans-unit id="s4a0394fb54f76154">
   <source>Connected to <x id="0" equiv-text="${Math.max(p.peersConnected, 1)}"/> peer(s). Syncing...</source>
@@ -3162,6 +3162,34 @@ inizia ora</target>
 <trans-unit id="sfbb1f6b888aed522">
   <source>Failed attempts</source>
   <target>Tentativi falliti</target>
+</trans-unit>
+<trans-unit id="s8beefc1aae2a7ce9">
+  <source>Connecting to peers</source>
+  <target>Connessione ai peer</target>
+</trans-unit>
+<trans-unit id="se211cb4da8632f64">
+  <source>Cannot reach peers</source>
+  <target>Peer non raggiungibili</target>
+</trans-unit>
+<trans-unit id="sffbaa0fa95aa2446">
+  <source>Connected, receiving data</source>
+  <target>Connesso, ricezione dati</target>
+</trans-unit>
+<trans-unit id="s3a6c6086bf3f06a8">
+  <source>Connected to peers</source>
+  <target>Connesso ai peer</target>
+</trans-unit>
+<trans-unit id="s0a857219d8ac0c29">
+  <source>Peer</source>
+  <target>Peer</target>
+</trans-unit>
+<trans-unit id="sa79b17587610b650">
+  <source><x id="0" equiv-text="${this.peers}"/> peers</source>
+  <target><x id="0" equiv-text="${this.peers}"/> peer</target>
+</trans-unit>
+<trans-unit id="scb6a9c1a1757adbc">
+  <source>You</source>
+  <target>Tu</target>
 </trans-unit>
 </body>
 </file>
