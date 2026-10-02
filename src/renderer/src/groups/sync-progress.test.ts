@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deriveSyncProgress, withKnownPeers } from './sync-progress.js';
+import { deriveSyncProgress, elapsedSince, withKnownPeers } from './sync-progress.js';
 import type {
   NetworkMetricsWithCounts,
   PeerMetaWithCounts,
@@ -166,16 +166,37 @@ describe('deriveSyncProgress', () => {
   });
 
   it('converts gossip timestamps from microseconds and treats a newer one as activity', () => {
-    const p = deriveSyncProgress({
+    const first = deriveSyncProgress({
       previous: undefined,
       metrics: metrics({
-        peers: { a: { completed_rounds: 1, last_gossip_timestamp: (NOW - 1000) * 1000 } },
+        peers: { a: { completed_rounds: 1, last_gossip_timestamp: (NOW - 9000) * 1000 } },
       }),
       knownPeers: 1,
       now: NOW,
     });
-    expect(p.lastGossipAt).toBe(NOW - 1000);
-    expect(p.lastActivityAt).toBe(NOW);
+    expect(first.lastGossipAt).toBe(NOW - 9000);
+    const next = deriveSyncProgress({
+      previous: first,
+      metrics: metrics({
+        peers: { a: { completed_rounds: 2, last_gossip_timestamp: (NOW + 1000) * 1000 } },
+      }),
+      knownPeers: 1,
+      now: NOW + 2000,
+    });
+    expect(next.lastActivityAt).toBe(NOW + 2000);
+  });
+
+  it('dates activity on the first snapshot from stored gossip history, not from now', () => {
+    // After a restart the peer meta store still holds the last gossip time from before
+    const p = deriveSyncProgress({
+      previous: undefined,
+      metrics: metrics({
+        peers: { a: { completed_rounds: 1, last_gossip_timestamp: (NOW - 600_000) * 1000 } },
+      }),
+      knownPeers: 1,
+      now: NOW,
+    });
+    expect(p.lastActivityAt).toBe(NOW - 600_000);
   });
 });
 
@@ -209,5 +230,21 @@ describe('withKnownPeers', () => {
     const p = withKnownPeers(snapshot, 1, NOW + 1000);
     expect(p.stage).toBe('syncing');
     expect(p.peersFound).toBe(2);
+  });
+});
+
+describe('elapsedSince', () => {
+  it('uses seconds under a minute, never negative', () => {
+    expect(elapsedSince(NOW - 43_400, NOW)).toEqual({ value: 43, unit: 'seconds' });
+    expect(elapsedSince(NOW + 500, NOW)).toEqual({ value: 0, unit: 'seconds' });
+  });
+
+  it('uses whole minutes under an hour', () => {
+    expect(elapsedSince(NOW - 60_000, NOW)).toEqual({ value: 1, unit: 'minutes' });
+    expect(elapsedSince(NOW - 59 * 60_000 - 59_000, NOW)).toEqual({ value: 59, unit: 'minutes' });
+  });
+
+  it('uses whole hours from an hour on', () => {
+    expect(elapsedSince(NOW - 3 * 3_600_000 - 1_000, NOW)).toEqual({ value: 3, unit: 'hours' });
   });
 });

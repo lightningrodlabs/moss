@@ -3115,10 +3115,6 @@ starts now</source>
   <source>Receiving data</source>
   <target>Veri alınıyor</target>
 </trans-unit>
-<trans-unit id="sd55aa0f4fe7d38a0">
-  <source>Last data received <x id="0" equiv-text="${seconds}"/>s ago</source>
-  <target>Son veri <x id="0" equiv-text="${seconds}"/> sn önce alındı</target>
-</trans-unit>
 <trans-unit id="s7ea1a45432c32726">
   <source>Peers found</source>
   <target>Bulunan eşler</target>
@@ -3146,6 +3142,22 @@ starts now</source>
 <trans-unit id="sb90cbaac002c7f8c">
   <source>Last sync</source>
   <target>Son senkronizasyon</target>
+</trans-unit>
+<trans-unit id="sc11bb51cbf821afc">
+  <source>Last data received <x id="0" equiv-text="${this.agoText(elapsed)}"/></source>
+  <target>Son veri alındı: <x id="0" equiv-text="${this.agoText(elapsed)}"/></target>
+</trans-unit>
+<trans-unit id="s2cb9bcd31f9f4c0f">
+  <source><x id="0" equiv-text="${elapsed.value}"/>s ago</source>
+  <target><x id="0" equiv-text="${elapsed.value}"/> sn önce</target>
+</trans-unit>
+<trans-unit id="sd988a9395d37c0f8">
+  <source><x id="0" equiv-text="${elapsed.value}"/> min ago</source>
+  <target><x id="0" equiv-text="${elapsed.value}"/> dk önce</target>
+</trans-unit>
+<trans-unit id="saf2e0363e12de264">
+  <source><x id="0" equiv-text="${elapsed.value}"/> h ago</source>
+  <target><x id="0" equiv-text="${elapsed.value}"/> sa önce</target>
 </trans-unit>
 </body>
 </file>

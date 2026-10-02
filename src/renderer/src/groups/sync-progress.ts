@@ -61,7 +61,12 @@ export function deriveSyncProgress(input: {
     activeRounds > 0 ||
     (localOpCount !== undefined && localOpCount > (previous?.localOpCount ?? localOpCount)) ||
     (previous !== undefined && pendingFetches !== previous.pendingFetches) ||
-    (lastGossipAt !== undefined && lastGossipAt > (previous?.lastGossipAt ?? 0));
+    (previous !== undefined &&
+      lastGossipAt !== undefined &&
+      lastGossipAt > (previous.lastGossipAt ?? 0));
+  // Gossip history survives restarts, so on the first snapshot it dates the
+  // last activity rather than counting as activity happening now
+  const lastActivityAt = moved ? now : (previous?.lastActivityAt ?? lastGossipAt);
 
   return {
     stage,
@@ -72,7 +77,7 @@ export function deriveSyncProgress(input: {
     pendingFetches,
     activeRounds,
     lastGossipAt,
-    lastActivityAt: moved ? now : previous?.lastActivityAt,
+    lastActivityAt,
   };
 }
 
@@ -92,4 +97,18 @@ export function withKnownPeers(
   const peersFound = Math.max(snapshot.peersFound, knownPeers);
   const stage = snapshot.stage === 'no-peers' && peersFound > 0 ? 'connecting' : snapshot.stage;
   return { ...snapshot, peersFound, stage };
+}
+
+/** A coarse elapsed time, in the largest unit that keeps the number readable. */
+export interface Elapsed {
+  value: number;
+  unit: 'seconds' | 'minutes' | 'hours';
+}
+
+/** How long ago `then` was, relative to `now` (both ms since epoch). */
+export function elapsedSince(then: number, now: number): Elapsed {
+  const seconds = Math.max(0, Math.floor((now - then) / 1000));
+  if (seconds < 60) return { value: seconds, unit: 'seconds' };
+  if (seconds < 3600) return { value: Math.floor(seconds / 60), unit: 'minutes' };
+  return { value: Math.floor(seconds / 3600), unit: 'hours' };
 }

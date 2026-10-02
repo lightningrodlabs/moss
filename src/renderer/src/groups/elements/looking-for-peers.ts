@@ -21,7 +21,14 @@ import { dialogMessagebox } from '../../electron-api.js';
 import { telescopeIcon } from '../../ui/icons.js';
 import { mossStyles } from '../../shared-styles.js';
 import { groupModifiersToAppId } from '../../utils.js';
-import { deriveSyncProgress, SyncProgress, withKnownPeers } from '../sync-progress.js';
+import { serviceStyles } from '../../self/settings/services/service-styles.js';
+import {
+  deriveSyncProgress,
+  Elapsed,
+  elapsedSince,
+  SyncProgress,
+  withKnownPeers,
+} from '../sync-progress.js';
 
 @localized()
 @customElement('looking-for-peers')
@@ -201,37 +208,50 @@ export class LookingForPeers extends LitElement {
     if (p.lastActivityAt === undefined) {
       return html`<span class="liveness">${msg('Waiting for data...')}</span>`;
     }
-    const seconds = Math.max(0, Math.round((this._now - p.lastActivityAt) / 1000));
-    const active = seconds < 5;
+    const elapsed = elapsedSince(p.lastActivityAt, this._now);
+    const active = elapsed.unit === 'seconds' && elapsed.value < 5;
     return html`<span class="liveness">
       <span class="liveness-dot ${active ? 'active' : ''}"></span>
-      ${active ? msg('Receiving data') : msg(str`Last data received ${seconds}s ago`)}
+      ${active ? msg('Receiving data') : msg(str`Last data received ${this.agoText(elapsed)}`)}
     </span>`;
+  }
+
+  agoText(elapsed: Elapsed): string {
+    switch (elapsed.unit) {
+      case 'seconds':
+        return msg(str`${elapsed.value}s ago`);
+      case 'minutes':
+        return msg(str`${elapsed.value} min ago`);
+      case 'hours':
+        return msg(str`${elapsed.value} h ago`);
+    }
   }
 
   renderDetails(p: SyncProgress) {
     const online = this._onlinePeers.value;
     return html`
       <sl-details summary=${msg('Details')} class="sync-details">
-        <div class="details-grid">
-          <span>${msg('Peers found')}</span><span>${p.peersFound}</span>
+        <div class="service-details details-grid">
+          <span>${msg('Peers found')}</span><span class="value">${p.peersFound}</span>
           ${online !== undefined
-            ? html`<span>${msg('Peers online')}</span><span>${online}</span>`
+            ? html`<span>${msg('Peers online')}</span><span class="value">${online}</span>`
             : ''}
-          <span>${msg('Peers synced with')}</span><span>${p.peersSyncedWith}</span>
+          <span>${msg('Peers synced with')}</span><span class="value">${p.peersSyncedWith}</span>
           ${p.localOpCount !== undefined
             ? html`<span>${msg('Data items held')}</span
-                ><span
+                ><span class="value"
                   >${p.highestPeerOpCount !== undefined
                     ? `${p.localOpCount} / ${p.highestPeerOpCount}`
                     : p.localOpCount}</span
                 >`
             : ''}
-          <span>${msg('Items downloading')}</span><span>${p.pendingFetches}</span>
-          <span>${msg('Active sync sessions')}</span><span>${p.activeRounds}</span>
+          <span>${msg('Items downloading')}</span><span class="value">${p.pendingFetches}</span>
+          <span>${msg('Active sync sessions')}</span><span class="value">${p.activeRounds}</span>
           ${p.lastGossipAt !== undefined
             ? html`<span>${msg('Last sync')}</span
-                ><span>${new Date(p.lastGossipAt).toLocaleTimeString()}</span>`
+                ><span class="value"
+                  >${this.agoText(elapsedSince(p.lastGossipAt, this._now))}</span
+                >`
             : ''}
         </div>
       </sl-details>
@@ -241,6 +261,7 @@ export class LookingForPeers extends LitElement {
   static styles = [
     sharedStyles,
     mossStyles,
+    serviceStyles,
     css`
       .liveness {
         display: flex;
@@ -248,14 +269,17 @@ export class LookingForPeers extends LitElement {
         gap: 8px;
         opacity: 0.8;
       }
+      /* Same look as the peer status indicator in group-peers-status */
       .liveness-dot {
-        width: 10px;
-        height: 10px;
+        width: 11px;
+        height: 11px;
+        box-sizing: border-box;
+        border: 2px solid var(--moss-fishy-green);
         border-radius: 50%;
-        background: #bbb;
+        background: #bfbfbf;
       }
       .liveness-dot.active {
-        background: var(--moss-fishy-green);
+        background: #44d944;
         animation: pulse 1.2s ease-in-out infinite;
       }
       @keyframes pulse {
@@ -267,11 +291,15 @@ export class LookingForPeers extends LitElement {
         margin-top: 16px;
         width: 360px;
       }
-      .details-grid {
+      /* The sl-details panel already pads its content */
+      .service-details.details-grid {
         display: grid;
         grid-template-columns: 1fr auto;
-        gap: 4px 16px;
-        font-size: 14px;
+        column-gap: 16px;
+        padding-top: 0;
+      }
+      .details-grid .value {
+        text-align: right;
       }
     `,
   ];
