@@ -3099,18 +3099,6 @@ starts now</source>
   <source>Found <x id="0" equiv-text="${p.peersFound}"/> peer(s). Connecting...</source>
   <target><x id="0" equiv-text="${p.peersFound}"/> 人のピアが見つかりました。接続中...</target>
 </trans-unit>
-<trans-unit id="sa0f7950cbfc9f096">
-  <source>Syncing with <x id="0" equiv-text="${p.peersFound}"/> peer(s)...</source>
-  <target><x id="0" equiv-text="${p.peersFound}"/> 人のピアと同期中...</target>
-</trans-unit>
-<trans-unit id="s88f7bc6cf91211c8">
-  <source>Synced with peers. Waiting for the group's details...</source>
-  <target>ピアとの同期が完了しました。グループの詳細を待っています...</target>
-</trans-unit>
-<trans-unit id="s346d8f65c1905359">
-  <source>Waiting for data...</source>
-  <target>データを待っています...</target>
-</trans-unit>
 <trans-unit id="s116925108bec4547">
   <source>Receiving data</source>
   <target>データを受信中</target>
@@ -3118,18 +3106,6 @@ starts now</source>
 <trans-unit id="s7ea1a45432c32726">
   <source>Peers found</source>
   <target>見つかったピア</target>
-</trans-unit>
-<trans-unit id="sadfa462e3e286489">
-  <source>Peers online</source>
-  <target>オンラインのピア</target>
-</trans-unit>
-<trans-unit id="s51096ac5d41a36e0">
-  <source>Peers synced with</source>
-  <target>同期済みのピア</target>
-</trans-unit>
-<trans-unit id="s63bb18e0f4d0b55c">
-  <source>Data items held</source>
-  <target>保持しているデータ項目</target>
 </trans-unit>
 <trans-unit id="s8e7ed0951d15e54f">
   <source>Items downloading</source>
@@ -3158,6 +3134,34 @@ starts now</source>
 <trans-unit id="saf2e0363e12de264">
   <source><x id="0" equiv-text="${elapsed.value}"/> h ago</source>
   <target><x id="0" equiv-text="${elapsed.value}"/> 時間前</target>
+</trans-unit>
+<trans-unit id="seefabaec75656974">
+  <source>Found <x id="0" equiv-text="${p.peersFound}"/> peer(s), but cannot reach them yet</source>
+  <target><x id="0" equiv-text="${p.peersFound}"/> 人のピアが見つかりましたが、まだ接続できません</target>
+</trans-unit>
+<trans-unit id="s3f98f7ff0de7a4ce">
+  <source>They may be offline, or a network or firewall setting may be blocking the connection. Moss keeps trying.</source>
+  <target>オフラインか、ネットワークやファイアウォールの設定が接続を妨げている可能性があります。Moss は試行を続けます。</target>
+</trans-unit>
+<trans-unit id="s4a0394fb54f76154">
+  <source>Connected to <x id="0" equiv-text="${Math.max(p.peersConnected, 1)}"/> peer(s). Syncing...</source>
+  <target><x id="0" equiv-text="${Math.max(p.peersConnected, 1)}"/> 人のピアに接続しました。同期中...</target>
+</trans-unit>
+<trans-unit id="s74ae8e9b3a53646f">
+  <source>No data received yet</source>
+  <target>まだデータを受信していません</target>
+</trans-unit>
+<trans-unit id="sd9820ab9d5e81909">
+  <source>Peers connected</source>
+  <target>接続済みのピア</target>
+</trans-unit>
+<trans-unit id="sd0471ead8b1083d0">
+  <source>Data received</source>
+  <target>受信したデータ</target>
+</trans-unit>
+<trans-unit id="sfbb1f6b888aed522">
+  <source>Failed attempts</source>
+  <target>失敗した試行</target>
 </trans-unit>
 </body>
 </file>

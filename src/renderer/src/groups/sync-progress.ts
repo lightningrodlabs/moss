@@ -1,25 +1,58 @@
-import type { NetworkMetricsWithCounts } from '../network/network-metrics-types.js';
+import type {
+  NetworkMetricsWithCounts,
+  PeerMetaWithCounts,
+} from '../network/network-metrics-types.js';
 
 /**
  * Where a group still waiting for its profile stands: nobody found yet,
- * peers found but no data moving, data moving, or caught up with peers
- * while the profile itself has not arrived.
+ * peers found but no contact yet, peers found but every attempt this
+ * session failed, or in contact with at least one peer.
  */
-export type SyncStage = 'no-peers' | 'connecting' | 'syncing' | 'caught-up';
+export type SyncStage = 'no-peers' | 'found' | 'unreachable' | 'connected';
+
+/** Gossip counters per peer at the first snapshot, so history from before this session is ignored. */
+interface PeerBaseline {
+  rounds: number;
+  lastGossipAt: number | undefined;
+}
+
+interface SessionBaseline {
+  opCount: number | undefined;
+  failures: number;
+  peers: Record<string, PeerBaseline>;
+}
 
 export interface SyncProgress {
   stage: SyncStage;
   peersFound: number;
-  peersSyncedWith: number;
-  localOpCount: number | undefined;
-  highestPeerOpCount: number | undefined;
+  /** Peers we had a sync session or a completed round with during this session. */
+  peersConnected: number;
+  /** Data items that arrived since the screen opened; undefined when the conductor does not report counts. */
+  dataReceived: number | undefined;
   pendingFetches: number;
   activeRounds: number;
-  /** Most recent gossip with any peer, in ms since epoch. */
+  /** Failed sync attempts during this session (timeouts and errors). */
+  failedAttempts: number;
+  /** Most recent gossip with any peer, in ms since epoch, including earlier sessions. */
   lastGossipAt: number | undefined;
-  /** Last time any sync data visibly moved, in ms since epoch. */
-  lastActivityAt: number | undefined;
+  /** Last time data visibly arrived during this session, in ms since epoch. */
+  lastDataAt: number | undefined;
+  /** Last time this session saw a successful round, in ms since epoch. */
+  lastSuccessAt: number | undefined;
+  /** Last time this session saw a failed attempt, in ms since epoch. */
+  lastFailureAt: number | undefined;
+  localOpCount: number | undefined;
+  /** Running totals across live peers, compared between snapshots. */
+  totalRounds: number;
+  totalFailures: number;
+  baseline: SessionBaseline | undefined;
 }
+
+const microsToMs = (micros: number | undefined) =>
+  micros === undefined ? undefined : Math.floor(micros / 1000);
+
+const failuresOf = (m: PeerMetaWithCounts) =>
+  (m.peer_timeouts ?? 0) + (m.local_errors ?? 0) + (m.peer_behavior_errors ?? 0);
 
 export function deriveSyncProgress(input: {
   previous: SyncProgress | undefined;
@@ -29,55 +62,98 @@ export function deriveSyncProgress(input: {
 }): SyncProgress {
   const { previous, metrics, knownPeers, now } = input;
   const gossip = metrics?.gossip_state_summary;
-  const livePeers = Object.values(gossip?.peer_meta ?? {}).filter((m) => !m.is_tombstone);
-
-  const peersSyncedWith = livePeers.filter((m) => (m.completed_rounds ?? 0) > 0).length;
-  const peerOpCounts = livePeers
-    .map((m) => m.dht_op_count)
-    .filter((c): c is number => typeof c === 'number');
-  const highestPeerOpCount = peerOpCounts.length > 0 ? Math.max(...peerOpCounts) : undefined;
+  const livePeers = Object.entries(gossip?.peer_meta ?? {}).filter(([, m]) => !m.is_tombstone);
   const localOpCount = gossip?.local_op_count;
-  const pendingFetches = Object.keys(metrics?.fetch_state_summary.pending_requests ?? {}).length;
-  const activeRounds = (gossip?.initiated_round ? 1 : 0) + (gossip?.accepted_rounds.length ?? 0);
+  const failures = livePeers.reduce((sum, [, m]) => sum + failuresOf(m), 0);
+
+  const baseline: SessionBaseline | undefined =
+    previous?.baseline ??
+    (metrics
+      ? {
+          opCount: localOpCount,
+          failures,
+          peers: Object.fromEntries(
+            livePeers.map(([url, m]) => [
+              url,
+              {
+                rounds: m.completed_rounds ?? 0,
+                lastGossipAt: microsToMs(m.last_gossip_timestamp),
+              },
+            ]),
+          ),
+        }
+      : undefined);
+
+  const roundPeers = new Set(
+    [gossip?.initiated_round, ...(gossip?.accepted_rounds ?? [])]
+      .filter((r) => r !== undefined)
+      .map((r) => r.session_with_peer),
+  );
+  const contactedThisSession = (url: string, m: PeerMetaWithCounts) => {
+    const base = baseline?.peers[url];
+    const lastGossipAt = microsToMs(m.last_gossip_timestamp);
+    return (
+      (m.completed_rounds ?? 0) > (base?.rounds ?? 0) ||
+      (lastGossipAt !== undefined && lastGossipAt > (base?.lastGossipAt ?? 0))
+    );
+  };
+  const peersConnected = livePeers.filter(
+    ([url, m]) => roundPeers.has(url) || contactedThisSession(url, m),
+  ).length;
+
+  const totalRounds = livePeers.reduce((sum, [, m]) => sum + (m.completed_rounds ?? 0), 0);
   const gossipTimes = livePeers
-    .map((m) => m.last_gossip_timestamp)
-    .filter((t): t is number => typeof t === 'number')
-    .map((micros) => Math.floor(micros / 1000));
+    .map(([, m]) => microsToMs(m.last_gossip_timestamp))
+    .filter((t): t is number => t !== undefined);
   const lastGossipAt = gossipTimes.length > 0 ? Math.max(...gossipTimes) : undefined;
 
-  const peersFound = Math.max(knownPeers, livePeers.length);
-  const behindPeers =
+  // Successes and failures only count once they happen after the first snapshot
+  const succeeded =
+    previous !== undefined &&
+    (totalRounds > previous.totalRounds ||
+      (lastGossipAt !== undefined && lastGossipAt > (previous.lastGossipAt ?? 0)));
+  const failed = previous !== undefined && failures > previous.totalFailures;
+  const lastSuccessAt = succeeded ? now : previous?.lastSuccessAt;
+  const lastFailureAt = failed ? now : previous?.lastFailureAt;
+
+  const pendingFetches = Object.keys(metrics?.fetch_state_summary.pending_requests ?? {}).length;
+  const activeRounds = roundPeers.size;
+  const dataGrew =
+    previous !== undefined &&
     localOpCount !== undefined &&
-    highestPeerOpCount !== undefined &&
-    highestPeerOpCount > localOpCount;
+    localOpCount > (previous.localOpCount ?? localOpCount);
+  const lastDataAt = dataGrew || pendingFetches > 0 ? now : previous?.lastDataAt;
+
+  const peersFound = Math.max(knownPeers, livePeers.length);
+  const connected =
+    activeRounds > 0 ||
+    (lastSuccessAt !== undefined && lastSuccessAt >= (lastFailureAt ?? Number.NEGATIVE_INFINITY));
 
   let stage: SyncStage;
   if (peersFound === 0) stage = 'no-peers';
-  else if (activeRounds > 0 || pendingFetches > 0 || behindPeers) stage = 'syncing';
-  else if (peersSyncedWith > 0) stage = 'caught-up';
-  else stage = 'connecting';
-
-  const moved =
-    activeRounds > 0 ||
-    (localOpCount !== undefined && localOpCount > (previous?.localOpCount ?? localOpCount)) ||
-    (previous !== undefined && pendingFetches !== previous.pendingFetches) ||
-    (previous !== undefined &&
-      lastGossipAt !== undefined &&
-      lastGossipAt > (previous.lastGossipAt ?? 0));
-  // Gossip history survives restarts, so on the first snapshot it dates the
-  // last activity rather than counting as activity happening now
-  const lastActivityAt = moved ? now : (previous?.lastActivityAt ?? lastGossipAt);
+  else if (connected) stage = 'connected';
+  else if (lastFailureAt !== undefined) stage = 'unreachable';
+  else stage = 'found';
 
   return {
     stage,
     peersFound,
-    peersSyncedWith,
-    localOpCount,
-    highestPeerOpCount,
+    peersConnected,
+    dataReceived:
+      localOpCount !== undefined && baseline?.opCount !== undefined
+        ? Math.max(0, localOpCount - baseline.opCount)
+        : undefined,
     pendingFetches,
     activeRounds,
+    failedAttempts: baseline ? Math.max(0, failures - baseline.failures) : 0,
     lastGossipAt,
-    lastActivityAt,
+    lastDataAt,
+    lastSuccessAt,
+    lastFailureAt,
+    localOpCount,
+    totalRounds,
+    totalFailures: failures,
+    baseline,
   };
 }
 
@@ -95,7 +171,7 @@ export function withKnownPeers(
     return deriveSyncProgress({ previous: undefined, metrics: undefined, knownPeers, now });
   }
   const peersFound = Math.max(snapshot.peersFound, knownPeers);
-  const stage = snapshot.stage === 'no-peers' && peersFound > 0 ? 'connecting' : snapshot.stage;
+  const stage = snapshot.stage === 'no-peers' && peersFound > 0 ? 'found' : snapshot.stage;
   return { ...snapshot, peersFound, stage };
 }
 

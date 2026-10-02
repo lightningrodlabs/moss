@@ -59,12 +59,6 @@ export class LookingForPeers extends LitElement {
     () => [this.groupStore],
   );
 
-  _onlinePeers = new StoreSubscriber(
-    this,
-    () => this.groupStore.onlinePeersCount,
-    () => [this.groupStore],
-  );
-
   async connectedCallback() {
     super.connectedCallback();
     this._clockInterval = setInterval(() => (this._now = Date.now()), 1000);
@@ -76,9 +70,12 @@ export class LookingForPeers extends LitElement {
       appId,
       { includeDhtSummary: false },
       (dump) => {
+        const metrics = dump[dnaHashB64];
+        // A reading without this group would read as all counters reset
+        if (!metrics) return;
         this._progress = deriveSyncProgress({
           previous: this._progress,
-          metrics: dump[dnaHashB64],
+          metrics,
           knownPeers: this._knownPeers.value ?? 0,
           now: Date.now(),
         });
@@ -165,7 +162,6 @@ export class LookingForPeers extends LitElement {
       <div class="scroller">
         <div class="column center-content content">
         ${telescopeIcon(120)}
-        <div class="dot-carousel" style="margin-top: 20px; --carousel-color: black;"></div>
         ${this.renderStatus(withKnownPeers(this._progress, this._knownPeers.value ?? 0, this._now))}
         <span style="max-width: 600px; text-align: center; margin-top: 40px;"
           >${msg('The group ID is: ')}<pre></pre>${encodeHashToBase64(
@@ -177,40 +173,56 @@ export class LookingForPeers extends LitElement {
     `;
   }
 
+  /**
+   * Only the heading and hint change with the stage. The liveness line and
+   * Details stay in one place so an open Details panel survives a stage change.
+   */
   renderStatus(p: SyncProgress) {
+    const waiting = p.stage === 'no-peers';
+    return html`
+      ${this.renderHeading(p)}
+      <div class="column center-content" style=${waiting ? 'display: none;' : ''}>
+        ${this.renderLiveness(p)} ${this.renderDetails(p)}
+      </div>
+    `;
+  }
+
+  renderHeading(p: SyncProgress) {
     switch (p.stage) {
       case 'no-peers':
         return html`
           <h2>${msg('Looking for peers...')}</h2>
-          <span style="max-width: 600px; text-align: center"
+          <span class="hint"
             >${msg(
               "No peers found yet to fetch the group's meta data. Ask one of the members of this group to launch Moss so that you can start synchronizing with them.",
             )}</span
           >
         `;
-      case 'connecting':
+      case 'found':
+        return html`<h2>${msg(str`Found ${p.peersFound} peer(s). Connecting...`)}</h2>`;
+      case 'unreachable':
         return html`
-          <h2>${msg(str`Found ${p.peersFound} peer(s). Connecting...`)}</h2>
-          ${this.renderLiveness(p)} ${this.renderDetails(p)}
+          <h2>${msg(str`Found ${p.peersFound} peer(s), but cannot reach them yet`)}</h2>
+          <span class="hint"
+            >${msg(
+              'They may be offline, or a network or firewall setting may be blocking the connection. Moss keeps trying.',
+            )}</span
+          >
         `;
-      case 'syncing':
-        return html`
-          <h2>${msg(str`Syncing with ${p.peersFound} peer(s)...`)}</h2>
-          ${this.renderLiveness(p)} ${this.renderDetails(p)}
-        `;
-      case 'caught-up':
-        return html`
-          <h2>${msg("Synced with peers. Waiting for the group's details...")}</h2>
-          ${this.renderLiveness(p)} ${this.renderDetails(p)}
-        `;
+      case 'connected':
+        return html`<h2>
+          ${msg(str`Connected to ${Math.max(p.peersConnected, 1)} peer(s). Syncing...`)}
+        </h2>`;
     }
   }
 
   renderLiveness(p: SyncProgress) {
-    if (p.lastActivityAt === undefined) {
-      return html`<span class="liveness">${msg('Waiting for data...')}</span>`;
+    if (p.lastDataAt === undefined) {
+      return html`<span class="liveness">
+        <span class="liveness-dot"></span>${msg('No data received yet')}
+      </span>`;
     }
-    const elapsed = elapsedSince(p.lastActivityAt, this._now);
+    const elapsed = elapsedSince(p.lastDataAt, this._now);
     const active = elapsed.unit === 'seconds' && elapsed.value < 5;
     return html`<span class="liveness">
       <span class="liveness-dot ${active ? 'active' : ''}"></span>
@@ -230,31 +242,19 @@ export class LookingForPeers extends LitElement {
   }
 
   renderDetails(p: SyncProgress) {
-    const online = this._onlinePeers.value;
+    const row = (label: string, value: unknown) =>
+      html`<span>${label}</span><span class="value">${value}</span>`;
     return html`
       <sl-details summary=${msg('Details')} class="sync-details">
         <div class="service-details details-grid">
-          <span>${msg('Peers found')}</span><span class="value">${p.peersFound}</span>
-          ${online !== undefined
-            ? html`<span>${msg('Peers online')}</span><span class="value">${online}</span>`
-            : ''}
-          <span>${msg('Peers synced with')}</span><span class="value">${p.peersSyncedWith}</span>
-          ${p.localOpCount !== undefined
-            ? html`<span>${msg('Data items held')}</span
-                ><span class="value"
-                  >${p.highestPeerOpCount !== undefined
-                    ? `${p.localOpCount} / ${p.highestPeerOpCount}`
-                    : p.localOpCount}</span
-                >`
-            : ''}
-          <span>${msg('Items downloading')}</span><span class="value">${p.pendingFetches}</span>
-          <span>${msg('Active sync sessions')}</span><span class="value">${p.activeRounds}</span>
+          ${row(msg('Peers found'), p.peersFound)} ${row(msg('Peers connected'), p.peersConnected)}
+          ${p.dataReceived !== undefined ? row(msg('Data received'), p.dataReceived) : ''}
+          ${row(msg('Items downloading'), p.pendingFetches)}
+          ${row(msg('Active sync sessions'), p.activeRounds)}
           ${p.lastGossipAt !== undefined
-            ? html`<span>${msg('Last sync')}</span
-                ><span class="value"
-                  >${this.agoText(elapsedSince(p.lastGossipAt, this._now))}</span
-                >`
+            ? row(msg('Last sync'), this.agoText(elapsedSince(p.lastGossipAt, this._now)))
             : ''}
+          ${p.failedAttempts > 0 ? row(msg('Failed attempts'), p.failedAttempts) : ''}
         </div>
       </sl-details>
     `;
@@ -281,6 +281,10 @@ export class LookingForPeers extends LitElement {
       .content {
         margin: auto 0;
         flex: none;
+      }
+      .hint {
+        max-width: 600px;
+        text-align: center;
       }
       .liveness {
         display: flex;

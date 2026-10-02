@@ -3099,18 +3099,6 @@ inizia ora</target>
   <source>Found <x id="0" equiv-text="${p.peersFound}"/> peer(s). Connecting...</source>
   <target><x id="0" equiv-text="${p.peersFound}"/> peer trovati. Connessione in corso...</target>
 </trans-unit>
-<trans-unit id="sa0f7950cbfc9f096">
-  <source>Syncing with <x id="0" equiv-text="${p.peersFound}"/> peer(s)...</source>
-  <target>Sincronizzazione con <x id="0" equiv-text="${p.peersFound}"/> peer...</target>
-</trans-unit>
-<trans-unit id="s88f7bc6cf91211c8">
-  <source>Synced with peers. Waiting for the group's details...</source>
-  <target>Sincronizzato con i peer. In attesa dei dettagli del gruppo...</target>
-</trans-unit>
-<trans-unit id="s346d8f65c1905359">
-  <source>Waiting for data...</source>
-  <target>In attesa di dati...</target>
-</trans-unit>
 <trans-unit id="s116925108bec4547">
   <source>Receiving data</source>
   <target>Ricezione dati in corso</target>
@@ -3118,18 +3106,6 @@ inizia ora</target>
 <trans-unit id="s7ea1a45432c32726">
   <source>Peers found</source>
   <target>Peer trovati</target>
-</trans-unit>
-<trans-unit id="sadfa462e3e286489">
-  <source>Peers online</source>
-  <target>Peer online</target>
-</trans-unit>
-<trans-unit id="s51096ac5d41a36e0">
-  <source>Peers synced with</source>
-  <target>Peer sincronizzati</target>
-</trans-unit>
-<trans-unit id="s63bb18e0f4d0b55c">
-  <source>Data items held</source>
-  <target>Elementi di dati conservati</target>
 </trans-unit>
 <trans-unit id="s8e7ed0951d15e54f">
   <source>Items downloading</source>
@@ -3158,6 +3134,34 @@ inizia ora</target>
 <trans-unit id="saf2e0363e12de264">
   <source><x id="0" equiv-text="${elapsed.value}"/> h ago</source>
   <target><x id="0" equiv-text="${elapsed.value}"/> h fa</target>
+</trans-unit>
+<trans-unit id="seefabaec75656974">
+  <source>Found <x id="0" equiv-text="${p.peersFound}"/> peer(s), but cannot reach them yet</source>
+  <target><x id="0" equiv-text="${p.peersFound}"/> peer trovati, ma non ancora raggiungibili</target>
+</trans-unit>
+<trans-unit id="s3f98f7ff0de7a4ce">
+  <source>They may be offline, or a network or firewall setting may be blocking the connection. Moss keeps trying.</source>
+  <target>Potrebbero essere offline, oppure un&apos;impostazione di rete o firewall blocca la connessione. Moss continua a provare.</target>
+</trans-unit>
+<trans-unit id="s4a0394fb54f76154">
+  <source>Connected to <x id="0" equiv-text="${Math.max(p.peersConnected, 1)}"/> peer(s). Syncing...</source>
+  <target>Connesso a <x id="0" equiv-text="${Math.max(p.peersConnected, 1)}"/> peer. Sincronizzazione...</target>
+</trans-unit>
+<trans-unit id="s74ae8e9b3a53646f">
+  <source>No data received yet</source>
+  <target>Nessun dato ricevuto finora</target>
+</trans-unit>
+<trans-unit id="sd9820ab9d5e81909">
+  <source>Peers connected</source>
+  <target>Peer connessi</target>
+</trans-unit>
+<trans-unit id="sd0471ead8b1083d0">
+  <source>Data received</source>
+  <target>Dati ricevuti</target>
+</trans-unit>
+<trans-unit id="sfbb1f6b888aed522">
+  <source>Failed attempts</source>
+  <target>Tentativi falliti</target>
 </trans-unit>
 </body>
 </file>
