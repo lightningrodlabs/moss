@@ -10,12 +10,14 @@ function metrics(opts: {
   localOpCount?: number;
   pending?: number;
   roundsWith?: string[];
+  initiatedWith?: string;
 }): NetworkMetricsWithCounts {
   const pending_requests: Record<string, string[]> = {};
   for (let i = 0; i < (opts.pending ?? 0); i++) pending_requests[`op${i}`] = ['peer'];
   return {
     fetch_state_summary: { pending_requests } as NetworkMetricsWithCounts['fetch_state_summary'],
     gossip_state_summary: {
+      initiated_round: opts.initiatedWith ? { session_with_peer: opts.initiatedWith } : undefined,
       accepted_rounds: (opts.roundsWith ?? []).map((url) => ({ session_with_peer: url })),
       dht_summary: {},
       peer_meta: opts.peers ?? {},
@@ -135,6 +137,25 @@ describe('deriveSyncProgress stages', () => {
       ok,
       metrics({ peers: { a: { completed_rounds: 1, peer_timeouts: 1 } } }),
       NOW + 4000,
+    );
+    expect(p.stage).toBe('unreachable');
+  });
+
+  it('does not count our own open attempt as contact', () => {
+    // kitsune2 keeps an initiated round open for up to 15 s per attempt, even to a peer that is gone
+    const p = step(undefined, metrics({ peers: { a: {} }, initiatedWith: 'a' }), NOW);
+    expect(p.stage).toBe('found');
+    expect(p.peersConnected).toBe(0);
+    expect(p.activeRounds).toBe(0);
+  });
+
+  it('turns unreachable while retrying a peer that went away after contact', () => {
+    const first = step(undefined, metrics({ peers: { a: {} } }), NOW);
+    const ok = step(first, metrics({ peers: { a: { completed_rounds: 1 } } }), NOW + 2000);
+    const p = step(
+      ok,
+      metrics({ peers: { a: { completed_rounds: 1, peer_timeouts: 1 } }, initiatedWith: 'a' }),
+      NOW + 20_000,
     );
     expect(p.stage).toBe('unreachable');
   });

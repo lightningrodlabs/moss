@@ -84,11 +84,9 @@ export function deriveSyncProgress(input: {
         }
       : undefined);
 
-  const roundPeers = new Set(
-    [gossip?.initiated_round, ...(gossip?.accepted_rounds ?? [])]
-      .filter((r) => r !== undefined)
-      .map((r) => r.session_with_peer),
-  );
+  // Only rounds a peer opened with us prove contact. Our own initiated round is
+  // just an attempt: kitsune2 keeps one open for up to 15 s, even to a peer that is gone.
+  const roundPeers = new Set((gossip?.accepted_rounds ?? []).map((r) => r.session_with_peer));
   const contactedThisSession = (url: string, m: PeerMetaWithCounts) => {
     const base = baseline?.peers[url];
     const lastGossipAt = microsToMs(m.last_gossip_timestamp);
