@@ -75,3 +75,21 @@ export function deriveSyncProgress(input: {
     lastActivityAt: moved ? now : previous?.lastActivityAt,
   };
 }
+
+/**
+ * Combines the latest metrics snapshot with the current known-peer count.
+ * agentInfo polling runs on its own schedule, so a peer it finds between
+ * snapshots shows up right away instead of on the next metrics tick.
+ */
+export function withKnownPeers(
+  snapshot: SyncProgress | undefined,
+  knownPeers: number,
+  now: number,
+): SyncProgress {
+  if (!snapshot) {
+    return deriveSyncProgress({ previous: undefined, metrics: undefined, knownPeers, now });
+  }
+  const peersFound = Math.max(snapshot.peersFound, knownPeers);
+  const stage = snapshot.stage === 'no-peers' && peersFound > 0 ? 'connecting' : snapshot.stage;
+  return { ...snapshot, peersFound, stage };
+}

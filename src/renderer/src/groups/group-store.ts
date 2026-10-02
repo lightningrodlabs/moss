@@ -138,6 +138,9 @@ export class GroupStore {
 
   private _knownAgents: Writable<Set<AgentPubKeyB64>> = writable(new Set());
 
+  /** Number of other agents discovered in this group's network, from agentInfo polling. */
+  knownAgentsCount: Readable<number> = derived(this._knownAgents, (known) => known.size);
+
   private _ignoredApplets: Writable<AppletId[]> = writable([]);
 
   private _hiddenAgents: Writable<AgentPubKeyB64[]> = writable([]);

@@ -3095,6 +3095,58 @@ começa agora</target>
   <source>Enable Group</source>
   <target>Ativar grupo</target>
 </trans-unit>
+<trans-unit id="s1d907d30387edf65">
+  <source>Found <x id="0" equiv-text="${p.peersFound}"/> peer(s). Connecting...</source>
+  <target><x id="0" equiv-text="${p.peersFound}"/> par(es) encontrado(s). Conectando...</target>
+</trans-unit>
+<trans-unit id="sa0f7950cbfc9f096">
+  <source>Syncing with <x id="0" equiv-text="${p.peersFound}"/> peer(s)...</source>
+  <target>Sincronizando com <x id="0" equiv-text="${p.peersFound}"/> par(es)...</target>
+</trans-unit>
+<trans-unit id="s88f7bc6cf91211c8">
+  <source>Synced with peers. Waiting for the group's details...</source>
+  <target>Sincronizado com os pares. Aguardando os detalhes do grupo...</target>
+</trans-unit>
+<trans-unit id="s346d8f65c1905359">
+  <source>Waiting for data...</source>
+  <target>Aguardando dados...</target>
+</trans-unit>
+<trans-unit id="s116925108bec4547">
+  <source>Receiving data</source>
+  <target>Recebendo dados</target>
+</trans-unit>
+<trans-unit id="sd55aa0f4fe7d38a0">
+  <source>Last data received <x id="0" equiv-text="${seconds}"/>s ago</source>
+  <target>Últimos dados recebidos há <x id="0" equiv-text="${seconds}"/> s</target>
+</trans-unit>
+<trans-unit id="s7ea1a45432c32726">
+  <source>Peers found</source>
+  <target>Pares encontrados</target>
+</trans-unit>
+<trans-unit id="sadfa462e3e286489">
+  <source>Peers online</source>
+  <target>Pares online</target>
+</trans-unit>
+<trans-unit id="s51096ac5d41a36e0">
+  <source>Peers synced with</source>
+  <target>Pares sincronizados</target>
+</trans-unit>
+<trans-unit id="s63bb18e0f4d0b55c">
+  <source>Data items held</source>
+  <target>Itens de dados armazenados</target>
+</trans-unit>
+<trans-unit id="s8e7ed0951d15e54f">
+  <source>Items downloading</source>
+  <target>Itens em download</target>
+</trans-unit>
+<trans-unit id="s7d5343b68b6715db">
+  <source>Active sync sessions</source>
+  <target>Sessões de sincronização ativas</target>
+</trans-unit>
+<trans-unit id="sb90cbaac002c7f8c">
+  <source>Last sync</source>
+  <target>Última sincronização</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

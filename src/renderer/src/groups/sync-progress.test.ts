@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deriveSyncProgress } from './sync-progress.js';
+import { deriveSyncProgress, withKnownPeers } from './sync-progress.js';
 import type {
   NetworkMetricsWithCounts,
   PeerMetaWithCounts,
@@ -176,5 +176,38 @@ describe('deriveSyncProgress', () => {
     });
     expect(p.lastGossipAt).toBe(NOW - 1000);
     expect(p.lastActivityAt).toBe(NOW);
+  });
+});
+
+describe('withKnownPeers', () => {
+  it('derives from known peers alone before the first snapshot', () => {
+    expect(withKnownPeers(undefined, 0, NOW).stage).toBe('no-peers');
+    const p = withKnownPeers(undefined, 3, NOW);
+    expect(p.stage).toBe('connecting');
+    expect(p.peersFound).toBe(3);
+  });
+
+  it('leaves no-peers when agentInfo finds a peer between snapshots', () => {
+    const snapshot = deriveSyncProgress({
+      previous: undefined,
+      metrics: metrics({}),
+      knownPeers: 0,
+      now: NOW,
+    });
+    const p = withKnownPeers(snapshot, 1, NOW + 1000);
+    expect(p.stage).toBe('connecting');
+    expect(p.peersFound).toBe(1);
+  });
+
+  it('keeps the snapshot stage and never lowers the peer count', () => {
+    const snapshot = deriveSyncProgress({
+      previous: undefined,
+      metrics: metrics({ pending: 2, peers: { a: { completed_rounds: 1 }, b: {} } }),
+      knownPeers: 2,
+      now: NOW,
+    });
+    const p = withKnownPeers(snapshot, 1, NOW + 1000);
+    expect(p.stage).toBe('syncing');
+    expect(p.peersFound).toBe(2);
   });
 });
