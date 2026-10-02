@@ -51,6 +51,8 @@ import '../self/cross-group/cross-group-main.js';
 import '../tool-library/tool-library.js';
 import '../layout/views/asset-view.js';
 import '../groups/elements/group-container.js';
+import type { GroupContainer } from '../groups/elements/group-container.js';
+import type { GroupContextAction } from './navigation/group-context-menu-items.js';
 import './debugging-panel/debugging-panel.js';
 
 import '../ui/moss-dialog.js';
@@ -937,6 +939,20 @@ export class MainDashboard extends LitElement {
     // });
   }
 
+  /** Selects the group, then opens the dialog for the action picked in its context menu. */
+  async openGroupAction(groupDnaHash: DnaHash, action: GroupContextAction) {
+    await this.openGroup(groupDnaHash);
+    await this.updateComplete;
+    const groupHashB64 = encodeHashToBase64(groupDnaHash);
+    const containers = Array.from(
+      this.shadowRoot?.querySelectorAll<GroupContainer>('group-container') ?? [],
+    );
+    const container = containers.find((c) => encodeHashToBase64(c.groupDnaHash) === groupHashB64);
+    // Only the dialog for this action stays open, in this group or any other
+    containers.forEach((c) => c.closeGroupActionDialogs(c === container ? action : undefined));
+    await container?.requestGroupAction(action);
+  }
+
   async activateAppletsForGroup(groupDnaHash) {
     console.log('Activating applets for group: ', encodeHashToBase64(groupDnaHash));
 
@@ -1720,6 +1736,9 @@ export class MainDashboard extends LitElement {
           @group-selected=${(e: CustomEvent) => {
             this.openGroup(e.detail.groupDnaHash);
           }}
+          @group-action-requested=${(
+            e: CustomEvent<{ groupDnaHash: DnaHash; action: GroupContextAction }>,
+          ) => this.openGroupAction(e.detail.groupDnaHash, e.detail.action)}
           @request-add-group=${() =>
             (this.shadowRoot?.getElementById('add-group-dialog') as MossDialog).show()}
           @agents-online=${async (e: CustomEvent) => {

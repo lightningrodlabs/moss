@@ -65,6 +65,8 @@ import { GroupSettings } from './settings/group-settings.js';
 import { MossDialog } from '../../ui/moss-dialog.js';
 import { personPlusIcon, editIcon, saveIcon, closeIcon } from '../../ui/icons.js';
 import type { GroupDashboardEl } from './group-dashboard.js';
+import type { LookingForPeers } from './looking-for-peers.js';
+import type { GroupContextAction } from '../../app/navigation/group-context-menu-items.js';
 import yaml from 'js-yaml';
 import { decode } from '@msgpack/msgpack';
 
@@ -113,6 +115,9 @@ export class GroupHome extends LitElement {
 
   @query('invite-people-dialog')
   inviteMemberDialog: any;
+
+  @query('looking-for-peers')
+  _lookingForPeers: LookingForPeers | undefined;
 
   @state()
   _peerStatusLoading = true;
@@ -347,6 +352,40 @@ export class GroupHome extends LitElement {
 
   public selectTab(tab: 'home' | 'unjoined tools'): void {
     this._selectedTab = tab;
+  }
+
+  /**
+   * Closes any dialog that a context menu action may have opened, except the
+   * one for `keep`, which is about to be shown and must not race its own
+   * hide animation.
+   */
+  public closeGroupActionDialogs(keep?: GroupContextAction): void {
+    if (keep !== 'settings' && this._settingsDialogOpen) {
+      this._settingsDialogOpen = false;
+      this.groupSettingsDialog?.hide();
+    }
+    if (keep !== 'invite') this.inviteMemberDialog?.hide();
+    if (keep !== 'leave') this._lookingForPeers?.hideLeaveDialog();
+  }
+
+  /** Opens the dialog behind an action picked in the groups sidebar's context menu. */
+  public async requestGroupAction(action: GroupContextAction): Promise<void> {
+    await this.updateComplete;
+    switch (action) {
+      case 'settings':
+        this._settingsDialogOpen = true;
+        this.groupSettingsDialog?.show();
+        break;
+      case 'invite':
+        this.inviteMemberDialog?.show();
+        break;
+      case 'leave':
+        this._lookingForPeers?.showLeaveDialog();
+        break;
+      case 'enable':
+        // An enabled group's home is showing, so there is nothing to enable.
+        break;
+    }
   }
 
   public openInactiveTools() {

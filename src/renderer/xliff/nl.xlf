@@ -3091,6 +3091,10 @@ begint nu</target>
   <source>Finishing transcription</source>
   <target>Transcriptie wordt afgerond</target>
 </trans-unit>
+<trans-unit id="sc989dc757c56431d">
+  <source>Enable Group</source>
+  <target>Groep inschakelen</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

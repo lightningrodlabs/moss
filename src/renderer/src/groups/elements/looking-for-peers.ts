@@ -54,6 +54,14 @@ export class LookingForPeers extends LitElement {
     this.leaving = false;
   }
 
+  public showLeaveDialog(): void {
+    this.dialog.show();
+  }
+
+  public hideLeaveDialog(): void {
+    this.dialog.hide();
+  }
+
   get dialog(): SlDialog {
     return this.shadowRoot?.getElementById('leave-group-dialog') as SlDialog;
   }
