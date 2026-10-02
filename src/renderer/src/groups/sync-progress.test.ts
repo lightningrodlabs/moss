@@ -19,6 +19,7 @@ function metrics(opts: {
       accepted_rounds: Array.from({ length: opts.rounds ?? 0 }, () => ({
         session_with_peer: 'peer',
       })),
+      dht_summary: {},
       peer_meta: opts.peers ?? {},
       local_op_count: opts.localOpCount,
     },

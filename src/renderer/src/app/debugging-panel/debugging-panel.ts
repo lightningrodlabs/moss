@@ -19,6 +19,7 @@ import {
   InstalledAppId,
   TransportStats,
 } from '@holochain/client';
+import type { NetworkMetricsDump } from '../../network/network-metrics-types.js';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/skeleton/skeleton.js';
@@ -303,6 +304,40 @@ export class DebuggingPanel extends LitElement {
   @state()
   _networkStats: Record<InstalledAppId, [TransportStats, DumpNetworkMetricsResponse]> = {};
 
+  /** Latest metrics per app from the shared poller. */
+  private _latestMetrics: Record<InstalledAppId, NetworkMetricsDump> = {};
+  /** Active poller subscriptions, keyed by app. */
+  private _metricsSubscriptions = new Map<InstalledAppId, () => void>();
+
+  /**
+   * Keeps poller subscriptions equal to the apps whose stats are switched on,
+   * and drops them all while the panel is hidden so a hidden panel adds no
+   * conductor load.
+   */
+  private _syncMetricsSubscriptions(): void {
+    const wanted = new Set(this._isVisible ? this._appsToPollNetworkStats : []);
+    for (const [appId, unsubscribe] of this._metricsSubscriptions) {
+      if (!wanted.has(appId)) {
+        unsubscribe();
+        this._metricsSubscriptions.delete(appId);
+      }
+    }
+    for (const appId of wanted) {
+      if (this._metricsSubscriptions.has(appId)) continue;
+      this._metricsSubscriptions.set(
+        appId,
+        this._mossStore.networkMetricsPoller.subscribe(
+          appId,
+          { includeDhtSummary: true },
+          (metrics) => {
+            this._latestMetrics[appId] = metrics;
+          },
+          (e) => console.warn('Failed to fetch network metrics for', appId, e),
+        ),
+      );
+    }
+  }
+
   @state()
   _adminNetworkStats: DumpNetworkStatsResponse | null = null;
 
@@ -411,6 +446,7 @@ export class DebuggingPanel extends LitElement {
     this._visibilityObserver = new IntersectionObserver((entries) => {
       for (const entry of entries) {
         this._isVisible = entry.isIntersecting;
+        this._syncMetricsSubscriptions();
       }
     });
     this._visibilityObserver.observe(this);
@@ -422,6 +458,7 @@ export class DebuggingPanel extends LitElement {
     this._refreshInterval = safeSetInterval({
       name: 'pollNetworkStats',
       fn: async () => {
+        this._syncMetricsSubscriptions();
         if (!this._isVisible) return;
         await this.pollNetworkStats();
         this.requestUpdate();
@@ -453,6 +490,8 @@ export class DebuggingPanel extends LitElement {
       this._refreshInterval.cancel();
       this._refreshInterval = undefined;
     }
+    for (const unsubscribe of this._metricsSubscriptions.values()) unsubscribe();
+    this._metricsSubscriptions.clear();
     if (this._memoryPollInterval) {
       this._memoryPollInterval.cancel();
       this._memoryPollInterval = undefined;
@@ -1131,11 +1170,11 @@ export class DebuggingPanel extends LitElement {
     }
     await Promise.all(
       this._appsToPollNetworkStats.map(async (appId) => {
+        const networkMetrics = this._latestMetrics[appId];
+        // The shared poller has not delivered this app's first snapshot yet
+        if (!networkMetrics) return;
         const client = await this._mossStore.getAppClient(appId);
         const networkStats = await client[0].dumpNetworkStats();
-        const networkMetrics = await client[0].dumpNetworkMetrics({
-          include_dht_summary: true,
-        });
         this._networkStats[appId] = [networkStats.transport_stats, networkMetrics];
 
         // Build transport to agent map from agentInfo

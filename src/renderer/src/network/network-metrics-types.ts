@@ -1,7 +1,7 @@
 import type {
   DnaHashB64,
   FetchStateSummary,
-  GossipRoundStateSummary,
+  GossipStateSummary,
   LocalAgentSummary,
   PeerMeta,
   Timestamp,
@@ -19,9 +19,7 @@ export interface PeerMetaWithCounts extends PeerMeta {
   is_tombstone?: boolean;
 }
 
-export interface GossipStateSummaryWithCounts {
-  initiated_round?: GossipRoundStateSummary;
-  accepted_rounds: GossipRoundStateSummary[];
+export interface GossipStateSummaryWithCounts extends GossipStateSummary {
   peer_meta: Record<string, PeerMetaWithCounts>;
   local_op_count?: number;
 }
