@@ -76,6 +76,7 @@ import {
 } from '@theweave/group-client';
 import { FoyerStore } from './foyer.js';
 import { partitionAppletsByStatus } from './applet-status.js';
+import { liveAgentIdsFromAgentInfo } from './agent-info.js';
 import {
   appIdFromAppletHash,
   deriveToolCompatibilityId,
@@ -137,6 +138,9 @@ export class GroupStore {
   onlinePeersCount: Readable<number | undefined>;
 
   private _knownAgents: Writable<Set<AgentPubKeyB64>> = writable(new Set());
+
+  /** Number of other agents discovered in this group's network, from agentInfo polling. */
+  knownAgentsCount: Readable<number> = derived(this._knownAgents, (known) => known.size);
 
   private _ignoredApplets: Writable<AppletId[]> = writable([]);
 
@@ -1156,35 +1160,12 @@ export class GroupStore {
       const knownAgents = new Set<AgentPubKeyB64>();
       const myPubKeyB64 = encodeHashToBase64(this.groupClient.myPubKey);
 
-      for (const agentInfoItem of response) {
-        try {
-          // Response format: { agentInfo: "{...json...}", signature: "..." }
-          // Parse the outer structure
-          const parsed =
-            typeof agentInfoItem === 'string' ? JSON.parse(agentInfoItem) : agentInfoItem;
-
-          // Parse the inner agentInfo JSON string
-          const agentInfoData =
-            typeof parsed.agentInfo === 'string' ? JSON.parse(parsed.agentInfo) : parsed.agentInfo;
-
-          // Extract the partial agent ID from the 'agent' field
-          const partialAgentId = agentInfoData.agent;
-
-          if (!partialAgentId) {
-            console.warn('[AgentInfo] No agent field in agentInfo data:', agentInfoData);
-            continue;
-          }
-
-          // Reconstruct full agent key from partial ID
-          const fullAgentKey = this.getFullAgentId(partialAgentId);
-          const fullAgentKeyB64 = encodeHashToBase64(fullAgentKey);
-
-          // Exclude self and hidden agents
-          if (fullAgentKeyB64 !== myPubKeyB64 && !this.isAgentHidden(fullAgentKeyB64)) {
-            knownAgents.add(fullAgentKeyB64);
-          }
-        } catch (error) {
-          console.warn('[AgentInfo] Failed to parse agent info item:', agentInfoItem, error);
+      for (const partialAgentId of liveAgentIdsFromAgentInfo(response)) {
+        // Reconstruct full agent key from partial ID
+        const fullAgentKeyB64 = encodeHashToBase64(this.getFullAgentId(partialAgentId));
+        // Exclude self and hidden agents
+        if (fullAgentKeyB64 !== myPubKeyB64 && !this.isAgentHidden(fullAgentKeyB64)) {
+          knownAgents.add(fullAgentKeyB64);
         }
       }
 
