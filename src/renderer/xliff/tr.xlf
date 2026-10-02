@@ -3163,33 +3163,21 @@ starts now</source>
   <source>Failed attempts</source>
   <target>Başarısız denemeler</target>
 </trans-unit>
-<trans-unit id="s8beefc1aae2a7ce9">
-  <source>Connecting to peers</source>
-  <target>Eşlere bağlanılıyor</target>
+<trans-unit id="s970de9ba0cf07677">
+  <source>Searching</source>
+  <target>Aranıyor</target>
 </trans-unit>
-<trans-unit id="se211cb4da8632f64">
-  <source>Cannot reach peers</source>
-  <target>Eşlere ulaşılamıyor</target>
+<trans-unit id="s4b052cb287d81da7">
+  <source>Connecting</source>
+  <target>Bağlanıyor</target>
 </trans-unit>
-<trans-unit id="sffbaa0fa95aa2446">
-  <source>Connected, receiving data</source>
-  <target>Bağlı, veri alınıyor</target>
+<trans-unit id="s9e24f6e023b24ca5">
+  <source>Cannot reach</source>
+  <target>Ulaşılamıyor</target>
 </trans-unit>
-<trans-unit id="s3a6c6086bf3f06a8">
-  <source>Connected to peers</source>
-  <target>Eşlere bağlı</target>
-</trans-unit>
-<trans-unit id="s0a857219d8ac0c29">
-  <source>Peer</source>
-  <target>Eş</target>
-</trans-unit>
-<trans-unit id="sa79b17587610b650">
-  <source><x id="0" equiv-text="${this.peers}"/> peers</source>
-  <target><x id="0" equiv-text="${this.peers}"/> eş</target>
-</trans-unit>
-<trans-unit id="scb6a9c1a1757adbc">
-  <source>You</source>
-  <target>Sen</target>
+<trans-unit id="s82a4e28ab5b56670">
+  <source>Connected</source>
+  <target>Bağlı</target>
 </trans-unit>
 </body>
 </file>

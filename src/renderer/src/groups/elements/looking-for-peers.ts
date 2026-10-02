@@ -21,7 +21,7 @@ import { dialogMessagebox } from '../../electron-api.js';
 import { telescopeIcon } from '../../ui/icons.js';
 import { mossStyles } from '../../shared-styles.js';
 import { groupModifiersToAppId } from '../../utils.js';
-import './peer-link-indicator.js';
+import { dataFlowArrow, syncStatusBadge, syncStatusStyles } from './sync-status-visuals.js';
 import { serviceStyles } from '../../self/settings/services/service-styles.js';
 import {
   deriveSyncProgress,
@@ -180,50 +180,44 @@ export class LookingForPeers extends LitElement {
   renderStatus(p: SyncProgress) {
     const waiting = p.stage === 'no-peers';
     return html`
-      ${waiting
-        ? telescopeIcon(120)
-        : html`<peer-link-indicator
-            .state=${p.stage === 'unreachable'
-              ? 'unreachable'
-              : p.stage === 'connected'
-                ? 'connected'
-                : 'found'}
-            .peers=${p.stage === 'connected' ? Math.max(p.peersConnected, 1) : p.peersFound}
-            .flowing=${this.isReceiving(p)}
-          ></peer-link-indicator>`}
-      ${this.renderHeading(p)}
+      ${telescopeIcon(120)}
+      <h2>${this.headingText(p)}</h2>
+      ${syncStatusBadge(p.stage)} ${this.renderHint(p)}
       <div class="column center-content" style=${waiting ? 'display: none;' : ''}>
         ${this.renderLiveness(p)} ${this.renderDetails(p)}
       </div>
     `;
   }
 
-  renderHeading(p: SyncProgress) {
+  headingText(p: SyncProgress): string {
     switch (p.stage) {
       case 'no-peers':
-        return html`
-          <h2>${msg('Looking for peers...')}</h2>
-          <span class="hint"
-            >${msg(
-              "No peers found yet to fetch the group's meta data. Ask one of the members of this group to launch Moss so that you can start synchronizing with them.",
-            )}</span
-          >
-        `;
+        return msg('Looking for peers...');
       case 'found':
-        return html`<h2>${msg(str`Found ${p.peersFound} peer(s). Connecting...`)}</h2>`;
+        return msg(str`Found ${p.peersFound} peer(s). Connecting...`);
       case 'unreachable':
-        return html`
-          <h2>${msg(str`Found ${p.peersFound} peer(s), but cannot reach them yet`)}</h2>
-          <span class="hint"
-            >${msg(
-              'They may be offline, or a network or firewall setting may be blocking the connection. Moss keeps trying.',
-            )}</span
-          >
-        `;
+        return msg(str`Found ${p.peersFound} peer(s), but cannot reach them yet`);
       case 'connected':
-        return html`<h2>
-          ${msg(str`Connected to ${Math.max(p.peersConnected, 1)} peer(s). Syncing...`)}
-        </h2>`;
+        return msg(str`Connected to ${Math.max(p.peersConnected, 1)} peer(s). Syncing...`);
+    }
+  }
+
+  renderHint(p: SyncProgress) {
+    switch (p.stage) {
+      case 'no-peers':
+        return html`<span class="hint"
+          >${msg(
+            "No peers found yet to fetch the group's meta data. Ask one of the members of this group to launch Moss so that you can start synchronizing with them.",
+          )}</span
+        >`;
+      case 'unreachable':
+        return html`<span class="hint"
+          >${msg(
+            'They may be offline, or a network or firewall setting may be blocking the connection. Moss keeps trying.',
+          )}</span
+        >`;
+      default:
+        return '';
     }
   }
 
@@ -235,14 +229,14 @@ export class LookingForPeers extends LitElement {
   }
 
   renderLiveness(p: SyncProgress) {
-    if (p.lastDataAt === undefined) {
-      return html`<span class="liveness">${msg('No data received yet')}</span>`;
-    }
-    return html`<span class="liveness">
-      ${this.isReceiving(p)
-        ? msg('Receiving data')
-        : msg(str`Last data received ${this.agoText(elapsedSince(p.lastDataAt, this._now))}`)}
-    </span>`;
+    const receiving = this.isReceiving(p);
+    const text =
+      p.lastDataAt === undefined
+        ? msg('No data received yet')
+        : receiving
+          ? msg('Receiving data')
+          : msg(str`Last data received ${this.agoText(elapsedSince(p.lastDataAt, this._now))}`);
+    return html`<span class="liveness">${dataFlowArrow(receiving)} ${text}</span>`;
   }
 
   agoText(elapsed: Elapsed): string {
@@ -279,6 +273,7 @@ export class LookingForPeers extends LitElement {
     sharedStyles,
     mossStyles,
     serviceStyles,
+    syncStatusStyles,
     css`
       :host {
         position: relative;
@@ -297,7 +292,11 @@ export class LookingForPeers extends LitElement {
         margin: auto 0;
         flex: none;
       }
+      .status-badge {
+        margin-bottom: 12px;
+      }
       .hint {
+        margin-bottom: 12px;
         max-width: 600px;
         text-align: center;
       }

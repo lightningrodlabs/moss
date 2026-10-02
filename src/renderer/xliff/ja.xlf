@@ -3163,33 +3163,21 @@ starts now</source>
   <source>Failed attempts</source>
   <target>失敗した試行</target>
 </trans-unit>
-<trans-unit id="s8beefc1aae2a7ce9">
-  <source>Connecting to peers</source>
-  <target>ピアに接続中</target>
+<trans-unit id="s970de9ba0cf07677">
+  <source>Searching</source>
+  <target>検索中</target>
 </trans-unit>
-<trans-unit id="se211cb4da8632f64">
-  <source>Cannot reach peers</source>
-  <target>ピアに接続できません</target>
+<trans-unit id="s4b052cb287d81da7">
+  <source>Connecting</source>
+  <target>接続中</target>
 </trans-unit>
-<trans-unit id="sffbaa0fa95aa2446">
-  <source>Connected, receiving data</source>
-  <target>接続済み、データを受信中</target>
+<trans-unit id="s9e24f6e023b24ca5">
+  <source>Cannot reach</source>
+  <target>接続できません</target>
 </trans-unit>
-<trans-unit id="s3a6c6086bf3f06a8">
-  <source>Connected to peers</source>
-  <target>ピアに接続済み</target>
-</trans-unit>
-<trans-unit id="s0a857219d8ac0c29">
-  <source>Peer</source>
-  <target>ピア</target>
-</trans-unit>
-<trans-unit id="sa79b17587610b650">
-  <source><x id="0" equiv-text="${this.peers}"/> peers</source>
-  <target><x id="0" equiv-text="${this.peers}"/> 人のピア</target>
-</trans-unit>
-<trans-unit id="scb6a9c1a1757adbc">
-  <source>You</source>
-  <target>あなた</target>
+<trans-unit id="s82a4e28ab5b56670">
+  <source>Connected</source>
+  <target>接続済み</target>
 </trans-unit>
 </body>
 </file>
