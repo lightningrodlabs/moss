@@ -11,6 +11,9 @@ import { hostTimeoutMessage } from './host-timeout.js';
 import { replyWithError } from './reply-envelope.js';
 import { assertValidRequest } from './request-validation.js';
 
+/** Every request type except `ready`, which the channel answers itself. */
+export type HandledRequest = Exclude<AppletToParentRequest, { type: 'ready' }>;
+
 /** Who sent a request: the identity derived from its origin, and its window. */
 export type RequestContext = { kind: IframeKind; source: MessageEventSource };
 
@@ -19,22 +22,22 @@ export type RequestContext = { kind: IframeKind; source: MessageEventSource };
  * main window and a WAL window share every wire concern and differ only in
  * where each request type is handled.
  */
-export type RequestHandler = (
-  request: AppletToParentRequest,
-  context: RequestContext,
-) => Promise<unknown>;
+export type RequestHandler = (request: HandledRequest, context: RequestContext) => Promise<unknown>;
+
+type RegistryEntry = { subType: string; source: MessageEventSource | null | 'wal-window' };
 
 /**
- * The frames a window knows about, by applet. An entry whose source is
- * `'wal-window'` lives in another window and is reached over IPC, not by this
- * channel.
+ * The frames a window knows about: applet views by applet, and cross-group
+ * views by tool. An entry whose source is `'wal-window'` lives in another
+ * window and is reached over IPC, not by this channel.
  */
 export type FrameRegistry = {
-  appletIframes: Record<
-    AppletId,
-    Array<{ subType: string; source: MessageEventSource | null | 'wal-window' }>
-  >;
+  appletIframes: Record<AppletId, RegistryEntry[]>;
+  crossGroupIframes: Record<string, RegistryEntry[]>;
 };
+
+/** A frame this window hosts, with how messages about it name it. */
+type HostedFrame = { source: MessageEventSource; target: string };
 
 export type AppletChannelOptions = {
   registry: FrameRegistry;
@@ -53,6 +56,7 @@ type ReadyWaiter = {
   appletId: AppletId;
   subType: string;
   resolve: (source: MessageEventSource | undefined) => void;
+  timer: ReturnType<typeof setTimeout>;
 };
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 20000;
@@ -134,6 +138,7 @@ export class AppletChannel {
     this.readyWaiters = this.readyWaiters.filter((waiter) => {
       const frame = this.readyFrame(waiter.appletId, waiter.subType);
       if (!frame) return true;
+      clearTimeout(waiter.timer);
       waiter.resolve(frame);
       return false;
     });
@@ -151,18 +156,19 @@ export class AppletChannel {
     const frame = this.readyFrame(appletId, subType);
     if (frame) return Promise.resolve(frame);
     return new Promise((resolve) => {
-      const waiter: ReadyWaiter = { appletId, subType, resolve };
-      this.readyWaiters.push(waiter);
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         this.readyWaiters = this.readyWaiters.filter((w) => w !== waiter);
         resolve(undefined);
       }, timeoutMs);
+      const waiter: ReadyWaiter = { appletId, subType, resolve, timer };
+      this.readyWaiters.push(waiter);
     });
   }
 
   /**
-   * Sends a message to every frame of the given applets that this window hosts.
-   * A frame that is not ready gets the message when it becomes ready.
+   * Sends a message to every frame of the given applets that this window hosts,
+   * or to every applet and cross-group view for `'all'`. A frame that is not
+   * ready gets the message when it becomes ready.
    */
   broadcast(appletIds: 'all' | AppletId[], message: ParentToAppletMessage): void {
     for (const { source } of this.hostedFrames(appletIds)) {
@@ -174,16 +180,25 @@ export class AppletChannel {
     }
   }
 
-  /** Sends a request to one frame of the given applet and resolves with its answer. */
+  /**
+   * Sends a request to one frame and resolves with its answer. `target` names
+   * the frame in errors, e.g. "applet <id>".
+   */
   request<T>(
     source: MessageEventSource,
     message: ParentToAppletMessage,
-    options: { appletId: AppletId; timeoutMs?: number },
+    options: { target: string; timeoutMs?: number },
   ): Promise<T> {
+    if (isClosed(source)) {
+      this.forget(source);
+      return Promise.reject(
+        new Error(`postMessage '${message.type}' to ${options.target}: its window was closed.`),
+      );
+    }
     const timeoutMs = options.timeoutMs ?? this.requestTimeoutMs;
     const timeoutText = hostTimeoutMessage(
       message.type,
-      options.appletId,
+      options.target,
       timeoutMs,
       this.isReady(source) ? 'reported' : 'assumed',
     );
@@ -214,7 +229,7 @@ export class AppletChannel {
   ): Promise<void> {
     const ready = this.hostedFrames(appletIds).filter(({ source }) => this.isReady(source));
     await Promise.allSettled(
-      ready.map(({ source, appletId }) => this.request(source, message, { appletId, timeoutMs })),
+      ready.map(({ source, target }) => this.request(source, message, { target, timeoutMs })),
     );
   }
 
@@ -252,23 +267,29 @@ export class AppletChannel {
 
   /**
    * The frames of the given applets that this window hosts and that still
-   * exist. A frame removed from the page without unregistering keeps its
-   * registry entry, but its window reports closed; the channel forgets it.
+   * exist; for `'all'`, cross-group views too. A frame removed from the page
+   * without unregistering keeps its registry entry, but its window reports
+   * closed; the channel forgets it.
    */
-  private hostedFrames(
-    appletIds: 'all' | AppletId[],
-  ): Array<{ source: MessageEventSource; appletId: AppletId }> {
-    const registry = this.options.registry.appletIframes;
-    const ids = appletIds === 'all' ? Object.keys(registry) : appletIds;
-    const frames: Array<{ source: MessageEventSource; appletId: AppletId }> = [];
-    for (const appletId of ids) {
-      for (const { source } of registry[appletId] ?? []) {
+  private hostedFrames(appletIds: 'all' | AppletId[]): HostedFrame[] {
+    const { appletIframes, crossGroupIframes } = this.options.registry;
+    const groups: Array<{ entries: RegistryEntry[]; target: string }> = (
+      appletIds === 'all' ? Object.keys(appletIframes) : appletIds
+    ).map((id) => ({ entries: appletIframes[id] ?? [], target: `applet ${id}` }));
+    if (appletIds === 'all') {
+      for (const [toolId, entries] of Object.entries(crossGroupIframes)) {
+        groups.push({ entries, target: `cross-group view of tool ${toolId}` });
+      }
+    }
+    const frames: HostedFrame[] = [];
+    for (const { entries, target } of groups) {
+      for (const { source } of entries) {
         if (!isHostedSource(source)) continue;
         if (isClosed(source)) {
           this.forget(source);
           continue;
         }
-        frames.push({ source, appletId });
+        frames.push({ source, target });
       }
     }
     return frames;

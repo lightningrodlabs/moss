@@ -36,11 +36,8 @@ import { TransferableReply } from '../transferable-reply.js';
 import { MossStore } from '../moss-store.js';
 // import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId, stringifyWal } from '@theweave/api';
-import {
-  openWalInWindow,
-  validateNotifications,
-} from '../utils.js';
-import type { AppletChannel } from './applet-channel/applet-channel.js';
+import { openWalInWindow, validateNotifications } from '../utils.js';
+import type { AppletChannel, HandledRequest } from './applet-channel/applet-channel.js';
 import { AppletStore } from './applet-store.js';
 import { getAsrRendererBridge, type SessionOrigin } from './asr-bridge.js';
 import { resolveAppletName } from './applet-name.js';
@@ -285,12 +282,11 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
   };
 }
 
-
 export async function handleAppletIframeMessage(
   mossStore: MossStore,
   openViews: AppOpenViews,
   source: IframeKind,
-  message: AppletToParentRequest,
+  message: HandledRequest,
   eventSource: MessageEventSource | null | 'wal-window',
   /**
    * webContents id of the BrowserWindow that originated the request
@@ -1079,10 +1075,6 @@ export async function handleAppletIframeMessage(
       groupStore.unsubscribeFromAssetStore(message.wal, encodeHashToBase64(source.appletHash));
       return;
     }
-    case 'ready':
-      // The applet channel of the window that hosts a frame consumes its ready
-      // report. A report relayed from a WAL window has no use here.
-      return;
     case 'search':
       // Declared in AppletToParentRequest but not sent by any current applet, so
       // the host has no handler for it. Kept as an explicit case so the
@@ -1135,7 +1127,7 @@ export class AppletHost {
   }
 
   postMessage<T>(message: ParentToAppletMessage): Promise<T> {
-    return this.channel.request<T>(this.source, message, { appletId: this.appletId });
+    return this.channel.request<T>(this.source, message, { target: `applet ${this.appletId}` });
   }
 }
 

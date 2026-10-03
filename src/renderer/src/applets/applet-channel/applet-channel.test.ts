@@ -33,10 +33,19 @@ class CrossOriginFrame extends FakeFrame {
   }
 }
 
-function registryWith(frames: Array<{ appletId: string; subType: string; source: unknown }>) {
-  const registry: FrameRegistry = { appletIframes: {} };
+function registryWith(
+  frames: Array<{ appletId: string; subType: string; source: unknown }>,
+  crossGroupFrames: Array<{ toolId: string; subType: string; source: unknown }> = [],
+) {
+  const registry: FrameRegistry = { appletIframes: {}, crossGroupIframes: {} };
   for (const f of frames) {
     (registry.appletIframes[f.appletId] ??= []).push({
+      subType: f.subType,
+      source: f.source as MessageEventSource,
+    });
+  }
+  for (const f of crossGroupFrames) {
+    (registry.crossGroupIframes[f.toolId] ??= []).push({
       subType: f.subType,
       source: f.source as MessageEventSource,
     });
@@ -44,7 +53,10 @@ function registryWith(frames: Array<{ appletId: string; subType: string; source:
   return registry;
 }
 
-function newChannel(registry: FrameRegistry = { appletIframes: {} }, isAppletDev = false) {
+function newChannel(
+  registry: FrameRegistry = { appletIframes: {}, crossGroupIframes: {} },
+  isAppletDev = false,
+) {
   return new AppletChannel({ registry, isAppletDev: () => isAppletDev, requestTimeoutMs: 50 });
 }
 
@@ -164,7 +176,7 @@ describe('AppletChannel: requests from frames', () => {
 
   it('ignores messages while the window does not yet know whether it runs in applet dev mode', async () => {
     const channel = new AppletChannel({
-      registry: { appletIframes: {} },
+      registry: { appletIframes: {}, crossGroupIframes: {} },
       isAppletDev: () => undefined,
     });
     const handle = vi.fn(echoType);
@@ -217,6 +229,18 @@ describe('AppletChannel: readiness', () => {
     const waiting = channel.waitForReadyAppletFrame(APPLET_ID, 'main', 1000);
     await sendRequest(channel, echoType, frame, { type: 'ready' });
     expect(await waiting).toBe(frame);
+  });
+
+  it('leaves no timer behind once the view reports ready', async () => {
+    vi.useFakeTimers();
+    const frame = new FakeFrame();
+    const channel = newChannel(
+      registryWith([{ appletId: APPLET_ID, subType: 'main', source: frame }]),
+    );
+    const waiting = channel.waitForReadyAppletFrame(APPLET_ID, 'main', 20000);
+    channel.markReady(frame as unknown as MessageEventSource);
+    expect(await waiting).toBe(frame);
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it('resolves at once when the view is already ready', async () => {
@@ -307,6 +331,18 @@ describe('AppletChannel: broadcasts', () => {
     expect(removed.posted).toEqual([]);
   });
 
+  it('sends a broadcast for all applets to cross-group views too, and one for named applets only to theirs', () => {
+    const crossGroup = new FakeFrame();
+    const channel = newChannel(
+      registryWith([], [{ toolId: 'tool-x', subType: 'main', source: crossGroup }]),
+    );
+    channel.markReady(crossGroup as unknown as MessageEventSource);
+    channel.broadcast([APPLET_ID], locale);
+    expect(crossGroup.posted).toEqual([]);
+    channel.broadcast('all', locale);
+    expect(crossGroup.posted).toEqual([locale]);
+  });
+
   it('drops the oldest held message past the cap', () => {
     const frame = new FakeFrame();
     const channel = new AppletChannel({
@@ -353,7 +389,7 @@ describe('AppletChannel: requests to frames', () => {
           type: 'search',
           filter: 'x',
         },
-        { appletId: APPLET_ID },
+        { target: `applet ${APPLET_ID}` },
       ),
     ).toBe(42);
   });
@@ -366,7 +402,7 @@ describe('AppletChannel: requests to frames', () => {
       channel.request(
         frame as unknown as MessageEventSource,
         { type: 'search', filter: 'x' },
-        { appletId: APPLET_ID },
+        { target: `applet ${APPLET_ID}` },
       ),
     ).rejects.toThrow('boom');
   });
@@ -380,7 +416,7 @@ describe('AppletChannel: requests to frames', () => {
           type: 'search',
           filter: 'x',
         },
-        { appletId: APPLET_ID },
+        { target: `applet ${APPLET_ID}` },
       ),
     ).rejects.toThrow('never reported that it was ready');
   });
@@ -393,7 +429,7 @@ describe('AppletChannel: requests to frames', () => {
       channel.request(
         frame as unknown as MessageEventSource,
         { type: 'search', filter: 'x' },
-        { appletId: APPLET_ID },
+        { target: `applet ${APPLET_ID}` },
       ),
     ).rejects.toThrow("stalled inside the Tool's own handler");
   });
@@ -404,7 +440,7 @@ describe('AppletChannel: requests to frames', () => {
       channel.request(
         new CrossOriginFrame() as unknown as MessageEventSource,
         { type: 'search', filter: 'x' },
-        { appletId: APPLET_ID },
+        { target: `applet ${APPLET_ID}` },
       ),
     ).rejects.toThrow(`to applet ${APPLET_ID} timed out`);
   });
@@ -432,6 +468,35 @@ describe('AppletChannel: requests to frames', () => {
     expect(Date.now() - started).toBeLessThan(500);
     expect(removed.posted).toEqual([]);
     expect(channel.isReady(removed as unknown as MessageEventSource)).toBe(false);
+  });
+
+  it('rejects at once for a frame whose window was closed, and forgets it', async () => {
+    const removed = new CrossOriginFrame();
+    const channel = newChannel();
+    channel.markReady(removed as unknown as MessageEventSource);
+    removed.closed = true;
+    const started = Date.now();
+    await expect(
+      channel.request(
+        removed as unknown as MessageEventSource,
+        { type: 'search', filter: 'x' },
+        { target: `applet ${APPLET_ID}`, timeoutMs: 1000 },
+      ),
+    ).rejects.toThrow('closed');
+    expect(Date.now() - started).toBeLessThan(500);
+    expect(removed.posted).toEqual([]);
+    expect(channel.isReady(removed as unknown as MessageEventSource)).toBe(false);
+  });
+
+  it('includes ready cross-group views when waiting for all frames', async () => {
+    const crossGroup = new FakeFrame();
+    crossGroup.answer = (_m, port) => port.postMessage({ type: 'success', result: 1 });
+    const channel = newChannel(
+      registryWith([], [{ toolId: 'tool-x', subType: 'main', source: crossGroup }]),
+    );
+    channel.markReady(crossGroup as unknown as MessageEventSource);
+    await channel.requestAll('all', { type: 'on-before-unload' }, 1000);
+    expect(crossGroup.posted).toEqual([{ type: 'on-before-unload' }]);
   });
 
   it('waits for every ready frame to answer, and skips frames that are not ready', async () => {
