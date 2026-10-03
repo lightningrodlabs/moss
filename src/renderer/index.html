@@ -140,9 +140,10 @@
         }
       }
 
-      // Wait for locale to be set before importing the app
-      await initializeLocale();
-      await import('./src/moss-app.ts');
+      // Set the locale before importing the app. This module must finish
+      // evaluating without awaiting: moss-app imports modules this entry also
+      // imports, and if they share a chunk, a pending entry would deadlock it.
+      initializeLocale().then(() => import('./src/moss-app.ts'));
     </script>
   </body>
 </html>
