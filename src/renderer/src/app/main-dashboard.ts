@@ -77,6 +77,7 @@ import { MossPocket } from '../assets/pocket/pocket.js';
 import { CreatablePalette } from '../assets/creatables/creatable-palette.js';
 import { handleAppletIframeMessage } from '../applets/applet-host.js';
 import { UNLOAD_TIMEOUT_MS } from '../applets/applet-channel/applet-channel.js';
+import { externalNavigationReported, holdUnloadWhileSaving } from '../unload-hold.js';
 import { assertValidRequest } from '../applets/applet-channel/request-validation.js';
 import { initAsrRendererBridge } from '../applets/asr-bridge.js';
 import { openViewsContext } from '../layout/context.js';
@@ -549,29 +550,14 @@ export class MainDashboard extends LitElement {
     }
   }
 
-  beforeUnloadListener = async (e) => {
-    console.log('GOT BEFOREUNLOAD EVENT: ', e);
-    // Wait first to check whether it's triggered by a will-navigate or will-frame-navigate
-    // event to an external location (https, mailto, ...) and this listener should therefore
-    // not be executed (https://github.com/electron/electron/issues/29921)
-    let shouldProceed = true;
-    await new Promise((resolve) => {
-      window.electronAPI.onWillNavigateExternal(() => {
-        shouldProceed = false;
-        window.electronAPI.removeWillNavigateListeners();
-        resolve(null);
-      });
-      setTimeout(() => {
-        resolve(null);
-      }, 500);
-    });
-
-    e.preventDefault();
-
-    if (shouldProceed) {
-      e.preventDefault();
+  beforeUnloadListener = holdUnloadWhileSaving({
+    isExternalNavigation: () =>
+      externalNavigationReported(
+        (callback) => window.electronAPI.onWillNavigateExternal(callback),
+        () => window.electronAPI.removeWillNavigateListeners(),
+      ),
+    save: async () => {
       this.reloading = true;
-      console.log('onbeforeunload event');
       // If it takes longer than 5 seconds to unload, offer to hard reload
       this.slowReloadTimeout = window.setTimeout(() => {
         this.slowLoading = true;
@@ -581,17 +567,17 @@ export class MainDashboard extends LitElement {
         { type: 'on-before-unload' },
         UNLOAD_TIMEOUT_MS,
       );
-      console.log('on-before-unload callbacks finished.');
+    },
+    finish: () => {
       window.removeEventListener('beforeunload', this.beforeUnloadListener);
       // The logic to set this variable lives in index.html
       if ((window as any).__WINDOW_CLOSING__) {
-        console.log('__WINDOW_CLOSING__ is true');
         window.electronAPI.closeMainWindow();
       } else {
         window.location.reload();
       }
-    }
-  };
+    },
+  });
 
   private _toolInfoListener = (e: Event) => {
     const detail = (e as CustomEvent<ToolInfoInput>).detail;
@@ -641,6 +627,9 @@ export class MainDashboard extends LitElement {
           throw new Error('source not defined in AppletToParentMessage');
         }
         assertValidRequest(payload.message.request);
+        if (payload.message.request.type === 'ready') {
+          throw new Error('A ready report is answered by the window that hosts the frame.');
+        }
         const result = await handleAppletIframeMessage(
           this._mossStore,
           this.openViews,

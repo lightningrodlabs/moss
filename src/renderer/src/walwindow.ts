@@ -27,6 +27,7 @@ import { localized, msg } from '@lit/localize';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import { IframeStore } from './iframe-store';
 import { AppletChannel, UNLOAD_TIMEOUT_MS } from './applets/applet-channel/applet-channel';
+import { externalNavigationReported, holdUnloadWhileSaving } from './unload-hold';
 import { deriveWalMessageSource, walZomeCallSigning } from './wal-message-source';
 import { audioSourceGrantsClient, releaseGrantsFor } from './audio-sources/singletons.js';
 import { TransferableReply } from './transferable-reply.js';
@@ -139,42 +140,30 @@ export class WalWindow extends LitElement {
   @state()
   shouldClose = false;
 
-  beforeUnloadListener = async (e) => {
-    // Wait first to check whether it's triggered by a will-navigate or will-frame-navigate
-    // event to an external location (https, mailto, ...) and this listener should therefore
-    // not be executed (https://github.com/electron/electron/issues/29921)
-    let shouldProceed = true;
-    await new Promise((resolve) => {
-      window.electronAPI.onWillNavigateExternal(() => {
-        shouldProceed = false;
-        window.electronAPI.removeWillNavigateListeners();
-        resolve(null);
-      });
-      setTimeout(() => {
-        resolve(null);
-      }, 500);
-    });
-
-    if (shouldProceed) {
-      e.preventDefault();
-      console.log('onbeforeunload event');
+  beforeUnloadListener = holdUnloadWhileSaving({
+    isExternalNavigation: () =>
+      externalNavigationReported(
+        (callback) => window.electronAPI.onWillNavigateExternal(callback),
+        () => window.electronAPI.removeWillNavigateListeners(),
+      ),
+    save: async () => {
       this.loading = 'Saving...';
       // If it takes longer than 5 seconds to unload, offer to hard reload
       this.slowReloadTimeout = window.setTimeout(() => {
         this.slowLoading = true;
       }, 4500);
       await this.appletChannel.requestAll('all', { type: 'on-before-unload' }, UNLOAD_TIMEOUT_MS);
-      console.log('on-before-unload callbacks finished.');
+    },
+    finish: () => {
       window.removeEventListener('beforeunload', this.beforeUnloadListener);
       // The logic to set this variable lives in walwindow.html
       if (window.__WINDOW_CLOSING__) {
-        console.log('__WINDOW_CLOSING__ is true.');
         walWindow.electronAPI.closeWindow();
       } else {
         window.location.reload();
       }
-    }
-  };
+    },
+  });
 
   async firstUpdated() {
     window.addEventListener('beforeunload', this.beforeUnloadListener);
