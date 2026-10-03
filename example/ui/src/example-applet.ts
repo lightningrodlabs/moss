@@ -39,6 +39,8 @@ export class ExampleApplet extends LitElement {
 
   onBeforeUnloadUnsubscribe: UnsubscribeFunction | undefined;
 
+  localeChangeUnsubscribe: UnsubscribeFunction | undefined;
+
   firstUpdated() {
     this.onBeforeUnloadUnsubscribe = this.weaveClient.onBeforeUnload(async () => {
       // Uncomment below to test that unloading after force reload timeout works
@@ -51,7 +53,7 @@ export class ExampleApplet extends LitElement {
     // applet, including views in WAL windows. The host element carries the
     // locale the view currently holds.
     this.dataset.weaveLocale = this.weaveClient.getLocale();
-    this.weaveClient.onLocaleChange((locale) => {
+    this.localeChangeUnsubscribe = this.weaveClient.onLocaleChange((locale) => {
       this.dataset.weaveLocale = locale;
     });
     // To test whether applet iframe properly gets removed after disabling applet.
@@ -80,6 +82,13 @@ export class ExampleApplet extends LitElement {
     if (!delayMs) return;
     await new Promise((resolve) => setTimeout(resolve, delayMs));
     window.localStorage.setItem('weave-e2e-unload-done', String(Date.now()));
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.onBeforeUnloadUnsubscribe?.();
+    this.localeChangeUnsubscribe?.();
+    this.networkStatsUpdateUnsubscribe?.();
   }
 
   async notifyWe(notifications: FrameNotification[]) {

@@ -11,19 +11,19 @@ import {
 import { FIXTURE_TOOL_TITLE } from '../fixtures/toolCuration';
 
 /**
- * Smoke #14 — Whether reloading the main window waits for an applet's unload callback.
+ * Smoke #14 — What happens to an applet's unload callback when the main
+ * window reloads.
  *
- * why: a Tool registers onBeforeUnload callbacks to save state. Moss should
- * let them finish before the page goes away. The example applet's callback
- * waits SLOW_UNLOAD_MS when asked to, then records when it finished in the
- * applet's local storage. A WAL window showing the same applet stays open
- * across the main window's reload, so the spec reads the record from there.
+ * why: a Tool registers onBeforeUnload callbacks to save state, and Moss holds
+ * the reload while it asks the applet frames to run them. The example
+ * applet's callback waits SLOW_UNLOAD_MS when asked to, then records when it
+ * finished in the applet's local storage. A WAL window showing the same
+ * applet stays open across the main window's reload, so the spec reads the
+ * record from there.
  *
- * Today the applet-view listener on the applet side replies to the unload
- * request at once, before the callbacks finish, so the host stops waiting too
- * early and the callback is cut off. This spec pins that behavior. The
- * applet-side fix (applet channel PR 2) flips the final assertion to expect a
- * finished callback that took at least SLOW_UNLOAD_MS.
+ * The applet-view listener answers the unload request before its callbacks
+ * finish, so the reload proceeds and cuts the callback off. The spec pins that
+ * outcome.
  */
 const GROUP_NAME = 'Unload Wait';
 const SLOW_UNLOAD_MS = 2000;
@@ -66,7 +66,9 @@ test('reloading the main window does not yet wait for the applet unload callback
     ).toBe(String(SLOW_UNLOAD_MS));
 
     const reloadStartedAt = Date.now();
+    const reloaded = moss.mainWindow.waitForEvent('load', { timeout: 30_000 });
     await moss.mainWindow.evaluate(() => window.location.reload()).catch(() => undefined);
+    await reloaded;
     await waitForBoot(moss.mainWindow, 90_000);
     const reloadMs = Date.now() - reloadStartedAt;
     test.info().annotations.push({ type: 'reload-ms', description: String(reloadMs) });
@@ -75,9 +77,7 @@ test('reloading the main window does not yet wait for the applet unload callback
     // callback in the main-window frame ran to the end.
     const done = await readFromWal('weave-e2e-unload-done');
     test.info().annotations.push({ type: 'unload-done', description: String(done) });
-    // PR 2 replaces this with: expect(done).not.toBeNull() and
-    // expect(Number(done) - reloadStartedAt).toBeGreaterThanOrEqual(SLOW_UNLOAD_MS).
-    expect(done, 'the unload callback is cut off by the reload').toBeNull();
+    expect(done, 'the reload cuts the unload callback off').toBeNull();
   } finally {
     await closeMoss(moss);
   }

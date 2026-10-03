@@ -45,16 +45,23 @@ test('a language change reaches the applet view in a WAL window', async ({
     await createExamplePost(frame, `pw-wal-locale-${Date.now()}`);
 
     const { walFrame } = await openFirstPostInWalWindow(moss.app, frame);
-    await expect(walFrame.locator('[data-weave-locale="en"]')).toBeAttached();
+    const initialLocale = await walFrame
+      .locator('[data-weave-locale]')
+      .getAttribute('data-weave-locale');
+    const targetLocale = initialLocale === 'de' ? 'fr' : 'de';
 
     await moss.mainWindow.bringToFront();
     await openSettings(moss.mainWindow);
     await openLanguageTab(moss.mainWindow);
-    await selectLocale(moss.mainWindow, 'de');
+    await selectLocale(moss.mainWindow, targetLocale);
 
     // The main-window view is the control: it has always received the change.
-    await expect(frame.locator('[data-weave-locale="de"]')).toBeAttached({ timeout: 15_000 });
-    await expect(walFrame.locator('[data-weave-locale="de"]')).toBeAttached({ timeout: 15_000 });
+    await expect(frame.locator(`[data-weave-locale="${targetLocale}"]`)).toBeAttached({
+      timeout: 15_000,
+    });
+    await expect(walFrame.locator(`[data-weave-locale="${targetLocale}"]`)).toBeAttached({
+      timeout: 15_000,
+    });
   } finally {
     await closeMoss(moss);
   }
