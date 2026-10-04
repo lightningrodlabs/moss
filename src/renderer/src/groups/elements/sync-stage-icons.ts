@@ -72,7 +72,11 @@ export function syncStageIcons(active: DisplayStage, unreachable: boolean) {
     >
       <g>${radarBase}${sweep}${svg`<circle class="blip" cx="16.5" cy="8" r="1.4"/>`}</g>
     </svg>
-    <svg class="stage-icon mesh partial ${on('mesh-partial')}" viewBox="0 0 24 24" aria-hidden="true">
+    <svg
+      class="stage-icon mesh partial ${on('mesh-partial')}"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
       <g>
         ${EDGES.map((e, i) => edgeLine(i, e, partialEdgeClass(e)))}
         ${NODES.map((_, i) => node(i, i < 2 ? 'full' : 'hollow'))}
