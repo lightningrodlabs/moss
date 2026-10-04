@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { finalTimeline, MORPH_MS, SYNCED_HOLD_MS, TimerBag } from './sync-final-sequence.js';
+import {
+  finalTimeline,
+  MORPH_MS,
+  nextSyncOverlay,
+  SYNCED_HOLD_MS,
+  TimerBag,
+} from './sync-final-sequence.js';
 
 describe('finalTimeline', () => {
   it('depends only on when the synced message was first shown', () => {
@@ -51,5 +57,21 @@ describe('TimerBag', () => {
     vi.advanceTimersByTime(100);
     expect(a).not.toHaveBeenCalled();
     expect(b).toHaveBeenCalledOnce();
+  });
+});
+
+describe('nextSyncOverlay', () => {
+  it('never shows the waiting screen for a group whose profile is already known', () => {
+    expect(nextSyncOverlay(false, 'known')).toBe(false);
+  });
+  it('shows the waiting screen while the profile is missing', () => {
+    expect(nextSyncOverlay(false, 'missing')).toBe(true);
+  });
+  it('keeps the waiting screen up when the profile arrives, so it can finish its sequence', () => {
+    expect(nextSyncOverlay(true, 'known')).toBe(true);
+  });
+  it('drops the waiting screen while the profile is loading or failed', () => {
+    expect(nextSyncOverlay(true, 'pending')).toBe(false);
+    expect(nextSyncOverlay(true, 'error')).toBe(false);
   });
 });

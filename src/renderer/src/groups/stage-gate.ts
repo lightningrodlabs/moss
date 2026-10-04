@@ -18,7 +18,8 @@ export function gateStage(
   wanted: DisplayStage,
   now: number,
 ): { state: GateState; delayMs: number | undefined } {
-  if (wanted === state.shown) return { state: { ...state, pending: undefined }, delayMs: undefined };
+  if (wanted === state.shown)
+    return { state: { ...state, pending: undefined }, delayMs: undefined };
   const elapsed = now - state.shownAt;
   if (elapsed >= MIN_STAGE_DWELL_MS) {
     return { state: { shown: wanted, shownAt: now, pending: undefined }, delayMs: undefined };

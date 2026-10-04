@@ -44,3 +44,23 @@ export class TimerBag {
     this.timers.clear();
   }
 }
+
+/** What group-home knows about the group profile. */
+export type ProfileState = 'pending' | 'missing' | 'known' | 'error';
+
+/**
+ * Whether the waiting screen is up. It appears only while the profile is
+ * missing, and then stays through the profile's arrival until it reports the
+ * end of its own closing sequence.
+ */
+export function nextSyncOverlay(overlay: boolean, profile: ProfileState): boolean {
+  switch (profile) {
+    case 'missing':
+      return true;
+    case 'known':
+      return overlay;
+    case 'pending':
+    case 'error':
+      return false;
+  }
+}
