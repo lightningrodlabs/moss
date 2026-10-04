@@ -109,6 +109,7 @@ import {
   validateArgs,
 } from './cli/cli';
 import { launch } from './launch';
+import { singleFlight } from './singleFlight';
 import {
   AgentPubKeyB64,
   AppInfo,
@@ -3314,7 +3315,10 @@ if (!RUNNING_WITH_COMMAND) {
       appletZomeCallAuthorizer.invalidate();
       WE_FILE_SYSTEM.deleteAppMetaDataDir(appId);
     });
-    ipcMain.handle('launch', async (_e): Promise<boolean> => {
+    // The renderer asks for a launch whenever it finds no conductor, which a
+    // page reload during startup does a second time. Both requests must end up
+    // with the same lair and conductor, since two cannot share a data directory.
+    const launchOnce = singleFlight(async (): Promise<boolean> => {
       let isFirstLaunch = !WE_FILE_SYSTEM.keystoreInitialized();
       const password = WE_FILE_SYSTEM.readOrCreateRandomPassword();
       [LAIR_HANDLE, HOLOCHAIN_MANAGER, WE_RUST_HANDLER] = await launch(
@@ -3335,6 +3339,7 @@ if (!RUNNING_WITH_COMMAND) {
       }
       return isFirstLaunch;
     });
+    ipcMain.handle('launch', (_e): Promise<boolean> => launchOnce());
     ipcMain.handle('moss-update-available', () => UPDATE_AVAILABLE);
     ipcMain.handle('install-moss-update', async () => {
       if (!UPDATE_AVAILABLE) throw new Error('No update available.');
