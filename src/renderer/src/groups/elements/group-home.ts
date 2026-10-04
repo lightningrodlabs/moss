@@ -123,12 +123,13 @@ export class GroupHome extends LitElement {
   @query('#group-header-icon')
   private _headerIcon!: HTMLElement | null;
 
-  /** The waiting screen is up, either alone or over the group view while it closes. */
-  @state()
+  /**
+   * The waiting screen is up, either alone or over the group view while it
+   * closes. Derived while rendering, so it is not reactive state.
+   */
   private _syncOverlay = false;
 
   /** The waiting screen has started its morph, so the group view may fade in. */
-  @state()
   private _syncMorphing = false;
 
   @state()
@@ -320,14 +321,22 @@ export class GroupHome extends LitElement {
       // Reload foyer width when group changes
       this._loadFoyerWidth();
     }
-    this._syncOverlay = nextSyncOverlay(this._syncOverlay, this.profileState());
-    if (!this._syncOverlay) this._syncMorphing = false;
   }
 
   private profileState(): ProfileState {
     const profile = this.groupProfile.value;
     if (profile.status !== 'complete') return profile.status;
     return profile.value[0] ? 'known' : 'missing';
+  }
+
+  /**
+   * Decides whether the waiting screen is up for the profile being rendered.
+   * It runs during render because the profile subscriber takes its value
+   * between willUpdate and render.
+   */
+  private updateSyncOverlay(): void {
+    this._syncOverlay = nextSyncOverlay(this._syncOverlay, this.profileState());
+    if (!this._syncOverlay) this._syncMorphing = false;
   }
 
   private _startFoyerResize(e: MouseEvent) {
@@ -1140,6 +1149,7 @@ export class GroupHome extends LitElement {
   }
 
   renderContent() {
+    this.updateSyncOverlay();
     switch (this.groupProfile.value.status) {
       case 'pending':
         return html`<div class="row center-content" style="flex: 1">
@@ -1164,8 +1174,14 @@ export class GroupHome extends LitElement {
                 class="sync-screen"
                 ?synced=${!!groupProfile}
                 .morphTarget=${this._resolveHeaderIcon}
-                @sync-screen-morph=${() => (this._syncMorphing = true)}
-                @sync-screen-done=${() => (this._syncOverlay = false)}
+                @sync-screen-morph=${() => {
+                  this._syncMorphing = true;
+                  this.requestUpdate();
+                }}
+                @sync-screen-done=${() => {
+                  this._syncOverlay = false;
+                  this.requestUpdate();
+                }}
               ></looking-for-peers>`
             : ''}
         `;
