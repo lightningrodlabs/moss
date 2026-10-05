@@ -228,9 +228,16 @@ export class AppletChannel {
     timeoutMs = this.requestTimeoutMs,
   ): Promise<void> {
     const ready = this.hostedFrames(appletIds).filter(({ source }) => this.isReady(source));
-    await Promise.allSettled(
+    const results = await Promise.allSettled(
       ready.map(({ source, target }) => this.request(source, message, { target, timeoutMs })),
     );
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        console.warn(
+          String(result.reason instanceof Error ? result.reason.message : result.reason),
+        );
+      }
+    }
   }
 
   private forget(source: MessageEventSource): void {
@@ -258,11 +265,15 @@ export class AppletChannel {
   }
 
   private readyFrame(appletId: AppletId, subType: string): MessageEventSource | undefined {
-    const entry = (this.options.registry.appletIframes[appletId] ?? []).find(
-      (info) =>
-        info.subType === subType && isHostedSource(info.source) && this.isReady(info.source),
-    );
-    return entry?.source as MessageEventSource | undefined;
+    for (const info of this.options.registry.appletIframes[appletId] ?? []) {
+      if (info.subType !== subType || !isHostedSource(info.source)) continue;
+      if (isClosed(info.source)) {
+        this.forget(info.source);
+        continue;
+      }
+      if (this.isReady(info.source)) return info.source;
+    }
+    return undefined;
   }
 
   /**

@@ -231,6 +231,21 @@ describe('AppletChannel: readiness', () => {
     expect(await waiting).toBe(frame);
   });
 
+  it('does not hand out a closed view of the applet when a newer one is ready', async () => {
+    const old = new CrossOriginFrame();
+    const current = new CrossOriginFrame();
+    const channel = newChannel(
+      registryWith([
+        { appletId: APPLET_ID, subType: 'main', source: old },
+        { appletId: APPLET_ID, subType: 'main', source: current },
+      ]),
+    );
+    channel.markReady(old as unknown as MessageEventSource);
+    old.closed = true;
+    channel.markReady(current as unknown as MessageEventSource);
+    expect(await channel.waitForReadyAppletFrame(APPLET_ID, 'main', 0)).toBe(current);
+  });
+
   it('leaves no timer behind once the view reports ready', async () => {
     vi.useFakeTimers();
     const frame = new FakeFrame();
@@ -486,6 +501,18 @@ describe('AppletChannel: requests to frames', () => {
     expect(Date.now() - started).toBeLessThan(500);
     expect(removed.posted).toEqual([]);
     expect(channel.isReady(removed as unknown as MessageEventSource)).toBe(false);
+  });
+
+  it('logs which frame failed when waiting for all frames', async () => {
+    const silent = new FakeFrame();
+    const channel = newChannel(
+      registryWith([{ appletId: APPLET_ID, subType: 'main', source: silent }]),
+    );
+    channel.markReady(silent as unknown as MessageEventSource);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await channel.requestAll('all', { type: 'on-before-unload' }, 20);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining(`applet ${APPLET_ID} timed out`));
+    warn.mockRestore();
   });
 
   it('includes ready cross-group views when waiting for all frames', async () => {
