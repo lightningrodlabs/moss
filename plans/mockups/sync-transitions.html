@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sync transitions</title>
+<style>
+  :root {
+    --moss-main-green: #e0eed5;
+    --moss-light-green: #f4fed6;
+    --moss-medium-green: #85b46e;
+    --moss-dark-green: #1c251e;
+    --moss-hint-green: #324d47;
+    --moss-grey-green: #4c6a39;
+    --moss-grey-light: #e8e8e8;
+    --moss-grey-dark: #757575;
+    --moss-dark-button: #151a11;
+    --moss-field-grey: #f4f4f4;
+    --t: 600ms;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    color: var(--moss-dark-green);
+    background: #d9ddd4;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    height: 100vh;
+    transition: grid-template-columns 300ms ease;
+  }
+  body.playing { grid-template-columns: 0 1fr; }
+  body.playing aside { opacity: 0; pointer-events: none; }
+  #reopen {
+    display: none;
+    background: rgba(255,255,255,.85); color: var(--moss-dark-green); border: 1px solid var(--moss-grey-light);
+    border-radius: 8px; padding: 8px 12px; font-size: 13px; cursor: pointer;
+  }
+  body.playing #reopen { display: block; }
+  #toolbar { display: flex; gap: 6px; align-items: center; }
+  #stepbar { display: flex; gap: 6px; align-items: center; }
+  #stepbar button, #reopen { background: rgba(255,255,255,.85); color: var(--moss-dark-green); border: 1px solid var(--moss-grey-light); border-radius: 8px; padding: 8px 12px; font-size: 13px; cursor: pointer; }
+  #stepbar button:disabled { opacity: .4; cursor: default; }
+  #steplabel { font-size: 12px; color: var(--moss-grey-dark); background: rgba(255,255,255,.7); padding: 4px 8px; border-radius: 6px; }
+  aside {
+    transition: opacity 200ms;
+    min-width: 0; overflow-x: hidden;
+    background: #fff;
+    border-right: 1px solid var(--moss-grey-light);
+    padding: 16px;
+    overflow-y: auto;
+    font-size: 13px;
+  }
+  aside h1 { font-size: 15px; margin: 0 0 12px; }
+  fieldset { border: 1px solid var(--moss-grey-light); border-radius: 8px; margin: 0 0 12px; padding: 8px 10px; }
+  legend { font-weight: 600; padding: 0 4px; }
+  label { display: block; margin: 4px 0; cursor: pointer; }
+  label small { color: var(--moss-grey-dark); display: block; margin-left: 20px; }
+  .btnrow { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+  button.ctl {
+    background: var(--moss-dark-button); color: #fff; border: 0; border-radius: 8px;
+    padding: 8px 12px; font-size: 13px; cursor: pointer;
+  }
+  button.ctl.secondary { background: var(--moss-grey-light); color: var(--moss-dark-green); }
+  #log { font-family: ui-monospace, monospace; font-size: 11px; color: var(--moss-grey-dark); white-space: pre-wrap; max-height: 160px; overflow: auto; }
+
+  main { display: flex; flex-direction: column; padding: 16px; gap: 8px; min-width: 0; position: relative; }
+  .window {
+    position: relative; flex: 1; background: #c9d4b3;
+    border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.12);
+    border-top: 8px solid #1c251e;
+  }
+  .sidebar { width: 210px; flex: none; padding: 10px 12px; font-size: 15px; border-right: 1px solid rgba(0,0,0,.08); }
+  .sb-group { background: #fff; border-radius: 10px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; font-weight: 500; }
+  .sb-ring { width: 28px; height: 28px; border-radius: 50%; border: 3px solid #7461eb; border-right-color: #39c6d6; flex: none; }
+  .sb-online { display: flex; align-items: center; gap: 6px; padding: 10px 8px; color: var(--moss-dark-green); }
+  .sb-online .n { color: var(--moss-grey-dark); } .sb-online .chev { margin-left: auto; color: var(--moss-grey-dark); }
+  .sb-sep { border-top: 1px solid rgba(0,0,0,.12); margin: 6px 0 4px; }
+  .sb-label { font-size: 12px; color: var(--moss-grey-dark); padding: 2px 0 6px; }
+  .sb-tool { display: flex; align-items: center; gap: 8px; padding: 6px 4px; }
+  .sb-tool i { width: 26px; height: 26px; border-radius: 6px; background: #9aa; flex: none; display: inline-block; }
+  .sb-tool.dim { color: var(--moss-grey-dark); } .sb-tool .pw { margin-left: auto; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #7461eb; }
+  .sb-plus { text-align: center; color: #7461eb; padding: 8px; font-size: 18px; }
+  .screen { position: absolute; inset: 0; }
+  .group { display: flex; background: #c9d4b3; }
+  .group-main { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 14px 20px 0 10px; }
+  .hidden { visibility: hidden; }
+
+  /* ---- waiting screen ---- */
+  .sync { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 16px; }
+  .leave { position: absolute; top: 10px; right: 10px; background: #d9534f; color: #fff; border: 0; border-radius: 6px; padding: 8px 14px; font-size: 13px; }
+  .icon-wrap { width: 120px; height: 120px; position: relative; transform-origin: top left; }
+  .icon-wrap svg { position: absolute; inset: 0; width: 120px; height: 120px; fill: var(--moss-dark-green); opacity: 0; transform: scale(.7); transition: opacity 400ms ease, transform 400ms cubic-bezier(.2,.8,.2,1); }
+  .icon-wrap svg.on { opacity: 1; transform: none; }
+  .icon-wrap svg.connecting { fill: #a86f00; }
+  .icon-wrap svg.stroke { fill: none !important; stroke: #a86f00; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-wrap svg.stroke.on.unreachable { stroke: #c62828; }
+  .icon-wrap svg.unreachable-tint.on.unreachable { fill: #c62828; }
+  .icon-wrap svg.syncing { fill: #2e7d32; }
+  .icon-wrap svg.on.pulse > g { animation: pulse 1.6s ease-in-out infinite; transform-origin: 12px 12px; }
+  .icon-wrap svg.on.spin > g { animation: spin 2.4s linear infinite; transform-origin: 12px 12px; }
+  .icon-wrap svg.on.bob > g { animation: bob 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.08); opacity: .7; } }
+  @keyframes spin { to { transform: rotate(-360deg); } }
+  @keyframes bob { 0%,100% { transform: translateY(-3%); } 50% { transform: translateY(3%); } }
+  .icon-wrap svg.check { fill: none; stroke: #2e7d32; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-wrap svg.check circle { stroke-dasharray: 63; stroke-dashoffset: 63; }
+  .icon-wrap svg.check path { stroke-dasharray: 20; stroke-dashoffset: 20; }
+  .icon-wrap svg.check.on circle { animation: draw 500ms ease-out forwards; }
+  .icon-wrap svg.check.on path { animation: draw 350ms 350ms ease-out forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  .icon-wrap svg.mesh { fill: none; }
+  .icon-wrap svg.mesh line { stroke: #2e7d32; stroke-width: .9; stroke-linecap: round; stroke-dasharray: 20; stroke-dashoffset: 20; }
+  .icon-wrap svg.mesh circle { fill: #2e7d32; stroke: #fff; stroke-width: .8; transform: scale(0); transform-box: fill-box; transform-origin: center; }
+  .icon-wrap svg.mesh.on line { animation: draw 450ms ease-out forwards; animation-delay: calc(250ms + var(--i) * 45ms); }
+  .icon-wrap svg.mesh.on circle { animation: popin 300ms cubic-bezier(.2,.8,.2,1) forwards; animation-delay: calc(var(--i) * 60ms); }
+  @keyframes popin { to { transform: scale(1); } }
+  .icon-wrap svg.radar { fill: none; stroke: #6b6b6b; stroke-width: .9; }
+  .icon-wrap svg.radar .wedge { fill: #2e7d32; fill-opacity: .25; stroke: none; }
+  .icon-wrap svg.radar .sweep line { stroke: #2e7d32; stroke-width: 1.1; stroke-linecap: round; }
+  .icon-wrap svg.radar.on .sweep { animation: spin-cw 2s linear infinite; transform-origin: 12px 12px; }
+  .icon-wrap svg.radar .blip { fill: #a86f00; stroke: none; opacity: .25; }
+  .icon-wrap svg.radar.on .blip { animation: blip 2s linear infinite; }
+  .icon-wrap svg.radar.on.unreachable .blip { fill: #c62828; }
+  .icon-wrap svg.radar.on.unreachable { stroke: #c62828; }
+  @keyframes spin-cw { to { transform: rotate(360deg); } }
+  @keyframes blip { 0%, 12% { opacity: .25; } 15% { opacity: 1; } 70%, 100% { opacity: .25; } }
+  .icon-wrap svg.mesh.partial line.solid { stroke-dasharray: none; stroke-dashoffset: 0; }
+  .icon-wrap svg.mesh.partial line.dashed { stroke: #8a8a8a; stroke-dasharray: 1.2 1.2; stroke-dashoffset: 0; }
+  .icon-wrap svg.mesh.partial.on line.dashed { animation: march 1s linear infinite; }
+  .icon-wrap svg.mesh.partial line.absent { display: none; }
+  .icon-wrap svg.mesh.partial circle.hollow { fill: #c9d4b3; stroke: #8a8a8a; stroke-width: .9; }
+  .icon-wrap svg.mesh.partial.on circle { animation: none; transform: scale(1); }
+  .icon-wrap svg.mesh.partial.on line.solid { animation: none; }
+  @keyframes march { to { stroke-dashoffset: -2.4; } }
+
+  .sync h2 { font-size: 22px; font-weight: 600; margin: 12px 0 10px; }
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 6px; padding: 3px 12px; border-radius: 999px;
+    border: 1.5px solid currentColor; background: #fff; font-size: 13px; font-weight: 600; margin-bottom: 12px;
+    transition: color 300ms;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .status-badge.no-peers { color: #6b6b6b; }
+  .status-badge.found { color: #a86f00; }
+  .status-badge.unreachable { color: #c62828; }
+  .status-badge.connected { color: #2e7d32; }
+  .status-badge.synced { color: #2e7d32; background: #e4f3e5; }
+  .hint { max-width: 600px; margin-bottom: 12px; font-size: 14px; min-height: 1.2em; }
+  .liveness { display: flex; align-items: center; gap: 8px; opacity: .8; font-size: 14px; justify-content: center; }
+  .flow-arrow { fill: none; stroke: #8a8a8a; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .flow-arrow.receiving { stroke: #2e7d32; animation: flow 1s ease-in-out infinite; }
+  @keyframes flow { 0%,100% { transform: translateY(-2px); } 50% { transform: translateY(2px); } }
+  .details { margin-top: 16px; width: 360px; background: #fff; border: 1px solid var(--moss-grey-light); border-radius: 8px; text-align: left; font-size: 13px; overflow: hidden; transition: max-height 380ms ease-in, opacity 320ms ease-in 60ms, margin 380ms ease-in, transform 380ms ease-in; max-height: 300px; }
+  .details summary { padding: 10px 14px; cursor: pointer; font-weight: 500; }
+  .details .grid { display: grid; grid-template-columns: 1fr auto; column-gap: 16px; row-gap: 4px; padding: 0 14px 12px; }
+  .details .grid .value { text-align: right; }
+  .sync.collapse .details { max-height: 0; opacity: 0; margin-top: 0; border-width: 0; transform: translateY(-48px); }
+  .sync.collapse .below { opacity: 0; transition: opacity 320ms ease-in 60ms; }
+  .group-id { margin-top: 40px; font-size: 12px; color: var(--moss-grey-dark); max-width: 600px; }
+  .group-id code { display: block; margin-top: 4px; font-size: 11px; word-break: break-all; }
+  .progress { width: 360px; height: 4px; background: var(--moss-grey-light); border-radius: 2px; margin-top: 14px; overflow: hidden; display: none; }
+  .progress i { display: block; height: 100%; width: 0; background: #2e7d32; transition: width var(--hold, 2000ms) linear; }
+  .sync.show-progress .progress { display: block; }
+  .sync.show-progress .progress i { width: 100%; }
+
+  /* ---- group page ---- */
+  .gh-top { display: flex; align-items: center; padding-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,.12); gap: 12px; }
+  .gh-icon { width: 80px; height: 80px; border-radius: 50%; margin-right: 14px; background: conic-gradient(#7461eb, #39c6d6, #2e7d32, #7461eb); display: grid; place-items: center; flex: none; }
+  .gh-icon::after { content: ''; width: 52px; height: 52px; border-radius: 50%; background: #fff; }
+  .gh-title { font-size: 28px; font-weight: 700; flex: 1; }
+  .moss-button { background: #141a12; color: #fff; border: 0; border-radius: 12px; padding: 0 18px; height: 40px; font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+  .moss-button.icon { width: 40px; padding: 0; justify-content: center; border-radius: 10px; }
+  .dash { flex: 1; display: grid; grid-template-columns: 1fr 440px; gap: 16px; padding: 14px 0 16px; min-height: 0; }
+  .tiles { display: grid; grid-template-rows: 1fr; }
+  .tile { background: #3b4061; border-radius: 10px; padding: 24px; display: flex; align-items: flex-start; justify-content: center; }
+  .tile .card { background: #2a3160; border-radius: 18px; width: 340px; height: 150px; margin-top: 150px; display: grid; place-items: end center; }
+  .tile .card i { width: 72px; height: 72px; border-radius: 50%; background: #fff; border: 8px solid #cfd6ea; transform: translateY(36px); }
+  .foyer { background: #d6dec5; border-radius: 10px; padding: 10px 10px; font-size: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .foyer .fh { display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+  .foyer .fh b { font-weight: 400; display: block; margin-top: 4px; font-size: 16px; }
+  .foyer .msg { display: flex; gap: 8px; align-items: flex-start; }
+  .foyer .msg i { width: 44px; height: 44px; border-radius: 50%; background: #e9c9a0; flex: none; }
+  .foyer .bubble { background: #fff; border-radius: 10px; padding: 8px 12px; flex: 1; word-break: break-all; }
+  .foyer .bubble u { color: #1c251e; }
+  .foyer .bubble small { display: block; text-align: right; font-size: 12px; color: #444; margin-top: 4px; }
+  /* ---- transitions ---- */
+  .window.v-cut .sync.out { visibility: hidden; }
+  .window.v-cut .group.in { visibility: visible; }
+
+  .window.v-fade .sync { transition: opacity var(--t) ease; }
+  .window.v-fade .group { opacity: 0; transition: opacity var(--t) ease; }
+  .window.v-fade .sync.out { opacity: 0; }
+  .window.v-fade .group.in { visibility: visible; opacity: 1; }
+
+  .window.v-fade-seq .sync { transition: opacity calc(var(--t) * .4) ease; }
+  .window.v-fade-seq .group { opacity: 0; transition: opacity calc(var(--t) * .4) ease calc(var(--t) * .6); }
+  .window.v-fade-seq .sync.out { opacity: 0; }
+  .window.v-fade-seq .group.in { visibility: visible; opacity: 1; }
+
+  .window.v-zoom .sync { transition: opacity var(--t) ease, transform var(--t) ease; }
+  .window.v-zoom .group { opacity: 0; transform: scale(.8); transition: opacity var(--t) ease, transform var(--t) cubic-bezier(.2,.8,.2,1); }
+  .window.v-zoom .sync.out { opacity: 0; transform: scale(1.25); }
+  .window.v-zoom .group.in { visibility: visible; opacity: 1; transform: none; }
+
+  .window.v-slide .sync { transition: opacity calc(var(--t) * .6) ease, transform var(--t) ease; }
+  .window.v-slide .group { opacity: 0; transform: translateY(100%); transition: opacity var(--t) ease, transform var(--t) cubic-bezier(.2,.8,.2,1); }
+  .window.v-slide .sync.out { opacity: 0; transform: translateY(-40%); }
+  .window.v-slide .group.in { visibility: visible; opacity: 1; transform: none; }
+
+  .window.v-wipe .group { clip-path: inset(100% 0 0 0); transition: clip-path var(--t) cubic-bezier(.2,.8,.2,1); }
+  .window.v-wipe .group.in { visibility: visible; clip-path: inset(0 0 0 0); }
+
+  .window.v-morph .sync .below, .window.v-morph .sync h2, .window.v-morph .sync .leave { transition: opacity calc(var(--t) * .5) ease; }
+  .window.v-morph .sync.out .below, .window.v-morph .sync.out h2, .window.v-morph .sync.out .leave { opacity: 0; }
+  .window.v-morph .sync .icon-wrap { transition: transform var(--t) cubic-bezier(.2,.8,.2,1), opacity calc(var(--t) * .4) ease calc(var(--t) * .6); }
+  .window.v-morph .sync.out .icon-wrap { opacity: 0; }
+  .window.v-morph .group { opacity: 0; transition: opacity calc(var(--t) * .6) ease calc(var(--t) * .4); }
+  .window.v-morph .group.in { visibility: visible; opacity: 1; }
+  .window.v-morph .group.in .gh-icon { animation: pop calc(var(--t) * .6) calc(var(--t) * .4) both; }
+  @keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  .window.v-bgfade .sync { transition: opacity var(--t) ease; }
+  .window.v-bgfade .group { opacity: 0; transition: opacity var(--t) ease calc(var(--t) * .5); }
+  .window.v-bgfade .sync.out { opacity: 0; }
+  .window.v-bgfade .group.in { visibility: visible; opacity: 1; }
+  .window.v-bgfade .group.in .tile, .window.v-bgfade .group.in .foyer { animation: rise calc(var(--t) * .8) both cubic-bezier(.2,.8,.2,1); }
+  .window.v-bgfade .group.in .tile { animation-delay: calc(var(--t) * .6); }
+  .window.v-bgfade .group.in .foyer { animation-delay: calc(var(--t) * .8); }
+  @keyframes rise { from { transform: translateY(48px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  @media (prefers-reduced-motion: reduce) { .window * { transition-duration: 1ms !important; animation-duration: 1ms !important; } }
+</style>
+</head>
+<body>
+<aside>
+  <h1>Sync → group transitions</h1>
+
+  <fieldset>
+    <legend>Scenario</legend>
+    <label><input type="radio" name="scenario" value="slow" checked /> Slow sync <small>every stage visible for seconds, then completes</small></label>
+    <label><input type="radio" name="scenario" value="instant" /> Instant <small>all stages within 300 ms (peer already online, data cached)</small></label>
+    <label><input type="radio" name="scenario" value="sudden" /> Long then sudden <small>Connecting for 6 s, then found → synced within 150 ms</small></label>
+    <label><input type="radio" name="scenario" value="unreachable" /> Unreachable then recovers <small>found → cannot reach → connected → synced</small></label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Stage icons</legend>
+    <label><input type="radio" name="icons" value="a" checked /> Telescope → radio waves → rotating arrows → check</label>
+    <label><input type="radio" name="icons" value="b" /> Telescope → chain link → download (Moss icon) → check</label>
+    <label><input type="radio" name="icons" value="c" /> Telescope → handshake → rotating arrows → connected peers <small>ends on a fully interconnected mesh instead of a check</small></label>
+    <label><input type="radio" name="icons" value="d" /> Radar → radar with blip → partly connected peers → connected peers <small>no telescope; searching is an empty sweeping radar</small></label>
+    <label><input type="radio" name="icons" value="none" /> Telescope only <small>current behavior: one icon for every stage</small></label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Minimum dwell per stage</legend>
+    <label><input type="radio" name="dwell" value="0" /> 0 ms <small>stages flash through as fast as they arrive</small></label>
+    <label><input type="radio" name="dwell" value="700" checked /> 700 ms</label>
+    <label><input type="radio" name="dwell" value="1200" /> 1200 ms</label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Final message</legend>
+    <label><input type="radio" name="final" value="none" /> None <small>current behavior: the group page replaces the screen on the next render</small></label>
+    <label><input type="radio" name="final" value="text" /> Text only <small>badge turns Synced, heading changes</small></label>
+    <label><input type="radio" name="final" value="check" checked /> Check icon <small>telescope becomes a drawn check mark</small></label>
+    <label><input type="radio" name="final" value="check-collapse" /> Check + collapse <small>details and liveness fold away, leaving only the icon and heading</small></label>
+    <label><input type="radio" name="final" value="check-progress" /> Check + progress bar <small>a thin bar fills during the hold, so the wait reads as deliberate</small></label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Hold on final message</legend>
+    <label><input type="radio" name="hold" value="0" /> 0 s</label>
+    <label><input type="radio" name="hold" value="1500" /> 1.5 s</label>
+    <label><input type="radio" name="hold" value="2500" checked /> 2.5 s</label>
+    <label><input type="radio" name="hold" value="4000" /> 4 s</label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Transition</legend>
+    <label><input type="radio" name="variant" value="v-cut" /> Cut <small>instant swap (current)</small></label>
+    <label><input type="radio" name="variant" value="v-fade" checked /> Cross-fade</label>
+    <label><input type="radio" name="variant" value="v-fade-seq" /> Fade out, pause, fade in <small>a beat of empty background between</small></label>
+    <label><input type="radio" name="variant" value="v-zoom" /> Zoom <small>group page grows in from 80% while the sync screen expands away</small></label>
+    <label><input type="radio" name="variant" value="v-slide" /> Slide up <small>group page pushes in from below</small></label>
+    <label><input type="radio" name="variant" value="v-wipe" /> Wipe from bottom</label>
+    <label><input type="radio" name="variant" value="v-morph" /> Morph icon into header <small>check mark flies to the group icon position</small></label>
+    <label><input type="radio" name="variant" value="v-bgfade" /> Fade + staggered tiles</label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Transition duration</legend>
+    <label><input type="radio" name="dur" value="300" /> 300 ms</label>
+    <label><input type="radio" name="dur" value="600" checked /> 600 ms</label>
+    <label><input type="radio" name="dur" value="1000" /> 1000 ms</label>
+  </fieldset>
+
+  <div class="btnrow">
+    <button class="ctl" id="play">Play scenario</button>
+    <button class="ctl secondary" id="jump">Jump to synced</button>
+    <button class="ctl secondary" id="reset">Reset</button>
+  </div>
+  <div class="btnrow"><button class="ctl secondary" id="prev2">◀ Prev stage</button><button class="ctl secondary" id="next2">Next stage ▶</button></div>
+  <div id="log"></div>
+</aside>
+
+<main>
+  <div id="toolbar"><button id="reopen">Controls</button>
+  <div id="stepbar"><button id="prev" title="Previous stage">◀ Prev</button><button id="next" title="Next stage">Next ▶</button><span id="steplabel">manual: press Next</span></div></div>
+  <div class="window v-fade" id="win">
+    <section class="screen sync" id="sync">
+      <button class="leave">Leave Group</button>
+      <div class="icon-wrap" id="iconwrap">
+        <svg data-stage="no-peers" class="on" viewBox="0 0 24 24"><g><path d="M21.9,8.9L20.2,9.9L16.2,3L17.9,2L21.9,8.9M9.8,7.9L12.8,13.1L18.9,9.6L15.9,4.4L9.8,7.9M11.4,12.7L9.4,9.2L5.1,11.7L7.1,15.2L11.4,12.7M2.1,14.6L3.1,16.3L5.7,14.8L4.7,13.1L2.1,14.6M12.1,14L11.8,13.6L7.5,16.1L7.8,16.5C8,16.8 8.3,17.1 8.6,17.3L7,22H9L10.4,17.7H10.5L12,22H14L12.1,16.4C12.6,15.7 12.6,14.8 12.1,14Z"/></g></svg>
+        <!-- set A: radio waves (connecting) and rotating arrows (syncing) -->
+        <svg data-stage="connecting" data-set="a" class="connecting unreachable-tint pulse" viewBox="0 0 24 24"><g><path d="M4.93,4.93C3.12,6.74 2,9.24 2,12C2,14.76 3.12,17.26 4.93,19.07L6.34,17.66C4.89,16.22 4,14.22 4,12C4,9.79 4.89,7.78 6.34,6.34L4.93,4.93M19.07,4.93L17.66,6.34C19.11,7.78 20,9.79 20,12C20,14.22 19.11,16.22 17.66,17.66L19.07,19.07C20.88,17.26 22,14.76 22,12C22,9.24 20.88,6.74 19.07,4.93M7.76,7.76C6.67,8.85 6,10.35 6,12C6,13.65 6.67,15.15 7.76,16.24L9.17,14.83C8.45,14.11 8,13.11 8,12C8,10.89 8.45,9.89 9.17,9.17L7.76,7.76M16.24,7.76L14.83,9.17C15.55,9.89 16,10.89 16,12C16,13.11 15.55,14.11 14.83,14.83L16.24,16.24C17.33,15.15 18,13.65 18,12C18,10.35 17.33,8.85 16.24,7.76M12,10A2,2 0 0,0 10,12A2,2 0 0,0 12,14A2,2 0 0,0 14,12A2,2 0 0,0 12,10Z"/></g></svg>
+        <svg data-stage="syncing" data-set="a c" class="syncing spin" viewBox="0 0 24 24"><g><path d="M12,18A6,6 0 0,1 6,12C6,11 6.25,10.03 6.7,9.2L5.24,7.74C4.46,8.97 4,10.43 4,12A8,8 0 0,0 12,20V23L16,19L12,15M12,4V1L8,5L12,9V6A6,6 0 0,1 18,12C18,13 17.75,13.97 17.3,14.8L18.76,16.26C19.54,15.03 20,13.57 20,12A8,8 0 0,0 12,4Z"/></g></svg>
+        <!-- set B: chain link (connecting) and the Moss download icon (syncing) -->
+        <svg data-stage="connecting" data-set="b" class="connecting unreachable-tint pulse" viewBox="0 0 24 24"><g><path d="M10.59,13.41C11,13.8 11,14.44 10.59,14.83C10.2,15.22 9.56,15.22 9.17,14.83C7.22,12.88 7.22,9.71 9.17,7.76V7.76L12.71,4.22C14.66,2.27 17.83,2.27 19.78,4.22C21.73,6.17 21.73,9.34 19.78,11.29L18.29,12.78C18.3,11.96 18.17,11.14 17.89,10.36L18.36,9.88C19.54,8.71 19.54,6.81 18.36,5.64C17.19,4.46 15.29,4.46 14.12,5.64L10.59,9.17C9.41,10.34 9.41,12.24 10.59,13.41M13.41,9.17C13.8,8.78 14.44,8.78 14.83,9.17C16.78,11.12 16.78,14.29 14.83,16.24V16.24L11.29,19.78C9.34,21.73 6.17,21.73 4.22,19.78C2.27,17.83 2.27,14.66 4.22,12.71L5.71,11.22C5.7,12.04 5.83,12.86 6.11,13.65L5.64,14.12C4.46,15.29 4.46,17.19 5.64,18.36C6.81,19.54 8.71,19.54 9.88,18.36L13.41,14.83C14.59,13.66 14.59,11.76 13.41,10.59C13,10.2 13,9.56 13.41,9.17Z"/></g></svg>
+        <svg data-stage="syncing" data-set="b" class="syncing bob" viewBox="0 0 16 16"><g><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/></g></svg>
+        <!-- set C: handshake (connecting), rotating arrows (syncing), fully connected peers (synced) -->
+        <svg data-stage="connecting" data-set="c" class="connecting unreachable-tint pulse stroke" viewBox="0 0 24 24"><g><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path d="M3 4h8"/></g></svg>
+        <svg data-stage="synced" data-set="c d" class="mesh" viewBox="0 0 24 24"><g><line x1="12.00" y1="4.00" x2="19.61" y2="9.53" style="--i:0"/><line x1="12.00" y1="4.00" x2="16.70" y2="18.47" style="--i:1"/><line x1="12.00" y1="4.00" x2="7.30" y2="18.47" style="--i:2"/><line x1="12.00" y1="4.00" x2="4.39" y2="9.53" style="--i:3"/><line x1="19.61" y1="9.53" x2="16.70" y2="18.47" style="--i:4"/><line x1="19.61" y1="9.53" x2="7.30" y2="18.47" style="--i:5"/><line x1="19.61" y1="9.53" x2="4.39" y2="9.53" style="--i:6"/><line x1="16.70" y1="18.47" x2="7.30" y2="18.47" style="--i:7"/><line x1="16.70" y1="18.47" x2="4.39" y2="9.53" style="--i:8"/><line x1="7.30" y1="18.47" x2="4.39" y2="9.53" style="--i:9"/><circle cx="12.00" cy="4.00" r="2.2" style="--i:0"/><circle cx="19.61" cy="9.53" r="2.2" style="--i:1"/><circle cx="16.70" cy="18.47" r="2.2" style="--i:2"/><circle cx="7.30" cy="18.47" r="2.2" style="--i:3"/><circle cx="4.39" cy="9.53" r="2.2" style="--i:4"/></g></svg>
+        <!-- set D: radar (searching), radar with a blip (connecting), partial mesh (syncing), full mesh (synced) -->
+        <svg data-stage="no-peers" data-set="d" class="radar" viewBox="0 0 24 24"><g><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="3"/><path d="M2 12H22M12 2V22"/><g class="sweep"><path class="wedge" d="M12 12 L12 2 A10 10 0 0 1 19.07 4.93 Z"/><line x1="12" y1="12" x2="12" y2="2"/></g></g></svg>
+        <svg data-stage="connecting" data-set="d" class="radar unreachable-tint" viewBox="0 0 24 24"><g><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="3"/><path d="M2 12H22M12 2V22"/><g class="sweep"><path class="wedge" d="M12 12 L12 2 A10 10 0 0 1 19.07 4.93 Z"/><line x1="12" y1="12" x2="12" y2="2"/></g><circle class="blip" cx="16.5" cy="8" r="1.4"/></g></svg>
+        <svg data-stage="syncing" data-set="d" class="mesh partial" viewBox="0 0 24 24"><g><line class="solid" x1="12.00" y1="4.00" x2="19.61" y2="9.53"/><line class="dashed" x1="12.00" y1="4.00" x2="16.70" y2="18.47"/><line class="absent" x1="12.00" y1="4.00" x2="7.30" y2="18.47"/><line class="dashed" x1="12.00" y1="4.00" x2="4.39" y2="9.53"/><line class="dashed" x1="19.61" y1="9.53" x2="16.70" y2="18.47"/><line class="dashed" x1="19.61" y1="9.53" x2="7.30" y2="18.47"/><line class="absent" x1="19.61" y1="9.53" x2="4.39" y2="9.53"/><line class="absent" x1="16.70" y1="18.47" x2="7.30" y2="18.47"/><line class="absent" x1="16.70" y1="18.47" x2="4.39" y2="9.53"/><line class="absent" x1="7.30" y1="18.47" x2="4.39" y2="9.53"/><circle class="full" cx="12.00" cy="4.00" r="2.2"/><circle class="full" cx="19.61" cy="9.53" r="2.2"/><circle class="hollow" cx="16.70" cy="18.47" r="2.2"/><circle class="hollow" cx="7.30" cy="18.47" r="2.2"/><circle class="hollow" cx="4.39" cy="9.53" r="2.2"/></g></svg>
+        <svg data-stage="synced" class="check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M7 12.5 L10.5 16 L17 9"/></svg>
+      </div>
+      <h2 id="heading">Looking for peers...</h2>
+      <span class="status-badge no-peers" id="badge"><span class="status-dot"></span><span id="badgeword">Searching</span></span>
+      <div class="hint" id="hint">No peers found yet to fetch the group's meta data. Ask one of the members of this group to launch Moss so that you can start synchronizing with them.</div>
+      <div class="below" id="below" style="display:none">
+        <div class="liveness" id="liveness">
+          <svg class="flow-arrow" id="arrow" viewBox="0 0 16 16" width="16" height="16"><path d="M8 2 V11 M3.5 7 L8 11.5 L12.5 7 M3 14 H13"/></svg>
+          <span id="livetext">No data received yet</span>
+        </div>
+        <details class="details" open>
+          <summary>Details</summary>
+          <div class="grid">
+            <span>Peers found</span><span class="value" id="d-found">0</span>
+            <span>Peers connected</span><span class="value" id="d-conn">0</span>
+            <span>Data received</span><span class="value" id="d-data">0 B</span>
+            <span>Items downloading</span><span class="value" id="d-pend">0</span>
+            <span>Active sync sessions</span><span class="value" id="d-rounds">0</span>
+          </div>
+        </details>
+      </div>
+      <div class="progress"><i></i></div>
+      <div class="group-id below">The group ID is:<code>uhC0kX3Zl9mQ2cPq7wR8sT1uV4xY6zA0bC2dE4fG6hI8jK0lM2nO4pQ6r</code></div>
+    </section>
+
+    <section class="screen group hidden" id="group">
+    <div class="sidebar">
+      <div class="sb-group"><span class="sb-ring"></span>HoloVerse2</div>
+      <div class="sb-online">◐ <span>1<span class="n">/13</span> online</span><span class="chev">⌄</span></div>
+      <div class="sb-sep"></div>
+      <div class="sb-label">Tools</div>
+      <div class="sb-tool"><i style="background:#3b4061"></i>Presence v0.16</div>
+      <div class="sb-tool dim"><i></i>Presence<span class="pw"></span></div>
+      <div class="sb-tool dim"><i style="background:#8aa7c9"></i>KanDo<span class="pw"></span></div>
+      <div class="sb-plus">+</div>
+    </div>
+      <div class="group-main">
+      <div class="gh-top">
+        <div class="gh-icon" id="ghicon"></div>
+        <span class="gh-title">HoloVerse2</span>
+        <button class="moss-button icon">✎</button>
+        <button class="moss-button">👤+ Invite People</button>
+        <button class="moss-button">⚙ Settings</button>
+      </div>
+      <div class="dash">
+        <div class="tiles"><div class="tile"><div class="card"><i></i></div></div></div>
+        <div class="foyer">
+          <div class="fh"><span>🛋<b>Foyer Messages: 2</b></span><span>▣</span></div>
+          <div class="msg"><i></i><div class="bubble"><u>https://linear.app/hcf/project/wind-tunnel-and-edge-node-for-hf-fb3842e43bf6/issues</u><small>10:03:48 AM</small></div></div>
+          <div class="msg"><i></i><div class="bubble"><u>https://us04web.zoom.us/j/3033326611</u><small>3:10:21 PM</small></div></div>
+        </div>
+      </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const win = $('win'), sync = $('sync'), group = $('group');
+  const val = (name) => document.querySelector(`input[name=${name}]:checked`).value;
+
+  // Each scenario is a list of stage snapshots with the time (ms) they arrive
+  // from the poller. 'synced' means the group profile arrived.
+  const scenarios = {
+    slow: [
+      { at: 0, stage: 'no-peers', found: 0, conn: 0, data: 0 },
+      { at: 2500, stage: 'found', found: 1, conn: 0, data: 0 },
+      { at: 5000, stage: 'connected', found: 2, conn: 1, data: 12_400, pend: 14, rounds: 1 },
+      { at: 7500, stage: 'connected', found: 2, conn: 2, data: 188_000, pend: 3, rounds: 2 },
+      { at: 9500, stage: 'synced', found: 2, conn: 2, data: 231_000, pend: 0, rounds: 0 },
+    ],
+    instant: [
+      { at: 0, stage: 'no-peers', found: 0, conn: 0, data: 0 },
+      { at: 100, stage: 'found', found: 1, conn: 0, data: 0 },
+      { at: 200, stage: 'connected', found: 1, conn: 1, data: 40_000, pend: 0, rounds: 1 },
+      { at: 300, stage: 'synced', found: 1, conn: 1, data: 231_000, pend: 0, rounds: 0 },
+    ],
+    sudden: [
+      { at: 0, stage: 'no-peers', found: 0, conn: 0, data: 0 },
+      { at: 1500, stage: 'found', found: 1, conn: 0, data: 0 },
+      { at: 7500, stage: 'connected', found: 1, conn: 1, data: 231_000, pend: 0, rounds: 1 },
+      { at: 7650, stage: 'synced', found: 1, conn: 1, data: 231_000, pend: 0, rounds: 0 },
+    ],
+    unreachable: [
+      { at: 0, stage: 'no-peers', found: 0, conn: 0, data: 0 },
+      { at: 1500, stage: 'found', found: 1, conn: 0, data: 0 },
+      { at: 4000, stage: 'unreachable', found: 1, conn: 0, data: 0 },
+      { at: 8000, stage: 'connected', found: 1, conn: 1, data: 60_000, pend: 5, rounds: 1 },
+      { at: 10_000, stage: 'synced', found: 1, conn: 1, data: 231_000, pend: 0, rounds: 0 },
+    ],
+  };
+
+  const headings = {
+    'no-peers': () => 'Looking for peers...',
+    found: (s) => `Found ${s.found} peer(s). Connecting...`,
+    unreachable: (s) => `Found ${s.found} peer(s), but cannot reach them yet`,
+    connected: (s) => `Connected to ${Math.max(s.conn, 1)} peer(s). Syncing...`,
+    synced: (s) => `Synced with ${Math.max(s.conn, 1)} peer(s). Opening the group...`,
+  };
+  const badgeWords = { 'no-peers': 'Searching', found: 'Connecting', unreachable: 'Cannot reach', connected: 'Connected', synced: 'Synced' };
+  const hints = {
+    'no-peers': "No peers found yet to fetch the group's meta data. Ask one of the members of this group to launch Moss so that you can start synchronizing with them.",
+    unreachable: 'They may be offline, or a network or firewall setting may be blocking the connection. Moss keeps trying.',
+  };
+  const fmtBytes = (n) => (n >= 1000 ? `${(n / 1000).toFixed(n >= 100_000 ? 0 : 1)} kB` : `${n} B`);
+
+  let timers = [];
+  let t0 = 0;
+  // Manual stepping: -1 = not started, 0..n-1 = scenario event index, n = group page shown
+  let stepIdx = -1;
+  const log = (m) => { $('log').textContent += `${String(Date.now() - t0).padStart(5)} ms  ${m}\n`; $('log').scrollTop = 1e9; };
+  const later = (ms, fn) => timers.push(setTimeout(fn, ms));
+
+  function paintStage(s) {
+    const finalStyle = val('final');
+    const isFinal = s.stage === 'synced';
+    if (isFinal && finalStyle === 'none') return; // the group page just appears
+    showIcon(s.stage, finalStyle);
+    $('heading').textContent = headings[s.stage](s);
+    $('badge').className = `status-badge ${s.stage}`;
+    $('badgeword').textContent = badgeWords[s.stage];
+    $('hint').textContent = hints[s.stage] || '';
+    const below = $('below');
+    below.style.display = s.stage === 'no-peers' ? 'none' : '';
+    const receiving = s.data > 0 && !isFinal;
+    $('arrow').classList.toggle('receiving', receiving);
+    $('livetext').textContent = isFinal ? 'All group data received' : s.data > 0 ? 'Receiving data' : 'No data received yet';
+    $('d-found').textContent = s.found; $('d-conn').textContent = s.conn;
+    $('d-data').textContent = fmtBytes(s.data || 0); $('d-pend').textContent = s.pend || 0; $('d-rounds').textContent = s.rounds || 0;
+    if (isFinal) {
+      sync.classList.toggle('collapse', finalStyle === 'check-collapse');
+      sync.classList.toggle('show-progress', finalStyle === 'check-progress');
+      sync.style.setProperty('--hold', `${val('hold')}ms`);
+    }
+  }
+
+  const iconStageFor = { 'no-peers': 'no-peers', found: 'connecting', unreachable: 'connecting', connected: 'syncing', synced: 'synced' };
+  function showIcon(stage, finalStyle) {
+    const set = val('icons');
+    let want = iconStageFor[stage];
+    if (stage === 'synced' && finalStyle === 'text') want = 'syncing';
+    if (set === 'none' && want !== 'synced') want = 'no-peers';
+    const all = [...document.querySelectorAll('#iconwrap svg')];
+    const inSet = (svg) => svg.dataset.set && svg.dataset.set.split(' ').includes(set);
+    const chosen = all.find((svg) => svg.dataset.stage === want && inSet(svg))
+      || all.find((svg) => svg.dataset.stage === want && !svg.dataset.set);
+    all.forEach((svg) => {
+      svg.classList.toggle('on', svg === chosen);
+      svg.classList.toggle('unreachable', stage === 'unreachable');
+    });
+  }
+
+  function transition() {
+    const variant = val('variant');
+    win.className = `window ${variant}`;
+    win.style.setProperty('--t', `${val('dur')}ms`);
+    group.classList.remove('hidden');
+    if (variant === 'v-morph') {
+      // FLIP: move the icon from where it is to where the group icon sits
+      const from = $('iconwrap').getBoundingClientRect();
+      const to = $('ghicon').getBoundingClientRect();
+      const scale = to.width / from.width;
+      $('iconwrap').style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${scale})`;
+    }
+    requestAnimationFrame(() => { sync.classList.add('out'); group.classList.add('in'); });
+    log(`transition ${variant} ${val('dur')} ms`);
+  }
+
+  function reset() {
+    timers.forEach(clearTimeout); timers = [];
+    win.className = `window ${val('variant')}`;
+    sync.className = 'screen sync'; sync.style.transform = ''; $('iconwrap').style.transform = '';
+    group.className = 'screen group hidden';
+    paintStage(scenarios.slow[0]);
+    showIcon('no-peers', val('final'));
+    stepIdx = -1; updateStepBar();
+    $('log').textContent = '';
+    t0 = Date.now();
+  }
+
+  // Replays the scenario, stretching each stage to at least the minimum dwell
+  // so a fast conductor cannot flash three headings in 300 ms.
+  function play() {
+    reset();
+    document.body.classList.add('playing');
+    const events = scenarios[val('scenario')];
+    const dwell = Number(val('dwell'));
+    const hold = Number(val('hold'));
+    let shownAt = -Infinity, lastStage;
+    let schedule = [];
+    for (const ev of events) {
+      let at = ev.at;
+      if (ev.stage !== lastStage) at = Math.max(at, shownAt + dwell);
+      else at = Math.max(at, shownAt);
+      schedule.push({ ...ev, showAt: at });
+      if (ev.stage !== lastStage) shownAt = at;
+      lastStage = ev.stage;
+    }
+    for (const ev of schedule) {
+      later(ev.showAt, () => {
+        paintStage(ev);
+        stepIdx = schedule.indexOf(ev); updateStepBar();
+        log(`${ev.stage} (arrived ${ev.at} ms${ev.showAt !== ev.at ? `, shown late by ${ev.showAt - ev.at} ms` : ''})`);
+        if (ev.stage === 'synced') later(val('final') === 'none' ? 0 : hold, () => { stepIdx = schedule.length; updateStepBar(); transition(); });
+      });
+    }
+  }
+
+  function jump() {
+    reset();
+    document.body.classList.add('playing');
+    const events = scenarios[val('scenario')];
+    paintStage(events[events.length - 2]);
+    later(600, () => { paintStage(events[events.length - 1]); log('synced'); later(val('final') === 'none' ? 0 : Number(val('hold')), transition); });
+  }
+
+  $('reopen').onclick = () => document.body.classList.remove('playing');
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.body.classList.remove('playing'); });
+  function untransition() {
+    sync.classList.remove('out'); group.classList.remove('in');
+    $('iconwrap').style.transform = '';
+    later(Number(val('dur')), () => group.classList.add('hidden'));
+  }
+  function updateStepBar() {
+    const events = scenarios[val('scenario')];
+    $('prev').disabled = $('prev2').disabled = stepIdx < 0;
+    $('next').disabled = $('next2').disabled = stepIdx >= events.length;
+    $('steplabel').textContent = stepIdx < 0 ? 'manual: press Next' : stepIdx >= events.length ? 'group page' : `${stepIdx + 1}/${events.length} ${events[stepIdx].stage}`;
+  }
+  function stepTo(idx) {
+    const events = scenarios[val('scenario')];
+    timers.forEach(clearTimeout); timers = [];
+    const wasGroup = stepIdx >= events.length;
+    stepIdx = idx;
+    if (idx >= events.length) { transition(); updateStepBar(); return; }
+    if (wasGroup) untransition();
+    sync.classList.remove('collapse', 'show-progress');
+    const ev = events[idx];
+    if (ev.stage === 'synced' && val('final') === 'none') { stepIdx = events.length; transition(); updateStepBar(); return; }
+    paintStage(ev);
+    log(`step ${idx + 1}: ${ev.stage}`);
+    updateStepBar();
+  }
+  const next = () => { const n = scenarios[val('scenario')].length; if (stepIdx < n) stepTo(stepIdx + 1); };
+  const prev = () => { if (stepIdx > 0) stepTo(stepIdx - 1); else if (stepIdx === 0) reset(); };
+  $('next').onclick = $('next2').onclick = next; $('prev').onclick = $('prev2').onclick = prev;
+  document.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') next(); if (e.key === 'ArrowLeft') prev(); });
+  $('play').onclick = play; $('jump').onclick = jump; $('reset').onclick = reset;
+  document.querySelectorAll('input[name=variant], input[name=icons], input[name=scenario]').forEach((r) => r.addEventListener('change', reset));
+  reset();
+</script>
+</body>
+</html>

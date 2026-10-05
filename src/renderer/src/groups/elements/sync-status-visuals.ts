@@ -1,17 +1,18 @@
 import { css, html, svg } from 'lit';
 import { msg } from '@lit/localize';
-import type { SyncStage } from '../sync-progress.js';
+import type { DisplayStage } from '../stage-gate.js';
 
 /**
  * A rounded label naming the connection stage. Colour, dot and word all
  * carry the stage, so it reads without relying on colour alone.
  */
-export function syncStatusBadge(stage: SyncStage) {
+export function syncStatusBadge(stage: DisplayStage) {
   const word = {
     'no-peers': msg('Searching'),
     found: msg('Connecting'),
     unreachable: msg('Cannot reach'),
     connected: msg('Connected'),
+    synced: msg('Synced'),
   }[stage];
   return html`<span class="status-badge ${stage}"><span class="status-dot"></span>${word}</span>`;
 }
@@ -58,6 +59,10 @@ export const syncStatusStyles = css`
   }
   .status-badge.connected {
     color: #2e7d32;
+  }
+  .status-badge.synced {
+    color: #2e7d32;
+    background: #e4f3e5;
   }
   .flow-arrow {
     fill: none;
