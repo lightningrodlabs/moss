@@ -175,18 +175,6 @@ export async function launchMoss(opts: LaunchOptions): Promise<LaunchedMoss> {
     child.stderr?.on('data', (d) => process.stderr.write(`[moss:${opts.profileName}:err] ${d}`));
   }
 
-  // why: Moss holds a reload or close by cancelling `beforeunload` until its
-  // applets have saved, then finishes it itself. Chromium reports each cancel
-  // to Playwright as a dialog; left to Playwright's default, it tries to
-  // dismiss a dialog Electron has already resolved and the call errors. Leave
-  // those to the app and dismiss any other dialog as the default would.
-  const handleDialogs = (page: Page) =>
-    page.on('dialog', (dialog) => {
-      if (dialog.type() !== 'beforeunload') void dialog.dismiss().catch(() => undefined);
-    });
-  app.windows().forEach(handleDialogs);
-  app.on('window', handleDialogs);
-
   const mainWindow = await waitForAdminWindow(app, opts.adminWindowTimeoutMs ?? 60_000);
   if (process.env.MOSS_E2E_DEBUG) {
     mainWindow.on('console', (msg) =>

@@ -69,6 +69,16 @@ Checked 2026-09-28 unless marked open.
 - The unload broadcast never waited for applet callbacks, because it was posted without a reply port. PR 1 sends it as a request to every ready frame with an 8 s timeout. The start-up delay before the unload listener is registered is gone, because frames that are not ready count as answered.
 - The locale change sent to WAL windows named no applets, so it never reached their frames. It now names every applet in the main window's registry.
 
+## Holding a reload or close until applets save (follow-up, not PR 1)
+
+PR 1 sends `on-before-unload` to the ready frames from the window's `beforeunload` listener, before the listener returns, and does not hold the unload. Measured on Electron 32 while trying to hold it by cancelling `beforeunload`:
+
+- Chromium honors the cancel only after a user gesture on the page. Without one it logs "Blocked attempt to show a 'beforeunload' confirmation panel" and unloads anyway, so a renderer that then asks for its own reload reloads the next page too.
+- After a cancel, Chromium drops a reload requested before the cancel settles. The cancel settles in the task after `will-prevent-unload`, and under Playwright only once Playwright answers the `beforeunload` dialog.
+- A synchronous cancel also stops top-frame link navigations before `will-navigate`, so external links stop opening.
+
+A reliable hold needs the main process to drive it: for the menu reload, a window close and quit, ask the window to save over IPC, wait with a timeout, then reload or close. The existing "reloading" overlay and force-reload button belong to that design.
+
 ## PR 2 scope (applet side)
 
 - Merge the applet iframe's two listeners and two dispatchers into one.

@@ -27,7 +27,6 @@ import { localized, msg } from '@lit/localize';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import { IframeStore } from './iframe-store';
 import { AppletChannel, UNLOAD_TIMEOUT_MS } from './applets/applet-channel/applet-channel';
-import { externalNavigationReported, holdUnloadWhileSaving } from './unload-hold';
 import { deriveWalMessageSource, walZomeCallSigning } from './wal-message-source';
 import { audioSourceGrantsClient, releaseGrantsFor } from './audio-sources/singletons.js';
 import { TransferableReply } from './transferable-reply.js';
@@ -61,8 +60,6 @@ declare global {
       >;
       isAppletDev: () => Promise<boolean>;
       onWindowClosing: (callback: (e: Electron.IpcRendererEvent) => any) => void;
-      onWillNavigateExternal: (callback: (e: any) => any) => void;
-      removeWillNavigateListeners: () => void;
       onParentToAppletMessage: (
         callback: (e: Electron.IpcRendererEvent, payload: ParentToAppletMessagePayload) => any,
       ) => void;
@@ -140,30 +137,13 @@ export class WalWindow extends LitElement {
   @state()
   shouldClose = false;
 
-  beforeUnloadListener = holdUnloadWhileSaving({
-    isExternalNavigation: () =>
-      externalNavigationReported(
-        (callback) => window.electronAPI.onWillNavigateExternal(callback),
-        () => window.electronAPI.removeWillNavigateListeners(),
-      ),
-    save: async () => {
-      this.loading = 'Saving...';
-      // If it takes longer than 5 seconds to unload, offer to hard reload
-      this.slowReloadTimeout = window.setTimeout(() => {
-        this.slowLoading = true;
-      }, 4500);
-      await this.appletChannel.requestAll('all', { type: 'on-before-unload' }, UNLOAD_TIMEOUT_MS);
-    },
-    finish: () => {
-      window.removeEventListener('beforeunload', this.beforeUnloadListener);
-      // The logic to set this variable lives in walwindow.html
-      if (window.__WINDOW_CLOSING__) {
-        walWindow.electronAPI.closeWindow();
-      } else {
-        window.location.reload();
-      }
-    },
-  });
+  // Asks the ready applet frames to run their unload callbacks. It sends the
+  // request before returning, ahead of each frame's own beforeunload, in which
+  // the frame unregisters. The unload itself is not held: Chromium honors a
+  // cancelled unload only after a user gesture on the page.
+  beforeUnloadListener = () => {
+    void this.appletChannel.requestAll('all', { type: 'on-before-unload' }, UNLOAD_TIMEOUT_MS);
+  };
 
   async firstUpdated() {
     window.addEventListener('beforeunload', this.beforeUnloadListener);

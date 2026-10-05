@@ -77,7 +77,6 @@ import { MossPocket } from '../assets/pocket/pocket.js';
 import { CreatablePalette } from '../assets/creatables/creatable-palette.js';
 import { handleAppletIframeMessage } from '../applets/applet-host.js';
 import { UNLOAD_TIMEOUT_MS } from '../applets/applet-channel/applet-channel.js';
-import { externalNavigationReported, holdUnloadWhileSaving } from '../unload-hold.js';
 import { assertValidRequest } from '../applets/applet-channel/request-validation.js';
 import { initAsrRendererBridge } from '../applets/asr-bridge.js';
 import { openViewsContext } from '../layout/context.js';
@@ -542,42 +541,25 @@ export class MainDashboard extends LitElement {
   hardRefresh() {
     this.slowLoading = false;
     window.removeEventListener('beforeunload', this.beforeUnloadListener);
-    // The logic to set this variable lives in walwindow.html
+    // The logic to set this variable lives in index.html
     if ((window as any).__WINDOW_CLOSING__) {
-      (window as any).electronAPI.closeWindow();
+      window.electronAPI.closeMainWindow();
     } else {
       window.location.reload();
     }
   }
 
-  beforeUnloadListener = holdUnloadWhileSaving({
-    isExternalNavigation: () =>
-      externalNavigationReported(
-        (callback) => window.electronAPI.onWillNavigateExternal(callback),
-        () => window.electronAPI.removeWillNavigateListeners(),
-      ),
-    save: async () => {
-      this.reloading = true;
-      // If it takes longer than 5 seconds to unload, offer to hard reload
-      this.slowReloadTimeout = window.setTimeout(() => {
-        this.slowLoading = true;
-      }, 4500);
-      await this._mossStore.appletChannel.requestAll(
-        'all',
-        { type: 'on-before-unload' },
-        UNLOAD_TIMEOUT_MS,
-      );
-    },
-    finish: () => {
-      window.removeEventListener('beforeunload', this.beforeUnloadListener);
-      // The logic to set this variable lives in index.html
-      if ((window as any).__WINDOW_CLOSING__) {
-        window.electronAPI.closeMainWindow();
-      } else {
-        window.location.reload();
-      }
-    },
-  });
+  // Asks the ready applet frames to run their unload callbacks. It sends the
+  // request before returning, ahead of each frame's own beforeunload, in which
+  // the frame unregisters. The unload itself is not held: Chromium honors a
+  // cancelled unload only after a user gesture on the page.
+  beforeUnloadListener = () => {
+    void this._mossStore.appletChannel.requestAll(
+      'all',
+      { type: 'on-before-unload' },
+      UNLOAD_TIMEOUT_MS,
+    );
+  };
 
   private _toolInfoListener = (e: Event) => {
     const detail = (e as CustomEvent<ToolInfoInput>).detail;
