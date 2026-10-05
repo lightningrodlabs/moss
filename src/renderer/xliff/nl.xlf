@@ -3183,6 +3183,18 @@ begint nu</target>
   <source>Last attempt</source>
   <target>Laatste poging</target>
 </trans-unit>
+<trans-unit id="sa968b0c395c8592b">
+  <source>Synced</source>
+  <target>Gesynchroniseerd</target>
+</trans-unit>
+<trans-unit id="saed663119abec327">
+  <source>Synced with <x id="0" equiv-text="${Math.max(p.peersConnected, 1)}"/> peer(s). Opening the group...</source>
+  <target>Gesynchroniseerd met <x id="0" equiv-text="${Math.max(p.peersConnected, 1)}"/> peer(s). Groep wordt geopend...</target>
+</trans-unit>
+<trans-unit id="s13a593c2fafe8278">
+  <source>All group data received</source>
+  <target>Alle groepsgegevens ontvangen</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

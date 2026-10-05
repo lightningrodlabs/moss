@@ -66,6 +66,7 @@ import { MossDialog } from '../../ui/moss-dialog.js';
 import { personPlusIcon, editIcon, saveIcon, closeIcon } from '../../ui/icons.js';
 import type { GroupDashboardEl } from './group-dashboard.js';
 import type { LookingForPeers } from './looking-for-peers.js';
+import { nextSyncOverlay, ProfileState } from '../sync-final-sequence.js';
 import type { GroupContextAction } from '../../app/navigation/group-context-menu-items.js';
 import yaml from 'js-yaml';
 import { decode } from '@msgpack/msgpack';
@@ -118,6 +119,18 @@ export class GroupHome extends LitElement {
 
   @query('looking-for-peers')
   _lookingForPeers: LookingForPeers | undefined;
+
+  @query('#group-header-icon')
+  private _headerIcon!: HTMLElement | null;
+
+  /**
+   * The waiting screen is up, either alone or over the group view while it
+   * closes. Derived while rendering, so it is not reactive state.
+   */
+  private _syncOverlay = false;
+
+  /** The waiting screen has started its morph, so the group view may fade in. */
+  private _syncMorphing = false;
 
   @state()
   _peerStatusLoading = true;
@@ -299,10 +312,31 @@ export class GroupHome extends LitElement {
   }
 
   willUpdate(_changedProperties: Map<string, unknown>) {
-    // Reload foyer width when group changes
     if (this._groupStore && this.mossStore) {
+      // A waiting screen belongs to the group it was waiting for
+      const groupDnaHashB64 = encodeHashToBase64(this._groupStore.groupDnaHash);
+      if (this._lastGroupDnaHash !== null && this._lastGroupDnaHash !== groupDnaHashB64) {
+        this._syncOverlay = false;
+      }
+      // Reload foyer width when group changes
       this._loadFoyerWidth();
     }
+  }
+
+  private profileState(): ProfileState {
+    const profile = this.groupProfile.value;
+    if (profile.status !== 'complete') return profile.status;
+    return profile.value[0] ? 'known' : 'missing';
+  }
+
+  /**
+   * Decides whether the waiting screen is up for the profile being rendered.
+   * It runs during render because the profile subscriber takes its value
+   * between willUpdate and render.
+   */
+  private updateSyncOverlay(): void {
+    this._syncOverlay = nextSyncOverlay(this._syncOverlay, this.profileState());
+    if (!this._syncOverlay) this._syncMorphing = false;
   }
 
   private _startFoyerResize(e: MouseEvent) {
@@ -1006,6 +1040,8 @@ export class GroupHome extends LitElement {
           >
             <div class="row" style="align-items: center; flex: 1;">
               <div
+                id="group-header-icon"
+                class="header-icon"
                 style="background: linear-gradient(rgb(178, 200, 90) 0%, rgb(102, 157, 90) 62.38%, rgb(127, 111, 82) 92.41%); width: 64px; height: 64px; border-radius: 50%; margin-right: 20px;"
               >
                 <img
@@ -1113,6 +1149,7 @@ export class GroupHome extends LitElement {
   }
 
   renderContent() {
+    this.updateSyncOverlay();
     switch (this.groupProfile.value.status) {
       case 'pending':
         return html`<div class="row center-content" style="flex: 1">
@@ -1122,13 +1159,31 @@ export class GroupHome extends LitElement {
         const groupProfile = this.groupProfile.value.value[0];
         const modifiers = this.groupProfile.value.value[1];
 
-        if (!groupProfile)
-          return html`<looking-for-peers style="display: flex; flex: 1;"></looking-for-peers>`;
-
+        // The waiting screen keeps one place in the template, so the instance
+        // that showed the sync stages is the one that plays the closing sequence.
         return html`
-          <moss-profile-prompt>
-            ${this.renderContentInner(groupProfile, modifiers)}
-          </moss-profile-prompt>
+          ${groupProfile
+            ? html`<moss-profile-prompt
+                class=${this._syncMorphing ? 'arriving' : this._syncOverlay ? 'behind-sync' : ''}
+              >
+                ${this.renderContentInner(groupProfile, modifiers)}
+              </moss-profile-prompt>`
+            : ''}
+          ${this._syncOverlay
+            ? html`<looking-for-peers
+                class="sync-screen"
+                ?synced=${!!groupProfile}
+                .morphTarget=${this._resolveHeaderIcon}
+                @sync-screen-morph=${() => {
+                  this._syncMorphing = true;
+                  this.requestUpdate();
+                }}
+                @sync-screen-done=${() => {
+                  this._syncOverlay = false;
+                  this.requestUpdate();
+                }}
+              ></looking-for-peers>`
+            : ''}
         `;
       case 'error':
         return html`<display-error
@@ -1138,6 +1193,8 @@ export class GroupHome extends LitElement {
     }
   }
 
+  private _resolveHeaderIcon = () => this._headerIcon;
+
   render() {
     return html` ${this.renderContent()} `;
   }
@@ -1145,6 +1202,48 @@ export class GroupHome extends LitElement {
   static styles = [
     mossStyles,
     css`
+      :host {
+        position: relative;
+      }
+      /* Fills the content box of the host, on top of the group view once that exists */
+      looking-for-peers.sync-screen {
+        position: absolute;
+        inset: 8px;
+        z-index: 2;
+      }
+      /* The group view stays unseen under the waiting screen until the morph starts */
+      moss-profile-prompt.behind-sync {
+        opacity: 0;
+      }
+      moss-profile-prompt.arriving {
+        opacity: 0;
+        animation: arrive 360ms ease 240ms forwards;
+      }
+      moss-profile-prompt.arriving .header-icon {
+        animation: pop 360ms cubic-bezier(0.2, 0.8, 0.2, 1) 240ms both;
+      }
+      @keyframes arrive {
+        to {
+          opacity: 1;
+        }
+      }
+      @keyframes pop {
+        from {
+          transform: scale(0.6);
+          opacity: 0;
+        }
+        to {
+          transform: none;
+          opacity: 1;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        moss-profile-prompt.arriving,
+        moss-profile-prompt.arriving .header-icon {
+          animation-duration: 1ms;
+        }
+      }
+
       .settings-btn {
         color: white;
         cursor: pointer;

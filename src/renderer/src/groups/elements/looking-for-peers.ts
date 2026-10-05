@@ -1,5 +1,5 @@
-import { css, html, LitElement } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { css, html, LitElement, PropertyValues } from 'lit';
+import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg, str } from '@lit/localize';
 import { StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
 import { notifyError, sharedStyles } from '@holochain-open-dev/elements';
@@ -18,11 +18,14 @@ import { MossStore } from '../../moss-store.js';
 import { mossStoreContext } from '../../context.js';
 import { encodeHashToBase64 } from '@holochain/client';
 import { dialogMessagebox } from '../../electron-api.js';
-import { telescopeIcon } from '../../ui/icons.js';
 import { mossStyles } from '../../shared-styles.js';
 import { groupModifiersToAppId } from '../../utils.js';
 import { dataFlowArrow, syncStatusBadge, syncStatusStyles } from './sync-status-visuals.js';
+import { syncStageIcons, syncStageIconStyles } from './sync-stage-icons.js';
+import { morphTransform } from './sync-morph.js';
 import { serviceStyles } from '../../self/settings/services/service-styles.js';
+import { DisplayStage, gateStage, GateState } from '../stage-gate.js';
+import { finalTimeline, MORPH_MS, SYNCED_HOLD_MS, TimerBag } from '../sync-final-sequence.js';
 import {
   deriveSyncProgress,
   Elapsed,
@@ -31,6 +34,14 @@ import {
   withKnownPeers,
 } from '../sync-progress.js';
 
+export { MORPH_MS, SYNCED_HOLD_MS };
+
+/**
+ * The waiting screen shown until the group profile is known. Once `synced` is
+ * set it shows a closing message, holds it, then morphs its icon onto
+ * `morphTarget`. It announces the morph with `sync-screen-morph` and its end
+ * with `sync-screen-done`.
+ */
 @localized()
 @customElement('looking-for-peers')
 export class LookingForPeers extends LitElement {
@@ -40,8 +51,26 @@ export class LookingForPeers extends LitElement {
   @consume({ context: mossStoreContext, subscribe: true })
   mossStore!: MossStore;
 
+  /** Set by group-home once the group profile is known; starts the final sequence. */
+  @property({ type: Boolean })
+  synced = false;
+
+  /** Resolves the element whose bounding rect the icon morphs onto, read when the morph starts. */
+  @property({ attribute: false })
+  morphTarget: (() => HTMLElement | null | undefined) | undefined;
+
   @state()
   leaving = false;
+
+  /** The stage on screen, which trails the derived stage by the minimum dwell. */
+  @state()
+  private _gate: GateState = { shown: 'no-peers', shownAt: Date.now(), pending: undefined };
+
+  @state()
+  private _morphing = false;
+
+  private _timers = new TimerBag();
+  private _cancelGateTimer: (() => void) | undefined;
 
   /** Progress derived from the latest metrics snapshot. */
   @state()
@@ -62,6 +91,7 @@ export class LookingForPeers extends LitElement {
 
   async connectedCallback() {
     super.connectedCallback();
+    this.resumeSequence();
     this._clockInterval = setInterval(() => (this._now = Date.now()), 1000);
     const appId = await groupModifiersToAppId(await toPromise(this.groupStore.modifiers));
     // The screen may have been removed while the app id was resolving
@@ -80,6 +110,7 @@ export class LookingForPeers extends LitElement {
           knownPeers: this._knownPeers.value ?? 0,
           now: Date.now(),
         });
+        this.wantStage(this.synced ? 'synced' : this._progress.stage);
       },
       (e) => console.warn('Failed to read sync metrics for the waiting group:', e),
     );
@@ -91,6 +122,69 @@ export class LookingForPeers extends LitElement {
     this._unsubscribeMetrics = undefined;
     if (this._clockInterval) clearInterval(this._clockInterval);
     this._clockInterval = undefined;
+    this._timers.clear();
+    this._cancelGateTimer = undefined;
+  }
+
+  updated(changed: PropertyValues<this>) {
+    if (changed.has('synced') && this.synced) this.wantStage('synced');
+  }
+
+  /** Asks for a stage to be shown; it appears once the current one has had its minimum time. */
+  private wantStage(stage: DisplayStage) {
+    // The synced message is final
+    if (this._gate.shown === 'synced') return;
+    const { state, delayMs } = gateStage(this._gate, stage, Date.now());
+    this._gate = state;
+    this._cancelGateTimer?.();
+    this._cancelGateTimer = undefined;
+    if (delayMs !== undefined) {
+      this._cancelGateTimer = this._timers.set(() => {
+        if (this._gate.pending) this.wantStage(this._gate.pending);
+      }, delayMs);
+    }
+    if (state.shown === 'synced') this.startFinalSequence(state.shownAt);
+  }
+
+  /** Runs from its own timers, since metrics may stop once the group profile is known. */
+  private startFinalSequence(syncedAt: number) {
+    const { morphAt, doneAt } = finalTimeline(syncedAt);
+    const now = Date.now();
+    this._timers.set(() => this.startMorph(), morphAt - now);
+    this._timers.set(
+      () =>
+        this.dispatchEvent(new CustomEvent('sync-screen-done', { bubbles: true, composed: true })),
+      doneAt - now,
+    );
+  }
+
+  /** Restarts whatever was pending when the screen was last removed from the page. */
+  private resumeSequence() {
+    if (this._gate.shown === 'synced') {
+      this._morphing = false;
+      this.removeAttribute('morphing');
+      const icons = this.iconsElement;
+      if (icons) icons.style.transform = '';
+      this.startFinalSequence(Date.now());
+    } else if (this._gate.pending) {
+      this.wantStage(this._gate.pending);
+    }
+  }
+
+  private get iconsElement(): HTMLElement | null {
+    return this.shadowRoot?.querySelector<HTMLElement>('.stage-icons') ?? null;
+  }
+
+  /** Moves the icon onto the target; without a usable target it only fades. */
+  private startMorph() {
+    const icons = this.iconsElement;
+    const transform = icons
+      ? morphTransform(icons.getBoundingClientRect(), this.morphTarget?.()?.getBoundingClientRect())
+      : undefined;
+    if (icons && transform) icons.style.transform = transform;
+    this._morphing = true;
+    this.setAttribute('morphing', '');
+    this.dispatchEvent(new CustomEvent('sync-screen-morph', { bubbles: true, composed: true }));
   }
 
   async leaveGroup() {
@@ -155,15 +249,20 @@ export class LookingForPeers extends LitElement {
     return html`
       ${this.renderLeaveGroupDialog()}
       <sl-button
+        class="leave ${this._morphing ? 'out' : ''}"
         variant="danger"
         @click=${() => this.dialog.show()}
         style="position: absolute; top: 10px; right: 10px; z-index: 1;"
         >${msg('Leave Group')}
       </sl-button>
       <div class="scroller">
-        <div class="column center-content content">
+        <div
+          class="column center-content content ${
+            this._gate.shown === 'synced' ? 'final' : ''
+          } ${this._morphing ? 'out' : ''}"
+        >
         ${this.renderStatus(withKnownPeers(this._progress, this._knownPeers.value ?? 0, this._now))}
-        <span style="max-width: 600px; text-align: center; margin-top: 40px;"
+        <span class="group-id" style="max-width: 600px; text-align: center; margin-top: 40px;"
           >${msg('The group ID is: ')}<pre></pre>${encodeHashToBase64(
             this.groupStore.groupDnaHash,
           )}</pre></span
@@ -174,23 +273,25 @@ export class LookingForPeers extends LitElement {
   }
 
   /**
-   * Only the heading and hint change with the stage. The liveness line and
+   * Only the icon, heading and hint change with the stage. The liveness line and
    * Details stay in one place so an open Details panel survives a stage change.
+   * The stage comes from the gate, the numbers from the latest progress.
    */
   renderStatus(p: SyncProgress) {
-    const waiting = p.stage === 'no-peers';
+    const stage = this._gate.shown;
+    const waiting = stage === 'no-peers';
     return html`
-      ${telescopeIcon(120)}
-      <h2>${this.headingText(p)}</h2>
-      ${syncStatusBadge(p.stage)} ${this.renderHint(p)}
-      <div class="column center-content" style=${waiting ? 'display: none;' : ''}>
-        ${this.renderLiveness(p)} ${this.renderDetails(p)}
+      ${syncStageIcons(stage, stage === 'unreachable')}
+      <h2>${this.headingText(stage, p)}</h2>
+      ${syncStatusBadge(stage)} ${this.renderHint(stage)}
+      <div class="column center-content below" style=${waiting ? 'display: none;' : ''}>
+        ${this.renderLiveness(stage, p)} ${this.renderDetails(p)}
       </div>
     `;
   }
 
-  headingText(p: SyncProgress): string {
-    switch (p.stage) {
+  headingText(stage: DisplayStage, p: SyncProgress): string {
+    switch (stage) {
       case 'no-peers':
         return msg('Looking for peers...');
       case 'found':
@@ -199,11 +300,13 @@ export class LookingForPeers extends LitElement {
         return msg(str`Found ${p.peersFound} peer(s), but cannot reach them yet`);
       case 'connected':
         return msg(str`Connected to ${Math.max(p.peersConnected, 1)} peer(s). Syncing...`);
+      case 'synced':
+        return msg(str`Synced with ${Math.max(p.peersConnected, 1)} peer(s). Opening the group...`);
     }
   }
 
-  renderHint(p: SyncProgress) {
-    switch (p.stage) {
+  renderHint(stage: DisplayStage) {
+    switch (stage) {
       case 'no-peers':
         return html`<span class="hint"
           >${msg(
@@ -228,10 +331,12 @@ export class LookingForPeers extends LitElement {
     return elapsed.unit === 'seconds' && elapsed.value < 5;
   }
 
-  renderLiveness(p: SyncProgress) {
-    const receiving = this.isReceiving(p);
-    const text =
-      p.lastDataAt === undefined
+  renderLiveness(stage: DisplayStage, p: SyncProgress) {
+    const synced = stage === 'synced';
+    const receiving = !synced && this.isReceiving(p);
+    const text = synced
+      ? msg('All group data received')
+      : p.lastDataAt === undefined
         ? msg('No data received yet')
         : receiving
           ? msg('Receiving data')
@@ -277,9 +382,14 @@ export class LookingForPeers extends LitElement {
     mossStyles,
     serviceStyles,
     syncStatusStyles,
+    syncStageIconStyles,
     css`
       :host {
         position: relative;
+      }
+      /* The group home underneath is what the user should reach during the morph */
+      :host([morphing]) {
+        pointer-events: none;
       }
       /* Out of flow, so the screen never grows its ancestors; it scrolls
          itself when the window is too short, for example with Details open */
@@ -312,6 +422,60 @@ export class LookingForPeers extends LitElement {
       .sync-details {
         margin-top: 16px;
         width: 360px;
+        overflow: hidden;
+        max-height: 400px;
+        transition:
+          max-height 380ms ease-in,
+          opacity 320ms ease-in 60ms,
+          margin 380ms ease-in,
+          transform 380ms ease-in;
+      }
+      /* Synced: everything below the badge folds away, leaving icon and heading */
+      .content.final .below,
+      .content.final .group-id {
+        opacity: 0;
+        transition: opacity 320ms ease-in 60ms;
+      }
+      .content.final .sync-details {
+        max-height: 0;
+        opacity: 0;
+        margin-top: 0;
+        border-width: 0;
+        transform: translateY(-48px);
+      }
+      /* Morph: the icon travels to the group header while the rest fades */
+      .stage-icons {
+        transition:
+          transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1),
+          opacity 240ms ease 360ms;
+      }
+      .content.out .stage-icons {
+        opacity: 0;
+      }
+      .content h2,
+      .content .status-badge,
+      .content .hint,
+      .leave {
+        transition: opacity 300ms ease;
+      }
+      .content.out h2,
+      .content.out .status-badge,
+      .content.out .hint,
+      .leave.out {
+        opacity: 0;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .stage-icons,
+        .sync-details,
+        .content.final .below,
+        .content.final .group-id,
+        .content h2,
+        .content .status-badge,
+        .content .hint,
+        .leave {
+          transition-duration: 1ms;
+          transition-delay: 0s;
+        }
       }
       /* The sl-details panel already pads its content */
       .service-details.details-grid {
