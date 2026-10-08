@@ -100,6 +100,8 @@ export class AsrSession {
   private clockMs = 0;
   private closed = false;
   private failed = false;
+  /** The error that ended the session, kept for listeners that subscribe afterwards. */
+  private failure: Error | null = null;
   /**
    * Chain of pending transcribe calls. Flushes run strictly in audio
    * order so `final` events never arrive out of sequence, while
@@ -216,7 +218,23 @@ export class AsrSession {
     return () => this.partialListeners.delete(cb);
   }
 
+  /**
+   * Subscribe to the terminal error. A listener added after the session
+   * already failed (the broker can abort a session before its opener has
+   * had a chance to subscribe) still hears the error, once.
+   */
   onError(cb: Listener<Error>): () => void {
+    const priorFailure = this.failure;
+    if (priorFailure) {
+      let cancelled = false;
+      queueMicrotask(() => {
+        if (!cancelled) this.notifyError(cb, priorFailure);
+      });
+      return () => {
+        cancelled = true;
+        return true;
+      };
+    }
     this.errorListeners.add(cb);
     return () => this.errorListeners.delete(cb);
   }
@@ -236,6 +254,15 @@ export class AsrSession {
     } finally {
       await this.onClose();
     }
+  }
+
+  /**
+   * End the session from the host side, for example because the user
+   * switched speech models. Listeners get `reason`, buffered audio is
+   * dropped rather than transcribed, and the server is released once.
+   */
+  abort(reason: Error): void {
+    this.fail(reason);
   }
 
   private msToSamples(ms: number): number {
@@ -398,6 +425,7 @@ export class AsrSession {
   private fail(err: Error): void {
     if (this.failed) return;
     this.failed = true;
+    this.failure = err;
     this.chunks = [];
     this.bufferedSamples = 0;
     this.emitError(err);
@@ -421,12 +449,15 @@ export class AsrSession {
   }
 
   private emitError(err: Error): void {
-    for (const cb of this.errorListeners) {
-      try {
-        cb(err);
-      } catch {
-        // ditto
-      }
+    for (const cb of this.errorListeners) this.notifyError(cb, err);
+  }
+
+  private notifyError(cb: Listener<Error>, err: Error): void {
+    try {
+      cb(err);
+    } catch {
+      // Listeners are caller-controlled; their failures must not
+      // tank the session. Swallow and continue.
     }
   }
 }

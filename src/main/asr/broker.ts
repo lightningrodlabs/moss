@@ -16,7 +16,7 @@
 //
 // What this does NOT do (deferred):
 //   - Multiple model variants loaded simultaneously. v1 = single
-//     active model, swap = unload + load.
+//     active model; setServerConfig() replaces it.
 //   - Cross-process isolation. A future revision moves the server (and
 //     potentially this broker) into an Electron utilityProcess so
 //     model OOM doesn't take down Moss main. The interface here is
@@ -72,9 +72,21 @@ export class AsrBroker {
   private readonly factory: (config: WhisperServerConfig) => WhisperServer;
   private lastStatus: AsrHostStatus = 'idle';
 
+  private serverConfigValue: WhisperServerConfig;
+  /** Sessions the broker handed out and has not yet released. */
+  private readonly sessions = new Set<AsrSession>();
+  /** Bumped on every config swap so a session whose cold start straddled the swap is not handed a stale server. */
+  private generation = 0;
+
   constructor(private readonly config: AsrBrokerConfig) {
+    this.serverConfigValue = config.server;
     this.idleTimeoutMs = config.idleTimeoutMs ?? DEFAULT_IDLE_TIMEOUT_MS;
     this.factory = config.serverFactory ?? ((c) => new WhisperServer(c));
+  }
+
+  /** The config the next cold start will use. */
+  get serverConfig(): WhisperServerConfig {
+    return this.serverConfigValue;
   }
 
   /**
@@ -86,8 +98,41 @@ export class AsrBroker {
     if (this.destroyed) {
       throw new Error('AsrBroker is destroyed; cannot open new sessions');
     }
+    const generation = this.generation;
     const server = await this.acquire();
-    return new AsrSession(server, () => this.release(), opts);
+    const session = new AsrSession(server, () => this.releaseSession(session), opts);
+    this.sessions.add(session);
+    if (generation !== this.generation) {
+      session.abort(new Error('speech model changed'));
+    }
+    return session;
+  }
+
+  /**
+   * Point the broker at a different model. Sessions that are open are
+   * ended with an error so the user's choice takes effect now rather
+   * than after every tool happens to close; the next session cold-starts
+   * the new model.
+   */
+  async setServerConfig(next: WhisperServerConfig): Promise<void> {
+    this.serverConfigValue = next;
+    this.generation += 1;
+    if (this.starting) {
+      await this.starting.catch(() => undefined);
+    }
+    if (!this.server) return;
+    const open = [...this.sessions];
+    this.sessions.clear();
+    this.sessionCount = 0;
+    this.cancelIdleTimer();
+    for (const s of open) s.abort(new Error('speech model changed'));
+    const server = this.server;
+    this.server = null;
+    this.publishStatus();
+    this.unloading = server.stop().finally(() => {
+      this.unloading = null;
+    });
+    await this.unloading;
   }
 
   /**
@@ -174,7 +219,7 @@ export class AsrBroker {
     }
     // Cold start.
     this.starting = (async () => {
-      const s = this.factory(this.config.server);
+      const s = this.factory(this.serverConfigValue);
       try {
         await s.start();
       } catch (err) {
@@ -198,6 +243,12 @@ export class AsrBroker {
     if (this.destroyed) {
       throw new Error('AsrBroker has been destroyed');
     }
+  }
+
+  /** A session the broker already forgot (aborted during a swap) must not release twice. */
+  private async releaseSession(session: AsrSession): Promise<void> {
+    if (!this.sessions.delete(session)) return;
+    await this.release();
   }
 
   private async release(): Promise<void> {

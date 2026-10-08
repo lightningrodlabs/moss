@@ -210,3 +210,67 @@ describe('AsrBroker', () => {
     await broker.destroy();
   });
 });
+
+describe('AsrBroker.setServerConfig', () => {
+  const nextConfig = { command: ['noop'], modelPath: '/models/ggml-small.bin' };
+
+  it('just stores the config when nothing is loaded', async () => {
+    const { broker, fakes } = makeBroker();
+    await broker.setServerConfig(nextConfig);
+    expect(fakes).toHaveLength(0);
+    expect(broker.serverConfig).toEqual(nextConfig);
+    await broker.openSession();
+    expect(fakes[0].config.modelPath).toBe('/models/ggml-small.bin');
+  });
+
+  it('aborts open sessions, stops the server and cold-starts the next session with the new config', async () => {
+    const { broker, fakes } = makeBroker({ idleTimeoutMs: 60_000 });
+    const a = await broker.openSession();
+    const b = await broker.openSession();
+    const errors: string[] = [];
+    a.onError((e) => errors.push(`a:${e.message}`));
+    b.onError((e) => errors.push(`b:${e.message}`));
+
+    await broker.setServerConfig(nextConfig);
+    await sleep(0);
+
+    expect(errors.sort()).toEqual(['a:speech model changed', 'b:speech model changed']);
+    expect(fakes[0].stopCalls).toBe(1);
+    expect(broker.isLoaded).toBe(false);
+    expect(broker.openSessionCount).toBe(0);
+    expect(broker.status).toBe('idle');
+
+    await broker.openSession();
+    expect(fakes).toHaveLength(2);
+    expect(fakes[1].config.modelPath).toBe('/models/ggml-small.bin');
+    expect(broker.openSessionCount).toBe(1);
+  });
+
+  it('waits for an in-flight cold start, then stops that server', async () => {
+    const { broker, fakes } = makeBroker({ startDelayMs: 30 });
+    const opening = broker.openSession();
+    await sleep(5);
+    const swap = broker.setServerConfig(nextConfig);
+    const session = await opening;
+    const errors: string[] = [];
+    session.onError((e) => errors.push(e.message));
+    await swap;
+    await sleep(0);
+
+    expect(fakes[0].startCalls).toBe(1);
+    expect(fakes[0].stopCalls).toBe(1);
+    expect(broker.isLoaded).toBe(false);
+    expect(errors).toEqual(['speech model changed']);
+  });
+
+  it('ignores a late release from an aborted session so the count cannot go negative', async () => {
+    const { broker } = makeBroker({ idleTimeoutMs: 60_000 });
+    const s = await broker.openSession();
+    await broker.setServerConfig(nextConfig);
+    await s.close();
+    const t = await broker.openSession();
+    expect(broker.openSessionCount).toBe(1);
+    await t.close();
+    expect(broker.openSessionCount).toBe(0);
+  });
+});
