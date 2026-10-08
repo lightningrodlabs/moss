@@ -1,16 +1,15 @@
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
-
 import { afterEach, describe, expect, it } from 'vitest';
+
+import { FakeWhisperServer, asWhisperServer } from './fakeWhisperServer';
 
 import {
   _resetAsrServiceForTests,
-  defaultModelPath,
   getAsrBroker,
   getAsrCapabilities,
+  getAsrModelPath,
   initAsrService,
   isAsrServiceInitialized,
+  setAsrModelPath,
   shutdownAsrService,
 } from '../asrService';
 
@@ -93,46 +92,82 @@ describe('asrService singleton', () => {
   });
 });
 
-describe('defaultModelPath', () => {
-  it('uses $MOSS_ASR_MODEL when set', () => {
-    const orig = process.env.MOSS_ASR_MODEL;
-    process.env.MOSS_ASR_MODEL = '/custom/path.bin';
-    try {
-      expect(defaultModelPath('/repo')).toBe('/custom/path.bin');
-    } finally {
-      if (orig === undefined) delete process.env.MOSS_ASR_MODEL;
-      else process.env.MOSS_ASR_MODEL = orig;
-    }
+describe('setAsrModelPath', () => {
+  it('updates capabilities and the broker config when a broker exists', async () => {
+    const broker = initAsrService({
+      binariesDir: '/tmp/nonexistent',
+      whisperServerVersion: '1.8.4',
+      isPackaged: false,
+      modelPath: '/models/ggml-base.en.bin',
+    })!;
+    expect(getAsrCapabilities().asr.model).toBe('base.en');
+
+    await setAsrModelPath('/models/ggml-small.bin', 120_000);
+
+    expect(getAsrModelPath()).toBe('/models/ggml-small.bin');
+    expect(getAsrCapabilities().asr.model).toBe('small');
+    expect(getAsrCapabilities().asr.languages).toContain('de');
+    expect(broker.serverConfig.modelPath).toBe('/models/ggml-small.bin');
+    expect(broker.serverConfig.startTimeoutMs).toBeGreaterThanOrEqual(120_000);
   });
 
-  it('returns null when neither a bundled nor a spike model file exists', () => {
-    const orig = process.env.MOSS_ASR_MODEL;
-    delete process.env.MOSS_ASR_MODEL;
-    try {
-      expect(defaultModelPath('/nonexistent-repo', '/tmp/nonexistent-resources')).toBeNull();
-      expect(defaultModelPath('/nonexistent-repo')).toBeNull();
-    } finally {
-      if (orig !== undefined) process.env.MOSS_ASR_MODEL = orig;
-    }
+  it('creates the broker when init had no model and a model is set later', async () => {
+    expect(
+      initAsrService({
+        binariesDir: '/tmp/nonexistent',
+        whisperServerVersion: '1.8.4',
+        isPackaged: false,
+        modelPath: null,
+      }),
+    ).toBeNull();
+    expect(getAsrCapabilities().asr.available).toBe(false);
+    expect(() => getAsrBroker()).toThrow(/No ASR model/);
+
+    await setAsrModelPath('/models/ggml-tiny.bin');
+
+    expect(getAsrCapabilities().asr.available).toBe(true);
+    expect(getAsrBroker().serverConfig.modelPath).toBe('/models/ggml-tiny.bin');
   });
 
-  it('prefers the bundled model, then the spike model, when the file exists', () => {
-    const orig = process.env.MOSS_ASR_MODEL;
-    delete process.env.MOSS_ASR_MODEL;
-    const root = mkdtempSync(path.join(tmpdir(), 'asr-model-'));
-    try {
-      const spike = path.join(root, 'repo/spikes/asr-m0/models/ggml-base.en.bin');
-      mkdirSync(path.dirname(spike), { recursive: true });
-      writeFileSync(spike, '');
-      expect(defaultModelPath(path.join(root, 'repo'), path.join(root, 'resources'))).toBe(spike);
+  it('reports unavailable again when the model is cleared', async () => {
+    initAsrService({
+      binariesDir: '/tmp/nonexistent',
+      whisperServerVersion: '1.8.4',
+      isPackaged: false,
+      modelPath: '/models/ggml-base.en.bin',
+    });
+    await setAsrModelPath(null);
+    expect(getAsrCapabilities().asr.available).toBe(false);
+    expect(() => getAsrBroker()).toThrow(/No ASR model/);
+  });
 
-      const bundled = path.join(root, 'resources/models/ggml-base.en.bin');
-      mkdirSync(path.dirname(bundled), { recursive: true });
-      writeFileSync(bundled, '');
-      expect(defaultModelPath(path.join(root, 'repo'), path.join(root, 'resources'))).toBe(bundled);
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-      if (orig !== undefined) process.env.MOSS_ASR_MODEL = orig;
-    }
+  it('still records the path when whisper-server cannot be resolved', async () => {
+    initAsrService({
+      binariesDir: '/tmp/nonexistent',
+      whisperServerVersion: '1.8.4',
+      isPackaged: true,
+      modelPath: '/models/ggml-base.en.bin',
+    });
+    await setAsrModelPath('/models/ggml-small.bin');
+    expect(getAsrModelPath()).toBe('/models/ggml-small.bin');
+    expect(getAsrCapabilities().asr.available).toBe(false);
+    expect(() => getAsrBroker()).toThrow(/Cannot locate whisper-server/);
+  });
+
+  it('clearing the model aborts open sessions with the model-changed error', async () => {
+    initAsrService({
+      binariesDir: '/tmp/nonexistent',
+      whisperServerVersion: '1.8.4',
+      isPackaged: false,
+      modelPath: '/models/ggml-base.en.bin',
+      serverFactory: (cfg) => asWhisperServer(new FakeWhisperServer(cfg)),
+    });
+    const session = await getAsrBroker().openSession();
+    const errors: string[] = [];
+    session.onError((e) => errors.push(e.message));
+
+    await setAsrModelPath(null);
+
+    expect(errors).toEqual(['speech model changed']);
   });
 });

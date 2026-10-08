@@ -1118,6 +1118,8 @@ if (!RUNNING_WITH_COMMAND) {
       binariesDir: BINARIES_DIRECTORY,
       resourcesPath: RESOURCES_DIRECTORY,
       whisperServerVersion: MOSS_CONFIG.whisperServer,
+      modelsDir: WE_FILE_SYSTEM.modelsDir,
+      configDir: WE_FILE_SYSTEM.profileConfigDir,
       repoRoot: app.getAppPath(),
       onLog: (stream, chunk) => {
         const line = `[whisper-server] ${chunk.trimEnd()}`;

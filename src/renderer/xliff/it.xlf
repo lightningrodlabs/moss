@@ -3199,6 +3199,74 @@ inizia ora</target>
   <source>Send</source>
   <target>Invia</target>
 </trans-unit>
+<trans-unit id="sd3386a2ef42e80b9">
+  <source>Download</source>
+  <target>Scarica</target>
+</trans-unit>
+<trans-unit id="s89118d3a7be870ca">
+  <source>Resume</source>
+  <target>Riprendi</target>
+</trans-unit>
+<trans-unit id="s625ad019db843f94">
+  <source>Use</source>
+  <target>Usa</target>
+</trans-unit>
+<trans-unit id="sedc2d92054cd8393">
+  <source>Bundled</source>
+  <target>Incluso</target>
+</trans-unit>
+<trans-unit id="s1d79865c64db073b">
+  <source>English only</source>
+  <target>Solo inglese</target>
+</trans-unit>
+<trans-unit id="s8e0cfad6a9a8f63c">
+  <source>Multilingual</source>
+  <target>Multilingue</target>
+</trans-unit>
+<trans-unit id="s5da52af9b083c29a">
+  <source>Model</source>
+  <target>Modello</target>
+</trans-unit>
+<trans-unit id="sfe1bb68c9a596303">
+  <source>Choose which speech model Moss runs. Larger models are more accurate but slower and use more memory.</source>
+  <target>Scegli quale modello vocale esegue Moss. I modelli più grandi sono più precisi ma più lenti e usano più memoria.</target>
+</trans-unit>
+<trans-unit id="s8aefa57686098031">
+  <source>Switch speech model?</source>
+  <target>Cambiare modello vocale?</target>
+</trans-unit>
+<trans-unit id="s8e114dd98aeedf91">
+  <source>Switch</source>
+  <target>Cambia</target>
+</trans-unit>
+<trans-unit id="s38e4aa7f1d3af95b">
+  <source>1 transcription session is active. Switching the model stops it now. Tools will need to start transcription again, for example by rejoining a room.</source>
+  <target>1 sessione di trascrizione è attiva. Cambiare modello la interrompe subito. Gli strumenti dovranno riavviare la trascrizione, ad esempio rientrando in una stanza.</target>
+</trans-unit>
+<trans-unit id="s73ef98c8f3889e14">
+  <source><x id="0" equiv-text="${n}"/> transcription sessions are active. Switching the model stops them now. Tools will need to start transcription again, for example by rejoining a room.</source>
+  <target><x id="0" equiv-text="${n}"/> sessioni di trascrizione sono attive. Cambiare modello le interrompe subito. Gli strumenti dovranno riavviare la trascrizione, ad esempio rientrando in una stanza.</target>
+</trans-unit>
+<trans-unit id="sadd6c527dbde86cf">
+  <source>Which model should I use?</source>
+  <target>Quale modello devo usare?</target>
+</trans-unit>
+<trans-unit id="sb42dfad0c1af8655">
+  <source>An English-only model (.en) and the multilingual model of the same name are the same size because they are the same design, trained on different speech. For English, tiny.en and base.en are noticeably more accurate than tiny and base. From small upward the difference is slight.</source>
+  <target>Un modello solo inglese (.en) e il modello multilingue con lo stesso nome hanno la stessa dimensione perché hanno la stessa struttura e cambiano solo i dati di addestramento. Per l'inglese, tiny.en e base.en sono nettamente più precisi di tiny e base. Da small in su la differenza è minima.</target>
+</trans-unit>
+<trans-unit id="s8bb20e789fd4d22b">
+  <source>Choose a multilingual model if anyone will speak a language other than English. An English-only model turns other languages into nonsense.</source>
+  <target>Scegli un modello multilingue se qualcuno parlerà una lingua diversa dall'inglese. Un modello solo inglese trasforma le altre lingue in testo senza senso.</target>
+</trans-unit>
+<trans-unit id="sa60d4041cede6f63">
+  <source>A bigger model is more accurate, but each step up is several times slower and needs more memory: roughly 0.4 GB for base, 0.9 GB for small, 2 GB for medium and 4 GB for large. On most laptops medium and large cannot keep up with live speech, so captions arrive late. Pick the largest model that still keeps up.</source>
+  <target>Un modello più grande è più preciso, ma ogni gradino è diverse volte più lento e richiede più memoria: circa 0,4 GB per base, 0,9 GB per small, 2 GB per medium e 4 GB per large. Sulla maggior parte dei portatili medium e large non tengono il passo del parlato dal vivo e i sottotitoli arrivano in ritardo. Scegli il modello più grande che tiene ancora il passo.</target>
+</trans-unit>
+<trans-unit id="s77efaef33da6e1e9">
+  <source>large-v3-turbo is nearly as accurate as large-v3 and several times faster. Try it before large-v3.</source>
+  <target>large-v3-turbo è quasi preciso quanto large-v3 e diverse volte più veloce. Provalo prima di large-v3.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

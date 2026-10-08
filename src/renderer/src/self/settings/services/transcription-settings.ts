@@ -5,6 +5,9 @@
 //   - Info icon opens an about dialog: what runs locally, and the
 //     current capabilities (model, languages, latency tier) behind a
 //     technical-details turn-down.
+//   - Model section: lists the available speech models with download,
+//     resume, cancel, delete and select. Switching the active model stops
+//     open sessions, so it asks for confirmation when any are open.
 //   - Lists per-tool consent decisions with Revoke buttons.
 //
 // Turning the switch off or revoking a tool's consent also closes any
@@ -14,15 +17,21 @@
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
-import { localized, msg } from '@lit/localize';
+import { localized, msg, str } from '@lit/localize';
 
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 import '@shoelace-style/shoelace/dist/components/details/details.js';
+import './asr-model-list.js';
 import '../../../ui/moss-dialog.js';
 import type { MossDialog } from '../../../ui/moss-dialog.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import type { AppletId, LocalModelCapabilities } from '@theweave/api';
+import type {
+  AsrModelDownloadEnded,
+  AsrModelDownloadProgress,
+  AsrModelListEntry,
+} from '@theweave/moss-types';
 import { decodeHashFromBase64 } from '@holochain/client';
 
 import { mossStoreContext } from '../../../context.js';
@@ -49,6 +58,32 @@ export class MossTranscriptionSettings extends LitElement {
   @state() private capabilities: LocalModelCapabilities | null = null;
   @state() private capabilitiesError: string | null = null;
   @state() private grants: GrantRow[] = [];
+  @state() private models: AsrModelListEntry[] = [];
+  @state() private progress: Map<string, AsrModelDownloadProgress> = new Map();
+  @state() private modelErrors: Map<string, string> = new Map();
+  @state() private pendingSwitch: {
+    id: string;
+    sessions: number;
+    action: 'select' | 'delete';
+  } | null = null;
+
+  @query('#switch-dialog')
+  private _switchDialog!: MossDialog;
+
+  private onDownloadProgress = (_e: Electron.IpcRendererEvent, p: AsrModelDownloadProgress) => {
+    const next = new Map(this.progress);
+    next.set(p.id, p);
+    this.progress = next;
+  };
+
+  private onDownloadEnded = (_e: Electron.IpcRendererEvent, ended: AsrModelDownloadEnded) => {
+    this.clearProgress(ended.id);
+    this.setModelError(ended.id, ended.outcome === 'error' ? (ended.error ?? null) : null);
+    void Promise.all([this.refreshModels(), this.refreshCapabilities()]);
+  };
+
+  private unsubscribeProgress: (() => void) | null = null;
+  private unsubscribeEnded: (() => void) | null = null;
 
   private onGrantsChanged = () => {
     void this.refreshGrants();
@@ -59,15 +94,112 @@ export class MossTranscriptionSettings extends LitElement {
     this.enabled = this.mossStore.persistedStore.localAiEnabled.value();
     void this.refresh();
     window.addEventListener(APPLET_ASR_CONSENT_CHANGED_EVENT, this.onGrantsChanged);
+    this.unsubscribeProgress = window.electronAPI.onAsrModelDownloadProgress(
+      this.onDownloadProgress,
+    );
+    this.unsubscribeEnded = window.electronAPI.onAsrModelDownloadEnded(this.onDownloadEnded);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     window.removeEventListener(APPLET_ASR_CONSENT_CHANGED_EVENT, this.onGrantsChanged);
+    this.unsubscribeProgress?.();
+    this.unsubscribeProgress = null;
+    this.unsubscribeEnded?.();
+    this.unsubscribeEnded = null;
   }
 
   private async refresh(): Promise<void> {
-    await Promise.all([this.refreshCapabilities(), this.refreshGrants()]);
+    await Promise.all([this.refreshCapabilities(), this.refreshGrants(), this.refreshModels()]);
+  }
+
+  private async refreshModels(): Promise<void> {
+    try {
+      this.models = await window.electronAPI.asrModelsList();
+    } catch (e) {
+      this.capabilitiesError = (e as Error).message;
+    }
+  }
+
+  private setModelError(id: string, message: string | null): void {
+    const next = new Map(this.modelErrors);
+    if (message === null) next.delete(id);
+    else next.set(id, message);
+    this.modelErrors = next;
+  }
+
+  private clearProgress(id: string): void {
+    const next = new Map(this.progress);
+    next.delete(id);
+    this.progress = next;
+  }
+
+  private async downloadModel(id: string): Promise<void> {
+    this.setModelError(id, null);
+    try {
+      await window.electronAPI.asrModelDownload({ id });
+    } catch (e) {
+      this.setModelError(id, (e as Error).message);
+    } finally {
+      this.clearProgress(id);
+      await Promise.all([this.refreshModels(), this.refreshCapabilities()]);
+    }
+  }
+
+  private async cancelDownload(id: string): Promise<void> {
+    await window.electronAPI.asrModelCancelDownload({ id });
+  }
+
+  /** Deleting the active model stops every open tool session, so ask first when there are any. */
+  private async requestDelete(id: string): Promise<void> {
+    const active = this.models.find((m) => m.id === id)?.active ?? false;
+    if (active && (await this.confirmIfSessionsOpen(id, 'delete'))) return;
+    await this.deleteModel(id);
+  }
+
+  private async deleteModel(id: string): Promise<void> {
+    this.setModelError(id, null);
+    try {
+      await window.electronAPI.asrModelDelete({ id });
+    } catch (e) {
+      this.setModelError(id, (e as Error).message);
+    }
+    await Promise.all([this.refreshModels(), this.refreshCapabilities()]);
+  }
+
+  /** Switching stops every open tool session, so ask first when there are any. */
+  private async requestSelect(id: string): Promise<void> {
+    if (await this.confirmIfSessionsOpen(id, 'select')) return;
+    await this.selectModel(id);
+  }
+
+  /** Opens the confirm dialog and returns true when sessions are open. */
+  private async confirmIfSessionsOpen(id: string, action: 'select' | 'delete'): Promise<boolean> {
+    const sessions = await window.electronAPI.asrOpenSessionCount();
+    if (sessions === 0) return false;
+    this.pendingSwitch = { id, sessions, action };
+    await this.updateComplete;
+    this._switchDialog.show();
+    return true;
+  }
+
+  private async confirmSwitch(): Promise<void> {
+    const pending = this.pendingSwitch;
+    this.pendingSwitch = null;
+    this._switchDialog.hide();
+    if (!pending) return;
+    if (pending.action === 'delete') await this.deleteModel(pending.id);
+    else await this.selectModel(pending.id);
+  }
+
+  private async selectModel(id: string): Promise<void> {
+    this.setModelError(id, null);
+    try {
+      await window.electronAPI.asrModelSelect({ id });
+    } catch (e) {
+      this.setModelError(id, (e as Error).message);
+    }
+    await Promise.all([this.refreshModels(), this.refreshCapabilities()]);
   }
 
   private async refreshCapabilities(): Promise<void> {
@@ -144,16 +276,14 @@ export class MossTranscriptionSettings extends LitElement {
       </p>`;
     }
     return html`
-      <div class="column service-rows">
+      <div class="service-listbox">
         ${this.grants.map(
           (g) => html`
-            <div class="row service-row">
-              <div class="column" style="flex: 1; min-width: 0;">
-                <span class="service-row-name">${g.name}</span>
-                <span class="service-row-meta"
-                  >${g.value === 'granted' ? msg('Allowed') : msg('Denied')}</span
-                >
-              </div>
+            <div class="service-line">
+              <span class="service-line-name">${g.name}</span>
+              <span class="service-line-meta"
+                >${g.value === 'granted' ? msg('Allowed') : msg('Denied')}</span
+              >
               <sl-button size="small" variant="default" @click=${() => this.revoke(g.appletId)}>
                 ${msg('Revoke')}
               </sl-button>
@@ -200,8 +330,86 @@ export class MossTranscriptionSettings extends LitElement {
           <h3 style="margin: 0 0 8px 0;">${msg('Tool permissions')}</h3>
           ${this.renderGrants()}
         </section>
+
+        <section>
+          <h3 style="margin: 0 0 8px 0;">${msg('Model')}</h3>
+          <p class="service-note" style="margin: 0 0 8px 0;">
+            ${msg(
+              'Choose which speech model Moss runs. Larger models are more accurate but slower and use more memory.',
+            )}
+          </p>
+          <asr-model-list
+            .models=${this.models}
+            .progress=${this.progress}
+            .errors=${this.modelErrors}
+            @model-download=${(e: CustomEvent<{ id: string }>) =>
+              void this.downloadModel(e.detail.id)}
+            @model-cancel=${(e: CustomEvent<{ id: string }>) =>
+              void this.cancelDownload(e.detail.id)}
+            @model-delete=${(e: CustomEvent<{ id: string }>) =>
+              void this.requestDelete(e.detail.id)}
+            @model-select=${(e: CustomEvent<{ id: string }>) =>
+              void this.requestSelect(e.detail.id)}
+          ></asr-model-list>
+          <sl-details class="model-help" summary=${msg('Which model should I use?')}>
+            <div class="column" style="gap: 10px;">
+              <p>
+                ${msg(
+                  'An English-only model (.en) and the multilingual model of the same name are the same size because they are the same design, trained on different speech. For English, tiny.en and base.en are noticeably more accurate than tiny and base. From small upward the difference is slight.',
+                )}
+              </p>
+              <p>
+                ${msg(
+                  'Choose a multilingual model if anyone will speak a language other than English. An English-only model turns other languages into nonsense.',
+                )}
+              </p>
+              <p>
+                ${msg(
+                  'A bigger model is more accurate, but each step up is several times slower and needs more memory: roughly 0.4 GB for base, 0.9 GB for small, 2 GB for medium and 4 GB for large. On most laptops medium and large cannot keep up with live speech, so captions arrive late. Pick the largest model that still keeps up.',
+                )}
+              </p>
+              <p>
+                ${msg(
+                  'large-v3-turbo is nearly as accurate as large-v3 and several times faster. Try it before large-v3.',
+                )}
+              </p>
+            </div>
+          </sl-details>
+        </section>
       </div>
-      ${this.renderAboutDialog()}
+      ${this.renderAboutDialog()} ${this.renderSwitchDialog()}
+    `;
+  }
+
+  private renderSwitchDialog() {
+    const n = this.pendingSwitch?.sessions ?? 0;
+    return html`
+      <moss-dialog id="switch-dialog" width="520px" headerAlign="left">
+        <span slot="header">${msg('Switch speech model?')}</span>
+        <div slot="content" class="column" style="gap: 16px;">
+          <p>
+            ${n === 1
+              ? msg(
+                  '1 transcription session is active. Switching the model stops it now. Tools will need to start transcription again, for example by rejoining a room.',
+                )
+              : msg(
+                  str`${n} transcription sessions are active. Switching the model stops them now. Tools will need to start transcription again, for example by rejoining a room.`,
+                )}
+          </p>
+          <div class="row" style="justify-content: flex-end; gap: 8px;">
+            <sl-button
+              @click=${() => {
+                this.pendingSwitch = null;
+                this._switchDialog.hide();
+              }}
+              >${msg('Cancel')}</sl-button
+            >
+            <sl-button variant="primary" @click=${() => void this.confirmSwitch()}
+              >${msg('Switch')}</sl-button
+            >
+          </div>
+        </div>
+      </moss-dialog>
     `;
   }
 
@@ -245,6 +453,14 @@ export class MossTranscriptionSettings extends LitElement {
     css`
       :host {
         display: flex;
+      }
+      .model-help {
+        margin-top: 8px;
+      }
+      .model-help p {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.5;
       }
     `,
   ];

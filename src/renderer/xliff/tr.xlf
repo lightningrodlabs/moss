@@ -3199,6 +3199,74 @@ starts now</source>
   <source>Send</source>
   <target>Gönder</target>
 </trans-unit>
+<trans-unit id="sd3386a2ef42e80b9">
+  <source>Download</source>
+  <target>İndir</target>
+</trans-unit>
+<trans-unit id="s89118d3a7be870ca">
+  <source>Resume</source>
+  <target>Devam et</target>
+</trans-unit>
+<trans-unit id="s625ad019db843f94">
+  <source>Use</source>
+  <target>Kullan</target>
+</trans-unit>
+<trans-unit id="sedc2d92054cd8393">
+  <source>Bundled</source>
+  <target>Dahil</target>
+</trans-unit>
+<trans-unit id="s1d79865c64db073b">
+  <source>English only</source>
+  <target>Yalnızca İngilizce</target>
+</trans-unit>
+<trans-unit id="s8e0cfad6a9a8f63c">
+  <source>Multilingual</source>
+  <target>Çok dilli</target>
+</trans-unit>
+<trans-unit id="s5da52af9b083c29a">
+  <source>Model</source>
+  <target>Model</target>
+</trans-unit>
+<trans-unit id="sfe1bb68c9a596303">
+  <source>Choose which speech model Moss runs. Larger models are more accurate but slower and use more memory.</source>
+  <target>Moss'un hangi konuşma modelini çalıştıracağını seçin. Büyük modeller daha doğru ama daha yavaştır ve daha fazla bellek kullanır.</target>
+</trans-unit>
+<trans-unit id="s8aefa57686098031">
+  <source>Switch speech model?</source>
+  <target>Konuşma modeli değiştirilsin mi?</target>
+</trans-unit>
+<trans-unit id="s8e114dd98aeedf91">
+  <source>Switch</source>
+  <target>Değiştir</target>
+</trans-unit>
+<trans-unit id="s38e4aa7f1d3af95b">
+  <source>1 transcription session is active. Switching the model stops it now. Tools will need to start transcription again, for example by rejoining a room.</source>
+  <target>1 transkripsiyon oturumu etkin. Modeli değiştirmek onu hemen durdurur. Araçların transkripsiyonu yeniden başlatması gerekir, örneğin bir odaya yeniden katılarak.</target>
+</trans-unit>
+<trans-unit id="s73ef98c8f3889e14">
+  <source><x id="0" equiv-text="${n}"/> transcription sessions are active. Switching the model stops them now. Tools will need to start transcription again, for example by rejoining a room.</source>
+  <target><x id="0" equiv-text="${n}"/> transkripsiyon oturumu etkin. Modeli değiştirmek bunları hemen durdurur. Araçların transkripsiyonu yeniden başlatması gerekir, örneğin bir odaya yeniden katılarak.</target>
+</trans-unit>
+<trans-unit id="sadd6c527dbde86cf">
+  <source>Which model should I use?</source>
+  <target>Hangi modeli kullanmalıyım?</target>
+</trans-unit>
+<trans-unit id="sb42dfad0c1af8655">
+  <source>An English-only model (.en) and the multilingual model of the same name are the same size because they are the same design, trained on different speech. For English, tiny.en and base.en are noticeably more accurate than tiny and base. From small upward the difference is slight.</source>
+  <target>Yalnızca İngilizce bir model (.en) ile aynı adlı çok dilli model aynı boyuttadır, çünkü tasarımları aynıdır ve yalnızca farklı konuşmalarla eğitilmişlerdir. İngilizce için tiny.en ve base.en, tiny ve base modellerinden belirgin biçimde daha doğrudur. small ve üzerinde fark azdır.</target>
+</trans-unit>
+<trans-unit id="s8bb20e789fd4d22b">
+  <source>Choose a multilingual model if anyone will speak a language other than English. An English-only model turns other languages into nonsense.</source>
+  <target>İngilizce dışında bir dil konuşulacaksa çok dilli bir model seçin. Yalnızca İngilizce bir model diğer dilleri anlamsız metne çevirir.</target>
+</trans-unit>
+<trans-unit id="sa60d4041cede6f63">
+  <source>A bigger model is more accurate, but each step up is several times slower and needs more memory: roughly 0.4 GB for base, 0.9 GB for small, 2 GB for medium and 4 GB for large. On most laptops medium and large cannot keep up with live speech, so captions arrive late. Pick the largest model that still keeps up.</source>
+  <target>Daha büyük bir model daha doğrudur, ancak her adım birkaç kat daha yavaştır ve daha fazla bellek ister: base için yaklaşık 0,4 GB, small için 0,9 GB, medium için 2 GB ve large için 4 GB. Çoğu dizüstü bilgisayarda medium ve large canlı konuşmaya yetişemez, altyazılar geç gelir. Hâlâ yetişebilen en büyük modeli seçin.</target>
+</trans-unit>
+<trans-unit id="s77efaef33da6e1e9">
+  <source>large-v3-turbo is nearly as accurate as large-v3 and several times faster. Try it before large-v3.</source>
+  <target>large-v3-turbo neredeyse large-v3 kadar doğrudur ve birkaç kat daha hızlıdır. large-v3'ten önce onu deneyin.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

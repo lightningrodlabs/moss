@@ -478,3 +478,39 @@ describe('AsrSession VAD', () => {
     expect(fake.transcribeCalls).toHaveLength(0);
   });
 });
+
+describe('AsrSession.abort', () => {
+  it('reports the reason to error listeners, drops buffered audio and releases the server once', async () => {
+    const fake = new FakeWhisperServer({ command: ['noop'], modelPath: '/dev/null' });
+    await fake.start();
+    let released = 0;
+    const session = new AsrSession(asWhisperServer(fake), async () => {
+      released += 1;
+    });
+    const errors: Error[] = [];
+    session.onError((e) => errors.push(e));
+    await session.pushAudio(new Int16Array(1600));
+
+    session.abort(new Error('speech model changed'));
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(errors.map((e) => e.message)).toEqual(['speech model changed']);
+    expect(released).toBe(1);
+    expect(fake.transcribeCalls).toHaveLength(0);
+    await session.close();
+    expect(released).toBe(1);
+  });
+
+  it('tells a listener that subscribes after the abort', async () => {
+    const fake = new FakeWhisperServer({ command: ['noop'], modelPath: '/dev/null' });
+    await fake.start();
+    const session = new AsrSession(asWhisperServer(fake), async () => undefined);
+    session.abort(new Error('speech model changed'));
+
+    const errors: string[] = [];
+    session.onError((e) => errors.push(e.message));
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(errors).toEqual(['speech model changed']);
+  });
+});
