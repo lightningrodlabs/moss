@@ -263,6 +263,22 @@ describe('AsrBroker.setServerConfig', () => {
     expect(errors).toEqual(['speech model changed']);
   });
 
+  it('does not let a warm-up that straddled the swap under-count the next session', async () => {
+    const { broker } = makeBroker({ startDelayMs: 30, idleTimeoutMs: 0 });
+    const warming = broker.warmUp();
+    await sleep(5);
+    const swap = broker.setServerConfig(nextConfig);
+    await Promise.all([warming, swap]);
+    // The swap has completed; the warm-up's own bookkeeping must not leak into this session.
+    const s = await broker.openSession();
+    await sleep(0);
+    expect(broker.openSessionCount).toBe(1);
+    expect(broker.isLoaded).toBe(true);
+    await s.close();
+    expect(broker.openSessionCount).toBe(0);
+    expect(broker.isLoaded).toBe(false);
+  });
+
   it('ignores a late release from an aborted session so the count cannot go negative', async () => {
     const { broker } = makeBroker({ idleTimeoutMs: 60_000 });
     const s = await broker.openSession();

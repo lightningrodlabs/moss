@@ -144,7 +144,10 @@ export class AsrBroker {
     if (this.destroyed) {
       throw new Error('AsrBroker is destroyed; cannot warm up');
     }
+    const generation = this.generation;
     await this.acquire();
+    // A swap during the start already reset the count and stopped that server.
+    if (generation !== this.generation) return;
     await this.release();
   }
 
