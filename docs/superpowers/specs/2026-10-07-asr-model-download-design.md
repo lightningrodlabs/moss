@@ -71,8 +71,12 @@ Knows where models live and which one is active.
   `MossFileSystem` (`src/main/filesystem.ts`), created with the other
   profile directories.
 - The user's choice is saved as `<profileConfigDir>/asr-model.json`
-  (`{ "modelId": "small" }`), read and written like
-  `lanDiscoverySetting.ts`. A missing or damaged file reads as no choice.
+  (`{ "modelId": "small" }`), a small JSON file read with a try/catch so a
+  missing or damaged file reads as no choice.
+- The row and progress shapes that cross to the renderer
+  (`AsrModelListEntry`, `AsrModelDownloadProgress`, `AsrLatencyTier`) live
+  in `@theweave/moss-types` (`shared/types/src/asr-models.ts`), which main,
+  preload and renderer already import.
 - `listModels(dirs)` returns one `AsrModelListEntry` per catalog entry:
 
 ```ts
@@ -146,14 +150,17 @@ already exists.
 - `initAsrService` takes the resolved path from the store and no longer
   caches capabilities for the life of the app: `getAsrCapabilities()`
   recomputes from the current path.
-- New `selectAsrModel(id)`: checks the id is installed, writes the saved
-  choice, resolves the new path, calls `broker.setServerConfig` with the
-  new `modelPath` and the catalog's `startTimeoutMs`, and updates the path
-  that capabilities are computed from.
-- When init found no whisper-server binary, selection still saves the
-  choice and updates capabilities, so the setting survives a later fix.
+- New `setAsrModelPath(path, startTimeoutMs?)`: records the path, swaps
+  the running broker's config (`broker.setServerConfig`), or creates the
+  broker if init had no model, or destroys it when the path is null.
+- When init found no whisper-server binary, the path is still recorded and
+  the resolver error is still what `getAsrBroker()` throws, so the setting
+  survives a later fix.
+- The store-facing steps (write the selection, resolve the path, look up
+  the catalog start budget) live in the handlers, `modelIpcHandlers.ts`,
+  which call `setAsrModelPath` through the context's `applyModelPath`.
 
-### IPC: `ipcHandlers.ts` and `wireUp.ts`
+### IPC: `modelIpcHandlers.ts`, `ipcHandlers.ts` and `wireUp.ts`
 
 New channels, each a literal string so `ipc-contract-drift.test.ts` sees
 them:
@@ -161,7 +168,7 @@ them:
 | channel | direction | payload |
 | --- | --- | --- |
 | `asr-models-list` | invoke | → `AsrModelListEntry[]` |
-| `asr-model-download` | invoke | `{ id }` → `DownloadOutcome` (resolves when the download ends) |
+| `asr-model-download` | invoke | `{ id }` → `DownloadOutcome` (resolves when the download ends; when no model was active before, the completed download becomes the active model) |
 | `asr-model-cancel-download` | invoke | `{ id }` |
 | `asr-model-delete` | invoke | `{ id }` |
 | `asr-model-select` | invoke | `{ id }` |
@@ -243,5 +250,7 @@ Vitest unit tests, no Holochain, no Electron:
   choice; works without a broker.
 - `ipcHandlers.test.ts`: the new handlers against fakes.
 - `capabilities.test.ts`: catalog entry wins over filename parse.
-- Renderer: `asr-model-list.test.ts` renders each row state from a fixture
-  list; `transcription-settings` confirm branch when the count is nonzero.
+- Renderer: the unit suite runs in a node environment with no DOM, so the
+  row logic (state per row, size formatting, language summary) lives in a
+  pure module `model-row-state.ts` with its own test; the Lit elements are
+  covered by typecheck and a manual smoke run.
