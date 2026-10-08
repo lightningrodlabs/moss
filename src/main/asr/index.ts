@@ -80,3 +80,5 @@ export { AsrModelStore, ASR_MODEL_SELECTION_FILE, BUNDLED_ASR_MODEL_FILENAME } f
 export type { AsrModelStoreOptions } from './modelStore';
 export { ASR_MODEL_CATALOG, catalogEntryById, catalogEntryForPath } from './modelCatalog';
 export type { AsrModelCatalogEntry } from './modelCatalog';
+export { ModelDownloader } from './modelDownloader';
+export type { DownloadOutcome, DownloadProgress, ModelDownloaderOptions } from './modelDownloader';
