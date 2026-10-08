@@ -3091,6 +3091,50 @@ begint nu</target>
   <source>Finishing transcription</source>
   <target>Transcriptie wordt afgerond</target>
 </trans-unit>
+<trans-unit id="sd3386a2ef42e80b9">
+  <source>Download</source>
+  <target>Downloaden</target>
+</trans-unit>
+<trans-unit id="s89118d3a7be870ca">
+  <source>Resume</source>
+  <target>Hervatten</target>
+</trans-unit>
+<trans-unit id="s625ad019db843f94">
+  <source>Use</source>
+  <target>Gebruiken</target>
+</trans-unit>
+<trans-unit id="sedc2d92054cd8393">
+  <source>Bundled</source>
+  <target>Meegeleverd</target>
+</trans-unit>
+<trans-unit id="s1d79865c64db073b">
+  <source>English only</source>
+  <target>Alleen Engels</target>
+</trans-unit>
+<trans-unit id="s8e0cfad6a9a8f63c">
+  <source>Multilingual</source>
+  <target>Meertalig</target>
+</trans-unit>
+<trans-unit id="s5da52af9b083c29a">
+  <source>Model</source>
+  <target>Model</target>
+</trans-unit>
+<trans-unit id="sfe1bb68c9a596303">
+  <source>Choose which speech model Moss runs. Larger models are more accurate but slower and use more memory.</source>
+  <target>Kies welk spraakmodel Moss gebruikt. Grotere modellen zijn nauwkeuriger maar trager en gebruiken meer geheugen.</target>
+</trans-unit>
+<trans-unit id="s8aefa57686098031">
+  <source>Switch speech model?</source>
+  <target>Spraakmodel wisselen?</target>
+</trans-unit>
+<trans-unit id="sea6390d342b09e37">
+  <source><x id="0" equiv-text="${n}"/> transcription session(s) are active. Switching the model stops them now. Tools will need to start transcription again, for example by rejoining a room.</source>
+  <target><x id="0" equiv-text="${n}"/> transcriptiesessie(s) zijn actief. Van model wisselen stopt ze nu. Tools moeten de transcriptie opnieuw starten, bijvoorbeeld door een ruimte opnieuw te betreden.</target>
+</trans-unit>
+<trans-unit id="s8e114dd98aeedf91">
+  <source>Switch</source>
+  <target>Wisselen</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

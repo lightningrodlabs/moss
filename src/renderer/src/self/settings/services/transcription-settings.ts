@@ -5,6 +5,9 @@
 //   - Info icon opens an about dialog: what runs locally, and the
 //     current capabilities (model, languages, latency tier) behind a
 //     technical-details turn-down.
+//   - Model section: lists the available speech models with download,
+//     resume, cancel, delete and select. Switching the active model stops
+//     open sessions, so it asks for confirmation when any are open.
 //   - Lists per-tool consent decisions with Revoke buttons.
 //
 // Turning the switch off or revoking a tool's consent also closes any
@@ -14,15 +17,17 @@
 import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
-import { localized, msg } from '@lit/localize';
+import { localized, msg, str } from '@lit/localize';
 
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 import '@shoelace-style/shoelace/dist/components/details/details.js';
+import './asr-model-list.js';
 import '../../../ui/moss-dialog.js';
 import type { MossDialog } from '../../../ui/moss-dialog.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import type { AppletId, LocalModelCapabilities } from '@theweave/api';
+import type { AsrModelDownloadProgress, AsrModelListEntry } from '@theweave/moss-types';
 import { decodeHashFromBase64 } from '@holochain/client';
 
 import { mossStoreContext } from '../../../context.js';
@@ -49,6 +54,19 @@ export class MossTranscriptionSettings extends LitElement {
   @state() private capabilities: LocalModelCapabilities | null = null;
   @state() private capabilitiesError: string | null = null;
   @state() private grants: GrantRow[] = [];
+  @state() private models: AsrModelListEntry[] = [];
+  @state() private progress: Map<string, AsrModelDownloadProgress> = new Map();
+  @state() private modelErrors: Map<string, string> = new Map();
+  @state() private pendingSwitch: { id: string; sessions: number } | null = null;
+
+  @query('#switch-dialog')
+  private _switchDialog!: MossDialog;
+
+  private onDownloadProgress = (_e: Electron.IpcRendererEvent, p: AsrModelDownloadProgress) => {
+    const next = new Map(this.progress);
+    next.set(p.id, p);
+    this.progress = next;
+  };
 
   private onGrantsChanged = () => {
     void this.refreshGrants();
@@ -59,6 +77,9 @@ export class MossTranscriptionSettings extends LitElement {
     this.enabled = this.mossStore.persistedStore.localAiEnabled.value();
     void this.refresh();
     window.addEventListener(APPLET_ASR_CONSENT_CHANGED_EVENT, this.onGrantsChanged);
+    // The preload exposes no matching off(); the pane is long-lived and a
+    // repeat mount only rewrites the same progress value.
+    window.electronAPI.onAsrModelDownloadProgress(this.onDownloadProgress);
   }
 
   disconnectedCallback(): void {
@@ -67,7 +88,83 @@ export class MossTranscriptionSettings extends LitElement {
   }
 
   private async refresh(): Promise<void> {
-    await Promise.all([this.refreshCapabilities(), this.refreshGrants()]);
+    await Promise.all([this.refreshCapabilities(), this.refreshGrants(), this.refreshModels()]);
+  }
+
+  private async refreshModels(): Promise<void> {
+    try {
+      this.models = await window.electronAPI.asrModelsList();
+    } catch (e) {
+      this.capabilitiesError = (e as Error).message;
+    }
+  }
+
+  private setModelError(id: string, message: string | null): void {
+    const next = new Map(this.modelErrors);
+    if (message === null) next.delete(id);
+    else next.set(id, message);
+    this.modelErrors = next;
+  }
+
+  private clearProgress(id: string): void {
+    const next = new Map(this.progress);
+    next.delete(id);
+    this.progress = next;
+  }
+
+  private async downloadModel(id: string): Promise<void> {
+    this.setModelError(id, null);
+    try {
+      await window.electronAPI.asrModelDownload({ id });
+    } catch (e) {
+      this.setModelError(id, (e as Error).message);
+    } finally {
+      this.clearProgress(id);
+      await Promise.all([this.refreshModels(), this.refreshCapabilities()]);
+    }
+  }
+
+  private async cancelDownload(id: string): Promise<void> {
+    await window.electronAPI.asrModelCancelDownload({ id });
+  }
+
+  private async deleteModel(id: string): Promise<void> {
+    this.setModelError(id, null);
+    try {
+      await window.electronAPI.asrModelDelete({ id });
+    } catch (e) {
+      this.setModelError(id, (e as Error).message);
+    }
+    await Promise.all([this.refreshModels(), this.refreshCapabilities()]);
+  }
+
+  /** Switching stops every open tool session, so ask first when there are any. */
+  private async requestSelect(id: string): Promise<void> {
+    const sessions = await window.electronAPI.asrOpenSessionCount();
+    if (sessions > 0) {
+      this.pendingSwitch = { id, sessions };
+      await this.updateComplete;
+      this._switchDialog.show();
+      return;
+    }
+    await this.selectModel(id);
+  }
+
+  private async confirmSwitch(): Promise<void> {
+    const pending = this.pendingSwitch;
+    this.pendingSwitch = null;
+    this._switchDialog.hide();
+    if (pending) await this.selectModel(pending.id);
+  }
+
+  private async selectModel(id: string): Promise<void> {
+    this.setModelError(id, null);
+    try {
+      await window.electronAPI.asrModelSelect({ id });
+    } catch (e) {
+      this.setModelError(id, (e as Error).message);
+    }
+    await Promise.all([this.refreshModels(), this.refreshCapabilities()]);
   }
 
   private async refreshCapabilities(): Promise<void> {
@@ -197,11 +294,53 @@ export class MossTranscriptionSettings extends LitElement {
         </section>
 
         <section>
+          <h3 style="margin: 0 0 8px 0;">${msg('Model')}</h3>
+          <p class="service-note" style="margin: 0 0 8px 0;">
+            ${msg('Choose which speech model Moss runs. Larger models are more accurate but slower and use more memory.')}
+          </p>
+          <asr-model-list
+            .models=${this.models}
+            .progress=${this.progress}
+            .errors=${this.modelErrors}
+            @model-download=${(e: CustomEvent<{ id: string }>) => void this.downloadModel(e.detail.id)}
+            @model-cancel=${(e: CustomEvent<{ id: string }>) => void this.cancelDownload(e.detail.id)}
+            @model-delete=${(e: CustomEvent<{ id: string }>) => void this.deleteModel(e.detail.id)}
+            @model-select=${(e: CustomEvent<{ id: string }>) => void this.requestSelect(e.detail.id)}
+          ></asr-model-list>
+        </section>
+
+        <section>
           <h3 style="margin: 0 0 8px 0;">${msg('Tool permissions')}</h3>
           ${this.renderGrants()}
         </section>
       </div>
-      ${this.renderAboutDialog()}
+      ${this.renderAboutDialog()} ${this.renderSwitchDialog()}
+    `;
+  }
+
+  private renderSwitchDialog() {
+    const n = this.pendingSwitch?.sessions ?? 0;
+    return html`
+      <moss-dialog id="switch-dialog" width="520px" headerAlign="left">
+        <span slot="header">${msg('Switch speech model?')}</span>
+        <div slot="content" class="column" style="gap: 16px;">
+          <p>
+            ${msg(
+              str`${n} transcription session(s) are active. Switching the model stops them now. Tools will need to start transcription again, for example by rejoining a room.`,
+            )}
+          </p>
+          <div class="row" style="justify-content: flex-end; gap: 8px;">
+            <sl-button
+              @click=${() => {
+                this.pendingSwitch = null;
+                this._switchDialog.hide();
+              }}
+              >${msg('Cancel')}</sl-button
+            >
+            <sl-button variant="primary" @click=${() => void this.confirmSwitch()}>${msg('Switch')}</sl-button>
+          </div>
+        </div>
+      </moss-dialog>
     `;
   }
 

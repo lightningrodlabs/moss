@@ -3091,6 +3091,50 @@ starts now</source>
   <source>Finishing transcription</source>
   <target>文字起こしを完了しています</target>
 </trans-unit>
+<trans-unit id="sd3386a2ef42e80b9">
+  <source>Download</source>
+  <target>ダウンロード</target>
+</trans-unit>
+<trans-unit id="s89118d3a7be870ca">
+  <source>Resume</source>
+  <target>再開</target>
+</trans-unit>
+<trans-unit id="s625ad019db843f94">
+  <source>Use</source>
+  <target>使用</target>
+</trans-unit>
+<trans-unit id="sedc2d92054cd8393">
+  <source>Bundled</source>
+  <target>同梱</target>
+</trans-unit>
+<trans-unit id="s1d79865c64db073b">
+  <source>English only</source>
+  <target>英語のみ</target>
+</trans-unit>
+<trans-unit id="s8e0cfad6a9a8f63c">
+  <source>Multilingual</source>
+  <target>多言語</target>
+</trans-unit>
+<trans-unit id="s5da52af9b083c29a">
+  <source>Model</source>
+  <target>モデル</target>
+</trans-unit>
+<trans-unit id="sfe1bb68c9a596303">
+  <source>Choose which speech model Moss runs. Larger models are more accurate but slower and use more memory.</source>
+  <target>Moss が実行する音声モデルを選びます。大きいモデルは精度が高いものの、遅くメモリを多く使います。</target>
+</trans-unit>
+<trans-unit id="s8aefa57686098031">
+  <source>Switch speech model?</source>
+  <target>音声モデルを切り替えますか？</target>
+</trans-unit>
+<trans-unit id="sea6390d342b09e37">
+  <source><x id="0" equiv-text="${n}"/> transcription session(s) are active. Switching the model stops them now. Tools will need to start transcription again, for example by rejoining a room.</source>
+  <target><x id="0" equiv-text="${n}"/> 件の文字起こしセッションが進行中です。モデルを切り替えると今すぐ停止します。ツール側で文字起こしを再開する必要があります（例: ルームに再参加）。</target>
+</trans-unit>
+<trans-unit id="s8e114dd98aeedf91">
+  <source>Switch</source>
+  <target>切り替える</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

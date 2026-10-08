@@ -3091,6 +3091,50 @@ commence maintenant</target>
   <source>Finishing transcription</source>
   <target>Finalisation de la transcription</target>
 </trans-unit>
+<trans-unit id="sd3386a2ef42e80b9">
+  <source>Download</source>
+  <target>Télécharger</target>
+</trans-unit>
+<trans-unit id="s89118d3a7be870ca">
+  <source>Resume</source>
+  <target>Reprendre</target>
+</trans-unit>
+<trans-unit id="s625ad019db843f94">
+  <source>Use</source>
+  <target>Utiliser</target>
+</trans-unit>
+<trans-unit id="sedc2d92054cd8393">
+  <source>Bundled</source>
+  <target>Inclus</target>
+</trans-unit>
+<trans-unit id="s1d79865c64db073b">
+  <source>English only</source>
+  <target>Anglais uniquement</target>
+</trans-unit>
+<trans-unit id="s8e0cfad6a9a8f63c">
+  <source>Multilingual</source>
+  <target>Multilingue</target>
+</trans-unit>
+<trans-unit id="s5da52af9b083c29a">
+  <source>Model</source>
+  <target>Modèle</target>
+</trans-unit>
+<trans-unit id="sfe1bb68c9a596303">
+  <source>Choose which speech model Moss runs. Larger models are more accurate but slower and use more memory.</source>
+  <target>Choisissez le modèle vocal que Moss exécute. Les modèles plus grands sont plus précis mais plus lents et utilisent plus de mémoire.</target>
+</trans-unit>
+<trans-unit id="s8aefa57686098031">
+  <source>Switch speech model?</source>
+  <target>Changer de modèle vocal ?</target>
+</trans-unit>
+<trans-unit id="sea6390d342b09e37">
+  <source><x id="0" equiv-text="${n}"/> transcription session(s) are active. Switching the model stops them now. Tools will need to start transcription again, for example by rejoining a room.</source>
+  <target><x id="0" equiv-text="${n}"/> session(s) de transcription sont actives. Changer de modèle les arrête maintenant. Les outils devront relancer la transcription, par exemple en rejoignant à nouveau une salle.</target>
+</trans-unit>
+<trans-unit id="s8e114dd98aeedf91">
+  <source>Switch</source>
+  <target>Changer</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
