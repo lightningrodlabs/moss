@@ -1467,7 +1467,7 @@ if (!RUNNING_WITH_COMMAND) {
     );
     ipcMain.handle(
       'parent-to-applet-message',
-      (_e, message: ParentToAppletMessage, forApplets: AppletId[]) => {
+      (_e, message: ParentToAppletMessage, forApplets: 'all' | AppletId[]) => {
         // We send this to all wal windows as they may also contain embeddables
         Object.values(WAL_WINDOWS).forEach(({ window }) =>
           emitToWindow(window, 'parent-to-applet-message', { message, forApplets }),

@@ -66,7 +66,7 @@ declare global {
       appletMessageToParentResponse: (response: AppletHostResponse, id: string) => Promise<void>;
       parentToAppletMessage: (
         message: ParentToAppletMessage,
-        forApplets: AppletId[],
+        forApplets: 'all' | AppletId[],
       ) => Promise<void>;
       dialogMessagebox: (
         options: Electron.MessageBoxOptions,
@@ -105,7 +105,6 @@ declare global {
       onSwitchToWeaveLocation: (callback: (e: any, payload: WeaveLocation) => any) => void;
       onMossUpdateProgress: (callback: (e: any, payload: ProgressInfo) => any) => void;
       onRequestFactoryReset: (callback: (e: any) => any) => void;
-      onWillNavigateExternal: (callback: (e: any) => any) => void;
       onIframeStoreSync: (
         callback: (
           e: Electron.IpcRendererEvent,
@@ -130,7 +129,6 @@ declare global {
         ) => any,
       ) => void;
       requestIframeStoreSync: () => void;
-      removeWillNavigateListeners: () => void;
       onZomeCallSigned: (
         callback: (
           e: any,

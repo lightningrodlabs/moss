@@ -119,12 +119,7 @@ export async function launchMoss(opts: LaunchOptions): Promise<LaunchedMoss> {
     '--profile',
     mossProfile,
     ...(opts.bootstrap
-      ? [
-          '--bootstrap-url',
-          opts.bootstrap.bootstrapUrl,
-          '--relay-url',
-          opts.bootstrap.relayUrl,
-        ]
+      ? ['--bootstrap-url', opts.bootstrap.bootstrapUrl, '--relay-url', opts.bootstrap.relayUrl]
       : []),
     ...(opts.toolCurationUrl ? ['--tool-curation-url', opts.toolCurationUrl] : []),
     ...(opts.extraArgs ?? []),

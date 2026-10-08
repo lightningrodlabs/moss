@@ -1,4 +1,4 @@
-import { Page, FrameLocator, expect } from '@playwright/test';
+import { Page, FrameLocator, ElectronApplication, expect } from '@playwright/test';
 
 /**
  * Helpers for tool-library / applet flows. Skeletons — locators tighten on first
@@ -135,4 +135,59 @@ export async function expectPeerCount(page: Page, atLeast: number, timeoutMs = 9
       message: `Expected at least ${atLeast} peers in group peer-list`,
     })
     .toBeGreaterThanOrEqual(atLeast);
+}
+
+/**
+ * Create a post in the example applet's main view and wait until it is listed.
+ *
+ * Shoelace form controls live in nested shadow roots; set their values directly
+ * and submit the form, which fires the create_post zome call.
+ */
+export async function createExamplePost(frame: FrameLocator, title: string) {
+  await expect(frame.locator('all-posts')).toBeVisible({ timeout: 30_000 });
+  await frame.locator('create-post').evaluate(
+    async (el: any, { title, content }: { title: string; content: string }) => {
+      const root: ShadowRoot = el.shadowRoot;
+      const titleEl: any = root.querySelector('sl-input[name="title"]');
+      const contentEl: any = root.querySelector('sl-textarea[name="content"]');
+      if (!titleEl || !contentEl) throw new Error('create-post form controls not found');
+      titleEl.value = title;
+      contentEl.value = content;
+      if (titleEl.updateComplete) await titleEl.updateComplete;
+      if (contentEl.updateComplete) await contentEl.updateComplete;
+      const form = root.querySelector('#create-form') as HTMLFormElement | null;
+      if (!form) throw new Error('#create-form not found');
+      form.requestSubmit();
+    },
+    { title, content: `created by e2e: ${title}` },
+  );
+  await expect(frame.locator('post-summary').first()).toBeVisible({ timeout: 60_000 });
+}
+
+/**
+ * Open the first listed post of the example applet in its own WAL window, and
+ * return that window with a locator for the applet frame inside it.
+ *
+ * why: there is no button for this in the example applet, so the spec asks the
+ * applet's own WeaveClient to open the post, the same call a Tool makes.
+ */
+export async function openFirstPostInWalWindow(
+  app: ElectronApplication,
+  frame: FrameLocator,
+): Promise<{ walWindow: Page; walFrame: FrameLocator }> {
+  const opened = app.waitForEvent('window', { timeout: 60_000 });
+  await frame.locator('[data-weave-ready]').evaluate(async (host: any) => {
+    const summary = host.shadowRoot
+      ?.querySelector('example-applet-main')
+      ?.shadowRoot?.querySelector('all-posts')
+      ?.shadowRoot?.querySelector('post-summary');
+    if (!summary?.postHash) throw new Error('no post-summary with a postHash found');
+    const appInfo = await host.weaveClient.renderInfo.appletClient.appInfo();
+    const dnaHash = appInfo.cell_info.forum[0].value.cell_id[0];
+    await host.weaveClient.openAsset({ hrl: [dnaHash, summary.postHash] }, 'window');
+  });
+  const walWindow = await opened;
+  const walFrame = walWindow.frameLocator('#wal-iframe');
+  await waitForAppletHandshake(walFrame, 60_000);
+  return { walWindow, walFrame };
 }

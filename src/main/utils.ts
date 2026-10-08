@@ -82,10 +82,6 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
     }
     if (isWeaveUrl(e.url)) {
       e.preventDefault();
-      // This event is emitted to allow the window to prevent the
-      // beforeunload event to execute
-      // (https://github.com/electron/electron/issues/29921)
-      emitToWindow(browserWindow, 'will-navigate-external', null);
       emitToWindow(browserWindow, 'deep-link-received', e.url);
       return;
     }
@@ -95,10 +91,6 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       e.url.startsWith('mailto:')
     ) {
       e.preventDefault();
-      // This event is emitted to allow the window to prevent the
-      // beforeunload event to execute
-      // (https://github.com/electron/electron/issues/29921)
-      emitToWindow(browserWindow, 'will-navigate-external', null);
       shell.openExternal(e.url);
     }
   });
@@ -120,9 +112,6 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
       e.url.startsWith('mailto:')
     ) {
       e.preventDefault();
-      // This event is emitted to allow the window to prevent the
-      // beforeunload event to execute
-      emitToWindow(browserWindow, 'will-navigate-external', null);
       shell.openExternal(e.url);
     }
   });
@@ -134,7 +123,11 @@ export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {
     if (isWeaveUrl(details.url)) {
       emitToWindow(browserWindow, 'deep-link-received', details.url);
     }
-    if (details.url.startsWith('http://') || details.url.startsWith('https://')) {
+    if (
+      details.url.startsWith('http://') ||
+      details.url.startsWith('https://') ||
+      details.url.startsWith('mailto:')
+    ) {
       shell.openExternal(details.url);
     }
     return { action: 'deny' };

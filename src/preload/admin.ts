@@ -42,8 +42,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('sign-zome-call-applet', request, callerAppletIds),
   appletMessageToParentResponse: (response: AppletHostResponse, id: string) =>
     ipcRenderer.invoke('applet-message-to-parent-response', response, id),
-  parentToAppletMessage: (message: ParentToAppletMessage, forApplet: AppletId) =>
-    ipcRenderer.invoke('parent-to-applet-message', message, forApplet),
+  parentToAppletMessage: (message: ParentToAppletMessage, forApplets: 'all' | AppletId[]) =>
+    ipcRenderer.invoke('parent-to-applet-message', message, forApplets),
   dialogMessagebox: (options: Electron.MessageBoxOptions) =>
     ipcRenderer.invoke('dialog-messagebox', options),
   installApp: (filePath: string, appId: string, networkSeed?: string) =>
@@ -84,12 +84,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   ) => ipcRenderer.on('switch-to-weave-location', callback),
   onWindowClosing: (callback: (e: Electron.IpcRendererEvent) => any) =>
     ipcRenderer.on('window-closing', callback),
-  onWillNavigateExternal: (callback: (e: Electron.IpcRendererEvent) => any) =>
-    ipcRenderer.on('will-navigate-external', callback),
   onIframeStoreSync: (callback: (e: Electron.IpcRendererEvent) => any) =>
     ipcRenderer.on('iframe-store-sync', callback),
   requestIframeStoreSync: () => ipcRenderer.invoke('request-iframe-store-sync'),
-  removeWillNavigateListeners: () => ipcRenderer.removeAllListeners('will-navigate-external'),
   closeMainWindow: () => ipcRenderer.invoke('close-main-window'),
   openWalWindow: (iframeSrc: string, appletId: AppletId, groupId: DnaHashB64, wal: WAL) => {
     ipcRenderer.invoke('open-wal-window', iframeSrc, appletId, groupId, wal);
