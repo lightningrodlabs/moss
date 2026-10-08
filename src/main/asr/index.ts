@@ -44,8 +44,10 @@ export type {
 export {
   getAsrBroker,
   getAsrCapabilities,
+  getAsrModelPath,
   initAsrService,
   isAsrServiceInitialized,
+  setAsrModelPath,
   shutdownAsrService,
 } from './asrService';
 export type { AsrServiceConfig } from './asrService';

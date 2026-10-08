@@ -4,8 +4,10 @@ import {
   _resetAsrServiceForTests,
   getAsrBroker,
   getAsrCapabilities,
+  getAsrModelPath,
   initAsrService,
   isAsrServiceInitialized,
+  setAsrModelPath,
   shutdownAsrService,
 } from '../asrService';
 
@@ -85,5 +87,68 @@ describe('asrService singleton', () => {
     await shutdownAsrService();
     expect(isAsrServiceInitialized()).toBe(false);
     await shutdownAsrService(); // no throw
+  });
+});
+
+describe('setAsrModelPath', () => {
+  it('updates capabilities and the broker config when a broker exists', async () => {
+    const broker = initAsrService({
+      binariesDir: '/tmp/nonexistent',
+      whisperServerVersion: '1.8.4',
+      isPackaged: false,
+      modelPath: '/models/ggml-base.en.bin',
+    })!;
+    expect(getAsrCapabilities().asr.model).toBe('base.en');
+
+    await setAsrModelPath('/models/ggml-small.bin', 120_000);
+
+    expect(getAsrModelPath()).toBe('/models/ggml-small.bin');
+    expect(getAsrCapabilities().asr.model).toBe('small');
+    expect(getAsrCapabilities().asr.languages).toContain('de');
+    expect(broker.serverConfig.modelPath).toBe('/models/ggml-small.bin');
+    expect(broker.serverConfig.startTimeoutMs).toBeGreaterThanOrEqual(120_000);
+  });
+
+  it('creates the broker when init had no model and a model is set later', async () => {
+    expect(
+      initAsrService({
+        binariesDir: '/tmp/nonexistent',
+        whisperServerVersion: '1.8.4',
+        isPackaged: false,
+        modelPath: null,
+      }),
+    ).toBeNull();
+    expect(getAsrCapabilities().asr.available).toBe(false);
+    expect(() => getAsrBroker()).toThrow(/No ASR model/);
+
+    await setAsrModelPath('/models/ggml-tiny.bin');
+
+    expect(getAsrCapabilities().asr.available).toBe(true);
+    expect(getAsrBroker().serverConfig.modelPath).toBe('/models/ggml-tiny.bin');
+  });
+
+  it('reports unavailable again when the model is cleared', async () => {
+    initAsrService({
+      binariesDir: '/tmp/nonexistent',
+      whisperServerVersion: '1.8.4',
+      isPackaged: false,
+      modelPath: '/models/ggml-base.en.bin',
+    });
+    await setAsrModelPath(null);
+    expect(getAsrCapabilities().asr.available).toBe(false);
+    expect(() => getAsrBroker()).toThrow(/No ASR model/);
+  });
+
+  it('still records the path when whisper-server cannot be resolved', async () => {
+    initAsrService({
+      binariesDir: '/tmp/nonexistent',
+      whisperServerVersion: '1.8.4',
+      isPackaged: true,
+      modelPath: '/models/ggml-base.en.bin',
+    });
+    await setAsrModelPath('/models/ggml-small.bin');
+    expect(getAsrModelPath()).toBe('/models/ggml-small.bin');
+    expect(getAsrCapabilities().asr.available).toBe(false);
+    expect(() => getAsrBroker()).toThrow(/Cannot locate whisper-server/);
   });
 });
