@@ -117,9 +117,18 @@ export class ModelDownloader {
     };
 
     const out = createWriteStream(partPath, { flags: resumed ? 'a' : 'w' });
+    const reader = res.body.getReader();
+    // A failed write (disk full, unwritable path) surfaces as a stream
+    // 'error' event that nothing awaits while the loop is blocked on the
+    // network. Capture it and cancel the reader so the loop wakes up and
+    // the failure becomes a rejected download.
+    let writeError: Error | undefined;
+    out.on('error', (err) => {
+      writeError ??= err;
+      reader.cancel().catch(() => {});
+    });
     report(true);
     try {
-      const reader = res.body.getReader();
       for (;;) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -127,10 +136,12 @@ export class ModelDownloader {
         if (!out.write(value)) await once(out, 'drain');
         report(false);
       }
+      if (writeError) throw writeError;
     } catch (err) {
+      await reader.cancel().catch(() => {});
       await closeStream(out);
-      if (signal.aborted) return 'cancelled';
-      throw new Error(`download of ${entry.id} failed: ${(err as Error).message}`);
+      if (signal.aborted && !writeError) return 'cancelled';
+      throw new Error(`download of ${entry.id} failed: ${(writeError ?? (err as Error)).message}`);
     }
     await closeStream(out);
     report(true);
@@ -146,6 +157,7 @@ export class ModelDownloader {
 }
 
 function closeStream(out: WriteStream): Promise<void> {
+  if (out.destroyed) return Promise.resolve();
   return new Promise((resolve) => out.end(() => resolve()));
 }
 

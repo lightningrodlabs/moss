@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -186,5 +186,17 @@ describe('ModelDownloader', () => {
     expect(calls).toHaveLength(1);
     downloader.cancel('tiny');
     await expect(a).resolves.toBe('cancelled');
+  });
+
+  it('rejects with the write error, cancels the body and stays usable when the .part cannot be written', async () => {
+    const { fetch } = fakeFetch(BODY, { ignoreRange: true, hangAfter: 1 });
+    const { downloader, modelsDir } = makeDownloader(fetch);
+    // A directory at the .part path makes createWriteStream fail with EISDIR.
+    mkdirSync(path.join(modelsDir, 'ggml-tiny.bin.part'));
+
+    await expect(downloader.download(entryFor(BODY, { sizeBytes: 10_000_000 }))).rejects.toThrow(
+      /download of tiny failed: .*EISDIR/,
+    );
+    expect(downloader.isDownloading('tiny')).toBe(false);
   });
 });
