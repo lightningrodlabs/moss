@@ -85,6 +85,8 @@ at runtime from Settings → Services → Transcription. If you cache the result
 it when the user retries a transcription-dependent action so "enable me"
 prompts stay accurate.
 
+The user picks the speech model under Settings > Services > Transcription. `capabilities().asr.model`, `languages` and `latencyTier` describe whichever model is active. When the user switches models while your session is open, the session ends with an `onError` whose message is `speech model changed` (and `openSession()` rejects with the same message if the switch lands while the session is opening); open a new session to continue.
+
 ## Opening a session
 
 A session is the unit of transcription work. It batches audio, commits

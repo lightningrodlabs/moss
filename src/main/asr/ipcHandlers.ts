@@ -106,6 +106,9 @@ export async function asrOpenSession(
     await session.close().catch(() => undefined);
     throw new AsrIpcError('session owner went away while the model was loading', 'not_found');
   }
+  // A session that failed before the owner learned its id cannot deliver
+  // the error as an event, so the open itself fails with it.
+  if (session.failure) throw new AsrIpcError(session.failure.message, 'internal');
   const sessionId = ctx.registry.register(session, ownerId);
 
   session.onFinal((ev) => {
@@ -155,6 +158,15 @@ export async function asrCloseSession(
   }
   ctx.registry.remove(req.sessionId);
   await entry.session.close();
+}
+
+/** How many tool sessions are open right now; 0 when no broker could be created. */
+export function asrOpenSessionCount(ctx: AsrIpcHandlerContext): number {
+  try {
+    return ctx.getBroker().openSessionCount;
+  } catch {
+    return 0;
+  }
 }
 
 /**

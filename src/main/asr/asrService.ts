@@ -13,16 +13,17 @@
 //     doesn't fit the reactive-store shape
 //   - the sidecar process is owned by main, not the renderer
 
-import { existsSync } from 'node:fs';
-import path from 'node:path';
-
 import type { LocalModelCapabilities } from '@theweave/api';
 
 import { AsrBroker, type AsrHostStatus } from './broker';
 import { resolveWhisperServerCommand, WhisperCommandResolveError } from './binaryResolver';
 import { computeAsrCapabilities } from './capabilities';
+import type { WhisperServerConfig } from './types';
+import type { WhisperServer } from './whisperServer';
 
-export const BUNDLED_ASR_MODEL_FILENAME = 'ggml-base.en.bin';
+import { BUNDLED_ASR_MODEL_FILENAME } from './modelStore';
+
+export { BUNDLED_ASR_MODEL_FILENAME };
 
 export interface AsrServiceConfig {
   /** Absolute path to the directory holding bundled binaries (resources/bins). */
@@ -46,91 +47,124 @@ export interface AsrServiceConfig {
   onLog?: (stream: 'stdout' | 'stderr', chunk: string) => void;
   /** Override the capabilities `latencyTier` reported to applets. */
   latencyTier?: 'fast' | 'ok' | 'slow';
+  /** Readiness budget for the configured model, from the catalog. */
+  modelStartTimeoutMs?: number;
   /** Receives sidecar status transitions for the shell's indicator. */
   onStatusChange?: (status: AsrHostStatus) => void;
+  /** Test seam: substitutes the sidecar the broker spawns. */
+  serverFactory?: (config: WhisperServerConfig) => WhisperServer;
 }
 
 let broker: AsrBroker | null = null;
 let initialized = false;
-let capabilities: LocalModelCapabilities = computeAsrCapabilities({ modelPath: null });
-let initError: Error | null = null;
+let serviceConfig: AsrServiceConfig | null = null;
+let currentModelPath: string | null = null;
+let currentStartTimeoutMs: number | undefined;
+/** Readiness floor the resolved command itself needs (the nix fallback may fetch a closure first). */
+let commandStartTimeoutMs: number | undefined;
+/** Set when whisper-server could not be located; the broker can never exist until a restart. */
+let resolveError: WhisperCommandResolveError | null = null;
 
-/**
- * Wire up the broker with everything it needs. Idempotent — second
- * call is a no-op.
- *
- * If whisper-server can't be resolved (no bundled binary, no env
- * override, and nix fallback disabled in packaged builds), init
- * completes without a broker: capabilities reports `available: false`
- * and getAsrBroker() throws the resolver error. This keeps the app
- * startable from a `yarn build:linux` (which doesn't build the sidecar)
- * while still surfacing the real problem when an applet tries to use
- * ASR.
- */
 export function initAsrService(config: AsrServiceConfig): AsrBroker | null {
   if (initialized) return broker;
   initialized = true;
-  if (config.modelPath === null) {
-    initError = new Error(
-      'No ASR model is installed. Set $MOSS_ASR_MODEL or bundle resources/models/' +
-        BUNDLED_ASR_MODEL_FILENAME,
-    );
-    capabilities = computeAsrCapabilities({ modelPath: null, latencyTier: config.latencyTier });
-    return null;
-  }
+  serviceConfig = config;
+  currentModelPath = config.modelPath;
+  currentStartTimeoutMs = config.modelStartTimeoutMs;
+  ensureBroker();
+  return broker;
+}
+
+/**
+ * Build the broker if a model and a sidecar command are both available.
+ * Safe to call repeatedly; a missing model is not an error here because
+ * the user can download one later.
+ */
+function ensureBroker(): void {
+  if (broker || resolveError || !serviceConfig || currentModelPath === null) return;
   try {
     const resolved = resolveWhisperServerCommand({
-      binariesDir: config.binariesDir,
-      whisperServerVersion: config.whisperServerVersion,
-      isPackaged: config.isPackaged,
+      binariesDir: serviceConfig.binariesDir,
+      whisperServerVersion: serviceConfig.whisperServerVersion,
+      isPackaged: serviceConfig.isPackaged,
     });
+    commandStartTimeoutMs = resolved.startTimeoutMs;
     broker = new AsrBroker({
-      server: {
-        command: resolved.command,
-        modelPath: config.modelPath,
-        onLog: config.onLog,
-        startTimeoutMs: resolved.startTimeoutMs,
-      },
-      idleTimeoutMs: config.idleTimeoutMs,
-      onStatusChange: config.onStatusChange,
+      server: serverConfigFor(resolved.command),
+      idleTimeoutMs: serviceConfig.idleTimeoutMs,
+      onStatusChange: serviceConfig.onStatusChange,
+      serverFactory: serviceConfig.serverFactory,
     });
-    capabilities = computeAsrCapabilities({
-      modelPath: config.modelPath,
-      latencyTier: config.latencyTier,
-    });
-    return broker;
   } catch (err) {
     if (err instanceof WhisperCommandResolveError) {
-      initError = err;
-      capabilities = computeAsrCapabilities({
-        modelPath: null,
-        latencyTier: config.latencyTier,
-      });
-      return null;
+      resolveError = err;
+      return;
     }
     throw err;
   }
 }
 
-/**
- * Static capabilities for the currently-configured model. Safe to call
- * before / after initAsrService(); returns an unavailable shape when
- * the service hasn't been wired up yet.
- */
-export function getAsrCapabilities(): LocalModelCapabilities {
-  return capabilities;
+/** The sidecar config for the current model: the larger of the command's and the model's readiness budgets. */
+function serverConfigFor(command: readonly string[]): WhisperServerConfig {
+  const timeouts = [commandStartTimeoutMs, currentStartTimeoutMs].filter(
+    (t): t is number => t !== undefined,
+  );
+  return {
+    command,
+    modelPath: currentModelPath ?? '',
+    onLog: serviceConfig?.onLog,
+    startTimeoutMs: timeouts.length ? Math.max(...timeouts) : undefined,
+  };
 }
 
 /**
- * Look up the singleton broker. Throws if initAsrService() hasn't
- * been called yet — this is intentional: silently lazy-initing here
- * would hide wiring bugs in main. Also throws if init ran but
- * whisper-server couldn't be located (re-throws the stored resolver
- * error so callers get the helpful "tried X, Y, Z" message).
+ * Switch the model the sidecar loads. With a broker this swaps the
+ * running sidecar; without one it tries to create it, so a model
+ * downloaded after startup becomes usable without a restart.
  */
+export async function setAsrModelPath(
+  modelPath: string | null,
+  startTimeoutMs?: number,
+): Promise<void> {
+  currentModelPath = modelPath;
+  currentStartTimeoutMs = startTimeoutMs;
+  if (broker) {
+    if (modelPath === null) {
+      const b = broker;
+      broker = null;
+      b.abortSessions(new Error('speech model changed'));
+      await b.destroy();
+      return;
+    }
+    await broker.setServerConfig(serverConfigFor(broker.serverConfig.command));
+    return;
+  }
+  ensureBroker();
+}
+
+export function getAsrModelPath(): string | null {
+  return currentModelPath;
+}
+
+/** Capabilities for the model that is configured right now. Unavailable until the broker can run it. */
+export function getAsrCapabilities(): LocalModelCapabilities {
+  const usable = broker !== null && currentModelPath !== null;
+  return computeAsrCapabilities({
+    modelPath: usable ? currentModelPath : null,
+    latencyTier: serviceConfig?.latencyTier,
+  });
+}
+
 export function getAsrBroker(): AsrBroker {
-  if (initError) {
-    throw initError;
+  if (!initialized) {
+    throw new Error('AsrBroker not initialized; call initAsrService() first');
+  }
+  if (resolveError) throw resolveError;
+  if (currentModelPath === null) {
+    throw new Error(
+      'No ASR model is installed. Download one under Settings > Services > Transcription, set $MOSS_ASR_MODEL, or bundle resources/models/' +
+        BUNDLED_ASR_MODEL_FILENAME,
+    );
   }
   if (!broker) {
     throw new Error('AsrBroker not initialized; call initAsrService() first');
@@ -138,60 +172,26 @@ export function getAsrBroker(): AsrBroker {
   return broker;
 }
 
-/** True if initAsrService() has run. */
 export function isAsrServiceInitialized(): boolean {
   return initialized;
 }
 
-/**
- * Tear down the broker, free the sidecar process. Safe to call from
- * an Electron `before-quit` handler. Idempotent.
- */
 export async function shutdownAsrService(): Promise<void> {
-  if (!broker) {
-    initialized = false;
-    initError = null;
-    return;
-  }
   const b = broker;
-  broker = null;
-  initialized = false;
-  initError = null;
-  await b.destroy();
+  resetState();
+  if (b) await b.destroy();
 }
 
-/**
- * Test-only: forget the singleton state without going through
- * shutdown. Used by unit tests to start clean between cases.
- * Production code should not call this.
- */
 export function _resetAsrServiceForTests(): void {
-  broker = null;
-  initialized = false;
-  initError = null;
-  capabilities = computeAsrCapabilities({ modelPath: null });
+  resetState();
 }
 
-/**
- * Resolve the default ggml model file for this install. Lookup order:
- *   1. $MOSS_ASR_MODEL — absolute override for CI / tool authors.
- *   2. <resourcesPath>/models/ggml-base.en.bin — bundled in release
- *      installers by scripts/fetch-asr-model.mjs.
- *   3. <repoRoot>/spikes/asr-m0/models/ggml-base.en.bin — dev fallback
- *      populated manually via spikes/asr-m0/fetch-model.mjs.
- *
- * Returns null when none of these exist, so capabilities can report
- * the truth instead of advertising a model that fails at spawn time.
- * The env override is trusted as given so a misconfigured path fails
- * loudly at first use rather than silently disabling the feature.
- */
-export function defaultModelPath(repoRoot: string, resourcesPath?: string): string | null {
-  const fromEnv = process.env.MOSS_ASR_MODEL;
-  if (fromEnv && fromEnv.trim().length > 0) return fromEnv.trim();
-  const candidates: string[] = [];
-  if (resourcesPath) {
-    candidates.push(path.join(resourcesPath, 'models', BUNDLED_ASR_MODEL_FILENAME));
-  }
-  candidates.push(path.join(repoRoot, 'spikes/asr-m0/models', BUNDLED_ASR_MODEL_FILENAME));
-  return candidates.find((c) => existsSync(c)) ?? null;
+function resetState(): void {
+  broker = null;
+  initialized = false;
+  serviceConfig = null;
+  resolveError = null;
+  currentModelPath = null;
+  currentStartTimeoutMs = undefined;
+  commandStartTimeoutMs = undefined;
 }

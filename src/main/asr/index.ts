@@ -42,11 +42,12 @@ export type {
 } from './binaryResolver';
 
 export {
-  defaultModelPath,
   getAsrBroker,
   getAsrCapabilities,
+  getAsrModelPath,
   initAsrService,
   isAsrServiceInitialized,
+  setAsrModelPath,
   shutdownAsrService,
 } from './asrService';
 export type { AsrServiceConfig } from './asrService';
@@ -63,8 +64,17 @@ export {
   asrCloseSession,
   asrGetCapabilities,
   asrOpenSession,
+  asrOpenSessionCount,
   asrPushAudio,
 } from './ipcHandlers';
+export {
+  asrModelCancelDownload,
+  asrModelDelete,
+  asrModelDownload,
+  asrModelSelect,
+  asrModelsList,
+} from './modelIpcHandlers';
+export type { AsrModelIdRequest, AsrModelIpcContext } from './modelIpcHandlers';
 export type {
   AsrCloseSessionRequest,
   AsrEventEmitter,
@@ -76,3 +86,10 @@ export type {
 
 export { registerAsrIpc, isAsrIpcRegistered } from './wireUp';
 export type { AsrSidecarLogStream, AsrWireUpConfig } from './wireUp';
+
+export { AsrModelStore, ASR_MODEL_SELECTION_FILE, BUNDLED_ASR_MODEL_FILENAME } from './modelStore';
+export type { AsrModelStoreOptions } from './modelStore';
+export { ASR_MODEL_CATALOG, catalogEntryById, catalogEntryForPath } from './modelCatalog';
+export type { AsrModelCatalogEntry } from './modelCatalog';
+export { ModelDownloader } from './modelDownloader';
+export type { DownloadOutcome, DownloadProgress, ModelDownloaderOptions } from './modelDownloader';

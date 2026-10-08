@@ -13,6 +13,7 @@ export type SyncStage = 'no-peers' | 'found' | 'unreachable' | 'connected';
 /** Gossip counters per peer at the first snapshot, so history from before this session is ignored. */
 interface PeerBaseline {
   rounds: number;
+  failures: number;
 }
 
 interface SessionBaseline {
@@ -26,6 +27,8 @@ export interface SyncProgress {
   peersFound: number;
   /** Peers we had a sync session or a completed round with during this session. */
   peersConnected: number;
+  /** Peers with a failed attempt during this session and no session open with us now. */
+  peersFailed: number;
   /** Data items that arrived since the screen opened; undefined when the conductor does not report counts. */
   dataReceived: number | undefined;
   pendingFetches: number;
@@ -72,7 +75,10 @@ export function deriveSyncProgress(input: {
           opCount: localOpCount,
           failures,
           peers: Object.fromEntries(
-            livePeers.map(([url, m]) => [url, { rounds: m.completed_rounds ?? 0 }]),
+            livePeers.map(([url, m]) => [
+              url,
+              { rounds: m.completed_rounds ?? 0, failures: failuresOf(m) },
+            ]),
           ),
         }
       : undefined);
@@ -84,6 +90,10 @@ export function deriveSyncProgress(input: {
     (m.completed_rounds ?? 0) > (baseline?.peers[url]?.rounds ?? 0);
   const peersConnected = livePeers.filter(
     ([url, m]) => roundPeers.has(url) || contactedThisSession(url, m),
+  ).length;
+
+  const peersFailed = livePeers.filter(
+    ([url, m]) => !roundPeers.has(url) && failuresOf(m) > (baseline?.peers[url]?.failures ?? 0),
   ).length;
 
   const totalRounds = livePeers.reduce((sum, [, m]) => sum + (m.completed_rounds ?? 0), 0);
@@ -124,6 +134,7 @@ export function deriveSyncProgress(input: {
     stage,
     peersFound,
     peersConnected,
+    peersFailed,
     dataReceived:
       localOpCount !== undefined && baseline?.opCount !== undefined
         ? Math.max(0, localOpCount - baseline.opCount)

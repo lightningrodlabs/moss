@@ -3259,6 +3259,78 @@ começa agora</target>
   <source>Local Discovery</source>
   <target>Descoberta local</target>
 </trans-unit>
+<trans-unit id="s57adf424d57c8a0f">
+  <source>Send</source>
+  <target>Enviar</target>
+</trans-unit>
+<trans-unit id="sd3386a2ef42e80b9">
+  <source>Download</source>
+  <target>Baixar</target>
+</trans-unit>
+<trans-unit id="s89118d3a7be870ca">
+  <source>Resume</source>
+  <target>Retomar</target>
+</trans-unit>
+<trans-unit id="s625ad019db843f94">
+  <source>Use</source>
+  <target>Usar</target>
+</trans-unit>
+<trans-unit id="sedc2d92054cd8393">
+  <source>Bundled</source>
+  <target>Incluído</target>
+</trans-unit>
+<trans-unit id="s1d79865c64db073b">
+  <source>English only</source>
+  <target>Somente inglês</target>
+</trans-unit>
+<trans-unit id="s8e0cfad6a9a8f63c">
+  <source>Multilingual</source>
+  <target>Multilíngue</target>
+</trans-unit>
+<trans-unit id="s5da52af9b083c29a">
+  <source>Model</source>
+  <target>Modelo</target>
+</trans-unit>
+<trans-unit id="sfe1bb68c9a596303">
+  <source>Choose which speech model Moss runs. Larger models are more accurate but slower and use more memory.</source>
+  <target>Escolha qual modelo de voz o Moss executa. Modelos maiores são mais precisos, mas mais lentos e usam mais memória.</target>
+</trans-unit>
+<trans-unit id="s8aefa57686098031">
+  <source>Switch speech model?</source>
+  <target>Trocar o modelo de voz?</target>
+</trans-unit>
+<trans-unit id="s8e114dd98aeedf91">
+  <source>Switch</source>
+  <target>Trocar</target>
+</trans-unit>
+<trans-unit id="s38e4aa7f1d3af95b">
+  <source>1 transcription session is active. Switching the model stops it now. Tools will need to start transcription again, for example by rejoining a room.</source>
+  <target>1 sessão de transcrição está ativa. Trocar o modelo a interrompe agora. As ferramentas precisarão reiniciar a transcrição, por exemplo entrando novamente em uma sala.</target>
+</trans-unit>
+<trans-unit id="s73ef98c8f3889e14">
+  <source><x id="0" equiv-text="${n}"/> transcription sessions are active. Switching the model stops them now. Tools will need to start transcription again, for example by rejoining a room.</source>
+  <target><x id="0" equiv-text="${n}"/> sessões de transcrição estão ativas. Trocar o modelo as interrompe agora. As ferramentas precisarão reiniciar a transcrição, por exemplo entrando novamente em uma sala.</target>
+</trans-unit>
+<trans-unit id="sadd6c527dbde86cf">
+  <source>Which model should I use?</source>
+  <target>Qual modelo devo usar?</target>
+</trans-unit>
+<trans-unit id="sb42dfad0c1af8655">
+  <source>An English-only model (.en) and the multilingual model of the same name are the same size because they are the same design, trained on different speech. For English, tiny.en and base.en are noticeably more accurate than tiny and base. From small upward the difference is slight.</source>
+  <target>Um modelo somente em inglês (.en) e o modelo multilíngue de mesmo nome têm o mesmo tamanho porque têm o mesmo projeto e só mudam os dados de treino. Para inglês, tiny.en e base.en são bem mais precisos que tiny e base. A partir de small a diferença é pequena.</target>
+</trans-unit>
+<trans-unit id="s8bb20e789fd4d22b">
+  <source>Choose a multilingual model if anyone will speak a language other than English. An English-only model turns other languages into nonsense.</source>
+  <target>Escolha um modelo multilíngue se alguém for falar outro idioma além do inglês. Um modelo somente em inglês transforma os outros idiomas em texto sem sentido.</target>
+</trans-unit>
+<trans-unit id="sa60d4041cede6f63">
+  <source>A bigger model is more accurate, but each step up is several times slower and needs more memory: roughly 0.4 GB for base, 0.9 GB for small, 2 GB for medium and 4 GB for large. On most laptops medium and large cannot keep up with live speech, so captions arrive late. Pick the largest model that still keeps up.</source>
+  <target>Um modelo maior é mais preciso, mas cada degrau é várias vezes mais lento e precisa de mais memória: cerca de 0,4 GB para base, 0,9 GB para small, 2 GB para medium e 4 GB para large. Na maioria dos notebooks, medium e large não acompanham a fala ao vivo e as legendas chegam atrasadas. Escolha o maior modelo que ainda acompanha.</target>
+</trans-unit>
+<trans-unit id="s77efaef33da6e1e9">
+  <source>large-v3-turbo is nearly as accurate as large-v3 and several times faster. Try it before large-v3.</source>
+  <target>large-v3-turbo é quase tão preciso quanto large-v3 e várias vezes mais rápido. Experimente-o antes do large-v3.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

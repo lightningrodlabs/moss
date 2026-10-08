@@ -2,16 +2,19 @@
 // model and environment. Pure function so the wire-up can call it once
 // at init and cache the result; trivially unit-testable.
 //
-// Language inference follows whisper.cpp's ggml naming convention:
+// Language and latency come from the model catalog when the file is a
+// catalog model. Files outside the catalog fall back to whisper.cpp's
+// ggml naming convention:
 //   - ggml-<size>.<lang>.bin  → single-language model (e.g. base.en)
 //   - ggml-<size>.bin         → multilingual model (all 99 codes)
-//
-// The multilingual list below is whisper's fixed set; change only when
-// upstream whisper.cpp adds or drops a code.
 
 import path from 'node:path';
 
 import type { LocalModelCapabilities } from '@theweave/api';
+
+import { WHISPER_MULTILINGUAL_CODES, catalogEntryForPath } from './modelCatalog';
+
+export { WHISPER_MULTILINGUAL_CODES };
 
 export interface ComputeAsrCapabilitiesInput {
   /** Absolute path to the loaded ggml model file, or null if unconfigured. */
@@ -32,14 +35,17 @@ export function computeAsrCapabilities(input: ComputeAsrCapabilitiesInput): Loca
       },
     };
   }
-  const { model, languages } = parseModelFilename(input.modelPath);
+  const entry = catalogEntryForPath(input.modelPath);
+  const { model, languages } = entry
+    ? { model: entry.id, languages: [...entry.languages] }
+    : parseModelFilename(input.modelPath);
   return {
     asr: {
       available: true,
       languages,
       streaming: false,
       model,
-      latencyTier: input.latencyTier ?? 'ok',
+      latencyTier: input.latencyTier ?? entry?.latencyTier ?? 'ok',
     },
   };
 }
@@ -61,109 +67,3 @@ function parseModelFilename(modelPath: string): { model: string; languages: stri
   return { model: stem, languages: [...WHISPER_MULTILINGUAL_CODES] };
 }
 
-/**
- * The language codes whisper's multilingual models expose, per
- * whisper.cpp's `whisper_lang_str` table. Static — this is a property
- * of the model family, not of any particular ggml file.
- */
-export const WHISPER_MULTILINGUAL_CODES: readonly string[] = Object.freeze([
-  'en',
-  'zh',
-  'de',
-  'es',
-  'ru',
-  'ko',
-  'fr',
-  'ja',
-  'pt',
-  'tr',
-  'pl',
-  'ca',
-  'nl',
-  'ar',
-  'sv',
-  'it',
-  'id',
-  'hi',
-  'fi',
-  'vi',
-  'he',
-  'uk',
-  'el',
-  'ms',
-  'cs',
-  'ro',
-  'da',
-  'hu',
-  'ta',
-  'no',
-  'th',
-  'ur',
-  'hr',
-  'bg',
-  'lt',
-  'la',
-  'mi',
-  'ml',
-  'cy',
-  'sk',
-  'te',
-  'fa',
-  'lv',
-  'bn',
-  'sr',
-  'az',
-  'sl',
-  'kn',
-  'et',
-  'mk',
-  'br',
-  'eu',
-  'is',
-  'hy',
-  'ne',
-  'mn',
-  'bs',
-  'kk',
-  'sq',
-  'sw',
-  'gl',
-  'mr',
-  'pa',
-  'si',
-  'km',
-  'sn',
-  'yo',
-  'so',
-  'af',
-  'oc',
-  'ka',
-  'be',
-  'tg',
-  'sd',
-  'gu',
-  'am',
-  'yi',
-  'lo',
-  'uz',
-  'fo',
-  'ht',
-  'ps',
-  'tk',
-  'nn',
-  'mt',
-  'sa',
-  'lb',
-  'my',
-  'bo',
-  'tl',
-  'mg',
-  'as',
-  'tt',
-  'haw',
-  'ln',
-  'ha',
-  'ba',
-  'jw',
-  'su',
-]);

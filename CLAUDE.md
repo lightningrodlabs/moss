@@ -25,6 +25,7 @@ Moss is a Holochain-based runtime for composable peer-to-peer collaboration tool
 6. **Code comments**: Code comments must explain intent (what the code is trying to achieve), not the change itself. Do not write comments that compare to prior behavior, contrast with other functions, or describe what the code is _no longer_ doing — that belongs in the PR description or commit message.
 7. **UI/UX/CSS/layout (and timing/3rd-party-internal) bugs = measure, don't reason.** These emerge from how layers compose at runtime; static reasoning and "looks right" fixes will loop endlessly. Before editing: dump the _real_ DOM geometry (walk the ancestor chain incl. across shadow roots; log per element `overflowX/Y`, `clientH/scrollH` (→ which element scrolls), `clientW/scrollW`, rect `top/bottom`). Read back every DOM mutation to confirm it actually applied before building on it. A repro only counts if it reproduces the _failure_ — if the repro passes but the app fails, the repro is wrong; replicate the exact containment. With multiple candidate causes, the next action is a measurement that distinguishes them, not a fix for the likeliest. Never tune a formula whose reference frame may be broken (e.g. filling to a container that has collapsed to content height).
 8. **Maintainability** Don't let file sizes get too big. Split into separate concerns when possible.
+9. **Visual changes follow existing practice.** Before adding or styling a UI element (buttons, hover text, icons, spacing), find how the renderer already does it and reuse that: the existing CSS classes in `src/renderer/src/shared-styles.ts` (e.g. `moss-button`, `moss-button-icon`) and the existing component patterns (e.g. hover text is an `sl-tooltip` wrapper, not a `title` attribute). Match a nearby example rather than inventing a new style.
 
 ## Development Commands
 
@@ -334,6 +335,7 @@ Profile data is rooted at Electron's `userData` path (Linux: `~/.config/org.ligh
     uis/                       # UI assets (by sha256)
     icons/                     # cached tool icons
     feedback/                  # feedback records
+    models/                    # downloaded speech models
   logs/                        # Application logs
   chromium/                    # Electron sessionData
 ```
@@ -382,6 +384,7 @@ Zomes are compiled to WASM32 target and packaged into `.happ` files using the `h
 
 - `shared/types/src/defineConfig.ts` is the dev-config schema source; the build emits the committed `cli/defineConfig.js`/`.d.ts` via `tsconfig.defineConfig.json`
 - `moss.config.json` - the Holochain version, the group-happ version + sha256, `binariesAppendix`, an optional `kitsune2BootstrapSrv` version override, and the feedback URL (not ports or bootstrap URLs). Which release each binary is fetched from — and therefore its filename in `resources/bins` — is not here: it is `binarySources` in `holochain-checksums.json`, applied by `scripts/binary-names.mjs`
+- `scripts/asr-catalog-lib.mjs` lists the whisper models Moss offers for download; `yarn update:asr-catalog` regenerates `src/main/asr/modelCatalogData.ts` (checksums and sizes) from the HuggingFace LFS pointers, and `setup:release` runs `yarn check:asr-catalog` so a stale catalog fails the release
 
 ## Creating Tools/Applets
 

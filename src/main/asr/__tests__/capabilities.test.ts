@@ -50,4 +50,17 @@ describe('computeAsrCapabilities', () => {
     expect(caps.asr.model).toBe('medium.de');
     expect(caps.asr.languages).toEqual(['de']);
   });
+
+  it('takes the latency tier from the catalog when the file is a catalog model', () => {
+    const caps = computeAsrCapabilities({ modelPath: '/x/ggml-medium.bin' });
+    expect(caps.asr.latencyTier).toBe('slow');
+    expect(caps.asr.model).toBe('medium');
+  });
+
+  it('falls back to the filename parse for a file outside the catalog', () => {
+    const caps = computeAsrCapabilities({ modelPath: '/x/ggml-custom.en.bin' });
+    expect(caps.asr.model).toBe('custom.en');
+    expect(caps.asr.languages).toEqual(['en']);
+    expect(caps.asr.latencyTier).toBe('ok');
+  });
 });

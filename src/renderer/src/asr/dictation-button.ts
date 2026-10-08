@@ -15,6 +15,7 @@ import { mdiMicrophone } from '@mdi/js';
 
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
+import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 
 import { mossStoreContext } from '../context.js';
 import type { MossStore } from '../moss-store.js';
@@ -108,18 +109,21 @@ export class MossDictationButton extends LitElement {
         ? msg('Stop dictation')
         : msg('Dictate a message');
     return html`
-      <button
-        class="moss-button mic-button ${active ? 'listening' : ''} ${finishing ? 'finishing' : ''}"
-        title=${label}
-        aria-label=${label}
-        aria-pressed=${active ? 'true' : 'false'}
-        ?disabled=${finishing}
-        @click=${() => this.toggle()}
-      >
-        ${finishing
-          ? html`<sl-spinner></sl-spinner>`
-          : html`<sl-icon .src=${wrapPathInSvg(mdiMicrophone)}></sl-icon>`}
-      </button>
+      <sl-tooltip content=${label}>
+        <button
+          class="moss-button mic-button ${active ? 'listening' : ''} ${finishing
+            ? 'finishing'
+            : ''}"
+          aria-label=${label}
+          aria-pressed=${active ? 'true' : 'false'}
+          ?disabled=${finishing}
+          @click=${() => this.toggle()}
+        >
+          ${finishing
+            ? html`<sl-spinner></sl-spinner>`
+            : html`<sl-icon .src=${wrapPathInSvg(mdiMicrophone)}></sl-icon>`}
+        </button>
+      </sl-tooltip>
     `;
   }
 

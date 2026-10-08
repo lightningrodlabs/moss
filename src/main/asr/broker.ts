@@ -16,7 +16,7 @@
 //
 // What this does NOT do (deferred):
 //   - Multiple model variants loaded simultaneously. v1 = single
-//     active model, swap = unload + load.
+//     active model; setServerConfig() replaces it.
 //   - Cross-process isolation. A future revision moves the server (and
 //     potentially this broker) into an Electron utilityProcess so
 //     model OOM doesn't take down Moss main. The interface here is
@@ -72,9 +72,23 @@ export class AsrBroker {
   private readonly factory: (config: WhisperServerConfig) => WhisperServer;
   private lastStatus: AsrHostStatus = 'idle';
 
+  private serverConfigValue: WhisperServerConfig;
+  /** Sessions the broker handed out and has not yet released. */
+  private readonly sessions = new Set<AsrSession>();
+  /** Bumped on every config swap so a session whose cold start straddled the swap is not handed a stale server. */
+  private generation = 0;
+  /** The config generation each server was started under; a mismatch with `generation` marks it retired. */
+  private readonly serverGenerations = new WeakMap<WhisperServer, number>();
+
   constructor(private readonly config: AsrBrokerConfig) {
+    this.serverConfigValue = config.server;
     this.idleTimeoutMs = config.idleTimeoutMs ?? DEFAULT_IDLE_TIMEOUT_MS;
     this.factory = config.serverFactory ?? ((c) => new WhisperServer(c));
+  }
+
+  /** The config the next cold start will use. */
+  get serverConfig(): WhisperServerConfig {
+    return this.serverConfigValue;
   }
 
   /**
@@ -86,8 +100,61 @@ export class AsrBroker {
     if (this.destroyed) {
       throw new Error('AsrBroker is destroyed; cannot open new sessions');
     }
-    const server = await this.acquire();
-    return new AsrSession(server, () => this.release(), opts);
+    for (;;) {
+      const generation = this.generation;
+      const server = await this.acquire();
+      if (this.isCurrent(server)) {
+        // The acquisition was counted and this session owns one release.
+        const session = new AsrSession(server, () => this.releaseSession(session), opts);
+        this.sessions.add(session);
+        return session;
+      }
+      // The server belongs to a config a swap has since retired; the swap
+      // already reset the count, so this acquisition owes no release.
+      if (generation !== this.generation) {
+        // Opened before the swap: the caller's model is gone, say so.
+        const session = new AsrSession(server, async () => undefined, opts);
+        session.abort(new Error('speech model changed'));
+        return session;
+      }
+      // Opened after the swap: try again on the new config.
+    }
+  }
+
+  /**
+   * Point the broker at a different model. Sessions that are open are
+   * ended with an error so the user's choice takes effect now rather
+   * than after every tool happens to close; the next session cold-starts
+   * the new model.
+   */
+  async setServerConfig(next: WhisperServerConfig): Promise<void> {
+    this.serverConfigValue = next;
+    this.generation += 1;
+    if (this.starting) {
+      await this.starting.catch(() => undefined);
+    }
+    if (!this.server) return;
+    this.abortSessions(new Error('speech model changed'));
+    const server = this.server;
+    this.server = null;
+    this.publishStatus();
+    this.unloading = server.stop().finally(() => {
+      this.unloading = null;
+    });
+    await this.unloading;
+  }
+
+  /**
+   * End every open session with `reason` and reset the bookkeeping. Does
+   * not stop the sidecar: callers that are about to destroy() the broker
+   * use it so sessions hear why, since destroy() leaves them alone.
+   */
+  abortSessions(reason: Error): void {
+    const open = [...this.sessions];
+    this.sessions.clear();
+    this.sessionCount = 0;
+    this.cancelIdleTimer();
+    for (const s of open) s.abort(reason);
   }
 
   /**
@@ -99,8 +166,9 @@ export class AsrBroker {
     if (this.destroyed) {
       throw new Error('AsrBroker is destroyed; cannot warm up');
     }
-    await this.acquire();
-    await this.release();
+    const server = await this.acquire();
+    // A retired server's count was already reset by the swap.
+    if (this.isCurrent(server)) await this.release();
   }
 
   /** Down, coming up, or serving. */
@@ -163,18 +231,17 @@ export class AsrBroker {
       await this.unloading;
     }
     if (this.server && this.server.state === 'ready') {
-      this.sessionCount++;
-      return this.server;
+      return this.claim(this.server);
     }
     if (this.starting) {
       const s = await this.starting;
       this.assertAlive();
-      this.sessionCount++;
-      return s;
+      return this.claim(s);
     }
     // Cold start.
     this.starting = (async () => {
-      const s = this.factory(this.config.server);
+      const s = this.factory(this.serverConfigValue);
+      this.serverGenerations.set(s, this.generation);
       try {
         await s.start();
       } catch (err) {
@@ -190,14 +257,29 @@ export class AsrBroker {
     this.publishStatus();
     const s = await this.starting;
     this.assertAlive();
-    this.sessionCount++;
-    return s;
+    return this.claim(s);
+  }
+
+  private isCurrent(server: WhisperServer): boolean {
+    return this.serverGenerations.get(server) === this.generation;
+  }
+
+  /** Count an acquisition only when its server is still the current one. */
+  private claim(server: WhisperServer): WhisperServer {
+    if (this.isCurrent(server)) this.sessionCount++;
+    return server;
   }
 
   private assertAlive(): void {
     if (this.destroyed) {
       throw new Error('AsrBroker has been destroyed');
     }
+  }
+
+  /** A session the broker already forgot (aborted during a swap) must not release twice. */
+  private async releaseSession(session: AsrSession): Promise<void> {
+    if (!this.sessions.delete(session)) return;
+    await this.release();
   }
 
   private async release(): Promise<void> {

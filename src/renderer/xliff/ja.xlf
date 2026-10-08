@@ -3259,6 +3259,78 @@ starts now</source>
   <source>Local Discovery</source>
   <target>ローカル検出</target>
 </trans-unit>
+<trans-unit id="s57adf424d57c8a0f">
+  <source>Send</source>
+  <target>送信</target>
+</trans-unit>
+<trans-unit id="sd3386a2ef42e80b9">
+  <source>Download</source>
+  <target>ダウンロード</target>
+</trans-unit>
+<trans-unit id="s89118d3a7be870ca">
+  <source>Resume</source>
+  <target>再開</target>
+</trans-unit>
+<trans-unit id="s625ad019db843f94">
+  <source>Use</source>
+  <target>使用</target>
+</trans-unit>
+<trans-unit id="sedc2d92054cd8393">
+  <source>Bundled</source>
+  <target>同梱</target>
+</trans-unit>
+<trans-unit id="s1d79865c64db073b">
+  <source>English only</source>
+  <target>英語のみ</target>
+</trans-unit>
+<trans-unit id="s8e0cfad6a9a8f63c">
+  <source>Multilingual</source>
+  <target>多言語</target>
+</trans-unit>
+<trans-unit id="s5da52af9b083c29a">
+  <source>Model</source>
+  <target>モデル</target>
+</trans-unit>
+<trans-unit id="sfe1bb68c9a596303">
+  <source>Choose which speech model Moss runs. Larger models are more accurate but slower and use more memory.</source>
+  <target>Moss が実行する音声モデルを選びます。大きいモデルは精度が高いものの、遅くメモリを多く使います。</target>
+</trans-unit>
+<trans-unit id="s8aefa57686098031">
+  <source>Switch speech model?</source>
+  <target>音声モデルを切り替えますか？</target>
+</trans-unit>
+<trans-unit id="s8e114dd98aeedf91">
+  <source>Switch</source>
+  <target>切り替える</target>
+</trans-unit>
+<trans-unit id="s38e4aa7f1d3af95b">
+  <source>1 transcription session is active. Switching the model stops it now. Tools will need to start transcription again, for example by rejoining a room.</source>
+  <target>1 件の文字起こしセッションが進行中です。モデルを切り替えると今すぐ停止します。ツール側で文字起こしを再開する必要があります（例: ルームに再参加）。</target>
+</trans-unit>
+<trans-unit id="s73ef98c8f3889e14">
+  <source><x id="0" equiv-text="${n}"/> transcription sessions are active. Switching the model stops them now. Tools will need to start transcription again, for example by rejoining a room.</source>
+  <target><x id="0" equiv-text="${n}"/> 件の文字起こしセッションが進行中です。モデルを切り替えると今すぐ停止します。ツール側で文字起こしを再開する必要があります（例: ルームに再参加）。</target>
+</trans-unit>
+<trans-unit id="sadd6c527dbde86cf">
+  <source>Which model should I use?</source>
+  <target>どのモデルを使えばよいですか？</target>
+</trans-unit>
+<trans-unit id="sb42dfad0c1af8655">
+  <source>An English-only model (.en) and the multilingual model of the same name are the same size because they are the same design, trained on different speech. For English, tiny.en and base.en are noticeably more accurate than tiny and base. From small upward the difference is slight.</source>
+  <target>英語専用モデル（.en）と同名の多言語モデルは、設計が同じで学習に使った音声だけが異なるため、サイズは同じです。英語では tiny.en と base.en が tiny や base より明らかに高精度です。small 以上では差はわずかです。</target>
+</trans-unit>
+<trans-unit id="s8bb20e789fd4d22b">
+  <source>Choose a multilingual model if anyone will speak a language other than English. An English-only model turns other languages into nonsense.</source>
+  <target>英語以外の言語を話す人がいる場合は多言語モデルを選んでください。英語専用モデルでは他の言語は意味のない文字列になります。</target>
+</trans-unit>
+<trans-unit id="sa60d4041cede6f63">
+  <source>A bigger model is more accurate, but each step up is several times slower and needs more memory: roughly 0.4 GB for base, 0.9 GB for small, 2 GB for medium and 4 GB for large. On most laptops medium and large cannot keep up with live speech, so captions arrive late. Pick the largest model that still keeps up.</source>
+  <target>大きいモデルほど高精度ですが、一段上がるごとに数倍遅くなり、必要なメモリも増えます。目安は base で約 0.4 GB、small で 0.9 GB、medium で 2 GB、large で 4 GB です。多くのノート PC では medium と large はリアルタイムの音声に追いつけず、字幕が遅れます。追いつける範囲で最も大きいモデルを選んでください。</target>
+</trans-unit>
+<trans-unit id="s77efaef33da6e1e9">
+  <source>large-v3-turbo is nearly as accurate as large-v3 and several times faster. Try it before large-v3.</source>
+  <target>large-v3-turbo は large-v3 とほぼ同じ精度で、数倍高速です。large-v3 の前にこちらを試してください。</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
