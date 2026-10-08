@@ -3195,6 +3195,10 @@ commence maintenant</target>
   <source>All group data received</source>
   <target>Toutes les données du groupe ont été reçues</target>
 </trans-unit>
+<trans-unit id="s57adf424d57c8a0f">
+  <source>Send</source>
+  <target>Envoyer</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

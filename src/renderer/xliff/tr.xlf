@@ -3195,6 +3195,10 @@ starts now</source>
   <source>All group data received</source>
   <target>Tüm grup verileri alındı</target>
 </trans-unit>
+<trans-unit id="s57adf424d57c8a0f">
+  <source>Send</source>
+  <target>Gönder</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

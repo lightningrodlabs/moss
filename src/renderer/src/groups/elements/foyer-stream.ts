@@ -9,6 +9,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
+import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
 import '@shoelace-style/shoelace/dist/components/menu/menu.js';
 import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
@@ -552,13 +553,15 @@ export class FoyerStream extends LitElement {
             <moss-dictation-button
               @dictation-text=${(e: CustomEvent<string>) => this.appendDictation(e.detail)}
             ></moss-dictation-button>
-            <button
-              class="moss-button send-button"
-              ?disabled=${this.disabled}
-              @click=${() => this.sendMessage()}
-            >
-              <div class="column center-content" style="padding-top: 2px;">${sendIcon(18)}</div>
-            </button>
+            <sl-tooltip content=${msg('Send')}>
+              <button
+                class="moss-button send-button"
+                ?disabled=${this.disabled}
+                @click=${() => this.sendMessage()}
+              >
+                <div class="column center-content" style="padding-top: 2px;">${sendIcon(18)}</div>
+              </button>
+            </sl-tooltip>
           </div>
         </div>
       </div>
@@ -666,8 +669,8 @@ export class FoyerStream extends LitElement {
         flex-shrink: 0;
       }
       /* One line of the input tall, whether side by side or stacked. */
-      .send-buttons > moss-dictation-button,
-      .send-buttons > .send-button {
+      .send-buttons moss-dictation-button,
+      .send-buttons .send-button {
         height: 40px;
         box-sizing: border-box;
       }

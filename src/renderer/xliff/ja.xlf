@@ -3195,6 +3195,10 @@ starts now</source>
   <source>All group data received</source>
   <target>すべてのグループデータを受信しました</target>
 </trans-unit>
+<trans-unit id="s57adf424d57c8a0f">
+  <source>Send</source>
+  <target>送信</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
