@@ -40,7 +40,9 @@ for (const model of ASR_CATALOG_MODELS) {
 const next = renderCatalogData(rows);
 let current = '';
 try {
-  current = readFileSync(DATA_FILE, 'utf-8');
+  // A Windows checkout may hold the file with CRLF line endings; the
+  // comparison is about content, so line endings are normalized first.
+  current = readFileSync(DATA_FILE, 'utf-8').replace(/\r\n/g, '\n');
 } catch {
   // A missing file is just "needs generating".
 }
