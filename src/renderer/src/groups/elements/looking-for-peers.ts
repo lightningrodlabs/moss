@@ -281,7 +281,7 @@ export class LookingForPeers extends LitElement {
     const stage = this._gate.shown;
     const waiting = stage === 'no-peers';
     return html`
-      ${syncStageIcons(stage, stage === 'unreachable')}
+      ${syncStageIcons(stage, p)}
       <h2>${this.headingText(stage, p)}</h2>
       ${syncStatusBadge(stage)} ${this.renderHint(stage)}
       <div class="column center-content below" style=${waiting ? 'display: none;' : ''}>

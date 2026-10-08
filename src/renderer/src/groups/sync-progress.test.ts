@@ -169,6 +169,33 @@ describe('deriveSyncProgress stages', () => {
     expect(p.stage).toBe('unreachable');
   });
 
+  it('counts the peers whose attempts failed this session', () => {
+    const first = step(
+      undefined,
+      metrics({ peers: { a: { peer_timeouts: 2 }, b: { peer_timeouts: 4 }, c: {} } }),
+      NOW,
+    );
+    expect(first.peersFailed).toBe(0);
+    const p = step(
+      first,
+      metrics({
+        peers: { a: { peer_timeouts: 3 }, b: { peer_timeouts: 4 }, c: { local_errors: 1 } },
+      }),
+      NOW + 2000,
+    );
+    expect(p.peersFailed).toBe(2);
+  });
+
+  it('does not count a peer as failed while it has a session open with us', () => {
+    const first = step(undefined, metrics({ peers: { a: {} } }), NOW);
+    const p = step(
+      first,
+      metrics({ peers: { a: { peer_timeouts: 1 } }, roundsWith: ['a'] }),
+      NOW + 2000,
+    );
+    expect(p.peersFailed).toBe(0);
+  });
+
   it('ignores tombstoned peers', () => {
     const p = step(undefined, metrics({ peers: { a: { is_tombstone: true } } }), NOW, 0);
     expect(p.stage).toBe('no-peers');
