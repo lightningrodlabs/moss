@@ -33,6 +33,7 @@ import {
   AudioSourcePickerRequest,
   AudioSourceRequestResult,
   DistributionInfo,
+  AsrModelDownloadEnded,
   AsrModelDownloadProgress,
   AsrModelListEntry,
   LocalToolInfo,
@@ -356,7 +357,10 @@ declare global {
       asrOpenSessionCount: () => Promise<number>;
       onAsrModelDownloadProgress: (
         callback: (e: Electron.IpcRendererEvent, p: AsrModelDownloadProgress) => void,
-      ) => void;
+      ) => () => void;
+      onAsrModelDownloadEnded: (
+        callback: (e: Electron.IpcRendererEvent, ended: AsrModelDownloadEnded) => void,
+      ) => () => void;
       onWalWindowClosed: (
         callback: (e: Electron.IpcRendererEvent, info: { webContentsId: number }) => void,
       ) => void;

@@ -5,7 +5,7 @@ import type { AsrModelDownloadProgress, AsrModelListEntry } from '@theweave/moss
 
 export type ModelRowState =
   | { kind: 'download' }
-  | { kind: 'resume'; partialBytes: number }
+  | { kind: 'resume'; partialBytes: number; deletable: true }
   | { kind: 'downloading'; percent: number }
   | { kind: 'installed'; deletable: boolean }
   | { kind: 'active'; deletable: boolean };
@@ -23,7 +23,7 @@ export function modelRowState(
     const deletable = !entry.bundled;
     return entry.active ? { kind: 'active', deletable } : { kind: 'installed', deletable };
   }
-  if (entry.partialBytes !== undefined) return { kind: 'resume', partialBytes: entry.partialBytes };
+  if (entry.partialBytes !== undefined) return { kind: 'resume', partialBytes: entry.partialBytes, deletable: true };
   return { kind: 'download' };
 }
 

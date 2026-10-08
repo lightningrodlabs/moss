@@ -27,7 +27,11 @@ import type { MossDialog } from '../../../ui/moss-dialog.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import type { AppletId, LocalModelCapabilities } from '@theweave/api';
-import type { AsrModelDownloadProgress, AsrModelListEntry } from '@theweave/moss-types';
+import type {
+  AsrModelDownloadEnded,
+  AsrModelDownloadProgress,
+  AsrModelListEntry,
+} from '@theweave/moss-types';
 import { decodeHashFromBase64 } from '@holochain/client';
 
 import { mossStoreContext } from '../../../context.js';
@@ -57,7 +61,11 @@ export class MossTranscriptionSettings extends LitElement {
   @state() private models: AsrModelListEntry[] = [];
   @state() private progress: Map<string, AsrModelDownloadProgress> = new Map();
   @state() private modelErrors: Map<string, string> = new Map();
-  @state() private pendingSwitch: { id: string; sessions: number } | null = null;
+  @state() private pendingSwitch: {
+    id: string;
+    sessions: number;
+    action: 'select' | 'delete';
+  } | null = null;
 
   @query('#switch-dialog')
   private _switchDialog!: MossDialog;
@@ -68,6 +76,15 @@ export class MossTranscriptionSettings extends LitElement {
     this.progress = next;
   };
 
+  private onDownloadEnded = (_e: Electron.IpcRendererEvent, ended: AsrModelDownloadEnded) => {
+    this.clearProgress(ended.id);
+    this.setModelError(ended.id, ended.outcome === 'error' ? (ended.error ?? null) : null);
+    void Promise.all([this.refreshModels(), this.refreshCapabilities()]);
+  };
+
+  private unsubscribeProgress: (() => void) | null = null;
+  private unsubscribeEnded: (() => void) | null = null;
+
   private onGrantsChanged = () => {
     void this.refreshGrants();
   };
@@ -77,14 +94,17 @@ export class MossTranscriptionSettings extends LitElement {
     this.enabled = this.mossStore.persistedStore.localAiEnabled.value();
     void this.refresh();
     window.addEventListener(APPLET_ASR_CONSENT_CHANGED_EVENT, this.onGrantsChanged);
-    // The preload exposes no matching off(); the pane is long-lived and a
-    // repeat mount only rewrites the same progress value.
-    window.electronAPI.onAsrModelDownloadProgress(this.onDownloadProgress);
+    this.unsubscribeProgress = window.electronAPI.onAsrModelDownloadProgress(this.onDownloadProgress);
+    this.unsubscribeEnded = window.electronAPI.onAsrModelDownloadEnded(this.onDownloadEnded);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     window.removeEventListener(APPLET_ASR_CONSENT_CHANGED_EVENT, this.onGrantsChanged);
+    this.unsubscribeProgress?.();
+    this.unsubscribeProgress = null;
+    this.unsubscribeEnded?.();
+    this.unsubscribeEnded = null;
   }
 
   private async refresh(): Promise<void> {
@@ -128,6 +148,13 @@ export class MossTranscriptionSettings extends LitElement {
     await window.electronAPI.asrModelCancelDownload({ id });
   }
 
+  /** Deleting the active model stops every open tool session, so ask first when there are any. */
+  private async requestDelete(id: string): Promise<void> {
+    const active = this.models.find((m) => m.id === id)?.active ?? false;
+    if (active && (await this.confirmIfSessionsOpen(id, 'delete'))) return;
+    await this.deleteModel(id);
+  }
+
   private async deleteModel(id: string): Promise<void> {
     this.setModelError(id, null);
     try {
@@ -140,21 +167,27 @@ export class MossTranscriptionSettings extends LitElement {
 
   /** Switching stops every open tool session, so ask first when there are any. */
   private async requestSelect(id: string): Promise<void> {
-    const sessions = await window.electronAPI.asrOpenSessionCount();
-    if (sessions > 0) {
-      this.pendingSwitch = { id, sessions };
-      await this.updateComplete;
-      this._switchDialog.show();
-      return;
-    }
+    if (await this.confirmIfSessionsOpen(id, 'select')) return;
     await this.selectModel(id);
+  }
+
+  /** Opens the confirm dialog and returns true when sessions are open. */
+  private async confirmIfSessionsOpen(id: string, action: 'select' | 'delete'): Promise<boolean> {
+    const sessions = await window.electronAPI.asrOpenSessionCount();
+    if (sessions === 0) return false;
+    this.pendingSwitch = { id, sessions, action };
+    await this.updateComplete;
+    this._switchDialog.show();
+    return true;
   }
 
   private async confirmSwitch(): Promise<void> {
     const pending = this.pendingSwitch;
     this.pendingSwitch = null;
     this._switchDialog.hide();
-    if (pending) await this.selectModel(pending.id);
+    if (!pending) return;
+    if (pending.action === 'delete') await this.deleteModel(pending.id);
+    else await this.selectModel(pending.id);
   }
 
   private async selectModel(id: string): Promise<void> {
@@ -304,7 +337,7 @@ export class MossTranscriptionSettings extends LitElement {
             .errors=${this.modelErrors}
             @model-download=${(e: CustomEvent<{ id: string }>) => void this.downloadModel(e.detail.id)}
             @model-cancel=${(e: CustomEvent<{ id: string }>) => void this.cancelDownload(e.detail.id)}
-            @model-delete=${(e: CustomEvent<{ id: string }>) => void this.deleteModel(e.detail.id)}
+            @model-delete=${(e: CustomEvent<{ id: string }>) => void this.requestDelete(e.detail.id)}
             @model-select=${(e: CustomEvent<{ id: string }>) => void this.requestSelect(e.detail.id)}
           ></asr-model-list>
         </section>
@@ -325,9 +358,13 @@ export class MossTranscriptionSettings extends LitElement {
         <span slot="header">${msg('Switch speech model?')}</span>
         <div slot="content" class="column" style="gap: 16px;">
           <p>
-            ${msg(
-              str`${n} transcription session(s) are active. Switching the model stops them now. Tools will need to start transcription again, for example by rejoining a room.`,
-            )}
+            ${n === 1
+              ? msg(
+                  '1 transcription session is active. Switching the model stops it now. Tools will need to start transcription again, for example by rejoining a room.',
+                )
+              : msg(
+                  str`${n} transcription sessions are active. Switching the model stops them now. Tools will need to start transcription again, for example by rejoining a room.`,
+                )}
           </p>
           <div class="row" style="justify-content: flex-end; gap: 8px;">
             <sl-button

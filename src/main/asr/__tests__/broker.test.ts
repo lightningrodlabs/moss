@@ -332,3 +332,21 @@ describe('AsrBroker.setServerConfig', () => {
     expect(broker.openSessionCount).toBe(0);
   });
 });
+
+describe('AsrBroker.abortSessions', () => {
+  it('aborts every open session with the reason and leaves the server loaded', async () => {
+    const { broker } = makeBroker({ idleTimeoutMs: 60_000 });
+    const a = await broker.openSession();
+    const c = await broker.openSession();
+    const errors: string[] = [];
+    a.onError((e) => errors.push(`a:${e.message}`));
+    c.onError((e) => errors.push(`c:${e.message}`));
+
+    broker.abortSessions(new Error('because'));
+    await sleep(0);
+
+    expect(errors.sort()).toEqual(['a:because', 'c:because']);
+    expect(broker.openSessionCount).toBe(0);
+    expect(broker.isLoaded).toBe(true);
+  });
+});

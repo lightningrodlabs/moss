@@ -7,8 +7,9 @@
 //   'asr-model-delete'           { id } → void
 //   'asr-model-select'           { id } → void
 //   'asr-model-download-progress' (send) main → every window
+//   'asr-model-download-ended'    (send) main → every window, once per download
 
-import type { AsrModelListEntry } from '@theweave/moss-types';
+import type { AsrModelDownloadEnded, AsrModelListEntry } from '@theweave/moss-types';
 
 import {
   ASR_MODEL_CATALOG,
@@ -54,6 +55,26 @@ export async function asrModelDownload(
     await asrModelSelect(ctx, { id: req.id });
   }
   return outcome;
+}
+
+/**
+ * Runs a download and announces how it ended, so every window showing the
+ * model list can settle its row, not just the one that started it.
+ * Resolves or rejects exactly as asrModelDownload does.
+ */
+export async function asrModelDownloadAnnounced(
+  ctx: AsrModelIpcContext,
+  req: AsrModelIdRequest,
+  announce: (ended: AsrModelDownloadEnded) => void,
+): Promise<DownloadOutcome> {
+  try {
+    const outcome = await asrModelDownload(ctx, req);
+    announce({ id: req.id, outcome });
+    return outcome;
+  } catch (e) {
+    announce({ id: req.id, outcome: 'error', error: e instanceof Error ? e.message : String(e) });
+    throw e;
+  }
 }
 
 export function asrModelCancelDownload(ctx: AsrModelIpcContext, req: AsrModelIdRequest): void {

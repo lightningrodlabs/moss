@@ -22,8 +22,12 @@ describe('modelRowState', () => {
     expect(modelRowState(entry(), undefined)).toEqual({ kind: 'download' });
   });
 
-  it('offers Resume when a partial file exists', () => {
-    expect(modelRowState(entry({ partialBytes: 1234 }), undefined)).toEqual({ kind: 'resume', partialBytes: 1234 });
+  it('offers Resume, and a way to discard the partial file, when one exists', () => {
+    expect(modelRowState(entry({ partialBytes: 1234 }), undefined)).toEqual({
+      kind: 'resume',
+      partialBytes: 1234,
+      deletable: true,
+    });
   });
 
   it('shows progress while downloading, rounding percent down', () => {

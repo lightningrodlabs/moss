@@ -26,3 +26,10 @@ export interface AsrModelDownloadProgress {
   bytes: number;
   total: number;
 }
+
+/** Announced to every window when a download settles, however it ended. */
+export interface AsrModelDownloadEnded {
+  id: string;
+  outcome: 'complete' | 'cancelled' | 'error';
+  error?: string;
+}

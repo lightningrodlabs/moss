@@ -19,6 +19,7 @@ import { AsrBroker, type AsrHostStatus } from './broker';
 import { resolveWhisperServerCommand, WhisperCommandResolveError } from './binaryResolver';
 import { computeAsrCapabilities } from './capabilities';
 import type { WhisperServerConfig } from './types';
+import type { WhisperServer } from './whisperServer';
 
 import { BUNDLED_ASR_MODEL_FILENAME } from './modelStore';
 
@@ -50,6 +51,8 @@ export interface AsrServiceConfig {
   modelStartTimeoutMs?: number;
   /** Receives sidecar status transitions for the shell's indicator. */
   onStatusChange?: (status: AsrHostStatus) => void;
+  /** Test seam: substitutes the sidecar the broker spawns. */
+  serverFactory?: (config: WhisperServerConfig) => WhisperServer;
 }
 
 let broker: AsrBroker | null = null;
@@ -90,6 +93,7 @@ function ensureBroker(): void {
       server: serverConfigFor(resolved.command),
       idleTimeoutMs: serviceConfig.idleTimeoutMs,
       onStatusChange: serviceConfig.onStatusChange,
+      serverFactory: serviceConfig.serverFactory,
     });
   } catch (err) {
     if (err instanceof WhisperCommandResolveError) {
@@ -128,6 +132,7 @@ export async function setAsrModelPath(
     if (modelPath === null) {
       const b = broker;
       broker = null;
+      b.abortSessions(new Error('speech model changed'));
       await b.destroy();
       return;
     }

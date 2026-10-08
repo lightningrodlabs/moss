@@ -3127,13 +3127,17 @@ comienza ahora</target>
   <source>Switch speech model?</source>
   <target>¿Cambiar el modelo de voz?</target>
 </trans-unit>
-<trans-unit id="sea6390d342b09e37">
-  <source><x id="0" equiv-text="${n}"/> transcription session(s) are active. Switching the model stops them now. Tools will need to start transcription again, for example by rejoining a room.</source>
-  <target><x id="0" equiv-text="${n}"/> sesión(es) de transcripción están activas. Cambiar el modelo las detiene ahora. Las herramientas tendrán que reiniciar la transcripción, por ejemplo volviendo a entrar en una sala.</target>
-</trans-unit>
 <trans-unit id="s8e114dd98aeedf91">
   <source>Switch</source>
   <target>Cambiar</target>
+</trans-unit>
+<trans-unit id="s38e4aa7f1d3af95b">
+  <source>1 transcription session is active. Switching the model stops it now. Tools will need to start transcription again, for example by rejoining a room.</source>
+  <target>1 sesión de transcripción está activa. Cambiar el modelo la detiene ahora. Las herramientas tendrán que reiniciar la transcripción, por ejemplo volviendo a entrar en una sala.</target>
+</trans-unit>
+<trans-unit id="s73ef98c8f3889e14">
+  <source><x id="0" equiv-text="${n}"/> transcription sessions are active. Switching the model stops them now. Tools will need to start transcription again, for example by rejoining a room.</source>
+  <target><x id="0" equiv-text="${n}"/> sesiones de transcripción están activas. Cambiar el modelo las detiene ahora. Las herramientas tendrán que reiniciar la transcripción, por ejemplo volviendo a entrar en una sala.</target>
 </trans-unit>
 </body>
 </file>

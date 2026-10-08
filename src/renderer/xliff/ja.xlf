@@ -3127,13 +3127,17 @@ starts now</source>
   <source>Switch speech model?</source>
   <target>音声モデルを切り替えますか？</target>
 </trans-unit>
-<trans-unit id="sea6390d342b09e37">
-  <source><x id="0" equiv-text="${n}"/> transcription session(s) are active. Switching the model stops them now. Tools will need to start transcription again, for example by rejoining a room.</source>
-  <target><x id="0" equiv-text="${n}"/> 件の文字起こしセッションが進行中です。モデルを切り替えると今すぐ停止します。ツール側で文字起こしを再開する必要があります（例: ルームに再参加）。</target>
-</trans-unit>
 <trans-unit id="s8e114dd98aeedf91">
   <source>Switch</source>
   <target>切り替える</target>
+</trans-unit>
+<trans-unit id="s38e4aa7f1d3af95b">
+  <source>1 transcription session is active. Switching the model stops it now. Tools will need to start transcription again, for example by rejoining a room.</source>
+  <target>1 件の文字起こしセッションが進行中です。モデルを切り替えると今すぐ停止します。ツール側で文字起こしを再開する必要があります（例: ルームに再参加）。</target>
+</trans-unit>
+<trans-unit id="s73ef98c8f3889e14">
+  <source><x id="0" equiv-text="${n}"/> transcription sessions are active. Switching the model stops them now. Tools will need to start transcription again, for example by rejoining a room.</source>
+  <target><x id="0" equiv-text="${n}"/> 件の文字起こしセッションが進行中です。モデルを切り替えると今すぐ停止します。ツール側で文字起こしを再開する必要があります（例: ルームに再参加）。</target>
 </trans-unit>
 </body>
 </file>

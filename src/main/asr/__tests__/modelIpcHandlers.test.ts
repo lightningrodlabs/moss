@@ -12,6 +12,7 @@ import {
   asrModelCancelDownload,
   asrModelDelete,
   asrModelDownload,
+  asrModelDownloadAnnounced,
   asrModelSelect,
   asrModelsList,
 } from '../modelIpcHandlers';
@@ -87,6 +88,29 @@ describe('model IPC handlers', () => {
     const { ctx } = makeCtx();
     await expect(asrModelDownload(ctx, { id: 'nope' })).rejects.toThrow(/unknown model/);
     await expect(asrModelDownload(ctx, { id: 'tiny' })).rejects.toThrow(/HTTP 503/);
+  });
+
+  it('announces a failed download as an error and still rejects', async () => {
+    const { ctx } = makeCtx();
+    const ended: unknown[] = [];
+    await expect(asrModelDownloadAnnounced(ctx, { id: 'tiny' }, (e) => ended.push(e))).rejects.toThrow(/HTTP 503/);
+    expect(ended).toEqual([{ id: 'tiny', outcome: 'error', error: expect.stringMatching(/HTTP 503/) }]);
+  });
+
+  it('announces a completed download', async () => {
+    const body = Buffer.from('abc');
+    const fetchImpl = (async () => new Response(new Uint8Array(body), { status: 200 })) as typeof fetch;
+    const { ctx } = makeCtx({ fetch: fetchImpl });
+    const tiny: AsrModelCatalogEntry = {
+      ...catalogEntryById('tiny')!,
+      sha256: createHash('sha256').update(body).digest('hex'),
+      sizeBytes: body.byteLength,
+    };
+    const ended: unknown[] = [];
+    await expect(
+      asrModelDownloadAnnounced({ ...ctx, catalog: [tiny] }, { id: 'tiny' }, (e) => ended.push(e)),
+    ).resolves.toBe('complete');
+    expect(ended).toEqual([{ id: 'tiny', outcome: 'complete' }]);
   });
 
   it('cancel is a no-op for an id that is not downloading', () => {

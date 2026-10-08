@@ -134,11 +134,7 @@ export class AsrBroker {
       await this.starting.catch(() => undefined);
     }
     if (!this.server) return;
-    const open = [...this.sessions];
-    this.sessions.clear();
-    this.sessionCount = 0;
-    this.cancelIdleTimer();
-    for (const s of open) s.abort(new Error('speech model changed'));
+    this.abortSessions(new Error('speech model changed'));
     const server = this.server;
     this.server = null;
     this.publishStatus();
@@ -146,6 +142,19 @@ export class AsrBroker {
       this.unloading = null;
     });
     await this.unloading;
+  }
+
+  /**
+   * End every open session with `reason` and reset the bookkeeping. Does
+   * not stop the sidecar: callers that are about to destroy() the broker
+   * use it so sessions hear why, since destroy() leaves them alone.
+   */
+  abortSessions(reason: Error): void {
+    const open = [...this.sessions];
+    this.sessions.clear();
+    this.sessionCount = 0;
+    this.cancelIdleTimer();
+    for (const s of open) s.abort(reason);
   }
 
   /**

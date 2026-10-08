@@ -33,7 +33,10 @@ export class AsrModelList extends LitElement {
       case 'download':
         return html`<sl-button size="small" @click=${() => this.act('model-download', entry.id)}>${msg('Download')}</sl-button>`;
       case 'resume':
-        return html`<sl-button size="small" @click=${() => this.act('model-download', entry.id)}>${msg('Resume')}</sl-button>`;
+        return html`
+          <sl-button size="small" @click=${() => this.act('model-download', entry.id)}>${msg('Resume')}</sl-button>
+          <sl-button size="small" @click=${() => this.act('model-delete', entry.id)}>${msg('Delete')}</sl-button>
+        `;
       case 'downloading':
         return html`
           <sl-progress-bar value=${state.percent}>${state.percent}%</sl-progress-bar>

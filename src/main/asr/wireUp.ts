@@ -7,7 +7,7 @@
 //   - the session ipcMain handlers (capabilities, warm-up, status,
 //     open, push, close, open-session-count)
 //   - the model-management ipcMain handlers (list, download,
-//     cancel-download, delete, select) and the download-progress push
+//     cancel-download, delete, select) and the download-progress and download-ended pushes
 //   - per-renderer cleanup (close sessions when webContents goes away)
 //   - shutdown on app quit
 //
@@ -44,7 +44,7 @@ import {
   AsrModelIpcContext,
   asrModelCancelDownload,
   asrModelDelete,
-  asrModelDownload,
+  asrModelDownloadAnnounced,
   asrModelSelect,
   asrModelsList,
 } from './modelIpcHandlers';
@@ -182,7 +182,9 @@ export function registerAsrIpc(config: AsrWireUpConfig): void {
   ipcMain.handle('asr-open-session-count', () => asrOpenSessionCount(ctx));
 
   ipcMain.handle('asr-models-list', () => asrModelsList(modelCtx));
-  ipcMain.handle('asr-model-download', (_e, req: { id: string }) => asrModelDownload(modelCtx, req));
+  ipcMain.handle('asr-model-download', (_e, req: { id: string }) =>
+    asrModelDownloadAnnounced(modelCtx, req, (ended) => broadcast('asr-model-download-ended', ended)),
+  );
   ipcMain.handle('asr-model-cancel-download', (_e, req: { id: string }) =>
     asrModelCancelDownload(modelCtx, req),
   );

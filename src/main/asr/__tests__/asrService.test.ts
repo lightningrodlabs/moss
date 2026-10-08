@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { FakeWhisperServer, asWhisperServer } from './fakeWhisperServer';
+
 import {
   _resetAsrServiceForTests,
   getAsrBroker,
@@ -150,5 +152,22 @@ describe('setAsrModelPath', () => {
     expect(getAsrModelPath()).toBe('/models/ggml-small.bin');
     expect(getAsrCapabilities().asr.available).toBe(false);
     expect(() => getAsrBroker()).toThrow(/Cannot locate whisper-server/);
+  });
+
+  it('clearing the model aborts open sessions with the model-changed error', async () => {
+    initAsrService({
+      binariesDir: '/tmp/nonexistent',
+      whisperServerVersion: '1.8.4',
+      isPackaged: false,
+      modelPath: '/models/ggml-base.en.bin',
+      serverFactory: (cfg) => asWhisperServer(new FakeWhisperServer(cfg)),
+    });
+    const session = await getAsrBroker().openSession();
+    const errors: string[] = [];
+    session.onError((e) => errors.push(e.message));
+
+    await setAsrModelPath(null);
+
+    expect(errors).toEqual(['speech model changed']);
   });
 });

@@ -25,6 +25,7 @@ import {
   AudioSourceGrantInfo,
   AudioSourcePickerRequest,
   AudioSourcePortDelivery,
+  AsrModelDownloadEnded,
   AsrModelDownloadProgress,
   AsrModelListEntry,
   DistributionInfo,
@@ -299,7 +300,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   asrOpenSessionCount: () => ipcRenderer.invoke('asr-open-session-count') as Promise<number>,
   onAsrModelDownloadProgress: (
     callback: (e: Electron.IpcRendererEvent, p: AsrModelDownloadProgress) => void,
-  ) => ipcRenderer.on('asr-model-download-progress', callback),
+  ) => {
+    ipcRenderer.on('asr-model-download-progress', callback);
+    return () => ipcRenderer.removeListener('asr-model-download-progress', callback);
+  },
+  onAsrModelDownloadEnded: (
+    callback: (e: Electron.IpcRendererEvent, ended: AsrModelDownloadEnded) => void,
+  ) => {
+    ipcRenderer.on('asr-model-download-ended', callback);
+    return () => ipcRenderer.removeListener('asr-model-download-ended', callback);
+  },
   onWalWindowClosed: (
     callback: (e: Electron.IpcRendererEvent, info: { webContentsId: number }) => void,
   ) => ipcRenderer.on('wal-window-closed', callback),
