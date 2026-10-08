@@ -160,6 +160,15 @@ export async function asrCloseSession(
   await entry.session.close();
 }
 
+/** How many tool sessions are open right now; 0 when no broker could be created. */
+export function asrOpenSessionCount(ctx: AsrIpcHandlerContext): number {
+  try {
+    return ctx.getBroker().openSessionCount;
+  } catch {
+    return 0;
+  }
+}
+
 /**
  * Close every session owned by the given owner. Called by the wire-up
  * when a renderer goes away. Errors during individual close() calls

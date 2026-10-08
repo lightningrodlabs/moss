@@ -64,8 +64,17 @@ export {
   asrCloseSession,
   asrGetCapabilities,
   asrOpenSession,
+  asrOpenSessionCount,
   asrPushAudio,
 } from './ipcHandlers';
+export {
+  asrModelCancelDownload,
+  asrModelDelete,
+  asrModelDownload,
+  asrModelSelect,
+  asrModelsList,
+} from './modelIpcHandlers';
+export type { AsrModelIdRequest, AsrModelIpcContext } from './modelIpcHandlers';
 export type {
   AsrCloseSessionRequest,
   AsrEventEmitter,

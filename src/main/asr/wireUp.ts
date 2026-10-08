@@ -4,7 +4,10 @@
 //
 // Registers:
 //   - the broker singleton (initAsrService)
-//   - three ipcMain handlers (open, push, close)
+//   - the session ipcMain handlers (capabilities, warm-up, status,
+//     open, push, close, open-session-count)
+//   - the model-management ipcMain handlers (list, download,
+//     cancel-download, delete, select) and the download-progress push
 //   - per-renderer cleanup (close sessions when webContents goes away)
 //   - shutdown on app quit
 //
@@ -12,12 +15,13 @@
 // renderers can land their first IPC.
 
 import { app, BrowserWindow, ipcMain, webContents } from 'electron';
+import path from 'node:path';
 
 import {
-  defaultModelPath,
   getAsrBroker,
   getAsrCapabilities,
   initAsrService,
+  setAsrModelPath,
   shutdownAsrService,
 } from './asrService';
 import {
@@ -29,10 +33,22 @@ import {
   asrCloseSession,
   asrGetCapabilities,
   asrOpenSession,
+  asrOpenSessionCount,
   asrPushAudio,
   asrStatus,
   asrWarmUp,
 } from './ipcHandlers';
+import { catalogEntryForPath } from './modelCatalog';
+import { ModelDownloader } from './modelDownloader';
+import {
+  AsrModelIpcContext,
+  asrModelCancelDownload,
+  asrModelDelete,
+  asrModelDownload,
+  asrModelSelect,
+  asrModelsList,
+} from './modelIpcHandlers';
+import { AsrModelStore } from './modelStore';
 import { SessionRegistry } from './sessionRegistry';
 
 /** Where a line of whisper-server output came from. */
@@ -55,13 +71,11 @@ export interface AsrWireUpConfig {
    * (resources/bins/whisper-server-v<version><exe>).
    */
   whisperServerVersion: string;
-  /**
-   * Optional model override. If omitted, defaults to $MOSS_ASR_MODEL,
-   * then to a bundled model under `resourcesPath`, then to the M0
-   * spike artifact under `repoRoot` (dev only).
-   */
-  modelPath?: string;
-  /** Used to compute the default model path. Required when modelPath is omitted. */
+  /** <profileDataDir>/models: where downloaded models go. */
+  modelsDir: string;
+  /** <profileConfigDir>: holds the user's model choice. */
+  configDir: string;
+  /** Repo root, for the dev-only spike model directory. */
   repoRoot?: string;
   /** Override the broker's idle unload timeout. */
   idleTimeoutMs?: number;
@@ -93,8 +107,20 @@ export function registerAsrIpc(config: AsrWireUpConfig): void {
   if (registered) return;
   registered = true;
 
-  const modelPath =
-    config.modelPath ?? defaultModelPath(config.repoRoot ?? process.cwd(), config.resourcesPath);
+  const store = new AsrModelStore({
+    modelsDir: config.modelsDir,
+    configDir: config.configDir,
+    bundledModelsDir: config.resourcesPath ? path.join(config.resourcesPath, 'models') : undefined,
+    spikeModelsDir: config.repoRoot ? path.join(config.repoRoot, 'spikes/asr-m0/models') : undefined,
+  });
+  const modelPath = store.resolveActiveModelPath();
+  const modelEntry = modelPath ? catalogEntryForPath(modelPath) : undefined;
+
+  const broadcast = (channel: string, payload: unknown): void => {
+    for (const w of BrowserWindow.getAllWindows()) {
+      if (!w.isDestroyed()) w.webContents.send(channel, payload);
+    }
+  };
 
   const latencyTier = config.latencyTier ?? readLatencyTierEnv();
   initAsrService({
@@ -102,17 +128,23 @@ export function registerAsrIpc(config: AsrWireUpConfig): void {
     whisperServerVersion: config.whisperServerVersion,
     isPackaged: app.isPackaged,
     modelPath,
+    modelStartTimeoutMs: modelEntry?.startTimeoutMs,
     idleTimeoutMs: config.idleTimeoutMs,
     onLog: config.onLog ?? defaultOnLog,
     latencyTier,
     // Every window may be hosting an applet that is waiting on the
     // sidecar, so the status goes to all of them.
-    onStatusChange: (status) => {
-      for (const w of BrowserWindow.getAllWindows()) {
-        if (!w.isDestroyed()) w.webContents.send('asr-status', status);
-      }
-    },
+    onStatusChange: (status) => broadcast('asr-status', status),
   });
+
+  const modelCtx: AsrModelIpcContext = {
+    store,
+    downloader: new ModelDownloader({
+      modelsDir: store.modelsDir,
+      onProgress: (p) => broadcast('asr-model-download-progress', p),
+    }),
+    applyModelPath: setAsrModelPath,
+  };
 
   const registry = new SessionRegistry();
   const ctx: AsrIpcHandlerContext = {
@@ -147,6 +179,15 @@ export function registerAsrIpc(config: AsrWireUpConfig): void {
   ipcMain.handle('asr-close-session', (e, req: AsrCloseSessionRequest) =>
     asrCloseSession(ctx, e.sender.id, req),
   );
+  ipcMain.handle('asr-open-session-count', () => asrOpenSessionCount(ctx));
+
+  ipcMain.handle('asr-models-list', () => asrModelsList(modelCtx));
+  ipcMain.handle('asr-model-download', (_e, req: { id: string }) => asrModelDownload(modelCtx, req));
+  ipcMain.handle('asr-model-cancel-download', (_e, req: { id: string }) =>
+    asrModelCancelDownload(modelCtx, req),
+  );
+  ipcMain.handle('asr-model-delete', (_e, req: { id: string }) => asrModelDelete(modelCtx, req));
+  ipcMain.handle('asr-model-select', (_e, req: { id: string }) => asrModelSelect(modelCtx, req));
 
   // Renderer cleanup: when a webContents goes away (window closed,
   // page navigated) drop all of its sessions. Applet iframes share the

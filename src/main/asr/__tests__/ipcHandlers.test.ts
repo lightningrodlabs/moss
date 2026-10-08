@@ -12,6 +12,7 @@ import {
   asrCloseSession,
   asrGetCapabilities,
   asrOpenSession,
+  asrOpenSessionCount,
   asrPushAudio,
   asrStatus,
   asrWarmUp,
@@ -296,5 +297,19 @@ describe('asrWarmUp / asrStatus', () => {
     expect(await asrStatus(h.ctx)).toBe('ready');
     expect(h.registry.size).toBe(0);
     expect(h.fakes).toHaveLength(1);
+  });
+
+  it('asrOpenSessionCount reports open sessions and 0 without a broker', async () => {
+    const h = makeHarness();
+    expect(asrOpenSessionCount(h.ctx)).toBe(0);
+    await asrOpenSession(h.ctx, 1, {});
+    expect(asrOpenSessionCount(h.ctx)).toBe(1);
+    const broken: AsrIpcHandlerContext = {
+      ...h.ctx,
+      getBroker: () => {
+        throw new Error('none');
+      },
+    };
+    expect(asrOpenSessionCount(broken)).toBe(0);
   });
 });

@@ -33,6 +33,8 @@ import {
   AudioSourcePickerRequest,
   AudioSourceRequestResult,
   DistributionInfo,
+  AsrModelDownloadProgress,
+  AsrModelListEntry,
   LocalToolInfo,
   ResourceLocation,
   ToolCompatibilityId,
@@ -346,6 +348,15 @@ declare global {
         endOfUtterance?: boolean;
       }) => Promise<void>;
       asrCloseSession: (req: { sessionId: string }) => Promise<void>;
+      asrModelsList: () => Promise<AsrModelListEntry[]>;
+      asrModelDownload: (req: { id: string }) => Promise<'complete' | 'cancelled'>;
+      asrModelCancelDownload: (req: { id: string }) => Promise<void>;
+      asrModelDelete: (req: { id: string }) => Promise<void>;
+      asrModelSelect: (req: { id: string }) => Promise<void>;
+      asrOpenSessionCount: () => Promise<number>;
+      onAsrModelDownloadProgress: (
+        callback: (e: Electron.IpcRendererEvent, p: AsrModelDownloadProgress) => void,
+      ) => void;
       onWalWindowClosed: (
         callback: (e: Electron.IpcRendererEvent, info: { webContentsId: number }) => void,
       ) => void;

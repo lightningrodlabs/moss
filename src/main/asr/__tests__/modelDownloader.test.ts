@@ -68,12 +68,13 @@ function fakeFetch(
         }
         if (offset >= body.byteLength) {
           controller.close();
-          return;
+          return undefined;
         }
         const end = Math.min(offset + chunk, body.byteLength);
         controller.enqueue(new Uint8Array(body.subarray(offset, end)));
         offset = end;
         sent += 1;
+        return undefined;
       },
     });
     return new Response(stream, { status });

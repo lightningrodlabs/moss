@@ -25,6 +25,8 @@ import {
   AudioSourceGrantInfo,
   AudioSourcePickerRequest,
   AudioSourcePortDelivery,
+  AsrModelDownloadProgress,
+  AsrModelListEntry,
   DistributionInfo,
   ResourceLocation,
   ToolCompatibilityId,
@@ -287,6 +289,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('asr-push-audio', req) as Promise<void>,
   asrCloseSession: (req: { sessionId: string }) =>
     ipcRenderer.invoke('asr-close-session', req) as Promise<void>,
+  asrModelsList: () => ipcRenderer.invoke('asr-models-list') as Promise<AsrModelListEntry[]>,
+  asrModelDownload: (req: { id: string }) =>
+    ipcRenderer.invoke('asr-model-download', req) as Promise<'complete' | 'cancelled'>,
+  asrModelCancelDownload: (req: { id: string }) =>
+    ipcRenderer.invoke('asr-model-cancel-download', req) as Promise<void>,
+  asrModelDelete: (req: { id: string }) => ipcRenderer.invoke('asr-model-delete', req) as Promise<void>,
+  asrModelSelect: (req: { id: string }) => ipcRenderer.invoke('asr-model-select', req) as Promise<void>,
+  asrOpenSessionCount: () => ipcRenderer.invoke('asr-open-session-count') as Promise<number>,
+  onAsrModelDownloadProgress: (
+    callback: (e: Electron.IpcRendererEvent, p: AsrModelDownloadProgress) => void,
+  ) => ipcRenderer.on('asr-model-download-progress', callback),
   onWalWindowClosed: (
     callback: (e: Electron.IpcRendererEvent, info: { webContentsId: number }) => void,
   ) => ipcRenderer.on('wal-window-closed', callback),
