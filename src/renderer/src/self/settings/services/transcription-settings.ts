@@ -94,7 +94,9 @@ export class MossTranscriptionSettings extends LitElement {
     this.enabled = this.mossStore.persistedStore.localAiEnabled.value();
     void this.refresh();
     window.addEventListener(APPLET_ASR_CONSENT_CHANGED_EVENT, this.onGrantsChanged);
-    this.unsubscribeProgress = window.electronAPI.onAsrModelDownloadProgress(this.onDownloadProgress);
+    this.unsubscribeProgress = window.electronAPI.onAsrModelDownloadProgress(
+      this.onDownloadProgress,
+    );
     this.unsubscribeEnded = window.electronAPI.onAsrModelDownloadEnded(this.onDownloadEnded);
   }
 
@@ -274,16 +276,14 @@ export class MossTranscriptionSettings extends LitElement {
       </p>`;
     }
     return html`
-      <div class="column service-rows">
+      <div class="service-listbox">
         ${this.grants.map(
           (g) => html`
-            <div class="row service-row">
-              <div class="column" style="flex: 1; min-width: 0;">
-                <span class="service-row-name">${g.name}</span>
-                <span class="service-row-meta"
-                  >${g.value === 'granted' ? msg('Allowed') : msg('Denied')}</span
-                >
-              </div>
+            <div class="service-line">
+              <span class="service-line-name">${g.name}</span>
+              <span class="service-line-meta"
+                >${g.value === 'granted' ? msg('Allowed') : msg('Denied')}</span
+              >
               <sl-button size="small" variant="default" @click=${() => this.revoke(g.appletId)}>
                 ${msg('Revoke')}
               </sl-button>
@@ -327,24 +327,54 @@ export class MossTranscriptionSettings extends LitElement {
         </section>
 
         <section>
+          <h3 style="margin: 0 0 8px 0;">${msg('Tool permissions')}</h3>
+          ${this.renderGrants()}
+        </section>
+
+        <section>
           <h3 style="margin: 0 0 8px 0;">${msg('Model')}</h3>
           <p class="service-note" style="margin: 0 0 8px 0;">
-            ${msg('Choose which speech model Moss runs. Larger models are more accurate but slower and use more memory.')}
+            ${msg(
+              'Choose which speech model Moss runs. Larger models are more accurate but slower and use more memory.',
+            )}
           </p>
           <asr-model-list
             .models=${this.models}
             .progress=${this.progress}
             .errors=${this.modelErrors}
-            @model-download=${(e: CustomEvent<{ id: string }>) => void this.downloadModel(e.detail.id)}
-            @model-cancel=${(e: CustomEvent<{ id: string }>) => void this.cancelDownload(e.detail.id)}
-            @model-delete=${(e: CustomEvent<{ id: string }>) => void this.requestDelete(e.detail.id)}
-            @model-select=${(e: CustomEvent<{ id: string }>) => void this.requestSelect(e.detail.id)}
+            @model-download=${(e: CustomEvent<{ id: string }>) =>
+              void this.downloadModel(e.detail.id)}
+            @model-cancel=${(e: CustomEvent<{ id: string }>) =>
+              void this.cancelDownload(e.detail.id)}
+            @model-delete=${(e: CustomEvent<{ id: string }>) =>
+              void this.requestDelete(e.detail.id)}
+            @model-select=${(e: CustomEvent<{ id: string }>) =>
+              void this.requestSelect(e.detail.id)}
           ></asr-model-list>
-        </section>
-
-        <section>
-          <h3 style="margin: 0 0 8px 0;">${msg('Tool permissions')}</h3>
-          ${this.renderGrants()}
+          <sl-details class="model-help" summary=${msg('Which model should I use?')}>
+            <div class="column" style="gap: 10px;">
+              <p>
+                ${msg(
+                  'An English-only model (.en) and the multilingual model of the same name are the same size because they are the same design, trained on different speech. For English, tiny.en and base.en are noticeably more accurate than tiny and base. From small upward the difference is slight.',
+                )}
+              </p>
+              <p>
+                ${msg(
+                  'Choose a multilingual model if anyone will speak a language other than English. An English-only model turns other languages into nonsense.',
+                )}
+              </p>
+              <p>
+                ${msg(
+                  'A bigger model is more accurate, but each step up is several times slower and needs more memory: roughly 0.4 GB for base, 0.9 GB for small, 2 GB for medium and 4 GB for large. On most laptops medium and large cannot keep up with live speech, so captions arrive late. Pick the largest model that still keeps up.',
+                )}
+              </p>
+              <p>
+                ${msg(
+                  'large-v3-turbo is nearly as accurate as large-v3 and several times faster. Try it before large-v3.',
+                )}
+              </p>
+            </div>
+          </sl-details>
         </section>
       </div>
       ${this.renderAboutDialog()} ${this.renderSwitchDialog()}
@@ -374,7 +404,9 @@ export class MossTranscriptionSettings extends LitElement {
               }}
               >${msg('Cancel')}</sl-button
             >
-            <sl-button variant="primary" @click=${() => void this.confirmSwitch()}>${msg('Switch')}</sl-button>
+            <sl-button variant="primary" @click=${() => void this.confirmSwitch()}
+              >${msg('Switch')}</sl-button
+            >
           </div>
         </div>
       </moss-dialog>
@@ -421,6 +453,14 @@ export class MossTranscriptionSettings extends LitElement {
     css`
       :host {
         display: flex;
+      }
+      .model-help {
+        margin-top: 8px;
+      }
+      .model-help p {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.5;
       }
     `,
   ];

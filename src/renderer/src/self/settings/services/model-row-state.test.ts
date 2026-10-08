@@ -38,11 +38,17 @@ describe('modelRowState', () => {
   });
 
   it('treats a zero total as 0 percent rather than NaN', () => {
-    expect(modelRowState(entry(), { id: 'small', bytes: 0, total: 0 })).toEqual({ kind: 'downloading', percent: 0 });
+    expect(modelRowState(entry(), { id: 'small', bytes: 0, total: 0 })).toEqual({
+      kind: 'downloading',
+      percent: 0,
+    });
   });
 
   it('marks installed and active rows, hiding delete for bundled-only copies', () => {
-    expect(modelRowState(entry({ installed: true }), undefined)).toEqual({ kind: 'installed', deletable: true });
+    expect(modelRowState(entry({ installed: true }), undefined)).toEqual({
+      kind: 'installed',
+      deletable: true,
+    });
     expect(modelRowState(entry({ installed: true, bundled: true }), undefined)).toEqual({
       kind: 'installed',
       deletable: false,

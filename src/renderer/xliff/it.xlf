@@ -3139,6 +3139,26 @@ inizia ora</target>
   <source><x id="0" equiv-text="${n}"/> transcription sessions are active. Switching the model stops them now. Tools will need to start transcription again, for example by rejoining a room.</source>
   <target><x id="0" equiv-text="${n}"/> sessioni di trascrizione sono attive. Cambiare modello le interrompe subito. Gli strumenti dovranno riavviare la trascrizione, ad esempio rientrando in una stanza.</target>
 </trans-unit>
+<trans-unit id="sadd6c527dbde86cf">
+  <source>Which model should I use?</source>
+  <target>Quale modello devo usare?</target>
+</trans-unit>
+<trans-unit id="sb42dfad0c1af8655">
+  <source>An English-only model (.en) and the multilingual model of the same name are the same size because they are the same design, trained on different speech. For English, tiny.en and base.en are noticeably more accurate than tiny and base. From small upward the difference is slight.</source>
+  <target>Un modello solo inglese (.en) e il modello multilingue con lo stesso nome hanno la stessa dimensione perché hanno la stessa struttura e cambiano solo i dati di addestramento. Per l'inglese, tiny.en e base.en sono nettamente più precisi di tiny e base. Da small in su la differenza è minima.</target>
+</trans-unit>
+<trans-unit id="s8bb20e789fd4d22b">
+  <source>Choose a multilingual model if anyone will speak a language other than English. An English-only model turns other languages into nonsense.</source>
+  <target>Scegli un modello multilingue se qualcuno parlerà una lingua diversa dall'inglese. Un modello solo inglese trasforma le altre lingue in testo senza senso.</target>
+</trans-unit>
+<trans-unit id="sa60d4041cede6f63">
+  <source>A bigger model is more accurate, but each step up is several times slower and needs more memory: roughly 0.4 GB for base, 0.9 GB for small, 2 GB for medium and 4 GB for large. On most laptops medium and large cannot keep up with live speech, so captions arrive late. Pick the largest model that still keeps up.</source>
+  <target>Un modello più grande è più preciso, ma ogni gradino è diverse volte più lento e richiede più memoria: circa 0,4 GB per base, 0,9 GB per small, 2 GB per medium e 4 GB per large. Sulla maggior parte dei portatili medium e large non tengono il passo del parlato dal vivo e i sottotitoli arrivano in ritardo. Scegli il modello più grande che tiene ancora il passo.</target>
+</trans-unit>
+<trans-unit id="s77efaef33da6e1e9">
+  <source>large-v3-turbo is nearly as accurate as large-v3 and several times faster. Try it before large-v3.</source>
+  <target>large-v3-turbo è quasi preciso quanto large-v3 e diverse volte più veloce. Provalo prima di large-v3.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

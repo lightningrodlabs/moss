@@ -7,8 +7,9 @@ import { css } from 'lit';
  * A pane is a `.service-pane` column of `<section>`s. A section opens with
  * a `.service-heading` row — title, an optional `.info-icon` that opens an
  * about dialog, an optional switch — followed by a `.service-note` line of
- * explanation, then either `.service-rows` of `.service-row` cards or a
- * `.service-empty` line. Diagnostics belong in `.service-details` inside
+ * explanation, then either `.service-rows` of `.service-row` cards, a
+ * `.service-listbox` of one-line `.service-line` entries for longer lists,
+ * or a `.service-empty` line. Diagnostics belong in `.service-details` inside
  * the about dialog's technical-details section, not on the pane itself.
  */
 export const serviceStyles = css`
@@ -70,6 +71,45 @@ export const serviceStyles = css`
   .service-row-meta {
     font-size: 12px;
     opacity: 0.6;
+  }
+
+  /*
+   * A bordered box of one-line entries that scrolls on its own, for lists
+   * long enough that cards would push the rest of the pane off screen.
+   */
+  .service-listbox {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .service-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 10px;
+    min-height: 32px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  }
+
+  .service-line:last-child {
+    border-bottom: none;
+  }
+
+  .service-line-name {
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .service-line-meta {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    opacity: 0.6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .service-empty {

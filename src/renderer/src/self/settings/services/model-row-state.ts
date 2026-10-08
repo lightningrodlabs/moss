@@ -23,7 +23,8 @@ export function modelRowState(
     const deletable = !entry.bundled;
     return entry.active ? { kind: 'active', deletable } : { kind: 'installed', deletable };
   }
-  if (entry.partialBytes !== undefined) return { kind: 'resume', partialBytes: entry.partialBytes, deletable: true };
+  if (entry.partialBytes !== undefined)
+    return { kind: 'resume', partialBytes: entry.partialBytes, deletable: true };
   return { kind: 'download' };
 }
 
