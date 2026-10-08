@@ -77,6 +77,8 @@ export class AsrBroker {
   private readonly sessions = new Set<AsrSession>();
   /** Bumped on every config swap so a session whose cold start straddled the swap is not handed a stale server. */
   private generation = 0;
+  /** The config generation each server was started under; a mismatch with `generation` marks it retired. */
+  private readonly serverGenerations = new WeakMap<WhisperServer, number>();
 
   constructor(private readonly config: AsrBrokerConfig) {
     this.serverConfigValue = config.server;
@@ -98,14 +100,25 @@ export class AsrBroker {
     if (this.destroyed) {
       throw new Error('AsrBroker is destroyed; cannot open new sessions');
     }
-    const generation = this.generation;
-    const server = await this.acquire();
-    const session = new AsrSession(server, () => this.releaseSession(session), opts);
-    this.sessions.add(session);
-    if (generation !== this.generation) {
-      session.abort(new Error('speech model changed'));
+    for (;;) {
+      const generation = this.generation;
+      const server = await this.acquire();
+      if (this.isCurrent(server)) {
+        // The acquisition was counted and this session owns one release.
+        const session = new AsrSession(server, () => this.releaseSession(session), opts);
+        this.sessions.add(session);
+        return session;
+      }
+      // The server belongs to a config a swap has since retired; the swap
+      // already reset the count, so this acquisition owes no release.
+      if (generation !== this.generation) {
+        // Opened before the swap: the caller's model is gone, say so.
+        const session = new AsrSession(server, async () => undefined, opts);
+        session.abort(new Error('speech model changed'));
+        return session;
+      }
+      // Opened after the swap: try again on the new config.
     }
-    return session;
   }
 
   /**
@@ -144,11 +157,9 @@ export class AsrBroker {
     if (this.destroyed) {
       throw new Error('AsrBroker is destroyed; cannot warm up');
     }
-    const generation = this.generation;
-    await this.acquire();
-    // A swap during the start already reset the count and stopped that server.
-    if (generation !== this.generation) return;
-    await this.release();
+    const server = await this.acquire();
+    // A retired server's count was already reset by the swap.
+    if (this.isCurrent(server)) await this.release();
   }
 
   /** Down, coming up, or serving. */
@@ -211,18 +222,17 @@ export class AsrBroker {
       await this.unloading;
     }
     if (this.server && this.server.state === 'ready') {
-      this.sessionCount++;
-      return this.server;
+      return this.claim(this.server);
     }
     if (this.starting) {
       const s = await this.starting;
       this.assertAlive();
-      this.sessionCount++;
-      return s;
+      return this.claim(s);
     }
     // Cold start.
     this.starting = (async () => {
       const s = this.factory(this.serverConfigValue);
+      this.serverGenerations.set(s, this.generation);
       try {
         await s.start();
       } catch (err) {
@@ -238,8 +248,17 @@ export class AsrBroker {
     this.publishStatus();
     const s = await this.starting;
     this.assertAlive();
-    this.sessionCount++;
-    return s;
+    return this.claim(s);
+  }
+
+  private isCurrent(server: WhisperServer): boolean {
+    return this.serverGenerations.get(server) === this.generation;
+  }
+
+  /** Count an acquisition only when its server is still the current one. */
+  private claim(server: WhisperServer): WhisperServer {
+    if (this.isCurrent(server)) this.sessionCount++;
+    return server;
   }
 
   private assertAlive(): void {

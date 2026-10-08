@@ -16,6 +16,7 @@ import {
   asrStatus,
   asrWarmUp,
 } from '../ipcHandlers';
+import { AsrSession } from '../session';
 import { SessionRegistry } from '../sessionRegistry';
 import { FakeWhisperServer, asWhisperServer } from './fakeWhisperServer';
 
@@ -78,6 +79,25 @@ describe('asrOpenSession', () => {
     expect(sessionId).toBe('id-0');
     expect(h.registry.size).toBe(1);
     expect(h.registry.get(sessionId)?.ownerId).toBe(100);
+  });
+
+  it('rejects the open when the broker hands back an already-aborted session', async () => {
+    const h = makeHarness();
+    const fake = new FakeWhisperServer({ command: ['noop'], modelPath: '/dev/null' });
+    await fake.start();
+    const aborted = new AsrSession(asWhisperServer(fake), async () => undefined);
+    aborted.abort(new Error('speech model changed'));
+    const ctx: AsrIpcHandlerContext = {
+      ...h.ctx,
+      getBroker: () => ({ openSession: async () => aborted }) as unknown as AsrBroker,
+    };
+
+    const err = await asrOpenSession(ctx, 7, {}).catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(AsrIpcError);
+    expect((err as AsrIpcError).message).toBe('speech model changed');
+    expect(h.registry.size).toBe(0);
+    expect(h.events).toHaveLength(0);
   });
 
   it('forwards final events to the owner via emitEvent', async () => {

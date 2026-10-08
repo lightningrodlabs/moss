@@ -101,7 +101,7 @@ export class AsrSession {
   private closed = false;
   private failed = false;
   /** The error that ended the session, kept for listeners that subscribe afterwards. */
-  private failure: Error | null = null;
+  private failureValue: Error | null = null;
   /**
    * Chain of pending transcribe calls. Flushes run strictly in audio
    * order so `final` events never arrive out of sequence, while
@@ -154,6 +154,11 @@ export class AsrSession {
     this.vadEnabled = opts.vad ?? VAD_DEFAULTS.enabled;
     this.vadSilenceRms = opts.vadSilenceRms ?? VAD_DEFAULTS.silenceRms;
     this.vadSilenceSamples = this.msToSamples(opts.vadSilenceMs ?? VAD_DEFAULTS.silenceMs);
+  }
+
+  /** The error that ended the session, if it has already failed. */
+  get failure(): Error | undefined {
+    return this.failureValue ?? undefined;
   }
 
   /** Diagnostic only. Reflects whether close() has been called. */
@@ -224,7 +229,7 @@ export class AsrSession {
    * had a chance to subscribe) still hears the error, once.
    */
   onError(cb: Listener<Error>): () => void {
-    const priorFailure = this.failure;
+    const priorFailure = this.failureValue;
     if (priorFailure) {
       let cancelled = false;
       queueMicrotask(() => {
@@ -425,7 +430,7 @@ export class AsrSession {
   private fail(err: Error): void {
     if (this.failed) return;
     this.failed = true;
-    this.failure = err;
+    this.failureValue = err;
     this.chunks = [];
     this.bufferedSamples = 0;
     this.emitError(err);

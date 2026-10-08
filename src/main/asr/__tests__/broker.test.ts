@@ -279,6 +279,48 @@ describe('AsrBroker.setServerConfig', () => {
     expect(broker.isLoaded).toBe(false);
   });
 
+  it('hands a session opened after the swap the new server while the old start is still in flight', async () => {
+    const { broker, fakes } = makeBroker({ startDelayMs: 30, idleTimeoutMs: 0 });
+    const aErrors: string[] = [];
+    const bErrors: string[] = [];
+    const openingA = broker.openSession();
+    await sleep(5);
+    const swap = broker.setServerConfig(nextConfig);
+    const openingB = broker.openSession();
+    const [a, b] = await Promise.all([openingA, openingB]);
+    a.onError((e) => aErrors.push(e.message));
+    b.onError((e) => bErrors.push(e.message));
+    await swap;
+    await sleep(0);
+
+    expect(aErrors).toEqual(['speech model changed']);
+    expect(bErrors).toEqual([]);
+    expect(fakes).toHaveLength(2);
+    expect(fakes[1].config.modelPath).toBe('/models/ggml-small.bin');
+    expect(fakes[0].stopCalls).toBe(1);
+    expect(broker.isLoaded).toBe(true);
+    expect(broker.openSessionCount).toBe(1);
+
+    await b.close();
+    expect(broker.isLoaded).toBe(false);
+  });
+
+  it('keeps the new server loaded while another post-swap session is still open', async () => {
+    const { broker } = makeBroker({ startDelayMs: 30, idleTimeoutMs: 0 });
+    const openingA = broker.openSession();
+    await sleep(5);
+    const swap = broker.setServerConfig(nextConfig);
+    const [, b, c] = await Promise.all([openingA, broker.openSession(), broker.openSession()]);
+    await swap;
+    await sleep(0);
+
+    await b.close();
+    expect(broker.openSessionCount).toBe(1);
+    expect(broker.isLoaded).toBe(true);
+    await c.close();
+    expect(broker.isLoaded).toBe(false);
+  });
+
   it('ignores a late release from an aborted session so the count cannot go negative', async () => {
     const { broker } = makeBroker({ idleTimeoutMs: 60_000 });
     const s = await broker.openSession();
