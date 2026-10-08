@@ -13,16 +13,15 @@
 //     doesn't fit the reactive-store shape
 //   - the sidecar process is owned by main, not the renderer
 
-import { existsSync } from 'node:fs';
-import path from 'node:path';
-
 import type { LocalModelCapabilities } from '@theweave/api';
 
 import { AsrBroker, type AsrHostStatus } from './broker';
 import { resolveWhisperServerCommand, WhisperCommandResolveError } from './binaryResolver';
 import { computeAsrCapabilities } from './capabilities';
 
-export const BUNDLED_ASR_MODEL_FILENAME = 'ggml-base.en.bin';
+import { BUNDLED_ASR_MODEL_FILENAME } from './modelStore';
+
+export { BUNDLED_ASR_MODEL_FILENAME };
 
 export interface AsrServiceConfig {
   /** Absolute path to the directory holding bundled binaries (resources/bins). */
@@ -172,26 +171,3 @@ export function _resetAsrServiceForTests(): void {
   capabilities = computeAsrCapabilities({ modelPath: null });
 }
 
-/**
- * Resolve the default ggml model file for this install. Lookup order:
- *   1. $MOSS_ASR_MODEL — absolute override for CI / tool authors.
- *   2. <resourcesPath>/models/ggml-base.en.bin — bundled in release
- *      installers by scripts/fetch-asr-model.mjs.
- *   3. <repoRoot>/spikes/asr-m0/models/ggml-base.en.bin — dev fallback
- *      populated manually via spikes/asr-m0/fetch-model.mjs.
- *
- * Returns null when none of these exist, so capabilities can report
- * the truth instead of advertising a model that fails at spawn time.
- * The env override is trusted as given so a misconfigured path fails
- * loudly at first use rather than silently disabling the feature.
- */
-export function defaultModelPath(repoRoot: string, resourcesPath?: string): string | null {
-  const fromEnv = process.env.MOSS_ASR_MODEL;
-  if (fromEnv && fromEnv.trim().length > 0) return fromEnv.trim();
-  const candidates: string[] = [];
-  if (resourcesPath) {
-    candidates.push(path.join(resourcesPath, 'models', BUNDLED_ASR_MODEL_FILENAME));
-  }
-  candidates.push(path.join(repoRoot, 'spikes/asr-m0/models', BUNDLED_ASR_MODEL_FILENAME));
-  return candidates.find((c) => existsSync(c)) ?? null;
-}

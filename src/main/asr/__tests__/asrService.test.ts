@@ -1,12 +1,7 @@
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
-
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   _resetAsrServiceForTests,
-  defaultModelPath,
   getAsrBroker,
   getAsrCapabilities,
   initAsrService,
@@ -90,49 +85,5 @@ describe('asrService singleton', () => {
     await shutdownAsrService();
     expect(isAsrServiceInitialized()).toBe(false);
     await shutdownAsrService(); // no throw
-  });
-});
-
-describe('defaultModelPath', () => {
-  it('uses $MOSS_ASR_MODEL when set', () => {
-    const orig = process.env.MOSS_ASR_MODEL;
-    process.env.MOSS_ASR_MODEL = '/custom/path.bin';
-    try {
-      expect(defaultModelPath('/repo')).toBe('/custom/path.bin');
-    } finally {
-      if (orig === undefined) delete process.env.MOSS_ASR_MODEL;
-      else process.env.MOSS_ASR_MODEL = orig;
-    }
-  });
-
-  it('returns null when neither a bundled nor a spike model file exists', () => {
-    const orig = process.env.MOSS_ASR_MODEL;
-    delete process.env.MOSS_ASR_MODEL;
-    try {
-      expect(defaultModelPath('/nonexistent-repo', '/tmp/nonexistent-resources')).toBeNull();
-      expect(defaultModelPath('/nonexistent-repo')).toBeNull();
-    } finally {
-      if (orig !== undefined) process.env.MOSS_ASR_MODEL = orig;
-    }
-  });
-
-  it('prefers the bundled model, then the spike model, when the file exists', () => {
-    const orig = process.env.MOSS_ASR_MODEL;
-    delete process.env.MOSS_ASR_MODEL;
-    const root = mkdtempSync(path.join(tmpdir(), 'asr-model-'));
-    try {
-      const spike = path.join(root, 'repo/spikes/asr-m0/models/ggml-base.en.bin');
-      mkdirSync(path.dirname(spike), { recursive: true });
-      writeFileSync(spike, '');
-      expect(defaultModelPath(path.join(root, 'repo'), path.join(root, 'resources'))).toBe(spike);
-
-      const bundled = path.join(root, 'resources/models/ggml-base.en.bin');
-      mkdirSync(path.dirname(bundled), { recursive: true });
-      writeFileSync(bundled, '');
-      expect(defaultModelPath(path.join(root, 'repo'), path.join(root, 'resources'))).toBe(bundled);
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-      if (orig !== undefined) process.env.MOSS_ASR_MODEL = orig;
-    }
   });
 });

@@ -42,7 +42,6 @@ export type {
 } from './binaryResolver';
 
 export {
-  defaultModelPath,
   getAsrBroker,
   getAsrCapabilities,
   initAsrService,
@@ -76,3 +75,8 @@ export type {
 
 export { registerAsrIpc, isAsrIpcRegistered } from './wireUp';
 export type { AsrSidecarLogStream, AsrWireUpConfig } from './wireUp';
+
+export { AsrModelStore, ASR_MODEL_SELECTION_FILE, BUNDLED_ASR_MODEL_FILENAME } from './modelStore';
+export type { AsrModelStoreOptions } from './modelStore';
+export { ASR_MODEL_CATALOG, catalogEntryById, catalogEntryForPath } from './modelCatalog';
+export type { AsrModelCatalogEntry } from './modelCatalog';

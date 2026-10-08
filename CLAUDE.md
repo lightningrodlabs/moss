@@ -334,6 +334,7 @@ Profile data is rooted at Electron's `userData` path (Linux: `~/.config/org.ligh
     uis/                       # UI assets (by sha256)
     icons/                     # cached tool icons
     feedback/                  # feedback records
+    models/                    # downloaded speech models
   logs/                        # Application logs
   chromium/                    # Electron sessionData
 ```
