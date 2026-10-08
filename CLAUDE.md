@@ -383,6 +383,7 @@ Zomes are compiled to WASM32 target and packaged into `.happ` files using the `h
 
 - `shared/types/src/defineConfig.ts` is the dev-config schema source; the build emits the committed `cli/defineConfig.js`/`.d.ts` via `tsconfig.defineConfig.json`
 - `moss.config.json` - the Holochain version, group-happ version + sha256, and the feedback URL (not ports or bootstrap URLs)
+- `scripts/asr-catalog-lib.mjs` lists the whisper models Moss offers for download; `yarn update:asr-catalog` regenerates `src/main/asr/modelCatalogData.ts` (checksums and sizes) from the HuggingFace LFS pointers, and `setup:release` runs `yarn check:asr-catalog` so a stale catalog fails the release
 
 ## Creating Tools/Applets
 
