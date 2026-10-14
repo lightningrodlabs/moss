@@ -1,15 +1,15 @@
 {
   "_FIELD_TEST_ONLY": [
-    "BRANCH feat/moss-0.16-dev.8 -- DO NOT MERGE TO main-0.7.",
-    "The 'holochain' and 'hc' entries in this file are NOT the stock holochain 0.7.0",
+    "BRANCH feat/moss-0.16-hc-0.7.1 -- DO NOT MERGE TO main-0.7.",
+    "The 'holochain' and 'hc' entries in this file are NOT the stock holochain 0.7.1-rc.2",
     "release artifacts. They are PATCHED binaries carrying the kitsune2 hello/PoK",
     "access module plus mDNS LAN discovery, built from lightningrodlabs/holochain",
-    "branch moss-0.16 at commit cde77393bfb2059e2763cc8f8fc4f894bf0f0996",
+    "branch moss-0.16-0.7.1 at commit 1d1f448b3707127bcfb05ab17df744c319501da3",
     "(kitsune2 branch moss-0.16, rev d8b99b09096ac495ea7152cf48f9d4a1ac3cd0a8: upstream",
     "kitsune2 main plus the hello/PoK and mDNS work), published as the fork release",
-    "lightningrodlabs/holochain @ holochain-0.7.0-mdns.3. The `binarySources` block",
+    "lightningrodlabs/holochain @ holochain-0.7.1-rc.2-mdns.4. The `binarySources` block",
     "below is what repoints the fetch at that release.",
-    "mdns.3 keeps HCP2P_PROTO_VER=1002, so hello.2 and every mdns.* node interoperate.",
+    "mdns.4 keeps HCP2P_PROTO_VER=1002, so hello.2 and every mdns.* node interoperate.",
     "Patched nodes advertise HCP2P_PROTO_VER=1002 and reject stock peers at preflight,",
     "so a build made from this branch CANNOT see stock Moss on the network. That is",
     "deliberate -- it isolates the field-test cohort -- but it means every installer",
@@ -17,48 +17,49 @@
     "so. See RUNBOOK-fieldtest.md.",
     "'lair-keystore' and 'kitsune2-bootstrap-srv' are UNPATCHED. They have no",
     "binarySources entry and therefore still come from the stock",
-    "holochain/holochain @ holochain-0.7.0 release. Do not add one.",
+    "holochain/holochain @ holochain-0.7.1-rc.2 release. Do not add one.",
     "NOTE: `yarn update-hc-checksums` regenerates this file from GitHub release assets",
     "and will destroy this note, the binarySources block, and the patched checksums.",
-    "All ten holochain/hc checksums are from the fork release lightningrodlabs/holochain @ holochain-0.7.0-mdns.3 checksums-sha256.txt (workflow run 36604772636, holochain commit cde77393, kitsune2 rev d8b99b09), each re-hashed locally from the downloaded asset and matched."
+    "All ten holochain/hc checksums are from the fork release lightningrodlabs/holochain @ holochain-0.7.1-rc.2-mdns.4 checksums-sha256.txt (workflow run 38578023644, holochain commit 1d1f448b, kitsune2 rev d8b99b09), matched against the GitHub asset digests.",
+    "mdns.4 is Holochain 0.7.1-rc.2 (not 0.7.0) plus the capability grant wire fix from holochain/holochain#6042, so DNAs built against hdk 0.7.0 and hdk 0.7.1 both run. Local builds only until 0.7.1 final; no dev.11 release from this branch."
   ],
-  "version": "0.7.0",
+  "version": "0.7.1-rc.2",
   "binarySources": {
     "holochain": {
       "binariesRepo": "lightningrodlabs/holochain",
-      "binariesTag": "holochain-0.7.0-mdns.3"
+      "binariesTag": "holochain-0.7.1-rc.2-mdns.4"
     },
     "hc": {
       "binariesRepo": "lightningrodlabs/holochain",
-      "binariesTag": "holochain-0.7.0-mdns.3"
+      "binariesTag": "holochain-0.7.1-rc.2-mdns.4"
     }
   },
   "hc": {
-    "aarch64-apple-darwin": "4e76cab46f7bca8084fc7d44722a7b79021eeb9c4deb994c0e522c68ef31a94a",
-    "aarch64-unknown-linux-gnu": "efaa032e3910da041e20697914e520b201421616618fd11d772bfecff9a6e5ca",
-    "x86_64-apple-darwin": "79349f3f797d573cc3a022fb29968d21840b63c787695f82580f3a7184a5bc72",
-    "x86_64-pc-windows-msvc.exe": "b2678c8d22c067fb5309442c8397f5e67cf06ba4d2e737fe296359edffc20a18",
-    "x86_64-unknown-linux-gnu": "8a169e4158d41f38acde50078e15da04ed308cfd2ab4564718f4562da16a34e7"
+    "aarch64-apple-darwin": "b7c6389b61165a8c9d390e3b6e9e5a2bf674a4c947d507c0f543193a2dcba681",
+    "aarch64-unknown-linux-gnu": "fc5e64e1fc9c3f056357987dbb16a064846b2d7f0751f237af7bf93c043e0d4d",
+    "x86_64-apple-darwin": "cde3fdd6a87592da165c4c15c72c03afa5633679f133280d0c1e1c31797071a2",
+    "x86_64-pc-windows-msvc.exe": "592afb7d10913a513ce5ec6eae2c239829b8a724feddd3ab27c2f88eb25b5269",
+    "x86_64-unknown-linux-gnu": "61fbbb24b7b4629a4e249141ffc1861bfbb2eb3eb6fd24eb881a370a495044ee"
   },
   "holochain": {
-    "aarch64-apple-darwin": "0b77e10c7d9c0cfc3cba8dd333e51b5ef21889dc56d60ed4257051eac50808a5",
-    "aarch64-unknown-linux-gnu": "8e41b19758f8e239216c4cf838bf1a478a1153cdd94fc2a9ce73cef50e45f20c",
-    "x86_64-apple-darwin": "9bffed8cbc987f455d7b494f413b93f323032f9a2385dafaee33a35bcf0bd1b4",
-    "x86_64-pc-windows-msvc.exe": "0a2f6ad46cf4ed9ca913cb57b6613325c80e9183ea0befb5b3ec02627bc0720b",
-    "x86_64-unknown-linux-gnu": "5d602c97d886d962bb2db8dd6723f0403ca1d8db860d0fab926021924477b891"
+    "aarch64-apple-darwin": "c13057d3ff8cdac357c416eb879ed2f0b5ca1b9c7e76f19f1bb3835447bf63b1",
+    "aarch64-unknown-linux-gnu": "b4a4b9e7786294e988a6be5653dc6d984a01ad93b8c1525f15a096e1e178735c",
+    "x86_64-apple-darwin": "d8827d0ba405db767b1d2c04fd5c14e00f473878fcde07cf89a9cf650ca1a970",
+    "x86_64-pc-windows-msvc.exe": "15507c2ac0d71680b55364826663216a5e66509b1a2f4fe7467e27f91cab9c2d",
+    "x86_64-unknown-linux-gnu": "f44af57e1d61285267a45217577a0b5c6964dbd2238f3fed89b6d30689c2bb68"
   },
   "kitsune2-bootstrap-srv": {
-    "aarch64-apple-darwin": "a5ada66e9663c8badb3a0d2b2ff3af4a667a21aab2438c8cc79f0833c26f602b",
-    "aarch64-unknown-linux-gnu": "e2127dfb7e0e5e8a8ce02c734e725dfa77714e3b867d9cbc7d2bb2f3a90d3dd4",
-    "x86_64-apple-darwin": "5cecf1325f41eea4edae94811ac206e7695ee5e9807a6ec58a8b4cddcc7245eb",
-    "x86_64-pc-windows-msvc.exe": "5c9c4b9d45f5045b517da877f0ba2237b2afc28e8f5a1f3ca659ef2d9cad1e6c",
-    "x86_64-unknown-linux-gnu": "ba5a61c981300c1854e33cec5a091bfb2f9137ea977a938685eef0afa809b7be"
+    "aarch64-apple-darwin": "968d1417097d6447e56a7bb8c09264062d576bd9f9818257fad05bbf00c5f944",
+    "aarch64-unknown-linux-gnu": "1cfa20a4a1b97881a301235d5f11ad64bae69a4d32703c7941765aec5ea95596",
+    "x86_64-apple-darwin": "43f40a34472b566164addbddd66469e6bcf2d1de6b84d007174f2aaf72875829",
+    "x86_64-pc-windows-msvc.exe": "707bee1014eeb69504ee7549c015bf4d9ca2502304a2fde8b737c6f39060883d",
+    "x86_64-unknown-linux-gnu": "f080b3ee4f3d4e37a2d790eb3df9722b5b1a1924d9d6c730c05c64859273a9d5"
   },
   "lair-keystore": {
-    "aarch64-apple-darwin": "e8fcdf26c0b1a51e5ab93a82333b5db92f0a8a6effb8494fdbb0dc000856ded8",
-    "aarch64-unknown-linux-gnu": "efb5894d76ee8d58845445e1b6a3ff18d721345943e545457331825fb799b08c",
-    "x86_64-apple-darwin": "afcaefac4f93828e59566f185d7398b7d5d7afaa43ef4b95bd9c42f0b967d7b8",
-    "x86_64-pc-windows-msvc.exe": "2c1fded6eb7c6ec4b3d033c6a310d7c2cc916d6e0ac10c2f71047ebb6b623f6b",
-    "x86_64-unknown-linux-gnu": "7a77822ab5e0020d0f3c358030d4ccfa8c6c144407a5c075d302c7b0fcf670c1"
+    "aarch64-apple-darwin": "31e9d87ddce30b0dfccff1086e63dc8b605a122595c7eafb50073f175bbb2a43",
+    "aarch64-unknown-linux-gnu": "1e6fd052be5194d45c97a918721939c5454d0616ca4439f9bdb5a15eb2a04a6e",
+    "x86_64-apple-darwin": "e85d4a56f592b8f68c7606add9bdb18c833c818ae9efcfc234cc335942980c19",
+    "x86_64-pc-windows-msvc.exe": "c07851ba4339e7a985b4e8b0a9d18511362329f475f616bc620f5c85a73ba1a9",
+    "x86_64-unknown-linux-gnu": "0fa6069131037cd27887049fcb6eaa3c94262b0ec1eb4b45b9f32059473b1569"
   }
 }
