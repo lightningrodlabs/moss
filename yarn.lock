@@ -1616,10 +1616,10 @@
   resolved "https://registry.yarnpkg.com/@holochain-playground/cli/-/cli-0.1.1.tgz#a5deb207dd3362cf7ab45070f0bc3cb8f12d9602"
   integrity sha512-JbapAe+uBaec52rTePjdlP0mq3zQhJG/hrdbCd+eecZLA3cXWEGgISR5YwLtx6udN+0ghCDH4U6KILjPiwWZMg==
 
-"@holochain/client@^0.21.0":
-  version "0.21.0"
-  resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.21.0.tgz#e19c780702043892287655b7cdb70a3896dd47d9"
-  integrity sha512-o1Fzu/9LXWSb1zP21sLXvhTihUKs/5r4ZEFKQW/e9MPogHiMsyt3/6AYKB+X0ZcUilC5sBSFODIAifRu0XMQqA==
+"@holochain/client@^0.21.0", "@holochain/client@^0.21.1":
+  version "0.21.1"
+  resolved "https://registry.yarnpkg.com/@holochain/client/-/client-0.21.1.tgz#d4e9daac0fd700ce5bc557a633fbe5f3b8be9bb8"
+  integrity sha512-Y+x3vO5Rgl++SUS20ZzG7jsmO/yp1bfkR4fiKfHfjL/NUr5s7lBn/N+ZrZbAHZ+3jFU+gPKWzukMtLzHx9bbLg==
   dependencies:
     "@bitgo/blake2b" "^3.2.4"
     "@msgpack/msgpack" "^3.1.2"
@@ -3157,10 +3157,10 @@
     defer-to-connect "^2.0.0"
 
 "@theweave/api@file:libs/api":
-  version "0.7.0-dev.3"
+  version "0.7.0-dev.5"
   dependencies:
     "@holochain-open-dev/profiles" "^0.701.0"
-    "@holochain/client" "^0.21.0"
+    "@holochain/client" "^0.21.1"
     "@msgpack/msgpack" "^2.8.0"
     js-base64 "^3.7.2"
 
@@ -3171,7 +3171,7 @@
     "@holochain-open-dev/profiles" "^0.701.0"
     "@holochain-open-dev/stores" "^0.700.0"
     "@holochain-open-dev/utils" "^0.700.0"
-    "@holochain/client" "^0.21.0"
+    "@holochain/client" "^0.21.1"
     "@lit/context" "^1.0.1"
     "@lit/localize" "^0.12.0"
     "@mdi/js" "^7.2.0"

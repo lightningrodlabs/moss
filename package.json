@@ -1,6 +1,6 @@
 {
   "name": "org.lightningrodlabs.moss-0.16",
-  "version": "0.16.0-dev.10",
+  "version": "0.16.0-dev.11",
   "private": true,
   "description": "Moss (0.16)",
   "homepage": "https://theweave.social",
@@ -97,7 +97,7 @@
     "@holochain-open-dev/profiles": "^0.701.0",
     "@holochain-open-dev/stores": "^0.700.0",
     "@holochain-open-dev/utils": "^0.700.0",
-    "@holochain/client": "^0.21.0",
+    "@holochain/client": "^0.21.1",
     "@lightningrodlabs/flexaudio": "0.3.0-lrl.1",
     "@lightningrodlabs/we-rust-utils": "^0.700.1",
     "@msgpack/msgpack": "^2.8.0",
