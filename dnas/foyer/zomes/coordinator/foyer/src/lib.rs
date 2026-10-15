@@ -48,11 +48,11 @@ pub fn init(_: ()) -> ExternResult<InitCallbackResult> {
     let mut fns = HashSet::new();
     fns.insert((zome_info()?.name, "recv_remote_signal".into()));
     let functions = GrantedFunctions::Listed(fns);
-    create_cap_grant(CapGrantEntry {
-        tag: "".into(),
-        access: CapAccess::Unrestricted,
+    create_cap_grant(CapGrant::new_zome_call_grant(
+        "".into(),
+        GrantConstraint::Unrestricted,
         functions,
-    })?;
+    ))?;
 
     Ok(InitCallbackResult::Pass)
 }

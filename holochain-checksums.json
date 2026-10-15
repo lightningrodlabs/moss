@@ -1,31 +1,31 @@
 {
-  "version": "0.7.0",
+  "version": "0.7.1",
   "hc": {
-    "aarch64-apple-darwin": "4b5b11c85954caf918ed902eb52caad25ba4f34a47328771e138f5d247aeef50",
-    "aarch64-unknown-linux-gnu": "fca45395c716a79bfb87e1b7d6ebe695e8fd5fb79348224c6fb24be354341761",
-    "x86_64-apple-darwin": "8333ede23dd59a9f6f31aba06aac963cb25178a3dac25ec7257fa04fdad2d210",
-    "x86_64-pc-windows-msvc.exe": "643ed26e84a7ae72a454bd78b9427b50883fb1306406ba7b5fa4857c61c6b322",
-    "x86_64-unknown-linux-gnu": "f1eca56b97bc2261324e00e0e86a274f7dc8363f73264e697fd0c0216b2aac23"
+    "aarch64-apple-darwin": "dc5f1895c720b1bf3fa29bc0e41d421acc80fb956a5a6d82ba076bc16a793c4f",
+    "aarch64-unknown-linux-gnu": "0b3f605ca7acf71d876f10eacf59a08ebbe6b07c0b5c43928157f521052721c6",
+    "x86_64-apple-darwin": "db9da483333e52cc295819f1f15d64c56b39d94e17b3a31af5630717f24150e3",
+    "x86_64-pc-windows-msvc.exe": "7b00c9515e9de6af0f5ba0f2ae5b37f27090169de5fa42af0184913129873c42",
+    "x86_64-unknown-linux-gnu": "56eb7de100a77a1883fd606a30b33bc2c17bd5b3bd32935304d4f6e34cbff718"
   },
   "holochain": {
-    "aarch64-apple-darwin": "fa44e56402294221cad34933bfe12e079460aa22acf98723f5b4e68e3e33cc3b",
-    "aarch64-unknown-linux-gnu": "a01a6b0be4a6fa52276fb0aca94559a05457bbad495bdd01802208d3f3649e51",
-    "x86_64-apple-darwin": "53d48d0f92fdfb2d70cd302a3782df142ab324c023943319d2c33226a79dea0c",
-    "x86_64-pc-windows-msvc.exe": "5d9bd8cf28c45645158d56198cfec38d04ac4cf620ba89ca37db2f7c46d7b3d2",
-    "x86_64-unknown-linux-gnu": "ffa40a0c6fab5ce062c4af76328dfe2de143256ddf791a504d72bca698a9ba20"
+    "aarch64-apple-darwin": "5a2a4b1db5e2aa2cfa6b2b480c12633de92a20850852a2c58a97721a19771ad6",
+    "aarch64-unknown-linux-gnu": "dcf9ad7f90ae32b2a3dab6b6bae560760403c5bba94d7c02da608930c42cb2fa",
+    "x86_64-apple-darwin": "9fcbcb770ef7d60bd6c6a8ca94a4a715ffd24d8b4daf43fb1b76a162b0493a40",
+    "x86_64-pc-windows-msvc.exe": "59261119a3ad3e51cd33d996be3110d39a5c4d1cc7c34c173a28efec137bb5b1",
+    "x86_64-unknown-linux-gnu": "0c14700874349c8417c4bfebfe845e7ab036757442e4388e50dd622bb3c89974"
   },
   "kitsune2-bootstrap-srv": {
-    "aarch64-apple-darwin": "a5ada66e9663c8badb3a0d2b2ff3af4a667a21aab2438c8cc79f0833c26f602b",
-    "aarch64-unknown-linux-gnu": "e2127dfb7e0e5e8a8ce02c734e725dfa77714e3b867d9cbc7d2bb2f3a90d3dd4",
-    "x86_64-apple-darwin": "5cecf1325f41eea4edae94811ac206e7695ee5e9807a6ec58a8b4cddcc7245eb",
-    "x86_64-pc-windows-msvc.exe": "5c9c4b9d45f5045b517da877f0ba2237b2afc28e8f5a1f3ca659ef2d9cad1e6c",
-    "x86_64-unknown-linux-gnu": "ba5a61c981300c1854e33cec5a091bfb2f9137ea977a938685eef0afa809b7be"
+    "aarch64-apple-darwin": "968d1417097d6447e56a7bb8c09264062d576bd9f9818257fad05bbf00c5f944",
+    "aarch64-unknown-linux-gnu": "1cfa20a4a1b97881a301235d5f11ad64bae69a4d32703c7941765aec5ea95596",
+    "x86_64-apple-darwin": "43f40a34472b566164addbddd66469e6bcf2d1de6b84d007174f2aaf72875829",
+    "x86_64-pc-windows-msvc.exe": "c0d52cf421f71e3dd54465bcf561aac727777f40d043e7b1de968b46ce460216",
+    "x86_64-unknown-linux-gnu": "f080b3ee4f3d4e37a2d790eb3df9722b5b1a1924d9d6c730c05c64859273a9d5"
   },
   "lair-keystore": {
-    "aarch64-apple-darwin": "e8fcdf26c0b1a51e5ab93a82333b5db92f0a8a6effb8494fdbb0dc000856ded8",
-    "aarch64-unknown-linux-gnu": "efb5894d76ee8d58845445e1b6a3ff18d721345943e545457331825fb799b08c",
-    "x86_64-apple-darwin": "afcaefac4f93828e59566f185d7398b7d5d7afaa43ef4b95bd9c42f0b967d7b8",
-    "x86_64-pc-windows-msvc.exe": "2c1fded6eb7c6ec4b3d033c6a310d7c2cc916d6e0ac10c2f71047ebb6b623f6b",
-    "x86_64-unknown-linux-gnu": "7a77822ab5e0020d0f3c358030d4ccfa8c6c144407a5c075d302c7b0fcf670c1"
+    "aarch64-apple-darwin": "1e074d8587b8bc2125d9a379a443c27363b8e60955cad5faa8638d653dd19289",
+    "aarch64-unknown-linux-gnu": "69a96c3b06eec29a288f04ecf0210bb281697423a3ee10bc393ceea0d712c823",
+    "x86_64-apple-darwin": "34a40c1b4324801db1c028dafaf82ea3276c808971c6ad1830fcf445e6f35419",
+    "x86_64-pc-windows-msvc.exe": "16750b08e5ddd50a04f493142bc85b33cc6bfaf0ef7c7fe9cb215129787a923f",
+    "x86_64-unknown-linux-gnu": "87c7a02556d47d950f0d4284bfdb4e37737b0bc98afe038955817793606d669a"
   }
 }
