@@ -18,8 +18,8 @@
     "@holochain/client": "^0.21.1",
     "@holochain-open-dev/tryorama": "^0.21.0",
     "@holochain-open-dev/utils": "^0.701.0",
-    "@theweave/group-client": "^0.7.0-dev.0",
-    "@theweave/api": "^0.7.0-dev.0",
+    "@theweave/group-client": "^0.7.0-rc.1",
+    "@theweave/api": "^0.7.0-rc.1",
     "typescript": "^5.8.3",
     "vitest": "^0.28.4"
   },

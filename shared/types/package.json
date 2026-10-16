@@ -1,6 +1,6 @@
 {
   "name": "@theweave/moss-types",
-  "version": "0.7.0-dev.2",
+  "version": "0.7.0-rc.1",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
@@ -19,7 +19,7 @@
   "type": "module",
   "dependencies": {
     "@holochain/client": "^0.21.1",
-    "@theweave/api": "^0.7.0-dev.0",
+    "@theweave/api": "^0.7.0-rc.1",
     "@sinclair/typebox": "0.33.12"
   },
   "devDependencies": {

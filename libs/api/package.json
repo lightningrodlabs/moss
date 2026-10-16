@@ -1,6 +1,6 @@
 {
   "name": "@theweave/api",
-  "version": "0.7.0-dev.5",
+  "version": "0.7.0-rc.1",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
