@@ -1,0 +1,72 @@
+name: release-npm
+
+# Publishes the @theweave npm packages with trusted publishing (OIDC): no npm
+# token is stored in this repository. Each package's trusted publisher on
+# npmjs.com must name this repository and this workflow file (release-npm.yaml).
+#
+# Packages publish in dependency order and only when their version is not on
+# npm yet, so bumping one package's version and re-running publishes just that
+# package. Run it from the branch the release is cut from.
+on:
+  workflow_dispatch:
+    inputs:
+      dist_tag:
+        description: 'npm dist-tag: auto (prerelease -> next, release -> latest), or an explicit tag such as latest'
+        required: true
+        default: auto
+      dry_run:
+        description: 'Run npm publish --dry-run instead of publishing'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: release-npm
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-22.04
+    steps:
+      # The staleness check compares source commit times with release times.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm 11.5.1 or later.
+      - run: npm install -g npm@^11.10.0
+
+      - run: node --test scripts/publish-npm.test.mjs
+
+      - name: Install
+        run: yarn install --frozen-lockfile --network-timeout 600000
+
+      # The renderer imports the hrl_locator wasm, and the CLI tarball carries
+      # the group happ, so the CLI needs the zomes and the full app build.
+      - name: Build zomes
+        run: |
+          rustup target add wasm32-unknown-unknown
+          yarn build:zomes
+
+      - name: Build libraries and the CLI
+        run: |
+          yarn build:libs
+          yarn build:iframes
+          mkdir -p resources/default-apps
+          yarn fetch:group-happ
+          yarn build
+
+      - name: Publish
+        env:
+          DIST_TAG: ${{ inputs.dist_tag }}
+        run: >-
+          node scripts/publish-npm.mjs ${{ inputs.dry_run && '--dry-run' || '' }}
+          libs/api shared/types shared/utils shared/group-client libs/elements cli
