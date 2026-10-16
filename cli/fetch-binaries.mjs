@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
 import crypto from 'crypto';
-import { binaryUrlFor } from './binary-source.mjs';
+import { binaryFilenameFor, binaryUrlFor } from './binary-source.mjs';
 
 const mossConfigJSON = fs.readFileSync(path.join('dist', 'main', 'moss.config.json'));
 const mossConfig = JSON.parse(mossConfigJSON);
@@ -49,7 +49,7 @@ function downloadFile(binaryName, versionOverride = null) {
   const expectedSha256Hex = HOLOCHAIN_CHECKSUMS[binaryName][targetEnding];
   const version = versionOverride ?? mossConfig.holochain;
 
-  const binaryFilename = `${binaryName}-v${version}${process.platform === 'win32' ? '.exe' : ''}`;
+  const binaryFilename = binaryFilenameFor(HOLOCHAIN_CHECKSUMS, mossConfig, binaryName);
   const targetPath = path.join(binariesDir, binaryFilename);
   const url = binaryUrlFor(HOLOCHAIN_CHECKSUMS, binaryName, version, targetEnding);
 

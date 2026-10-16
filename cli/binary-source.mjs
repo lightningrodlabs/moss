@@ -23,3 +23,21 @@ export function binaryUrlFor(checksums, binaryName, version, targetEnding) {
   const { repo, tag } = binarySourceFor(checksums, binaryName, version);
   return `https://github.com/${repo}/releases/download/${tag}/${binaryName}-${targetEnding}`;
 }
+
+/**
+ * The filename a binary is saved under in `dist/main/resources/bins`.
+ *
+ * The app finds each binary by the name scripts/binary-names.mjs gives it: a
+ * binary with a `binarySources` entry is named after that entry's release tag,
+ * any other after its stock version. This mirrors holochainBinaryName there;
+ * the published cli package cannot import from the repository's scripts/.
+ */
+export function binaryFilenameFor(checksums, mossConfig, binaryName, platform = process.platform) {
+  const forkTag = checksums.binarySources?.[binaryName]?.binariesTag;
+  const stockVersion =
+    binaryName === 'kitsune2-bootstrap-srv'
+      ? (mossConfig.kitsune2BootstrapSrv ?? mossConfig.holochain)
+      : mossConfig.holochain;
+  const version = forkTag ? forkTag.replace(/^holochain-/, '') : stockVersion;
+  return `${binaryName}-v${version}${platform === 'win32' ? '.exe' : ''}`;
+}
