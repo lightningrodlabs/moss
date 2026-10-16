@@ -154,9 +154,11 @@ export class MossDangerZoneSettings extends LitElement {
                             ? msg('Joined')
                             : r.status === 'joined-no-profile'
                               ? msg('Joined (profile not yet synced)')
-                              : r.status === 'already-installed'
-                                ? msg('Already installed')
-                                : msg('Error')}
+                              : r.status === 'imported-disabled'
+                                ? msg('Imported (left disabled)')
+                                : r.status === 'already-installed'
+                                  ? msg('Already installed')
+                                  : msg('Error')}
                         ${r.error ? html` — <span style="color: red;">${r.error}</span>` : ''}
                       </div>
                     `,

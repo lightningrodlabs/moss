@@ -72,6 +72,7 @@ import {
   setLinkOpenHandlers,
   signZomeCall,
 } from './utils';
+import { exportedGroupDisabled, importGroupDisabled } from './groupsImport';
 import { createWalWindow } from './windows';
 import { AudioCaptureBackend, loadAudioCapture, probeAudioCapabilities } from './audioCapture';
 import { AudioSourceGrants } from './audioSourceGrants';
@@ -2043,8 +2044,16 @@ if (!RUNNING_WITH_COMMAND) {
       agentProfile: AgentProfile | undefined;
       description?: string;
       tools?: ToolExportEntry[];
+      /** The group was not running when exported; the import leaves it that way. */
+      disabled?: boolean;
     };
-    type ImportStatus = 'created' | 'joined' | 'joined-no-profile' | 'already-installed' | 'error';
+    type ImportStatus =
+      | 'created'
+      | 'joined'
+      | 'joined-no-profile'
+      | 'imported-disabled'
+      | 'already-installed'
+      | 'error';
     type ImportResult = { groupName: string | undefined; status: ImportStatus; error?: string };
 
     // Collect all groups data via zome calls (without writing to disk).
@@ -2197,13 +2206,23 @@ if (!RUNNING_WITH_COMMAND) {
           }
 
           return {
+
             appId,
+
             networkSeed,
+
             progenitor,
+
             groupProfile,
+
             agentProfile,
+
             description: groupDescription,
+
             tools,
+
+            disabled: exportedGroupDisabled(groupApp.status),
+
           };
         }),
       );
@@ -2290,6 +2309,11 @@ if (!RUNNING_WITH_COMMAND) {
               group: { type: 'provisioned', value: { modifiers: { properties } } },
             },
           });
+          if (importGroupDisabled(group)) {
+            results.push({ groupName: groupProfile?.name, status: 'imported-disabled' });
+            emitProgress(current, groupProfile?.name, 'done', { status: 'imported-disabled' });
+            continue;
+          }
           await enableAppAndInvalidate(appId);
 
           const token = await HOLOCHAIN_MANAGER!.getAppToken(appId);

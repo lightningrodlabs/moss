@@ -3331,6 +3331,9 @@ begint nu</target>
   <source>large-v3-turbo is nearly as accurate as large-v3 and several times faster. Try it before large-v3.</source>
   <target>large-v3-turbo is bijna even nauwkeurig als large-v3 en enkele keren sneller. Probeer het vóór large-v3.</target>
 </trans-unit>
+<trans-unit id="s6460533be9607473">
+  <source>Imported (left disabled)</source>
+<target>Geïmporteerd (uitgeschakeld gelaten)</target></trans-unit>
 </body>
 </file>
 </xliff>

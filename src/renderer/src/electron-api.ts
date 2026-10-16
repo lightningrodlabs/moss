@@ -448,7 +448,7 @@ export type ImportGroupsProgress = {
   groupName: string | undefined;
   step: 'installing' | 'waiting-for-sync' | 'setting-profile' | 'installing-tool' | 'done';
   secondsLeft?: number;
-  status?: 'created' | 'joined' | 'joined-no-profile' | 'already-installed' | 'error';
+  status?: 'created' | 'joined' | 'joined-no-profile' | 'imported-disabled' | 'already-installed' | 'error';
   error?: string;
   toolName?: string;
   toolIndex?: number;
@@ -457,7 +457,7 @@ export type ImportGroupsProgress = {
 
 export type GroupImportResult = Array<{
   groupName: string | undefined;
-  status: 'created' | 'joined' | 'joined-no-profile' | 'already-installed' | 'error';
+  status: 'created' | 'joined' | 'joined-no-profile' | 'imported-disabled' | 'already-installed' | 'error';
   error?: string;
 }>;
 

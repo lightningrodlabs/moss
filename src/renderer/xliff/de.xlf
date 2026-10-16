@@ -3331,6 +3331,9 @@ beginnt jetzt</target>
   <source>large-v3-turbo is nearly as accurate as large-v3 and several times faster. Try it before large-v3.</source>
   <target>large-v3-turbo ist fast so genau wie large-v3 und um ein Mehrfaches schneller. Probiere es vor large-v3 aus.</target>
 </trans-unit>
+<trans-unit id="s6460533be9607473">
+  <source>Imported (left disabled)</source>
+<target>Importiert (bleibt deaktiviert)</target></trans-unit>
 </body>
 </file>
 </xliff>
