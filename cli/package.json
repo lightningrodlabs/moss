@@ -16,11 +16,11 @@
     "prepublishOnly": "node ../scripts/check-cli-dist.mjs && node ../scripts/publish-staleness.mjs"
   },
   "dependencies": {
-    "@holochain/client": "^0.21.0",
-    "@holochain-open-dev/elements": "^0.700.0",
-    "@holochain-open-dev/profiles": "^0.701.0",
-    "@holochain-open-dev/stores": "^0.700.0",
-    "@holochain-open-dev/utils": "^0.700.0",
+    "@holochain/client": "^0.21.1",
+    "@holochain-open-dev/elements": "^0.701.0",
+    "@holochain-open-dev/profiles": "^0.702.0",
+    "@holochain-open-dev/stores": "^0.701.0",
+    "@holochain-open-dev/utils": "^0.701.0",
     "@lightningrodlabs/we-rust-utils": "^0.700.1",
     "@electron-toolkit/preload": "^2.0.0",
     "@electron-toolkit/utils": "^2.0.0",
