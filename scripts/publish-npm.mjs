@@ -13,7 +13,7 @@
 // and anything else goes to `latest`.
 //
 // After each publish the script waits until the registry serves the new
-// version. Each package's prepublishOnly hook (scripts/publish-staleness.mjs)
+// version, which can take several minutes while npm processes the package. Each package's prepublishOnly hook (scripts/publish-staleness.mjs)
 // reads the registry to check the siblings it depends on, so the next package
 // must not start before the previous one is visible.
 
@@ -82,6 +82,15 @@ export function publishOrder(packages) {
   return ordered;
 }
 
+/**
+ * Whether npm refused a publish because the version already exists. A version
+ * that npm is still processing is invisible to `npm view` but blocks a second
+ * publish, so a rerun sees this refusal and must treat it as done.
+ */
+export function isAlreadyPublished(stderr) {
+  return /cannot publish over the previously published version/i.test(stderr);
+}
+
 function npmView(spec, field) {
   try {
     const out = execFileSync('npm', ['view', spec, field, '--json'], {
@@ -96,11 +105,23 @@ function npmView(spec, field) {
 }
 
 function waitUntilVisible(name, version) {
-  for (let attempt = 0; attempt < 24; attempt++) {
+  for (let attempt = 0; attempt < 90; attempt++) {
     if (npmView(`${name}@${version}`, 'version')) return;
-    execFileSync('sleep', ['5']);
+    execFileSync('sleep', ['10']);
   }
-  throw new Error(`${name}@${version} did not appear on the registry within two minutes`);
+  throw new Error(`${name}@${version} did not appear on the registry within fifteen minutes`);
+}
+
+function publish(dir, args) {
+  try {
+    execFileSync('npm', args, { cwd: dir, stdio: ['ignore', 'inherit', 'pipe'], encoding: 'utf8' });
+    return 'published';
+  } catch (e) {
+    const stderr = String(e.stderr ?? '');
+    process.stderr.write(stderr);
+    if (isAlreadyPublished(stderr)) return 'already-published';
+    throw e;
+  }
 }
 
 function main(argv) {
@@ -128,7 +149,10 @@ function main(argv) {
     console.log(`publish ${name}@${version} --tag ${tag}`);
     const args = ['publish', '--access', 'public', '--tag', tag];
     if (dryRun) args.push('--dry-run');
-    execFileSync('npm', args, { cwd: dir, stdio: 'inherit' });
+    const outcome = publish(dir, args);
+    if (outcome === 'already-published') {
+      console.log(`${name}@${version}: npm already has this version, still processing`);
+    }
     if (!dryRun) waitUntilVisible(name, version);
   }
 }

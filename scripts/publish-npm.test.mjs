@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-const { distTagFor, compareReleases, resolveDistTag, publishOrder } = await import(
+const { distTagFor, compareReleases, resolveDistTag, publishOrder, isAlreadyPublished } = await import(
   './publish-npm.mjs'
 );
 
@@ -63,4 +63,15 @@ test('rejects a dependency cycle among the packages', () => {
 test('a release replaces a prerelease that holds latest', () => {
   // Moss has published its dev builds under latest, e.g. 0.7.0-dev.5.
   assert.equal(distTagFor('0.6.9', '0.7.0-dev.5'), 'latest');
+});
+
+test('a refusal to publish over an existing version means it is already published', () => {
+  const stderr =
+    'npm error code E403\nnpm error 403 403 Forbidden - PUT https://registry.npmjs.org/@theweave%2fgroup-client - You cannot publish over the previously published versions: 0.7.0-rc.1.';
+  assert.equal(isAlreadyPublished(stderr), true);
+});
+
+test('any other publish failure is not mistaken for an earlier publish', () => {
+  assert.equal(isAlreadyPublished('npm error code E422\nnpm error 422 Unprocessable Entity'), false);
+  assert.equal(isAlreadyPublished(''), false);
 });
