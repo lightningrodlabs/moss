@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { breakingVersion } from './utils';
+import { breakingVersion } from './breakingVersion';
 
 /**
  * The profile folder and the default network seed derive from this value, so

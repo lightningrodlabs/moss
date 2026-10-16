@@ -1,7 +1,6 @@
 import { BrowserWindow, app, net, shell } from 'electron';
 import fs from 'fs';
 import mime from 'mime';
-import semver from 'semver';
 import os from 'os';
 import { breakingAppVersion } from './filesystem';
 import {
@@ -159,26 +158,7 @@ export function formatUpdaterArg(arg: unknown): string {
   }
 }
 
-export function breakingVersion(version: string): string {
-  if (!semver.valid(version)) {
-    throw new Error('App has an invalid version number.');
-  }
-  const prerelease = semver.prerelease(version);
-  if (prerelease) {
-    return `${semver.major(version)}.${semver.minor(version)}.${semver.patch(version)}-${prerelease[0]}`;
-  }
-  switch (semver.major(version)) {
-    case 0:
-      switch (semver.minor(version)) {
-        case 0:
-          return `0.0.${semver.patch(version)}`;
-        default:
-          return `0.${semver.minor(version)}.x`;
-      }
-    default:
-      return `${semver.major(version)}.x.x`;
-  }
-}
+export { breakingVersion } from './breakingVersion';
 
 export function defaultAppNetworkSeed(devConfig?: WeaveDevConfig): string {
   return devConfig || !app.isPackaged
