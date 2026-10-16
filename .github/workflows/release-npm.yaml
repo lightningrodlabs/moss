@@ -67,6 +67,9 @@ jobs:
       - name: Publish
         env:
           DIST_TAG: ${{ inputs.dist_tag }}
+          # A dry run publishes nothing, so each package's staleness check
+          # would find its freshly versioned siblings missing from npm.
+          PUBLISH_ALLOW_STALE_DEPS: ${{ inputs.dry_run && '1' || '' }}
         run: >-
           node scripts/publish-npm.mjs ${{ inputs.dry_run && '--dry-run' || '' }}
           libs/api shared/types shared/utils shared/group-client libs/elements cli
