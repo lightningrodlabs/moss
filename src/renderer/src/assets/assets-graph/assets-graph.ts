@@ -9,7 +9,7 @@ import { MossStore } from '../../moss-store';
 import { toPromise } from '@holochain-open-dev/stores';
 import { AppInfo, DnaHashB64, encodeHashToBase64 } from '@holochain/client';
 import { AppletId, AssetInfo, deStringifyWal, stringifyWal } from '@theweave/api';
-import { appIdFromAppletHash, getCellId } from '@theweave/utils';
+import { appIdFromAppletHash, getCellId, isCellNotRunningError } from '@theweave/utils';
 import { mossStyles } from '../../shared-styles';
 
 @customElement('assets-graph')
@@ -79,7 +79,7 @@ export class AssetsGraph extends LitElement {
             try {
               appInfo = await appletClient.appInfo();
             } catch (e: any) {
-              if (e.toString && !e.toString().includes('CellDisabled')) {
+              if (!isCellNotRunningError(e)) {
                 console.warn('Failed to get AppInfo for applet', appletId, ':', e);
               }
             }

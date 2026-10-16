@@ -10,6 +10,7 @@ import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
 import { WAL, weaveUrlFromWal } from '@theweave/api';
+import { isCellNotRunningError } from '@theweave/utils';
 
 import { mossStyles } from '../../shared-styles.js';
 import { mossStoreContext } from '../../context.js';
@@ -118,7 +119,7 @@ export class WalElement extends LitElement {
       case 'error':
         const error = this.assetInfo.value.error;
         let appletDisabled = false;
-        if (error.toString().includes('CellDisabled')) {
+        if (isCellNotRunningError(error)) {
           appletDisabled = true;
         } else {
           console.error('Failed to get asset info for WAL element: ', this.assetInfo.value.error);

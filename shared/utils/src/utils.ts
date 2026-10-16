@@ -92,6 +92,17 @@ export function getLatestVersionFromToolInfo(
     .sort((version_a, version_b) => compareVersions(version_b.version, version_a.version))[0];
 }
 
+/**
+ * Whether a conductor error says the cell for a call is not running, which is
+ * what a zome call against a disabled applet returns. Holochain 0.7.1 reports
+ * this as `CellNotRunning`; 0.7.0 reported it as `CellDisabled`.
+ */
+export function isCellNotRunningError(error: unknown): boolean {
+  if (error === undefined || error === null) return false;
+  const text = typeof error === 'string' ? error : String(error);
+  return text.includes('CellNotRunning') || text.includes('CellDisabled');
+}
+
 export function getAppStatus(app: AppInfo): string {
   if (isAppRunning(app)) {
     return 'ENABLED';
