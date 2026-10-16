@@ -14,9 +14,11 @@ export function exportedGroupDisabled(status: AppStatus): boolean {
 /**
  * Whether an imported group is to be installed without being enabled.
  *
- * Exports written before the `disabled` flag existed carry no state, but an
- * enabled group always yields at least its group profile to the exporter, so
- * an entry with neither profile came from a group that was not running.
+ * Exports written before the `disabled` flag existed carry no state. For
+ * those, my own profile decides: a group I never set a profile in was not one
+ * I was active in, and enabling it would only produce a nameless group that
+ * waits for peers and asks for a profile. The group profile alone proves
+ * nothing, since any enabled group answers that first exporter call.
  */
 export function importGroupDisabled(entry: {
   disabled?: boolean;
@@ -24,5 +26,5 @@ export function importGroupDisabled(entry: {
   agentProfile: unknown | undefined;
 }): boolean {
   if (entry.disabled !== undefined) return entry.disabled;
-  return !entry.groupProfile && !entry.agentProfile;
+  return !entry.agentProfile;
 }

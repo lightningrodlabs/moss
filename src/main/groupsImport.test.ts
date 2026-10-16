@@ -27,12 +27,15 @@ describe('importGroupDisabled', () => {
     expect(importGroupDisabled({ disabled: false, groupProfile: undefined, agentProfile: undefined })).toBe(false);
   });
 
-  it('treats an older export entry with no profiles at all as a disabled group', () => {
+  it('leaves an older export entry without my profile disabled', () => {
+    // An enabled group answers the exporter's first call, so the group profile
+    // alone says nothing about whether I was active there; my own profile does.
+    expect(importGroupDisabled({ groupProfile: profile, agentProfile: undefined })).toBe(true);
     expect(importGroupDisabled({ groupProfile: undefined, agentProfile: undefined })).toBe(true);
   });
 
-  it('enables an older export entry that carries any profile', () => {
-    expect(importGroupDisabled({ groupProfile: profile, agentProfile: undefined })).toBe(false);
+  it('enables an older export entry that carries my profile', () => {
+    expect(importGroupDisabled({ groupProfile: profile, agentProfile: me })).toBe(false);
     expect(importGroupDisabled({ groupProfile: undefined, agentProfile: me })).toBe(false);
   });
 });

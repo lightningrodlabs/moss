@@ -1189,6 +1189,9 @@ export class MossStore {
     await this.adminWebsocket.disableApp({
       installed_app_id: appToDisable.installed_app_id,
     });
+    silentExportGroupsData().catch((e) =>
+      console.warn('Auto-export after changing group state failed:', e),
+    );
     // Remove applet iframes
     const applets = await toPromise(groupStore.allMyRunningApplets);
 
@@ -1228,6 +1231,9 @@ export class MossStore {
     });
 
     await this.disabledGroups.reload();
+    silentExportGroupsData().catch((e) =>
+      console.warn('Auto-export after changing group state failed:', e),
+    );
     await this.groupStores.reload();
 
     const groupStore = await this.groupStore(groupDnaHash);
