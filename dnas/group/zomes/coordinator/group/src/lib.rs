@@ -12,13 +12,11 @@ use hdk::prelude::*;
 pub fn init() -> ExternResult<InitCallbackResult> {
     let mut functions = HashSet::new();
     functions.insert((zome_info()?.name, FunctionName("recv_remote_signal".into())));
-    let cap_grant_entry: CapGrantEntry = CapGrantEntry::new(
+    create_cap_grant(CapGrant::new_zome_call_grant(
         String::from("arbitrary remote signals"), // A string by which to later query for saved grants.
-        ().into(), // Unrestricted access means any external agent can call the extern
+        GrantConstraint::Unrestricted, // any external agent can call the extern
         GrantedFunctions::Listed(functions),
-    );
-
-    create_cap_grant(cap_grant_entry)?;
+    ))?;
     Ok(InitCallbackResult::Pass)
 }
 
