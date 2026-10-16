@@ -202,7 +202,7 @@ export class InstallableTools extends LitElement {
             );
           }}
           class=""
-          style="margin:auto; width: 263px; height: 32px; margin-top: 20px; margin-bottom: 20px; position:absolute; bottom:30px;left: -22px; right: 0px;"
+          style="margin:auto; width: 263px; min-height: 32px; margin-top: 20px; margin-bottom: 20px; position:absolute; bottom:30px;left: -22px; right: 0px; background: #ffffff; border-radius: 8px;"
           id="select-group"
         ></select-group>
       </div>
