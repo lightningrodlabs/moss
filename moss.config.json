@@ -2,7 +2,7 @@
   "holochain": "0.7.1",
   "groupHapp": {
     "version": "0.16.0-rc.1",
-    "sha256": "PENDING: set from the group-happ-v0.16.0-rc.1 release asset"
+    "sha256": "636a7b752256e6b6aa4cd058962b609cbda3843d047bdc6533bac045a5e24a2c"
   },
   "whisperServer": "1.8.4",
   "binariesAppendix": "moss-0.16",
