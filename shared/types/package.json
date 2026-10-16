@@ -1,6 +1,11 @@
 {
   "name": "@theweave/moss-types",
   "version": "0.7.0-rc.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lightningrodlabs/moss.git",
+    "directory": "shared/types"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",

@@ -1,13 +1,14 @@
 {
   "name": "@theweave/elements",
   "version": "0.7.0-rc.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lightningrodlabs/moss.git",
+    "directory": "libs/elements"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/lightningrodlabs/moss"
-  },
   "exports": {
     ".": "./dist/index.js",
     "./dist/*": "./dist/*"
