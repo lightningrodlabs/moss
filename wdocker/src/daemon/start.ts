@@ -22,6 +22,7 @@ import {
 import { nanoid } from 'nanoid';
 import { MOSS_CONFIG, HOLOCHAIN_CHECKSUMS } from '../const.js';
 import { downloadFile } from '../utils.js';
+import { holochainBinaryUrl } from '../binarySource.js';
 import psList from 'ps-list';
 import path from 'path';
 
@@ -306,10 +307,8 @@ export async function fetchHolochainBinary(dstPath: string): Promise<void> {
       throw new Error(`Got unexpected OS platform: ${process.platform}`);
   }
 
-  const holochainBinaryRemoteFilename = `holochain-${targetEnding}`;
-  const holochainBinaryUrl = `https://github.com/holochain/holochain/releases/download/holochain-${MOSS_CONFIG.holochain}/${holochainBinaryRemoteFilename}`;
   return downloadFile(
-    holochainBinaryUrl,
+    holochainBinaryUrl(HOLOCHAIN_CHECKSUMS, MOSS_CONFIG, targetEnding),
     dstPath,
     HOLOCHAIN_CHECKSUMS.holochain[targetEnding],
     true,
