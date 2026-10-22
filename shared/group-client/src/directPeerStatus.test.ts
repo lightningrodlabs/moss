@@ -45,6 +45,14 @@ describe('encode/decode', () => {
     ).toBeUndefined();
     expect(decodePeerStatus(encode(5))).toBeUndefined();
   });
+  it('accepts a timezone offset of at most 14 hours in whole minutes', () => {
+    const ping = (tz_utc_offset: number) =>
+      decodePeerStatus(encode({ type: 'Ping', status: 'online', tz_utc_offset }));
+    expect(ping(840)?.tz_utc_offset).toBe(840);
+    expect(ping(-840)?.tz_utc_offset).toBe(-840);
+    expect(ping(841)).toBeUndefined();
+    expect(ping(1.5)).toBeUndefined();
+  });
 });
 
 describe('hasPeerStatusGrant', () => {

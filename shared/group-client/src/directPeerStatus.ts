@@ -22,6 +22,11 @@ export function encodePeerStatus(p: DirectPeerStatusPayload): Uint8Array {
   return encode(p);
 }
 
+/** Real UTC offsets are whole minutes within 14 hours either side. */
+function isValidUtcOffset(v: unknown): v is number {
+  return typeof v === 'number' && Number.isInteger(v) && Math.abs(v) <= 840;
+}
+
 /** Returns undefined unless the bytes hold a well-formed peer status payload. */
 export function decodePeerStatus(bytes: Uint8Array): DirectPeerStatusPayload | undefined {
   let value: unknown;
@@ -34,9 +39,10 @@ export function decodePeerStatus(bytes: Uint8Array): DirectPeerStatusPayload | u
   const v = value as Record<string, unknown>;
   if (v.type !== 'Ping' && v.type !== 'Pong') return undefined;
   if (typeof v.status !== 'string') return undefined;
-  if (v.tz_utc_offset !== undefined && typeof v.tz_utc_offset !== 'number') return undefined;
+  const tz = v.tz_utc_offset;
+  if (tz !== undefined && !isValidUtcOffset(tz)) return undefined;
   const payload: DirectPeerStatusPayload = { type: v.type, status: v.status };
-  if (v.tz_utc_offset !== undefined) payload.tz_utc_offset = v.tz_utc_offset;
+  if (tz !== undefined) payload.tz_utc_offset = tz;
   return payload;
 }
 
