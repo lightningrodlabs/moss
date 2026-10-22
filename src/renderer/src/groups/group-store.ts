@@ -27,6 +27,7 @@ import {
   AgentPubKeyB64,
   AppAuthenticationToken,
   AppWebsocket,
+  CellId,
   CellType,
   DnaHash,
   EntryHash,
@@ -69,9 +70,10 @@ import {
   AssetRelationWithTags,
   decodeAssetRelationWALs,
   GroupRemoteSignal,
-  PeerStatusClient,
+  DirectPeerStatus,
+  PEER_STATUS_GRANT_TAG,
+  hasPeerStatusGrant,
   SignalPayloadAssets,
-  SignalPayloadPeerStatus,
   walDecodeContext,
 } from '@theweave/group-client';
 import { FoyerStore } from './foyer.js';
@@ -80,7 +82,9 @@ import { liveAgentIdsFromAgentInfo } from './agent-info.js';
 import {
   appIdFromAppletHash,
   deriveToolCompatibilityId,
+  retryInitTimeout,
   toolCompatibilityIdFromDistInfoString,
+  zomeCallGateOf,
 } from '@theweave/utils';
 import { GroupToolTransferTransport } from './tool-transfer/group-transport';
 import { requestToolFromPeers, RequesterEvent } from './tool-transfer/requester';
@@ -123,7 +127,7 @@ export class GroupStore {
   groupClient: GroupClient;
   toolTransfer: GroupToolTransferTransport;
 
-  peerStatusClient: PeerStatusClient;
+  private directPeerStatus: DirectPeerStatus;
 
   customViewsStore: CustomViewsStore;
 
@@ -211,7 +215,7 @@ export class GroupStore {
     this.groupClient = new GroupClient(appWebsocket, authenticationToken, 'group');
     this.toolTransfer = new GroupToolTransferTransport(this.groupClient);
 
-    this.peerStatusClient = new PeerStatusClient(appWebsocket, 'group');
+    this.directPeerStatus = new DirectPeerStatus(appWebsocket, groupDnaHash);
     this.profilesStore = new ProfilesStore(new ProfilesClient(appWebsocket, 'group'));
     this.customViewsStore = new CustomViewsStore(new CustomViewsClient(appWebsocket, 'group'));
 
@@ -240,44 +244,42 @@ export class GroupStore {
     // Track per-agent previous status to only log transitions
     const _prevAgentStatus: Record<string, string> = {};
 
-    this._peerStatusSignalUnsub = this.peerStatusClient.onSignal(
-      async (signal: SignalPayloadPeerStatus) => {
-        const agentB64 = encodeHashToBase64(signal.from_agent);
+    this._peerStatusSignalUnsub = this.directPeerStatus.onSignal(async (from, payload) => {
+      const agentB64 = encodeHashToBase64(from);
 
-        // Ignore signals from hidden agents entirely
-        if (this.isAgentHidden(agentB64)) {
-          onlineDebugLog(
-            `[OnlineDebug][${groupIdShort}] Ignoring ${signal.type} from hidden agent ${agentB64.slice(0, 8)} (instance=${this._instanceId})`,
-          );
-          return;
-        }
+      // Ignore signals from hidden agents entirely
+      if (this.isAgentHidden(agentB64)) {
+        onlineDebugLog(
+          `[OnlineDebug][${groupIdShort}] Ignoring ${payload.type} from hidden agent ${agentB64.slice(0, 8)} (instance=${this._instanceId})`,
+        );
+        return;
+      }
 
-        if (signal.type == 'Pong') {
-          const prev = _prevAgentStatus[agentB64];
-          onlineDebugLog(
-            `[OnlineDebug][${groupIdShort}] Pong from ${agentB64.slice(0, 8)}: ${prev ?? 'unknown'} -> ${signal.status} (instance=${this._instanceId})`,
-          );
-          _prevAgentStatus[agentB64] = signal.status;
-          this.updatePeerStatus(signal.from_agent, signal.status, signal.tz_utc_offset);
-        }
-        if (signal.type == 'Ping') {
-          const prev = _prevAgentStatus[agentB64];
-          onlineDebugLog(
-            `[OnlineDebug][${groupIdShort}] Ping from ${agentB64.slice(0, 8)}: ${prev ?? 'unknown'} -> ${signal.status} (instance=${this._instanceId})`,
-          );
-          _prevAgentStatus[agentB64] = signal.status;
-          const now = Date.now();
-          const status =
-            now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
-          this.updatePeerStatus(signal.from_agent, signal.status, signal.tz_utc_offset);
-          await this.peerStatusClient.pong(
-            [signal.from_agent],
-            status,
-            this.mossStore.tzUtcOffset(),
-          );
-        }
-      },
-    );
+      if (payload.type == 'Pong') {
+        const prev = _prevAgentStatus[agentB64];
+        onlineDebugLog(
+          `[OnlineDebug][${groupIdShort}] Pong from ${agentB64.slice(0, 8)}: ${prev ?? 'unknown'} -> ${payload.status} (instance=${this._instanceId})`,
+        );
+        _prevAgentStatus[agentB64] = payload.status;
+        this.updatePeerStatus(from, payload.status, payload.tz_utc_offset);
+      }
+      if (payload.type == 'Ping') {
+        const prev = _prevAgentStatus[agentB64];
+        onlineDebugLog(
+          `[OnlineDebug][${groupIdShort}] Ping from ${agentB64.slice(0, 8)}: ${prev ?? 'unknown'} -> ${payload.status} (instance=${this._instanceId})`,
+        );
+        _prevAgentStatus[agentB64] = payload.status;
+        const now = Date.now();
+        const status =
+          now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
+        this.updatePeerStatus(from, payload.status, payload.tz_utc_offset);
+        await this.directPeerStatus.send([from], {
+          type: 'Pong',
+          status,
+          tz_utc_offset: this.mossStore.tzUtcOffset(),
+        });
+      }
+    });
 
     this.allProfiles = pipe(this.profilesStore.agentsWithProfile, (agents) => {
       return this.agentsProfiles(agents);
@@ -381,6 +383,9 @@ export class GroupStore {
     );
 
     this.constructed = true;
+
+    // The grant request runs the cell's init, so it is also the one deliberate warm-up of the group cell.
+    this.ensurePeerStatusGrant().catch((e) => console.warn('Peer status grant failed: ', e));
   }
 
   /**
@@ -1267,6 +1272,29 @@ export class GroupStore {
   }
 
   /**
+   * Lets peers send us direct-signal peer status. The grant is committed once per cell;
+   * an existing grant is detected so restarts do not add duplicates.
+   */
+  private async ensurePeerStatusGrant(): Promise<void> {
+    const cellId: CellId = [this.groupDnaHash, this.groupClient.myPubKey];
+    const { installed_app_id } = await this.appWebsocket.appInfo();
+    const grants = await this.mossStore.adminWebsocket.listCapabilityGrants({
+      installed_app_id,
+      include_revoked: false,
+    });
+    if (hasPeerStatusGrant(grants, cellId, PEER_STATUS_GRANT_TAG)) return;
+    await zomeCallGateOf(this.appWebsocket).run('group', () =>
+      retryInitTimeout(() =>
+        this.appWebsocket.grantDirectSignalCapability({
+          cell_id: cellId,
+          tag: PEER_STATUS_GRANT_TAG,
+          constraint: { type: 'unrestricted' },
+        }),
+      ),
+    );
+  }
+
+  /**
    * Pings all agents discovered via agentInfo.
    * Self is already excluded from the knownAgents set by pollAgentInfo().
    * Since agentInfo only returns agents in the network, we ping all of them
@@ -1282,7 +1310,11 @@ export class GroupStore {
     const knownAgents = knownAgentsB64.map((b64) => decodeHashFromBase64(b64));
 
     return knownAgents.length > 0
-      ? this.peerStatusClient.ping(knownAgents, myStatus, tzOffset)
+      ? this.directPeerStatus.send(knownAgents, {
+          type: 'Ping',
+          status: myStatus,
+          tz_utc_offset: tzOffset,
+        })
       : Promise.resolve();
   }
 
