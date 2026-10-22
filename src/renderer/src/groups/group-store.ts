@@ -79,6 +79,8 @@ import {
 import { FoyerStore } from './foyer.js';
 import { partitionAppletsByStatus } from './applet-status.js';
 import { liveAgentIdsFromAgentInfo } from './agent-info.js';
+import { TimerBag } from './sync-final-sequence.js';
+import { planPingBatches } from './ping-schedule.js';
 import {
   appIdFromAppletHash,
   deriveToolCompatibilityId,
@@ -199,6 +201,10 @@ export class GroupStore {
   private _pingIntervalHandle: SafeIntervalHandle | undefined;
   private _agentInfoIntervalHandle: SafeIntervalHandle | undefined;
   private _assetRelationsIntervalHandle: SafeIntervalHandle | undefined;
+  private _pingTimers = new TimerBag();
+  private _stopped = false;
+  private _peerStatusGrantDone = false;
+  private _peerStatusGrantInFlight: Promise<void> | undefined;
 
   // Signal handler unsubscribers for cleanup
   private _peerStatusSignalUnsub: (() => void) | undefined;
@@ -396,6 +402,8 @@ export class GroupStore {
     onlineDebugLog(
       `[OnlineDebug][${this._groupIdShort}] GroupStore cleanup called (instance=${this._instanceId})`,
     );
+    this._stopped = true;
+    this._pingTimers.clear();
     if (this._pingIntervalHandle) {
       this._pingIntervalHandle.cancel();
       this._pingIntervalHandle = undefined;
@@ -1174,8 +1182,12 @@ export class GroupStore {
         }
       }
 
-      const prevSize = get(this._knownAgents).size;
+      const prevKnown = get(this._knownAgents);
+      const prevSize = prevKnown.size;
+      const newcomers = [...knownAgents].filter((b64) => !prevKnown.has(b64));
       this._knownAgents.set(knownAgents);
+      // A person appears as soon as the network knows them instead of up to one cycle later.
+      if (newcomers.length > 0) this.sendPingsPaced(newcomers.map((b64) => decodeHashFromBase64(b64)));
       const currentOnlineCount = get(this.onlinePeersCount);
       onlineDebugLog(
         `[OnlineDebug][${this._groupIdShort}] pollAgentInfo: knownAgents ${prevSize} -> ${knownAgents.size}, onlineCount=${currentOnlineCount} (instance=${this._instanceId})`,
@@ -1268,6 +1280,11 @@ export class GroupStore {
     onlineDebugLog(
       `[OnlineDebug][${this._groupIdShort}] pingClean: markedOffline=${markedOfflineCount}, pinging ${knownAgentsCount} known agents (instance=${this._instanceId})`,
     );
+    // A direct signal from a peer is dropped until our grant exists, so a failed first attempt
+    // must not leave this agent invisible for the whole session.
+    if (!this._peerStatusGrantDone && !this._peerStatusGrantInFlight) {
+      this.ensurePeerStatusGrant().catch((e) => console.warn('Peer status grant failed: ', e));
+    }
     await this.pingAgents();
   }
 
@@ -1275,14 +1292,26 @@ export class GroupStore {
    * Lets peers send us direct-signal peer status. The grant is committed once per cell;
    * an existing grant is detected so restarts do not add duplicates.
    */
-  private async ensurePeerStatusGrant(): Promise<void> {
+  private ensurePeerStatusGrant(): Promise<void> {
+    if (this._peerStatusGrantInFlight) return this._peerStatusGrantInFlight;
+    const attempt = this.commitPeerStatusGrant().finally(() => {
+      this._peerStatusGrantInFlight = undefined;
+    });
+    this._peerStatusGrantInFlight = attempt;
+    return attempt;
+  }
+
+  private async commitPeerStatusGrant(): Promise<void> {
     const cellId: CellId = [this.groupDnaHash, this.groupClient.myPubKey];
     const { installed_app_id } = await this.appWebsocket.appInfo();
     const grants = await this.mossStore.adminWebsocket.listCapabilityGrants({
       installed_app_id,
       include_revoked: false,
     });
-    if (hasPeerStatusGrant(grants, cellId, PEER_STATUS_GRANT_TAG)) return;
+    if (hasPeerStatusGrant(grants, cellId, PEER_STATUS_GRANT_TAG)) {
+      this._peerStatusGrantDone = true;
+      return;
+    }
     await zomeCallGateOf(this.appWebsocket).run('group', () =>
       retryInitTimeout(() =>
         this.appWebsocket.grantDirectSignalCapability({
@@ -1292,6 +1321,7 @@ export class GroupStore {
         }),
       ),
     );
+    this._peerStatusGrantDone = true;
   }
 
   /**
@@ -1301,21 +1331,28 @@ export class GroupStore {
    * to determine their actual online/offline status.
    */
   async pingAgents(): Promise<void> {
-    const now = Date.now();
-    const myStatus = now - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
-    const tzOffset = this.mossStore.tzUtcOffset();
+    // A new cycle replaces any batches still pending from the last one.
+    this._pingTimers.clear();
+    const knownAgents = Array.from(get(this._knownAgents)).map((b64) => decodeHashFromBase64(b64));
+    this.sendPingsPaced(knownAgents);
+  }
 
-    // Get agents that Holochain knows about in the network (self already excluded)
-    const knownAgentsB64 = Array.from(get(this._knownAgents));
-    const knownAgents = knownAgentsB64.map((b64) => decodeHashFromBase64(b64));
-
-    return knownAgents.length > 0
-      ? this.directPeerStatus.send(knownAgents, {
-          type: 'Ping',
-          status: myStatus,
-          tz_utc_offset: tzOffset,
-        })
-      : Promise.resolve();
+  /**
+   * Sends a Ping to every given agent. The target set and cadence are unchanged; only the burst
+   * is spread across the cycle, so a large group does not land on the conductor at once.
+   */
+  private sendPingsPaced(agents: AgentPubKey[]): void {
+    if (this._stopped) return;
+    const status = Date.now() - this.mossStore.myLatestActivity > IDLE_THRESHOLD ? 'inactive' : 'online';
+    const tz_utc_offset = this.mossStore.tzUtcOffset();
+    for (const batch of planPingBatches(agents)) {
+      const send = () =>
+        this.directPeerStatus
+          .send(batch.agents, { type: 'Ping', status, tz_utc_offset })
+          .catch((e) => console.warn('Peer status ping failed: ', e));
+      if (batch.delayMs === 0) void send();
+      else this._pingTimers.set(() => void send(), batch.delayMs);
+    }
   }
 
   /**
