@@ -5,6 +5,8 @@ import {
   RoleNameCallZomeRequest,
 } from '@holochain/client';
 
+import { CellCallGate, instrumentZomeCallGate } from './zome-call-gate.js';
+
 export interface ZomeCallTiming {
   fnName: string;
   durationMs: number;
@@ -25,6 +27,7 @@ export async function createAppWebsocket(
 ): Promise<AppWebsocket> {
   const appWs = await AppWebsocket.connect(opts);
   applyStickyAuthToken(appWs);
+  instrumentZomeCallGate(appWs, new CellCallGate());
   return appWs;
 }
 
@@ -71,13 +74,13 @@ export function applyStickyAuthToken(appWs: AppWebsocket): void {
  * and the applet iframe.
  */
 export function instrumentZomeCallLogging(appWs: AppWebsocket, logger: ZomeCallLogger): void {
-  const callZomePure = AppWebsocket.prototype.callZome;
+  const callZomePure = appWs.callZome.bind(appWs);
   appWs.callZome = async <ReturnType>(
     request: CallZomeRequest | RoleNameCallZomeRequest,
     timeout?: number,
   ): Promise<ReturnType> => {
     const start = Date.now();
-    const response = await callZomePure.apply(appWs, [request, timeout]);
+    const response = await callZomePure(request, timeout);
     const end = Date.now();
     setTimeout(() =>
       logger({
