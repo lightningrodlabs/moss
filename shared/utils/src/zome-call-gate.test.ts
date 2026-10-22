@@ -9,6 +9,7 @@ import type {
 import {
   CellCallGate,
   cellKeyOf,
+  WARMING_CALL_TIMEOUT_MS,
   instrumentZomeCallGate,
   isInitTimeoutError,
   retryInitTimeout,
@@ -128,6 +129,28 @@ describe('CellCallGate', () => {
     expect(await pC).toBe('c');
   });
 
+  it('tells the callback whether it is the warming call', async () => {
+    const gate = new CellCallGate();
+    const a = deferred<string>();
+    const seen: boolean[] = [];
+    const pA = gate.run('group', (isWarmer) => {
+      seen.push(isWarmer);
+      return a.promise;
+    });
+    const pB = gate.run('group', async (isWarmer) => {
+      seen.push(isWarmer);
+      return 'b';
+    });
+    await flush();
+    a.resolve('a');
+    await Promise.all([pA, pB]);
+    await gate.run('group', async (isWarmer) => {
+      seen.push(isWarmer);
+      return 'c';
+    });
+    expect(seen).toEqual([true, false, false]);
+  });
+
   it('keys are independent', async () => {
     const gate = new CellCallGate();
     const a = deferred<string>();
@@ -171,6 +194,49 @@ describe('retryInitTimeout', () => {
     ).rejects.toBe(err);
     expect(fn.mock.calls.length).toBeGreaterThanOrEqual(2);
     expect(fn.mock.calls.length).toBeLessThanOrEqual(3);
+  });
+});
+
+describe('retryInitTimeout startedAt', () => {
+  it('measures the deadline from startedAt, so a long wait leaves no time to retry', async () => {
+    const err = new Error(INIT_TEXT);
+    const fn = vi.fn<() => Promise<string>>().mockRejectedValue(err);
+    const sleep = vi.fn(async () => {});
+    await expect(
+      retryInitTimeout(fn, { startedAt: Date.now() - 200_000, sleep }),
+    ).rejects.toBe(err);
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+});
+
+describe('instrumentZomeCallGate timeouts', () => {
+  const req = { role_name: 'group', zome_name: 'z', fn_name: 'f', payload: null };
+
+  it('gives the warming call the long timeout when none was given', async () => {
+    const spy = vi.fn(async (_req: unknown, _timeout?: number) => 'ok');
+    const appWs = { callZome: spy } as unknown as AppWebsocket;
+    instrumentZomeCallGate(appWs, new CellCallGate(), { sleep: async () => {} });
+    await appWs.callZome(req);
+    expect(WARMING_CALL_TIMEOUT_MS).toBe(180_000);
+    expect(spy).toHaveBeenLastCalledWith(req, 180_000);
+  });
+
+  it("passes the caller's timeout through for the warming call", async () => {
+    const spy = vi.fn(async (_req: unknown, _timeout?: number) => 'ok');
+    const appWs = { callZome: spy } as unknown as AppWebsocket;
+    instrumentZomeCallGate(appWs, new CellCallGate(), { sleep: async () => {} });
+    await appWs.callZome(req, 5000);
+    expect(spy).toHaveBeenLastCalledWith(req, 5000);
+  });
+
+  it('leaves the timeout unset for calls on a warm cell', async () => {
+    const spy = vi.fn(async (_req: unknown, _timeout?: number) => 'ok');
+    const appWs = { callZome: spy } as unknown as AppWebsocket;
+    instrumentZomeCallGate(appWs, new CellCallGate(), { sleep: async () => {} });
+    await appWs.callZome(req);
+    await appWs.callZome(req);
+    expect(spy).toHaveBeenLastCalledWith(req, undefined);
   });
 });
 

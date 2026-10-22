@@ -7,6 +7,12 @@ import {
 
 const INIT_TIMEOUT_TEXT = 'triggered the `init()` callback';
 
+/**
+ * Client-side timeout for the call that warms a cell. That call runs the cell's `init()`, which
+ * can take longer than the client's default 60 s on a cold, newly joined cell.
+ */
+export const WARMING_CALL_TIMEOUT_MS = 180_000;
+
 /** True when the conductor gave up waiting for another call's `init()` to finish. */
 export function isInitTimeoutError(error: unknown): boolean {
   return String(error).includes(INIT_TIMEOUT_TEXT);
@@ -29,15 +35,16 @@ type KeyState = { kind: 'warming'; inFlight: Promise<unknown> } | { kind: 'warm'
 export class CellCallGate {
   private states = new Map<string, KeyState>();
 
-  async run<T>(cellKey: string, fn: () => Promise<T>): Promise<T> {
+  /** Runs `fn` for `cellKey`; `fn` learns whether it is the call that warms the cell. */
+  async run<T>(cellKey: string, fn: (isWarmer: boolean) => Promise<T>): Promise<T> {
     for (;;) {
       const state = this.states.get(cellKey);
-      if (state?.kind === 'warm') return fn();
+      if (state?.kind === 'warm') return fn(false);
       if (state?.kind === 'warming') {
         await state.inFlight.catch(() => undefined);
         continue;
       }
-      const inFlight = fn();
+      const inFlight = fn(true);
       this.states.set(cellKey, { kind: 'warming', inFlight });
       try {
         const result = await inFlight;
@@ -54,6 +61,8 @@ export class CellCallGate {
 export interface InitRetryOptions {
   spacingMs: number;
   deadlineMs: number;
+  /** When the call was first requested (ms since epoch); the deadline is measured from here. */
+  startedAt?: number;
   sleep?: (ms: number) => Promise<void>;
 }
 
@@ -61,7 +70,7 @@ const realSleep = (ms: number): Promise<void> => new Promise((resolve) => setTim
 
 /**
  * Retries `fn` while it fails with the conductor's init timeout, until the
- * deadline (measured from the first call) would be passed by the next attempt.
+ * deadline (measured from `startedAt`, default now) would be passed by the next attempt.
  */
 export async function retryInitTimeout<T>(
   fn: () => Promise<T>,
@@ -70,7 +79,7 @@ export async function retryInitTimeout<T>(
   const spacingMs = opts.spacingMs ?? 2000;
   const deadlineMs = opts.deadlineMs ?? 120000;
   const sleep = opts.sleep ?? realSleep;
-  const start = Date.now();
+  const start = opts.startedAt ?? Date.now();
   for (;;) {
     try {
       return await fn();
@@ -96,10 +105,13 @@ export function instrumentZomeCallGate(
 ): void {
   gates.set(appWs, gate);
   const original = appWs.callZome.bind(appWs);
-  appWs.callZome = ((request: CallZomeRequest | RoleNameCallZomeRequest, timeout?: number) =>
-    gate.run(cellKeyOf(request), () =>
-      retryInitTimeout(() => original(request, timeout), retry),
-    )) as AppWebsocket['callZome'];
+  appWs.callZome = ((request: CallZomeRequest | RoleNameCallZomeRequest, timeout?: number) => {
+    const startedAt = Date.now();
+    return gate.run(cellKeyOf(request), (isWarmer) => {
+      const callTimeout = isWarmer ? (timeout ?? WARMING_CALL_TIMEOUT_MS) : timeout;
+      return retryInitTimeout(() => original(request, callTimeout), { ...retry, startedAt });
+    });
+  }) as AppWebsocket['callZome'];
 }
 
 /** The gate attached to `appWs`; attaches a new one if there is none yet. */

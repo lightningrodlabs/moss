@@ -401,7 +401,7 @@ export class GroupStore {
 
     this.constructed = true;
 
-    // The grant request runs the cell's init, so it is also the one deliberate warm-up of the group cell.
+    // The grant request is routed through the zome-call gate, so it never races the cell's init.
     this.ensurePeerStatusGrant().catch((e) => console.warn('Peer status grant failed: ', e));
   }
 
