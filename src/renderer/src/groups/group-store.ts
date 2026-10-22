@@ -81,6 +81,7 @@ import { partitionAppletsByStatus } from './applet-status.js';
 import { liveAgentIdsFromAgentInfo } from './agent-info.js';
 import { TimerBag } from './sync-final-sequence.js';
 import { PacedPingSender, shouldAttemptGrant } from './ping-schedule.js';
+import { reloadableStore } from './reloadable-store.js';
 import {
   appIdFromAppletHash,
   deriveToolCompatibilityId,
@@ -230,6 +231,9 @@ export class GroupStore {
 
     this.directPeerStatus = new DirectPeerStatus(appWebsocket, groupDnaHash);
     this.profilesStore = new ProfilesStore(new ProfilesClient(appWebsocket, 'group'));
+    // A failed profile read must be retryable from the UI while other views keep watching the
+    // same store, so the store can be rebuilt in place.
+    this.profilesStore.myProfile = reloadableStore(() => this.buildMyProfileStore());
     this.customViewsStore = new CustomViewsStore(new CustomViewsClient(appWebsocket, 'group'));
 
     FoyerStore.create(this, this.profilesStore, appWebsocket, authenticationToken, 'foyer').then(
@@ -970,6 +974,32 @@ export class GroupStore {
   groupAppletsMetaData = lazyReloadableStore(async () =>
     this.groupClient.getGroupAppletsMetaData(),
   );
+
+  /** Reads my profile, falling back to a second lookup, then follows my own profile writes. */
+  private buildMyProfileStore(): AsyncReadable<EntryRecord<Profile> | undefined> {
+    const client = this.profilesStore.client;
+    const myPubKey = client.client.myPubKey;
+    return asyncReadable<EntryRecord<Profile> | undefined>(async (set) => {
+      let profile = await client.getAgentProfile(myPubKey, true);
+      if (!profile) profile = await client.getAgentProfile(myPubKey, true);
+      set(profile);
+      // Profile signals are emitted by this agent's own cell, so every profile write is mine.
+      return client.onSignal((signal) => {
+        if (!(signal.type === 'EntryCreated' || signal.type === 'EntryUpdated')) return;
+        set(
+          new EntryRecord<Profile>({
+            entry: {
+              Present: {
+                entry_type: 'App',
+                entry: encode(signal.app_entry),
+              },
+            },
+            signed_action: signal.action as unknown as SignedActionHashed,
+          }),
+        );
+      });
+    });
+  }
 
   agentsProfiles(
     agents: Array<AgentPubKey>,

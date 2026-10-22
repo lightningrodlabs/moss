@@ -1,5 +1,5 @@
 import { TemplateResult, css, html, LitElement } from 'lit';
-import { property, customElement, state } from 'lit/decorators.js';
+import { property, customElement } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { consume } from '@lit/context';
 import { AsyncStatus, StoreSubscriber } from '@holochain-open-dev/stores';
@@ -7,6 +7,7 @@ import { sharedStyles } from '@holochain-open-dev/elements';
 
 import { mossStyles } from '../../shared-styles.js';
 import { conductorErrorMessage } from '../../conductor-error-message.js';
+import { isReloadable } from '../../groups/reloadable-store.js';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -30,15 +31,10 @@ export class MossProfilePrompt extends LitElement {
   @property()
   store!: ProfilesStore;
 
-  /** Private properties */
-
-  /** Bumped by the Retry button so the profile read is subscribed to again. */
-  @state() private _attempt = 0;
-
   myProfile: StoreSubscriber<AsyncStatus<EntryRecord<Profile> | undefined>> = new StoreSubscriber(
     this,
     () => this.store.myProfile,
-    () => [this.store, this._attempt],
+    () => [this.store],
   );
 
   renderPrompt(myProfile: EntryRecord<Profile> | undefined) {
@@ -85,7 +81,8 @@ export class MossProfilePrompt extends LitElement {
               class="moss-button"
               style="margin-top: 12px;"
               @click=${() => {
-                this._attempt += 1;
+                const myProfile = this.store.myProfile;
+                if (isReloadable(myProfile)) myProfile.reload();
               }}
             >
               ${msg('Retry')}
