@@ -3,19 +3,26 @@ import type { TimerBag } from './sync-final-sequence.js';
 
 /** Agents per conductor call when a ping cycle is spread out. */
 export const PING_BATCH_SIZE = 32;
-/** Gap between batches; 16 batches fill the 8-second cycle for 512 agents. */
+/** Gap between batches when they all fit inside the cycle budget. */
 export const PING_BATCH_SPACING_MS = 500;
+/** Every batch of a cycle starts within this window, so the next 8-second cycle never drops one. */
+export const PING_CYCLE_BUDGET_MS = 7000;
 
 /**
- * Splits agents into consecutive batches, batch i sent at i * spacingMs, so a large group
- * does not reach the conductor all at once. Input order is preserved.
+ * Splits agents into consecutive batches, batch i sent at i * spacing, so a large group
+ * does not reach the conductor all at once. The spacing shrinks when needed so the last batch
+ * starts within PING_CYCLE_BUDGET_MS. Input order is preserved.
  */
 export function planPingBatches<T>(
   agents: T[],
   opts: { batchSize?: number; spacingMs?: number } = {},
 ): Array<{ delayMs: number; agents: T[] }> {
   const batchSize = Math.max(1, opts.batchSize ?? PING_BATCH_SIZE);
-  const spacingMs = opts.spacingMs ?? PING_BATCH_SPACING_MS;
+  const nBatches = Math.ceil(agents.length / batchSize);
+  const spacingMs = Math.min(
+    opts.spacingMs ?? PING_BATCH_SPACING_MS,
+    Math.floor(PING_CYCLE_BUDGET_MS / Math.max(1, nBatches - 1)),
+  );
   const batches: Array<{ delayMs: number; agents: T[] }> = [];
   for (let i = 0; i * batchSize < agents.length; i++) {
     batches.push({

@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import type { AgentPubKey } from '@holochain/client';
-import { PacedPingSender, planPingBatches, shouldAttemptGrant } from './ping-schedule';
+import {
+  PING_CYCLE_BUDGET_MS,
+  PacedPingSender,
+  planPingBatches,
+  shouldAttemptGrant,
+} from './ping-schedule';
 import { TimerBag } from './sync-final-sequence';
 
 describe('planPingBatches', () => {
@@ -13,6 +18,16 @@ describe('planPingBatches', () => {
     expect(plan.map((b) => b.delayMs)).toEqual([0, 500, 1000, 1500]);
     expect(plan.map((b) => b.agents.length)).toEqual([32, 32, 32, 4]);
     expect(plan.flatMap((b) => b.agents)).toEqual(agents);
+  });
+  it('fits every batch of a very large group inside the cycle budget', () => {
+    const agents = Array.from({ length: 600 }, (_, i) => `a${i}`);
+    const plan = planPingBatches(agents);
+    expect(PING_CYCLE_BUDGET_MS).toBe(7000);
+    expect(plan).toHaveLength(19);
+    expect(plan[plan.length - 1].delayMs).toBeLessThanOrEqual(7000);
+    const sent = plan.flatMap((b) => b.agents);
+    expect(sent).toHaveLength(600);
+    expect(new Set(sent).size).toBe(600);
   });
   it('returns no batches for no agents', () => {
     expect(planPingBatches([])).toEqual([]);
