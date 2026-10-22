@@ -3334,6 +3334,12 @@ starts now</source>
 <trans-unit id="s6460533be9607473">
   <source>Imported (left disabled)</source>
 <target>İçe aktarıldı (devre dışı bırakıldı)</target></trans-unit>
+<trans-unit id="sc5f399d737cf70aa">
+  <source>Moss is still setting up this group. This can take a minute the first time. Use Retry if it does not finish on its own.</source>
+<target>Moss bu grubu hâlâ kuruyor. İlk seferde bu bir dakika sürebilir. Kendiliğinden bitmezse Yeniden dene'yi kullanın.</target></trans-unit>
+<trans-unit id="sb604ee6d1ab938d8">
+  <source>The group did not answer in time. Use Retry.</source>
+<target>Grup zamanında yanıt vermedi. Yeniden dene'yi kullanın.</target></trans-unit>
 </body>
 </file>
 </xliff>

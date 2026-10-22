@@ -1,9 +1,12 @@
 import { TemplateResult, css, html, LitElement } from 'lit';
-import { property, customElement } from 'lit/decorators.js';
+import { property, customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { consume } from '@lit/context';
 import { AsyncStatus, StoreSubscriber } from '@holochain-open-dev/stores';
 import { sharedStyles } from '@holochain-open-dev/elements';
+
+import { mossStyles } from '../../shared-styles.js';
+import { conductorErrorMessage } from '../../conductor-error-message.js';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -29,10 +32,13 @@ export class MossProfilePrompt extends LitElement {
 
   /** Private properties */
 
+  /** Bumped by the Retry button so the profile read is subscribed to again. */
+  @state() private _attempt = 0;
+
   myProfile: StoreSubscriber<AsyncStatus<EntryRecord<Profile> | undefined>> = new StoreSubscriber(
     this,
     () => this.store.myProfile,
-    () => [this.store],
+    () => [this.store, this._attempt],
   );
 
   renderPrompt(myProfile: EntryRecord<Profile> | undefined) {
@@ -70,10 +76,21 @@ export class MossProfilePrompt extends LitElement {
         `;
       case 'error':
         return html`
-          <display-error
-            .headline=${msg('Failed to read your profile')}
-            .error=${this.myProfile.value.error}
-          ></display-error>
+          <div class="column" style="align-items: center; justify-content: center; flex: 1;">
+            <display-error
+              .headline=${msg('Failed to read your profile')}
+              .error=${conductorErrorMessage(this.myProfile.value.error)}
+            ></display-error>
+            <button
+              class="moss-button"
+              style="margin-top: 12px;"
+              @click=${() => {
+                this._attempt += 1;
+              }}
+            >
+              ${msg('Retry')}
+            </button>
+          </div>
         `;
     }
     // return html`${subscribe(
@@ -91,6 +108,7 @@ export class MossProfilePrompt extends LitElement {
   static get styles() {
     return [
       sharedStyles,
+      ...mossStyles,
       css`
         :host {
           display: flex;

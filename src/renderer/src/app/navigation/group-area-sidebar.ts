@@ -61,6 +61,7 @@ import {
 import { MossDialog } from '../../ui/moss-dialog.js';
 import '../../groups/elements/settings/inactive-tools-dialog.js';
 import '../../groups/elements/invite/invite-people-dialog.js';
+import { conductorErrorMessage } from '../../conductor-error-message.js';
 
 // Sidebar for the applet instances of a group
 @localized()
@@ -638,8 +639,8 @@ export class GroupAppletsSidebar extends LitElement {
         // console.error('Failed to fetch group profile: ', this._myProfile.value.error);
         return html`<display-error
           tooltip
-          .headline=${msg('Error fetching the group profile')}
-          .error=${this._myProfile.value.error}
+          .headline=${msg('Failed to read your profile')}
+          .error=${conductorErrorMessage(this._myProfile.value.error)}
         ></display-error>`;
     }
   }

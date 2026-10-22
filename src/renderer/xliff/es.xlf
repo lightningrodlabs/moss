@@ -3334,6 +3334,12 @@ comienza ahora</target>
 <trans-unit id="s6460533be9607473">
   <source>Imported (left disabled)</source>
 <target>Importado (se mantiene desactivado)</target></trans-unit>
+<trans-unit id="sc5f399d737cf70aa">
+  <source>Moss is still setting up this group. This can take a minute the first time. Use Retry if it does not finish on its own.</source>
+<target>Moss todavía está configurando este grupo. La primera vez puede tardar un minuto. Usa Reintentar si no termina por sí solo.</target></trans-unit>
+<trans-unit id="sb604ee6d1ab938d8">
+  <source>The group did not answer in time. Use Retry.</source>
+<target>El grupo no respondió a tiempo. Usa Reintentar.</target></trans-unit>
 </body>
 </file>
 </xliff>
