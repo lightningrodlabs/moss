@@ -128,6 +128,10 @@ export class MossApp extends LitElement {
   @state()
   private loadingText = msg('loading...');
 
+  /** Why the last launch failed, shown on the error page until the user acts. */
+  @state()
+  private launchError: string | undefined;
+
   private _happMessageListener: ((event: MessageEvent) => void) | undefined;
 
   private _legacyKeystoreResolve: (() => void) | undefined;
@@ -251,6 +255,8 @@ export class MossApp extends LitElement {
           this._importGroupsProgress = undefined;
         }
       } catch (e) {
+        // The IPC wrapper prefix says nothing the user can use.
+        this.launchError = String(e).replace(/^Error invoking remote method 'launch': /, '');
         this.state = MossAppState.Error;
         return;
       }
@@ -850,6 +856,7 @@ export class MossApp extends LitElement {
         <div class="dialog-title" style="margin-bottom: 30px;">
           ${msg('Holochain failed to start up and crashed :(')}
         </div>
+        ${this.launchError ? html`<div class="launch-error">${this.launchError}</div>` : html``}
         <div style="max-width: 600px; text-align: center; margin-bottom: 40px;">
           <span
             >${msg(
@@ -859,6 +866,21 @@ export class MossApp extends LitElement {
           <a href="mailto:moss.0.15.feedback@theweave.social">moss.0.15.feedback@theweave.social</a>
         </div>
         <div class="row items-center">
+          <button
+            class="moss-button"
+            style="margin: 0 4px;"
+            @click=${async () => {
+              try {
+                await window.electronAPI.stopLeftoverProcesses();
+              } catch (e) {
+                this.launchError = `${msg('Could not stop leftover processes.')} ${e}`;
+                return;
+              }
+              window.location.reload();
+            }}
+          >
+            ${msg('Stop leftover processes and retry')}
+          </button>
           <button
             class="moss-button"
             style="margin: 0 4px;"
@@ -999,6 +1021,16 @@ export class MossApp extends LitElement {
           padding: 10px 20px;
           width: 310px;
           font-weight: 500;
+        }
+
+        .launch-error {
+          max-width: 600px;
+          margin-bottom: 30px;
+          padding: 12px 16px;
+          border-radius: 8px;
+          background: #ffdede;
+          color: #7a0000;
+          text-align: center;
         }
 
         .launch-bg {

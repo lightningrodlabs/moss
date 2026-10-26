@@ -12,6 +12,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   factoryReset: () => ipcRenderer.invoke('factory-reset'),
   openLogs: () => ipcRenderer.invoke('open-logs'),
   exportLogs: () => ipcRenderer.invoke('export-logs'),
-  stopLeftoverProcesses: () => ipcRenderer.invoke('stop-leftover-processes'),
   exit: () => ipcRenderer.invoke('exit'),
 });
