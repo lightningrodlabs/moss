@@ -106,6 +106,31 @@ const assetStoreCache = new Map<
   ReturnType<typeof readable<AsyncStatus<AssetStoreContent>>>
 >();
 
+/**
+ * The `captureAudioSources` entry of `weaveApi`. Attached only once the
+ * iframe config reports `audioCaptureAvailable`, so a Tool's feature
+ * detection (`client.captureAudioSources?.`) means the host can capture
+ * for it now: its Audio Sources service is on and its backend loaded.
+ * Attached before `applet-iframe-ready`, which is what
+ * `WeaveClient.connect` waits for.
+ */
+const captureAudioSources = async (
+  opts?: CaptureAudioSourcesOptions,
+): Promise<AudioSourceCapture | null> => {
+  const { result, ports } = await postMessageWithPorts({ type: 'request-audio-sources' });
+  if (!result) return null;
+  const port = ports[0];
+  // A Moss host attaches the port to the same reply that carries a non-null
+  // result (`TransferableReply`), so this branch is unreachable there; it
+  // guards a foreign host that answers the message without honouring the
+  // transfer.
+  if (!port) throw new Error('The host granted audio sources but transferred no port.');
+  return createAudioSourceCapture(
+    { label: result.label, canExcludeSelf: result.canExcludeSelf, port },
+    opts,
+  );
+};
+
 /** All weaveApi functions shoot an event to parent */
 const weaveApi: WeaveServices = {
   bootstrapUrls: (groupHash?: DnaHash) =>
@@ -336,23 +361,6 @@ const weaveApi: WeaveServices = {
       type: 'user-select-screen',
     }),
 
-  captureAudioSources: async (
-    opts?: CaptureAudioSourcesOptions,
-  ): Promise<AudioSourceCapture | null> => {
-    const { result, ports } = await postMessageWithPorts({ type: 'request-audio-sources' });
-    if (!result) return null;
-    const port = ports[0];
-    // A Moss host attaches the port to the same reply that carries a non-null
-    // result (`TransferableReply`), so this branch is unreachable there; it
-    // guards a foreign host that answers the message without honouring the
-    // transfer.
-    if (!port) throw new Error('The host granted audio sources but transferred no port.');
-    return createAudioSourceCapture(
-      { label: result.label, canExcludeSelf: result.canExcludeSelf, port },
-      opts,
-    );
-  },
-
   requestClose: () =>
     postMessage({
       type: 'request-close',
@@ -454,6 +462,7 @@ const weaveApi: WeaveServices = {
   }
 
   window.__ZOME_CALL_LOGGING_ENABLED__ = iframeConfig.zomeCallLogging;
+  if (iframeConfig.audioCaptureAvailable) weaveApi.captureAudioSources = captureAudioSources;
 
   // Message handler for ParentToApplet messages.
   // This one is registered early here for any type of iframe
