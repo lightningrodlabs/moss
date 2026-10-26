@@ -109,7 +109,8 @@ import {
   validateArgs,
 } from './cli/cli';
 import { launch } from './launch';
-import { clearChildRegistry } from './childProcessRegistry';
+import { clearChildRegistry, killLeftovers } from './childProcessRegistry';
+import { systemProbe } from './processProbe';
 import { singleFlight } from './singleFlight';
 import {
   AgentPubKeyB64,
@@ -517,7 +518,6 @@ if (!RUNNING_WITH_COMMAND) {
       }
     }
   }
-
 
   const APPLET_IFRAME_SCRIPT = fs.readFileSync(
     path.resolve(__dirname, '../applet-iframe/index.mjs'),
@@ -1243,6 +1243,17 @@ if (!RUNNING_WITH_COMMAND) {
       app.exit(0);
     });
     ipcMain.handle('open-logs', async () => WE_FILE_SYSTEM.openLogs());
+    // Splash-screen recovery for a keystore held by an earlier session of this
+    // profile. Scoped to this profile's registry, so other profiles are untouched.
+    ipcMain.handle('stop-leftover-processes', async (): Promise<number> => {
+      const stopped = killLeftovers(WE_FILE_SYSTEM.profileDataDir, systemProbe, process.pid);
+      for (const leftover of stopped) {
+        WE_EMITTER.emitMossLog(
+          `Stopped leftover ${leftover.name} process ${leftover.pid} (${leftover.binary}) on user request`,
+        );
+      }
+      return stopped.length;
+    });
     ipcMain.handle('export-logs', async () => WE_FILE_SYSTEM.exportLogs());
     /**
      * Probe a URL from the main process (no CORS) and return the content-type

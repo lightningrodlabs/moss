@@ -144,10 +144,8 @@ export class SplashScreen extends LitElement {
         }, 3000);
         await this.chooseView();
       } else {
+        // Stays until the user acts; the error view shows it with the recovery buttons.
         this.launchError = e;
-        setTimeout(() => {
-          this.launchError = undefined;
-        }, 6000);
         this.view = SplashScreenMode.Error;
       }
     }
@@ -315,7 +313,20 @@ export class SplashScreen extends LitElement {
     return html`
       <div class="column items-center">
         <h1 style="color: #bf0000;">${msg('Holochain failed to start up :(')}</h1>
+        <div class="launch-error" style="${this.launchError ? '' : 'display: none;'}">
+          ${this.launchError}
+        </div>
         <div class="row items-center">
+          <button
+            style="margin-right: 5px;"
+            @click=${async () => {
+              await window.electronAPI.stopLeftoverProcesses();
+              this.launchError = undefined;
+              this.chooseView();
+            }}
+          >
+            ${msg('Stop leftover processes and retry')}
+          </button>
           <button style="margin-right: 5px;" @click=${() => window.electronAPI.openLogs()}>
             ${msg('Open Logs')}
           </button>
@@ -325,6 +336,7 @@ export class SplashScreen extends LitElement {
           <button
             style="margin-right: 5px;"
             @click=${() => {
+              this.launchError = undefined;
               this.chooseView();
             }}
           >
@@ -435,7 +447,12 @@ export class SplashScreen extends LitElement {
             <img src="lightningrodlabs_logo.png" style="height: 30px; margin-left: 6px" />
           </div>
         </div>
-        <div class="top-right errorbar row " style="${this.launchError ? '' : 'display: none;'}">
+        <div
+          class="top-right errorbar row "
+          style="${this.launchError && this.view !== SplashScreenMode.Error
+            ? ''
+            : 'display: none;'}"
+        >
           ${this.launchError}
         </div>
       </div>
@@ -455,6 +472,16 @@ export class SplashScreen extends LitElement {
         }
         h2 {
           color: #ffffff;
+        }
+
+        .launch-error {
+          max-width: 520px;
+          margin: 0 16px 20px 16px;
+          padding: 10px 14px;
+          border-radius: 8px;
+          background: #ffdede;
+          color: #7a0000;
+          text-align: center;
         }
 
         .errorbar {

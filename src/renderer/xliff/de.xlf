@@ -3267,6 +3267,10 @@ beginnt jetzt</target>
   <source>large-v3-turbo is nearly as accurate as large-v3 and several times faster. Try it before large-v3.</source>
   <target>large-v3-turbo ist fast so genau wie large-v3 und um ein Mehrfaches schneller. Probiere es vor large-v3 aus.</target>
 </trans-unit>
+<trans-unit id="s8b8ffef8c28cd1fa">
+  <source>Stop leftover processes and retry</source>
+  <target>Übrig gebliebene Prozesse beenden und erneut versuchen</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

@@ -94,6 +94,7 @@ declare global {
       clearNetworkOverrides: () => Promise<void>;
       openLogs: () => Promise<void>;
       exportLogs: () => Promise<void>;
+      stopLeftoverProcesses: () => Promise<number>;
       onAppletToParentMessage: (
         callback: (
           e: any,
