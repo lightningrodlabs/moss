@@ -8,6 +8,7 @@ import {
   ProcessProbe,
   clearChildRegistry,
   findLeftovers,
+  findLiveOwner,
   killLeftovers,
   readChildRegistry,
   writeChildRegistry,
@@ -133,6 +134,21 @@ describe('childProcessRegistry file', () => {
     expect(killLeftovers(dir, probe, 999, { stopLiveOwner: true }).map((l) => l.pid)).toEqual([
       5, 10,
     ]);
+  });
+});
+
+describe('findLiveOwner', () => {
+  it('returns the recorded moss when it is still that very process', () => {
+    const { probe } = fakeProbe({ 5: MOSS_BIN }, [5]);
+    expect(findLiveOwner(registry, probe, 999)).toEqual({ name: 'moss', pid: 5, binary: MOSS_BIN });
+  });
+
+  it('returns undefined for a dead, reused or own pid', () => {
+    expect(findLiveOwner(registry, fakeProbe({}, []).probe, 999)).toBeUndefined();
+    expect(
+      findLiveOwner(registry, fakeProbe({ 5: MOSS_BIN }, [5], { 5: T0 + 99_000 }).probe, 999),
+    ).toBeUndefined();
+    expect(findLiveOwner(registry, fakeProbe({ 5: MOSS_BIN }, [5]).probe, 5)).toBeUndefined();
   });
 });
 

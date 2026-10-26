@@ -109,7 +109,7 @@ import {
   validateArgs,
 } from './cli/cli';
 import { launch } from './launch';
-import { killLeftovers } from './childProcessRegistry';
+import { findLiveOwner, killLeftovers, readChildRegistry } from './childProcessRegistry';
 import { systemProbe } from './processProbe';
 import { singleFlight } from './singleFlight';
 import {
@@ -434,43 +434,16 @@ if (!RUNNING_WITH_COMMAND) {
 
   let CACHED_DEEP_LINK: string | undefined; // in case the application gets opened from scratch and the password needs to be entered first
 
-  // ------------------------------------------------------------------------------------------
-
-  if (RUN_OPTIONS.devInfo) {
-    // garbage collect previously used folders
-    const files = fs.readdirSync(RUN_OPTIONS.devInfo.tempDirRoot);
-    const foldersToDelete = files.filter((file) =>
-      file.startsWith(`${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${RUN_OPTIONS.devInfo!.agentIdx}`),
-    );
-    for (const folder of foldersToDelete) {
-      fs.rmSync(path.join(RUN_OPTIONS.devInfo.tempDirRoot, folder), {
-        recursive: true,
-        force: true,
-        maxRetries: 4,
-      });
-    }
-  }
-
-  const WE_FILE_SYSTEM = MossFileSystem.connect(
-    app,
-    RUN_OPTIONS.profile,
-    RUN_OPTIONS.devInfo ? RUN_OPTIONS.devInfo.tempDir : undefined,
-  );
-
-  // Set the display name after filesystem paths are established so the storage directory
-  // continues to derive from package.json's `name` field rather than the display name.
-  app.setName(process.env.NODE_ENV === 'development' ? 'Moss-dev' : 'Moss');
-
   if (app.isPackaged) {
     // Single instance and deep link logic
     // ------------------------------------------------------------------------------------------
-    // Electron keys this lock on the userData path, which MossFileSystem.connect
-    // has just pointed at the profile's own directory. So a second instance of
-    // the same profile is refused (two conductors cannot share a keystore), while
-    // different profiles run side by side.
+    // One lock for the whole app, so a deep link opened from the OS (which never
+    // carries --profile) reaches whichever instance is running. A second
+    // instance with an explicit --profile is let through here; one-instance-per-
+    // profile is enforced by the registry owner check in whenReady below.
     const isFirstInstance = app.requestSingleInstanceLock({ profile: RUN_OPTIONS.profile });
 
-    if (!isFirstInstance) {
+    if (!isFirstInstance && RUN_OPTIONS.profile === undefined) {
       // Leave at once: nothing is spawned yet, and running on to the splash
       // screen would let this instance act on the registry of the live one.
       app.exit(0);
@@ -482,17 +455,23 @@ if (!RUNNING_WITH_COMMAND) {
         CACHED_DEEP_LINK = process.argv.find((arg) => isWeaveUrl(arg));
       }
 
-      // Fires in the instance that holds this profile's lock. On Linux and Windows
-      // it is also how deeplinks get in.
+      // Fires in the instance that holds the lock, whatever profile either side
+      // runs. On Linux and Windows it is also how deeplinks get in.
       app.on('second-instance', (_event, argv, _cwd, additionalData: any) => {
         if (!isAppQuitting) {
           console.log('second-instance event triggered. argv: ', argv);
           console.log('additionalData: ', additionalData);
           if (process.platform !== 'darwin') {
-            console.log('Option 3');
-
-            // deeplink case
-            const url = argv.pop();
+            // Only a weave URL is a deep link; the rest of argv is the other
+            // instance's own flags (--profile ...), not something to open.
+            const url = argv.find((arg) => isWeaveUrl(arg));
+            if (!url) {
+              // A plain relaunch of this profile: bring the window forward.
+              if (additionalData?.profile === RUN_OPTIONS.profile && MAIN_WINDOW) {
+                createOrShowMainWindow();
+              }
+              return;
+            }
             if (SPLASH_SCREEN_WINDOW) {
               CACHED_DEEP_LINK = url;
               SPLASH_SCREEN_WINDOW.show();
@@ -520,6 +499,33 @@ if (!RUNNING_WITH_COMMAND) {
       }
     }
   }
+
+  // ------------------------------------------------------------------------------------------
+
+  if (RUN_OPTIONS.devInfo) {
+    // garbage collect previously used folders
+    const files = fs.readdirSync(RUN_OPTIONS.devInfo.tempDirRoot);
+    const foldersToDelete = files.filter((file) =>
+      file.startsWith(`${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${RUN_OPTIONS.devInfo!.agentIdx}`),
+    );
+    for (const folder of foldersToDelete) {
+      fs.rmSync(path.join(RUN_OPTIONS.devInfo.tempDirRoot, folder), {
+        recursive: true,
+        force: true,
+        maxRetries: 4,
+      });
+    }
+  }
+
+  const WE_FILE_SYSTEM = MossFileSystem.connect(
+    app,
+    RUN_OPTIONS.profile,
+    RUN_OPTIONS.devInfo ? RUN_OPTIONS.devInfo.tempDir : undefined,
+  );
+
+  // Set the display name after filesystem paths are established so the storage directory
+  // continues to derive from package.json's `name` field rather than the display name.
+  app.setName(process.env.NODE_ENV === 'development' ? 'Moss-dev' : 'Moss');
 
   const APPLET_IFRAME_SCRIPT = fs.readFileSync(
     path.resolve(__dirname, '../applet-iframe/index.mjs'),
@@ -851,6 +857,38 @@ if (!RUNNING_WITH_COMMAND) {
   // Some APIs can only be used after this event occurs.
   app.whenReady().then(async () => {
     console.log('BEING RUN IN __dirnmane: ', __dirname);
+
+    // Two Moss instances cannot share a profile: the second lair cannot open the
+    // keystore and the second conductor cannot open the database. The registry
+    // says which process owns this profile right now (start-time identity, so a
+    // reused pid never counts). A live owner is either a healthy instance the
+    // user started twice, or one that hung on quit; the user decides which.
+    const registry = readChildRegistry(WE_FILE_SYSTEM.profileDataDir);
+    const liveOwner = registry ? findLiveOwner(registry, systemProbe, process.pid) : undefined;
+    if (liveOwner) {
+      const profileName = RUN_OPTIONS.profile ?? 'default';
+      const { response } = await dialog.showMessageBox({
+        type: 'warning',
+        title: 'Moss is already running',
+        message: `Moss is already running for profile "${profileName}" (process ${liveOwner.pid}).`,
+        detail:
+          'Use the running Moss, or stop it and continue here. Stop it only if that Moss is stuck; stopping a healthy one loses unsaved work.',
+        buttons: ['Use the running Moss', 'Stop it and continue'],
+        defaultId: 0,
+        cancelId: 0,
+      });
+      if (response === 0) {
+        app.exit(0);
+        return;
+      }
+      for (const stopped of killLeftovers(WE_FILE_SYSTEM.profileDataDir, systemProbe, process.pid, {
+        stopLiveOwner: true,
+      })) {
+        WE_EMITTER.emitMossLog(
+          `Stopped running ${stopped.name} process ${stopped.pid} (${stopped.binary}) on user request`,
+        );
+      }
+    }
 
     session.defaultSession.protocol.handle('moss', (request) => {
       const uriWithoutProtocol = request.url.slice('moss://'.length);
@@ -1249,7 +1287,7 @@ if (!RUNNING_WITH_COMMAND) {
     // profile. Scoped to this profile's registry, so other profiles are untouched.
     ipcMain.handle('stop-leftover-processes', async (): Promise<number> => {
       const stopped = killLeftovers(WE_FILE_SYSTEM.profileDataDir, systemProbe, process.pid, {
-        stopLiveOwner: app.isPackaged,
+        stopLiveOwner: false,
       });
       for (const leftover of stopped) {
         WE_EMITTER.emitMossLog(

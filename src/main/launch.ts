@@ -1,7 +1,7 @@
 import * as childProcess from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import { BrowserWindow, app } from 'electron';
+import { BrowserWindow } from 'electron';
 import { MossFileSystem } from './filesystem';
 import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
 import { DistributionInfo } from '@theweave/moss-types';
@@ -96,11 +96,11 @@ export async function launch(
   // only logged, since the launch below reports the real problem if one remains.
   const stopLeftovers = (): Leftover[] => {
     try {
-      // A packaged Moss holds this profile's single-instance lock, so a live
-      // recorded Moss can only be one that hung on quit. A dev build has no lock,
-      // and a live owner there is most likely a second healthy instance.
+      // A live recorded Moss is never stopped from here: the owner check at
+      // startup already asked the user about it, so one that appears now is a
+      // healthy instance the user started in the meantime.
       const stopped = killLeftovers(mossFileSystem.profileDataDir, systemProbe, process.pid, {
-        stopLiveOwner: app.isPackaged,
+        stopLiveOwner: false,
       });
       for (const leftover of stopped) {
         weEmitter.emitMossLog(

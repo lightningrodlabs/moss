@@ -170,6 +170,15 @@ export function findLeftovers(
   return found;
 }
 
+/** The recorded Moss, if it is still the very process that wrote the registry. */
+export function findLiveOwner(
+  registry: ChildRegistry,
+  probe: ProcessProbe,
+  selfPid: number,
+): Leftover | undefined {
+  return findLeftovers(registry, probe, selfPid).find((l) => l.name === 'moss');
+}
+
 export interface KillLeftoversOptions {
   /**
    * Whether a recorded Moss that is still running counts as a leftover. A
