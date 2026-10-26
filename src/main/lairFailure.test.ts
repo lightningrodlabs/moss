@@ -8,6 +8,10 @@ describe('classifyLairStderr', () => {
     expect(classifyLairStderr('ERROR: Error: {"error":"EBUSY"}').kind).toBe('keystore-busy');
   });
 
+  it('maps PermissionDenied (the unix spelling of access denied) to keystore-busy', () => {
+    expect(classifyLairStderr('Error: {"error":"PermissionDenied"}').kind).toBe('keystore-busy');
+  });
+
   it('maps ProcessAlreadyExists to keystore-busy', () => {
     expect(classifyLairStderr('ERROR: Error: {"error":"ProcessAlreadyExists"}').kind).toBe(
       'keystore-busy',
@@ -29,6 +33,7 @@ describe('describeLairFailure', () => {
     const text = describeLairFailure({ kind: 'keystore-busy', detail: 'EIO' }, 'work');
     expect(text).toContain('profile "work"');
     expect(text).toContain('another process is using it');
+    expect(text).toContain('not allowed to write');
   });
 
   it('describes keystore-busy for the default profile', () => {

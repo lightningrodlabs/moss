@@ -12,7 +12,9 @@ export interface LairFailure {
   detail: string;
 }
 
-const KEYSTORE_BUSY = /"error":"(EIO|EACCES|EBUSY)"|ProcessAlreadyExists/;
+// EIO is what Windows' ERROR_ACCESS_DENIED turns into; PermissionDenied is the
+// same refusal on unix, where lair prints the io::ErrorKind name instead.
+const KEYSTORE_BUSY = /"error":"(EIO|EACCES|EBUSY|PermissionDenied)"|ProcessAlreadyExists/;
 
 export function classifyLairStderr(line: string): LairFailure {
   if (line.includes('InternalSodium')) return { kind: 'wrong-password', detail: line };
@@ -23,7 +25,7 @@ export function classifyLairStderr(line: string): LairFailure {
 /** The sentence shown on the splash screen when the launch gives up. */
 export function describeLairFailure(failure: LairFailure, profile: string | undefined): string {
   if (failure.kind === 'keystore-busy') {
-    return `Moss could not open the keystore for profile "${profile ?? 'default'}" because another process is using it. This is usually a lair-keystore, holochain or Moss process left over from an earlier session. Stop it and retry, or restart your computer.`;
+    return `Moss could not open the keystore for profile "${profile ?? 'default'}" because another process is using it, or Moss is not allowed to write to its folder. This is usually a lair-keystore, holochain or Moss process left over from an earlier session. Stop it and retry, or restart your computer.`;
   }
   return `Failed to launch lair keystore: ${failure.detail}`;
 }

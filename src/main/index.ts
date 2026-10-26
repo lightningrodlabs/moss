@@ -870,7 +870,10 @@ if (!RUNNING_WITH_COMMAND) {
       WE_EMITTER.emitMossLog(
         `Profile "${profileName}" is owned by running moss process ${liveOwner.pid}; asking the user`,
       );
-      const { response } = await dialog.showMessageBox({
+      // The synchronous dialog returns on the click. The promise form can sit
+      // unresolved for tens of seconds on Linux while the app has no window to
+      // keep the event loop awake, and nothing else runs here meanwhile.
+      const response = dialog.showMessageBoxSync({
         type: 'warning',
         title: 'Moss is already running',
         message: `Moss is already running for profile "${profileName}" (process ${liveOwner.pid}).`,
