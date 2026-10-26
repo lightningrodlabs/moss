@@ -31,8 +31,9 @@ capture.onended = () => myMixer.disconnect(); // the host or the user ended it
 capture.stop();
 ```
 
-`captureAudioSources` is absent on hosts without the feature — feature-detect
-it. `capture.canExcludeSelf` is `false` when the host could not exclude its
+`captureAudioSources` is absent on hosts without the feature, on hosts whose
+Audio Sources service is switched off, and on hosts whose capture backend is
+unavailable on this machine — feature-detect it. `capture.canExcludeSelf` is `false` when the host could not exclude its
 own playback; tell the user echo is possible. `capture.stats` carries frame
 and buffer counters for diagnostics.
 
