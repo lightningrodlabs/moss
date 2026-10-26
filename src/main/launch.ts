@@ -1,7 +1,7 @@
 import * as childProcess from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, app } from 'electron';
 import { MossFileSystem } from './filesystem';
 import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
 import { DistributionInfo } from '@theweave/moss-types';
@@ -178,9 +178,14 @@ export async function launch(
   );
   // Every deliberate stop goes through kill(), which sets `killed`; anything
   // else is a crash the log must show, since the UI keeps running against a
-  // keystore that is no longer there.
+  // keystore that is no longer there. A Ctrl-C in a terminal reaches lair
+  // before Moss's own quit does, so an exit while quitting is not a crash either.
+  let quitting = false;
+  app.once('before-quit', () => {
+    quitting = true;
+  });
   lairHandle.on('exit', (code, signal) => {
-    if (lairHandle.killed) return;
+    if (lairHandle.killed || quitting) return;
     weEmitter.emitMossError(`Lair keystore exited unexpectedly (code ${code}, signal ${signal})`);
   });
   const holochainVersion = MOSS_CONFIG.holochain;

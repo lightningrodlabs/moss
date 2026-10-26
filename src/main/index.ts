@@ -867,6 +867,9 @@ if (!RUNNING_WITH_COMMAND) {
     const liveOwner = registry ? findLiveOwner(registry, systemProbe, process.pid) : undefined;
     if (liveOwner) {
       const profileName = RUN_OPTIONS.profile ?? 'default';
+      WE_EMITTER.emitMossLog(
+        `Profile "${profileName}" is owned by running moss process ${liveOwner.pid}; asking the user`,
+      );
       const { response } = await dialog.showMessageBox({
         type: 'warning',
         title: 'Moss is already running',
@@ -877,6 +880,9 @@ if (!RUNNING_WITH_COMMAND) {
         defaultId: 0,
         cancelId: 0,
       });
+      WE_EMITTER.emitMossLog(
+        `User chose to ${response === 0 ? 'use the running Moss' : 'stop it and continue'}`,
+      );
       if (response === 0) {
         app.exit(0);
         return;
