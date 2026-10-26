@@ -432,12 +432,43 @@ if (!RUNNING_WITH_COMMAND) {
 
   let CACHED_DEEP_LINK: string | undefined; // in case the application gets opened from scratch and the password needs to be entered first
 
+  // ------------------------------------------------------------------------------------------
+
+  if (RUN_OPTIONS.devInfo) {
+    // garbage collect previously used folders
+    const files = fs.readdirSync(RUN_OPTIONS.devInfo.tempDirRoot);
+    const foldersToDelete = files.filter((file) =>
+      file.startsWith(`${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${RUN_OPTIONS.devInfo!.agentIdx}`),
+    );
+    for (const folder of foldersToDelete) {
+      fs.rmSync(path.join(RUN_OPTIONS.devInfo.tempDirRoot, folder), {
+        recursive: true,
+        force: true,
+        maxRetries: 4,
+      });
+    }
+  }
+
+  const WE_FILE_SYSTEM = MossFileSystem.connect(
+    app,
+    RUN_OPTIONS.profile,
+    RUN_OPTIONS.devInfo ? RUN_OPTIONS.devInfo.tempDir : undefined,
+  );
+
+  // Set the display name after filesystem paths are established so the storage directory
+  // continues to derive from package.json's `name` field rather than the display name.
+  app.setName(process.env.NODE_ENV === 'development' ? 'Moss-dev' : 'Moss');
+
   if (app.isPackaged) {
     // Single instance and deep link logic
     // ------------------------------------------------------------------------------------------
+    // Electron keys this lock on the userData path, which MossFileSystem.connect
+    // has just pointed at the profile's own directory. So a second instance of
+    // the same profile is refused (two conductors cannot share a keystore), while
+    // different profiles run side by side.
     const isFirstInstance = app.requestSingleInstanceLock({ profile: RUN_OPTIONS.profile });
 
-    if (!isFirstInstance && RUN_OPTIONS.profile === undefined) {
+    if (!isFirstInstance) {
       app.quit();
     } else {
       // https://github.com/electron/electron/issues/40173
@@ -447,8 +478,8 @@ if (!RUNNING_WITH_COMMAND) {
         CACHED_DEEP_LINK = process.argv.find((arg) => isWeaveUrl(arg));
       }
 
-      // This event will always be triggered in the first instance, no matter with which profile
-      // it is being run. On Linux and Windows it is also how deeplinks get in.
+      // Fires in the instance that holds this profile's lock. On Linux and Windows
+      // it is also how deeplinks get in.
       app.on('second-instance', (_event, argv, _cwd, additionalData: any) => {
         if (!isAppQuitting) {
           console.log('second-instance event triggered. argv: ', argv);
@@ -486,32 +517,6 @@ if (!RUNNING_WITH_COMMAND) {
     }
   }
 
-  // ------------------------------------------------------------------------------------------
-
-  if (RUN_OPTIONS.devInfo) {
-    // garbage collect previously used folders
-    const files = fs.readdirSync(RUN_OPTIONS.devInfo.tempDirRoot);
-    const foldersToDelete = files.filter((file) =>
-      file.startsWith(`${APPLET_DEV_TMP_FOLDER_PREFIX}-agent-${RUN_OPTIONS.devInfo!.agentIdx}`),
-    );
-    for (const folder of foldersToDelete) {
-      fs.rmSync(path.join(RUN_OPTIONS.devInfo.tempDirRoot, folder), {
-        recursive: true,
-        force: true,
-        maxRetries: 4,
-      });
-    }
-  }
-
-  const WE_FILE_SYSTEM = MossFileSystem.connect(
-    app,
-    RUN_OPTIONS.profile,
-    RUN_OPTIONS.devInfo ? RUN_OPTIONS.devInfo.tempDir : undefined,
-  );
-
-  // Set the display name after filesystem paths are established so the storage directory
-  // continues to derive from package.json's `name` field rather than the display name.
-  app.setName(process.env.NODE_ENV === 'development' ? 'Moss-dev' : 'Moss');
 
   const APPLET_IFRAME_SCRIPT = fs.readFileSync(
     path.resolve(__dirname, '../applet-iframe/index.mjs'),
