@@ -109,6 +109,7 @@ import {
   validateArgs,
 } from './cli/cli';
 import { launch } from './launch';
+import { clearChildRegistry } from './childProcessRegistry';
 import { singleFlight } from './singleFlight';
 import {
   AgentPubKeyB64,
@@ -3429,6 +3430,8 @@ if (!RUNNING_WITH_COMMAND) {
     if (LOCAL_SERVICES_HANDLE) {
       LOCAL_SERVICES_HANDLE.kill();
     }
+    // The children are stopped now, so the next start has nothing to clean up.
+    clearChildRegistry(WE_FILE_SYSTEM.profileDataDir);
     // This handler is not async, and the app is already on its way out by the
     // time it fires, so the socket close is best-effort rather than awaited.
     void LAN_BEACON.shutdown();

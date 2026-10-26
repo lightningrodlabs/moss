@@ -13,6 +13,8 @@ import { RunOptions } from './cli/cli';
 import { WeEmitter } from './weEmitter';
 import { MOSS_CONFIG } from './mossConfig';
 import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
+import { ChildRecord, killLeftovers, writeChildRegistry } from './childProcessRegistry';
+import { systemProbe } from './processProbe';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 const DEFAULT_APPS: Record<string, string> = {};
@@ -31,6 +33,20 @@ export async function launch(
       `Failed to launch HolochainManager: neither bootstrapUrl nor relayUrl is set in runOptions.`,
     );
   }
+  // A lair or conductor left behind by an earlier session of this profile still
+  // holds the keystore pipe and the conductor database, and lair cannot start
+  // against a keystore another lair holds. Stop them first; a failure here is
+  // only logged, since the launch below reports the real problem if one remains.
+  try {
+    for (const leftover of killLeftovers(mossFileSystem.profileDataDir, systemProbe, process.pid)) {
+      weEmitter.emitMossLog(
+        `Stopped leftover ${leftover.name} process ${leftover.pid} (${leftover.binary}) from a previous session`,
+      );
+    }
+  } catch (e) {
+    weEmitter.emitMossError(`Failed to check for leftover processes: ${e}`);
+  }
+
   // Initialize lair if necessary
   const lairHandleTemp = childProcess.spawnSync(LAIR_BINARY, ['--version']);
   if (!lairHandleTemp.stdout) {
@@ -76,6 +92,21 @@ export async function launch(
     weEmitter.emitMossError(`Failed to launch lair keystore: ${e}`);
     throw new Error(`Failed to launch lair keystore: ${e}`);
   }
+  const spawnedChildren: ChildRecord[] = [
+    {
+      name: 'lair',
+      pid: lairHandle.pid!,
+      binary: LAIR_BINARY,
+      startedAt: new Date().toISOString(),
+    },
+  ];
+  const recordChildren = () =>
+    writeChildRegistry(mossFileSystem.profileDataDir, {
+      mossPid: process.pid,
+      mossBinary: process.execPath,
+      children: spawnedChildren,
+    });
+  recordChildren();
 
   const holochainVersion = MOSS_CONFIG.holochain;
 
@@ -86,12 +117,15 @@ export async function launch(
     );
 
   // launch holochain
+  const conductorBinary = runOptions.customBinary
+    ? runOptions.customBinary
+    : HOLOCHAIN_BINARIES[holochainVersion];
   let holochainManager: HolochainManager;
   try {
     holochainManager = await HolochainManager.launch(
       weEmitter,
       mossFileSystem,
-      runOptions.customBinary ? runOptions.customBinary : HOLOCHAIN_BINARIES[holochainVersion],
+      conductorBinary,
       password,
       holochainVersion,
       mossFileSystem.conductorDir,
@@ -109,6 +143,13 @@ export async function launch(
     weEmitter.emitMossError(`Failed to launch HolochainManager: ${e}`);
     throw new Error(`Failed to launch HolochainManager: ${e}`);
   }
+  spawnedChildren.push({
+    name: 'conductor',
+    pid: holochainManager.processHandle.pid!,
+    binary: conductorBinary,
+    startedAt: new Date().toISOString(),
+  });
+  recordChildren();
   // ADMIN_PORT = holochainManager.adminPort;
   // ADMIN_WEBSOCKET = holochainManager.adminWebsocket;
   // APP_PORT = holochainManager.appPort;cd di
