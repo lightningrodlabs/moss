@@ -47,9 +47,36 @@ function executablePath(pid: number): string | undefined {
   }
 }
 
+/** Start time of `pid` in epoch ms; undefined when the OS will not say. */
+function startTime(pid: number): number | undefined {
+  let text: string | undefined;
+  switch (process.platform) {
+    case 'linux':
+    case 'darwin':
+      // lstart is the full timestamp; `start` would be truncated to the clock.
+      text = run('ps', ['-p', String(pid), '-o', 'lstart='])?.trim();
+      break;
+    case 'win32':
+      text = run('powershell', [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        `(Get-Process -Id ${pid}).StartTime.ToUniversalTime().ToString('o')`,
+      ])?.trim();
+      break;
+    default:
+      return undefined;
+  }
+  if (!text) return undefined;
+  const ms = Date.parse(text);
+  return Number.isNaN(ms) ? undefined : ms;
+}
+
 function kill(pid: number): void {
   if (process.platform === 'win32') {
-    run('taskkill', ['/PID', String(pid), '/T', '/F']);
+    // No /T: lair and the conductor have no children of their own, and a tree
+    // kill would also take any unrelated process whose parent pid matches.
+    run('taskkill', ['/PID', String(pid), '/F']);
     return;
   }
   try {
@@ -60,4 +87,4 @@ function kill(pid: number): void {
 }
 
 /** The real OS process table. */
-export const systemProbe: ProcessProbe = { isAlive, executablePath, kill };
+export const systemProbe: ProcessProbe = { isAlive, executablePath, startTime, kill };

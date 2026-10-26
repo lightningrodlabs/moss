@@ -109,7 +109,7 @@ import {
   validateArgs,
 } from './cli/cli';
 import { launch } from './launch';
-import { clearChildRegistry, killLeftovers } from './childProcessRegistry';
+import { killLeftovers } from './childProcessRegistry';
 import { systemProbe } from './processProbe';
 import { singleFlight } from './singleFlight';
 import {
@@ -471,7 +471,9 @@ if (!RUNNING_WITH_COMMAND) {
     const isFirstInstance = app.requestSingleInstanceLock({ profile: RUN_OPTIONS.profile });
 
     if (!isFirstInstance) {
-      app.quit();
+      // Leave at once: nothing is spawned yet, and running on to the splash
+      // screen would let this instance act on the registry of the live one.
+      app.exit(0);
     } else {
       // https://github.com/electron/electron/issues/40173
       if (process.platform !== 'darwin') {
@@ -1246,7 +1248,9 @@ if (!RUNNING_WITH_COMMAND) {
     // Splash-screen recovery for a keystore held by an earlier session of this
     // profile. Scoped to this profile's registry, so other profiles are untouched.
     ipcMain.handle('stop-leftover-processes', async (): Promise<number> => {
-      const stopped = killLeftovers(WE_FILE_SYSTEM.profileDataDir, systemProbe, process.pid);
+      const stopped = killLeftovers(WE_FILE_SYSTEM.profileDataDir, systemProbe, process.pid, {
+        stopLiveOwner: app.isPackaged,
+      });
       for (const leftover of stopped) {
         WE_EMITTER.emitMossLog(
           `Stopped leftover ${leftover.name} process ${leftover.pid} (${leftover.binary}) on user request`,
@@ -3444,8 +3448,8 @@ if (!RUNNING_WITH_COMMAND) {
     if (LOCAL_SERVICES_HANDLE) {
       LOCAL_SERVICES_HANDLE.kill();
     }
-    // The children are stopped now, so the next start has nothing to clean up.
-    clearChildRegistry(WE_FILE_SYSTEM.profileDataDir);
+    // The child registry is left in place on purpose: kill() only asks the
+    // children to stop, and the next start checks the recorded pids itself.
     // This handler is not async, and the app is already on its way out by the
     // time it fires, so the socket close is best-effort rather than awaited.
     void LAN_BEACON.shutdown();

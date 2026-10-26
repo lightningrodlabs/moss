@@ -72,6 +72,7 @@ export class HolochainManager {
     relayUrl: string,
     rustLog?: string,
     wasmLog?: string,
+    onSpawned?: (pid: number) => void,
   ): Promise<HolochainManager> {
     const adminPort = process.env.ADMIN_PORT
       ? parseInt(process.env.ADMIN_PORT, 10)
@@ -171,6 +172,7 @@ export class HolochainManager {
       env: conductorEnv,
     });
     weEmitter.emitMossLog(`Spawned holochain conductor pid ${conductorHandle.pid}`);
+    if (conductorHandle.pid !== undefined && onSpawned) onSpawned(conductorHandle.pid);
     // Without a stdin 'error' handler, a spawn failure (missing/incompatible
     // binary) can surface as an uncaught EPIPE/ERR_STREAM_DESTROYED that crashes
     // main before the process 'error' listener turns it into a clean rejection.

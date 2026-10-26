@@ -23,23 +23,23 @@ describe('systemProbe', () => {
       expect(path.basename(reported!).toLowerCase()).toBe(
         path.basename(process.execPath).toLowerCase(),
       );
+      const started = systemProbe.startTime(pid);
+      expect(started).toBeDefined();
+      expect(Math.abs(started! - Date.now())).toBeLessThan(10_000);
 
       const registry = {
         mossPid: process.pid,
         mossBinary: process.execPath,
         children: [
-          {
-            name: 'lair' as const,
-            pid,
-            binary: process.execPath,
-            startedAt: new Date().toISOString(),
-          },
+          { name: 'lair' as const, pid, binary: process.execPath, startTime: started },
           // Same pid recorded under a different program: must not match.
+          { name: 'conductor' as const, pid, binary: '/opt/elsewhere/notepad.exe' },
+          // Same pid and program, but a process that started a minute earlier: must not match.
           {
             name: 'conductor' as const,
             pid,
-            binary: '/opt/elsewhere/notepad.exe',
-            startedAt: new Date().toISOString(),
+            binary: process.execPath,
+            startTime: started! - 60_000,
           },
         ],
       };
@@ -61,5 +61,6 @@ describe('systemProbe', () => {
     const unlikely = 4194303;
     expect(systemProbe.isAlive(unlikely)).toBe(false);
     expect(systemProbe.executablePath(unlikely)).toBeUndefined();
+    expect(systemProbe.startTime(unlikely)).toBeUndefined();
   });
 });

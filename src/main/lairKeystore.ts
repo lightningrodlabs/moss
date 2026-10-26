@@ -37,6 +37,7 @@ export async function launchLairKeystore(
   weEmitter: WeEmitter,
   password: string,
   rustLog?: string,
+  onSpawned?: (pid: number) => void,
 ): Promise<[childProcess.ChildProcessWithoutNullStreams, string]> {
   // On Unix systems, there is a limit to the path length of a domain socket. Create a symlink to the lair directory from the tempdir
   // instead and overwrite the connectionUrl in the lair-keystore-config.yaml
@@ -81,6 +82,7 @@ export async function launchLairKeystore(
     },
   });
   weEmitter.emitMossLog(`Spawned lair-keystore pid ${lairHandle.pid}`);
+  if (lairHandle.pid !== undefined && onSpawned) onSpawned(lairHandle.pid);
   // A spawn failure surfaces on stdin before the process 'error' event; swallow
   // it so the rejection below is the one the caller sees.
   lairHandle.stdin.on('error', () => {});
@@ -101,7 +103,10 @@ export async function launchLairKeystore(
     lairHandle.on('error', (err) => {
       fail({ kind: 'other', detail: `failed to spawn lair-keystore: ${err}` });
     });
-    lairHandle.on('exit', (code, signal) => {
+    // 'close' rather than 'exit': it fires after stderr has been drained, so a
+    // lair that prints its error and exits at once is classified by that line
+    // instead of being reported as a bare exit.
+    lairHandle.on('close', (code, signal) => {
       fail({
         kind: 'exited',
         detail: `lair-keystore exited (code ${code}, signal ${signal}) before it was ready`,

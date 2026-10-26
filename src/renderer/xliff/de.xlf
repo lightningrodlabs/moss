@@ -3271,6 +3271,10 @@ beginnt jetzt</target>
   <source>Stop leftover processes and retry</source>
   <target>Übrig gebliebene Prozesse beenden und erneut versuchen</target>
 </trans-unit>
+<trans-unit id="sb4a1e81ee82ba711">
+  <source>Could not stop leftover processes.</source>
+  <target>Übrig gebliebene Prozesse konnten nicht beendet werden.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

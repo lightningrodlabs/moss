@@ -3271,6 +3271,10 @@ starts now</source>
   <source>Stop leftover processes and retry</source>
   <target>Kalan süreçleri durdur ve yeniden dene</target>
 </trans-unit>
+<trans-unit id="sb4a1e81ee82ba711">
+  <source>Could not stop leftover processes.</source>
+  <target>Kalan süreçler durdurulamadı.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

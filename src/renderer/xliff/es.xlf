@@ -3271,6 +3271,10 @@ comienza ahora</target>
   <source>Stop leftover processes and retry</source>
   <target>Detener los procesos restantes y reintentar</target>
 </trans-unit>
+<trans-unit id="sb4a1e81ee82ba711">
+  <source>Could not stop leftover processes.</source>
+  <target>No se pudieron detener los procesos restantes.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

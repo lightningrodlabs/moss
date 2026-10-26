@@ -18,14 +18,20 @@ export interface ChildRecord {
   pid: number;
   /** Absolute path Moss spawned. */
   binary: string;
-  /** ISO 8601. */
-  startedAt: string;
+  /**
+   * Process start time (epoch ms) as the OS reported it right after spawn.
+   * Together with the pid it identifies one process, so a pid the OS later
+   * handed to another program (or another Moss profile) is never matched.
+   * Absent when the OS would not say.
+   */
+  startTime?: number;
 }
 
 export interface ChildRegistry {
   mossPid: number;
   /** `process.execPath` at write time. */
   mossBinary: string;
+  mossStartTime?: number;
   children: ChildRecord[];
 }
 
@@ -36,8 +42,13 @@ export interface ProcessProbe {
   isAlive(pid: number): boolean;
   /** Path (or at least file name) of the executable behind `pid`, or undefined if unknown. */
   executablePath(pid: number): string | undefined;
+  /** Start time of `pid` in epoch ms, or undefined if unknown. */
+  startTime(pid: number): number | undefined;
   kill(pid: number): void;
 }
+
+/** OS clocks report start times in ticks or whole seconds, so allow a second either way. */
+const START_TIME_TOLERANCE_MS = 1500;
 
 export interface Leftover {
   name: ChildName | 'moss';
@@ -56,7 +67,8 @@ function isChildRecord(value: unknown): value is ChildRecord {
     (v.name === 'lair' || v.name === 'conductor') &&
     typeof v.pid === 'number' &&
     typeof v.binary === 'string' &&
-    typeof v.startedAt === 'string'
+    (v.startTime === undefined || typeof v.startTime === 'number') &&
+    !('startedAt' in v)
   );
 }
 
@@ -66,6 +78,7 @@ function isChildRegistry(value: unknown): value is ChildRegistry {
   return (
     typeof v.mossPid === 'number' &&
     typeof v.mossBinary === 'string' &&
+    (v.mossStartTime === undefined || typeof v.mossStartTime === 'number') &&
     Array.isArray(v.children) &&
     v.children.every(isChildRecord)
   );
@@ -102,18 +115,35 @@ export function clearChildRegistry(profileDataDir: string): void {
  * 8.3 names, symlinks), but a reused pid belongs to a different program.
  */
 function sameImage(spawnedBinary: string, reportedPath: string): boolean {
+  // Linux reports a replaced executable as "<path> (deleted)"; it is still ours.
+  const reported = reportedPath.replace(/ \(deleted\)$/, '');
   // win32.basename splits on both separators, so it is right on every platform.
   return (
-    path.win32.basename(spawnedBinary).toLowerCase() ===
-    path.win32.basename(reportedPath).toLowerCase()
+    path.win32.basename(spawnedBinary).toLowerCase() === path.win32.basename(reported).toLowerCase()
   );
 }
 
-function isLeftover(pid: number, binary: string, probe: ProcessProbe, selfPid: number): boolean {
+/**
+ * True only for the very process that was recorded. Every Moss profile runs the
+ * same binaries, so the image name alone cannot tell a leftover from another
+ * profile's live process that inherited the pid; the start time can. When a
+ * start time was recorded but the OS will not report one now, err on the side
+ * of not killing.
+ */
+function isSameProcess(
+  pid: number,
+  binary: string,
+  startTime: number | undefined,
+  probe: ProcessProbe,
+  selfPid: number,
+): boolean {
   if (pid === selfPid) return false;
   if (!probe.isAlive(pid)) return false;
   const reported = probe.executablePath(pid);
-  return reported !== undefined && sameImage(binary, reported);
+  if (reported === undefined || !sameImage(binary, reported)) return false;
+  if (startTime === undefined) return true;
+  const liveStart = probe.startTime(pid);
+  return liveStart !== undefined && Math.abs(liveStart - startTime) <= START_TIME_TOLERANCE_MS;
 }
 
 /**
@@ -127,29 +157,60 @@ export function findLeftovers(
   selfPid: number,
 ): Leftover[] {
   const found: Leftover[] = [];
-  if (isLeftover(registry.mossPid, registry.mossBinary, probe, selfPid)) {
+  if (
+    isSameProcess(registry.mossPid, registry.mossBinary, registry.mossStartTime, probe, selfPid)
+  ) {
     found.push({ name: 'moss', pid: registry.mossPid, binary: registry.mossBinary });
   }
   for (const child of registry.children) {
-    if (isLeftover(child.pid, child.binary, probe, selfPid)) {
+    if (isSameProcess(child.pid, child.binary, child.startTime, probe, selfPid)) {
       found.push({ name: child.name, pid: child.pid, binary: child.binary });
     }
   }
   return found;
 }
 
-/** Stops the leftovers of this profile, drops the registry file, and returns what was stopped. */
+export interface KillLeftoversOptions {
+  /**
+   * Whether a recorded Moss that is still running counts as a leftover. A
+   * packaged Moss holds the per-profile single-instance lock, so a live owner
+   * can only be a hung previous instance. Without the lock (dev builds) it is
+   * more likely a healthy instance the user started twice, and its children
+   * must be left alone too.
+   */
+  stopLiveOwner: boolean;
+}
+
+/**
+ * Stops the leftovers of this profile and returns what was signalled. Records
+ * whose process survived the kill stay in the registry so a later attempt (the
+ * splash-screen button, the next start) can try again; the file is dropped
+ * once nothing recorded is alive.
+ */
 export function killLeftovers(
   profileDataDir: string,
   probe: ProcessProbe,
   selfPid: number,
+  options: KillLeftoversOptions = { stopLiveOwner: true },
 ): Leftover[] {
   const registry = readChildRegistry(profileDataDir);
   if (!registry) return [];
   const leftovers = findLeftovers(registry, probe, selfPid);
+  if (!options.stopLiveOwner && leftovers.some((l) => l.name === 'moss')) {
+    return [];
+  }
   for (const leftover of leftovers) {
     probe.kill(leftover.pid);
   }
-  clearChildRegistry(profileDataDir);
+  const survivors = findLeftovers(registry, probe, selfPid);
+  if (survivors.length === 0) {
+    clearChildRegistry(profileDataDir);
+  } else {
+    const survivorPids = new Set(survivors.map((s) => s.pid));
+    writeChildRegistry(profileDataDir, {
+      ...registry,
+      children: registry.children.filter((c) => survivorPids.has(c.pid)),
+    });
+  }
   return leftovers;
 }

@@ -145,7 +145,8 @@ export class SplashScreen extends LitElement {
         await this.chooseView();
       } else {
         // Stays until the user acts; the error view shows it with the recovery buttons.
-        this.launchError = e;
+        // The IPC wrapper prefix says nothing the user can use.
+        this.launchError = String(e).replace(/^Error invoking remote method 'launch': /, '');
         this.view = SplashScreenMode.Error;
       }
     }
@@ -320,7 +321,12 @@ export class SplashScreen extends LitElement {
           <button
             style="margin-right: 5px;"
             @click=${async () => {
-              await window.electronAPI.stopLeftoverProcesses();
+              try {
+                await window.electronAPI.stopLeftoverProcesses();
+              } catch (e) {
+                this.launchError = `${msg('Could not stop leftover processes.')} ${e}`;
+                return;
+              }
               this.launchError = undefined;
               this.chooseView();
             }}
