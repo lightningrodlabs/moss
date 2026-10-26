@@ -3396,6 +3396,7 @@ if (!RUNNING_WITH_COMMAND) {
   });
 
   app.on('before-quit', () => {
+    WE_EMITTER.emitMossLog('before-quit');
     if (!isAppQuitting) {
       // If the quitting process takes longer than 15 seconds, force quit.
       setTimeout(() => {
@@ -3433,9 +3434,11 @@ if (!RUNNING_WITH_COMMAND) {
       fs.rmSync('.hc_local_services');
     }
     if (LAIR_HANDLE) {
+      WE_EMITTER.emitMossLog(`quit: stopping lair pid ${LAIR_HANDLE.pid}`);
       LAIR_HANDLE.kill();
     }
     if (HOLOCHAIN_MANAGER) {
+      WE_EMITTER.emitMossLog(`quit: stopping conductor pid ${HOLOCHAIN_MANAGER.processHandle.pid}`);
       HOLOCHAIN_MANAGER.shutdown();
     }
     if (LOCAL_SERVICES_HANDLE) {

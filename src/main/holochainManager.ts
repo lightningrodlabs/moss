@@ -170,6 +170,7 @@ export class HolochainManager {
     const conductorHandle = childProcess.spawn(binary, ['-c', configPath, '-p'], {
       env: conductorEnv,
     });
+    weEmitter.emitMossLog(`Spawned holochain conductor pid ${conductorHandle.pid}`);
     // Without a stdin 'error' handler, a spawn failure (missing/incompatible
     // binary) can surface as an uncaught EPIPE/ERR_STREAM_DESTROYED that crashes
     // main before the process 'error' listener turns it into a clean rejection.

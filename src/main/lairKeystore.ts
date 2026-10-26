@@ -80,6 +80,7 @@ export async function launchLairKeystore(
       RUST_LOGS: rustLog ? rustLog : 'warn',
     },
   });
+  weEmitter.emitMossLog(`Spawned lair-keystore pid ${lairHandle.pid}`);
   // A spawn failure surfaces on stdin before the process 'error' event; swallow
   // it so the rejection below is the one the caller sees.
   lairHandle.stdin.on('error', () => {});

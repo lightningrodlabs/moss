@@ -140,6 +140,13 @@ export async function launch(
     runOptions,
     stopLeftovers,
   );
+  // Every deliberate stop goes through kill(), which sets `killed`; anything
+  // else is a crash the log must show, since the UI keeps running against a
+  // keystore that is no longer there.
+  lairHandle.on('exit', (code, signal) => {
+    if (lairHandle.killed) return;
+    weEmitter.emitMossError(`Lair keystore exited unexpectedly (code ${code}, signal ${signal})`);
+  });
   const spawnedChildren: ChildRecord[] = [
     {
       name: 'lair',
