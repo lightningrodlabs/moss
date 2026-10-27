@@ -23,6 +23,13 @@ export default defineConfig({
       watch: {
         exclude: ['**/.cargo/**', '.cargo'],
       },
+      rollupOptions: {
+        input: {
+          index: resolve(__dirname, 'src/main/index.ts'),
+          // Forked by parentWatchdog.ts as a plain Node process.
+          watchdog: resolve(__dirname, 'src/main/watchdogMain.ts'),
+        },
+      },
     },
   },
   preload: {
