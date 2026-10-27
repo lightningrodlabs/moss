@@ -521,8 +521,8 @@ const weaveApi: WeaveServices = {
       }
       try {
         const result = await handleParentMessageGeneral(appletClient, appletHash, m.data);
-        // Messages sent from MossStore.postMessageToAppletIframes() won't have
-        // a port attached here, only the ones sent from AppletHost
+        // Broadcasts from the host (AppletChannel.broadcast) carry no port;
+        // requests (AppletChannel.request) carry one for the reply.
         m.ports[0]?.postMessage({ type: 'success', result });
       } catch (e) {
         console.error(

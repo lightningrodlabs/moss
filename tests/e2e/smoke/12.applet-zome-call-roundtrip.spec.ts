@@ -1,7 +1,12 @@
 import { test, expect, launchMoss, closeMoss } from '../fixtures/moss';
 import { startFreshIfLegacyImport, waitForBoot } from '../helpers/bootToReady';
 import { createGroupFromMainDashboard, enterSpaceIfPrompted } from '../helpers/groups';
-import { installToolFromLibrary, openToolInGroup, waitForAppletHandshake } from '../helpers/tools';
+import {
+  createExamplePost,
+  installToolFromLibrary,
+  openToolInGroup,
+  waitForAppletHandshake,
+} from '../helpers/tools';
 import { FIXTURE_TOOL_TITLE } from '../fixtures/toolCuration';
 
 /**
@@ -46,35 +51,10 @@ test('applet own-cell zome calls (create_post + get_all_posts) round-trip via th
     await waitForAppletHandshake(frame, 60_000);
     await expect(frame.locator('example-applet-main')).toBeVisible({ timeout: 30_000 });
 
-    // Before creating anything the list shows its empty placeholder — confirms
-    // the initial get_all_posts (also a signed own-cell call) succeeded rather
-    // than erroring.
-    await expect(frame.locator('all-posts')).toBeVisible({ timeout: 30_000 });
-
-    // Fill and submit the create-post form. Shoelace form controls live in
-    // nested shadow roots; set their values directly and submit the form (the
-    // same evaluate-based technique the profile helper uses), which fires the
-    // onSubmit handler -> create_post zome call.
-    await frame.locator('create-post').evaluate(
-      async (el: any, { title, content }: { title: string; content: string }) => {
-        const root: ShadowRoot = el.shadowRoot;
-        const titleEl: any = root.querySelector('sl-input[name="title"]');
-        const contentEl: any = root.querySelector('sl-textarea[name="content"]');
-        if (!titleEl || !contentEl) throw new Error('create-post form controls not found');
-        titleEl.value = title;
-        contentEl.value = content;
-        if (titleEl.updateComplete) await titleEl.updateComplete;
-        if (contentEl.updateComplete) await contentEl.updateComplete;
-        const form = root.querySelector('#create-form') as HTMLFormElement | null;
-        if (!form) throw new Error('#create-form not found');
-        form.requestSubmit();
-      },
-      { title: POST_TITLE, content: 'created by e2e signing round-trip test' },
-    );
-
-    // A post-summary renders only after create_post succeeds AND the reloaded
-    // get_all_posts returns the record — both signed via sign-zome-call-applet.
-    await expect(frame.locator('post-summary').first()).toBeVisible({ timeout: 60_000 });
+    // createExamplePost waits for the empty list (the first signed own-cell
+    // call, get_all_posts) and then for the new post-summary, which renders
+    // only after create_post and the reloaded get_all_posts both succeed.
+    await createExamplePost(frame, POST_TITLE);
   } finally {
     await closeMoss(moss);
   }

@@ -77,7 +77,9 @@ import '../assets/pocket/pocket-drop.js';
 import '../assets/creatables/creatable-palette.js';
 import { MossPocket } from '../assets/pocket/pocket.js';
 import { CreatablePalette } from '../assets/creatables/creatable-palette.js';
-import { appletMessageHandler, handleAppletIframeMessage } from '../applets/applet-host.js';
+import { handleAppletIframeMessage } from '../applets/applet-host.js';
+import { UNLOAD_TIMEOUT_MS } from '../applets/applet-channel/applet-channel.js';
+import { assertValidRequest } from '../applets/applet-channel/request-validation.js';
 import { initAsrRendererBridge } from '../applets/asr-bridge.js';
 import { openViewsContext } from '../layout/context.js';
 import { AppOpenViews } from '../layout/types.js';
@@ -270,7 +272,7 @@ export class MainDashboard extends LitElement {
   _reloadingApplets: Array<AppletId> = [];
 
   // Listener references for cleanup in disconnectedCallback
-  private _appletMessageListener: ((event: MessageEvent) => void) | undefined;
+  private _stopAppletChannel: (() => void) | undefined;
   private _keydownListener: ((event: KeyboardEvent) => void) | undefined;
   private _openAssetUnsub: (() => void) | undefined;
 
@@ -541,56 +543,24 @@ export class MainDashboard extends LitElement {
   hardRefresh() {
     this.slowLoading = false;
     window.removeEventListener('beforeunload', this.beforeUnloadListener);
-    // The logic to set this variable lives in walwindow.html
+    // The logic to set this variable lives in index.html
     if ((window as any).__WINDOW_CLOSING__) {
-      (window as any).electronAPI.closeWindow();
+      window.electronAPI.closeMainWindow();
     } else {
       window.location.reload();
     }
   }
 
-  beforeUnloadListener = async (e) => {
-    console.log('GOT BEFOREUNLOAD EVENT: ', e);
-    // Wait first to check whether it's triggered by a will-navigate or will-frame-navigate
-    // event to an external location (https, mailto, ...) and this listener should therefore
-    // not be executed (https://github.com/electron/electron/issues/29921)
-    let shouldProceed = true;
-    await new Promise((resolve) => {
-      window.electronAPI.onWillNavigateExternal(() => {
-        shouldProceed = false;
-        window.electronAPI.removeWillNavigateListeners();
-        resolve(null);
-      });
-      setTimeout(() => {
-        resolve(null);
-      }, 500);
-    });
-
-    e.preventDefault();
-
-    if (shouldProceed) {
-      e.preventDefault();
-      this.reloading = true;
-      console.log('onbeforeunload event');
-      // If it takes longer than 5 seconds to unload, offer to hard reload
-      this.slowReloadTimeout = window.setTimeout(() => {
-        this.slowLoading = true;
-      }, 4500);
-      await this._mossStore.iframeStore.postMessageToAppletIframes(
-        { type: 'all' },
-        { type: 'on-before-unload' },
-      );
-      console.log('on-before-unload callbacks finished.');
-      window.removeEventListener('beforeunload', this.beforeUnloadListener);
-      // The logic to set this variable lives in index.html
-      window.location.reload();
-      if ((window as any).__WINDOW_CLOSING__) {
-        console.log('__WINDOW_CLOSING__ is true');
-        window.electronAPI.closeMainWindow();
-      } else {
-        window.location.reload();
-      }
-    }
+  // Asks the ready applet frames to run their unload callbacks. It sends the
+  // request before returning, ahead of each frame's own beforeunload, in which
+  // the frame unregisters. The unload itself is not held: Chromium honors a
+  // cancelled unload only after a user gesture on the page.
+  beforeUnloadListener = () => {
+    void this._mossStore.appletChannel.requestAll(
+      'all',
+      { type: 'on-before-unload' },
+      UNLOAD_TIMEOUT_MS,
+    );
   };
 
   private _toolInfoListener = (e: Event) => {
@@ -613,15 +583,13 @@ export class MainDashboard extends LitElement {
 
   async firstUpdated() {
     if (this.initialGroup) this.openGroup(this.initialGroup);
-    // add the beforeunload listener only 10 seconds later as there won't be anything
-    // meaningful to save by applets before and it will ensure that the iframes
-    // are ready to respond to the on-before-reload event
-    setTimeout(() => {
-      window.addEventListener('beforeunload', this.beforeUnloadListener);
-    }, 10000);
+    window.addEventListener('beforeunload', this.beforeUnloadListener);
 
-    this._appletMessageListener = appletMessageHandler(this._mossStore, this.openViews);
-    window.addEventListener('message', this._appletMessageListener);
+    this._stopAppletChannel = this._mossStore.appletChannel.listen(
+      window,
+      (request, { kind, source }) =>
+        handleAppletIframeMessage(this._mossStore, this.openViews, kind, request, source),
+    );
 
     // Wire window.electronAPI.onAsrEvent → AsrRendererBridge so that
     // 'asr-event' IPC pushes from main reach every iframe hosting the
@@ -641,6 +609,10 @@ export class MainDashboard extends LitElement {
       try {
         if (!payload.message.source) {
           throw new Error('source not defined in AppletToParentMessage');
+        }
+        assertValidRequest(payload.message.request);
+        if (payload.message.request.type === 'ready') {
+          throw new Error('A ready report is answered by the window that hosts the frame.');
         }
         const result = await handleAppletIframeMessage(
           this._mossStore,
@@ -857,9 +829,9 @@ export class MainDashboard extends LitElement {
     super.disconnectedCallback();
     this.removeEventListener('open-tool-info', this._toolInfoListener);
     this.removeEventListener('open-reenable-tool', this._reenableToolListener);
-    if (this._appletMessageListener) {
-      window.removeEventListener('message', this._appletMessageListener);
-      this._appletMessageListener = undefined;
+    if (this._stopAppletChannel) {
+      this._stopAppletChannel();
+      this._stopAppletChannel = undefined;
     }
     if (this._keydownListener) {
       window.removeEventListener('keydown', this._keydownListener);

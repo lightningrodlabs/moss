@@ -11,11 +11,11 @@ export type IframeReadiness = 'reported' | 'assumed';
  */
 export function hostTimeoutMessage(
   messageType: string,
-  appletId: string,
+  target: string,
   timeoutMs: number,
   readiness: IframeReadiness,
 ): string {
-  const head = `postMessage '${messageType}' to applet ${appletId} timed out after ${timeoutMs}ms. `;
+  const head = `postMessage '${messageType}' to ${target} timed out after ${timeoutMs}ms. `;
   return readiness === 'reported'
     ? head +
         "The iframe reported that it can answer messages, so the request most likely stalled inside the Tool's own handler."

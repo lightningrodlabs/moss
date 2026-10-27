@@ -1,6 +1,6 @@
 import { Value } from '@sinclair/typebox/value';
 import type { AppletToParentRequest } from '@theweave/api';
-import { AppletToParentRequest as AppletToParentRequestSchema } from '../validationSchemas.js';
+import { AppletToParentRequest as AppletToParentRequestSchema } from '../../validationSchemas.js';
 
 /**
  * Checks that a message from an applet iframe matches the request protocol.

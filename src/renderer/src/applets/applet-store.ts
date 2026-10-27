@@ -9,7 +9,7 @@ import {
 } from '../utils.js';
 import { ConductorInfo } from '../electron-api.js';
 import { Applet } from '@theweave/group-client';
-import { IframeStore } from '../iframe-store.js';
+import type { AppletChannel } from './applet-channel/applet-channel.js';
 
 /**
  * How long to wait for an applet's main iframe to report that it can answer
@@ -27,7 +27,7 @@ export class AppletStore {
     public conductorInfo: ConductorInfo,
     public authenticationToken: AppAuthenticationToken,
     isAppletDev: boolean,
-    public iframeStore: IframeStore,
+    public appletChannel: AppletChannel,
   ) {
     this._unreadNotifications.set(loadAppletNotificationStatus(encodeHashToBase64(appletHash)));
     this.isAppletDev = isAppletDev;
@@ -35,14 +35,12 @@ export class AppletStore {
 
   host: AsyncReadable<AppletHost | undefined> = lazyLoad(async () => {
     const appletHashBase64 = encodeHashToBase64(this.appletHash);
-    const readyIframe = await this.iframeStore.waitForReadyAppletIframe(
+    const readyFrame = await this.appletChannel.waitForReadyAppletFrame(
       appletHashBase64,
       'main',
       IFRAME_READY_TIMEOUT_MS,
     );
-    if (readyIframe && readyIframe.source && readyIframe.source !== 'wal-window') {
-      return new AppletHost(readyIframe.source, appletHashBase64, 'reported');
-    }
+    if (readyFrame) return new AppletHost(readyFrame, appletHashBase64, this.appletChannel);
 
     // An iframe that never reports readiness should still be reachable, so fall
     // back to whatever is in the DOM. Messages to it may go unanswered, which
@@ -52,7 +50,7 @@ export class AppletStore {
       console.warn(
         `Applet ${appletHashBase64} did not report readiness within ${IFRAME_READY_TIMEOUT_MS}ms. Falling back to its iframe in the DOM.`,
       );
-      return new AppletHost(relevantIframe.contentWindow, appletHashBase64, 'assumed');
+      return new AppletHost(relevantIframe.contentWindow, appletHashBase64, this.appletChannel);
     }
 
     console.warn(

@@ -20,15 +20,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     callback: (
       e: Electron.IpcRendererEvent,
       message: ParentToAppletMessage,
-      forApplets: AppletId[],
+      forApplets: 'all' | AppletId[],
     ) => any,
   ) => ipcRenderer.on('parent-to-applet-message', callback),
-  onWillNavigateExternal: (callback: (e: Electron.IpcRendererEvent) => any) =>
-    ipcRenderer.on('will-navigate-external', callback),
   onRequestIframeStoreSync: (callback: (e: Electron.IpcRendererEvent) => any) =>
     ipcRenderer.on('request-iframe-store-sync', callback),
   iframeStoreSync: (storeContent) => ipcRenderer.invoke('iframe-store-sync', storeContent),
-  removeWillNavigateListeners: () => ipcRenderer.removeAllListeners('will-navigate-external'),
   selectScreenOrWindow: () => ipcRenderer.invoke('select-screen-or-window'),
   requestAudioSources: (req: { requestId: string; toolName: string }) =>
     ipcRenderer.invoke('request-audio-sources', req),

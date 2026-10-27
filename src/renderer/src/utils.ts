@@ -53,7 +53,6 @@ import {
   deriveToolCompatibilityId,
   getCellId,
   toLowerCaseB64,
-  toOriginalCaseB64,
 } from '@theweave/utils';
 import {
   DeveloperCollective,
@@ -321,18 +320,6 @@ export function iframeOrigin(iframeKind: IframeKind): string {
 
 export function appletOriginFromAppletId(appletId: AppletId): string {
   return `applet://${toLowerCaseB64(appletId)}`;
-}
-
-export function getAppletIdFromOrigin(origin: string): AppletId {
-  const lowercaseB64IdWithPercent = origin.split('://')[1].split('?')[0].split('/')[0];
-  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
-  return toOriginalCaseB64(lowercaseB64Id);
-}
-
-export function getToolCompatibilityIdFromOrigin(origin: string): ToolCompatibilityId {
-  const lowercaseB64IdWithPercent = origin.split('://')[1].split('?')[0].split('/')[0];
-  const lowercaseB64Id = lowercaseB64IdWithPercent.replace(/%24/g, '$');
-  return toOriginalCaseB64(lowercaseB64Id);
 }
 
 /**
