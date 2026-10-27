@@ -3267,6 +3267,14 @@ starts now</source>
   <source>large-v3-turbo is nearly as accurate as large-v3 and several times faster. Try it before large-v3.</source>
   <target>large-v3-turbo neredeyse large-v3 kadar doğrudur ve birkaç kat daha hızlıdır. large-v3'ten önce onu deneyin.</target>
 </trans-unit>
+<trans-unit id="s8b8ffef8c28cd1fa">
+  <source>Stop leftover processes and retry</source>
+  <target>Kalan süreçleri durdur ve yeniden dene</target>
+</trans-unit>
+<trans-unit id="sb4a1e81ee82ba711">
+  <source>Could not stop leftover processes.</source>
+  <target>Kalan süreçler durdurulamadı.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

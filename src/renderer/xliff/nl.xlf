@@ -3267,6 +3267,14 @@ begint nu</target>
   <source>large-v3-turbo is nearly as accurate as large-v3 and several times faster. Try it before large-v3.</source>
   <target>large-v3-turbo is bijna even nauwkeurig als large-v3 en enkele keren sneller. Probeer het vóór large-v3.</target>
 </trans-unit>
+<trans-unit id="s8b8ffef8c28cd1fa">
+  <source>Stop leftover processes and retry</source>
+  <target>Achtergebleven processen stoppen en opnieuw proberen</target>
+</trans-unit>
+<trans-unit id="sb4a1e81ee82ba711">
+  <source>Could not stop leftover processes.</source>
+  <target>Achtergebleven processen konden niet worden gestopt.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

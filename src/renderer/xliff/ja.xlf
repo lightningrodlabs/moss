@@ -3267,6 +3267,14 @@ starts now</source>
   <source>large-v3-turbo is nearly as accurate as large-v3 and several times faster. Try it before large-v3.</source>
   <target>large-v3-turbo は large-v3 とほぼ同じ精度で、数倍高速です。large-v3 の前にこちらを試してください。</target>
 </trans-unit>
+<trans-unit id="s8b8ffef8c28cd1fa">
+  <source>Stop leftover processes and retry</source>
+  <target>残ったプロセスを停止して再試行</target>
+</trans-unit>
+<trans-unit id="sb4a1e81ee82ba711">
+  <source>Could not stop leftover processes.</source>
+  <target>残ったプロセスを停止できませんでした。</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

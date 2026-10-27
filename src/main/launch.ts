@@ -1,7 +1,7 @@
 import * as childProcess from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, app } from 'electron';
 import { MossFileSystem } from './filesystem';
 import { initializeLairKeystore, launchLairKeystore } from './lairKeystore';
 import { DistributionInfo } from '@theweave/moss-types';
@@ -13,9 +13,68 @@ import { RunOptions } from './cli/cli';
 import { WeEmitter } from './weEmitter';
 import { MOSS_CONFIG } from './mossConfig';
 import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
+import {
+  ChildName,
+  ChildRecord,
+  Leftover,
+  killLeftovers,
+  writeChildRegistry,
+} from './childProcessRegistry';
+import { systemProbe } from './processProbe';
+import { LairFailure, describeLairFailure } from './lairFailure';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 const DEFAULT_APPS: Record<string, string> = {};
+
+const LAIR_LAUNCH_ATTEMPTS = 3;
+
+function isLairFailure(e: unknown): e is LairFailure {
+  return typeof e === 'object' && e !== null && 'kind' in e && 'detail' in e;
+}
+
+/**
+ * A keystore that is still held by a process from an earlier session, or by a
+ * short-lived file lock (antivirus, indexer), frees up within seconds. Stop what
+ * this profile recorded, wait, and try again before giving up with a message the
+ * user can act on. Any other failure is final on the first attempt.
+ */
+async function launchLairWithRetry(
+  mossFileSystem: MossFileSystem,
+  weEmitter: WeEmitter,
+  password: string,
+  runOptions: RunOptions,
+  stopLeftovers: () => Leftover[],
+  onSpawned: (pid: number) => void,
+): Promise<[childProcess.ChildProcessWithoutNullStreams, string]> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await launchLairKeystore(
+        LAIR_BINARY,
+        mossFileSystem.keystoreDir,
+        weEmitter,
+        password,
+        runOptions.lairRustLog,
+        onSpawned,
+      );
+    } catch (e) {
+      const failure: LairFailure = isLairFailure(e) ? e : { kind: 'other', detail: String(e) };
+      if (failure.kind === 'wrong-password') {
+        throw new Error('Wrong password.');
+      }
+      if (failure.kind === 'keystore-busy' && attempt < LAIR_LAUNCH_ATTEMPTS) {
+        weEmitter.emitMossLog(
+          `Keystore busy on lair launch attempt ${attempt}/${LAIR_LAUNCH_ATTEMPTS} (${failure.detail}); stopping leftovers and retrying`,
+        );
+        stopLeftovers();
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+        continue;
+      }
+      const message = describeLairFailure(failure, runOptions.profile);
+      weEmitter.emitMossError(message);
+      throw new Error(message);
+    }
+  }
+}
 
 export async function launch(
   mossFileSystem: MossFileSystem,
@@ -31,6 +90,53 @@ export async function launch(
       `Failed to launch HolochainManager: neither bootstrapUrl nor relayUrl is set in runOptions.`,
     );
   }
+  // A lair or conductor left behind by an earlier session of this profile still
+  // holds the keystore pipe and the conductor database, and lair cannot start
+  // against a keystore another lair holds. Stop them first; a failure here is
+  // only logged, since the launch below reports the real problem if one remains.
+  const stopLeftovers = (): Leftover[] => {
+    try {
+      // A live recorded Moss is never stopped from here: the owner check at
+      // startup already asked the user about it, so one that appears now is a
+      // healthy instance the user started in the meantime.
+      const stopped = killLeftovers(mossFileSystem.profileDataDir, systemProbe, process.pid, {
+        stopLiveOwner: false,
+      });
+      for (const leftover of stopped) {
+        weEmitter.emitMossLog(
+          `Stopped leftover ${leftover.name} process ${leftover.pid} (${leftover.binary}) from a previous session`,
+        );
+      }
+      return stopped;
+    } catch (e) {
+      weEmitter.emitMossError(`Failed to check for leftover processes: ${e}`);
+      return [];
+    }
+  };
+  stopLeftovers();
+
+  // Each child is recorded the moment it is spawned, so a Moss that is killed
+  // while the conductor is still migrating still leaves a record for the next
+  // start to act on. A failed write must not abort a launch that is otherwise
+  // fine; it only costs the next start its cleanup.
+  const spawnedChildren: ChildRecord[] = [];
+  const recordChild = (name: ChildName, pid: number, binary: string) => {
+    const existing = spawnedChildren.findIndex((c) => c.name === name);
+    const record: ChildRecord = { name, pid, binary, startTime: systemProbe.startTime(pid) };
+    if (existing >= 0) spawnedChildren[existing] = record;
+    else spawnedChildren.push(record);
+    try {
+      writeChildRegistry(mossFileSystem.profileDataDir, {
+        mossPid: process.pid,
+        mossBinary: process.execPath,
+        mossStartTime: systemProbe.startTime(process.pid),
+        children: spawnedChildren,
+      });
+    } catch (e) {
+      weEmitter.emitMossError(`Failed to record ${name} pid ${pid}: ${e}`);
+    }
+  };
+
   // Initialize lair if necessary
   const lairHandleTemp = childProcess.spawnSync(LAIR_BINARY, ['--version']);
   if (!lairHandleTemp.stdout) {
@@ -62,21 +168,26 @@ export async function launch(
     splashscreenWindow.webContents.send('loading-progress-update', 'Starting lair keystore...');
 
   // launch lair keystore
-  let lairHandle: childProcess.ChildProcessWithoutNullStreams;
-  let lairUrl: string;
-  try {
-    [lairHandle, lairUrl] = await launchLairKeystore(
-      LAIR_BINARY,
-      mossFileSystem.keystoreDir,
-      weEmitter,
-      password,
-      runOptions.lairRustLog,
-    );
-  } catch (e) {
-    weEmitter.emitMossError(`Failed to launch lair keystore: ${e}`);
-    throw new Error(`Failed to launch lair keystore: ${e}`);
-  }
-
+  const [lairHandle, lairUrl] = await launchLairWithRetry(
+    mossFileSystem,
+    weEmitter,
+    password,
+    runOptions,
+    stopLeftovers,
+    (pid) => recordChild('lair', pid, LAIR_BINARY),
+  );
+  // Every deliberate stop goes through kill(), which sets `killed`; anything
+  // else is a crash the log must show, since the UI keeps running against a
+  // keystore that is no longer there. A Ctrl-C in a terminal reaches lair
+  // before Moss's own quit does, so an exit while quitting is not a crash either.
+  let quitting = false;
+  app.once('before-quit', () => {
+    quitting = true;
+  });
+  lairHandle.on('exit', (code, signal) => {
+    if (lairHandle.killed || quitting) return;
+    weEmitter.emitMossError(`Lair keystore exited unexpectedly (code ${code}, signal ${signal})`);
+  });
   const holochainVersion = MOSS_CONFIG.holochain;
 
   if (splashscreenWindow)
@@ -86,12 +197,15 @@ export async function launch(
     );
 
   // launch holochain
+  const conductorBinary = runOptions.customBinary
+    ? runOptions.customBinary
+    : HOLOCHAIN_BINARIES[holochainVersion];
   let holochainManager: HolochainManager;
   try {
     holochainManager = await HolochainManager.launch(
       weEmitter,
       mossFileSystem,
-      runOptions.customBinary ? runOptions.customBinary : HOLOCHAIN_BINARIES[holochainVersion],
+      conductorBinary,
       password,
       holochainVersion,
       mossFileSystem.conductorDir,
@@ -101,6 +215,7 @@ export async function launch(
       runOptions.relayUrl!,
       runOptions.holochainRustLog,
       runOptions.holochainWasmLog,
+      (pid) => recordChild('conductor', pid, conductorBinary),
     );
   } catch (e) {
     // lair is already running at this point; kill it so a failed launch (and each

@@ -69,6 +69,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('set-network-overrides', overrides),
   clearNetworkOverrides: () => ipcRenderer.invoke('clear-network-overrides'),
   openLogs: () => ipcRenderer.invoke('open-logs'),
+  stopLeftoverProcesses: () => ipcRenderer.invoke('stop-leftover-processes'),
   exportLogs: () => ipcRenderer.invoke('export-logs'),
   onMossUpdateProgress: (callback: (e: Electron.IpcRendererEvent, payload: ProgressInfo) => any) =>
     ipcRenderer.on('moss-update-progress', callback),
@@ -295,8 +296,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('asr-model-download', req) as Promise<'complete' | 'cancelled'>,
   asrModelCancelDownload: (req: { id: string }) =>
     ipcRenderer.invoke('asr-model-cancel-download', req) as Promise<void>,
-  asrModelDelete: (req: { id: string }) => ipcRenderer.invoke('asr-model-delete', req) as Promise<void>,
-  asrModelSelect: (req: { id: string }) => ipcRenderer.invoke('asr-model-select', req) as Promise<void>,
+  asrModelDelete: (req: { id: string }) =>
+    ipcRenderer.invoke('asr-model-delete', req) as Promise<void>,
+  asrModelSelect: (req: { id: string }) =>
+    ipcRenderer.invoke('asr-model-select', req) as Promise<void>,
   asrOpenSessionCount: () => ipcRenderer.invoke('asr-open-session-count') as Promise<number>,
   onAsrModelDownloadProgress: (
     callback: (e: Electron.IpcRendererEvent, p: AsrModelDownloadProgress) => void,
