@@ -556,6 +556,7 @@ export class FoyerStream extends LitElement {
             <sl-tooltip content=${msg('Send')}>
               <button
                 class="moss-button send-button"
+                aria-label=${msg('Send')}
                 ?disabled=${this.disabled}
                 @click=${() => this.sendMessage()}
               >
