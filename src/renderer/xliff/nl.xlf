@@ -3340,6 +3340,14 @@ begint nu</target>
 <trans-unit id="sb604ee6d1ab938d8">
   <source>The group did not answer in time. Use Retry.</source>
 <target>De groep antwoordde niet op tijd. Gebruik Opnieuw proberen.</target></trans-unit>
+<trans-unit id="s8b8ffef8c28cd1fa">
+  <source>Stop leftover processes and retry</source>
+  <target>Achtergebleven processen stoppen en opnieuw proberen</target>
+</trans-unit>
+<trans-unit id="sb4a1e81ee82ba711">
+  <source>Could not stop leftover processes.</source>
+  <target>Achtergebleven processen konden niet worden gestopt.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

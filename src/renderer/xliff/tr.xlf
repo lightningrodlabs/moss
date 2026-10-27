@@ -3340,6 +3340,14 @@ starts now</source>
 <trans-unit id="sb604ee6d1ab938d8">
   <source>The group did not answer in time. Use Retry.</source>
 <target>Grup zamanında yanıt vermedi. Tekrar Dene'yi kullanın.</target></trans-unit>
+<trans-unit id="s8b8ffef8c28cd1fa">
+  <source>Stop leftover processes and retry</source>
+  <target>Kalan süreçleri durdur ve yeniden dene</target>
+</trans-unit>
+<trans-unit id="sb4a1e81ee82ba711">
+  <source>Could not stop leftover processes.</source>
+  <target>Kalan süreçler durdurulamadı.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

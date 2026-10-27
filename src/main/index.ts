@@ -112,6 +112,8 @@ import {
   validateArgs,
 } from './cli/cli';
 import { launch } from './launch';
+import { findLiveOwner, killLeftovers, readChildRegistry } from './childProcessRegistry';
+import { systemProbe } from './processProbe';
 import { singleFlight } from './singleFlight';
 import {
   AgentPubKeyB64,
@@ -442,10 +444,16 @@ if (!RUNNING_WITH_COMMAND) {
   if (app.isPackaged) {
     // Single instance and deep link logic
     // ------------------------------------------------------------------------------------------
+    // One lock for the whole app, so a deep link opened from the OS (which never
+    // carries --profile) reaches whichever instance is running. A second
+    // instance with an explicit --profile is let through here; one-instance-per-
+    // profile is enforced by the registry owner check in whenReady below.
     const isFirstInstance = app.requestSingleInstanceLock({ profile: RUN_OPTIONS.profile });
 
     if (!isFirstInstance && RUN_OPTIONS.profile === undefined) {
-      app.quit();
+      // Leave at once: nothing is spawned yet, and running on to the splash
+      // screen would let this instance act on the registry of the live one.
+      app.exit(0);
     } else {
       // https://github.com/electron/electron/issues/40173
       if (process.platform !== 'darwin') {
@@ -454,17 +462,23 @@ if (!RUNNING_WITH_COMMAND) {
         CACHED_DEEP_LINK = process.argv.find((arg) => isWeaveUrl(arg));
       }
 
-      // This event will always be triggered in the first instance, no matter with which profile
-      // it is being run. On Linux and Windows it is also how deeplinks get in.
+      // Fires in the instance that holds the lock, whatever profile either side
+      // runs. On Linux and Windows it is also how deeplinks get in.
       app.on('second-instance', (_event, argv, _cwd, additionalData: any) => {
         if (!isAppQuitting) {
           console.log('second-instance event triggered. argv: ', argv);
           console.log('additionalData: ', additionalData);
           if (process.platform !== 'darwin') {
-            console.log('Option 3');
-
-            // deeplink case
-            const url = argv.pop();
+            // Only a weave URL is a deep link; the rest of argv is the other
+            // instance's own flags (--profile ...), not something to open.
+            const url = argv.find((arg) => isWeaveUrl(arg));
+            if (!url) {
+              // A plain relaunch of this profile: bring the window forward.
+              if (additionalData?.profile === RUN_OPTIONS.profile && MAIN_WINDOW) {
+                createOrShowMainWindow();
+              }
+              return;
+            }
             if (SPLASH_SCREEN_WINDOW) {
               CACHED_DEEP_LINK = url;
               SPLASH_SCREEN_WINDOW.show();
@@ -850,6 +864,47 @@ if (!RUNNING_WITH_COMMAND) {
   // Some APIs can only be used after this event occurs.
   app.whenReady().then(async () => {
     console.log('BEING RUN IN __dirnmane: ', __dirname);
+
+    // Two Moss instances cannot share a profile: the second lair cannot open the
+    // keystore and the second conductor cannot open the database. The registry
+    // says which process owns this profile right now (start-time identity, so a
+    // reused pid never counts). A live owner is either a healthy instance the
+    // user started twice, or one that hung on quit; the user decides which.
+    const registry = readChildRegistry(WE_FILE_SYSTEM.profileDataDir);
+    const liveOwner = registry ? findLiveOwner(registry, systemProbe, process.pid) : undefined;
+    if (liveOwner) {
+      const profileName = RUN_OPTIONS.profile ?? 'default';
+      WE_EMITTER.emitMossLog(
+        `Profile "${profileName}" is owned by running moss process ${liveOwner.pid}; asking the user`,
+      );
+      // The synchronous dialog returns on the click. The promise form can sit
+      // unresolved for tens of seconds on Linux while the app has no window to
+      // keep the event loop awake, and nothing else runs here meanwhile.
+      const response = dialog.showMessageBoxSync({
+        type: 'warning',
+        title: 'Moss is already running',
+        message: `Moss is already running for profile "${profileName}" (process ${liveOwner.pid}).`,
+        detail:
+          'Use the running Moss, or stop it and continue here. Stop it only if that Moss is stuck; stopping a healthy one loses unsaved work.',
+        buttons: ['Use the running Moss', 'Stop it and continue'],
+        defaultId: 0,
+        cancelId: 0,
+      });
+      WE_EMITTER.emitMossLog(
+        `User chose to ${response === 0 ? 'use the running Moss' : 'stop it and continue'}`,
+      );
+      if (response === 0) {
+        app.exit(0);
+        return;
+      }
+      for (const stopped of killLeftovers(WE_FILE_SYSTEM.profileDataDir, systemProbe, process.pid, {
+        stopLiveOwner: true,
+      })) {
+        WE_EMITTER.emitMossLog(
+          `Stopped running ${stopped.name} process ${stopped.pid} (${stopped.binary}) on user request`,
+        );
+      }
+    }
 
     session.defaultSession.protocol.handle('moss', (request) => {
       const uriWithoutProtocol = request.url.slice('moss://'.length);
@@ -1271,6 +1326,19 @@ if (!RUNNING_WITH_COMMAND) {
       app.exit(0);
     });
     ipcMain.handle('open-logs', async () => WE_FILE_SYSTEM.openLogs());
+    // Splash-screen recovery for a keystore held by an earlier session of this
+    // profile. Scoped to this profile's registry, so other profiles are untouched.
+    ipcMain.handle('stop-leftover-processes', async (): Promise<number> => {
+      const stopped = killLeftovers(WE_FILE_SYSTEM.profileDataDir, systemProbe, process.pid, {
+        stopLiveOwner: false,
+      });
+      for (const leftover of stopped) {
+        WE_EMITTER.emitMossLog(
+          `Stopped leftover ${leftover.name} process ${leftover.pid} (${leftover.binary}) on user request`,
+        );
+      }
+      return stopped.length;
+    });
     ipcMain.handle('export-logs', async () => WE_FILE_SYSTEM.exportLogs());
     /**
      * Probe a URL from the main process (no CORS) and return the content-type
@@ -3424,6 +3492,7 @@ if (!RUNNING_WITH_COMMAND) {
   });
 
   app.on('before-quit', () => {
+    WE_EMITTER.emitMossLog('before-quit');
     if (!isAppQuitting) {
       // If the quitting process takes longer than 15 seconds, force quit.
       setTimeout(() => {
@@ -3461,14 +3530,18 @@ if (!RUNNING_WITH_COMMAND) {
       fs.rmSync('.hc_local_services');
     }
     if (LAIR_HANDLE) {
+      WE_EMITTER.emitMossLog(`quit: stopping lair pid ${LAIR_HANDLE.pid}`);
       LAIR_HANDLE.kill();
     }
     if (HOLOCHAIN_MANAGER) {
+      WE_EMITTER.emitMossLog(`quit: stopping conductor pid ${HOLOCHAIN_MANAGER.processHandle.pid}`);
       HOLOCHAIN_MANAGER.shutdown();
     }
     if (LOCAL_SERVICES_HANDLE) {
       LOCAL_SERVICES_HANDLE.kill();
     }
+    // The child registry is left in place on purpose: kill() only asks the
+    // children to stop, and the next start checks the recorded pids itself.
     // This handler is not async, and the app is already on its way out by the
     // time it fires, so the socket close is best-effort rather than awaited.
     void LAN_BEACON.shutdown();

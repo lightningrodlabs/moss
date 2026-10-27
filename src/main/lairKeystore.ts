@@ -5,6 +5,7 @@ import path from 'path';
 import split from 'split';
 import { LAIR_ERROR, WeEmitter, WRONG_PASSWORD } from './weEmitter';
 import { nanoid } from 'nanoid';
+import { LairFailure, classifyLairStderr } from './lairFailure';
 
 export async function initializeLairKeystore(
   lairBinary: string,
@@ -36,6 +37,7 @@ export async function launchLairKeystore(
   weEmitter: WeEmitter,
   password: string,
   rustLog?: string,
+  onSpawned?: (pid: number) => void,
 ): Promise<[childProcess.ChildProcessWithoutNullStreams, string]> {
   // On Unix systems, there is a limit to the path length of a domain socket. Create a symlink to the lair directory from the tempdir
   // instead and overwrite the connectionUrl in the lair-keystore-config.yaml
@@ -79,27 +81,58 @@ export async function launchLairKeystore(
       RUST_LOGS: rustLog ? rustLog : 'warn',
     },
   });
+  weEmitter.emitMossLog(`Spawned lair-keystore pid ${lairHandle.pid}`);
+  if (lairHandle.pid !== undefined && onSpawned) onSpawned(lairHandle.pid);
+  // A spawn failure surfaces on stdin before the process 'error' event; swallow
+  // it so the rejection below is the one the caller sees.
+  lairHandle.stdin.on('error', () => {});
   lairHandle.stdin.write(password);
   lairHandle.stdin.end();
-  // Wait for connection url or internal sodium error and return error or EventEmitter
-  lairHandle.stderr.pipe(split()).on('data', (line: string) => {
-    if (line.includes('InternalSodium')) {
-      weEmitter.emit(WRONG_PASSWORD);
-    } else {
-      weEmitter.emit(LAIR_ERROR, line);
-    }
-  });
-  lairHandle.stdout.pipe(split()).on('data', (line: string) => {
-    weEmitter.emitLairLog(line);
-    if (line.includes('# lair-keystore connection_url #')) {
-      const connectionUrl = line.split('#')[2].trim();
-      weEmitter.emitLairReady(connectionUrl);
-    }
-  });
 
+  // Settles exactly once, from this child's own streams and exit, so that a
+  // retried launch never sees the previous attempt's outcome. Rejects with a
+  // LairFailure so the caller can decide whether a retry makes sense.
   return new Promise((resolve, reject) => {
-    weEmitter.on('wrong-password', () => reject('Wrong password.'));
-    weEmitter.on('lair-error', (line) => reject(line));
-    weEmitter.on('lair-ready', (url) => resolve([lairHandle, url as string]));
+    let settled = false;
+    const fail = (failure: LairFailure) => {
+      if (settled) return;
+      settled = true;
+      lairHandle.kill();
+      reject(failure);
+    };
+    lairHandle.on('error', (err) => {
+      fail({ kind: 'other', detail: `failed to spawn lair-keystore: ${err}` });
+    });
+    // 'close' rather than 'exit': it fires after stderr has been drained, so a
+    // lair that prints its error and exits at once is classified by that line
+    // instead of being reported as a bare exit.
+    lairHandle.on('close', (code, signal) => {
+      fail({
+        kind: 'exited',
+        detail: `lair-keystore exited (code ${code}, signal ${signal}) before it was ready`,
+      });
+    });
+    lairHandle.stderr.pipe(split()).on('data', (line: string) => {
+      const failure = classifyLairStderr(line);
+      if (failure.kind === 'wrong-password') {
+        weEmitter.emit(WRONG_PASSWORD);
+      } else {
+        weEmitter.emit(LAIR_ERROR, line);
+      }
+      // split() yields a trailing empty line when the stream closes; the exit
+      // listener reports that case with the exit code instead.
+      if (line.length > 0) fail(failure);
+    });
+    lairHandle.stdout.pipe(split()).on('data', (line: string) => {
+      weEmitter.emitLairLog(line);
+      if (line.includes('# lair-keystore connection_url #')) {
+        const connectionUrl = line.split('#')[2].trim();
+        weEmitter.emitLairReady(connectionUrl);
+        if (!settled) {
+          settled = true;
+          resolve([lairHandle, connectionUrl]);
+        }
+      }
+    });
   });
 }

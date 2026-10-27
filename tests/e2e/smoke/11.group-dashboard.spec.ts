@@ -64,7 +64,7 @@ async function enterDashboardEditMode(page: Page) {
 
   // Edit / Save / Cancel live in group-home's header row (next to Invite People
   // / Settings), not inside group-dashboard, so we look for them at page scope.
-  // Buttons are icon-only — accessible name comes from a native `title` attr.
+  // Buttons are icon-only — the accessible name comes from their `aria-label`.
   const editBtn = page.getByRole('button', { name: /Edit group home/i });
   await expect(editBtn).toBeVisible({ timeout: 30_000 });
   await editBtn.click();
