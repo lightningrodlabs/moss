@@ -900,7 +900,11 @@ export class GroupHome extends LitElement {
     if (!this._dashEditing) {
       return html`
         <sl-tooltip content=${msg('Edit group home')}>
-          <button class="moss-button-icon" @click=${() => this._dashboardEl?.enterEdit()}>
+          <button
+            class="moss-button-icon"
+            aria-label=${msg('Edit group home')}
+            @click=${() => this._dashboardEl?.enterEdit()}
+          >
             ${editIcon(18)}
           </button>
         </sl-tooltip>
@@ -910,12 +914,20 @@ export class GroupHome extends LitElement {
     // palette rail, so the header only needs Save / Cancel.
     return html`
       <sl-tooltip content=${msg('Save')}>
-        <button class="moss-button-icon" @click=${() => this._dashboardEl?.save()}>
+        <button
+          class="moss-button-icon"
+          aria-label=${msg('Save')}
+          @click=${() => this._dashboardEl?.save()}
+        >
           ${saveIcon(18)}
         </button>
       </sl-tooltip>
       <sl-tooltip content=${msg('Cancel')}>
-        <button class="moss-button-icon" @click=${() => this._dashboardEl?.cancelEdit()}>
+        <button
+          class="moss-button-icon"
+          aria-label=${msg('Cancel')}
+          @click=${() => this._dashboardEl?.cancelEdit()}
+        >
           ${closeIcon(18)}
         </button>
       </sl-tooltip>
