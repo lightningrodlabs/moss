@@ -16,17 +16,22 @@ import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
 import {
   ChildName,
   ChildRecord,
+  ChildRegistry,
   Leftover,
   killLeftovers,
   writeChildRegistry,
 } from './childProcessRegistry';
 import { systemProbe } from './processProbe';
+import { ParentWatchdog, spawnParentWatchdog } from './parentWatchdog';
 import { LairFailure, describeLairFailure } from './lairFailure';
 const rustUtils = require('@lightningrodlabs/we-rust-utils');
 
 const DEFAULT_APPS: Record<string, string> = {};
 
 const LAIR_LAUNCH_ATTEMPTS = 3;
+
+// One per Moss process: a relaunch after a failed attempt reuses it.
+let parentWatchdog: ParentWatchdog | undefined;
 
 function isLairFailure(e: unknown): e is LairFailure {
   return typeof e === 'object' && e !== null && 'kind' in e && 'detail' in e;
@@ -125,17 +130,37 @@ export async function launch(
     const record: ChildRecord = { name, pid, binary, startTime: systemProbe.startTime(pid) };
     if (existing >= 0) spawnedChildren[existing] = record;
     else spawnedChildren.push(record);
+    const registry: ChildRegistry = {
+      mossPid: process.pid,
+      mossBinary: process.execPath,
+      mossStartTime: systemProbe.startTime(process.pid),
+      children: spawnedChildren,
+    };
     try {
-      writeChildRegistry(mossFileSystem.profileDataDir, {
-        mossPid: process.pid,
-        mossBinary: process.execPath,
-        mossStartTime: systemProbe.startTime(process.pid),
-        children: spawnedChildren,
-      });
+      writeChildRegistry(mossFileSystem.profileDataDir, registry);
     } catch (e) {
       weEmitter.emitMossError(`Failed to record ${name} pid ${pid}: ${e}`);
     }
+    parentWatchdog?.update(registry);
   };
+
+  // The watchdog stops these children should Moss die without reaching its
+  // quit handler. Without it the registry above still covers the next start.
+  if (!parentWatchdog) {
+    try {
+      // The bundler may place the caller in a chunk, so the script is located
+      // from the app root rather than from __dirname.
+      parentWatchdog = spawnParentWatchdog(
+        path.join(app.getAppPath(), 'out', 'main', 'watchdog.js'),
+        path.join(mossFileSystem.profileLogsDir, 'we.log'),
+        path.join(mossFileSystem.profileLogsDir, 'watchdog.log'),
+        (message) => weEmitter.emitMossError(message),
+      );
+      weEmitter.emitMossLog(`Spawned watchdog pid ${parentWatchdog.pid}`);
+    } catch (e) {
+      weEmitter.emitMossError(`Failed to spawn watchdog: ${e}`);
+    }
+  }
 
   // Initialize lair if necessary
   const lairHandleTemp = childProcess.spawnSync(LAIR_BINARY, ['--version']);

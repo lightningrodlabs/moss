@@ -84,6 +84,17 @@ function isChildRegistry(value: unknown): value is ChildRegistry {
   );
 }
 
+/** Returns undefined for malformed or differently shaped text. */
+export function parseChildRegistry(text: string): ChildRegistry | undefined {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+  return isChildRegistry(parsed) ? parsed : undefined;
+}
+
 /** Returns undefined for a missing, unreadable, malformed or differently shaped file. */
 export function readChildRegistry(profileDataDir: string): ChildRegistry | undefined {
   let raw: string;
@@ -92,13 +103,7 @@ export function readChildRegistry(profileDataDir: string): ChildRegistry | undef
   } catch {
     return undefined;
   }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return undefined;
-  }
-  return isChildRegistry(parsed) ? parsed : undefined;
+  return parseChildRegistry(raw);
 }
 
 export function writeChildRegistry(profileDataDir: string, registry: ChildRegistry): void {
