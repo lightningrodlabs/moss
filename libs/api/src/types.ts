@@ -681,6 +681,13 @@ export type IframeConfig =
       groupProfiles: GroupProfile[];
       groupHash: DnaHash | null;
       zomeCallLogging: boolean;
+      /**
+       * The host offers audio-source capture to this Tool: its Audio Sources
+       * service is switched on and its capture backend loaded and answered the
+       * device probe. The applet iframe exposes `captureAudioSources` only
+       * when true. Read at iframe load.
+       */
+      audioCaptureAvailable: boolean;
     }
   | {
       type: 'cross-group';
@@ -697,6 +704,13 @@ export type IframeConfig =
       locale: string;
       applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>;
       zomeCallLogging: boolean;
+      /**
+       * The host offers audio-source capture to this Tool: its Audio Sources
+       * service is switched on and its capture backend loaded and answered the
+       * device probe. The applet iframe exposes `captureAudioSources` only
+       * when true. Read at iframe load.
+       */
+      audioCaptureAvailable: boolean;
     }
   | {
       type: 'not-installed';

@@ -29,6 +29,7 @@ import { AppOpenViews } from '../layout/types.js';
 import {
   getAppletDevPort,
   getAppletIframeScript,
+  getAudioCapabilities,
   selectScreenOrWindow,
   signZomeCallApplet,
 } from '../electron-api.js';
@@ -45,6 +46,7 @@ import {
 } from '../utils.js';
 import { assertValidRequest } from './request-validation.js';
 import { hostTimeoutMessage, type IframeReadiness } from './host-timeout.js';
+import { audioCaptureAvailable } from './audio-capture-config.js';
 import { AppletStore } from './applet-store.js';
 import { getAsrRendererBridge, type SessionOrigin } from './asr-bridge.js';
 import { resolveAppletName } from './applet-name.js';
@@ -399,6 +401,10 @@ export async function handleAppletIframeMessage(
           locale: getLocale(),
           applets,
           zomeCallLogging: window.__ZOME_CALL_LOGGING_ENABLED__,
+          audioCaptureAvailable: await audioCaptureAvailable(
+            () => mossStore.persistedStore.audioSourcesEnabled.value(),
+            getAudioCapabilities,
+          ),
         };
         mossStore.iframeStore.registerCrossGroupIframe(source.toolCompatibilityId, {
           id: message.id,
@@ -446,6 +452,10 @@ export async function handleAppletIframeMessage(
           groupProfiles: filteredGroupProfiles,
           groupHash: source.groupHash, // Use the groupHash from the iframe source if any
           zomeCallLogging: window.__ZOME_CALL_LOGGING_ENABLED__,
+          audioCaptureAvailable: await audioCaptureAvailable(
+            () => mossStore.persistedStore.audioSourcesEnabled.value(),
+            getAudioCapabilities,
+          ),
         };
 
         mossStore.iframeStore.registerAppletIframe(encodeHashToBase64(source.appletHash), {

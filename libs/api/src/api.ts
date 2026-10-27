@@ -424,7 +424,9 @@ export interface WeaveServices {
   /**
    * Asks the host for audio playing on the user's machine. The host shows its
    * own picker. Resolves `null` when the user declines or the host cannot
-   * capture. Absent on hosts without the feature — feature-detect with
+   * capture. Absent on hosts without the feature, on hosts whose Audio
+   * Sources service is switched off, and on hosts whose capture backend is
+   * unavailable on this machine — feature-detect with
    * `client.captureAudioSources?.`.
    */
   captureAudioSources?: (opts?: CaptureAudioSourcesOptions) => Promise<AudioSourceCapture | null>;
@@ -610,7 +612,7 @@ export class WeaveClient implements WeaveServices {
 
   userSelectScreen = () => window.__WEAVE_API__.userSelectScreen();
 
-  /** Present only when the host offers audio-source capture. */
+  /** Present only when the host offers audio-source capture: service on, backend working on this machine. */
   captureAudioSources?: (opts?: CaptureAudioSourcesOptions) => Promise<AudioSourceCapture | null>;
 
   requestClose = () => window.__WEAVE_API__.requestClose();
