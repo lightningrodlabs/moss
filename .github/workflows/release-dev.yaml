@@ -58,7 +58,7 @@ jobs:
           ## Read before installing: this build cannot talk to stock Moss
 
           This is a **hello/PoK + mDNS LAN discovery field-test build**
-          (Holochain \`holochain-0.7.1-mdns.6\`) and it is **network-partitioned
+          (Holochain \`holochain-0.7.1-mdns.7\`) and it is **network-partitioned
           from every other Moss install**, on purpose. It runs a patched Holochain
           that advertises \`HCP2P_PROTO_VER=1002\` instead of the stock protocol
           version, so stock peers are rejected at preflight, before any app traffic.
