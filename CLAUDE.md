@@ -287,7 +287,7 @@ defineConfig({
       icon: { type: 'filesystem' | 'https', path: '...' },
       creatingAgent: { agentIdx: 1, agentProfile: {...} },
       joiningAgents: [{ agentIdx: 2, agentProfile: {...} }],
-      applets: [
+      tools: [
         {
           name: "Applet Name",
           instanceName: "Instance",
@@ -297,7 +297,7 @@ defineConfig({
       ]
     }
   ],
-  applets: [
+  tools: [
     {
       name: "Applet Name",
       subtitle: "...",

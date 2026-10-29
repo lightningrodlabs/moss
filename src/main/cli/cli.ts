@@ -2,7 +2,13 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { nanoid } from 'nanoid';
-import { AppletConfig, GroupConfig, WeaveDevConfig } from '@theweave/moss-types';
+import {
+  GroupConfig,
+  ToolConfig,
+  WeaveDevConfig,
+  WeaveDevConfigInput,
+  normalizeDevConfig,
+} from '@theweave/moss-types';
 import tsNode from 'ts-node';
 import { defaultAppNetworkSeed } from '../utils';
 import { WeAppletDevInfo } from '@theweave/moss-types';
@@ -199,25 +205,26 @@ function readAndValidateDevConfig(
     );
   }
 
-  let configObject: WeaveDevConfig | undefined;
+  let configInput: WeaveDevConfigInput | undefined;
   if (configPath.endsWith('.ts')) {
     tsNode.register();
-    configObject = require(path.join(process.cwd(), configPath)).default;
+    configInput = require(path.join(process.cwd(), configPath)).default;
   } else {
     const configString = fs.readFileSync(path.join(configPath), 'utf-8');
     try {
-      const parseResult: WeaveDevConfig = JSON.parse(configString);
-      configObject = parseResult;
+      const parseResult: WeaveDevConfigInput = JSON.parse(configString);
+      configInput = parseResult;
     } catch (e) {
       throw new Error("Failed to parse config file. Make sure it's valid JSON.");
     }
   }
-  if (!configObject) {
+  if (!configInput) {
     throw new Error('Failed to read config object.');
   }
+  const configObject: WeaveDevConfig = normalizeDevConfig(configInput);
 
-  const groups: GroupConfig[] = configObject!.groups ? configObject!.groups : [];
-  const applets: AppletConfig[] = configObject!.applets ? configObject!.applets : [];
+  const groups: GroupConfig[] = configObject.groups;
+  const applets: ToolConfig[] = configObject.applets;
 
   // validate groups field
   groups.forEach((group) => {
@@ -269,28 +276,23 @@ function readAndValidateDevConfig(
         );
     });
 
-    if (!group.applets)
-      throw new Error(
-        `Invalid We dev config: no "applets" field of type array provided for group '${group.name}'. Add at least an empty array [].`,
-      );
-
     group.applets.forEach((applet) => {
       if (!applet.name || typeof applet.name !== 'string')
         throw new Error(
-          `Invalid We dev config: Applets in the "groups.applets" field must have a "name" property of type string. The "name" property refers to the corresponding applet in the appstore.  The error occurred in group ${group.name}`,
+          `Invalid We dev config: Tools in the "groups.tools" field must have a "name" property of type string. The "name" property refers to the corresponding Tool in the top-level "tools" field.  The error occurred in group ${group.name}`,
         );
       // make sure that the applet has an applet config
       if (!applets.map((appletConfig) => appletConfig.name).includes(applet.name))
         throw new Error(
-          'Invalid We dev config: Can only add applets to groups that are also defined in the root level "applets" field.',
+          'Invalid We dev config: Can only add Tools to groups that are also defined in the top-level "tools" field.',
         );
       if (!applet.instanceName || typeof applet.instanceName !== 'string')
         throw new Error(
-          `Invalid We dev config: Applets in the "groups.applets" field must have an "instanceName" property of type string. The "instanceName" property defines the custom name of this applet instance used for installation. The error occurred in group ${group.name}`,
+          `Invalid We dev config: Tools in the "groups.tools" field must have an "instanceName" property of type string. The "instanceName" property defines the custom name of this Tool instance used for installation. The error occurred in group ${group.name}`,
         );
       if (!applet.registeringAgent || typeof applet.registeringAgent !== 'number')
         throw new Error(
-          `Invalid We dev config: Applets in the "groups.applets" field must have a "registeringAgent" property of type number. The error occurred in group ${group.name}`,
+          `Invalid We dev config: Tools in the "groups.tools" field must have a "registeringAgent" property of type number. The error occurred in group ${group.name}`,
         );
       const joiningAgents = applet.joiningAgents ? applet.joiningAgents : [];
       joiningAgents.forEach((agent) => {
@@ -307,7 +309,7 @@ function readAndValidateDevConfig(
     const uniqueAppletInstanceNames = new Set(appletInstanceNames);
     if (uniqueAppletInstanceNames.size !== appletInstanceNames.length)
       throw new Error(
-        `Invalid We dev config: The "instanceName" fields of applets in the "groups.applets" field in the we dev config must be unique per group. The error occurred in group ${group.name}`,
+        `Invalid We dev config: The "instanceName" fields of Tools in the "groups.tools" field in the dev config must be unique per group. The error occurred in group ${group.name}`,
       );
   });
 
@@ -320,15 +322,15 @@ function readAndValidateDevConfig(
   applets.forEach((applet) => {
     if (!applet.name || typeof applet.name !== 'string')
       throw new Error(
-        `Invalid We dev config: Applets in the "applets" field must have a "name" property of type string. The "name" property refers to the corresponding applet in the appstore.`,
+        `Invalid We dev config: Tools in the "tools" field must have a "name" property of type string. The "name" property is the name shown in the Tool library.`,
       );
     if (!applet.subtitle || typeof applet.subtitle !== 'string')
       throw new Error(
-        `Invalid We dev config: Applets in the "applets" field must have a "subtitle" property of type string. The "subtitle" property refers to the subtitle that the applet will have in the appstore.`,
+        `Invalid We dev config: Tools in the "tools" field must have a "subtitle" property of type string. The "subtitle" property refers to the subtitle that the Tool will have in the Tool library.`,
       );
     if (!applet.description || typeof applet.description !== 'string')
       throw new Error(
-        `Invalid We dev config: Applets in the "applets" field must have a "description" property of type string. The "description" property refers to the description that the applet will have in the appstore.`,
+        `Invalid We dev config: Tools in the "tools" field must have a "description" property of type string. The "description" property refers to the description that the Tool will have in the Tool library.`,
       );
     if (!applet.icon)
       throw new Error(
@@ -336,7 +338,7 @@ function readAndValidateDevConfig(
       );
     if (!applet.source)
       throw new Error(
-        `Invalid We dev config: Applets in the "applets" field of the we dev config mandatorily require a "source" attribute.`,
+        `Invalid We dev config: Tools in the "tools" field of the dev config require a "source" attribute.`,
       );
     if (!SUPPORTED_APPLET_SOURCE_TYPES.includes(applet.source.type))
       throw new Error(
@@ -391,7 +393,7 @@ function readAndValidateDevConfig(
   const uniqueAppletNames = new Set(allAppletNames);
   if (uniqueAppletNames.size !== allAppletNames.length)
     throw new Error(
-      'Invalid We dev config: Names of applets in the "applets" field of the we dev config file must be unique.',
+      'Invalid We dev config: Names of Tools in the "tools" field of the dev config file must be unique.',
     );
 
   return configObject;

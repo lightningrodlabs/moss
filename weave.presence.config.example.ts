@@ -52,7 +52,7 @@ export default defineConfig({
           },
         },
       ],
-      applets: [
+      tools: [
         {
           name: 'presence',
           instanceName: 'presence',
@@ -62,7 +62,7 @@ export default defineConfig({
       ],
     },
   ],
-  applets: [
+  tools: [
     {
       name: 'presence',
       subtitle: 'video calls',
