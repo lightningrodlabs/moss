@@ -31,7 +31,7 @@ if (!fs.existsSync(path.join(binariesDirectory, expectedLairBinary))) {
 // MOSS_REQUIRE_ASR=1 (`yarn check:binaries:release`). Plain `yarn setup`
 // does not build whisper-server — that needs cmake and a C++ toolchain —
 // and dev mode resolves the binary through a nix-shell fallback (see
-// src/main/asr/binaryResolver.ts), so `yarn applet-dev-*` runs the
+// src/main/asr/binaryResolver.ts), so `yarn tool-dev-*` runs the
 // plain check. `setup:release` and the packaging scripts run the strict
 // variant so a release never ships without the sidecar and model.
 if (process.env.MOSS_REQUIRE_ASR === '1') {

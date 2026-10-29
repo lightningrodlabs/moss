@@ -75,8 +75,8 @@ export default defineConfig({
 Now we can add npm scripts to run your Moss Tool in dev mode for 1 or 2 independent agents. In your root level `package.json` file add the following two scripts:
 
 ```json
-    "applet-dev": "concurrently \"UI_PORT=8888 npm run start -w ui\" \"weave --agent-idx 1 --dev-config ./weave.dev.config.ts\" \"sleep 5 && weave --agent-idx 2 --dev-config ./weave.dev.config.ts --sync-time 20000\"",
-    "applet-dev-1": "concurrently \"UI_PORT=8888 npm run start -w ui\" \"weave --agent-idx 1 --dev-config ./weave.dev.config.ts\"",
+    "tool-dev": "concurrently \"UI_PORT=8888 npm run start -w ui\" \"weave --agent-idx 1 --dev-config ./weave.dev.config.ts\" \"sleep 5 && weave --agent-idx 2 --dev-config ./weave.dev.config.ts --sync-time 20000\"",
+    "tool-dev-1": "concurrently \"UI_PORT=8888 npm run start -w ui\" \"weave --agent-idx 1 --dev-config ./weave.dev.config.ts\"",
 ```
 
 ### 3. Run your Tool
@@ -86,7 +86,7 @@ You're all set! 🎉
 You should now be able to run your Tool with the following command:
 
 ```bash
-npm run applet-dev
+npm run tool-dev
 ```
 
 which should spawn two sandboxed instances of Moss for separate agents, each having joined the same Moss group and with your Tool installe in their conductor.

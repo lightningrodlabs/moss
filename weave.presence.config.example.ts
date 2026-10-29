@@ -9,7 +9,7 @@
 //     this repo starts it for you).
 //
 // Set PRESENCE_DIR to point at a different Presence checkout (a
-// worktree, for instance); the applet-dev-presence scripts honor the
+// worktree, for instance); the tool-dev-presence scripts honor the
 // same variable for the UI dev server. Pass it as an absolute path:
 // Electron resolves relative paths against the physical working
 // directory, so a symlinked checkout makes `..` land somewhere else.

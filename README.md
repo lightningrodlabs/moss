@@ -45,12 +45,12 @@ This command will
 
 #### Development
 
-The following commands build the example applet and then run we in "applet-dev" mode based on the `we.dev.config.example.ts` file.
+The following commands build the example applet and then run we in "tool-dev" mode based on the `we.dev.config.example.ts` file.
 
 ```bash
 yarn build
 yarn build:example-applet
-yarn applet-dev-example
+yarn tool-dev-example
 ```
 
 Moss will start up 2 agents each with the same group and 3 applets installed. One of the applets will be in hot-reloading mode, i.e. you can modify the code in the `example/ui/` directory and should see the changes immediately. You should also see changes applied to the `src/renderer/src` directory immediately reflected.
