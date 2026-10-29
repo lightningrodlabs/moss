@@ -20,6 +20,7 @@ export type IframeConfig = {
     groupProfiles: GroupProfile[];
     groupHash: DnaHash | null;
     zomeCallLogging: boolean;
+    audioCaptureAvailable: boolean;
 } | {
     type: 'cross-group';
     appPort: number;
@@ -29,6 +30,7 @@ export type IframeConfig = {
     locale: string;
     applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>;
     zomeCallLogging: boolean;
+    audioCaptureAvailable: boolean;
 } | {
     type: 'not-installed';
     appletName: string;

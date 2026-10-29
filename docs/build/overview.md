@@ -6,7 +6,7 @@ Building a Tool for the Weave typically happens in **three steps**:
 
 1. 🧁 Build a normal [Holochain](https://www.holochain.org/) app
 2. 🧂 Add some sugar to make it run in Moss
-3. 🧶 _(optional)_ Knit it together with other Tools by leveraging the interoperability of the Weave Interacion Protocol (WIP)
+3. 🧶 _(optional)_ Knit it together with other Tools by leveraging the interoperability of the Weave Interaction Pattern (WIP)
 
 ## Option 2: Fork and Extend
 

@@ -114,6 +114,28 @@ Turns a host-delivered grant port into a live `MediaStreamTrack`<!-- -->. The re
 </td></tr>
 <tr><td>
 
+[fetchAsrCapabilities(transport)](./api.fetchasrcapabilities.md)
+
+
+</td><td>
+
+Introspection fetch: asks the host what ASR capabilities are wired up. Used by applet-iframe to back `weaveClient.localModels.capabilities()`<!-- -->.
+
+
+</td></tr>
+<tr><td>
+
+[fetchAsrStatus(transport)](./api.fetchasrstatus.md)
+
+
+</td><td>
+
+Ask the host whether the speech model is down, coming up, or serving.
+
+
+</td></tr>
+<tr><td>
+
 [initializeHotReload()](./api.initializehotreload.md)
 
 
@@ -127,6 +149,17 @@ Turns a host-delivered grant port into a live `MediaStreamTrack`<!-- -->. The re
 
 
 </td><td>
+
+
+</td></tr>
+<tr><td>
+
+[openAsrSession(transport, opts)](./api.openasrsession.md)
+
+
+</td><td>
+
+Factory: open a session via the supplied transport and return a fully-wired AsrSession. Used by applet-iframe to back `weaveClient.localModels.asr.openSession()`<!-- -->.
 
 
 </td></tr>
@@ -156,6 +189,17 @@ Picks the context the audio graph lives in. Host frames are 48 kHz samples, so a
 
 
 </td><td>
+
+
+</td></tr>
+<tr><td>
+
+[warmUpAsr(transport)](./api.warmupasr.md)
+
+
+</td><td>
+
+Ask the host to start the speech model; resolves once it is serving.
 
 
 </td></tr>
@@ -212,6 +256,62 @@ Description
 </th></tr></thead>
 <tbody><tr><td>
 
+[AsrApi](./api.asrapi.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[AsrFinalEvent](./api.asrfinalevent.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[AsrPartialEvent](./api.asrpartialevent.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[AsrSession](./api.asrsession.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[AsrSessionOptions](./api.asrsessionoptions.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[AsrTransport](./api.asrtransport.md)
+
+
+</td><td>
+
+Transport seam for AsrSession. The applet-iframe wires this with real postMessage + parent-event-dispatch; tests pass a fake.
+
+
+</td></tr>
+<tr><td>
+
 [AssetServices](./api.assetservices.md)
 
 
@@ -258,6 +358,35 @@ What the host hands over on a successful `request-audio-sources`<!-- -->.
 
 </td><td>
 
+
+
+</td></tr>
+<tr><td>
+
+[LocalAsrCapabilities](./api.localasrcapabilities.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[LocalModelCapabilities](./api.localmodelcapabilities.md)
+
+
+</td><td>
+
+Introspection result for `WeaveClient.localModels.capabilities()`<!-- -->. Tools call this once before deciding whether to offer transcription- dependent UI. The shape is intentionally small; richer telemetry (benchmark numbers, memory footprint) can slot in later without breaking changes.
+
+
+</td></tr>
+<tr><td>
+
+[LocalModelsApi](./api.localmodelsapi.md)
+
+
+</td><td>
 
 
 </td></tr>
@@ -420,6 +549,35 @@ Description
 <tr><td>
 
 [AppletView](./api.appletview.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[AsrHostStatus](./api.asrhoststatus.md)
+
+
+</td><td>
+
+Whether the host's speech model is down, coming up, or serving.
+
+
+</td></tr>
+<tr><td>
+
+[AsrIncomingEvent](./api.asrincomingevent.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[AsrSessionRequest](./api.asrsessionrequest.md)
 
 
 </td><td>
@@ -716,6 +874,15 @@ Indicates where/how an applet view is being rendered by Moss. Lets an applet ada
 <tr><td>
 
 [RenderView](./api.renderview.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[UnsubscribeFn](./api.unsubscribefn.md)
 
 
 </td><td>

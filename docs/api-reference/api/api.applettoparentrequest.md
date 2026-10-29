@@ -133,7 +133,24 @@ export type AppletToParentRequest = {
 } | {
     type: 'unsubscribe-from-asset-store';
     wal: WAL;
+} | {
+    type: 'asr-capabilities';
+} | {
+    type: 'asr-warm-up';
+} | {
+    type: 'asr-status';
+} | {
+    type: 'asr-open-session';
+    opts?: AsrSessionOptions;
+} | {
+    type: 'asr-push-audio';
+    sessionId: string;
+    pcm: Uint8Array;
+    endOfUtterance?: boolean;
+} | {
+    type: 'asr-close-session';
+    sessionId: string;
 };
 ```
-**References:** [Hrl](./api.hrl.md)<!-- -->, [ZomeCallLogInfo](./api.zomecallloginfo.md)<!-- -->, [OpenViewRequest](./api.openviewrequest.md)<!-- -->, [FrameNotification](./api.framenotification.md)<!-- -->, [AppletHash](./api.applethash.md)<!-- -->, [CreatableName](./api.creatablename.md)<!-- -->, [CreatableType](./api.creatabletype.md)<!-- -->, [CreatableResult](./api.creatableresult.md)<!-- -->, [WAL](./api.wal.md)
+**References:** [Hrl](./api.hrl.md)<!-- -->, [ZomeCallLogInfo](./api.zomecallloginfo.md)<!-- -->, [OpenViewRequest](./api.openviewrequest.md)<!-- -->, [FrameNotification](./api.framenotification.md)<!-- -->, [AppletHash](./api.applethash.md)<!-- -->, [CreatableName](./api.creatablename.md)<!-- -->, [CreatableType](./api.creatabletype.md)<!-- -->, [CreatableResult](./api.creatableresult.md)<!-- -->, [WAL](./api.wal.md)<!-- -->, [AsrSessionOptions](./api.asrsessionoptions.md)
 

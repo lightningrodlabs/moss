@@ -4,6 +4,9 @@ import { defineConfig } from 'vitepress';
 export default defineConfig({
   title: 'Weave/Moss',
   description: 'Build Tools for Social Fabric',
+  // Internal plans and specs live under docs/superpowers for the repo's own
+  // tooling; they are not part of the published site.
+  srcExclude: ['superpowers/**'],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
@@ -27,6 +30,7 @@ export default defineConfig({
         items: [
           { text: 'Choose your Path', link: '/build/overview' },
           { text: 'Tooling Overview', link: '/build/tooling-overview' },
+          { text: 'Moss 0.16 for Tool Developers', link: '/build/moss-0.16' },
           {
             text: '🧁 Step 1: Build a Holochain app',
             items: [
@@ -57,10 +61,11 @@ export default defineConfig({
               },
             ],
           },
+          {
+            text: '🎙️ Audio and Speech',
+            items: [{ text: 'Audio Transcription', link: '/build/transcription' }],
+          },
           { text: 'Publishing a Tool', link: '/build/publishing-a-tool' },
-          // { text: 'Step 2: Add Weave sugar', link: '/markdown-examples' },
-          // { text: 'Markdown Examples', link: '/markdown-examples' },
-          // { text: 'Runtime API Examples', link: '/api-examples' },
         ],
       },
       {

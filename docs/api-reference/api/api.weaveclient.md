@@ -117,7 +117,7 @@ Description
 
 </td><td>
 
-_(Optional)_ Present only when the host offers audio-source capture.
+_(Optional)_ Present only when the host offers audio-source capture: service on, backend working on this machine.
 
 
 </td></tr>
@@ -203,6 +203,27 @@ _(Optional)_ Present only when the host offers audio-source capture.
 
 
 </td><td>
+
+
+</td></tr>
+<tr><td>
+
+[localModels](./api.weaveclient.localmodels.md)
+
+
+</td><td>
+
+`readonly`
+
+
+</td><td>
+
+[LocalModelsApi](./api.localmodelsapi.md) \| undefined
+
+
+</td><td>
+
+Local on-device models. Reads through to the host implementation set up in the applet iframe, which proxies over postMessage to Moss main. Undefined when the host has no localModels surface configured.
 
 
 </td></tr>

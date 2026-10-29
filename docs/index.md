@@ -5,7 +5,7 @@ layout: home
 hero:
   name: 'Developing for The Weave'
   text: 'Interoperable Tools for Social Fabric'
-  tagline: Developer Documentation for Moss/The Weave<br><br>🚧 This documentation is still under construction 🚧
+  tagline: Developer Documentation for Moss/The Weave. Covers Moss 0.16 on Holochain 0.7.<br><br>🚧 This documentation is still under construction 🚧
   actions:
     - theme: brand
       text: Start Building

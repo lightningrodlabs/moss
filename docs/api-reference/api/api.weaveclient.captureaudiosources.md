@@ -4,7 +4,7 @@
 
 ## WeaveClient.captureAudioSources property
 
-Present only when the host offers audio-source capture.
+Present only when the host offers audio-source capture: service on, backend working on this machine.
 
 **Signature:**
 

@@ -25,24 +25,33 @@ export default defineDevCollectiveToolList({
   tools: [
     {
       id: 'my-tool', // MUST NOT change once published
+      versionBranch: '0.2', // MUST NOT change once published; all versions in a branch share one happ
       title: 'My Tool',
       subtitle: '...',
-      description: '...',
+      description: '## Overview\n\n...\n\n## Features\n\n- ...',
       icon: 'data:image/png;base64,...',
+      tags: [],
       versions: [
         {
-          version: '0.1.0',
-          versionBranch: '0.1',
-          releasedAt: 1700000000000,
-          source: { type: 'https', url: 'https://.../my-tool-0.1.0.webhapp' },
-          hashes: { webhappHash: '...', happHash: '...', uiHash: '...' },
+          version: '0.2.0',
+          url: 'https://.../my-tool-0.2.0.webhapp',
+          hashes: { webhappSha256: '...', happSha256: '...', uiSha256: '...' },
           changelog: '...',
+          releasedAt: 1700000000000,
         },
       ],
     },
   ],
 });
 ```
+
+Compute the three hashes with the Weave CLI, because Moss compares them with its own computation when a group member installs the Tool:
+
+```bash
+weave hash-webhapp <version> <path or URL of the .webhapp>
+```
+
+A `versionBranch` groups versions that can talk to each other: every version in a branch must keep the same `happSha256`. A build with a new DNA, such as a rebuild for a new Holochain version, goes under a new `versionBranch` in a new entry with the same `id`. See [Moss 0.16 for Tool Developers](./moss-0.16).
 
 Once generated to JSON, host this file at a stable URL.
 
@@ -69,7 +78,7 @@ export default defineCurationLists({
         {
           toolListUrl: 'https://my-collective.example.com/tool-list.json',
           toolId: 'my-tool',
-          versionBranch: '0.1',
+          versionBranch: '0.2',
           tags: [],
         },
       ],
@@ -86,7 +95,7 @@ The Lightningrod Labs curation list is open source and is a working example of b
 
 [https://github.com/lightningrodlabs/weave-tool-curation](https://github.com/lightningrodlabs/weave-tool-curation)
 
-You can fork that repo as a starting point for your own curation list.
+You can fork that repo as a starting point for your own curation list. The lists are kept per Moss version line; the `0.16/` folder holds the lists that Moss 0.16 reads, and its README describes the required shape of the `description` and `changelog` fields.
 
 ## Adding a Curation List to Moss
 

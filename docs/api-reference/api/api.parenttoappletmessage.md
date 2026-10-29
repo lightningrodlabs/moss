@@ -32,7 +32,17 @@ export type ParentToAppletMessage = {
 } | {
     type: 'locale-change';
     locale: string;
+} | {
+    type: 'asr-event';
+    event: (AsrFinalEvent & {
+        sessionId: string;
+        eventType: 'final';
+    }) | {
+        sessionId: string;
+        eventType: 'error';
+        error: string;
+    };
 };
 ```
-**References:** [WAL](./api.wal.md)<!-- -->, [RecordInfo](./api.recordinfo.md)<!-- -->, [PeerStatusUpdate](./api.peerstatusupdate.md)<!-- -->, [AsyncStatus](./api.asyncstatus.md)<!-- -->, [AssetStoreContent](./api.assetstorecontent.md)
+**References:** [WAL](./api.wal.md)<!-- -->, [RecordInfo](./api.recordinfo.md)<!-- -->, [PeerStatusUpdate](./api.peerstatusupdate.md)<!-- -->, [AsyncStatus](./api.asyncstatus.md)<!-- -->, [AssetStoreContent](./api.assetstorecontent.md)<!-- -->, [AsrFinalEvent](./api.asrfinalevent.md)
 
