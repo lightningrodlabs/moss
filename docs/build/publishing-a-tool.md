@@ -51,7 +51,7 @@ Compute the three hashes with the Weave CLI, because Moss compares them with its
 weave hash-webhapp <version> <path or URL of the .webhapp>
 ```
 
-A `versionBranch` groups versions that can talk to each other: every version in a branch must keep the same `happSha256`. A build with a new DNA, such as a rebuild for a new Holochain version, goes under a new `versionBranch` in a new entry with the same `id`. See [Moss 0.16 for Tool Developers](./moss-0.16).
+A `versionBranch` groups versions that can talk to each other: every version in a branch must keep the same `happSha256`. A build with a new DNA, such as a rebuild for a new Holochain version, goes under a new `versionBranch` in a new entry with the same `id`. See [Versions and Upgrading](./versions).
 
 Once generated to JSON, host this file at a stable URL.
 

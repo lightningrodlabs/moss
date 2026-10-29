@@ -1,8 +1,8 @@
-# Moss 0.16 for Tool Developers
+# Versions and Upgrading
 
-Moss 0.16 runs on Holochain 0.7. A Tool built for Moss 0.15 (Holochain 0.6) does not load in Moss 0.16. The two Moss versions install side by side on the same computer, each with its own groups, so a Tool needs one build per Moss version while both are in use.
+Each Moss line runs one Holochain version, and a Tool must be built for that Holochain version to load. Moss 0.16 runs on Holochain 0.7. A Tool built for Moss 0.15 (Holochain 0.6) does not load in Moss 0.16. The two Moss versions install side by side on the same computer, each with its own groups, so a Tool needs one build per Moss version while both are in use.
 
-This page lists what changed for Tool developers and what to update.
+This page lists the versions a Tool for Moss 0.16 needs, the steps to move a Tool from 0.15, and what changed in the API.
 
 ## Versions
 

@@ -19,8 +19,8 @@ function currentSidebar(base: string): DefaultTheme.SidebarItem[] {
       collapsed: false,
       items: [
         { text: 'Choose your Path', link: `${base}build/overview` },
+        { text: 'Versions and Upgrading', link: `${base}build/versions` },
         { text: 'Tooling Overview', link: `${base}build/tooling-overview` },
-        { text: 'Moss 0.16 for Tool Developers', link: `${base}build/moss-0.16` },
         {
           text: '🧁 Step 1: Build a Holochain app',
           items: [
@@ -40,8 +40,11 @@ function currentSidebar(base: string): DefaultTheme.SidebarItem[] {
           ],
         },
         {
-          text: '🎙️ Audio and Speech',
-          items: [{ text: 'Audio Transcription', link: `${base}build/transcription` }],
+          text: '🧩 Services',
+          items: [
+            { text: 'Audio Capture', link: `${base}build/audio-capture` },
+            { text: 'Speech Transcription', link: `${base}build/transcription` },
+          ],
         },
         { text: 'Publishing a Tool', link: `${base}build/publishing-a-tool` },
       ],

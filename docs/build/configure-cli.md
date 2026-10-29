@@ -40,7 +40,7 @@ export default defineConfig({
           },
         },
       ],
-      applets: [
+      tools: [
         {
           name: 'Forum',
           instanceName: 'Forum',
@@ -50,7 +50,7 @@ export default defineConfig({
       ],
     },
   ],
-  applets: [
+  tools: [
     {
       name: 'Forum',
       subtitle: 'A simple forum app',
