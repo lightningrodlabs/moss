@@ -23,6 +23,25 @@ export const DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS: ToolCurationConfig[] = [
   },
 ];
 
+/**
+ * Curation files a groups import looks Tools up in: the --tool-curation-url
+ * override, else the user's saved curation list, else the defaults. Usable before
+ * the Moss store exists.
+ */
+export async function importCurationUrls(): Promise<string[]> {
+  const cliOverride = await window.electronAPI.getToolCurationOverride();
+  if (cliOverride) return [cliOverride];
+  const json: string | null = window.localStorage.getItem('mossCurationConfig');
+  if (json) {
+    try {
+      return JSON.parse(json) as string[];
+    } catch {
+      // fall through to the defaults
+    }
+  }
+  return DEFAULT_PRODUCTION_TOOL_CURATION_CONFIGS.map((c) => c.url);
+}
+
 export function activeToolCurationConfigs(mossStore: MossStore): ToolCurationConfig[] {
   if (mossStore.appletDevConfig) {
     return mossStore.appletDevConfig.toolCurations;

@@ -2020,18 +2020,6 @@ starts now</source>
   <source>Importing groups...</source>
   <target>グループをインポート中…</target>
 </trans-unit>
-<trans-unit id="s1db8ae432fd2d80c">
-  <source>Import existing data?</source>
-  <target>既存のデータをインポートしますか?</target>
-</trans-unit>
-<trans-unit id="sb9bf0a402ae8b0b8">
-  <source>Moss data from previous version(s) found. You can import to keep your previous identity and groups, or start fresh.</source>
-  <target>以前のバージョンの Moss データが見つかりました。インポートして以前のアイデンティティとグループを引き継ぐか、新規に開始できます。</target>
-</trans-unit>
-<trans-unit id="sb4319ece7027f084">
-  <source>Import data</source>
-  <target>データをインポート</target>
-</trans-unit>
 <trans-unit id="sfd5be1a75a199417">
   <source>Start fresh</source>
   <target>新規に開始</target>
@@ -3274,6 +3262,146 @@ starts now</source>
 <trans-unit id="sb4a1e81ee82ba711">
   <source>Could not stop leftover processes.</source>
   <target>残ったプロセスを停止できませんでした。</target>
+</trans-unit>
+<trans-unit id="s658f51369f706454">
+  <source>Import from an earlier Moss version?</source>
+  <target>以前のバージョンの Moss からインポートしますか？</target>
+</trans-unit>
+<trans-unit id="s0d6c967e8aaf4abc">
+  <source>Import a copy of a profile?</source>
+  <target>プロファイルのコピーをインポートしますか？</target>
+</trans-unit>
+<trans-unit id="see53272060a09c3a">
+  <source>This version of Moss cannot connect to people who still use an earlier version. You can bring your identity and groups over from an earlier version, or start fresh.</source>
+  <target>このバージョンの Moss は、以前のバージョンを使っている人とは接続できません。以前のバージョンからアイデンティティとグループを引き継ぐか、新規に開始できます。</target>
+</trans-unit>
+<trans-unit id="s2c059dc19ef2d49d">
+  <source>You can copy the identity and groups of an existing profile. The copied groups and Tools join new networks, separate from the originals.</source>
+  <target>既存のプロファイルのアイデンティティとグループをコピーできます。コピーしたグループとツールは、元とは別の新しいネットワークに参加します。</target>
+</trans-unit>
+<trans-unit id="s7293b574f8e4277f">
+  <source>Version to import from</source>
+  <target>インポート元のバージョン</target>
+</trans-unit>
+<trans-unit id="s5efec4756b02a31c">
+  <source>Profile to copy</source>
+  <target>コピーするプロファイル</target>
+</trans-unit>
+<trans-unit id="s7f7955db2b0740c7">
+  <source>Profile "<x id="0" equiv-text="${selected.profileName}"/>", last used <x id="1" equiv-text="${this._lastUsed(selected)}"/></source>
+  <target>プロファイル「<x id="0" equiv-text="${selected.profileName}"/>」、最終使用日 <x id="1" equiv-text="${this._lastUsed(selected)}"/></target>
+</trans-unit>
+<trans-unit id="s9b1f95dcd792e7d8">
+  <source>What gets imported</source>
+  <target>インポートされるもの</target>
+</trans-unit>
+<trans-unit id="sd7dba4dfa609ceda">
+  <source>Your identity, so other members recognize you.</source>
+  <target>あなたのアイデンティティ（他のメンバーがあなたを認識できます）。</target>
+</trans-unit>
+<trans-unit id="s23fbc9a307157195">
+  <source>Your groups, with their names, icons and your profile in each.</source>
+  <target>あなたのグループ（名前、アイコン、各グループでのあなたのプロフィール）。</target>
+</trans-unit>
+<trans-unit id="s67d89ac73fe0258f">
+  <source>What does not get imported</source>
+  <target>インポートされないもの</target>
+</trans-unit>
+<trans-unit id="sb57b10b357e12324">
+  <source>The content inside Tools, for example posts, files and boards. The Tools start empty. If a Tool can export its data, export it in the earlier version and import it here.</source>
+  <target>ツール内のコンテンツ（投稿、ファイル、ボードなど）。ツールは空の状態で始まります。ツールがデータをエクスポートできる場合は、以前のバージョンでエクスポートし、ここでインポートしてください。</target>
+</trans-unit>
+<trans-unit id="sf117ddaebe5a0454">
+  <source>Importing copies the data. The earlier profile does not change.</source>
+  <target>インポートはデータをコピーします。以前のプロファイルは変更されません。</target>
+</trans-unit>
+<trans-unit id="s3914cb410fca44d4">
+  <source>Import</source>
+  <target>インポート</target>
+</trans-unit>
+<trans-unit id="s0194f7d4395c9c88">
+  <source>The Tools in each group, if they are available for this version of Moss. After the import, Moss lists any Tool that it could not install.</source>
+  <target>各グループのツール（このバージョンの Moss で利用できる場合）。インポート後、Moss はインストールできなかったツールを一覧表示します。</target>
+</trans-unit>
+<trans-unit id="s91db1ebbf945daae">
+  <source>The Tools of a stewarded group that you did not create. They appear when the person who created the group imports it into this version of Moss.</source>
+  <target>自分が作成していないスチュワード付きグループのツール。グループを作成した人がこのバージョンの Moss にインポートすると表示されます。</target>
+</trans-unit>
+<trans-unit id="s4de540ccd91a5192">
+  <source>Members who still use an earlier version cannot see you here until they also move to this version.</source>
+  <target>以前のバージョンを使っているメンバーは、このバージョンに移行するまで、ここであなたを見ることができません。</target>
+</trans-unit>
+<trans-unit id="s4eb955e68015ab8f">
+  <source>Not available for this version of Moss:</source>
+  <target>このバージョンの Moss では利用できません:</target>
+</trans-unit>
+<trans-unit id="scd97263b8982f6c8">
+  <source>Could not be installed:</source>
+  <target>インストールできませんでした:</target>
+</trans-unit>
+<trans-unit id="s57bc3d2af21d632e">
+  <source>You did not create this group, so Moss did not install its Tools. They appear when the person who created the group imports it into this version of Moss.</source>
+  <target>このグループはあなたが作成したものではないため、Moss はツールをインストールしませんでした。グループを作成した人がこのバージョンの Moss にインポートすると表示されます。</target>
+</trans-unit>
+<trans-unit id="s931926d743ce9a0a">
+  <source>Import finished</source>
+  <target>インポート完了</target>
+</trans-unit>
+<trans-unit id="s81ecf2d4386b8e84">
+  <source>Continue</source>
+  <target>続行</target>
+</trans-unit>
+<trans-unit id="s3dfdc3b6fba9e851">
+  <source>Imported.</source>
+  <target>インポートしました。</target>
+</trans-unit>
+<trans-unit id="se372e255a4895aba">
+  <source>Joined.</source>
+  <target>参加しました。</target>
+</trans-unit>
+<trans-unit id="s561f031a974b23fd">
+  <source>Joined. The group name and icon appear when another member of the group is online.</source>
+  <target>参加しました。グループの他のメンバーがオンラインになると、グループ名とアイコンが表示されます。</target>
+</trans-unit>
+<trans-unit id="s0ed2a085eca651c7">
+  <source>Already in this profile.</source>
+  <target>このプロファイルにすでにあります。</target>
+</trans-unit>
+<trans-unit id="seb593f30f1694650">
+  <source>Could not be imported: <x id="0" equiv-text="${r.error ?? ''}"/></source>
+  <target>インポートできませんでした: <x id="0" equiv-text="${r.error ?? ''}"/></target>
+</trans-unit>
+<trans-unit id="s874e5e148905c5fc">
+  <source>Tools installed:</source>
+  <target>インストールしたツール:</target>
+</trans-unit>
+<trans-unit id="s7fe1ba13973f115d">
+  <source>This group had no Tools.</source>
+  <target>このグループにはツールがありませんでした。</target>
+</trans-unit>
+<trans-unit id="s94d63573d312fe9b">
+  <source>Identity</source>
+  <target>アイデンティティ</target>
+</trans-unit>
+<trans-unit id="s7f2969d4e04cd764">
+  <source>Your identity from the earlier profile is imported.</source>
+  <target>以前のプロファイルのアイデンティティをインポートしました。</target>
+</trans-unit>
+<trans-unit id="s38fc1de5f99d801e">
+  <source>The earlier profile had no identity that Moss could import. Moss made a new one.</source>
+  <target>以前のプロファイルには、Moss がインポートできるアイデンティティがありませんでした。Moss は新しいアイデンティティを作成しました。</target>
+</trans-unit>
+<trans-unit id="s9f26843287bb592d">
+  <source>Groups</source>
+  <target>グループ</target>
+</trans-unit>
+<trans-unit id="s6757de553888d8d7">
+  <source>The earlier profile had no groups to import.</source>
+  <target>以前のプロファイルには、インポートするグループがありませんでした。</target>
+</trans-unit>
+<trans-unit id="s60b10efe9189daef">
+  <source>Opening Moss...</source>
+  <target>Moss を開いています...</target>
 </trans-unit>
 </body>
 </file>

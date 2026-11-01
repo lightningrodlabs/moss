@@ -1,3 +1,4 @@
+import { importCurationUrls } from '../../tool-library/fetch-unified-tools.js';
 import { customElement, state } from 'lit/decorators.js';
 import { css, html, LitElement } from 'lit';
 import { localized, msg } from '@lit/localize';
@@ -100,7 +101,9 @@ export class MossDangerZoneSettings extends LitElement {
               this.isImporting = true;
               this.importResults = undefined;
               try {
-                this.importResults = await window.electronAPI.importGroupsData();
+                this.importResults = await window.electronAPI.importGroupsData(
+                  await importCurationUrls(),
+                );
                 window.location.reload();
               } catch (e) {
                 console.error('Error during import:', e);

@@ -29,6 +29,7 @@ export const APPLET_DEV_TMP_FOLDER_PREFIX = 'moss-applet-dev';
 export interface CliOpts {
   profile?: string;
   fork?: string;
+  update?: boolean;
   devConfig?: string | undefined;
   devDataDir?: string | undefined;
   agentIdx?: number | undefined;
@@ -51,6 +52,7 @@ export interface CliOpts {
 export interface RunOptions {
   profile: string | undefined;
   fork: string | undefined;
+  update: boolean;
   appstoreNetworkSeed: string;
   devInfo: WeAppletDevInfo | undefined;
   bootstrapUrl: string | undefined;
@@ -120,6 +122,14 @@ export function validateArgs(args: CliOpts): RunOptions {
   if (fork && typeof fork !== 'string') {
     throw new Error('The --fork argument must be of type string.');
   }
+  // A value starting with a dash is almost always the next flag, swallowed because
+  // --fork was given without its suffix.
+  if (fork && fork.startsWith('-')) {
+    throw new Error(`The --fork argument needs a suffix value but got '${fork}'.`);
+  }
+  if (fork && args.update) {
+    throw new Error('The --fork and --update arguments cannot be used together.');
+  }
   if (args.holochainRustLog && typeof args.holochainRustLog !== 'string') {
     throw new Error('The --holochain-rust-log argument must be of type string.');
   }
@@ -171,6 +181,7 @@ export function validateArgs(args: CliOpts): RunOptions {
   return {
     profile,
     fork: fork ? fork : undefined, // coerce '' to undefined so an empty --fork is a no-op
+    update: args.update ? true : false,
     appstoreNetworkSeed,
     devInfo,
     bootstrapUrl: args.bootstrapUrl,

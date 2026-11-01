@@ -1,17 +1,18 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { notify } from '@holochain-open-dev/elements';
+import { notify, wrapPathInSvg } from '@holochain-open-dev/elements';
+import { mdiTranslate } from '@mdi/js';
 
 import '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
 import '@shoelace-style/shoelace/dist/components/menu/menu.js';
 import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
+import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 
 import {
   allLocales,
   getLocale,
   isSupportedLocale,
-  LANGUAGE_FLAGS,
   LANGUAGE_NAMES,
   setLocale,
   SupportedLocale,
@@ -20,7 +21,8 @@ import { PersistedStore } from '../persisted-store.js';
 import { mossStyles } from '../shared-styles.js';
 
 /**
- * Picks the interface language, showing the current one as a flag.
+ * Picks the interface language. The button shows a neutral translate icon and the
+ * current language's own name, so no language is tied to a country's flag.
  *
  * It reads and writes the stored preference directly rather than through the
  * Moss store, because the first thing someone sees on a first launch is the
@@ -38,7 +40,7 @@ export class LanguagePicker extends LitElement {
   firstUpdated(): void {
     // The locale in force, not the stored preference. On a first launch there
     // is no stored preference and index.html has already fallen back to the
-    // system language, so reading the preference would show a flag for a
+    // system language, so reading the preference would show the name of a
     // language the interface is not actually in.
     const active = getLocale();
     if (isSupportedLocale(active)) this.locale = active;
@@ -61,14 +63,10 @@ export class LanguagePicker extends LitElement {
 
   render() {
     return html`
-      <sl-dropdown placement="top-end" hoist>
-        <button
-          slot="trigger"
-          class="flag-button"
-          title=${msg('Language')}
-          aria-label=${msg('Language')}
-        >
-          ${LANGUAGE_FLAGS[this.locale]}
+      <sl-dropdown placement="top-start" hoist>
+        <button slot="trigger" class="language-button" aria-label=${msg('Language')}>
+          <sl-icon .src=${wrapPathInSvg(mdiTranslate)}></sl-icon>
+          <span>${LANGUAGE_NAMES[this.locale]}</span>
         </button>
         <sl-menu
           @sl-select=${(e: CustomEvent) => this.choose(e.detail.item.value as SupportedLocale)}
@@ -76,7 +74,7 @@ export class LanguagePicker extends LitElement {
           ${allLocales.map(
             (locale) => html`
               <sl-menu-item value=${locale} type="checkbox" ?checked=${locale === this.locale}>
-                ${LANGUAGE_FLAGS[locale]} ${LANGUAGE_NAMES[locale]}
+                <span lang=${locale}>${LANGUAGE_NAMES[locale]}</span>
               </sl-menu-item>
             `,
           )}
@@ -91,16 +89,25 @@ export class LanguagePicker extends LitElement {
       :host {
         display: inline-flex;
       }
-      .flag-button {
+      .language-button {
         all: unset;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
         cursor: pointer;
-        font-size: 20px;
+        font-size: 14px;
         line-height: 1;
-        padding: 4px 6px;
+        padding: 6px 8px;
         border-radius: 8px;
         opacity: 0.85;
       }
-      .flag-button:hover {
+      .language-button sl-icon {
+        font-size: 18px;
+      }
+      .language-button:focus-visible {
+        outline: 2px solid var(--moss-purple);
+      }
+      .language-button:hover {
         opacity: 1;
         background: rgba(0, 0, 0, 0.06);
       }

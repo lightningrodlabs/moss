@@ -2020,18 +2020,6 @@ begint nu</target>
   <source>Importing groups...</source>
   <target>Groepen worden geïmporteerd…</target>
 </trans-unit>
-<trans-unit id="s1db8ae432fd2d80c">
-  <source>Import existing data?</source>
-  <target>Bestaande gegevens importeren?</target>
-</trans-unit>
-<trans-unit id="sb9bf0a402ae8b0b8">
-  <source>Moss data from previous version(s) found. You can import to keep your previous identity and groups, or start fresh.</source>
-  <target>Moss-gegevens van eerdere versie(s) gevonden. Je kunt ze importeren om je eerdere identiteit en groepen te behouden, of opnieuw beginnen.</target>
-</trans-unit>
-<trans-unit id="sb4319ece7027f084">
-  <source>Import data</source>
-  <target>Gegevens importeren</target>
-</trans-unit>
 <trans-unit id="sfd5be1a75a199417">
   <source>Start fresh</source>
   <target>Opnieuw beginnen</target>
@@ -3274,6 +3262,146 @@ begint nu</target>
 <trans-unit id="sb4a1e81ee82ba711">
   <source>Could not stop leftover processes.</source>
   <target>Achtergebleven processen konden niet worden gestopt.</target>
+</trans-unit>
+<trans-unit id="s658f51369f706454">
+  <source>Import from an earlier Moss version?</source>
+  <target>Importeren uit een eerdere Moss-versie?</target>
+</trans-unit>
+<trans-unit id="s0d6c967e8aaf4abc">
+  <source>Import a copy of a profile?</source>
+  <target>Een kopie van een profiel importeren?</target>
+</trans-unit>
+<trans-unit id="see53272060a09c3a">
+  <source>This version of Moss cannot connect to people who still use an earlier version. You can bring your identity and groups over from an earlier version, or start fresh.</source>
+  <target>Deze versie van Moss kan geen verbinding maken met mensen die nog een eerdere versie gebruiken. Je kunt je identiteit en groepen meenemen uit een eerdere versie, of opnieuw beginnen.</target>
+</trans-unit>
+<trans-unit id="s2c059dc19ef2d49d">
+  <source>You can copy the identity and groups of an existing profile. The copied groups and Tools join new networks, separate from the originals.</source>
+  <target>Je kunt de identiteit en groepen van een bestaand profiel kopiëren. De gekopieerde groepen en Tools sluiten zich aan bij nieuwe netwerken, los van de originelen.</target>
+</trans-unit>
+<trans-unit id="s7293b574f8e4277f">
+  <source>Version to import from</source>
+  <target>Versie om uit te importeren</target>
+</trans-unit>
+<trans-unit id="s5efec4756b02a31c">
+  <source>Profile to copy</source>
+  <target>Profiel om te kopiëren</target>
+</trans-unit>
+<trans-unit id="s7f7955db2b0740c7">
+  <source>Profile "<x id="0" equiv-text="${selected.profileName}"/>", last used <x id="1" equiv-text="${this._lastUsed(selected)}"/></source>
+  <target>Profiel "<x id="0" equiv-text="${selected.profileName}"/>", laatst gebruikt op <x id="1" equiv-text="${this._lastUsed(selected)}"/></target>
+</trans-unit>
+<trans-unit id="s9b1f95dcd792e7d8">
+  <source>What gets imported</source>
+  <target>Wat wordt geïmporteerd</target>
+</trans-unit>
+<trans-unit id="sd7dba4dfa609ceda">
+  <source>Your identity, so other members recognize you.</source>
+  <target>Je identiteit, zodat andere leden je herkennen.</target>
+</trans-unit>
+<trans-unit id="s23fbc9a307157195">
+  <source>Your groups, with their names, icons and your profile in each.</source>
+  <target>Je groepen, met hun namen, pictogrammen en je profiel in elke groep.</target>
+</trans-unit>
+<trans-unit id="s67d89ac73fe0258f">
+  <source>What does not get imported</source>
+  <target>Wat niet wordt geïmporteerd</target>
+</trans-unit>
+<trans-unit id="sb57b10b357e12324">
+  <source>The content inside Tools, for example posts, files and boards. The Tools start empty. If a Tool can export its data, export it in the earlier version and import it here.</source>
+  <target>De inhoud van Tools, bijvoorbeeld berichten, bestanden en borden. De Tools beginnen leeg. Als een Tool zijn gegevens kan exporteren, exporteer ze dan in de eerdere versie en importeer ze hier.</target>
+</trans-unit>
+<trans-unit id="sf117ddaebe5a0454">
+  <source>Importing copies the data. The earlier profile does not change.</source>
+  <target>Importeren kopieert de gegevens. Het eerdere profiel verandert niet.</target>
+</trans-unit>
+<trans-unit id="s3914cb410fca44d4">
+  <source>Import</source>
+  <target>Importeren</target>
+</trans-unit>
+<trans-unit id="s0194f7d4395c9c88">
+  <source>The Tools in each group, if they are available for this version of Moss. After the import, Moss lists any Tool that it could not install.</source>
+  <target>De Tools in elke groep, als ze beschikbaar zijn voor deze versie van Moss. Na het importeren toont Moss elke Tool die het niet kon installeren.</target>
+</trans-unit>
+<trans-unit id="s91db1ebbf945daae">
+  <source>The Tools of a stewarded group that you did not create. They appear when the person who created the group imports it into this version of Moss.</source>
+  <target>De Tools van een groep met stewards die je niet zelf hebt gemaakt. Ze verschijnen zodra de persoon die de groep heeft gemaakt, deze in deze versie van Moss importeert.</target>
+</trans-unit>
+<trans-unit id="s4de540ccd91a5192">
+  <source>Members who still use an earlier version cannot see you here until they also move to this version.</source>
+  <target>Leden die nog een eerdere versie gebruiken, kunnen je hier pas zien als ze ook naar deze versie overstappen.</target>
+</trans-unit>
+<trans-unit id="s4eb955e68015ab8f">
+  <source>Not available for this version of Moss:</source>
+  <target>Niet beschikbaar voor deze versie van Moss:</target>
+</trans-unit>
+<trans-unit id="scd97263b8982f6c8">
+  <source>Could not be installed:</source>
+  <target>Kon niet worden geïnstalleerd:</target>
+</trans-unit>
+<trans-unit id="s57bc3d2af21d632e">
+  <source>You did not create this group, so Moss did not install its Tools. They appear when the person who created the group imports it into this version of Moss.</source>
+  <target>Je hebt deze groep niet gemaakt, dus Moss heeft de Tools niet geïnstalleerd. Ze verschijnen zodra de persoon die de groep heeft gemaakt, deze in deze versie van Moss importeert.</target>
+</trans-unit>
+<trans-unit id="s931926d743ce9a0a">
+  <source>Import finished</source>
+  <target>Importeren voltooid</target>
+</trans-unit>
+<trans-unit id="s81ecf2d4386b8e84">
+  <source>Continue</source>
+  <target>Doorgaan</target>
+</trans-unit>
+<trans-unit id="s3dfdc3b6fba9e851">
+  <source>Imported.</source>
+  <target>Geïmporteerd.</target>
+</trans-unit>
+<trans-unit id="se372e255a4895aba">
+  <source>Joined.</source>
+  <target>Lid geworden.</target>
+</trans-unit>
+<trans-unit id="s561f031a974b23fd">
+  <source>Joined. The group name and icon appear when another member of the group is online.</source>
+  <target>Lid geworden. De naam en het pictogram van de groep verschijnen zodra een ander lid van de groep online is.</target>
+</trans-unit>
+<trans-unit id="s0ed2a085eca651c7">
+  <source>Already in this profile.</source>
+  <target>Staat al in dit profiel.</target>
+</trans-unit>
+<trans-unit id="seb593f30f1694650">
+  <source>Could not be imported: <x id="0" equiv-text="${r.error ?? ''}"/></source>
+  <target>Kon niet worden geïmporteerd: <x id="0" equiv-text="${r.error ?? ''}"/></target>
+</trans-unit>
+<trans-unit id="s874e5e148905c5fc">
+  <source>Tools installed:</source>
+  <target>Geïnstalleerde Tools:</target>
+</trans-unit>
+<trans-unit id="s7fe1ba13973f115d">
+  <source>This group had no Tools.</source>
+  <target>Deze groep had geen Tools.</target>
+</trans-unit>
+<trans-unit id="s94d63573d312fe9b">
+  <source>Identity</source>
+  <target>Identiteit</target>
+</trans-unit>
+<trans-unit id="s7f2969d4e04cd764">
+  <source>Your identity from the earlier profile is imported.</source>
+  <target>Je identiteit uit het eerdere profiel is geïmporteerd.</target>
+</trans-unit>
+<trans-unit id="s38fc1de5f99d801e">
+  <source>The earlier profile had no identity that Moss could import. Moss made a new one.</source>
+  <target>Het eerdere profiel had geen identiteit die Moss kon importeren. Moss heeft een nieuwe gemaakt.</target>
+</trans-unit>
+<trans-unit id="s9f26843287bb592d">
+  <source>Groups</source>
+  <target>Groepen</target>
+</trans-unit>
+<trans-unit id="s6757de553888d8d7">
+  <source>The earlier profile had no groups to import.</source>
+  <target>Het eerdere profiel had geen groepen om te importeren.</target>
+</trans-unit>
+<trans-unit id="s60b10efe9189daef">
+  <source>Opening Moss...</source>
+  <target>Moss wordt geopend...</target>
 </trans-unit>
 </body>
 </file>
