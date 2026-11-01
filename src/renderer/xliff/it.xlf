@@ -2020,18 +2020,6 @@ inizia ora</target>
   <source>Importing groups...</source>
   <target>Importazione dei gruppi…</target>
 </trans-unit>
-<trans-unit id="s1db8ae432fd2d80c">
-  <source>Import existing data?</source>
-  <target>Importare i dati esistenti?</target>
-</trans-unit>
-<trans-unit id="sb9bf0a402ae8b0b8">
-  <source>Moss data from previous version(s) found. You can import to keep your previous identity and groups, or start fresh.</source>
-  <target>Trovati dati Moss da versioni precedenti. Puoi importarli per mantenere la tua identità e i tuoi gruppi precedenti, oppure ricominciare da capo.</target>
-</trans-unit>
-<trans-unit id="sb4319ece7027f084">
-  <source>Import data</source>
-  <target>Importa dati</target>
-</trans-unit>
 <trans-unit id="sfd5be1a75a199417">
   <source>Start fresh</source>
   <target>Ricomincia</target>
@@ -3274,6 +3262,146 @@ inizia ora</target>
 <trans-unit id="sb4a1e81ee82ba711">
   <source>Could not stop leftover processes.</source>
   <target>Impossibile arrestare i processi rimasti.</target>
+</trans-unit>
+<trans-unit id="s658f51369f706454">
+  <source>Import from an earlier Moss version?</source>
+  <target>Importare da una versione precedente di Moss?</target>
+</trans-unit>
+<trans-unit id="s0d6c967e8aaf4abc">
+  <source>Import a copy of a profile?</source>
+  <target>Importare una copia di un profilo?</target>
+</trans-unit>
+<trans-unit id="see53272060a09c3a">
+  <source>This version of Moss cannot connect to people who still use an earlier version. You can bring your identity and groups over from an earlier version, or start fresh.</source>
+  <target>Questa versione di Moss non può connettersi con chi usa ancora una versione precedente. Puoi portare la tua identità e i tuoi gruppi da una versione precedente, oppure ricominciare da capo.</target>
+</trans-unit>
+<trans-unit id="s2c059dc19ef2d49d">
+  <source>You can copy the identity and groups of an existing profile. The copied groups and Tools join new networks, separate from the originals.</source>
+  <target>Puoi copiare l’identità e i gruppi di un profilo esistente. I gruppi e gli Strumenti copiati si uniscono a nuove reti, separate dagli originali.</target>
+</trans-unit>
+<trans-unit id="s7293b574f8e4277f">
+  <source>Version to import from</source>
+  <target>Versione da cui importare</target>
+</trans-unit>
+<trans-unit id="s5efec4756b02a31c">
+  <source>Profile to copy</source>
+  <target>Profilo da copiare</target>
+</trans-unit>
+<trans-unit id="s7f7955db2b0740c7">
+  <source>Profile "<x id="0" equiv-text="${selected.profileName}"/>", last used <x id="1" equiv-text="${this._lastUsed(selected)}"/></source>
+  <target>Profilo «<x id="0" equiv-text="${selected.profileName}"/>», ultimo utilizzo il <x id="1" equiv-text="${this._lastUsed(selected)}"/></target>
+</trans-unit>
+<trans-unit id="s9b1f95dcd792e7d8">
+  <source>What gets imported</source>
+  <target>Cosa viene importato</target>
+</trans-unit>
+<trans-unit id="sd7dba4dfa609ceda">
+  <source>Your identity, so other members recognize you.</source>
+  <target>La tua identità, così gli altri membri ti riconoscono.</target>
+</trans-unit>
+<trans-unit id="s23fbc9a307157195">
+  <source>Your groups, with their names, icons and your profile in each.</source>
+  <target>I tuoi gruppi, con nomi, icone e il tuo profilo in ciascuno.</target>
+</trans-unit>
+<trans-unit id="s67d89ac73fe0258f">
+  <source>What does not get imported</source>
+  <target>Cosa non viene importato</target>
+</trans-unit>
+<trans-unit id="sb57b10b357e12324">
+  <source>The content inside Tools, for example posts, files and boards. The Tools start empty. If a Tool can export its data, export it in the earlier version and import it here.</source>
+  <target>Il contenuto degli Strumenti, ad esempio post, file e bacheche. Gli Strumenti partono vuoti. Se uno Strumento può esportare i suoi dati, esportali nella versione precedente e importali qui.</target>
+</trans-unit>
+<trans-unit id="sf117ddaebe5a0454">
+  <source>Importing copies the data. The earlier profile does not change.</source>
+  <target>L’importazione copia i dati. Il profilo precedente non cambia.</target>
+</trans-unit>
+<trans-unit id="s3914cb410fca44d4">
+  <source>Import</source>
+  <target>Importa</target>
+</trans-unit>
+<trans-unit id="s0194f7d4395c9c88">
+  <source>The Tools in each group, if they are available for this version of Moss. After the import, Moss lists any Tool that it could not install.</source>
+  <target>Gli Strumenti di ogni gruppo, se sono disponibili per questa versione di Moss. Dopo l’importazione, Moss elenca ogni Strumento che non è riuscito a installare.</target>
+</trans-unit>
+<trans-unit id="s91db1ebbf945daae">
+  <source>The Tools of a stewarded group that you did not create. They appear when the person who created the group imports it into this version of Moss.</source>
+  <target>Gli Strumenti di un gruppo gestito che non hai creato. Compaiono quando la persona che ha creato il gruppo lo importa in questa versione di Moss.</target>
+</trans-unit>
+<trans-unit id="s4de540ccd91a5192">
+  <source>Members who still use an earlier version cannot see you here until they also move to this version.</source>
+  <target>I membri che usano ancora una versione precedente non possono vederti qui finché non passano anche loro a questa versione.</target>
+</trans-unit>
+<trans-unit id="s4eb955e68015ab8f">
+  <source>Not available for this version of Moss:</source>
+  <target>Non disponibile per questa versione di Moss:</target>
+</trans-unit>
+<trans-unit id="scd97263b8982f6c8">
+  <source>Could not be installed:</source>
+  <target>Impossibile installare:</target>
+</trans-unit>
+<trans-unit id="s57bc3d2af21d632e">
+  <source>You did not create this group, so Moss did not install its Tools. They appear when the person who created the group imports it into this version of Moss.</source>
+  <target>Non hai creato questo gruppo, quindi Moss non ha installato i suoi Strumenti. Compaiono quando la persona che ha creato il gruppo lo importa in questa versione di Moss.</target>
+</trans-unit>
+<trans-unit id="s931926d743ce9a0a">
+  <source>Import finished</source>
+  <target>Importazione completata</target>
+</trans-unit>
+<trans-unit id="s81ecf2d4386b8e84">
+  <source>Continue</source>
+  <target>Continua</target>
+</trans-unit>
+<trans-unit id="s3dfdc3b6fba9e851">
+  <source>Imported.</source>
+  <target>Importato.</target>
+</trans-unit>
+<trans-unit id="se372e255a4895aba">
+  <source>Joined.</source>
+  <target>Unito.</target>
+</trans-unit>
+<trans-unit id="s561f031a974b23fd">
+  <source>Joined. The group name and icon appear when another member of the group is online.</source>
+  <target>Unito. Il nome e l’icona del gruppo compaiono quando un altro membro del gruppo è online.</target>
+</trans-unit>
+<trans-unit id="s0ed2a085eca651c7">
+  <source>Already in this profile.</source>
+  <target>Già presente in questo profilo.</target>
+</trans-unit>
+<trans-unit id="seb593f30f1694650">
+  <source>Could not be imported: <x id="0" equiv-text="${r.error ?? ''}"/></source>
+  <target>Impossibile importare: <x id="0" equiv-text="${r.error ?? ''}"/></target>
+</trans-unit>
+<trans-unit id="s874e5e148905c5fc">
+  <source>Tools installed:</source>
+  <target>Strumenti installati:</target>
+</trans-unit>
+<trans-unit id="s7fe1ba13973f115d">
+  <source>This group had no Tools.</source>
+  <target>Questo gruppo non aveva Strumenti.</target>
+</trans-unit>
+<trans-unit id="s94d63573d312fe9b">
+  <source>Identity</source>
+  <target>Identità</target>
+</trans-unit>
+<trans-unit id="s7f2969d4e04cd764">
+  <source>Your identity from the earlier profile is imported.</source>
+  <target>La tua identità dal profilo precedente è stata importata.</target>
+</trans-unit>
+<trans-unit id="s38fc1de5f99d801e">
+  <source>The earlier profile had no identity that Moss could import. Moss made a new one.</source>
+  <target>Il profilo precedente non aveva un’identità che Moss potesse importare. Moss ne ha creata una nuova.</target>
+</trans-unit>
+<trans-unit id="s9f26843287bb592d">
+  <source>Groups</source>
+  <target>Gruppi</target>
+</trans-unit>
+<trans-unit id="s6757de553888d8d7">
+  <source>The earlier profile had no groups to import.</source>
+  <target>Il profilo precedente non aveva gruppi da importare.</target>
+</trans-unit>
+<trans-unit id="s60b10efe9189daef">
+  <source>Opening Moss...</source>
+  <target>Apertura di Moss...</target>
 </trans-unit>
 </body>
 </file>

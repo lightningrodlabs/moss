@@ -53,8 +53,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('install-app', filePath, appId, networkSeed),
   refreshAppletSigningScope: () => ipcRenderer.invoke('refresh-applet-signing-scope'),
   lairSetupRequired: () => ipcRenderer.invoke('lair-setup-required'),
-  findLegacyProfiles: () => ipcRenderer.invoke('find-legacy-profiles'),
-  getLairBinaryVersion: () => ipcRenderer.invoke('get-lair-binary-version'),
+  findLegacyImportOffer: () => ipcRenderer.invoke('find-legacy-profiles'),
   copyLegacyProfile: (keystorePath: string) =>
     ipcRenderer.invoke('import-legacy-profile', keystorePath),
   launch: () => ipcRenderer.invoke('launch'),
@@ -155,8 +154,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('install-group-happ', useProgenitor, customGroupSeed),
   silentExportGroupsData: () => ipcRenderer.invoke('silent-export-groups-data'),
   exportGroupsData: () => ipcRenderer.invoke('export-groups-data'),
-  importGroupsData: () => ipcRenderer.invoke('import-groups-data'),
-  consumePendingGroupsImport: () => ipcRenderer.invoke('consume-pending-groups-import'),
+  importGroupsData: (curationUrls: string[]) =>
+    ipcRenderer.invoke('import-groups-data', curationUrls),
+  consumePendingGroupsImport: (curationUrls: string[]) =>
+    ipcRenderer.invoke('consume-pending-groups-import', curationUrls),
   onImportGroupsProgress: (callback: (e: Electron.IpcRendererEvent, payload: unknown) => void) =>
     ipcRenderer.on('import-groups-progress', callback),
   notification: (
