@@ -36,10 +36,16 @@ import semver from 'semver';
 import {
   MossFileSystem,
   deriveAppAssetsInfo,
-  findLegacyProfiles,
   importLegacyProfileData,
-  LegacyProfileInfo,
+  LegacyProfileCopyResult,
 } from './filesystem';
+import {
+  findLegacyImportOffer,
+  isFromOlderVersion,
+  LegacyImportOffer,
+  legacyImportMode,
+} from './legacyProfiles';
+import { CuratedTool, curatedToolsFromCuration, resolveImportedTool } from './importedTools';
 import { resolveMdnsEnabled } from './conductorNetworkConfig';
 import { readLanDiscoverySetting, writeLanDiscoverySetting } from './lanDiscoverySetting';
 import { listLocalTools } from './localTools';
@@ -50,7 +56,7 @@ import {
   storeToolAssetsFromPeer,
   ToolAssetDirs,
 } from './peerToolAssets';
-import { BINARIES_DIRECTORY, LAIR_BINARY, RESOURCES_DIRECTORY } from './const';
+import { BINARIES_DIRECTORY, RESOURCES_DIRECTORY } from './const';
 import { registerAsrIpc } from './asr/wireUp';
 import { relayTimeoutMs } from './appletRelayPolicy';
 import { MOSS_CONFIG } from './mossConfig';
@@ -312,7 +318,11 @@ program
   )
   .option(
     '--fork <string>',
-    'When importing existing data, appends this suffix to all imported network seeds.',
+    'Offers to import any existing profile as a copy, appending this suffix to all imported network seeds.',
+  )
+  .option(
+    '--update',
+    'Offers to import older Moss versions of the --profile being launched, as a plain launch does for the default profile.',
   )
   .option(
     '-n, --network-seed <string>',
@@ -577,11 +587,11 @@ if (!RUNNING_WITH_COMMAND) {
   let isAppQuitting = false;
   let LOCAL_SERVICES_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
   const LAN_BEACON = createLanBeaconService();
-  // A custom --profile normally means the user wants a fresh, dedicated data
-  // store, so we skip the legacy-import prompt. The exception is --fork: forking
-  // imported seeds only makes sense as part of the import flow, so when --fork
-  // is set we keep the prompt so the import path stays reachable.
-  const skipLegacyProfileImportPrompt = !!RUN_OPTIONS.profile && !RUN_OPTIONS.fork;
+  // Which import offer (if any) a first launch shows; see legacyImportMode.
+  const LEGACY_IMPORT_MODE = legacyImportMode(RUN_OPTIONS);
+  // Set when the profile copied on this first launch comes from an earlier Moss
+  // version, whose Tools must be replaced by versions this Moss can run.
+  let LEGACY_IMPORT_FROM_OLDER_VERSION = false;
   const WAL_WINDOWS: Record<
     string,
     {
@@ -1978,20 +1988,13 @@ if (!RUNNING_WITH_COMMAND) {
     ipcMain.handle('lair-setup-required', (): boolean => {
       return !WE_FILE_SYSTEM.keystoreInitialized();
     });
-    ipcMain.handle('find-legacy-profiles', (): LegacyProfileInfo[] => {
-      // Skip the legacy import choice for explicit custom profiles, but still let
-      // the renderer continue into the normal first-launch setup flow.
-      if (skipLegacyProfileImportPrompt) {
-        return [];
-      }
-      return findLegacyProfiles(app);
+    ipcMain.handle('find-legacy-profiles', (): LegacyImportOffer | undefined => {
+      if (!LEGACY_IMPORT_MODE) return undefined;
+      return findLegacyImportOffer(app.getPath('userData'), LEGACY_IMPORT_MODE);
     });
-    ipcMain.handle('get-lair-binary-version', (): string => {
-      const result = childProcess.spawnSync(LAIR_BINARY, ['--version']);
-      return result.stdout ? result.stdout.toString().trim() : 'unknown';
-    });
-    ipcMain.handle('import-legacy-profile', (_e, keystorePath: string): void => {
-      importLegacyProfileData(WE_FILE_SYSTEM, keystorePath);
+    ipcMain.handle('import-legacy-profile', (_e, keystorePath: string): LegacyProfileCopyResult => {
+      LEGACY_IMPORT_FROM_OLDER_VERSION = isFromOlderVersion(keystorePath, app.getPath('userData'));
+      return importLegacyProfileData(WE_FILE_SYSTEM, keystorePath);
     });
 
     // Helper: return the primary agent pubkey, preferring one imported from a legacy
@@ -2122,7 +2125,22 @@ if (!RUNNING_WITH_COMMAND) {
       | 'imported-disabled'
       | 'already-installed'
       | 'error';
-    type ImportResult = { groupName: string | undefined; status: ImportStatus; error?: string };
+    type SkippedTool = {
+      name: string;
+      reason: 'not-available' | 'failed';
+      error?: string;
+    };
+    type ImportResult = {
+      groupName: string | undefined;
+      status: ImportStatus;
+      error?: string;
+      /** Names of the Tools installed into the group */
+      installedTools?: string[];
+      /** Tools from the export that were not installed */
+      skippedTools?: SkippedTool[];
+      /** Number of Tools left for the group's progenitor to bring over */
+      toolsAwaitingProgenitor?: number;
+    };
 
     // Collect all groups data via zome calls (without writing to disk).
     const collectGroupsData = async (): Promise<GroupExportEntry[]> => {
@@ -2310,7 +2328,33 @@ if (!RUNNING_WITH_COMMAND) {
 
     // Execute a groups import from a parsed array. Used by both dialog-based and
     // auto-import (pending) flows.
-    const runGroupsImport = async (groups: GroupExportEntry[]): Promise<ImportResult[]> => {
+    // Reads the curated Tools of the given curation files. Unreachable files are skipped.
+    const fetchCuratedTools = async (
+      curationUrls: string[],
+    ): Promise<{ tools: CuratedTool[]; reachable: boolean }> => {
+      const tools: CuratedTool[] = [];
+      let reachable = false;
+      for (const url of curationUrls) {
+        try {
+          const resp = await net.fetch(url, { cache: 'no-cache' });
+          tools.push(...curatedToolsFromCuration(await resp.json(), ['default']));
+          reachable = true;
+        } catch (e) {
+          console.warn(`Failed to read tool curation ${url}:`, e);
+        }
+      }
+      return { tools, reachable };
+    };
+
+    const runGroupsImport = async (
+      groups: GroupExportEntry[],
+      toolSources: {
+        curationUrls: string[];
+        /** Install only curated Tools, because the export comes from an earlier Moss version */
+        requireCurated: boolean;
+      },
+    ): Promise<ImportResult[]> => {
+      const curated = await fetchCuratedTools(toolSources.curationUrls);
       const allApps = await HOLOCHAIN_MANAGER!.adminWebsocket.listApps({});
       let myPubKey = globalPubKeyFromListAppsResponse(allApps);
       if (!myPubKey) myPubKey = await getOrCreateAgentPubKey();
@@ -2445,7 +2489,11 @@ if (!RUNNING_WITH_COMMAND) {
           // on import; a stewarded group joined by a non-progenitor picks up its
           // tools by syncing instead.
           const shouldImportTools = amProgenitor || !progenitor;
+          const installedTools: string[] = [];
+          const skippedTools: SkippedTool[] = [];
+          let toolsAwaitingProgenitor = 0;
           if (group.tools && group.tools.length > 0 && !shouldImportTools) {
+            toolsAwaitingProgenitor = group.tools.length;
             console.log(
               `Skipping tool import for group ${appId} because importing agent is not the listed progenitor.`,
             );
@@ -2459,7 +2507,24 @@ if (!RUNNING_WITH_COMMAND) {
                 toolTotal: group.tools.length,
               });
               try {
-                const { toolId, toolListUrl, versionBranch } = tool;
+                const { toolId } = tool;
+                const source = resolveImportedTool(tool, curated.tools, toolSources.requireCurated);
+                if (!source) {
+                  skippedTools.push(
+                    curated.reachable
+                      ? {
+                          name: tool.custom_name || tool.toolName || toolId,
+                          reason: 'not-available',
+                        }
+                      : {
+                          name: tool.custom_name || tool.toolName || toolId,
+                          reason: 'failed',
+                          error: 'The Tool Library could not be reached.',
+                        },
+                  );
+                  continue;
+                }
+                const { toolListUrl, versionBranch } = source;
                 const toolListResp = await net.fetch(toolListUrl, { cache: 'no-cache' });
                 const toolList: DeveloperCollectiveToolList = await toolListResp.json();
                 const toolInfoEntry = toolList.tools.find(
@@ -2467,6 +2532,10 @@ if (!RUNNING_WITH_COMMAND) {
                 );
                 if (!toolInfoEntry) {
                   console.warn(`Tool "${toolId}" not found in tool list ${toolListUrl} — skipping`);
+                  skippedTools.push({
+                    name: tool.custom_name || tool.toolName || toolId,
+                    reason: 'not-available',
+                  });
                   continue;
                 }
 
@@ -2474,6 +2543,10 @@ if (!RUNNING_WITH_COMMAND) {
                 const versionToInstall = sortedVersions.find((v) => !!v.hashes.webhappSha256);
                 if (!versionToInstall) {
                   console.warn(`No valid webhapp version found for tool "${toolId}" — skipping`);
+                  skippedTools.push({
+                    name: tool.custom_name || tool.toolName || toolId,
+                    reason: 'not-available',
+                  });
                   continue;
                 }
 
@@ -2618,16 +2691,28 @@ if (!RUNNING_WITH_COMMAND) {
                 console.log(
                   `Imported tool "${tool.custom_name}" (${appletAppId}) into group ${appId}`,
                 );
+                installedTools.push(tool.custom_name || toolInfoEntry.title);
               } catch (toolErr) {
                 console.error(
                   `Failed to import tool "${tool.custom_name || tool.toolId}":`,
                   toolErr,
                 );
+                skippedTools.push({
+                  name: tool.custom_name || tool.toolName || tool.toolId,
+                  reason: 'failed',
+                  error: String(toolErr),
+                });
               }
             }
           }
 
-          results.push({ groupName: groupProfile?.name, status: importGroupStatus });
+          results.push({
+            groupName: groupProfile?.name,
+            status: importGroupStatus,
+            installedTools,
+            skippedTools,
+            toolsAwaitingProgenitor,
+          });
           emitProgress(current, groupProfile?.name, 'done', { status: importGroupStatus });
         } catch (e) {
           console.error(`Failed to import group ${appId}:`, e);
@@ -2652,7 +2737,7 @@ if (!RUNNING_WITH_COMMAND) {
       if (saveResult.canceled || !saveResult.filePath) return;
       fs.copyFileSync(WE_FILE_SYSTEM.groupsExportPath, saveResult.filePath);
     });
-    ipcMain.handle('import-groups-data', async (_e) => {
+    ipcMain.handle('import-groups-data', async (_e, curationUrls: string[]) => {
       const openResult = await dialog.showOpenDialog(MAIN_WINDOW!, {
         title: 'Import Groups Data',
         filters: [{ name: 'JSON', extensions: ['json'] }],
@@ -2661,12 +2746,15 @@ if (!RUNNING_WITH_COMMAND) {
       if (openResult.canceled || !openResult.filePaths[0]) return [];
       const raw = fs.readFileSync(openResult.filePaths[0], 'utf-8');
       const groups = JSON.parse(raw) as GroupExportEntry[];
-      return runGroupsImport(groups);
+      return runGroupsImport(groups, { curationUrls, requireCurated: false });
     });
-    ipcMain.handle('consume-pending-groups-import', async (_e) => {
+    ipcMain.handle('consume-pending-groups-import', async (_e, curationUrls: string[]) => {
       const pending = WE_FILE_SYSTEM.readPendingGroupsImport();
       if (!pending) return null;
-      return runGroupsImport(pending as GroupExportEntry[]);
+      return runGroupsImport(pending as GroupExportEntry[], {
+        curationUrls,
+        requireCurated: LEGACY_IMPORT_FROM_OLDER_VERSION,
+      });
     });
     ipcMain.handle(
       'join-group',
