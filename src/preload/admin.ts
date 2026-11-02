@@ -245,8 +245,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   getMainProcessMemory: () => ipcRenderer.invoke('get-main-process-memory'),
   getConductorProcessMemory: () => ipcRenderer.invoke('get-conductor-process-memory'),
-  fetchAndValidateHappOrWebhapp: (url: string) =>
-    ipcRenderer.invoke('fetch-and-validate-happ-or-webhapp', url),
+  fetchAndValidateHappOrWebhapp: (url: string, uiPort?: number) =>
+    ipcRenderer.invoke('fetch-and-validate-happ-or-webhapp', url, uiPort),
   validateHappOrWebhapp: (bytes: number[]) => ipcRenderer.invoke('validate-happ-or-webhapp', bytes),
   // Dev UI Override
   selectDevUiWebhapp: () => ipcRenderer.invoke('select-dev-ui-webhapp'),

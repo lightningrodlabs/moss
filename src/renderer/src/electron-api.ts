@@ -34,6 +34,7 @@ import {
   AudioSourcePickerRequest,
   AudioSourceRequestResult,
   DistributionInfo,
+  HappOrWebhappInspection,
   LocalToolInfo,
   ResourceLocation,
   ToolCompatibilityId,
@@ -296,7 +297,10 @@ declare global {
         vmSizeBytes: number;
         pid: number;
       } | null>;
-      fetchAndValidateHappOrWebhapp: (url: string) => Promise<any>;
+      fetchAndValidateHappOrWebhapp: (
+        url: string,
+        uiPort?: number,
+      ) => Promise<HappOrWebhappInspection>;
       validateHappOrWebhapp: (bytes: number[]) => Promise<AppHashes>;
       // Dev UI Override
       selectDevUiWebhapp: () => Promise<string | undefined>;
@@ -524,8 +528,11 @@ export function onAudioSourceGrantsChanged(callback: (grants: AudioSourceGrantIn
   window.electronAPI.onAudioSourceGrantsChanged((_e, grants) => callback(grants));
 }
 
-export async function fetchAndValidateHappOrWebhapp(url: string) {
-  return window.electronAPI.fetchAndValidateHappOrWebhapp(url);
+export async function fetchAndValidateHappOrWebhapp(
+  url: string,
+  uiPort?: number,
+): Promise<HappOrWebhappInspection> {
+  return window.electronAPI.fetchAndValidateHappOrWebhapp(url, uiPort);
 }
 
 export async function validateHappOrWebhapp(bytes: number[]) {

@@ -89,16 +89,17 @@ import {
   AssetSource,
   DeveloperCollectiveToolList,
   DistributionInfo,
+  HappOrWebhappInspection,
   LocalToolInfo,
   ResourceLocation,
+  SUPERSEDED_URL_SCHEMES,
   ToolCompatibilityId,
   ToolInfoAndVersions,
   ToolTransferManifest,
   ToolTransferRequest,
-  WeaveDevConfig,
   WEAVE_PROTOCOL_VERSION,
   WEAVE_URL_SCHEME,
-  SUPERSEDED_URL_SCHEMES,
+  WeaveDevConfig,
 } from '@theweave/moss-types';
 import { nanoid } from 'nanoid';
 import {
@@ -149,7 +150,8 @@ import {
   toOriginalCaseB64,
 } from '@theweave/utils';
 import { AppletZomeCallAuthorizer } from './appletZomeCallAuthorizer';
-import { sortVersionsDescending } from './utils';
+import { fetchWeaveConfigFromPort, sortVersionsDescending } from './utils';
+import { readWeaveConfigFromWebhapp } from './webhappWeaveConfig';
 import { Profile as AgentProfile } from '@holochain-open-dev/profiles';
 import { ProfilesClient } from '@holochain-open-dev/profiles/dist/profiles-client.js';
 import { Jimp } from 'jimp';
@@ -2675,41 +2677,48 @@ if (!RUNNING_WITH_COMMAND) {
       'lan-beacon-diagnostics',
       async (): Promise<BeaconDiagnostics> => LAN_BEACON.diagnostics(),
     );
-    ipcMain.handle('fetch-and-validate-happ-or-webhapp', async (_e, url: string): Promise<any> => {
-      let byteArray;
-      if (url.startsWith('file://')) {
-        const relativePath = url.replace('file://', '');
-        const absolutePath = path.resolve(relativePath);
-        const fileBuffer = fs.readFileSync(absolutePath);
-        byteArray = Array.from(new Uint8Array(fileBuffer));
-      } else {
-        const response = await net.fetch(url);
-        byteArray = Array.from(new Uint8Array(await response.arrayBuffer()));
-      }
-      const bytes = new Uint8Array(byteArray);
-      const { happSha256, webhappSha256, uiSha256 } =
-        await rustUtils.validateHappOrWebhapp(byteArray);
-      if (uiSha256) {
-        if (!webhappSha256) throw Error('Ui sha256 defined but not webhapp sha256.');
-        return {
-          type: 'webhapp',
-          sha256: webhappSha256,
-          happ: {
+    ipcMain.handle(
+      'fetch-and-validate-happ-or-webhapp',
+      async (_e, url: string, uiPort?: number): Promise<HappOrWebhappInspection> => {
+        let byteArray: number[];
+        if (url.startsWith('file://')) {
+          const relativePath = url.replace('file://', '');
+          const absolutePath = path.resolve(relativePath);
+          const fileBuffer = fs.readFileSync(absolutePath);
+          byteArray = Array.from(new Uint8Array(fileBuffer));
+        } else {
+          const response = await net.fetch(url);
+          byteArray = Array.from(new Uint8Array(await response.arrayBuffer()));
+        }
+        const bytes = new Uint8Array(byteArray);
+        const { happSha256, webhappSha256, uiSha256 } =
+          await rustUtils.validateHappOrWebhapp(byteArray);
+        if (uiSha256) {
+          if (!webhappSha256) throw Error('Ui sha256 defined but not webhapp sha256.');
+          return {
+            type: 'webhapp',
+            sha256: webhappSha256,
+            happ: {
+              sha256: happSha256,
+              roles: await decompressWebHapp(bytes),
+            },
+            ui: {
+              sha256: uiSha256,
+            },
+            weaveConfig: await readWeaveConfigFromWebhapp(bytes),
+          };
+        } else {
+          // A bare happ belongs to a Tool whose UI runs on a dev server, so
+          // its weave.config.json is only reachable through that port.
+          return {
+            type: 'happ',
             sha256: happSha256,
-            roles: await decompressWebHapp(bytes),
-          },
-          ui: {
-            sha256: uiSha256,
-          },
-        };
-      } else {
-        return {
-          type: 'happ',
-          sha256: happSha256,
-          roles: await decompressHapp(bytes),
-        };
-      }
-    });
+            roles: await decompressHapp(bytes),
+            weaveConfig: uiPort !== undefined ? await fetchWeaveConfigFromPort(uiPort) : undefined,
+          };
+        }
+      },
+    );
     ipcMain.handle('validate-happ-or-webhapp', async (_e, bytes: number[]): Promise<AppHashes> => {
       const { happSha256, webhappSha256, uiSha256 } = await rustUtils.validateHappOrWebhapp(bytes);
       if (uiSha256) {
