@@ -1,3 +1,77 @@
 {
-  "crossGroupView": true
+  "crossGroupView": true,
+  "installOptions": [
+    {
+      "role": "forum",
+      "property": "stewarded",
+      "kind": "boolean",
+      "label": "Stewarded",
+      "description": "Only stewards create categories.",
+      "required": false,
+      "default": false
+    },
+    {
+      "role": "forum",
+      "property": "theme",
+      "kind": "stringChoice",
+      "label": "Theme",
+      "required": false,
+      "choices": [
+        { "value": "light", "label": "Light" },
+        { "value": "dark", "label": "Dark" }
+      ]
+    },
+    {
+      "role": "forum",
+      "property": "pageSize",
+      "kind": "numberChoice",
+      "label": "Page size",
+      "required": false,
+      "choices": [
+        { "value": 10, "label": "10" },
+        { "value": 25, "label": "25" },
+        { "value": 50, "label": "50" }
+      ]
+    },
+    {
+      "role": "forum",
+      "property": "motto",
+      "kind": "string",
+      "label": "Motto",
+      "required": false,
+      "maxLength": 40
+    },
+    {
+      "role": "forum",
+      "property": "maxPosts",
+      "kind": "number",
+      "label": "Max posts",
+      "description": "Required, 1 to 1000.",
+      "required": true,
+      "min": 1,
+      "max": 1000,
+      "integer": true
+    },
+    {
+      "role": "forum",
+      "property": "moderators",
+      "kind": "agentList",
+      "label": "Moderators",
+      "required": false,
+      "maxItems": 5
+    },
+    {
+      "role": "forum",
+      "property": "postLimit",
+      "kind": "number",
+      "label": "Post limit",
+      "description": "Leave empty for no limit.",
+      "required": false,
+      "min": 1,
+      "max": 1000,
+      "integer": true,
+      "nullable": true,
+      "default": null
+    }
+  ]
 }
