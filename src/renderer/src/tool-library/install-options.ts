@@ -223,16 +223,20 @@ export function mergeProperties(
   return merged;
 }
 
+type ChoiceOption = Extract<ToolInstallOption, { kind: 'stringChoice' | 'numberChoice' }>;
+
 /**
- * Maps the string a select control reports back to the option's typed
- * choice value; an empty selection means the field is unset.
+ * Select controls carry each choice by its index, not its value, because
+ * Shoelace rewrites option values that contain spaces. These two map
+ * between the index string the control reports and the typed choice value.
  */
-export function choiceFromString(
-  option: Extract<ToolInstallOption, { kind: 'stringChoice' | 'numberChoice' }>,
-  selected: string,
-): string | number | undefined {
+export function choiceAtIndex(option: ChoiceOption, selected: string): string | number | undefined {
   if (selected === '') return undefined;
-  if (option.kind === 'stringChoice') return selected;
-  const match = option.choices.find((choice) => String(choice.value) === selected);
-  return match?.value;
+  const index = Number(selected);
+  return Number.isInteger(index) ? option.choices[index]?.value : undefined;
+}
+
+export function indexOfChoice(option: ChoiceOption, value: InstallOptionValue | undefined): string {
+  const index = option.choices.findIndex((choice) => choice.value === value);
+  return index === -1 ? '' : String(index);
 }

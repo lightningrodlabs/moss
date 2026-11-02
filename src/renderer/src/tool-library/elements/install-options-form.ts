@@ -20,7 +20,8 @@ import { groupStoreContext } from '../../groups/context.js';
 import { GroupStore, MaybeProfile } from '../../groups/group-store.js';
 import { mossStyles } from '../../shared-styles.js';
 import {
-  choiceFromString,
+  choiceAtIndex,
+  indexOfChoice,
   initialValues,
   InstallOptionValue,
   InstallOptionValues,
@@ -52,6 +53,13 @@ export class InstallOptionsForm extends LitElement {
   @state()
   private _values: InstallOptionValues = {};
 
+  /**
+   * What the text and number inputs were seeded with. They are bound to
+   * this, not to `_values`, so a keystroke never re-sets the control's
+   * value and wipes partially typed text such as `1.` or `-`.
+   */
+  private _seeds: InstallOptionValues = {};
+
   private _members = new StoreSubscriber(
     this,
     () => this.groupStore?.allProfiles,
@@ -61,6 +69,7 @@ export class InstallOptionsForm extends LitElement {
   willUpdate(changed: PropertyValues<this>): void {
     if (changed.has('options') || changed.has('manifestDefaults')) {
       this._values = initialValues(this.options, this.manifestDefaults);
+      this._seeds = this._values;
     }
   }
 
@@ -108,36 +117,35 @@ export class InstallOptionsForm extends LitElement {
   private renderChoice(
     option: Extract<ToolInstallOption, { kind: 'stringChoice' | 'numberChoice' }>,
   ): TemplateResult {
-    const current = this._values[optionKey(option)];
     return html`
       <sl-select
         data-option=${optionKey(option)}
         class="moss-input"
         .label=${option.label}
         help-text=${option.description ?? ''}
-        .value=${current === undefined || current === null ? '' : String(current)}
+        .value=${indexOfChoice(option, this._values[optionKey(option)])}
         ?required=${option.required}
         ?clearable=${!option.required}
         hoist
         @sl-change=${(e: Event) =>
-          this.setValue(option, choiceFromString(option, (e.target as SlSelect).value as string))}
+          this.setValue(option, choiceAtIndex(option, (e.target as SlSelect).value as string))}
       >
         ${option.choices.map(
-          (choice) => html`<sl-option value=${String(choice.value)}>${choice.label}</sl-option>`,
+          (choice, index) => html`<sl-option value=${String(index)}>${choice.label}</sl-option>`,
         )}
       </sl-select>
     `;
   }
 
   private renderString(option: Extract<ToolInstallOption, { kind: 'string' }>): TemplateResult {
-    const current = this._values[optionKey(option)];
+    const seed = this._seeds[optionKey(option)];
     return html`
       <sl-input
         data-option=${optionKey(option)}
         class="moss-input"
         .label=${option.label}
         help-text=${option.description ?? ''}
-        .value=${typeof current === 'string' ? current : ''}
+        .value=${typeof seed === 'string' ? seed : ''}
         minlength=${option.minLength ?? 0}
         maxlength=${option.maxLength}
         ?required=${option.required}
@@ -150,7 +158,7 @@ export class InstallOptionsForm extends LitElement {
   }
 
   private renderNumber(option: Extract<ToolInstallOption, { kind: 'number' }>): TemplateResult {
-    const current = this._values[optionKey(option)];
+    const seed = this._seeds[optionKey(option)];
     return html`
       <sl-input
         data-option=${optionKey(option)}
@@ -158,7 +166,7 @@ export class InstallOptionsForm extends LitElement {
         type="number"
         .label=${option.label}
         help-text=${option.description ?? ''}
-        .value=${typeof current === 'number' ? String(current) : ''}
+        .value=${typeof seed === 'number' ? String(seed) : ''}
         min=${option.min}
         max=${option.max}
         step=${option.integer ? 1 : 'any'}

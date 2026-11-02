@@ -62,6 +62,17 @@
     },
     {
       "role": "forum",
+      "property": "score",
+      "kind": "number",
+      "label": "Score",
+      "description": "Any number from -10 to 10, decimals allowed.",
+      "required": false,
+      "min": -10,
+      "max": 10,
+      "integer": false
+    },
+    {
+      "role": "forum",
       "property": "postLimit",
       "kind": "number",
       "label": "Post limit",

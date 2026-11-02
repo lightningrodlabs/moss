@@ -3,7 +3,8 @@ import type { ToolInstallOption } from '@theweave/api';
 import type { RoleProperties } from '@theweave/moss-types';
 import {
   checkDeclarations,
-  choiceFromString,
+  choiceAtIndex,
+  indexOfChoice,
   initialValues,
   mergeProperties,
   optionKey,
@@ -289,16 +290,32 @@ describe('mergeProperties', () => {
   });
 });
 
-describe('choiceFromString', () => {
+describe('choiceAtIndex', () => {
   it('maps a number choice back to its numeric value', () => {
-    expect(choiceFromString(pageSize, '25')).toBe(25);
+    expect(choiceAtIndex(pageSize, '1')).toBe(25);
   });
 
-  it('keeps a string choice as a string', () => {
-    expect(choiceFromString(theme, 'dark')).toBe('dark');
+  it('keeps a string choice value intact, spaces included', () => {
+    const spaced = { ...theme, choices: [{ value: 'dark mode', label: 'Dark' }] };
+    expect(choiceAtIndex(spaced, '0')).toBe('dark mode');
   });
 
   it('treats an empty selection as unset', () => {
-    expect(choiceFromString(pageSize, '')).toBeUndefined();
+    expect(choiceAtIndex(pageSize, '')).toBeUndefined();
+  });
+
+  it('treats an index outside the choices as unset', () => {
+    expect(choiceAtIndex(pageSize, '7')).toBeUndefined();
+  });
+});
+
+describe('indexOfChoice', () => {
+  it('finds the index of the current value', () => {
+    expect(indexOfChoice(pageSize, 25)).toBe('1');
+  });
+
+  it('is empty when nothing is chosen', () => {
+    expect(indexOfChoice(pageSize, undefined)).toBe('');
+    expect(indexOfChoice(pageSize, null)).toBe('');
   });
 });
