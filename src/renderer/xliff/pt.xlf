@@ -3091,6 +3091,90 @@ começa agora</target>
   <source>Finishing transcription</source>
   <target>Finalizando a transcrição</target>
 </trans-unit>
+<trans-unit id="sae5d87e99fe081e0">
+  <source>Required</source>
+  <target>Obrigatório</target>
+</trans-unit>
+<trans-unit id="s39113ead77d109f2">
+  <source>Wrong type</source>
+  <target>Tipo incorreto</target>
+</trans-unit>
+<trans-unit id="sa01ca5515c1bba3f">
+  <source>Choose one of the listed values</source>
+  <target>Escolha um dos valores indicados</target>
+</trans-unit>
+<trans-unit id="s9935205555f03661">
+  <source>At least <x id="0" equiv-text="${option.kind === 'string' ? (option.minLength ?? 0) : 0}"/> characters</source>
+  <target>Pelo menos <x id="0" equiv-text="${option.kind === 'string' ? (option.minLength ?? 0) : 0}"/> caracteres</target>
+</trans-unit>
+<trans-unit id="s418946207fdad993">
+  <source>At most <x id="0" equiv-text="${option.kind === 'string' ? option.maxLength : 0}"/> characters</source>
+  <target>No máximo <x id="0" equiv-text="${option.kind === 'string' ? option.maxLength : 0}"/> caracteres</target>
+</trans-unit>
+<trans-unit id="sca2ca47d776f686f">
+  <source>At least <x id="0" equiv-text="${option.kind === 'number' ? option.min : 0}"/></source>
+  <target>Pelo menos <x id="0" equiv-text="${option.kind === 'number' ? option.min : 0}"/></target>
+</trans-unit>
+<trans-unit id="s76221aaa3f3db961">
+  <source>At most <x id="0" equiv-text="${option.kind === 'number' ? option.max : 0}"/></source>
+  <target>No máximo <x id="0" equiv-text="${option.kind === 'number' ? option.max : 0}"/></target>
+</trans-unit>
+<trans-unit id="sd5a172c4edfd637a">
+  <source>Must be a whole number</source>
+  <target>Tem de ser um número inteiro</target>
+</trans-unit>
+<trans-unit id="s7eeccfb88eda3386">
+  <source>Select at least <x id="0" equiv-text="${option.kind === 'agentList' ? (option.minItems ?? 0) : 0}"/> members</source>
+  <target>Selecione pelo menos <x id="0" equiv-text="${option.kind === 'agentList' ? (option.minItems ?? 0) : 0}"/> membros</target>
+</trans-unit>
+<trans-unit id="s440d15aea6c52874">
+  <source>Select at most <x id="0" equiv-text="${option.kind === 'agentList' ? (option.maxItems ?? 0) : 0}"/> members</source>
+  <target>Selecione no máximo <x id="0" equiv-text="${option.kind === 'agentList' ? (option.maxItems ?? 0) : 0}"/> membros</target>
+</trans-unit>
+<trans-unit id="sfeb62ec512ee8d5a">
+  <source>Role "<x id="0" equiv-text="${role}"/>" is not in this Tool's happ</source>
+  <target>O papel "<x id="0" equiv-text="${role}"/>" não está no happ desta ferramenta</target>
+</trans-unit>
+<trans-unit id="se7be9358b38a8acc">
+  <source>Option <x id="0" equiv-text="${name}"/> is declared twice</source>
+  <target>A opção <x id="0" equiv-text="${name}"/> está declarada duas vezes</target>
+</trans-unit>
+<trans-unit id="s7640b2d2578a0c5b">
+  <source>Option <x id="0" equiv-text="${name}"/> has an invalid range</source>
+  <target>A opção <x id="0" equiv-text="${name}"/> tem um intervalo inválido</target>
+</trans-unit>
+<trans-unit id="sbba70e8956cc9b45">
+  <source>Option <x id="0" equiv-text="${name}"/> has invalid choices</source>
+  <target>A opção <x id="0" equiv-text="${name}"/> tem escolhas inválidas</target>
+</trans-unit>
+<trans-unit id="sde749a2dacae6349">
+  <source>Option <x id="0" equiv-text="${name}"/> has a default outside its constraints</source>
+  <target>O valor predefinido da opção <x id="0" equiv-text="${name}"/> está fora dos seus limites</target>
+</trans-unit>
+<trans-unit id="saa6f44424261a70c">
+  <source>Option <x id="0" equiv-text="${name}"/> cannot be both required and nullable</source>
+  <target>A opção <x id="0" equiv-text="${name}"/> não pode ser obrigatória e nullable ao mesmo tempo</target>
+</trans-unit>
+<trans-unit id="sb7b2ed0c7cad6752">
+  <source>Select members</source>
+  <target>Selecionar membros</target>
+</trans-unit>
+<trans-unit id="s7b0910e0e6da4038">
+  <source>This Tool declares install options in a format Moss does not understand.</source>
+  <target>Esta ferramenta declara opções de instalação num formato que o Moss não compreende.</target>
+</trans-unit>
+<trans-unit id="s1ade2b1463ead3f6">
+  <source>yaml. Values chosen above override these keys.</source>
+  <target>yaml. Os valores escolhidos acima substituem estas chaves.</target>
+</trans-unit>
+<trans-unit id="s7db428fe6f9264bc">
+  <source>You can still set DNA properties under Advanced.</source>
+  <target>Pode continuar a definir as propriedades da DNA em "Avançado".</target>
+</trans-unit>
+<trans-unit id="s34946a06ae82817e">
+  <source>Install options</source>
+  <target>Opções de instalação</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

@@ -222,3 +222,17 @@ export function mergeProperties(
   }
   return merged;
 }
+
+/**
+ * Maps the string a select control reports back to the option's typed
+ * choice value; an empty selection means the field is unset.
+ */
+export function choiceFromString(
+  option: Extract<ToolInstallOption, { kind: 'stringChoice' | 'numberChoice' }>,
+  selected: string,
+): string | number | undefined {
+  if (selected === '') return undefined;
+  if (option.kind === 'stringChoice') return selected;
+  const match = option.choices.find((choice) => String(choice.value) === selected);
+  return match?.value;
+}

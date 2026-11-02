@@ -3,6 +3,7 @@ import type { ToolInstallOption } from '@theweave/api';
 import type { RoleProperties } from '@theweave/moss-types';
 import {
   checkDeclarations,
+  choiceFromString,
   initialValues,
   mergeProperties,
   optionKey,
@@ -285,5 +286,19 @@ describe('mergeProperties', () => {
   it('does not mutate the base', () => {
     mergeProperties(base, [stewarded], { 'rVines/stewarded': true });
     expect(base.rVines.stewarded).toBe(false);
+  });
+});
+
+describe('choiceFromString', () => {
+  it('maps a number choice back to its numeric value', () => {
+    expect(choiceFromString(pageSize, '25')).toBe(25);
+  });
+
+  it('keeps a string choice as a string', () => {
+    expect(choiceFromString(theme, 'dark')).toBe('dark');
+  });
+
+  it('treats an empty selection as unset', () => {
+    expect(choiceFromString(pageSize, '')).toBeUndefined();
   });
 });
