@@ -152,14 +152,14 @@ the option's identity; two options may not share one. Every kind except
 
 Per kind:
 
-| kind | extra fields | writes |
-|---|---|---|
-| `boolean` | `default?: boolean` | boolean |
-| `stringChoice` | `choices: {value: string, label: string}[]`, `default?: string` | string |
-| `numberChoice` | `choices: {value: number, label: string}[]`, `default?: number` | number |
-| `string` | `minLength?: number` (0), `maxLength: number`, `default?: string` | string |
-| `number` | `min: number`, `max: number`, `integer: boolean`, `default?: number` | number |
-| `agentList` | `minItems?: number`, `maxItems?: number` | string[] of `u`-prefixed base64 agent keys |
+| kind           | extra fields                                                         | writes                                     |
+| -------------- | -------------------------------------------------------------------- | ------------------------------------------ |
+| `boolean`      | `default?: boolean`                                                  | boolean                                    |
+| `stringChoice` | `choices: {value: string, label: string}[]`, `default?: string`      | string                                     |
+| `numberChoice` | `choices: {value: number, label: string}[]`, `default?: number`      | number                                     |
+| `string`       | `minLength?: number` (0), `maxLength: number`, `default?: string`    | string                                     |
+| `number`       | `min: number`, `max: number`, `integer: boolean`, `default?: number` | number                                     |
+| `agentList`    | `minItems?: number`, `maxItems?: number`                             | string[] of `u`-prefixed base64 agent keys |
 
 A declaration is malformed when any of these fail: TypeBox schema; a `role`
 not in the happ manifest; duplicate `role`+`property`; `min > max`;

@@ -35,6 +35,7 @@
 ### Task 1: Types and schemas
 
 **Files:**
+
 - Create: `libs/api/src/tool-config.ts`
 - Modify: `libs/api/src/index.ts` (add `export * from './tool-config.js';`)
 - Create: `shared/types/src/tool-config.ts`
@@ -43,24 +44,63 @@
 - Test: `shared/types/src/tool-config.test.ts`
 
 **Interfaces:**
+
 - Produces (`@theweave/api`):
   ```ts
-  export type ToolInstallOptionBase = { role: string; property: string; label: string; description?: string; required: boolean };
-  export type ToolInstallOption = ToolInstallOptionBase & (
-    | { kind: 'boolean'; default?: boolean }
-    | { kind: 'stringChoice'; choices: { value: string; label: string }[]; default?: string | null; nullable?: boolean }
-    | { kind: 'numberChoice'; choices: { value: number; label: string }[]; default?: number | null; nullable?: boolean }
-    | { kind: 'string'; minLength?: number; maxLength: number; default?: string | null; nullable?: boolean }
-    | { kind: 'number'; min: number; max: number; integer: boolean; default?: number | null; nullable?: boolean }
-    | { kind: 'agentList'; minItems?: number; maxItems?: number; nullable?: boolean });
+  export type ToolInstallOptionBase = {
+    role: string;
+    property: string;
+    label: string;
+    description?: string;
+    required: boolean;
+  };
+  export type ToolInstallOption = ToolInstallOptionBase &
+    (
+      | { kind: 'boolean'; default?: boolean }
+      | {
+          kind: 'stringChoice';
+          choices: { value: string; label: string }[];
+          default?: string | null;
+          nullable?: boolean;
+        }
+      | {
+          kind: 'numberChoice';
+          choices: { value: number; label: string }[];
+          default?: number | null;
+          nullable?: boolean;
+        }
+      | {
+          kind: 'string';
+          minLength?: number;
+          maxLength: number;
+          default?: string | null;
+          nullable?: boolean;
+        }
+      | {
+          kind: 'number';
+          min: number;
+          max: number;
+          integer: boolean;
+          default?: number | null;
+          nullable?: boolean;
+        }
+      | { kind: 'agentList'; minItems?: number; maxItems?: number; nullable?: boolean }
+    );
   export type ToolWeaveConfig = { crossGroupView?: boolean; installOptions?: ToolInstallOption[] };
   ```
 - Produces (`@theweave/moss-types`): `TToolInstallOption`, `TToolWeaveConfig` (TypeBox, `additionalProperties: true` on the config object so unknown top-level keys keep passing), and
+
   ```ts
   export type RoleProperties = Record<string, Record<string, unknown>>; // role name -> properties
   export type HappOrWebhappInspection =
     | { type: 'happ'; sha256: string; roles: RoleProperties; weaveConfig?: unknown }
-    | { type: 'webhapp'; sha256: string; happ: { sha256: string; roles: RoleProperties }; ui: { sha256: string }; weaveConfig?: unknown };
+    | {
+        type: 'webhapp';
+        sha256: string;
+        happ: { sha256: string; roles: RoleProperties };
+        ui: { sha256: string };
+        weaveConfig?: unknown;
+      };
   ```
 
 - [ ] **Step 1: `yarn install`, then write the failing test** in `shared/types/src/tool-config.test.ts`: `Value.Check(TToolWeaveConfig, vinesExample)` is true for the spec's Vines JSON; false when an option has `kind: 'colour'`; false when a `number` option lacks `max`; false when a `boolean` option carries `nullable`; true for a `number` option with `nullable: true, default: null`; true for `{ crossGroupView: true }` alone.
@@ -72,22 +112,60 @@
 ### Task 2: Option logic (no DOM)
 
 **Files:**
+
 - Create: `src/renderer/src/tool-library/install-options.ts`
 - Test: `src/renderer/src/tool-library/install-options.test.ts`
 
 **Interfaces:**
+
 - Consumes: `ToolInstallOption` (Task 1), `RoleProperties` (Task 1).
 - Produces:
+
   ```ts
   export type InstallOptionValue = boolean | string | number | string[] | null; // null only for nullable options
   export type InstallOptionValues = Record<string, InstallOptionValue | undefined>; // keyed by optionKey; undefined = empty field
   export function optionKey(option: ToolInstallOption): string; // `${role}/${property}`
-  export type DeclarationProblem = { code: 'unknown-role' | 'duplicate' | 'bad-range' | 'bad-length' | 'bad-items' | 'bad-choices' | 'bad-default' | 'required-nullable'; role: string; property: string };
-  export function checkDeclarations(options: ToolInstallOption[], roleNames: string[]): DeclarationProblem | undefined;
-  export function initialValues(options: ToolInstallOption[], manifestDefaults: RoleProperties): InstallOptionValues;
-  export type ValueProblem = 'required' | 'wrong-type' | 'not-a-choice' | 'too-short' | 'too-long' | 'below-min' | 'above-max' | 'not-integer' | 'too-few' | 'too-many';
-  export function validateValue(option: ToolInstallOption, value: InstallOptionValue | undefined): ValueProblem | undefined;
-  export function mergeProperties(base: RoleProperties, options: ToolInstallOption[], values: InstallOptionValues): RoleProperties;
+  export type DeclarationProblem = {
+    code:
+      | 'unknown-role'
+      | 'duplicate'
+      | 'bad-range'
+      | 'bad-length'
+      | 'bad-items'
+      | 'bad-choices'
+      | 'bad-default'
+      | 'required-nullable';
+    role: string;
+    property: string;
+  };
+  export function checkDeclarations(
+    options: ToolInstallOption[],
+    roleNames: string[],
+  ): DeclarationProblem | undefined;
+  export function initialValues(
+    options: ToolInstallOption[],
+    manifestDefaults: RoleProperties,
+  ): InstallOptionValues;
+  export type ValueProblem =
+    | 'required'
+    | 'wrong-type'
+    | 'not-a-choice'
+    | 'too-short'
+    | 'too-long'
+    | 'below-min'
+    | 'above-max'
+    | 'not-integer'
+    | 'too-few'
+    | 'too-many';
+  export function validateValue(
+    option: ToolInstallOption,
+    value: InstallOptionValue | undefined,
+  ): ValueProblem | undefined;
+  export function mergeProperties(
+    base: RoleProperties,
+    options: ToolInstallOption[],
+    values: InstallOptionValues,
+  ): RoleProperties;
   ```
 
 - [ ] **Step 1: Write failing tests** (one `describe` per function):
@@ -103,10 +181,12 @@
 ### Task 3: Shared `rolesSettingsFor`
 
 **Files:**
+
 - Modify: `shared/utils/src/utils.ts` (add function), `src/renderer/src/moss-store.ts:1355-1368` (delete private method, import from `@theweave/utils`)
 - Test: `shared/utils/src/roles-settings.test.ts`
 
 **Interfaces:**
+
 - Produces: `export function rolesSettingsFor(properties: Record<string, Uint8Array>): RoleSettingsMap` — each role becomes `{ type: 'provisioned', value: { modifiers: { properties: decode(bytes) } } }`.
 
 - [ ] **Step 1: Write failing test**: encode `{ stewarded: true, stewards: ['uhCAk1'] }` with `@msgpack/msgpack`, call `rolesSettingsFor({ rVines: bytes })`, assert the decoded shape above and that `{}` yields `{}`.
@@ -118,15 +198,19 @@
 ### Task 4: Read `weave.config.json` during inspection
 
 **Files:**
+
 - Create: `src/main/webhappWeaveConfig.ts`
 - Modify: `src/main/index.ts:2678-2712` (handler), `src/preload/admin.ts:248-249`, `src/renderer/src/electron-api.ts:319,597-599`
 - Test: `src/main/webhappWeaveConfig.test.ts`
 
 **Interfaces:**
+
 - Produces:
   ```ts
   // src/main/webhappWeaveConfig.ts — imports only zlib, @msgpack/msgpack and adm-zip, never electron, so vitest can load it
-  export function readWeaveConfigFromWebhapp(webhappBytes: Uint8Array): Promise<unknown | undefined>; // gunzip + msgpack decode, find the resource whose key ends with '.zip', AdmZip(Buffer) → 'weave.config.json' → JSON.parse; undefined when absent or unparsable
+  export function readWeaveConfigFromWebhapp(
+    webhappBytes: Uint8Array,
+  ): Promise<unknown | undefined>; // gunzip + msgpack decode, find the resource whose key ends with '.zip', AdmZip(Buffer) → 'weave.config.json' → JSON.parse; undefined when absent or unparsable
   // src/main/utils.ts (electron is fine here)
   export function fetchWeaveConfigFromPort(uiPort: number): Promise<unknown | undefined>; // net.fetch http://localhost:<port>/weave.config.json with a 2000 ms AbortController, undefined on any failure
   ```
@@ -141,20 +225,24 @@
 ### Task 5: Install dialog form
 
 **Files:**
+
 - Create: `src/renderer/src/tool-library/elements/install-options-form.ts`
 - Modify: `src/renderer/src/tool-library/elements/install-tool-dialog.ts` (`open`, `downloadWebHapp`, `renderForm`, submit handler, `_dnaProperties` typing)
 - Modify: `src/renderer/xliff/*.xlf`, regenerate `src/renderer/src/locales/generated/`
 - Test: `src/renderer/src/tool-library/install-options-messages.test.ts`
 
 **Interfaces:**
+
 - Consumes: Task 2 functions; `HappOrWebhappInspection` (Task 1); `TToolWeaveConfig` (Task 1); `groupStore.allProfiles`.
 - Produces: element `<install-options-form>` with
+
   ```ts
   @property({ attribute: false }) options: ToolInstallOption[];
   @property({ attribute: false }) manifestDefaults: RoleProperties;
   get currentValues(): InstallOptionValues;
   reportValidity(): boolean; // runs validateValue per option, sets setCustomValidity + reportValidity on each control, returns true when all pass
   ```
+
   and a DOM-free `src/renderer/src/tool-library/install-options-messages.ts` exporting `valueProblemMessage(problem: ValueProblem, option: ToolInstallOption): string` and `declarationProblemMessage(problem: DeclarationProblem): string` built with `msg()`.
 
 - [ ] **Step 1: Write failing test** for the message helpers: `valueProblemMessage('too-many', agentListWithMaxItems2)` contains `2`; `declarationProblemMessage({ code: 'unknown-role', role: 'x', property: 'y' })` contains `x`.
@@ -170,6 +258,7 @@
 ### Task 6: Dev mode overrides and `roles_settings`
 
 **Files:**
+
 - Modify: `shared/types/src/defineConfig.ts:158-178` (`AppletInstallConfig.properties?: RoleProperties`)
 - Create: `src/main/cli/devProperties.ts`
 - Modify: `src/main/cli/devSetup.ts:348-373` (registering), `:421-428` (joining), `:612-629` (`installHapp`)
@@ -178,6 +267,7 @@
 - Test: `src/main/cli/devProperties.test.ts`
 
 **Interfaces:**
+
 - Consumes: `rolesSettingsFor` (Task 3), `decompressHapp` from `src/main/utils.ts` (returns `Promise<RoleProperties>` since Task 4).
 - Produces: `export function encodeRoleOverrides(manifestDefaults: RoleProperties, overrides: RoleProperties | undefined): Record<string, Uint8Array>` — for each role in `overrides`, msgpack-encode `{ ...manifestDefaults[role], ...overrides[role] }`; roles absent from `overrides` are omitted; `undefined` overrides → `{}`.
 - `installHapp(holochainManager, appId, networkSeed, pubKey, happPath, rolesSettings?: RoleSettingsMap)`.
@@ -192,6 +282,7 @@
 ### Task 7: Docs
 
 **Files:**
+
 - Create: `docs/build/tool-install-options.md`
 - Modify: `docs/.vitepress/config.mts` (sidebar item `{ text: 'Install Options', link: '/build/tool-install-options' }` after "Configure CLI"), `docs/build/configure-cli.md` (document `properties` on applet instances), `docs/build/publishing-a-tool.md` (one sentence linking the new page)
 
