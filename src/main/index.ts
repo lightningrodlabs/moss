@@ -81,7 +81,6 @@ import {
   AppletHostResponse,
   ConductorInfo,
   NetworkInfo,
-  ToolWeaveConfig,
   isAppletHostResponse,
 } from './sharedTypes';
 import {
@@ -132,6 +131,7 @@ import {
   FrameNotification,
   GroupProfile,
   ParentToAppletMessage,
+  ToolWeaveConfig,
   WAL,
   WeaveLocation,
 } from '@theweave/api';

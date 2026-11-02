@@ -23,6 +23,7 @@ import type {
   AsrSessionOptions,
   LocalModelCapabilities,
   AsrHostStatus,
+  ToolWeaveConfig,
 } from '@theweave/api';
 import {
   AppAssetsInfo,
@@ -40,7 +41,7 @@ import {
   ToolTransferRequest,
   WeaveDevConfig,
 } from '@theweave/moss-types';
-import { AppletHostResponse, ToolWeaveConfig } from './types';
+import { AppletHostResponse } from './types';
 
 // IPC_CHANGE_HERE
 
