@@ -1,11 +1,6 @@
 import { css, html, LitElement, TemplateResult } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
-import {
-  ActionHash,
-  encodeHashToBase64,
-  HoloHashMap,
-  YamlProperties,
-} from '@holochain/client';
+import { ActionHash, encodeHashToBase64, HoloHashMap, YamlProperties } from '@holochain/client';
 import { localized, msg } from '@lit/localize';
 import { ref } from 'lit/directives/ref.js';
 import {

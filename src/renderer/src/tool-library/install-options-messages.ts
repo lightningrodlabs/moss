@@ -16,7 +16,9 @@ export function valueProblemMessage(problem: ValueProblem, option: ToolInstallOp
     case 'not-a-choice':
       return msg('Choose one of the listed values');
     case 'too-short':
-      return msg(str`At least ${option.kind === 'string' ? (option.minLength ?? 0) : 0} characters`);
+      return msg(
+        str`At least ${option.kind === 'string' ? (option.minLength ?? 0) : 0} characters`,
+      );
     case 'too-long':
       return msg(str`At most ${option.kind === 'string' ? option.maxLength : 0} characters`);
     case 'below-min':

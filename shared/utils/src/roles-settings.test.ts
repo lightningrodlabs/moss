@@ -3,7 +3,7 @@ import { encode } from '@msgpack/msgpack';
 import { rolesSettingsFor } from './utils.js';
 
 describe('rolesSettingsFor', () => {
-  it('turns each role\'s encoded properties into provisioned role settings', () => {
+  it("turns each role's encoded properties into provisioned role settings", () => {
     const properties = { stewarded: true, stewards: ['uhCAk1'] };
     const settings = rolesSettingsFor({ rVines: encode(properties) });
     expect(settings).toEqual({
