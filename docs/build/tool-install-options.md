@@ -48,6 +48,7 @@ Every option has:
 | `description` | Optional help text under the field (text, see below).                           |
 | `required`    | `true` blocks installation until the field holds a valid value.                 |
 | `nullable`    | Optional, not on `boolean`. Lets an empty field write `null` (see below).       |
+| `dependsOn`   | Optional. Conditions on earlier options (see "Conditional options" below).      |
 
 ### Text in more than one language
 
@@ -111,6 +112,25 @@ region (`pt` for `pt-BR`), then `en`, then the first entry:
 }
 ```
 
+**`stringChoiceList`** — a multi-select over fixed string values. Optional `minItems` and `maxItems`, and a `default` list. Written as a list of the chosen values, in the order the `choices` declare them (`Vec<String>` in Rust). An empty list counts as empty, so `required` means at least one value.
+
+```json
+{
+  "role": "forum",
+  "property": "categories",
+  "kind": "stringChoiceList",
+  "label": "Categories",
+  "required": false,
+  "maxItems": 2,
+  "choices": [
+    { "value": "news", "label": "News" },
+    { "value": "events", "label": "Events" },
+    { "value": "help", "label": "Help" }
+  ],
+  "default": ["news"]
+}
+```
+
 **`string`** — free text. `maxLength` is required so no option is unbounded; `minLength` defaults to 0.
 
 ```json
@@ -158,6 +178,40 @@ region (`pt` for `pt-BR`), then `en`, then the first entry:
 - A `required` option must hold a valid value before the Install button works. A required option whose key has a manifest default is pre-filled and can be submitted as is.
 - An **empty** optional field writes nothing: the property keeps whatever your happ manifest says, and if the manifest has no such key, the key is absent. Moss never writes `null` into a property on its own, because a `null` in a plain Rust field fails genesis for every member.
 - For an `Option<T>` property, set `nullable: true`. Then an empty field writes `null`, and `default: null` is allowed. `required` and `nullable` together are rejected as contradictory.
+
+## Conditional options
+
+`dependsOn` makes an option apply only when other options hold certain values. It is a list of conditions, and all of them must hold:
+
+```json
+{
+  "role": "forum",
+  "property": "stewards",
+  "kind": "agentList",
+  "label": "Stewards",
+  "required": true,
+  "dependsOn": [{ "property": "stewarded" }]
+},
+{
+  "role": "forum",
+  "property": "accentColor",
+  "kind": "string",
+  "label": "Accent color",
+  "required": false,
+  "maxLength": 7,
+  "dependsOn": [{ "property": "theme", "in": ["dark", "custom"] }]
+}
+```
+
+Each condition names another option by `property`, and by `role` when it is not the same role as the dependent option. It holds when:
+
+- with neither `equals` nor `in`: the other option is filled in. For a `boolean` that means `true`, for a list it means at least one item, and for the other kinds it means a value that is not `null`.
+- with `equals`: the other option has that value. For a list, the list contains it.
+- with `in`: the other option has one of the listed values. For a list, the list contains at least one of them.
+
+An option that does not apply is hidden in the install dialog, is not checked (so `required` only counts while it applies), and is written as if it were empty. A condition on an option that does not apply never holds, so turning off one option hides the whole chain below it.
+
+A condition must name an option declared earlier in the list. `equals` and `in` cannot be used together, their values must be values the other option can hold (one of its `choices` for the choice kinds), `in` must not be empty, and neither can be used on an `agentList`, nor `in` on a `boolean`. A declaration that breaks these rules is reported as malformed.
 
 ## How the values are written
 
