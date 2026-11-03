@@ -6,6 +6,14 @@ describe('valueProblemMessage', () => {
     expect(valueProblemMessage({ code: 'too-many', limit: 2 })).toContain('2');
   });
 
+  it('counts members for an agent list and items for a choice list', () => {
+    expect(valueProblemMessage({ code: 'too-few', limit: 2 }, 'agentList')).toContain('members');
+    expect(valueProblemMessage({ code: 'too-few', limit: 2 }, 'stringChoiceList')).not.toContain(
+      'members',
+    );
+    expect(valueProblemMessage({ code: 'too-many', limit: 3 }, 'stringChoiceList')).toContain('3');
+  });
+
   it('has a message for every problem', () => {
     expect(valueProblemMessage({ code: 'required' })).not.toBe('');
   });

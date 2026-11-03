@@ -21,7 +21,9 @@ import { GroupStore, MaybeProfile } from '../../groups/group-store.js';
 import { mossStyles } from '../../shared-styles.js';
 import {
   choiceAtIndex,
+  choicesAtIndices,
   indexOfChoice,
+  indicesOfChoices,
   initialValues,
   InstallOptionValue,
   InstallOptionValues,
@@ -84,7 +86,7 @@ export class InstallOptionsForm extends LitElement {
     for (const option of this.options) {
       const problem = validateValue(option, this._values[optionKey(option)]);
       const control = this.controlFor(option);
-      control?.setCustomValidity(problem ? valueProblemMessage(problem) : '');
+      control?.setCustomValidity(problem ? valueProblemMessage(problem, option.kind) : '');
       if (problem) {
         allValid = false;
         control?.reportValidity();
@@ -135,6 +137,31 @@ export class InstallOptionsForm extends LitElement {
         hoist
         @sl-change=${(e: Event) =>
           this.setValue(option, choiceAtIndex(option, (e.target as SlSelect).value as string))}
+      >
+        ${option.choices.map(
+          (choice, index) =>
+            html`<sl-option value=${String(index)}>${this.text(choice.label)}</sl-option>`,
+        )}
+      </sl-select>
+    `;
+  }
+
+  private renderChoiceList(
+    option: Extract<ToolInstallOption, { kind: 'stringChoiceList' }>,
+  ): TemplateResult {
+    return html`
+      <sl-select
+        data-option=${optionKey(option)}
+        class="moss-input"
+        .label=${this.text(option.label)}
+        help-text=${this.text(option.description)}
+        .value=${indicesOfChoices(option, this._values[optionKey(option)])}
+        ?required=${option.required}
+        multiple
+        clearable
+        hoist
+        @sl-change=${(e: Event) =>
+          this.setValue(option, choicesAtIndices(option, (e.target as SlSelect).value as string[]))}
       >
         ${option.choices.map(
           (choice, index) =>
@@ -232,6 +259,8 @@ export class InstallOptionsForm extends LitElement {
       case 'stringChoice':
       case 'numberChoice':
         return this.renderChoice(option);
+      case 'stringChoiceList':
+        return this.renderChoiceList(option);
       case 'string':
         return this.renderString(option);
       case 'number':

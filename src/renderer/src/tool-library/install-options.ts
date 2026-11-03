@@ -43,6 +43,10 @@ function isNullable(option: ToolInstallOption): boolean {
   return option.kind !== 'boolean' && option.nullable === true;
 }
 
+function isListKind(option: ToolInstallOption): boolean {
+  return option.kind === 'agentList' || option.kind === 'stringChoiceList';
+}
+
 function declaredDefault(option: ToolInstallOption): InstallOptionValue | undefined {
   return option.kind === 'agentList' ? undefined : option.default;
 }
@@ -82,11 +86,17 @@ export function checkDeclarations(
         )
           return problem('bad-items');
         break;
+      case 'stringChoiceList':
       case 'stringChoice':
       case 'numberChoice': {
         const values = option.choices.map((choice) => choice.value);
         if (values.length === 0 || new Set(values).size !== values.length)
           return problem('bad-choices');
+        if (option.kind === 'stringChoiceList') {
+          const min = option.minItems ?? 0;
+          if (min > values.length || (option.maxItems !== undefined && min > option.maxItems))
+            return problem('bad-items');
+        }
         break;
       }
       case 'boolean':
@@ -117,6 +127,7 @@ function matchesKind(option: ToolInstallOption, value: unknown): value is Instal
     case 'numberChoice':
       return typeof value === 'number';
     case 'agentList':
+    case 'stringChoiceList':
       return Array.isArray(value) && value.every((item) => typeof item === 'string');
   }
 }
@@ -142,7 +153,7 @@ export function initialValues(
       values[key] = fromManifest;
     } else if (option.kind === 'boolean') {
       values[key] = false;
-    } else if (option.kind === 'agentList') {
+    } else if (isListKind(option)) {
       values[key] = [];
     } else if (isNullable(option)) {
       values[key] = null;
@@ -156,7 +167,7 @@ export function initialValues(
 /** True when the field counts as empty for `required` and merge purposes. */
 export function isUnset(option: ToolInstallOption, value: InstallOptionValue | undefined): boolean {
   if (value === undefined) return true;
-  if (option.kind === 'agentList' && Array.isArray(value) && value.length === 0) return true;
+  if (isListKind(option) && Array.isArray(value) && value.length === 0) return true;
   return false;
 }
 
@@ -190,8 +201,17 @@ export function validateValue(
       if (n > option.max) return { code: 'above-max', limit: option.max };
       return undefined;
     }
+    case 'stringChoiceList':
     case 'agentList': {
       const list = value as string[];
+      if (option.kind === 'stringChoiceList') {
+        const allowed = option.choices.map((choice) => choice.value);
+        if (
+          new Set(list).size !== list.length ||
+          !list.every((item) => allowed.includes(item))
+        )
+          return { code: 'not-a-choice' };
+      }
       if (option.minItems !== undefined && list.length < option.minItems)
         return { code: 'too-few', limit: option.minItems };
       if (option.maxItems !== undefined && list.length > option.maxItems)
@@ -219,9 +239,18 @@ export function mergeProperties(
     const unset = isUnset(option, value);
     if (unset && !isNullable(option)) continue;
     merged[option.role] = merged[option.role] ?? {};
-    merged[option.role][option.property] = unset ? null : value;
+    merged[option.role][option.property] = unset ? null : inDeclarationOrder(option, value);
   }
   return merged;
+}
+
+/** Orders a choice-list selection by its choices, so equal selections write equal bytes. */
+function inDeclarationOrder(
+  option: ToolInstallOption,
+  value: InstallOptionValue | undefined,
+): InstallOptionValue | undefined {
+  if (option.kind !== 'stringChoiceList' || !Array.isArray(value)) return value;
+  return option.choices.map((choice) => choice.value).filter((v) => value.includes(v));
 }
 
 type ChoiceOption = Extract<ToolInstallOption, { kind: 'stringChoice' | 'numberChoice' }>;
@@ -240,4 +269,23 @@ export function choiceAtIndex(option: ChoiceOption, selected: string): string | 
 export function indexOfChoice(option: ChoiceOption, value: InstallOptionValue | undefined): string {
   const index = option.choices.findIndex((choice) => choice.value === value);
   return index === -1 ? '' : String(index);
+}
+
+type ChoiceListOption = Extract<ToolInstallOption, { kind: 'stringChoiceList' }>;
+
+/** Multi-select counterpart of `choiceAtIndex`; returns values in declaration order. */
+export function choicesAtIndices(option: ChoiceListOption, selected: string[]): string[] {
+  const indices = new Set(selected.map(Number));
+  return option.choices.filter((_, index) => indices.has(index)).map((choice) => choice.value);
+}
+
+/** Multi-select counterpart of `indexOfChoice`. */
+export function indicesOfChoices(
+  option: ChoiceListOption,
+  value: InstallOptionValue | undefined,
+): string[] {
+  if (!Array.isArray(value)) return [];
+  return option.choices.flatMap((choice, index) =>
+    value.includes(choice.value) ? [String(index)] : [],
+  );
 }
