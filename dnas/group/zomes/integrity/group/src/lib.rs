@@ -19,10 +19,18 @@ pub use steward_permission::*;
 pub mod steward_permission_claim;
 use hdi::prelude::*;
 pub use steward_permission_claim::*;
+pub mod membrane_proof;
+pub use membrane_proof::*;
 
 #[derive(Clone, Serialize, Deserialize, Debug, SerializedBytes)]
 pub struct GroupDnaProperties {
     pub progenitor: Option<AgentPubKeyB64>,
+    /// Who may join. `None` means anyone with the network seed.
+    #[serde(default)]
+    pub join_policy: Option<JoinGate>,
+    /// Whether join signatures may come through a delegated invite key.
+    #[serde(default)]
+    pub allow_delegated_invites: bool,
 }
 
 #[derive(Serialize, Deserialize)]
