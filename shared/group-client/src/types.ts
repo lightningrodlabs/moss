@@ -1,4 +1,5 @@
 import {
+  Action,
   ActionHash,
   AgentPubKey,
   AgentPubKeyB64,
@@ -352,6 +353,16 @@ export type JoinGate =
   | { type: 'AnyOf'; content: JoinGate[] }
   | { type: 'AllOf'; content: JoinGate[] };
 
+/**
+ * A signed `StewardPermission` create record. A chain of these, from a steward
+ * back to a permission the progenitor issued, proves steward standing.
+ */
+export type StewardCredential = {
+  action: Action;
+  signature: Signature;
+  permission: StewardPermission;
+};
+
 /** A signer's approval of a one-time invite key. */
 export type Delegation = {
   invite_key: AgentPubKey;
@@ -361,7 +372,8 @@ export type Delegation = {
 /** One signer's approval of a joining agent. */
 export type JoinSignature = {
   signer: AgentPubKey;
-  steward_permission_hash: ActionHash | null;
+  /** Empty when the signer claims no steward standing. */
+  steward_credential: StewardCredential[];
   signature: Signature;
   delegation: Delegation | null;
 };
@@ -369,13 +381,13 @@ export type JoinSignature = {
 /** What a signer returns for an offline invite link. */
 export type InviteDelegation = {
   signer: AgentPubKey;
-  steward_permission_hash: ActionHash | null;
+  steward_credential: StewardCredential[];
   delegation: Delegation;
 };
 
 /** The membrane proof a joining agent presents, msgpack-encoded at install. */
 export type GroupMembraneProof = {
   signatures: JoinSignature[];
-  /** A non-expiring steward permission issued for the joining agent itself. */
-  own_steward_permission_hash?: ActionHash | null;
+  /** Proves the joining agent itself is a steward. Lets the first stewards join. */
+  own_steward_credential?: StewardCredential[];
 };

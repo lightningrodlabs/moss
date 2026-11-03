@@ -18,6 +18,7 @@ import {
   InviteDelegation,
   JoinGate,
   JoinSignature,
+  StewardCredential,
   StewardPermission,
 } from '@theweave/group-client';
 
@@ -122,26 +123,45 @@ async function joinWithoutProof(scenario: Scenario, group: Group) {
   });
 }
 
-/**
- * Alice issues a steward permission for a fresh key, then that agent joins
- * citing its own permission (plus Alice's signature when the policy needs it).
- */
-async function addSteward(
-  scenario: Scenario,
+/** The ActionHash of a credential's action, as Holochain computes it. */
+async function stewardCredential(viewer: PlayerApp, permissionHash: ActionHash): Promise<StewardCredential[]> {
+  return groupCell(viewer).callZome({
+    zome_name: 'group',
+    fn_name: 'get_steward_credential',
+    payload: permissionHash,
+  });
+}
+
+/** Alice issues a steward permission for `forAgent` and returns its credential and hash. */
+async function issueStewardPermission(
   group: Group,
-  opts: { expiry?: number; withProgenitorSignature?: boolean } = {},
-): Promise<[PlayerApp, AgentPubKey, ActionHash]> {
-  const [conductor, bobKey] = await prospectiveMember(scenario);
-  const permission: StewardPermission = { for_agent: bobKey, expiry: opts.expiry };
+  forAgent: AgentPubKey,
+  expiry?: number,
+): Promise<[StewardCredential[], ActionHash]> {
+  const permission: StewardPermission = { for_agent: forAgent, expiry };
   const record: HolochainRecord = await groupCell(group.alice).callZome({
     zome_name: 'group',
     fn_name: 'create_steward_permission',
     payload: permission,
   });
-  const permissionHash: ActionHash = record.signed_action.hashed.hash;
+  const hash = record.signed_action.hashed.hash;
+  return [await stewardCredential(group.alice, hash), hash];
+}
+
+/**
+ * Alice issues a steward permission for a fresh key, then that agent joins
+ * citing its own credential (plus Alice's signature when the policy needs it).
+ */
+async function addSteward(
+  scenario: Scenario,
+  group: Group,
+  opts: { expiry?: number; withProgenitorSignature?: boolean } = {},
+): Promise<[PlayerApp, AgentPubKey, StewardCredential[], ActionHash]> {
+  const [conductor, bobKey] = await prospectiveMember(scenario);
+  const [credential, permissionHash] = await issueStewardPermission(group, bobKey, opts.expiry);
   const proof: GroupMembraneProof = {
     signatures: opts.withProgenitorSignature ? [await signJoin(group.alice, bobKey)] : [],
-    own_steward_permission_hash: permissionHash,
+    own_steward_credential: credential,
   };
   const [bob] = await installGroup(scenario, appBundleSource, group.properties, {
     conductor,
@@ -149,7 +169,7 @@ async function addSteward(
     membraneProof: proof,
   });
   await scenario.shareAllAgents();
-  return [bob, bobKey, permissionHash];
+  return [bob, bobKey, credential, permissionHash];
 }
 
 test('joinPayloadBytes and delegationPayloadBytes match the Rust test vectors', () => {
@@ -270,6 +290,30 @@ test('Steward policy: first steward joins with its own permission, then admits o
   });
 });
 
+test('Steward policy: steward appointed by a steward joins with a two-link credential', async () => {
+  await runScenario(async (scenario) => {
+    const group = await groupWithPolicy(scenario, { type: 'Steward' });
+    const [bob, , , bobPermissionHash] = await addSteward(scenario, group);
+    const [conductor, daveKey] = await prospectiveMember(scenario);
+    const permission: StewardPermission = {
+      for_agent: daveKey,
+      permission_hash: bobPermissionHash,
+    };
+    const record: HolochainRecord = await groupCell(bob).callZome({
+      zome_name: 'group',
+      fn_name: 'create_steward_permission',
+      payload: permission,
+    });
+    const daveCredential = await stewardCredential(bob, record.signed_action.hashed.hash);
+    expect(daveCredential.length).toBe(2);
+    await installGroup(scenario, appBundleSource, group.properties, {
+      conductor,
+      agentPubKey: daveKey,
+      membraneProof: { signatures: [], own_steward_credential: daveCredential },
+    });
+  });
+});
+
 test('Steward policy: progenitor signature alone fails', async () => {
   await runScenario(async (scenario) => {
     const group = await groupWithPolicy(scenario, { type: 'Steward' });
@@ -279,27 +323,49 @@ test('Steward policy: progenitor signature alone fails', async () => {
   });
 });
 
-test('Steward policy: expiring steward permission is rejected by peers', async () => {
+test('Steward policy: expiring steward permission fails to install', async () => {
   await runScenario(async (scenario) => {
     const group = await groupWithPolicy(scenario, { type: 'Steward' });
     const farFuture = (Date.now() + 1000 * 60 * 60 * 24 * 365) * 1000;
-    // Genesis cannot look up permissions, so install succeeds; peers reject.
-    const [, bobKey] = await addSteward(scenario, group, { expiry: farFuture });
-    expect(await settledJoinStatus(group.alice, bobKey)).toBe('Invalid');
+    const [conductor, bobKey] = await prospectiveMember(scenario);
+    const [credential] = await issueStewardPermission(group, bobKey, farFuture);
+    await expect(
+      installGroup(scenario, appBundleSource, group.properties, {
+        conductor,
+        agentPubKey: bobKey,
+        membraneProof: { signatures: [], own_steward_credential: credential },
+      }),
+    ).rejects.toThrow();
   });
 });
 
-test('Steward policy: member signing with a borrowed permission hash is rejected by peers', async () => {
+test('Steward policy: member citing another steward\'s credential fails to install', async () => {
   await runScenario(async (scenario) => {
     const group = await groupWithPolicy(scenario, { type: 'Steward' });
-    const [bob, , bobPermissionHash] = await addSteward(scenario, group);
+    const [bob, , bobCredential] = await addSteward(scenario, group);
     const [carol] = await joinWith(scenario, group, async (k) => [await signJoin(bob, k)]);
     await scenario.shareAllAgents();
-    const [, daveKey] = await joinWith(scenario, group, async (k) => [
-      { ...(await signJoin(carol, k)), steward_permission_hash: bobPermissionHash },
-    ]);
-    await scenario.shareAllAgents();
-    expect(await settledJoinStatus(group.alice, daveKey)).toBe('Invalid');
+    await expect(
+      joinWith(scenario, group, async (k) => [
+        { ...(await signJoin(carol, k)), steward_credential: bobCredential },
+      ]),
+    ).rejects.toThrow();
+  });
+});
+
+test('Steward policy: tampered steward credential fails to install', async () => {
+  await runScenario(async (scenario) => {
+    const group = await groupWithPolicy(scenario, { type: 'Steward' });
+    const [conductor, bobKey] = await prospectiveMember(scenario);
+    const [credential] = await issueStewardPermission(group, bobKey);
+    const tampered = credential.map((c) => ({ ...c, signature: new Uint8Array(64) }));
+    await expect(
+      installGroup(scenario, appBundleSource, group.properties, {
+        conductor,
+        agentPubKey: bobKey,
+        membraneProof: { signatures: [], own_steward_credential: tampered },
+      }),
+    ).rejects.toThrow();
   });
 });
 
@@ -419,21 +485,21 @@ test('Delegated: invite key signature over a different agent fails', async () =>
   });
 });
 
-test('Delegated: delegation from a member citing a borrowed permission hash is rejected by peers', async () => {
+test('Delegated: delegation from a member citing another steward\'s credential fails to install', async () => {
   await runScenario(async (scenario) => {
     const group = await groupWithPolicy(scenario, { type: 'Steward' }, true);
-    const [bob, , bobPermissionHash] = await addSteward(scenario, group);
+    const [bob, , bobCredential] = await addSteward(scenario, group);
     const [carol] = await joinWith(scenario, group, async (k) => [await signJoin(bob, k)]);
     await scenario.shareAllAgents();
     const inviteKey = await localKeypair();
     const invite = await delegateInvite(carol, inviteKey.pubKey);
-    const [, daveKey] = await joinWith(scenario, group, async (k) => [
-      {
-        ...(await redeemInvite(invite, inviteKey, group.dnaHash, k)),
-        steward_permission_hash: bobPermissionHash,
-      },
-    ]);
-    await scenario.shareAllAgents();
-    expect(await settledJoinStatus(group.alice, daveKey)).toBe('Invalid');
+    await expect(
+      joinWith(scenario, group, async (k) => [
+        {
+          ...(await redeemInvite(invite, inviteKey, group.dnaHash, k)),
+          steward_credential: bobCredential,
+        },
+      ]),
+    ).rejects.toThrow();
   });
 });

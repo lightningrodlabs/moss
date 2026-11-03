@@ -276,7 +276,7 @@ export async function localJoinSignature(
 ): Promise<JoinSignature> {
   return {
     signer: keypair.pubKey,
-    steward_permission_hash: null,
+    steward_credential: [],
     signature: await localSign(keypair, joinPayloadBytes(dnaHash, joiningAgent)),
     delegation: null,
   };
@@ -291,7 +291,7 @@ export async function redeemInvite(
 ): Promise<JoinSignature> {
   return {
     signer: invite.signer,
-    steward_permission_hash: invite.steward_permission_hash,
+    steward_credential: invite.steward_credential,
     signature: await localSign(inviteKey, joinPayloadBytes(dnaHash, joiningAgent)),
     delegation: invite.delegation,
   };
