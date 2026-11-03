@@ -10,7 +10,7 @@ use crate::steward_permission::{get_my_accountabilities, Accountability};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct InviteDelegation {
     pub signer: AgentPubKey,
-    pub steward_permission_hash: Option<ActionHash>,
+    pub steward_credential: Vec<StewardCredential>,
     pub delegation: Delegation,
 }
 
@@ -21,7 +21,7 @@ pub fn sign_join_invitation(joining_agent: AgentPubKey) -> ExternResult<JoinSign
     let bytes = join_payload_bytes(&dna_info()?.hash, &joining_agent);
     Ok(JoinSignature {
         signature: sign_raw(me.clone(), bytes)?,
-        steward_permission_hash: my_non_expiring_permission_hash()?,
+        steward_credential: my_steward_credential()?,
         signer: me,
         delegation: None,
     })
@@ -38,9 +38,52 @@ pub fn sign_invite_delegation(invite_key: AgentPubKey) -> ExternResult<InviteDel
             delegation_signature: sign_raw(me.clone(), bytes)?,
             invite_key,
         },
-        steward_permission_hash: my_non_expiring_permission_hash()?,
+        steward_credential: my_steward_credential()?,
         signer: me,
     })
+}
+
+/// The signed permission records proving that the holder of
+/// `permission_hash` is a steward, from that permission back to the one the
+/// progenitor issued. The progenitor uses this to give a first steward the
+/// credential it cites when joining.
+#[hdk_extern]
+pub fn get_steward_credential(permission_hash: ActionHash) -> ExternResult<Vec<StewardCredential>> {
+    let mut chain = Vec::new();
+    let mut next = Some(permission_hash);
+    while let Some(hash) = next {
+        if chain.len() == MAX_STEWARD_CHAIN {
+            return Err(wasm_error!(WasmErrorInner::Guest(format!(
+                "Steward permission chain is longer than {MAX_STEWARD_CHAIN}"
+            ))));
+        }
+        let record = get(hash.clone(), GetOptions::network())?.ok_or(wasm_error!(
+            WasmErrorInner::Guest(format!("Steward permission {hash} not found"))
+        ))?;
+        let permission = record
+            .entry()
+            .to_app_option::<StewardPermission>()
+            .map_err(|e| wasm_error!(e))?
+            .ok_or(wasm_error!(WasmErrorInner::Guest(format!(
+                "Record {hash} is not a StewardPermission"
+            ))))?;
+        next = permission.permission_hash.clone();
+        chain.push(StewardCredential {
+            action: record.action().clone(),
+            signature: record.signature().clone(),
+            permission,
+        });
+    }
+    Ok(chain)
+}
+
+/// The caller's credential, or empty if the caller holds no non-expiring
+/// steward permission.
+fn my_steward_credential() -> ExternResult<Vec<StewardCredential>> {
+    match my_non_expiring_permission_hash()? {
+        Some(hash) => get_steward_credential(hash),
+        None => Ok(vec![]),
+    }
 }
 
 /// The caller's non-expiring steward permission, the only kind the join
