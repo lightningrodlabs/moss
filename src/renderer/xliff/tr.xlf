@@ -3179,6 +3179,22 @@ starts now</source>
   <source>View</source>
   <target>Görüntüle</target>
 </trans-unit>
+<trans-unit id="saa6d4980bd7d4f1f">
+  <source>About install options</source>
+  <target>Kurulum seçenekleri hakkında</target>
+</trans-unit>
+<trans-unit id="sebff61b46bb2a1be">
+  <source>These choices are written into the DNA properties of this Tool instance. DNA properties are part of its identity on the network, so everyone who joins the instance gets exactly the same values.</source>
+  <target>Bu seçimler bu araç örneğinin DNA özelliklerine yazılır. DNA özellikleri ağdaki kimliğinin bir parçasıdır, bu yüzden örneğe katılan herkes tam olarak aynı değerleri alır.</target>
+</trans-unit>
+<trans-unit id="sb58cbaf28e64cb82">
+  <source>They are permanent. Once the Tool is installed, the values cannot be changed. To use different values, install a new instance of the Tool.</source>
+  <target>Kalıcıdırlar. Araç kurulduktan sonra değerler değiştirilemez. Farklı değerler kullanmak için aracın yeni bir örneğini kurun.</target>
+</trans-unit>
+<trans-unit id="s5fe59e9e7e8ab433">
+  <source>All group members will be able to see the DNA properties in the Tool’s Advanced settings, under DNA Properties.</source>
+  <target>Tüm grup üyeleri DNA özelliklerini aracın gelişmiş ayarlarındaki “DNA Özellikleri” bölümünde görebilecek.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

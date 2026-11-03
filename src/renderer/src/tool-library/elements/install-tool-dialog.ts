@@ -50,6 +50,7 @@ import { checkDeclarations, mergeProperties } from '../install-options.js';
 import { declarationProblemMessage } from '../install-options-messages.js';
 import { InstallOptionsForm } from './install-options-form.js';
 import './install-options-form.js';
+import './install-options-info.js';
 import { MatchingInactiveTool } from './install-tool-duplicate-warning.js';
 import './install-tool-duplicate-warning.js';
 
@@ -476,7 +477,10 @@ export class InstallToolDialog extends LitElement {
               : html``}
             ${this._installOptions && this._installOptions.length > 0
               ? html`
-                  <div style="font-weight: 600; margin-bottom: 8px;">${msg('Install options')}</div>
+                  <div class="row" style="align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="font-weight: 600;">${msg('Install options')}</span>
+                    <install-options-info></install-options-info>
+                  </div>
                   <install-options-form
                     .options=${this._installOptions}
                     .manifestDefaults=${this._dnaProperties}

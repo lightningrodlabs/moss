@@ -209,7 +209,7 @@ export class MossTranscriptionSettings extends LitElement {
     return html`
       <moss-dialog id="about-dialog" width="780px" headerAlign="left">
         <span slot="header">${msg('About transcription')}</span>
-        <div slot="content" class="column service-about" style="gap: 16px;">
+        <div slot="content" class="column info-about" style="gap: 16px;">
           <p>
             ${msg(
               'All transcription happens on this computer. Your audio is turned into text by a speech model that runs locally, and nothing is sent to a server for processing.',

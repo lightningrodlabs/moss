@@ -149,7 +149,7 @@ export class MossAudioSourcesSettings extends LitElement {
     return html`
       <moss-dialog id="about-dialog" width="780px" headerAlign="left">
         <span slot="header">${msg('About audio capture')}</span>
-        <div slot="content" class="column service-about" style="gap: 16px;">
+        <div slot="content" class="column info-about" style="gap: 16px;">
           <p>
             ${msg(
               'Moss can pass audio that is playing on this computer to a tool — the sound of a meeting app, for example, or everything coming out of your speakers.',

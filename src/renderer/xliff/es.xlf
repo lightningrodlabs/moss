@@ -3179,6 +3179,22 @@ comienza ahora</target>
   <source>View</source>
   <target>Ver</target>
 </trans-unit>
+<trans-unit id="saa6d4980bd7d4f1f">
+  <source>About install options</source>
+  <target>Acerca de las opciones de instalación</target>
+</trans-unit>
+<trans-unit id="sebff61b46bb2a1be">
+  <source>These choices are written into the DNA properties of this Tool instance. DNA properties are part of its identity on the network, so everyone who joins the instance gets exactly the same values.</source>
+  <target>Estas elecciones se escriben en las propiedades DNA de esta instancia de la herramienta. Las propiedades DNA forman parte de su identidad en la red, así que todos los que se unan a la instancia reciben exactamente los mismos valores.</target>
+</trans-unit>
+<trans-unit id="sb58cbaf28e64cb82">
+  <source>They are permanent. Once the Tool is installed, the values cannot be changed. To use different values, install a new instance of the Tool.</source>
+  <target>Son permanentes. Una vez instalada la herramienta, los valores no se pueden cambiar. Para usar valores distintos, instala una nueva instancia de la herramienta.</target>
+</trans-unit>
+<trans-unit id="s5fe59e9e7e8ab433">
+  <source>All group members will be able to see the DNA properties in the Tool’s Advanced settings, under DNA Properties.</source>
+  <target>Todos los miembros del grupo podrán ver las propiedades DNA en la configuración avanzada de la herramienta, en «Propiedades DNA».</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
