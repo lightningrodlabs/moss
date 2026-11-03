@@ -8,8 +8,9 @@ use super::JoinGate;
 pub const MAX_POLICY_DEPTH: usize = 8;
 /// Longest allowed key list or combinator list in a policy.
 pub const MAX_POLICY_LIST: usize = 64;
-/// Most signatures a membrane proof may carry.
-pub const MAX_PROOF_SIGNATURES: usize = 16;
+/// Most signatures a membrane proof may carry. Equal to `MAX_POLICY_LIST`, so a
+/// proof can always carry a signature for every key an `External` gate lists.
+pub const MAX_PROOF_SIGNATURES: usize = MAX_POLICY_LIST;
 
 /// A signer whose approval of the joining agent has already been verified,
 /// with the roles that validation resolved for it.
@@ -227,6 +228,14 @@ mod tests {
         assert_shape_err(JoinGate::External { keys, threshold: 1 }, None);
         let gates = vec![JoinGate::AllowList { agents: vec![b64(1)] }; MAX_POLICY_LIST + 1];
         assert_shape_err(JoinGate::AnyOf(gates), None);
+    }
+
+    #[test]
+    fn proof_can_carry_a_signature_for_every_listed_external_key() {
+        assert!(MAX_PROOF_SIGNATURES >= MAX_POLICY_LIST);
+        let keys: Vec<AgentPubKeyB64> = (0..MAX_POLICY_LIST as u8).map(b64).collect();
+        let gate = JoinGate::External { keys, threshold: MAX_POLICY_LIST as u32 };
+        assert!(check_policy_shape(&gate, None).is_ok());
     }
 
     #[test]

@@ -243,14 +243,14 @@ test('Progenitor policy: valid proof plus one junk signature fails', async () =>
   });
 });
 
-test('Progenitor policy: proof with 17 signatures fails', async () => {
+test('Progenitor policy: proof with 65 signatures fails', async () => {
   await runScenario(async (scenario) => {
     const group = await groupWithPolicy(scenario, { type: 'Progenitor' });
     await expect(
       joinWith(scenario, group, async (k) => {
         const real = await signJoin(group.alice, k);
         const extra: JoinSignature[] = [];
-        for (let i = 0; i < 16; i++) {
+        for (let i = 0; i < 64; i++) {
           extra.push(await localJoinSignature(await localKeypair(), group.dnaHash, k));
         }
         return [real, ...extra];
