@@ -90,6 +90,13 @@ describe('TToolWeaveConfig', () => {
     expect(Value.Check(TToolWeaveConfig, { installOptions: [option] })).toBe(true);
   });
 
+  it('rejects an unknown key on a non-boolean option', () => {
+    const misspelled = { ...numberOption, maximum: 5 };
+    expect(Value.Check(TToolWeaveConfig, { installOptions: [misspelled] })).toBe(false);
+    const agents = { ...vinesExample.installOptions[1], maxItem: 3 };
+    expect(Value.Check(TToolWeaveConfig, { installOptions: [agents] })).toBe(false);
+  });
+
   it('accepts a config with only crossGroupView', () => {
     expect(Value.Check(TToolWeaveConfig, { crossGroupView: true })).toBe(true);
   });

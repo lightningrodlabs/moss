@@ -26,44 +26,59 @@ export const TToolInstallOption = Type.Union([
     { ...TOptionBase, kind: Type.Literal('boolean'), default: Type.Optional(Type.Boolean()) },
     { additionalProperties: false },
   ),
-  Type.Object({
-    ...TOptionBase,
-    ...TNullable,
-    kind: Type.Literal('stringChoice'),
-    choices: Type.Array(TStringChoice),
-    default: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-  }),
-  Type.Object({
-    ...TOptionBase,
-    ...TNullable,
-    kind: Type.Literal('numberChoice'),
-    choices: Type.Array(TNumberChoice),
-    default: Type.Optional(Type.Union([Type.Number(), Type.Null()])),
-  }),
-  Type.Object({
-    ...TOptionBase,
-    ...TNullable,
-    kind: Type.Literal('string'),
-    minLength: Type.Optional(Type.Number()),
-    maxLength: Type.Number(),
-    default: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-  }),
-  Type.Object({
-    ...TOptionBase,
-    ...TNullable,
-    kind: Type.Literal('number'),
-    min: Type.Number(),
-    max: Type.Number(),
-    integer: Type.Boolean(),
-    default: Type.Optional(Type.Union([Type.Number(), Type.Null()])),
-  }),
-  Type.Object({
-    ...TOptionBase,
-    ...TNullable,
-    kind: Type.Literal('agentList'),
-    minItems: Type.Optional(Type.Number()),
-    maxItems: Type.Optional(Type.Number()),
-  }),
+  Type.Object(
+    {
+      ...TOptionBase,
+      ...TNullable,
+      kind: Type.Literal('stringChoice'),
+      choices: Type.Array(TStringChoice),
+      default: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      ...TOptionBase,
+      ...TNullable,
+      kind: Type.Literal('numberChoice'),
+      choices: Type.Array(TNumberChoice),
+      default: Type.Optional(Type.Union([Type.Number(), Type.Null()])),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      ...TOptionBase,
+      ...TNullable,
+      kind: Type.Literal('string'),
+      minLength: Type.Optional(Type.Number()),
+      maxLength: Type.Number(),
+      default: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      ...TOptionBase,
+      ...TNullable,
+      kind: Type.Literal('number'),
+      min: Type.Number(),
+      max: Type.Number(),
+      integer: Type.Boolean(),
+      default: Type.Optional(Type.Union([Type.Number(), Type.Null()])),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      ...TOptionBase,
+      ...TNullable,
+      kind: Type.Literal('agentList'),
+      minItems: Type.Optional(Type.Number()),
+      maxItems: Type.Optional(Type.Number()),
+    },
+    { additionalProperties: false },
+  ),
 ]);
 
 export const TToolWeaveConfig = Type.Object(
