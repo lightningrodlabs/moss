@@ -10,6 +10,13 @@ export type InstallToolOptions = {
   toolName: string;
   /** Group display name. The tool list shows a select-group dropdown per tool. */
   groupName: string;
+  /**
+   * Values for the Tool's declared install options, keyed by the option's
+   * label. Each is typed into the matching field of the install dialog. A
+   * required field's accessible name also carries a trailing `*`, so the
+   * label is matched as a substring.
+   */
+  installOptions?: Record<string, string>;
 };
 
 /**
@@ -31,6 +38,15 @@ export async function openToolLibrary(page: Page) {
  * group pane (the new design — *not* across the top of the main page).
  */
 export async function installToolFromLibrary(page: Page, opts: InstallToolOptions) {
+  await openInstallDialog(page, opts);
+  await submitInstallDialog(page, opts.installOptions ?? {});
+}
+
+/**
+ * Open the install dialog for a tool from the in-app tool library, targeting
+ * the named group. Leaves the dialog open and unsubmitted.
+ */
+export async function openInstallDialog(page: Page, opts: InstallToolOptions) {
   await openToolLibrary(page);
   // Click the tool card by title — opens the tool detail dialog (library-tool-details).
   await page.getByText(opts.toolName, { exact: false }).first().click();
@@ -41,15 +57,29 @@ export async function installToolFromLibrary(page: Page, opts: InstallToolOption
   const dialogSelect = page.locator('library-tool-details select-group').first();
   await dialogSelect.locator('button.install-button').click();
   await dialogSelect.locator(`sl-menu-item:has-text("${opts.groupName}")`).first().click();
-  // Confirm in the install dialog. install-tool-dialog's submit button is
-  // labelled "Add to Group" (see install-tool-dialog.ts:473).
-  await page
-    .locator('install-tool-dialog')
-    .getByRole('button', { name: /add to group/i })
-    .click();
+  await expect(addToGroupButton(page)).toBeVisible();
+}
+
+/** The install dialog's "Add to Group" submit button. */
+export function addToGroupButton(page: Page) {
+  return page.locator('install-tool-dialog').getByRole('button', { name: /add to group/i });
+}
+
+/**
+ * Fill the install options in the open install dialog, submit it, and wait
+ * for the install to finish.
+ */
+export async function submitInstallDialog(page: Page, installOptions: Record<string, string>) {
+  const form = page.locator('install-tool-dialog install-options-form');
+  for (const [label, value] of Object.entries(installOptions)) {
+    await form.getByLabel(label).fill(value);
+  }
+  await addToGroupButton(page).click();
   // why: install includes a webhapp download + DNA registration; can take a while
   // even from a localhost fixture (lair signing, conductor admin calls, gossip).
-  await expect(page.locator('install-tool-dialog')).toBeHidden({ timeout: 120_000 });
+  // The <install-tool-dialog> host never has a box of its own, so the dialog
+  // closing is observed through its submit button.
+  await expect(addToGroupButton(page)).toBeHidden({ timeout: 120_000 });
 }
 
 /**
