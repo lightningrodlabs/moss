@@ -26,7 +26,8 @@ export type DeclarationProblem = {
     | 'bad-items'
     | 'bad-choices'
     | 'bad-default'
-    | 'required-nullable';
+    | 'required-nullable'
+    | 'bad-condition';
   role: string;
   property: string;
 };

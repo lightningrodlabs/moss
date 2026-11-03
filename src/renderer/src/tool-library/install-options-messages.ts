@@ -57,5 +57,7 @@ export function declarationProblemMessage(problem: DeclarationProblem): string {
       return msg(str`Option ${name} has a default outside its constraints`);
     case 'required-nullable':
       return msg(str`Option ${name} cannot be both required and nullable`);
+    case 'bad-condition':
+      return msg(str`Option ${name} depends on an option it cannot use`);
   }
 }

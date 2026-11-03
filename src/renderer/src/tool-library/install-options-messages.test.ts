@@ -31,4 +31,10 @@ describe('declarationProblemMessage', () => {
       declarationProblemMessage({ code: 'required-nullable', role: 'x', property: 'y' }),
     ).toContain('x/y');
   });
+
+  it('names the option for a condition it cannot use', () => {
+    expect(
+      declarationProblemMessage({ code: 'bad-condition', role: 'x', property: 'y' }),
+    ).toContain('x/y');
+  });
 });
