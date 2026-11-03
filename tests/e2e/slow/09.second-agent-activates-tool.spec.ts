@@ -72,7 +72,7 @@ test('two agents on a local bootstrap discover each other in the same group', as
     // Sanity: agent 1's local peer list shows just self.
     await expectPeerCount(agent1.mainWindow, 1, 60_000);
 
-    // why: dev mode (yarn applet-dev-example) sleeps 10s between launching
+    // why: dev mode (yarn tool-dev-example) sleeps 10s between launching
     // agents 1 and 2. Without this, agent 2 starts joining before agent 1's
     // group cell has registered with the bootstrap, and the gossip rendezvous
     // never converges. Mirror the dev-mode pattern.

@@ -76,3 +76,21 @@ unreachable).
 The gate is static; it cannot prove the tarball works. For anything with a
 bin, install the packed tarball from the real registry and run it before
 announcing the release — `wdocker/README.md` has the procedure.
+
+## Freezing the developer docs for a version
+
+The developer docs site (`docs/`, deployed from the `release-docs` branch) serves the current
+Moss line at the site root and older lines under `/<version>/`. The version switcher in the nav
+and the notice on old pages read `docs/.vitepress/versions.ts`.
+
+When a new Moss line starts, freeze the docs of the line it replaces:
+
+1. Copy `docs/build`, `docs/concepts`, `docs/index.md` and `docs/api-reference` from the last
+   commit of the old line into `docs/<old version>/`.
+2. In the copied `index.md`, prefix the hero `link:` values with `/<old version>` and name the
+   version in the tagline.
+3. Add the old version to `versions` in `docs/.vitepress/versions.ts`, with `current: false`.
+4. In `docs/.vitepress/config.mts`, add a sidebar function for the frozen line (copy the current
+   one and remove pages the old line did not have) and register it under its base path.
+5. Run `yarn docs:build`. It fails on dead links, so fix any link in the frozen pages that
+   pointed at a page the old line did not have.

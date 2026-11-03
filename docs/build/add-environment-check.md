@@ -48,7 +48,7 @@ For this, modify the code in `ui/src/holochain-app.ts` to insert the following c
 
 ### 3. Connect `WeaveClient` in Weave context
 
-Add a check to determine wheter your app is running in a Weave context and if yes, connect the `WeaveClient` and use the app websocket connection that it contains instead of connecting with the `AppWebsocket` class.
+Add a check to determine whether your app is running in a Weave context and if yes, connect the `WeaveClient` and use the app websocket connection that it contains instead of connecting with the `AppWebsocket` class.
 
 ```typescript
   async firstUpdated() {
@@ -79,4 +79,15 @@ Add a check to determine wheter your app is running in a Weave context and if ye
     } finally {
       this.loading = false;
     }
+```
+
+### 4. Adapt to where the view is rendered (optional)
+
+`weaveClient.renderInfo.view` tells your Tool which view Moss asked for: the main view, an asset view, or a creatable. For applet views, Moss 0.16 also sets `weaveClient.renderInfo.renderLocation` to one of `'main'`, `'embedded'`, `'side'` or `'window'`. Use it to keep embedded views light. For example, a video call Tool must not join a room when it is only shown as a dashboard tile. The field is undefined on hosts older than Moss 0.16, so treat a missing value as `'main'`.
+
+```typescript
+const info = weaveClient.renderInfo;
+if (info.type === 'applet-view' && info.renderLocation === 'embedded') {
+  // render a compact, read-only tile
+}
 ```

@@ -9,30 +9,93 @@ export interface WeAppletDevInfo {
 }
 
 /**
- * Define a configuration file to run We in development modes with groups
- * and applets pre-installed.
+ * Define a configuration file to run Moss in development mode with groups
+ * and Tools pre-installed.
  *
  * @param config
  * @returns
  */
-export function defineConfig(config: WeaveDevConfig) {
+export function defineConfig(config: WeaveDevConfigInput) {
   return config;
 }
 
-export interface WeaveDevConfig {
+/**
+ * The shape of a dev config file as written by a Tool developer. Tools are
+ * listed under `tools`; `applets` is the legacy spelling of the same field
+ * and is still accepted so that existing config files keep working.
+ */
+export interface WeaveDevConfigInput {
   /**
    * Configuration for groups to create on startup
    */
-  groups: GroupConfig[];
+  groups: GroupConfigInput[];
   /**
-   * Configuration of available applets to install into groups
+   * Configuration of available Tools to install into groups
    */
-  applets: AppletConfig[];
+  tools?: ToolConfig[];
+  /**
+   * Legacy spelling of `tools`. Use `tools` in new config files.
+   * @deprecated
+   */
+  applets?: ToolConfig[];
   /**
    * A list of URLs to Tool curations to use to populate the tool library additionally
-   * to the Tools specified in the applets field. Can also be left empty.
+   * to the Tools specified in the tools field. Can also be left empty.
    */
   toolCurations: ToolCurationConfig[];
+}
+
+export interface GroupConfigInput extends GroupConfigBase {
+  /**
+   * Tool instances to install to the group.
+   */
+  tools?: ToolInstallConfig[];
+  /**
+   * Legacy spelling of `tools`. Use `tools` in new config files.
+   * @deprecated
+   */
+  applets?: ToolInstallConfig[];
+}
+
+/**
+ * The dev config as the CLI and Moss consume it: every Tool list present and
+ * under one name, whichever spelling the config file used.
+ */
+export interface WeaveDevConfig {
+  groups: GroupConfig[];
+  applets: ToolConfig[];
+  toolCurations: ToolCurationConfig[];
+}
+
+export interface GroupConfig extends GroupConfigBase {
+  applets: ToolInstallConfig[];
+}
+
+/**
+ * Resolves the `tools`/`applets` spelling of a config file into the shape the
+ * CLI consumes. A file that uses both spellings for the same list is rejected
+ * rather than merged, because the two lists would almost certainly disagree.
+ */
+export function normalizeDevConfig(input: WeaveDevConfigInput): WeaveDevConfig {
+  const pick = <T>(where: string, tools: T[] | undefined, applets: T[] | undefined): T[] => {
+    if (tools && applets)
+      throw new Error(
+        `Invalid Weave dev config: use either "tools" or "applets" ${where}, not both.`,
+      );
+    return tools ?? applets ?? [];
+  };
+  const { tools, applets, groups, ...rest } = input;
+  return {
+    ...rest,
+    applets: pick('at the top level', tools, applets),
+    groups: (groups ?? []).map((group) => {
+      const { tools, applets, ...groupRest } = group;
+      return {
+        ...groupRest,
+        applets: pick(`in group '${group.name}'`, tools, applets),
+      };
+    }),
+  };
 }
 
 export type ToolCurationConfig = {
@@ -46,21 +109,21 @@ export type ToolCurationConfig = {
   useLists: string[];
 };
 
-export interface AppletConfig {
+export interface ToolConfig {
   /**
-   * Name of the applet as it should appear in the applet library
+   * Name of the Tool as it should appear in the Tool library
    */
   name: string;
   /**
-   * Subtitle of the applet as it should appear in the applet library
+   * Subtitle of the Tool as it should appear in the Tool library
    */
   subtitle: string;
   /**
-   * Description of the applet as it should appear in the applet library
+   * Description of the Tool as it should appear in the Tool library
    */
   description: string;
   /**
-   * Source for the icon of the applet
+   * Source for the icon of the Tool
    */
   icon: ResourceLocation;
   /**
@@ -73,7 +136,7 @@ export interface AppletConfig {
   source: WebHappLocation;
 }
 
-export interface GroupConfig {
+export interface GroupConfigBase {
   /**
    * Name of the group
    */
@@ -96,10 +159,6 @@ export interface GroupConfig {
    * since the group needs to be created first before other agents can join.
    */
   joiningAgents: AgentSpecifier[];
-  /**
-   * Applet instances to install to the group.
-   */
-  applets: AppletInstallConfig[];
 }
 
 export type WebHappLocation =
@@ -155,24 +214,24 @@ export interface AgentSpecifier {
   agentProfile: AgentProfile;
 }
 
-export interface AppletInstallConfig {
+export interface ToolInstallConfig {
   /**
-   * Name of the applet type.
+   * Name of the Tool, as given in the top-level `tools` list.
    */
   name: string;
   /**
-   * Name to give to the applet instance.
+   * Name to give to the Tool instance.
    */
   instanceName: string;
   /**
-   * agentIdx of the agent that's supposed to register this applet to the group.
+   * agentIdx of the agent that's supposed to register this Tool to the group.
    */
   registeringAgent: number;
   /**
-   * Array of agentIdx of agents that should join this applet instance that's being registered by the
+   * Array of agentIdx of agents that should join this Tool instance that's being registered by the
    * registeringAgent.
    * The agentIdx of joining agents must be strictly greater than the agentIdx of the registering agent
-   * since the applet needs to be registered before it can be joined.
+   * since the Tool needs to be registered before it can be joined.
    */
   joiningAgents: number[];
   /**
@@ -189,3 +248,8 @@ export interface AgentProfile {
   nickname: string;
   avatar?: ResourceLocation;
 }
+
+/** @deprecated Use ToolConfig. */
+export type AppletConfig = ToolConfig;
+/** @deprecated Use ToolInstallConfig. */
+export type AppletInstallConfig = ToolInstallConfig;

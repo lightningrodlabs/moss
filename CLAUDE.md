@@ -57,16 +57,16 @@ yarn build
 yarn build:example-applet
 
 # Run development mode with hot-reload (2 agents)
-yarn applet-dev-example
+yarn tool-dev-example
 
 # Run with 1 agent only
-yarn applet-dev-example-1
+yarn tool-dev-example-1
 
 # Run with 3 agents
-yarn applet-dev-3
+yarn tool-dev-3
 
 # Run with custom config
-yarn applet-dev         # uses weave.dev.config.ts
+yarn tool-dev         # uses weave.dev.config.ts
 ```
 
 Development mode starts:
@@ -287,7 +287,7 @@ defineConfig({
       icon: { type: 'filesystem' | 'https', path: '...' },
       creatingAgent: { agentIdx: 1, agentProfile: {...} },
       joiningAgents: [{ agentIdx: 2, agentProfile: {...} }],
-      applets: [
+      tools: [
         {
           name: "Applet Name",
           instanceName: "Instance",
@@ -297,7 +297,7 @@ defineConfig({
       ]
     }
   ],
-  applets: [
+  tools: [
     {
       name: "Applet Name",
       subtitle: "...",

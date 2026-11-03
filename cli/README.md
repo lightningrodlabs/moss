@@ -82,7 +82,7 @@ export default defineConfig({
           },
         },
       ],
-      applets: [
+      tools: [
         {
           name: 'Example Tool',
           instanceName: 'Example Tool',
@@ -104,7 +104,7 @@ export default defineConfig({
       ],
     },
   ],
-  applets: [
+  tools: [
     {
       name: 'Example Tool',
       subtitle: 'Just an Example',

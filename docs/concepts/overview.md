@@ -65,7 +65,7 @@ Capacities define the following UI elements:
 1. Asset renderer: presents a specific Asset given a WAL.
 1. Create renderer: presents UI that can create an Asset of a given type. Note that a create renderer must collect any appropriate information needed to create the Asset type (i.e. if the asset is a KanBan card, the capacity to specify which board and column in which to add the card). The create renderer returns a WAL for the created asset, because this renderer may have been activated at the request of a different Tool that wants to store a link the created Asset.
 1. "Cross-instance" renderer: Such renderers are given access to all of the instances of the same Capacity such that they can provide an end-user a unified experience of all of the assets of that abilities type. For example a calendar Capacity can display all of a user's events across all of their groups in such a renderer.
-1. Capacities may include other capacity-specific blocks which are made available to be composable by end-users into views. Such blocks are useful for creating dashboards.
+1. Block renderers: capacity-specific partial views that end-users compose into dashboards. Blocks are part of the pattern, but the current `@theweave/api` does not offer them.
 
 ### Discovery/Search
 
