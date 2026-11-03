@@ -197,6 +197,28 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
             )
           : html``}
 
+        <div class="row items-center" style="margin: 6px 0 8px;">
+          <span>${msg('DNA Properties')}</span>
+          <span style="flex: 1;"></span>
+          <sl-button
+            variant="neutral"
+            size="small"
+            @click=${(e: MouseEvent) => {
+              e.stopPropagation();
+              this.dispatchEvent(
+                new CustomEvent('view-dna-properties', {
+                  bubbles: true,
+                  composed: true,
+                  detail: this.appletHash,
+                }),
+              );
+            }}
+          >
+            <sl-icon slot="prefix" .src=${wrapPathInSvg(mdiTune)}></sl-icon>
+            ${msg('View')}
+          </sl-button>
+        </div>
+
         <div class="row items-center">
           ${isSteward
             ? html`
@@ -337,25 +359,6 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
     return html`
       <div class="row">
         ${this.renderAdvancedSettingsToggle()}
-
-        <moss-mini-button
-          variant="primary"
-          color="#EEEEEE"
-          style="margin-right:8px;"
-          @click=${() =>
-            this.dispatchEvent(
-              new CustomEvent('view-dna-properties', {
-                bubbles: true,
-                composed: true,
-                detail: this.appletHash,
-              }),
-            )}
-        >
-          <div class="row center-content">
-            <sl-icon style="height: 20px; width: 20px;" .src=${wrapPathInSvg(mdiTune)}></sl-icon
-            ><span style="margin-left: 5px;">${msg('DNA Properties')}</span>
-          </div>
-        </moss-mini-button>
 
         <div style="flex-grow: 1"></div>
 

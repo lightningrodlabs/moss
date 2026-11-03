@@ -3175,6 +3175,10 @@ begint nu</target>
   <source>Install options</source>
   <target>Installatieopties</target>
 </trans-unit>
+<trans-unit id="s7f59f507e02a2f38">
+  <source>View</source>
+  <target>Bekijken</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

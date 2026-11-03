@@ -3175,6 +3175,10 @@ starts now</source>
   <source>Install options</source>
   <target>Kurulum seçenekleri</target>
 </trans-unit>
+<trans-unit id="s7f59f507e02a2f38">
+  <source>View</source>
+  <target>Görüntüle</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
