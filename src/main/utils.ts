@@ -53,30 +53,6 @@ export async function decompressHapp(compressedData: Uint8Array): Promise<RolePr
   }
 }
 
-export async function decompressWebHapp(buffer: Uint8Array): Promise<RoleProperties> {
-  console.log('Decompressing web file...', buffer.length);
-  try {
-    const decompressedData = await gunzip(buffer);
-    // Convert Buffer to string (assuming UTF-8 data from Rust)
-    const raw: any = decode(decompressedData);
-    //console.log(raw);
-    for (const resource in raw.resources) {
-      //console.log(resource);
-      if (resource.endsWith('.happ')) {
-        const happ = await decompressHapp(raw.resources[resource]);
-        //console.log("webHapp dna properties:", JSON.stringify(happ));
-        return happ;
-      }
-    }
-    //console.log(JSON.stringify(raw.manifest));
-    //return decompressHapp(decompressedData);
-  } catch (err) {
-    console.error('Decompression failed:', err);
-    return Promise.reject('Decompression failed: ' + err);
-  }
-  return Promise.reject('No happ file in webapp bundle');
-}
-
 /**
  * Fetches a Tool's `weave.config.json` from its UI dev server, for Tools
  * whose UI is served from localhost instead of bundled in a webhapp.

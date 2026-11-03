@@ -61,7 +61,6 @@ import { DEFAULT_APPS_DIRECTORY, ICONS_DIRECTORY } from './paths';
 import {
   breakingVersion,
   decompressHapp,
-  decompressWebHapp,
   emitToWindow,
   formatUpdaterArg,
   logIf,
@@ -151,7 +150,7 @@ import {
 } from '@theweave/utils';
 import { AppletZomeCallAuthorizer } from './appletZomeCallAuthorizer';
 import { fetchWeaveConfigFromPort, sortVersionsDescending } from './utils';
-import { readWeaveConfigFromWebhapp } from './webhappWeaveConfig';
+import { happFromBundle, readWebhappBundle, weaveConfigFromBundle } from './webhappWeaveConfig';
 import { Profile as AgentProfile } from '@holochain-open-dev/profiles';
 import { ProfilesClient } from '@holochain-open-dev/profiles/dist/profiles-client.js';
 import { Jimp } from 'jimp';
@@ -2695,17 +2694,20 @@ if (!RUNNING_WITH_COMMAND) {
           await rustUtils.validateHappOrWebhapp(byteArray);
         if (uiSha256) {
           if (!webhappSha256) throw Error('Ui sha256 defined but not webhapp sha256.');
+          const bundle = await readWebhappBundle(bytes);
+          const happ = happFromBundle(bundle);
+          if (!happ) throw Error('No happ file in webapp bundle');
           return {
             type: 'webhapp',
             sha256: webhappSha256,
             happ: {
               sha256: happSha256,
-              roles: await decompressWebHapp(bytes),
+              roles: await decompressHapp(happ),
             },
             ui: {
               sha256: uiSha256,
             },
-            weaveConfig: await readWeaveConfigFromWebhapp(bytes),
+            weaveConfig: weaveConfigFromBundle(bundle),
           };
         } else {
           // A bare happ belongs to a Tool whose UI runs on a dev server, so
