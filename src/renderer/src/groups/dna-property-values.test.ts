@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { encode } from '@msgpack/msgpack';
-import { classifyPropertyValue, decodeRoleProperties } from './dna-property-values.js';
+import {
+  classifyPropertyValue,
+  decodeRoleProperties,
+  hasAnyProperties,
+} from './dna-property-values.js';
 
 const AGENT_A = 'uhCAkQi3Vlzs6idIzWBmxcMU9zk12RsK3EqlPrLy_6eIHKJWK3dfe';
 const AGENT_B = 'uhCAkxuzIMhvAMy1IUPwI6abbEdrPPXTtD4F_yOLSiqNDBcZv7hvA';
@@ -67,5 +71,23 @@ describe('decodeRoleProperties', () => {
     expect(decodeRoleProperties({ r: encode(null) })).toEqual([
       { role: 'r', entries: [{ key: '', value: { kind: 'text', text: 'null' } }] },
     ]);
+  });
+});
+
+describe('hasAnyProperties', () => {
+  it('is false for an applet with no roles', () => {
+    expect(hasAnyProperties({})).toBe(false);
+  });
+
+  it('is false when every role decodes to an empty object', () => {
+    expect(hasAnyProperties({ a: encode({}), b: encode({}) })).toBe(false);
+  });
+
+  it('is true when any role holds a key', () => {
+    expect(hasAnyProperties({ a: encode({}), b: encode({ invalid: false }) })).toBe(true);
+  });
+
+  it('is true for a non-object payload', () => {
+    expect(hasAnyProperties({ a: encode(7) })).toBe(true);
   });
 });

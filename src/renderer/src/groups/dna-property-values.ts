@@ -54,3 +54,11 @@ export function decodeRoleProperties(roles: Record<string, Uint8Array>): RolePro
     };
   });
 }
+
+/**
+ * Whether there is anything worth showing: a role whose properties hold at
+ * least one key, or a payload that is not an object at all.
+ */
+export function hasAnyProperties(roles: Record<string, Uint8Array>): boolean {
+  return decodeRoleProperties(roles).some(({ entries }) => entries.length > 0);
+}
