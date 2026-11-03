@@ -170,7 +170,7 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
 
     return html`
       <!-- Cells -->
-      <div style="margin-top: 5px; margin-bottom: 3px; color:#89D6AA">// Cells:</div>
+      <div style="margin-top: 5px; margin-bottom: 3px; color:#89D6AA">// ${msg('Cells')}:</div>
       <div>
         ${this.appInfo
           ? getProvisionedCells(this.appInfo).map(
@@ -180,14 +180,14 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
                     <span><b>${roleName} </b></span><br />
                   </div>
                   <div class="row  items-center" style="margin-bottom: 3px;">
-                    DNA hash:
+                    ${msg('DNA hash')}:
                     <copy-hash
                       styles="color:#E7EEC4;font-size:12px;"
                       .hash=${dnaHashForCell(cellInfo)}
                     ></copy-hash>
                   </div>
                   <div class="row items-center" style="margin-bottom: 4px;">
-                    network seed:
+                    ${msg('network seed')}:
                     <copy-hash
                       styles="color:#E7EEC4;font-size:12px;"
                       .hash=${getCellNetworkSeed(cellInfo)}

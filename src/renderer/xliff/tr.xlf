@@ -3195,6 +3195,18 @@ starts now</source>
   <source>All group members will be able to see the DNA properties in the Tool’s Advanced settings, under DNA Properties.</source>
   <target>Tüm grup üyeleri DNA özelliklerini aracın gelişmiş ayarlarındaki “DNA Özellikleri” bölümünde görebilecek.</target>
 </trans-unit>
+<trans-unit id="s1f781dc01a2b5152">
+  <source>Cells</source>
+  <target>Hücreler</target>
+</trans-unit>
+<trans-unit id="sfbaa654a4433213a">
+  <source>DNA hash</source>
+  <target>DNA hash</target>
+</trans-unit>
+<trans-unit id="sfdb24b0b0e46f052">
+  <source>network seed</source>
+  <target>ağ tohumu</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

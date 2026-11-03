@@ -3195,6 +3195,18 @@ commence maintenant</target>
   <source>All group members will be able to see the DNA properties in the Tool’s Advanced settings, under DNA Properties.</source>
   <target>Tous les membres du groupe pourront voir les propriétés DNA dans les paramètres avancés de l’outil, sous « Propriétés DNA ».</target>
 </trans-unit>
+<trans-unit id="s1f781dc01a2b5152">
+  <source>Cells</source>
+  <target>Cellules</target>
+</trans-unit>
+<trans-unit id="sfbaa654a4433213a">
+  <source>DNA hash</source>
+  <target>Hash DNA</target>
+</trans-unit>
+<trans-unit id="sfdb24b0b0e46f052">
+  <source>network seed</source>
+  <target>seed réseau</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
