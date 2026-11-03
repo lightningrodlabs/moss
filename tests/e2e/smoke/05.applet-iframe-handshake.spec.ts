@@ -2,7 +2,7 @@ import { test, expect, launchMoss, closeMoss } from '../fixtures/moss';
 import { startFreshIfLegacyImport, waitForBoot } from '../helpers/bootToReady';
 import { createGroupFromMainDashboard, enterSpaceIfPrompted } from '../helpers/groups';
 import { installToolFromLibrary, openToolInGroup, waitForAppletHandshake } from '../helpers/tools';
-import { FIXTURE_TOOL_TITLE } from '../fixtures/toolCuration';
+import { FIXTURE_TOOL_INSTALL_OPTIONS, FIXTURE_TOOL_TITLE } from '../fixtures/toolCuration';
 
 /**
  * Smoke #5 — Applet iframe loads and the WeaveClient handshake completes.
@@ -39,6 +39,7 @@ test('applet iframe loads and WeaveClient handshake completes', async ({
     await installToolFromLibrary(moss.mainWindow, {
       toolName: FIXTURE_TOOL_TITLE,
       groupName: GROUP_NAME,
+      installOptions: FIXTURE_TOOL_INSTALL_OPTIONS,
     });
 
     const frame = await openToolInGroup(moss.mainWindow, FIXTURE_TOOL_TITLE);

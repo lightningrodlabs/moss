@@ -1,8 +1,8 @@
 import { test, expect, launchMoss, closeMoss } from '../fixtures/moss';
 import { startFreshIfLegacyImport, waitForBoot } from '../helpers/bootToReady';
 import { createGroupFromMainDashboard, enterSpaceIfPrompted } from '../helpers/groups';
-import { installToolFromLibrary } from '../helpers/tools';
-import { FIXTURE_TOOL_TITLE } from '../fixtures/toolCuration';
+import { addToGroupButton, openInstallDialog, submitInstallDialog } from '../helpers/tools';
+import { FIXTURE_TOOL_INSTALL_OPTIONS, FIXTURE_TOOL_TITLE } from '../fixtures/toolCuration';
 
 /**
  * Smoke #4 — Install the example applet from the in-app tool library.
@@ -44,10 +44,19 @@ test('install example applet from the in-app tool library', async ({
     await createGroupFromMainDashboard(moss.mainWindow, { name: GROUP_NAME });
     await enterSpaceIfPrompted(moss.mainWindow, 'agent-one');
 
-    await installToolFromLibrary(moss.mainWindow, {
+    await openInstallDialog(moss.mainWindow, {
       toolName: FIXTURE_TOOL_TITLE,
       groupName: GROUP_NAME,
     });
+
+    // The example tool declares a required install option with no default.
+    // Submitting without it must keep the dialog open instead of installing.
+    const optionsForm = moss.mainWindow.locator('install-tool-dialog install-options-form');
+    await addToGroupButton(moss.mainWindow).click();
+    await expect(optionsForm.locator('sl-input[data-invalid]')).toHaveCount(1);
+    await expect(addToGroupButton(moss.mainWindow)).toBeVisible();
+
+    await submitInstallDialog(moss.mainWindow, FIXTURE_TOOL_INSTALL_OPTIONS);
 
     // why: after install the user remains in the tool library view; navigate
     // back to the group to verify the new tool appears in the group pane.

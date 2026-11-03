@@ -46,6 +46,12 @@ export const FIXTURE_TOOL_ID = 'example-applet';
 export const FIXTURE_TOOL_VERSION_BRANCH = '0.1.x';
 export const FIXTURE_TOOL_VERSION = '0.1.0';
 export const FIXTURE_TOOL_TITLE = 'Example Applet';
+/**
+ * Values for the example tool's required install options (see
+ * example/ui/weave.config.json), keyed by option label. The install dialog
+ * refuses to submit until these are filled.
+ */
+export const FIXTURE_TOOL_INSTALL_OPTIONS: Record<string, string> = { 'Max posts': '100' };
 
 export async function startToolCurationServer(): Promise<RunningToolCuration> {
   if (!fs.existsSync(WEBHAPP_PATH)) {

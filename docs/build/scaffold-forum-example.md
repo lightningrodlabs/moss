@@ -19,7 +19,7 @@ cd ~/Moss
 Run the following command to scaffold a ready-to-use forum Holochain app.
 
 ```bash
-nix run github:holochain/holochain#hc-scaffold -- example hello-world
+nix run github:holochain/holonix?ref=main-0.7#hc-scaffold -- example forum
 ```
 
 ::: tip ⚠️ package manager
@@ -58,4 +58,4 @@ Run the app in non-Moss development mode to check whether it works:
 npm run start
 ```
 
-This should spawn 2 windows with the forum app running in them. If you create a post in one of the windows and reload the page in the other window (Right click > Reload) and the post should appear.
+This should spawn 2 windows with the forum app running in them. If you create a post in one of the windows and reload the page in the other window (Right click > Reload), the post should appear.

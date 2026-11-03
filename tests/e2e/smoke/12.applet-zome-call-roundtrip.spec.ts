@@ -2,7 +2,7 @@ import { test, expect, launchMoss, closeMoss } from '../fixtures/moss';
 import { startFreshIfLegacyImport, waitForBoot } from '../helpers/bootToReady';
 import { createGroupFromMainDashboard, enterSpaceIfPrompted } from '../helpers/groups';
 import { installToolFromLibrary, openToolInGroup, waitForAppletHandshake } from '../helpers/tools';
-import { FIXTURE_TOOL_TITLE } from '../fixtures/toolCuration';
+import { FIXTURE_TOOL_INSTALL_OPTIONS, FIXTURE_TOOL_TITLE } from '../fixtures/toolCuration';
 
 /**
  * Smoke #12 — An applet's own zome calls round-trip through the host signer.
@@ -40,6 +40,7 @@ test('applet own-cell zome calls (create_post + get_all_posts) round-trip via th
     await installToolFromLibrary(moss.mainWindow, {
       toolName: FIXTURE_TOOL_TITLE,
       groupName: GROUP_NAME,
+      installOptions: FIXTURE_TOOL_INSTALL_OPTIONS,
     });
 
     const frame = await openToolInGroup(moss.mainWindow, FIXTURE_TOOL_TITLE);

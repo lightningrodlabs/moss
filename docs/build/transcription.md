@@ -3,7 +3,8 @@
 Moss provides on-device speech-to-text to Tools via `WeaveClient.localModels.asr`.
 The ASR runtime (whisper.cpp) and model lifecycle are owned by the Moss shell,
 so a Tool adds transcription without bundling weights, handling downloads,
-or prompting for its own model-loading consent.
+or prompting for its own model-loading consent. The user picks and downloads
+the speech model in Moss under Settings > Services.
 
 This guide covers everything a Tool needs to integrate. It's written to be
 readable cover-to-cover the first time, and scannable as reference after.
@@ -137,6 +138,10 @@ You can push from any audio source. Common sources:
   flatten to `Int16Array`.
 - **WebRTC remote tracks** — same as local mic, just attach to the
   remote `MediaStreamTrack`.
+- **Audio playing on the user's computer** — `weaveClient.captureAudioSources()`
+  returns a `MediaStreamTrack` of system or application audio when the host
+  offers it (see [`captureAudioSources`](/api-reference/api/api.weaveclient.captureaudiosources)).
+  Feed that track into the same `MediaStreamTrackProcessor` path as the mic.
 
 ### Converting `AudioData` to PCM16
 
@@ -377,8 +382,8 @@ import type {
 } from '@theweave/api';
 ```
 
-See [`libs/api/src/asr.ts`](../../libs/api/src/asr.ts) and
-[`libs/api/src/types.ts`](../../libs/api/src/types.ts) for the
+See [`libs/api/src/asr.ts`](https://github.com/lightningrodlabs/moss/blob/main-0.7/libs/api/src/asr.ts) and
+[`libs/api/src/types.ts`](https://github.com/lightningrodlabs/moss/blob/main-0.7/libs/api/src/types.ts) for the
 authoritative definitions.
 
 ## Implementation notes for agents
@@ -411,15 +416,15 @@ worth internalizing up front:
 
 If you need to read implementation detail (you usually won't):
 
-- Public API types: [`libs/api/src/asr.ts`](../../libs/api/src/asr.ts),
-  [`libs/api/src/types.ts`](../../libs/api/src/types.ts)
+- Public API types: [`libs/api/src/asr.ts`](https://github.com/lightningrodlabs/moss/blob/main-0.7/libs/api/src/asr.ts),
+  [`libs/api/src/types.ts`](https://github.com/lightningrodlabs/moss/blob/main-0.7/libs/api/src/types.ts)
 - Iframe-side wiring (how the API talks to the host):
-  [`iframes/applet-iframe/src/index.ts`](../../iframes/applet-iframe/src/index.ts)
+  [`iframes/applet-iframe/src/index.ts`](https://github.com/lightningrodlabs/moss/blob/main-0.7/iframes/applet-iframe/src/index.ts)
   search for `localModels`.
-- Host-side (Moss main process): [`src/main/asr/`](../../src/main/asr/)
+- Host-side (Moss main process): [`src/main/asr/`](https://github.com/lightningrodlabs/moss/blob/main-0.7/src/main/asr)
 - Renderer bridge (session routing, events back to the iframe):
-  [`src/renderer/src/applets/asr-bridge.ts`](../../src/renderer/src/applets/asr-bridge.ts),
-  [`src/renderer/src/applets/applet-host.ts`](../../src/renderer/src/applets/applet-host.ts)
+  [`src/renderer/src/applets/asr-bridge.ts`](https://github.com/lightningrodlabs/moss/blob/main-0.7/src/renderer/src/applets/asr-bridge.ts),
+  [`src/renderer/src/applets/applet-host.ts`](https://github.com/lightningrodlabs/moss/blob/main-0.7/src/renderer/src/applets/applet-host.ts)
 
 ## What's planned for later
 
@@ -433,9 +438,8 @@ Currently planned:
   runtimes that support them.
 - Translation, summarization, and embedding namespaces under
   `localModels`.
-- Per-install model selection (fast vs accurate) via Moss settings.
 - Manifest-declared `localModels.asr` permission + first-use consent
   prompt.
 
-See [`plans/local-models-asr.md`](../../plans/local-models-asr.md) for
+See [`plans/local-models-asr.md`](https://github.com/lightningrodlabs/moss/blob/main-0.7/plans/local-models-asr.md) for
 the full roadmap.

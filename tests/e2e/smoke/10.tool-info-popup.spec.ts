@@ -2,7 +2,7 @@ import { test, expect, launchMoss, closeMoss } from '../fixtures/moss';
 import { startFreshIfLegacyImport, waitForBoot } from '../helpers/bootToReady';
 import { createGroupFromMainDashboard, enterSpaceIfPrompted } from '../helpers/groups';
 import { installToolFromLibrary } from '../helpers/tools';
-import { FIXTURE_TOOL_TITLE } from '../fixtures/toolCuration';
+import { FIXTURE_TOOL_INSTALL_OPTIONS, FIXTURE_TOOL_TITLE } from '../fixtures/toolCuration';
 
 /**
  * Smoke #10 — Right-click an installed tool in the group sidebar opens the
@@ -36,6 +36,7 @@ test('right-click on group sidebar tool opens info dialog without install contro
     await installToolFromLibrary(moss.mainWindow, {
       toolName: FIXTURE_TOOL_TITLE,
       groupName: GROUP_NAME,
+      installOptions: FIXTURE_TOOL_INSTALL_OPTIONS,
     });
 
     // why: post-install the user is left on the tool-library page. Navigate

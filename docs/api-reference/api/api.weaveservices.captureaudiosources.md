@@ -4,7 +4,7 @@
 
 ## WeaveServices.captureAudioSources property
 
-Asks the host for audio playing on the user's machine. The host shows its own picker. Resolves `null` when the user declines or the host cannot capture. Absent on hosts without the feature — feature-detect with `client.captureAudioSources?.`<!-- -->.
+Asks the host for audio playing on the user's machine. The host shows its own picker. Resolves `null` when the user declines or the host cannot capture. Absent on hosts without the feature, on hosts whose Audio Sources service is switched off, and on hosts whose capture backend is unavailable on this machine — feature-detect with `client.captureAudioSources?.`<!-- -->.
 
 **Signature:**
 

@@ -37,7 +37,7 @@ export default defineConfig({
           },
         },
       ],
-      applets: [
+      tools: [
         {
           name: 'Example Applet',
           instanceName: 'Example Applet',
@@ -59,7 +59,7 @@ export default defineConfig({
       ],
     },
   ],
-  applets: [
+  tools: [
     {
       name: 'Example Applet',
       subtitle: 'Just an Example',
