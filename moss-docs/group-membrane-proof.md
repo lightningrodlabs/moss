@@ -54,7 +54,7 @@ The proof is msgpack-encoded and passed as `membrane_proof` in the group role's 
 
 ```ts
 type GroupMembraneProof = {
-  signatures: JoinSignature[]; // at most 16, one per signer
+  signatures: JoinSignature[]; // at most 64, one per signer
   own_steward_permission_hash?: ActionHash | null;
 };
 
@@ -120,7 +120,7 @@ Do not put a passcode hash in the link, and do not put the passcode in the proof
 
 ## Join status
 
-`get_agent_join_status(agent)` returns `Valid`, `Invalid`, or `Pending`. It reports what the agent-activity authorities found for that agent: rejected actions or warrants give `Invalid`, and an accepted `CreateAgent` gives `Valid`.
+`get_agent_join_status(agent)` returns `Valid`, `Invalid`, or `Pending`. It reads this node's agent-activity data first, and the network only if this node has none. A rejected `CreateAgent` or any warrant against the agent gives `Invalid`. An accepted `CreateAgent` gives `Valid`. Otherwise the result is `Pending`, which can last indefinitely, so Moss must not treat `Pending` as admitted.
 
 ## Security notes
 

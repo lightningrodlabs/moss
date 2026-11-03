@@ -63,9 +63,10 @@ fn my_non_expiring_permission_hash() -> ExternResult<Option<ActionHash>> {
 pub enum JoinStatus {
     /// The `CreateAgent` action passed validation and no warrant exists.
     Valid,
-    /// The join, or a later action, was rejected or warranted.
+    /// The join was rejected, or the agent has a warrant for any action.
     Invalid,
-    /// The authorities have not validated the join yet.
+    /// No authority has accepted or rejected the join yet. This can last
+    /// indefinitely, so callers must not treat it as admitted.
     Pending,
 }
 
