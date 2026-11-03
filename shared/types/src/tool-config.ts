@@ -6,18 +6,20 @@ import type { ToolInstallOption, ToolWeaveConfig } from '@theweave/api';
  * `@theweave/api`, used to check a Tool's `weave.config.json` before its
  * options are rendered.
  */
+const TLocalizedText = Type.Union([Type.String(), Type.Record(Type.String(), Type.String())]);
+
 const TOptionBase = {
   role: Type.String(),
   property: Type.String(),
-  label: Type.String(),
-  description: Type.Optional(Type.String()),
+  label: TLocalizedText,
+  description: Type.Optional(TLocalizedText),
   required: Type.Boolean(),
 };
 
 const TNullable = { nullable: Type.Optional(Type.Boolean()) };
 
-const TStringChoice = Type.Object({ value: Type.String(), label: Type.String() });
-const TNumberChoice = Type.Object({ value: Type.Number(), label: Type.String() });
+const TStringChoice = Type.Object({ value: Type.String(), label: TLocalizedText });
+const TNumberChoice = Type.Object({ value: Type.Number(), label: TLocalizedText });
 
 export const TToolInstallOption = Type.Union([
   Type.Object(

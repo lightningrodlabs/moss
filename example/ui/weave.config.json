@@ -6,7 +6,11 @@
       "property": "stewarded",
       "kind": "boolean",
       "label": "Stewarded",
-      "description": "Only stewards create categories.",
+      "description": {
+        "en": "Only stewards create categories.",
+        "de": "Nur Verwalter erstellen Kategorien.",
+        "fr": "Seuls les gestionnaires créent des catégories."
+      },
       "required": false,
       "default": false
     },

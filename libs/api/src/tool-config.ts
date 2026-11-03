@@ -16,20 +16,31 @@ export type ToolWeaveConfig = {
   installOptions?: ToolInstallOption[];
 };
 
+/**
+ * Text shown to the installer. A plain string is used in every locale. A map
+ * keyed by language tag (`en`, `de`, `pt-BR`, ...) lets Moss pick the
+ * installer's language, falling back to the language alone, then `en`, then
+ * the first entry.
+ */
+export type LocalizedText = string | Record<string, string>;
+
 export type ToolInstallOptionBase = {
   /** Role in the happ manifest whose DNA properties this option writes. */
   role: string;
   /** Key within that role's properties. `role` + `property` identify the option. */
   property: string;
   /** Field label shown to the installer. */
-  label: string;
+  label: LocalizedText;
   /** Help text shown under the field. */
-  description?: string;
+  description?: LocalizedText;
   /** A required option must hold a valid value before the Tool can be installed. */
   required: boolean;
 };
 
-export type ToolInstallOptionChoice<T extends string | number> = { value: T; label: string };
+export type ToolInstallOptionChoice<T extends string | number> = {
+  value: T;
+  label: LocalizedText;
+};
 
 /**
  * One install option. An empty field on an optional option leaves the

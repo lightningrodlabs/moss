@@ -44,10 +44,25 @@ Every option has:
 | `role`        | The role in your happ manifest whose DNA properties the option writes.          |
 | `property`    | The key within that role's properties. `role` + `property` identify the option. |
 | `kind`        | One of the kinds below.                                                         |
-| `label`       | The field label.                                                                |
-| `description` | Optional help text under the field.                                             |
+| `label`       | The field label (text, see below).                                              |
+| `description` | Optional help text under the field (text, see below).                           |
 | `required`    | `true` blocks installation until the field holds a valid value.                 |
 | `nullable`    | Optional, not on `boolean`. Lets an empty field write `null` (see below).       |
+
+### Text in more than one language
+
+`label`, `description`, and each choice's `label` take either a plain string
+or a map keyed by language tag. A plain string is shown in every language. With
+a map, Moss picks the installer's language, then the language without its
+region (`pt` for `pt-BR`), then `en`, then the first entry:
+
+```json
+"label": "Stewarded",
+"description": {
+  "en": "Only stewards create categories and channels.",
+  "de": "Nur Verwalter erstellen Kategorien und Kanäle."
+}
+```
 
 ## Kinds
 

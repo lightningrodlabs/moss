@@ -4,7 +4,7 @@ import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { AgentPubKey, encodeHashToBase64 } from '@holochain/client';
-import type { ToolInstallOption } from '@theweave/api';
+import type { LocalizedText, ToolInstallOption } from '@theweave/api';
 import type { RoleProperties } from '@theweave/moss-types';
 
 import '@shoelace-style/shoelace/dist/components/input/input.js';
@@ -29,6 +29,8 @@ import {
   validateValue,
 } from '../install-options.js';
 import { valueProblemMessage } from '../install-options-messages.js';
+import { localizedText } from '../localized-text.js';
+import { getLocale } from '../../locales/localization.js';
 
 type OptionControl = SlInput | SlSelect | SlSwitch;
 
@@ -97,6 +99,10 @@ export class InstallOptionsForm extends LitElement {
     );
   }
 
+  private text(text: LocalizedText | undefined): string {
+    return localizedText(text, getLocale());
+  }
+
   private setValue(option: ToolInstallOption, value: InstallOptionValue | undefined): void {
     this._values = { ...this._values, [optionKey(option)]: value };
     this.controlFor(option)?.setCustomValidity('');
@@ -107,9 +113,9 @@ export class InstallOptionsForm extends LitElement {
       <sl-switch
         data-option=${optionKey(option)}
         ?checked=${this._values[optionKey(option)] === true}
-        help-text=${option.description ?? ''}
+        help-text=${this.text(option.description)}
         @sl-change=${(e: Event) => this.setValue(option, (e.target as SlSwitch).checked)}
-        >${option.label}</sl-switch
+        >${this.text(option.label)}</sl-switch
       >
     `;
   }
@@ -121,8 +127,8 @@ export class InstallOptionsForm extends LitElement {
       <sl-select
         data-option=${optionKey(option)}
         class="moss-input"
-        .label=${option.label}
-        help-text=${option.description ?? ''}
+        .label=${this.text(option.label)}
+        help-text=${this.text(option.description)}
         .value=${indexOfChoice(option, this._values[optionKey(option)])}
         ?required=${option.required}
         ?clearable=${!option.required}
@@ -131,7 +137,8 @@ export class InstallOptionsForm extends LitElement {
           this.setValue(option, choiceAtIndex(option, (e.target as SlSelect).value as string))}
       >
         ${option.choices.map(
-          (choice, index) => html`<sl-option value=${String(index)}>${choice.label}</sl-option>`,
+          (choice, index) =>
+            html`<sl-option value=${String(index)}>${this.text(choice.label)}</sl-option>`,
         )}
       </sl-select>
     `;
@@ -143,8 +150,8 @@ export class InstallOptionsForm extends LitElement {
       <sl-input
         data-option=${optionKey(option)}
         class="moss-input"
-        .label=${option.label}
-        help-text=${option.description ?? ''}
+        .label=${this.text(option.label)}
+        help-text=${this.text(option.description)}
         .value=${typeof seed === 'string' ? seed : ''}
         minlength=${option.minLength ?? 0}
         maxlength=${option.maxLength}
@@ -164,8 +171,8 @@ export class InstallOptionsForm extends LitElement {
         data-option=${optionKey(option)}
         class="moss-input"
         type="number"
-        .label=${option.label}
-        help-text=${option.description ?? ''}
+        .label=${this.text(option.label)}
+        help-text=${this.text(option.description)}
         .value=${typeof seed === 'number' ? String(seed) : ''}
         min=${option.min}
         max=${option.max}
@@ -191,8 +198,8 @@ export class InstallOptionsForm extends LitElement {
       <sl-select
         data-option=${optionKey(option)}
         class="moss-input"
-        .label=${option.label}
-        help-text=${option.description ?? ''}
+        .label=${this.text(option.label)}
+        help-text=${this.text(option.description)}
         .value=${Array.isArray(current) ? current : []}
         placeholder=${msg('Select members')}
         ?required=${option.required}

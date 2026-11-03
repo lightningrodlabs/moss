@@ -38,6 +38,34 @@ const numberOption = {
 };
 
 describe('TToolWeaveConfig', () => {
+  it('accepts labels and descriptions keyed by language', () => {
+    const localized = {
+      installOptions: [
+        {
+          ...vinesExample.installOptions[0],
+          label: { en: 'Stewarded', de: 'Verwaltet' },
+          description: { en: 'Only stewards create categories.' },
+        },
+        {
+          role: 'rVines',
+          property: 'theme',
+          kind: 'stringChoice',
+          label: 'Theme',
+          required: false,
+          choices: [{ value: 'dark', label: { en: 'Dark', de: 'Dunkel' } }],
+        },
+      ],
+    };
+    expect(Value.Check(TToolWeaveConfig, localized)).toBe(true);
+  });
+
+  it('rejects a label map whose values are not strings', () => {
+    const bad = {
+      installOptions: [{ ...vinesExample.installOptions[0], label: { en: 1 } }],
+    };
+    expect(Value.Check(TToolWeaveConfig, bad)).toBe(false);
+  });
+
   it('accepts the Vines example', () => {
     expect(Value.Check(TToolWeaveConfig, vinesExample)).toBe(true);
   });
