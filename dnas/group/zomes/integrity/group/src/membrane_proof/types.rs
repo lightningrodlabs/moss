@@ -24,6 +24,10 @@ pub enum JoinGate {
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq, SerializedBytes)]
 pub struct GroupMembraneProof {
     pub signatures: Vec<JoinSignature>,
+    /// A non-expiring `StewardPermission` issued for the joining agent itself.
+    /// It lets the first stewards join groups whose policy needs a steward.
+    #[serde(default)]
+    pub own_steward_permission_hash: Option<ActionHash>,
 }
 
 /// One signer's approval of a joining agent.
@@ -126,6 +130,7 @@ mod tests {
                     delegation_signature: Signature::from([8u8; 64]),
                 }),
             }],
+            own_steward_permission_hash: Some(ActionHash::from_raw_32(vec![6; 32])),
         };
         let sb = SerializedBytes::try_from(proof.clone()).unwrap();
         assert_eq!(GroupMembraneProof::try_from(sb).unwrap(), proof);

@@ -11,13 +11,17 @@ pub const MAX_POLICY_LIST: usize = 64;
 /// Most signatures a membrane proof may carry.
 pub const MAX_PROOF_SIGNATURES: usize = 16;
 
-/// A signer whose signature over the joining agent has already been verified,
+/// A signer whose approval of the joining agent has already been verified,
 /// with the roles that validation resolved for it.
 #[derive(Clone, Debug)]
 pub struct VerifiedSigner {
     pub key: AgentPubKey,
     pub is_progenitor: bool,
     pub is_steward: bool,
+    /// False for the joining agent's own steward permission, which approves the
+    /// join as a steward without a signature, so it never counts as an
+    /// `External` signature.
+    pub signed: bool,
 }
 
 /// Rejects policies that can never be satisfied or that would make
@@ -77,7 +81,12 @@ pub fn gate_satisfied(gate: &JoinGate, joining_agent: &AgentPubKey, signers: &[V
         JoinGate::External { keys, threshold } => {
             let listed: HashSet<AgentPubKey> = keys.iter().cloned().map(AgentPubKey::from).collect();
             let signed: HashSet<&AgentPubKey> =
-                signers.iter().map(|s| &s.key).filter(|k| listed.contains(*k)).collect();
+                signers
+                .iter()
+                .filter(|s| s.signed)
+                .map(|s| &s.key)
+                .filter(|k| listed.contains(*k))
+                .collect();
             signed.len() >= *threshold as usize
         }
         JoinGate::AllowList { agents } => agents
@@ -99,7 +108,7 @@ mod tests {
         AgentPubKeyB64::from(key(byte))
     }
     fn signer(byte: u8, is_progenitor: bool, is_steward: bool) -> VerifiedSigner {
-        VerifiedSigner { key: key(byte), is_progenitor, is_steward }
+        VerifiedSigner { key: key(byte), is_progenitor, is_steward, signed: true }
     }
     fn progenitor() -> VerifiedSigner {
         signer(1, true, false)
@@ -157,6 +166,13 @@ mod tests {
         let gate = external_2_of_3();
         let signers = [signer(10, false, false), signer(50, false, false), progenitor()];
         assert!(!gate_satisfied(&gate, &joiner(), &signers));
+    }
+
+    #[test]
+    fn external_ignores_unsigned_entries() {
+        let gate = JoinGate::External { keys: vec![b64(99)], threshold: 1 };
+        let own_permission = VerifiedSigner { key: joiner(), is_progenitor: false, is_steward: true, signed: false };
+        assert!(!gate_satisfied(&gate, &joiner(), &[own_permission]));
     }
 
     #[test]

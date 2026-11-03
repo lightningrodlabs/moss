@@ -9,6 +9,17 @@ pub struct StewardPermission {
     pub expiry: Option<Timestamp>,
 }
 
+/// Whether `permission_hash` is a valid, non-expiring `StewardPermission` for
+/// `agent`. Expiring permissions never count, because validation has no clock
+/// to compare the expiry against.
+pub fn is_non_expiring_steward(agent: &AgentPubKey, permission_hash: ActionHash) -> ExternResult<bool> {
+    let record = must_get_valid_record(permission_hash)?;
+    match record.entry().to_app_option::<StewardPermission>() {
+        Ok(Some(permission)) => Ok(&permission.for_agent == agent && permission.expiry.is_none()),
+        _ => Ok(false),
+    }
+}
+
 /// Rules
 /// 1. Only the progenitor or agents with a non-expiring StewardPermission can create a StewardPermission
 /// 2. StewardPermissions cannot be created for oneself
