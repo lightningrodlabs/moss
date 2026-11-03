@@ -1,17 +1,15 @@
 import { css, html, LitElement, TemplateResult } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
-import {
-  ActionHash,
-  ActionHashB64,
-  AgentPubKey,
-  EntryHash,
-  encodeHashToBase64,
-  HoloHashMap,
-  YamlProperties,
-} from '@holochain/client';
+import { ActionHash, encodeHashToBase64, HoloHashMap, YamlProperties } from '@holochain/client';
 import { localized, msg } from '@lit/localize';
 import { ref } from 'lit/directives/ref.js';
-import { completed, joinAsyncMap, pipe, StoreSubscriber, toPromise } from '@holochain-open-dev/stores';
+import {
+  completed,
+  joinAsyncMap,
+  pipe,
+  StoreSubscriber,
+  toPromise,
+} from '@holochain-open-dev/stores';
 import { consume } from '@lit/context';
 import { notify, notifyError, onSubmit } from '@holochain-open-dev/elements';
 import { GetonlyMap, slice } from '@holochain-open-dev/utils';
@@ -36,21 +34,34 @@ import { MossDialog } from '../../ui/moss-dialog.js';
 import '../../ui/moss-dialog.js';
 import { Applet, AppletAgent } from '@theweave/group-client';
 import { toolCompatibilityIdFromDistInfoString } from '@theweave/utils';
-import { DistributionInfo, TDistributionInfo, ToolInfoAndVersions } from '@theweave/moss-types';
+import {
+  DistributionInfo,
+  RoleProperties,
+  TDistributionInfo,
+  ToolInfoAndVersions,
+  TToolWeaveConfig,
+} from '@theweave/moss-types';
+import { ToolInstallOption } from '@theweave/api';
 import { Value } from '@sinclair/typebox/value';
-import { getLocalizedTimeAgo } from '../../locales/localization.js';
 import { toolSettingsStyles } from '../../groups/elements/settings/tool-settings-styles.js';
 import { fetchAndValidateHappOrWebhapp } from '../../electron-api';
 import yaml from 'js-yaml';
+import { checkDeclarations, mergeProperties } from '../install-options.js';
+import { declarationProblemMessage } from '../install-options-messages.js';
+import { InstallOptionsForm } from './install-options-form.js';
+import './install-options-form.js';
+import './install-options-info.js';
+import { MatchingInactiveTool } from './install-tool-duplicate-warning.js';
+import './install-tool-duplicate-warning.js';
 
-type MatchingInactiveTool = {
-  toolHash: EntryHash;
-  toolName: string;
-  installerKey: AgentPubKey;
-  timestamp: number;
-  joinedMembers: AppletAgent[];
-  toolInfoAndVersions: ToolInfoAndVersions | undefined;
+/** What the install dialog learns from downloading the Tool before it renders the form. */
+type ToolInspection = {
+  roles: RoleProperties;
+  options?: ToolInstallOption[];
+  problem?: string;
 };
+
+const DEV_CONFIG_MARKER = '###DEVCONFIG###';
 
 @localized()
 @customElement('install-tool-dialog')
@@ -79,18 +90,6 @@ export class InstallToolDialog extends LitElement {
   form!: HTMLFormElement;
 
   @state()
-  _dnaBundle: { hash: ActionHashB64; file: File } | undefined = undefined;
-
-  @state()
-  _uiBundle: { hash: ActionHashB64; setupRenderers: any } | undefined = undefined;
-
-  @state()
-  _invalidUiBundle = false;
-
-  @state()
-  _duplicateName: boolean = false;
-
-  @state()
   _installing: boolean = false;
 
   @state()
@@ -100,7 +99,16 @@ export class InstallToolDialog extends LitElement {
   _tool: ToolAndCurationInfo | undefined;
 
   @state()
-  _dnaProperties: Object = {};
+  _dnaProperties: RoleProperties = {};
+
+  @state()
+  _installOptions: ToolInstallOption[] | undefined;
+
+  @state()
+  _optionsProblem: string | undefined;
+
+  @query('install-options-form')
+  _optionsForm!: InstallOptionsForm | null;
 
   @state()
   _showAdvanced: boolean = false;
@@ -119,13 +127,13 @@ export class InstallToolDialog extends LitElement {
     () => this.groupStore?.groupProfile,
     () => [this.groupStore],
   );
-  // _unlisten: UnlistenFn | undefined;
-
   async open(tool: ToolAndCurationInfo) {
     // reload all advertised applets
     await this.groupStore.allAdvertisedApplets.reload();
     this._tool = tool;
     this._dnaProperties = {};
+    this._installOptions = undefined;
+    this._optionsProblem = undefined;
     this._showAdvanced = false;
     this._matchingInactiveTool = undefined;
     this._activatingExisting = false;
@@ -139,7 +147,11 @@ export class InstallToolDialog extends LitElement {
       this._showDuplicateWarning = false;
     }
 
-    this.downloadWebHapp().then((obj) => (this._dnaProperties = obj));
+    this.downloadWebHapp().then((inspection) => {
+      this._dnaProperties = inspection.roles;
+      this._installOptions = inspection.options;
+      this._optionsProblem = inspection.problem;
+    });
 
     setTimeout(() => {
       if (!this._showDuplicateWarning) {
@@ -163,14 +175,6 @@ export class InstallToolDialog extends LitElement {
         bubbles: true,
       }),
     );
-  }
-
-  // disconnectedCallback(): void {
-  //   if (this._unlisten) this._unlisten();
-  // }
-
-  get publishDisabled() {
-    return this._duplicateName;
   }
 
   async checkPrivileges(): Promise<[boolean, ActionHash | undefined]> {
@@ -331,97 +335,50 @@ export class InstallToolDialog extends LitElement {
     }
   }
 
-  renderDuplicateWarning() {
-    const info = this._matchingInactiveTool;
-    if (!info) return html``;
-    const timeAgo = getLocalizedTimeAgo();
-
-    return html`
-      <div class="column" style="gap: 20px;">
-        <div class="form-text" style="font-size: 16px; line-height: 1.5;">
-          ${msg('That tool has already been added to the group.')}
-          ${msg('Are you sure you want to create another instance of that tool?')}
-        </div>
-
-        <div class="column tool" style="flex: 1;">
-          <div class="row" style="justify-content: space-between">
-            <div class="row">
-              ${info.toolInfoAndVersions?.icon
-                ? html`<sl-tooltip content="${info.toolInfoAndVersions.description}">
-                    <img
-                      src=${info.toolInfoAndVersions.icon}
-                      alt=${msg('Tool logo')}
-                      style="height: 64px; width:64px; margin-right: 10px; border-radius:16px;"
-                    />
-                  </sl-tooltip>`
-                : html``}
-              <div class="column">
-                <span class="tool-name">${info.toolName}</span>
-                <span class="tool-short-description">${info.toolInfoAndVersions?.subtitle}</span>
-              </div>
-            </div>
-          </div>
-          <div class="details-container column">
-            <div class="installer row">
-              <agent-avatar
-                .size=${24}
-                style="margin-right: 5px;"
-                .agentPubKey=${info.installerKey}
-              ></agent-avatar>
-              <span>${msg('installed this tool to the group space ')}</span>
-              <div style="margin-left:5px;">${timeAgo.format(new Date(info.timestamp / 1000))}</div>
-            </div>
-            ${info.joinedMembers.length > 0
-              ? html`<div class="participants row">
-                  <span style="margin-right: 5px;">${msg('In use by: ')}</span>
-                  ${info.joinedMembers.map(
-                    (appletAgent) => html`
-                      <agent-avatar
-                        style="margin-left: 5px;"
-                        .size=${24}
-                        .agentPubKey=${appletAgent.group_pubkey}
-                      ></agent-avatar>
-                    `,
-                  )}
-                </div>`
-              : ''}
-          </div>
-        </div>
-
-        <div class="row" style="gap: 12px; justify-content: flex-end; margin-top: 10px;">
-          <button
-            class="moss-button-secondary"
-            style="padding: 10px 20px; font-size: 16px;"
-            ?disabled=${this._activatingExisting}
-            @click=${() => this.proceedWithNewInstall()}
-          >
-            ${msg('Create New')}
-          </button>
-          <button
-            class="moss-button"
-            style="padding: 10px 20px; font-size: 16px;"
-            ?disabled=${this._activatingExisting}
-            @click=${() => this.activateExistingTool()}
-          >
-            ${this._activatingExisting
-              ? html`<sl-spinner style="font-size: 16px;"></sl-spinner>`
-              : msg('Activate Existing')}
-          </button>
-        </div>
-      </div>
-    `;
+  /**
+   * The YAML editor is the base when it was shown, else the manifest
+   * defaults; the option form's values overlay it per role. Roles no option
+   * writes and no editor showed are left out so the conductor keeps the
+   * manifest defaults for them.
+   */
+  propertiesToInstall(fields: Record<string, unknown>): RoleProperties {
+    const base: RoleProperties = {};
+    Object.entries(fields).forEach(([key, value]) => {
+      if (key.startsWith('role-')) {
+        base[key.substring(5)] = (yaml.load(value as string) ?? {}) as Record<string, unknown>;
+      }
+    });
+    if (!this._installOptions || !this._optionsForm) return base;
+    for (const option of this._installOptions) {
+      if (!(option.role in base))
+        base[option.role] = { ...(this._dnaProperties[option.role] ?? {}) };
+    }
+    return mergeProperties(base, this._installOptions, this._optionsForm.currentValues);
   }
 
-  async downloadWebHapp(): Promise<Object> {
+  async downloadWebHapp(): Promise<ToolInspection> {
     if (!this._tool) return Promise.reject('No tool defined.');
     const url = this._tool.latestVersion.url;
-    console.log('download webHapp', url);
-    const res = await fetchAndValidateHappOrWebhapp(url);
-    console.log('download webHapp res', res);
-    if (res.type === 'webhapp') {
-      return res.happ.roles;
+    // Dev-config Tools carry their UI dev server port after the marker.
+    const portString = this._tool.toolListUrl.startsWith(DEV_CONFIG_MARKER)
+      ? this._tool.toolListUrl.slice(DEV_CONFIG_MARKER.length)
+      : '';
+    const uiPort = portString ? parseInt(portString) : undefined;
+    const res = await fetchAndValidateHappOrWebhapp(url, uiPort);
+    const roles = res.type === 'webhapp' ? res.happ.roles : res.roles;
+    if (res.weaveConfig === undefined) return { roles };
+    if (!Value.Check(TToolWeaveConfig, res.weaveConfig)) {
+      return {
+        roles,
+        problem: msg('This Tool declares install options in a format Moss does not understand.'),
+      };
     }
-    return res.roles;
+    const options = res.weaveConfig.installOptions ?? [];
+    const declarationProblem = checkDeclarations(options, Object.keys(roles));
+    if (declarationProblem) {
+      return { roles, problem: declarationProblemMessage(declarationProblem) };
+    }
+    return { roles, options };
   }
 
   renderForm() {
@@ -450,7 +407,9 @@ export class InstallToolDialog extends LitElement {
                 resize="auto"
                 name="role-${roleName}"
                 id="properties-field-${roleName}"
-                help-text="yaml"
+                help-text=${this._installOptions?.length
+                  ? msg('yaml. Values chosen above override these keys.')
+                  : 'yaml'}
                 size="small"
                 .placeholder=${yamlStr}
                 rows="6"
@@ -510,6 +469,24 @@ export class InstallToolDialog extends LitElement {
               }}
               .defaultValue=${this._tool.toolInfoAndVersions.title}
             ></sl-input>
+
+            ${this._optionsProblem
+              ? html`<sl-alert variant="warning" open style="margin-bottom: 16px;">
+                  ${this._optionsProblem} ${msg('You can still set DNA properties under Advanced.')}
+                </sl-alert>`
+              : html``}
+            ${this._installOptions && this._installOptions.length > 0
+              ? html`
+                  <div class="row" style="align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="font-weight: 600;">${msg('Install options')}</span>
+                    <install-options-info></install-options-info>
+                  </div>
+                  <install-options-form
+                    .options=${this._installOptions}
+                    .manifestDefaults=${this._dnaProperties}
+                  ></install-options-form>
+                `
+              : html``}
 
             <span
               style="text-decoration: underline; cursor: pointer; margin-bottom: 10px;"
@@ -612,7 +589,12 @@ export class InstallToolDialog extends LitElement {
         <div slot="content">
           ${
             this._showDuplicateWarning
-              ? this.renderDuplicateWarning()
+              ? html`<install-tool-duplicate-warning
+                  .info=${this._matchingInactiveTool}
+                  .activating=${this._activatingExisting}
+                  @create-new=${() => this.proceedWithNewInstall()}
+                  @activate-existing=${() => this.activateExistingTool()}
+                ></install-tool-duplicate-warning>`
               : html`
                   <div class="form-text" style="margin-top: -20px; margin-bottom: 30px;">
                     <span style="text-decoration: underline; font-weight: bold;"
@@ -636,19 +618,12 @@ export class InstallToolDialog extends LitElement {
                   <form
                     class="column"
                     ${onSubmit((f) => {
-                      //console.log("fields", f);
-                      const transformed = {
+                      if (this._optionsForm && !this._optionsForm.reportValidity()) return;
+                      this.installApplet({
                         custom_name: f.custom_name,
                         network_seed: f.network_seed,
-                        properties: {},
-                      };
-                      Object.entries(f).map(([key, value]) => {
-                        if (key.startsWith('role-')) {
-                          transformed.properties[key.substring(5)] = yaml.load(value as string);
-                        }
+                        properties: this.propertiesToInstall(f),
                       });
-                      //console.log("transformed fields", transformed);
-                      /*await*/ this.installApplet(transformed);
                     })}
                   >
                     ${this.renderForm()}
@@ -664,21 +639,6 @@ export class InstallToolDialog extends LitElement {
     mossStyles,
     toolSettingsStyles,
     css`
-      .online-dot {
-        border-radius: 50%;
-        width: 10px;
-        height: 10px;
-        margin-right: 10px;
-      }
-
-      .online {
-        background-color: #17d310;
-      }
-
-      .offline {
-        background-color: #bfbfbf;
-      }
-
       .loading {
         display: none;
       }

@@ -55,6 +55,10 @@ export default defineConfig({
                 text: 'Configure CLI',
                 link: '/build/configure-cli',
               },
+              {
+                text: 'Install Options',
+                link: '/build/tool-install-options',
+              },
             ],
           },
           { text: 'Publishing a Tool', link: '/build/publishing-a-tool' },

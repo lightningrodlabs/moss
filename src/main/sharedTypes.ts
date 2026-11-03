@@ -38,10 +38,6 @@ export interface ConductorInfo {
   network_info: NetworkInfo;
 }
 
-export type ToolWeaveConfig = {
-  crossGroupView: boolean;
-};
-
 export type ToolUserPreferences = {
   cameraAccessGranted?: boolean;
   microphoneAccessGranted?: boolean;

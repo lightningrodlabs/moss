@@ -157,6 +157,14 @@ export interface AppletInstallConfig {
      * since the applet needs to be registered before it can be joined.
      */
     joiningAgents: number[];
+    /**
+     * DNA properties to install this instance with, keyed by role name. Each
+     * role's values are merged over the happ manifest's defaults for that role,
+     * so only the keys to change need to be listed. They are stored in the
+     * group's Applet entry, so every joining agent installs with the same
+     * properties and lands on the same DNA.
+     */
+    properties?: Record<string, Record<string, unknown>>;
 }
 export interface AgentProfile {
     nickname: string;

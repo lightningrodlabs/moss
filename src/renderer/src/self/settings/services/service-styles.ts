@@ -1,4 +1,5 @@
 import { css } from 'lit';
+import { infoAboutStyles } from '../../../ui/info-about-styles.js';
 
 /**
  * The shared shape of a pane under Settings > Services, so every service
@@ -6,13 +7,16 @@ import { css } from 'lit';
  *
  * A pane is a `.service-pane` column of `<section>`s. A section opens with
  * a `.service-heading` row — title, an optional `.info-icon` that opens an
- * about dialog, an optional switch — followed by a `.service-note` line of
+ * about dialog (both styled by the shared info-about styles), an optional
+ * switch — followed by a `.service-note` line of
  * explanation, then either `.service-rows` of `.service-row` cards, a
  * `.service-listbox` of one-line `.service-line` entries for longer lists,
  * or a `.service-empty` line. Diagnostics belong in `.service-details` inside
  * the about dialog's technical-details section, not on the pane itself.
  */
 export const serviceStyles = css`
+  ${infoAboutStyles}
+
   .service-pane {
     padding: 0 20px;
     gap: 24px;
@@ -33,23 +37,6 @@ export const serviceStyles = css`
     opacity: 0.7;
     font-size: 13px;
     line-height: 1.5;
-  }
-
-  .info-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    font-size: 14px;
-    cursor: pointer;
-    color: var(--sl-color-neutral-600, #666);
-    user-select: none;
-  }
-
-  .info-icon:hover {
-    color: var(--moss-purple, #6200ea);
   }
 
   .service-rows {
@@ -119,16 +106,6 @@ export const serviceStyles = css`
   }
 
   /* About dialog: plain-language paragraphs above a technical-details turn-down. */
-
-  .service-about p {
-    margin: 0;
-    font-size: 16px;
-    line-height: 1.5;
-  }
-
-  .service-about a {
-    color: var(--moss-purple, #6200ea);
-  }
 
   .service-details {
     font-family: monospace;
