@@ -199,7 +199,7 @@ describe('initialValues', () => {
 
 describe('validateValue', () => {
   it('requires a value for a required option', () => {
-    expect(validateValue(maxPosts, undefined)).toBe('required');
+    expect(validateValue(maxPosts, undefined)).toEqual({ code: 'required' });
   });
 
   it('accepts an empty optional option', () => {
@@ -207,39 +207,48 @@ describe('validateValue', () => {
   });
 
   it('rejects a fraction for an integer option', () => {
-    expect(validateValue(maxPosts, 2.5)).toBe('not-integer');
+    expect(validateValue(maxPosts, 2.5)).toEqual({ code: 'not-integer' });
   });
 
   it('rejects a number above max', () => {
-    expect(validateValue(maxPosts, 1001)).toBe('above-max');
+    expect(validateValue(maxPosts, 1001)).toEqual({ code: 'above-max', limit: 1000 });
   });
 
   it('rejects a number below min', () => {
-    expect(validateValue(maxPosts, 0)).toBe('below-min');
+    expect(validateValue(maxPosts, 0)).toEqual({ code: 'below-min', limit: 1 });
   });
 
   it('rejects a string longer than maxLength', () => {
-    expect(validateValue(motto, 'abc')).toBe('too-long');
+    expect(validateValue(motto, 'abc')).toEqual({ code: 'too-long', limit: motto.maxLength });
   });
 
   it('rejects a string shorter than minLength', () => {
-    expect(validateValue({ ...motto, minLength: 2, maxLength: 5 }, 'a')).toBe('too-short');
+    expect(validateValue({ ...motto, minLength: 2, maxLength: 5 }, 'a')).toEqual({
+      code: 'too-short',
+      limit: 2,
+    });
   });
 
   it('rejects a number choice outside the choices', () => {
-    expect(validateValue(pageSize, 11)).toBe('not-a-choice');
+    expect(validateValue(pageSize, 11)).toEqual({ code: 'not-a-choice' });
   });
 
   it('rejects a string choice outside the choices', () => {
-    expect(validateValue(theme, 'sepia')).toBe('not-a-choice');
+    expect(validateValue(theme, 'sepia')).toEqual({ code: 'not-a-choice' });
   });
 
   it('rejects too many agents', () => {
-    expect(validateValue({ ...stewards, maxItems: 1 }, ['uhCAk1', 'uhCAk2'])).toBe('too-many');
+    expect(validateValue({ ...stewards, maxItems: 1 }, ['uhCAk1', 'uhCAk2'])).toEqual({
+      code: 'too-many',
+      limit: 1,
+    });
   });
 
   it('rejects too few agents', () => {
-    expect(validateValue({ ...stewards, minItems: 2 }, ['uhCAk1'])).toBe('too-few');
+    expect(validateValue({ ...stewards, minItems: 2 }, ['uhCAk1'])).toEqual({
+      code: 'too-few',
+      limit: 2,
+    });
   });
 
   it('treats an empty optional agent list as unset', () => {
@@ -247,7 +256,7 @@ describe('validateValue', () => {
   });
 
   it('rejects a string for a boolean', () => {
-    expect(validateValue(stewarded, 'true')).toBe('wrong-type');
+    expect(validateValue(stewarded, 'true')).toEqual({ code: 'wrong-type' });
   });
 
   it('accepts null for a nullable option', () => {
@@ -255,7 +264,7 @@ describe('validateValue', () => {
   });
 
   it('rejects null for a non-nullable option', () => {
-    expect(validateValue({ ...maxPosts, required: false }, null)).toBe('wrong-type');
+    expect(validateValue({ ...maxPosts, required: false }, null)).toEqual({ code: 'wrong-type' });
   });
 });
 

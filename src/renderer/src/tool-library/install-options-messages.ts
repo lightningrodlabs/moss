@@ -1,5 +1,4 @@
 import { msg, str } from '@lit/localize';
-import type { ToolInstallOption } from '@theweave/api';
 import type { DeclarationProblem, ValueProblem } from './install-options.js';
 
 /**
@@ -7,8 +6,8 @@ import type { DeclarationProblem, ValueProblem } from './install-options.js';
  * from the element so the wording is testable without a DOM.
  */
 
-export function valueProblemMessage(problem: ValueProblem, option: ToolInstallOption): string {
-  switch (problem) {
+export function valueProblemMessage(problem: ValueProblem): string {
+  switch (problem.code) {
     case 'required':
       return msg('Required');
     case 'wrong-type':
@@ -16,25 +15,19 @@ export function valueProblemMessage(problem: ValueProblem, option: ToolInstallOp
     case 'not-a-choice':
       return msg('Choose one of the listed values');
     case 'too-short':
-      return msg(
-        str`At least ${option.kind === 'string' ? (option.minLength ?? 0) : 0} characters`,
-      );
+      return msg(str`At least ${problem.limit} characters`);
     case 'too-long':
-      return msg(str`At most ${option.kind === 'string' ? option.maxLength : 0} characters`);
+      return msg(str`At most ${problem.limit} characters`);
     case 'below-min':
-      return msg(str`At least ${option.kind === 'number' ? option.min : 0}`);
+      return msg(str`At least ${problem.limit}`);
     case 'above-max':
-      return msg(str`At most ${option.kind === 'number' ? option.max : 0}`);
+      return msg(str`At most ${problem.limit}`);
     case 'not-integer':
       return msg('Must be a whole number');
     case 'too-few':
-      return msg(
-        str`Select at least ${option.kind === 'agentList' ? (option.minItems ?? 0) : 0} members`,
-      );
+      return msg(str`Select at least ${problem.limit} members`);
     case 'too-many':
-      return msg(
-        str`Select at most ${option.kind === 'agentList' ? (option.maxItems ?? 0) : 0} members`,
-      );
+      return msg(str`Select at most ${problem.limit} members`);
   }
 }
 

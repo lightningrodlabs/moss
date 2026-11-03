@@ -84,7 +84,7 @@ export class InstallOptionsForm extends LitElement {
     for (const option of this.options) {
       const problem = validateValue(option, this._values[optionKey(option)]);
       const control = this.controlFor(option);
-      control?.setCustomValidity(problem ? valueProblemMessage(problem, option) : '');
+      control?.setCustomValidity(problem ? valueProblemMessage(problem) : '');
       if (problem) {
         allValid = false;
         control?.reportValidity();

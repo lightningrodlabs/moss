@@ -31,17 +31,13 @@ export type DeclarationProblem = {
   property: string;
 };
 
+/** Why a value is not acceptable; bounded problems carry the bound they broke. */
 export type ValueProblem =
-  | 'required'
-  | 'wrong-type'
-  | 'not-a-choice'
-  | 'too-short'
-  | 'too-long'
-  | 'below-min'
-  | 'above-max'
-  | 'not-integer'
-  | 'too-few'
-  | 'too-many';
+  | { code: 'required' | 'wrong-type' | 'not-a-choice' | 'not-integer' }
+  | {
+      code: 'too-short' | 'too-long' | 'below-min' | 'above-max' | 'too-few' | 'too-many';
+      limit: number;
+    };
 
 function isNullable(option: ToolInstallOption): boolean {
   return option.kind !== 'boolean' && option.nullable === true;
@@ -168,33 +164,38 @@ export function validateValue(
   option: ToolInstallOption,
   value: InstallOptionValue | undefined,
 ): ValueProblem | undefined {
-  if (isUnset(option, value)) return option.required ? 'required' : undefined;
-  if (value === null) return isNullable(option) ? undefined : 'wrong-type';
-  if (!matchesKind(option, value)) return 'wrong-type';
+  if (isUnset(option, value)) return option.required ? { code: 'required' } : undefined;
+  if (value === null) return isNullable(option) ? undefined : { code: 'wrong-type' };
+  if (!matchesKind(option, value)) return { code: 'wrong-type' };
 
   switch (option.kind) {
     case 'boolean':
       return undefined;
     case 'stringChoice':
     case 'numberChoice':
-      return option.choices.some((choice) => choice.value === value) ? undefined : 'not-a-choice';
+      return option.choices.some((choice) => choice.value === value)
+        ? undefined
+        : { code: 'not-a-choice' };
     case 'string': {
       const text = value as string;
-      if (text.length < (option.minLength ?? 0)) return 'too-short';
-      if (text.length > option.maxLength) return 'too-long';
+      const minLength = option.minLength ?? 0;
+      if (text.length < minLength) return { code: 'too-short', limit: minLength };
+      if (text.length > option.maxLength) return { code: 'too-long', limit: option.maxLength };
       return undefined;
     }
     case 'number': {
       const n = value as number;
-      if (option.integer && !Number.isInteger(n)) return 'not-integer';
-      if (n < option.min) return 'below-min';
-      if (n > option.max) return 'above-max';
+      if (option.integer && !Number.isInteger(n)) return { code: 'not-integer' };
+      if (n < option.min) return { code: 'below-min', limit: option.min };
+      if (n > option.max) return { code: 'above-max', limit: option.max };
       return undefined;
     }
     case 'agentList': {
       const list = value as string[];
-      if (option.minItems !== undefined && list.length < option.minItems) return 'too-few';
-      if (option.maxItems !== undefined && list.length > option.maxItems) return 'too-many';
+      if (option.minItems !== undefined && list.length < option.minItems)
+        return { code: 'too-few', limit: option.minItems };
+      if (option.maxItems !== undefined && list.length > option.maxItems)
+        return { code: 'too-many', limit: option.maxItems };
       return undefined;
     }
   }
