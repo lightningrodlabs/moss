@@ -1,5 +1,7 @@
 use hdi::prelude::*;
 
+use super::StewardCredential;
+
 /// A gate that decides whether an agent may join the group. Gates compose
 /// through `AnyOf` and `AllOf`, so new combinations need no new variants.
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -21,13 +23,14 @@ pub enum JoinGate {
 }
 
 /// The membrane proof a joining agent presents at genesis.
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq, SerializedBytes)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, SerializedBytes)]
 pub struct GroupMembraneProof {
     pub signatures: Vec<JoinSignature>,
-    /// A non-expiring `StewardPermission` issued for the joining agent itself.
-    /// It lets the first stewards join groups whose policy needs a steward.
+    /// Proves the joining agent itself holds a non-expiring steward
+    /// permission. It lets the first stewards join groups whose policy needs a
+    /// steward. Empty when the joiner claims no steward standing.
     #[serde(default)]
-    pub own_steward_permission_hash: Option<ActionHash>,
+    pub own_steward_credential: Vec<StewardCredential>,
 }
 
 /// One signer's approval of a joining agent.
@@ -36,10 +39,12 @@ pub struct GroupMembraneProof {
 /// bytes. With `delegation`, `signature` is the invite key's signature over the
 /// join bytes, and the delegation carries the signer's signature over the
 /// invite key.
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct JoinSignature {
     pub signer: AgentPubKey,
-    pub steward_permission_hash: Option<ActionHash>,
+    /// Proves the signer holds a non-expiring steward permission. Empty when
+    /// the signer claims no steward standing.
+    pub steward_credential: Vec<StewardCredential>,
     pub signature: Signature,
     pub delegation: Option<Delegation>,
 }
@@ -123,14 +128,14 @@ mod tests {
         let proof = GroupMembraneProof {
             signatures: vec![JoinSignature {
                 signer: agent(4),
-                steward_permission_hash: None,
+                steward_credential: vec![],
                 signature: Signature::from([9u8; 64]),
                 delegation: Some(Delegation {
                     invite_key: agent(5),
                     delegation_signature: Signature::from([8u8; 64]),
                 }),
             }],
-            own_steward_permission_hash: Some(ActionHash::from_raw_32(vec![6; 32])),
+            own_steward_credential: vec![],
         };
         let sb = SerializedBytes::try_from(proof.clone()).unwrap();
         assert_eq!(GroupMembraneProof::try_from(sb).unwrap(), proof);

@@ -3,25 +3,25 @@ use std::collections::HashSet;
 use hdi::prelude::*;
 
 use super::{
-    check_policy_shape, delegation_payload_bytes, gate_satisfied, join_payload_bytes,
-    GroupMembraneProof, JoinSignature, VerifiedSigner, MAX_PROOF_SIGNATURES,
+    check_policy_shape, check_steward_chain, delegation_payload_bytes, gate_satisfied,
+    join_payload_bytes, verify_steward_chain, GroupMembraneProof, JoinSignature,
+    StewardCredential, VerifiedSigner, MAX_PROOF_SIGNATURES,
 };
-use crate::{is_non_expiring_steward, GroupDnaProperties};
+use crate::GroupDnaProperties;
 
 fn invalid(reason: impl Into<String>) -> ExternResult<ValidateCallbackResult> {
     Ok(ValidateCallbackResult::Invalid(reason.into()))
 }
 
 /// Decides whether `joining_agent` may join the group, given the membrane proof
-/// it presented. With `is_genesis` the check runs locally before the agent is
-/// on the network, so steward permissions are not looked up.
+/// it presented. The decision uses only the DNA properties and the proof, with
+/// no DHT lookups, so genesis and every peer reach the same result.
 ///
 /// Every failure caused by untrusted input returns `Invalid`. Only host-function
-/// failures and unresolved `must_get_*` dependencies return `Err`.
+/// failures return `Err`.
 pub fn validate_join(
     joining_agent: &AgentPubKey,
     membrane_proof: &Option<MembraneProof>,
-    is_genesis: bool,
 ) -> ExternResult<ValidateCallbackResult> {
     let info = dna_info()?;
     let properties = match join_properties(info.modifiers.properties.clone()) {
@@ -62,10 +62,11 @@ pub fn validate_join(
 
     let join_bytes = join_payload_bytes(&info.hash, joining_agent);
     let mut signers = Vec::with_capacity(proof.signatures.len() + 1);
-    if let Some(hash) = &proof.own_steward_permission_hash {
-        let is_steward = is_genesis || is_non_expiring_steward(joining_agent, hash.clone())?;
-        if !is_steward {
-            return invalid("own_steward_permission_hash is not a non-expiring StewardPermission for the joining agent");
+    if !proof.own_steward_credential.is_empty() {
+        if let Some(reason) =
+            steward_credential_problem(&proof.own_steward_credential, joining_agent, progenitor.as_ref())?
+        {
+            return invalid(format!("Joining agent's steward credential: {reason}"));
         }
         signers.push(VerifiedSigner {
             key: joining_agent.clone(),
@@ -83,11 +84,16 @@ pub fn validate_join(
         )? {
             return invalid(reason);
         }
-        let is_steward = match &signature.steward_permission_hash {
-            None => false,
-            Some(_) if is_genesis => true,
-            Some(hash) => is_non_expiring_steward(&signature.signer, hash.clone())?,
-        };
+        let is_steward = !signature.steward_credential.is_empty();
+        if is_steward {
+            if let Some(reason) = steward_credential_problem(
+                &signature.steward_credential,
+                &signature.signer,
+                progenitor.as_ref(),
+            )? {
+                return invalid(format!("Steward credential of {}: {reason}", signature.signer));
+            }
+        }
         signers.push(VerifiedSigner {
             is_progenitor: progenitor.as_ref() == Some(&signature.signer),
             is_steward,
@@ -101,6 +107,21 @@ pub fn validate_join(
     } else {
         invalid("The membrane proof does not satisfy this group's join policy")
     }
+}
+
+/// Returns why `chain` does not prove that `holder` is a steward, if it does not.
+fn steward_credential_problem(
+    chain: &[StewardCredential],
+    holder: &AgentPubKey,
+    progenitor: Option<&AgentPubKey>,
+) -> ExternResult<Option<String>> {
+    let Some(progenitor) = progenitor else {
+        return Ok(Some("this group has no progenitor, so it has no stewards".into()));
+    };
+    if let Err(reason) = check_steward_chain(chain, holder, progenitor) {
+        return Ok(Some(reason));
+    }
+    verify_steward_chain(chain)
 }
 
 /// Reads the DNA properties. A DNA installed with no properties is an open

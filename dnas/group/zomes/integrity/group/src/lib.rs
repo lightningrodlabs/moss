@@ -64,7 +64,7 @@ pub enum LinkTypes {
 }
 #[hdk_extern]
 pub fn genesis_self_check(data: GenesisSelfCheckData) -> ExternResult<ValidateCallbackResult> {
-    validate_join(&data.agent_key, &data.membrane_proof, true)
+    validate_join(&data.agent_key, &data.membrane_proof)
 }
 
 /// Checks a `CreateAgent` action against the membrane proof in the
@@ -81,7 +81,7 @@ fn validate_create_agent(
     let previous_action = must_get_action(prev_action_hash.clone())?;
     match &previous_action.action().data {
         ActionData::AgentValidationPkg(AgentValidationPkgData { membrane_proof }) => {
-            validate_join(agent, membrane_proof, false)
+            validate_join(agent, membrane_proof)
         }
         _ => Ok(ValidateCallbackResult::Invalid(
             "The previous action for a `CreateAgent` action must be an `AgentValidationPkg`".into(),
