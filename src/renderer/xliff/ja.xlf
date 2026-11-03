@@ -3480,6 +3480,122 @@ starts now</source>
   <source>Opening Moss...</source>
   <target>Moss を開いています...</target>
 </trans-unit>
+<trans-unit id="sae5d87e99fe081e0">
+  <source>Required</source>
+  <target>必須</target>
+</trans-unit>
+<trans-unit id="s39113ead77d109f2">
+  <source>Wrong type</source>
+  <target>型が正しくありません</target>
+</trans-unit>
+<trans-unit id="sa01ca5515c1bba3f">
+  <source>Choose one of the listed values</source>
+  <target>一覧の値から選択してください</target>
+</trans-unit>
+<trans-unit id="s9935205555f03661">
+  <source>At least <x id="0" equiv-text="${problem.limit}"/> characters</source>
+  <target><x id="0" equiv-text="${option.kind === 'string' ? (option.minLength ?? 0) : 0}"/> 文字以上</target>
+</trans-unit>
+<trans-unit id="s418946207fdad993">
+  <source>At most <x id="0" equiv-text="${problem.limit}"/> characters</source>
+  <target><x id="0" equiv-text="${option.kind === 'string' ? option.maxLength : 0}"/> 文字以内</target>
+</trans-unit>
+<trans-unit id="sca2ca47d776f686f">
+  <source>At least <x id="0" equiv-text="${problem.limit}"/></source>
+  <target><x id="0" equiv-text="${option.kind === 'number' ? option.min : 0}"/> 以上</target>
+</trans-unit>
+<trans-unit id="s76221aaa3f3db961">
+  <source>At most <x id="0" equiv-text="${problem.limit}"/></source>
+  <target><x id="0" equiv-text="${option.kind === 'number' ? option.max : 0}"/> 以下</target>
+</trans-unit>
+<trans-unit id="sd5a172c4edfd637a">
+  <source>Must be a whole number</source>
+  <target>整数で入力してください</target>
+</trans-unit>
+<trans-unit id="s7eeccfb88eda3386">
+  <source>Select at least <x id="0" equiv-text="${problem.limit}"/> members</source>
+  <target>メンバーを <x id="0" equiv-text="${option.kind === 'agentList' ? (option.minItems ?? 0) : 0}"/> 人以上選択してください</target>
+</trans-unit>
+<trans-unit id="s440d15aea6c52874">
+  <source>Select at most <x id="0" equiv-text="${problem.limit}"/> members</source>
+  <target>メンバーは <x id="0" equiv-text="${option.kind === 'agentList' ? (option.maxItems ?? 0) : 0}"/> 人まで選択できます</target>
+</trans-unit>
+<trans-unit id="sfeb62ec512ee8d5a">
+  <source>Role "<x id="0" equiv-text="${role}"/>" is not in this Tool's happ</source>
+  <target>ロール「<x id="0" equiv-text="${role}"/>」はこのツールの happ にありません</target>
+</trans-unit>
+<trans-unit id="se7be9358b38a8acc">
+  <source>Option <x id="0" equiv-text="${name}"/> is declared twice</source>
+  <target>オプション <x id="0" equiv-text="${name}"/> が二重に宣言されています</target>
+</trans-unit>
+<trans-unit id="s7640b2d2578a0c5b">
+  <source>Option <x id="0" equiv-text="${name}"/> has an invalid range</source>
+  <target>オプション <x id="0" equiv-text="${name}"/> の範囲が無効です</target>
+</trans-unit>
+<trans-unit id="sbba70e8956cc9b45">
+  <source>Option <x id="0" equiv-text="${name}"/> has invalid choices</source>
+  <target>オプション <x id="0" equiv-text="${name}"/> の選択肢が無効です</target>
+</trans-unit>
+<trans-unit id="sde749a2dacae6349">
+  <source>Option <x id="0" equiv-text="${name}"/> has a default outside its constraints</source>
+  <target>オプション <x id="0" equiv-text="${name}"/> の既定値が制約の範囲外です</target>
+</trans-unit>
+<trans-unit id="saa6f44424261a70c">
+  <source>Option <x id="0" equiv-text="${name}"/> cannot be both required and nullable</source>
+  <target>オプション <x id="0" equiv-text="${name}"/> を必須かつ nullable にはできません</target>
+</trans-unit>
+<trans-unit id="sb7b2ed0c7cad6752">
+  <source>Select members</source>
+  <target>メンバーを選択</target>
+</trans-unit>
+<trans-unit id="s7b0910e0e6da4038">
+  <source>This Tool declares install options in a format Moss does not understand.</source>
+  <target>このツールは Moss が解釈できない形式でインストールオプションを宣言しています。</target>
+</trans-unit>
+<trans-unit id="s1ade2b1463ead3f6">
+  <source>yaml. Values chosen above override these keys.</source>
+  <target>yaml。上で選んだ値がこれらのキーを上書きします。</target>
+</trans-unit>
+<trans-unit id="s7db428fe6f9264bc">
+  <source>You can still set DNA properties under Advanced.</source>
+  <target>DNA プロパティは「詳細設定」から引き続き設定できます。</target>
+</trans-unit>
+<trans-unit id="s34946a06ae82817e">
+  <source>Install options</source>
+  <target>インストールオプション</target>
+</trans-unit>
+<trans-unit id="s7f59f507e02a2f38">
+  <source>View</source>
+  <target>表示</target>
+</trans-unit>
+<trans-unit id="saa6d4980bd7d4f1f">
+  <source>About install options</source>
+  <target>インストールオプションについて</target>
+</trans-unit>
+<trans-unit id="sebff61b46bb2a1be">
+  <source>These choices are written into the DNA properties of this Tool instance. DNA properties are part of its identity on the network, so everyone who joins the instance gets exactly the same values.</source>
+  <target>これらの選択は、このツールインスタンスのDNAプロパティに書き込まれます。DNAプロパティはネットワーク上での識別情報の一部なので、インスタンスに参加する全員がまったく同じ値を受け取ります。</target>
+</trans-unit>
+<trans-unit id="sb58cbaf28e64cb82">
+  <source>They are permanent. Once the Tool is installed, the values cannot be changed. To use different values, install a new instance of the Tool.</source>
+  <target>これらは永続的です。ツールをインストールした後は値を変更できません。別の値を使うには、ツールの新しいインスタンスをインストールしてください。</target>
+</trans-unit>
+<trans-unit id="s5fe59e9e7e8ab433">
+  <source>All group members will be able to see the DNA properties in the Tool’s Advanced settings, under DNA Properties.</source>
+  <target>グループの全メンバーが、ツールの詳細設定の「DNAプロパティ」でDNAプロパティを確認できます。</target>
+</trans-unit>
+<trans-unit id="s1f781dc01a2b5152">
+  <source>Cells</source>
+  <target>セル</target>
+</trans-unit>
+<trans-unit id="sfbaa654a4433213a">
+  <source>DNA hash</source>
+  <target>DNAハッシュ</target>
+</trans-unit>
+<trans-unit id="sfdb24b0b0e46f052">
+  <source>network seed</source>
+  <target>ネットワークシード</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

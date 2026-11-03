@@ -3480,6 +3480,122 @@ commence maintenant</target>
   <source>Opening Moss...</source>
   <target>Ouverture de Moss...</target>
 </trans-unit>
+<trans-unit id="sae5d87e99fe081e0">
+  <source>Required</source>
+  <target>Obligatoire</target>
+</trans-unit>
+<trans-unit id="s39113ead77d109f2">
+  <source>Wrong type</source>
+  <target>Type incorrect</target>
+</trans-unit>
+<trans-unit id="sa01ca5515c1bba3f">
+  <source>Choose one of the listed values</source>
+  <target>Choisissez une des valeurs proposées</target>
+</trans-unit>
+<trans-unit id="s9935205555f03661">
+  <source>At least <x id="0" equiv-text="${problem.limit}"/> characters</source>
+  <target>Au moins <x id="0" equiv-text="${option.kind === 'string' ? (option.minLength ?? 0) : 0}"/> caractères</target>
+</trans-unit>
+<trans-unit id="s418946207fdad993">
+  <source>At most <x id="0" equiv-text="${problem.limit}"/> characters</source>
+  <target>Au plus <x id="0" equiv-text="${option.kind === 'string' ? option.maxLength : 0}"/> caractères</target>
+</trans-unit>
+<trans-unit id="sca2ca47d776f686f">
+  <source>At least <x id="0" equiv-text="${problem.limit}"/></source>
+  <target>Au moins <x id="0" equiv-text="${option.kind === 'number' ? option.min : 0}"/></target>
+</trans-unit>
+<trans-unit id="s76221aaa3f3db961">
+  <source>At most <x id="0" equiv-text="${problem.limit}"/></source>
+  <target>Au plus <x id="0" equiv-text="${option.kind === 'number' ? option.max : 0}"/></target>
+</trans-unit>
+<trans-unit id="sd5a172c4edfd637a">
+  <source>Must be a whole number</source>
+  <target>Doit être un nombre entier</target>
+</trans-unit>
+<trans-unit id="s7eeccfb88eda3386">
+  <source>Select at least <x id="0" equiv-text="${problem.limit}"/> members</source>
+  <target>Sélectionnez au moins <x id="0" equiv-text="${option.kind === 'agentList' ? (option.minItems ?? 0) : 0}"/> membres</target>
+</trans-unit>
+<trans-unit id="s440d15aea6c52874">
+  <source>Select at most <x id="0" equiv-text="${problem.limit}"/> members</source>
+  <target>Sélectionnez au plus <x id="0" equiv-text="${option.kind === 'agentList' ? (option.maxItems ?? 0) : 0}"/> membres</target>
+</trans-unit>
+<trans-unit id="sfeb62ec512ee8d5a">
+  <source>Role "<x id="0" equiv-text="${role}"/>" is not in this Tool's happ</source>
+  <target>Le rôle « <x id="0" equiv-text="${role}"/> » n'existe pas dans le happ de cet outil</target>
+</trans-unit>
+<trans-unit id="se7be9358b38a8acc">
+  <source>Option <x id="0" equiv-text="${name}"/> is declared twice</source>
+  <target>L'option <x id="0" equiv-text="${name}"/> est déclarée deux fois</target>
+</trans-unit>
+<trans-unit id="s7640b2d2578a0c5b">
+  <source>Option <x id="0" equiv-text="${name}"/> has an invalid range</source>
+  <target>L'option <x id="0" equiv-text="${name}"/> a une plage invalide</target>
+</trans-unit>
+<trans-unit id="sbba70e8956cc9b45">
+  <source>Option <x id="0" equiv-text="${name}"/> has invalid choices</source>
+  <target>L'option <x id="0" equiv-text="${name}"/> a des choix invalides</target>
+</trans-unit>
+<trans-unit id="sde749a2dacae6349">
+  <source>Option <x id="0" equiv-text="${name}"/> has a default outside its constraints</source>
+  <target>La valeur par défaut de l'option <x id="0" equiv-text="${name}"/> est hors de ses limites</target>
+</trans-unit>
+<trans-unit id="saa6f44424261a70c">
+  <source>Option <x id="0" equiv-text="${name}"/> cannot be both required and nullable</source>
+  <target>L'option <x id="0" equiv-text="${name}"/> ne peut pas être à la fois obligatoire et nullable</target>
+</trans-unit>
+<trans-unit id="sb7b2ed0c7cad6752">
+  <source>Select members</source>
+  <target>Sélectionner des membres</target>
+</trans-unit>
+<trans-unit id="s7b0910e0e6da4038">
+  <source>This Tool declares install options in a format Moss does not understand.</source>
+  <target>Cet outil déclare des options d'installation dans un format que Moss ne comprend pas.</target>
+</trans-unit>
+<trans-unit id="s1ade2b1463ead3f6">
+  <source>yaml. Values chosen above override these keys.</source>
+  <target>yaml. Les valeurs choisies ci-dessus remplacent ces clés.</target>
+</trans-unit>
+<trans-unit id="s7db428fe6f9264bc">
+  <source>You can still set DNA properties under Advanced.</source>
+  <target>Vous pouvez toujours définir les propriétés de la DNA sous « Avancé ».</target>
+</trans-unit>
+<trans-unit id="s34946a06ae82817e">
+  <source>Install options</source>
+  <target>Options d'installation</target>
+</trans-unit>
+<trans-unit id="s7f59f507e02a2f38">
+  <source>View</source>
+  <target>Afficher</target>
+</trans-unit>
+<trans-unit id="saa6d4980bd7d4f1f">
+  <source>About install options</source>
+  <target>À propos des options d’installation</target>
+</trans-unit>
+<trans-unit id="sebff61b46bb2a1be">
+  <source>These choices are written into the DNA properties of this Tool instance. DNA properties are part of its identity on the network, so everyone who joins the instance gets exactly the same values.</source>
+  <target>Ces choix sont écrits dans les propriétés DNA de cette instance de l’outil. Les propriétés DNA font partie de son identité sur le réseau, donc toute personne qui rejoint l’instance obtient exactement les mêmes valeurs.</target>
+</trans-unit>
+<trans-unit id="sb58cbaf28e64cb82">
+  <source>They are permanent. Once the Tool is installed, the values cannot be changed. To use different values, install a new instance of the Tool.</source>
+  <target>Elles sont permanentes. Une fois l’outil installé, les valeurs ne peuvent plus être modifiées. Pour utiliser d’autres valeurs, installez une nouvelle instance de l’outil.</target>
+</trans-unit>
+<trans-unit id="s5fe59e9e7e8ab433">
+  <source>All group members will be able to see the DNA properties in the Tool’s Advanced settings, under DNA Properties.</source>
+  <target>Tous les membres du groupe pourront voir les propriétés DNA dans les paramètres avancés de l’outil, sous « Propriétés DNA ».</target>
+</trans-unit>
+<trans-unit id="s1f781dc01a2b5152">
+  <source>Cells</source>
+  <target>Cellules</target>
+</trans-unit>
+<trans-unit id="sfbaa654a4433213a">
+  <source>DNA hash</source>
+  <target>Hash DNA</target>
+</trans-unit>
+<trans-unit id="sfdb24b0b0e46f052">
+  <source>network seed</source>
+  <target>seed réseau</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

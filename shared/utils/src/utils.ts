@@ -15,7 +15,10 @@ import {
   encodeHashToBase64,
   HoloHashB64,
   ListAppsResponse,
+  RoleSettings,
+  RoleSettingsMap,
 } from '@holochain/client';
+import { decode } from '@msgpack/msgpack';
 import { AppletId, AppletHash } from '@theweave/api';
 import { Value } from '@sinclair/typebox/value';
 import { Md5 } from 'ts-md5';
@@ -133,4 +136,21 @@ export function getCellId(cellInfo: CellInfo): CellId | undefined {
     return cellInfo.value.cell_id;
   }
   return undefined;
+}
+
+/**
+ * Turns the msgpack-encoded per-role properties stored in a group's Applet
+ * entry into the role settings a conductor install takes, so every member
+ * installs the instance with the properties the installer chose.
+ */
+export function rolesSettingsFor(properties: Record<string, Uint8Array>): RoleSettingsMap {
+  return Object.fromEntries(
+    Object.entries(properties).map(([roleName, bytes]) => {
+      const settings: RoleSettings = {
+        type: 'provisioned',
+        value: { modifiers: { properties: decode(bytes) } },
+      };
+      return [roleName, settings];
+    }),
+  );
 }

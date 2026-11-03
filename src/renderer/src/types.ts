@@ -77,10 +77,6 @@ export type UpdateFeedMessage = {
   message: string;
 };
 
-export type ToolWeaveConfig = {
-  crossGroupView: boolean;
-};
-
 // CHANGE ALSO IN src/main/sharedTypes.ts
 /**
  * Reply envelope the main renderer sends back for an AppletToParentRequest

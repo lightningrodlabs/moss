@@ -25,6 +25,7 @@ import { dnaHashForCell, getCellNetworkSeed, getProvisionedCells } from '../../u
 import { chevronSingleDownIcon, chevronSingleUpIcon } from '../../ui/icons.js';
 import { BaseAppletSettingsCard } from './base-applet-settings-card.js';
 import { myStewardPermissionHash } from '../../groups/accountability-utils.js';
+import { hasAnyProperties } from '../../groups/dna-property-values.js';
 import {
   selectDevUiWebhapp,
   setDevUiOverride,
@@ -169,7 +170,7 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
 
     return html`
       <!-- Cells -->
-      <div style="margin-top: 5px; margin-bottom: 3px; color:#89D6AA">// Cells:</div>
+      <div style="margin-top: 5px; margin-bottom: 3px; color:#89D6AA">// ${msg('Cells')}:</div>
       <div>
         ${this.appInfo
           ? getProvisionedCells(this.appInfo).map(
@@ -179,14 +180,14 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
                     <span><b>${roleName} </b></span><br />
                   </div>
                   <div class="row  items-center" style="margin-bottom: 3px;">
-                    DNA hash:
+                    ${msg('DNA hash')}:
                     <copy-hash
                       styles="color:#E7EEC4;font-size:12px;"
                       .hash=${dnaHashForCell(cellInfo)}
                     ></copy-hash>
                   </div>
                   <div class="row items-center" style="margin-bottom: 4px;">
-                    network seed:
+                    ${msg('network seed')}:
                     <copy-hash
                       styles="color:#E7EEC4;font-size:12px;"
                       .hash=${getCellNetworkSeed(cellInfo)}
@@ -195,6 +196,29 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
                 </div>
               `,
             )
+          : html``}
+        ${hasAnyProperties(this.applet.properties)
+          ? html`<div class="row items-center" style="margin: 6px 0 8px;">
+              <span>${msg('DNA Properties')}</span>
+              <span style="flex: 1;"></span>
+              <sl-button
+                variant="neutral"
+                size="small"
+                @click=${(e: MouseEvent) => {
+                  e.stopPropagation();
+                  this.dispatchEvent(
+                    new CustomEvent('view-dna-properties', {
+                      bubbles: true,
+                      composed: true,
+                      detail: this.appletHash,
+                    }),
+                  );
+                }}
+              >
+                <sl-icon slot="prefix" .src=${wrapPathInSvg(mdiTune)}></sl-icon>
+                ${msg('View')}
+              </sl-button>
+            </div>`
           : html``}
 
         <div class="row items-center">
@@ -337,25 +361,6 @@ export class AppletSettingsCard extends BaseAppletSettingsCard {
     return html`
       <div class="row">
         ${this.renderAdvancedSettingsToggle()}
-
-        <moss-mini-button
-          variant="primary"
-          color="#EEEEEE"
-          style="margin-right:8px;"
-          @click=${() =>
-            this.dispatchEvent(
-              new CustomEvent('view-dna-properties', {
-                bubbles: true,
-                composed: true,
-                detail: this.appletHash,
-              }),
-            )}
-        >
-          <div class="row center-content">
-            <sl-icon style="height: 20px; width: 20px;" .src=${wrapPathInSvg(mdiTune)}></sl-icon
-            ><span style="margin-left: 5px;">${msg('DNA Properties')}</span>
-          </div>
-        </moss-mini-button>
 
         <div style="flex-grow: 1"></div>
 

@@ -23,6 +23,7 @@ import type {
   AsrSessionOptions,
   LocalModelCapabilities,
   AsrHostStatus,
+  ToolWeaveConfig,
 } from '@theweave/api';
 import {
   AppAssetsInfo,
@@ -36,6 +37,7 @@ import {
   AsrModelDownloadEnded,
   AsrModelDownloadProgress,
   AsrModelListEntry,
+  HappOrWebhappInspection,
   LocalToolInfo,
   ResourceLocation,
   ToolCompatibilityId,
@@ -43,7 +45,7 @@ import {
   ToolTransferRequest,
   WeaveDevConfig,
 } from '@theweave/moss-types';
-import { AppletHostResponse, ToolWeaveConfig } from './types';
+import { AppletHostResponse } from './types';
 
 // IPC_CHANGE_HERE
 
@@ -316,7 +318,10 @@ declare global {
         vmSizeBytes: number;
         pid: number;
       } | null>;
-      fetchAndValidateHappOrWebhapp: (url: string) => Promise<any>;
+      fetchAndValidateHappOrWebhapp: (
+        url: string,
+        uiPort?: number,
+      ) => Promise<HappOrWebhappInspection>;
       validateHappOrWebhapp: (bytes: number[]) => Promise<AppHashes>;
       // Dev UI Override
       selectDevUiWebhapp: () => Promise<string | undefined>;
@@ -594,8 +599,11 @@ export function onAudioSourceGrantsChanged(callback: (grants: AudioSourceGrantIn
   window.electronAPI.onAudioSourceGrantsChanged((_e, grants) => callback(grants));
 }
 
-export async function fetchAndValidateHappOrWebhapp(url: string) {
-  return window.electronAPI.fetchAndValidateHappOrWebhapp(url);
+export async function fetchAndValidateHappOrWebhapp(
+  url: string,
+  uiPort?: number,
+): Promise<HappOrWebhappInspection> {
+  return window.electronAPI.fetchAndValidateHappOrWebhapp(url, uiPort);
 }
 
 export async function validateHappOrWebhapp(bytes: number[]) {

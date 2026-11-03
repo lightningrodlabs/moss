@@ -3,3 +3,4 @@ export * from './const.js';
 export * from './defineConfig.js';
 export * from './audio-sources.js';
 export * from './asr-models.js';
+export * from './tool-config.js';

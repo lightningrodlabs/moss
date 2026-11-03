@@ -36,7 +36,6 @@ import {
   InstalledAppId,
   LazyHoloHashMap,
   ProvisionedCell,
-  RoleSettings,
   RoleSettingsMap,
   WsClient,
 } from '@holochain/client';
@@ -109,6 +108,7 @@ import {
   instrumentZomeCallLogging,
   isAppDisabled,
   isAppRunning,
+  rolesSettingsFor,
   toolCompatibilityIdFromDistInfo,
   toolCompatibilityIdFromDistInfoString,
 } from '@theweave/utils';
@@ -125,7 +125,7 @@ import {
 } from './types.js';
 import { Applet, AssetsClient, GroupClient, GroupProfile } from '@theweave/group-client';
 import { fromUint8Array } from 'js-base64';
-import { decode, encode } from '@msgpack/msgpack';
+import { encode } from '@msgpack/msgpack';
 import { AssetViewerState, DashboardState } from './app/main-dashboard.js';
 import { PersistedStore, SectionReadStates } from './persisted-store.js';
 import { MossCache } from './cache.js';
@@ -1375,21 +1375,6 @@ export class MossStore {
     });
   }
 
-  private rolesSettingsFor(applet: Applet): RoleSettingsMap {
-    return Object.fromEntries(
-      Object.entries(applet.properties).map(([key, bytes]) => {
-        const settings: RoleSettings = {
-          type: 'provisioned',
-          value: {
-            //membrane_proof?: MembraneProof;
-            modifiers: { properties: decode(bytes) },
-          },
-        };
-        return [key, settings];
-      }),
-    );
-  }
-
   /**
    * Resolves where to download the Tool from and which hashes to verify, using
    * the developer collective's tool list (or the dev config in applet dev mode).
@@ -1499,7 +1484,7 @@ export class MossStore {
         "Distribution info types other than 'web2-tool-list' are currently not supported.",
       );
     }
-    const roles_settings = this.rolesSettingsFor(applet);
+    const roles_settings = rolesSettingsFor(applet.properties);
 
     try {
       this.setInstallProgress(appletId, { phase: 'library' });
