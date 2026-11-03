@@ -5,6 +5,7 @@ import {
   DnaHash,
   Duration,
   EntryHash,
+  Signature,
   Timestamp,
 } from '@holochain/client';
 import { AppletId, WAL } from '@theweave/api';
@@ -200,8 +201,14 @@ export type AppletAgent = {
   applet_pubkey: AgentPubKey;
 };
 
+/**
+ * The group DNA properties. Omit `join_policy` and `allow_delegated_invites`
+ * when they have their default values, so open groups keep the same DNA hash.
+ */
 export type GroupDnaProperties = {
   progenitor: AgentPubKeyB64 | null;
+  join_policy?: JoinGate;
+  allow_delegated_invites?: boolean;
 };
 
 export type SignalPayloadGroup = {
@@ -332,3 +339,43 @@ export type GroupRemoteSignal =
       type: 'tool-transfer';
       payload: ToolTransferMessage;
     };
+
+/**
+ * A gate that decides who may join a group. Mirrors `JoinGate` in the group
+ * integrity zome. Gates compose through `AnyOf` and `AllOf`.
+ */
+export type JoinGate =
+  | { type: 'Progenitor' }
+  | { type: 'Steward' }
+  | { type: 'External'; content: { keys: AgentPubKeyB64[]; threshold: number } }
+  | { type: 'AllowList'; content: { agents: AgentPubKeyB64[] } }
+  | { type: 'AnyOf'; content: JoinGate[] }
+  | { type: 'AllOf'; content: JoinGate[] };
+
+/** A signer's approval of a one-time invite key. */
+export type Delegation = {
+  invite_key: AgentPubKey;
+  delegation_signature: Signature;
+};
+
+/** One signer's approval of a joining agent. */
+export type JoinSignature = {
+  signer: AgentPubKey;
+  steward_permission_hash: ActionHash | null;
+  signature: Signature;
+  delegation: Delegation | null;
+};
+
+/** What a signer returns for an offline invite link. */
+export type InviteDelegation = {
+  signer: AgentPubKey;
+  steward_permission_hash: ActionHash | null;
+  delegation: Delegation;
+};
+
+/** The membrane proof a joining agent presents, msgpack-encoded at install. */
+export type GroupMembraneProof = {
+  signatures: JoinSignature[];
+  /** A non-expiring steward permission issued for the joining agent itself. */
+  own_steward_permission_hash?: ActionHash | null;
+};
