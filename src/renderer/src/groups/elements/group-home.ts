@@ -1,6 +1,6 @@
 import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { localized, msg } from '@lit/localize';
-import { css, html, LitElement, TemplateResult, nothing } from 'lit';
+import { css, html, LitElement, nothing } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import {
   AgentPubKey,
@@ -35,7 +35,6 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
-import '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 
 import './group-peers-status.js';
 import './applet-install-progress.js';
@@ -51,6 +50,7 @@ import '../../self/profile/moss-profile-detail.js';
 import '../../ui/copy-hash.js';
 import './invite/invite-people-dialog.js';
 import './group-dashboard.js';
+import './dna-properties-view.js';
 
 import { groupStoreContext } from '../context.js';
 import { GroupStore } from '../group-store.js';
@@ -68,8 +68,6 @@ import type { GroupDashboardEl } from './group-dashboard.js';
 import type { LookingForPeers } from './looking-for-peers.js';
 import { nextSyncOverlay, ProfileState } from '../sync-final-sequence.js';
 import type { GroupContextAction } from '../../app/navigation/group-context-menu-items.js';
-import yaml from 'js-yaml';
-import { decode } from '@msgpack/msgpack';
 
 type View = {
   view: 'main';
@@ -502,29 +500,6 @@ export class GroupHome extends LitElement {
 
   renderDnaPropertiesDialog() {
     if (!this._appletToViewDna) return html``;
-
-    /** Generate UI for dna properties per role */
-    //console.log("dnaProperties", this._dnaProperties);
-    const dnaParams: TemplateResult<1>[] = [];
-    for (const [roleName, properties] of Object.entries(this._appletToViewDna.properties)) {
-      const yamlStr = yaml.dump(decode(properties));
-      //const yamlStr = JSON.stringify(properties, null, 2);
-      dnaParams.push(html`
-        <sl-tab slot="nav" .panel=${roleName}>${roleName}</sl-tab>
-        <sl-tab-panel .name=${roleName}>
-          <sl-textarea
-            filled
-            resize="auto"
-            readonly
-            size="small"
-            rows="6"
-            .value=${yamlStr}
-            style="font-family: monospace"
-          ></sl-textarea>
-        </sl-tab-panel>
-      `);
-    }
-
     return html`
       <moss-dialog id="dna-properties-dialog" width="590px" headerAlign="center">
         <div slot="header">
@@ -532,9 +507,9 @@ export class GroupHome extends LitElement {
           <div style="margin-top:10px">"${this._appletToViewDna.custom_name}"</div>
         </div>
         <div slot="content" class="column" style="align-items: center; text-align: center;">
-          ${dnaParams.length > 0
-            ? html` <sl-tab-group style="width:100%;"> ${dnaParams} </sl-tab-group> `
-            : html`${msg('None')}`}
+          <dna-properties-view
+            .properties=${this._appletToViewDna.properties}
+          ></dna-properties-view>
         </div>
       </moss-dialog>
     `;

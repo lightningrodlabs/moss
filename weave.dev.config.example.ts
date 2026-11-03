@@ -39,6 +39,7 @@ export default defineConfig({
           instanceName: 'Example Applet',
           registeringAgent: 1,
           joiningAgents: [2],
+          properties: { forum: { stewarded: true, maxPosts: 100 } },
         },
         {
           name: 'Example Applet Hot Reload',

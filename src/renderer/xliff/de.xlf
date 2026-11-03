@@ -2020,18 +2020,6 @@ beginnt jetzt</target>
   <source>Importing groups...</source>
   <target>Gruppen werden importiert…</target>
 </trans-unit>
-<trans-unit id="s1db8ae432fd2d80c">
-  <source>Import existing data?</source>
-  <target>Vorhandene Daten importieren?</target>
-</trans-unit>
-<trans-unit id="sb9bf0a402ae8b0b8">
-  <source>Moss data from previous version(s) found. You can import to keep your previous identity and groups, or start fresh.</source>
-  <target>Moss-Daten aus früheren Versionen gefunden. Du kannst sie importieren, um deine bisherige Identität und Gruppen zu behalten, oder neu starten.</target>
-</trans-unit>
-<trans-unit id="sb4319ece7027f084">
-  <source>Import data</source>
-  <target>Daten importieren</target>
-</trans-unit>
 <trans-unit id="sfd5be1a75a199417">
   <source>Start fresh</source>
   <target>Neu beginnen</target>
@@ -3274,6 +3262,262 @@ beginnt jetzt</target>
 <trans-unit id="sb4a1e81ee82ba711">
   <source>Could not stop leftover processes.</source>
   <target>Übrig gebliebene Prozesse konnten nicht beendet werden.</target>
+</trans-unit>
+<trans-unit id="s658f51369f706454">
+  <source>Import from an earlier Moss version?</source>
+  <target>Aus einer früheren Moss-Version importieren?</target>
+</trans-unit>
+<trans-unit id="s0d6c967e8aaf4abc">
+  <source>Import a copy of a profile?</source>
+  <target>Eine Kopie eines Profils importieren?</target>
+</trans-unit>
+<trans-unit id="see53272060a09c3a">
+  <source>This version of Moss cannot connect to people who still use an earlier version. You can bring your identity and groups over from an earlier version, or start fresh.</source>
+  <target>Diese Moss-Version kann sich nicht mit Personen verbinden, die noch eine frühere Version nutzen. Du kannst deine Identität und Gruppen aus einer früheren Version übernehmen oder neu starten.</target>
+</trans-unit>
+<trans-unit id="s2c059dc19ef2d49d">
+  <source>You can copy the identity and groups of an existing profile. The copied groups and Tools join new networks, separate from the originals.</source>
+  <target>Du kannst die Identität und Gruppen eines vorhandenen Profils kopieren. Die kopierten Gruppen und Tools treten neuen Netzwerken bei, getrennt von den Originalen.</target>
+</trans-unit>
+<trans-unit id="s7293b574f8e4277f">
+  <source>Version to import from</source>
+  <target>Zu importierende Version</target>
+</trans-unit>
+<trans-unit id="s5efec4756b02a31c">
+  <source>Profile to copy</source>
+  <target>Zu kopierendes Profil</target>
+</trans-unit>
+<trans-unit id="s7f7955db2b0740c7">
+  <source>Profile "<x id="0" equiv-text="${selected.profileName}"/>", last used <x id="1" equiv-text="${this._lastUsed(selected)}"/></source>
+  <target>Profil „<x id="0" equiv-text="${selected.profileName}"/>“, zuletzt verwendet am <x id="1" equiv-text="${this._lastUsed(selected)}"/></target>
+</trans-unit>
+<trans-unit id="s9b1f95dcd792e7d8">
+  <source>What gets imported</source>
+  <target>Was importiert wird</target>
+</trans-unit>
+<trans-unit id="sd7dba4dfa609ceda">
+  <source>Your identity, so other members recognize you.</source>
+  <target>Deine Identität, damit andere Mitglieder dich erkennen.</target>
+</trans-unit>
+<trans-unit id="s23fbc9a307157195">
+  <source>Your groups, with their names, icons and your profile in each.</source>
+  <target>Deine Gruppen, mit Namen, Symbolen und deinem Profil in jeder Gruppe.</target>
+</trans-unit>
+<trans-unit id="s67d89ac73fe0258f">
+  <source>What does not get imported</source>
+  <target>Was nicht importiert wird</target>
+</trans-unit>
+<trans-unit id="sb57b10b357e12324">
+  <source>The content inside Tools, for example posts, files and boards. The Tools start empty. If a Tool can export its data, export it in the earlier version and import it here.</source>
+  <target>Die Inhalte in den Tools, zum Beispiel Beiträge, Dateien und Boards. Die Tools starten leer. Wenn ein Tool seine Daten exportieren kann, exportiere sie in der früheren Version und importiere sie hier.</target>
+</trans-unit>
+<trans-unit id="sf117ddaebe5a0454">
+  <source>Importing copies the data. The earlier profile does not change.</source>
+  <target>Beim Import werden die Daten kopiert. Das frühere Profil bleibt unverändert.</target>
+</trans-unit>
+<trans-unit id="s3914cb410fca44d4">
+  <source>Import</source>
+  <target>Importieren</target>
+</trans-unit>
+<trans-unit id="s0194f7d4395c9c88">
+  <source>The Tools in each group, if they are available for this version of Moss. After the import, Moss lists any Tool that it could not install.</source>
+  <target>Die Tools in jeder Gruppe, sofern sie für diese Moss-Version verfügbar sind. Nach dem Import zeigt Moss jedes Tool an, das es nicht installieren konnte.</target>
+</trans-unit>
+<trans-unit id="s91db1ebbf945daae">
+  <source>The Tools of a stewarded group that you did not create. They appear when the person who created the group imports it into this version of Moss.</source>
+  <target>Die Tools einer betreuten Gruppe, die du nicht erstellt hast. Sie erscheinen, sobald die Person, die die Gruppe erstellt hat, sie in diese Moss-Version importiert.</target>
+</trans-unit>
+<trans-unit id="s4de540ccd91a5192">
+  <source>Members who still use an earlier version cannot see you here until they also move to this version.</source>
+  <target>Mitglieder, die noch eine frühere Version nutzen, sehen dich hier erst, wenn sie ebenfalls zu dieser Version wechseln.</target>
+</trans-unit>
+<trans-unit id="s4eb955e68015ab8f">
+  <source>Not available for this version of Moss:</source>
+  <target>Für diese Moss-Version nicht verfügbar:</target>
+</trans-unit>
+<trans-unit id="scd97263b8982f6c8">
+  <source>Could not be installed:</source>
+  <target>Konnte nicht installiert werden:</target>
+</trans-unit>
+<trans-unit id="s57bc3d2af21d632e">
+  <source>You did not create this group, so Moss did not install its Tools. They appear when the person who created the group imports it into this version of Moss.</source>
+  <target>Du hast diese Gruppe nicht erstellt, daher hat Moss ihre Tools nicht installiert. Sie erscheinen, sobald die Person, die die Gruppe erstellt hat, sie in diese Moss-Version importiert.</target>
+</trans-unit>
+<trans-unit id="s931926d743ce9a0a">
+  <source>Import finished</source>
+  <target>Import abgeschlossen</target>
+</trans-unit>
+<trans-unit id="s81ecf2d4386b8e84">
+  <source>Continue</source>
+  <target>Weiter</target>
+</trans-unit>
+<trans-unit id="s3dfdc3b6fba9e851">
+  <source>Imported.</source>
+  <target>Importiert.</target>
+</trans-unit>
+<trans-unit id="se372e255a4895aba">
+  <source>Joined.</source>
+  <target>Beigetreten.</target>
+</trans-unit>
+<trans-unit id="s561f031a974b23fd">
+  <source>Joined. The group name and icon appear when another member of the group is online.</source>
+  <target>Beigetreten. Name und Symbol der Gruppe erscheinen, sobald ein anderes Mitglied der Gruppe online ist.</target>
+</trans-unit>
+<trans-unit id="s0ed2a085eca651c7">
+  <source>Already in this profile.</source>
+  <target>Bereits in diesem Profil.</target>
+</trans-unit>
+<trans-unit id="seb593f30f1694650">
+  <source>Could not be imported: <x id="0" equiv-text="${r.error ?? ''}"/></source>
+  <target>Konnte nicht importiert werden: <x id="0" equiv-text="${r.error ?? ''}"/></target>
+</trans-unit>
+<trans-unit id="s874e5e148905c5fc">
+  <source>Tools installed:</source>
+  <target>Installierte Tools:</target>
+</trans-unit>
+<trans-unit id="s7fe1ba13973f115d">
+  <source>This group had no Tools.</source>
+  <target>Diese Gruppe hatte keine Tools.</target>
+</trans-unit>
+<trans-unit id="s94d63573d312fe9b">
+  <source>Identity</source>
+  <target>Identität</target>
+</trans-unit>
+<trans-unit id="s7f2969d4e04cd764">
+  <source>Your identity from the earlier profile is imported.</source>
+  <target>Deine Identität aus dem früheren Profil ist importiert.</target>
+</trans-unit>
+<trans-unit id="s38fc1de5f99d801e">
+  <source>The earlier profile had no identity that Moss could import. Moss made a new one.</source>
+  <target>Das frühere Profil hatte keine Identität, die Moss importieren konnte. Moss hat eine neue erstellt.</target>
+</trans-unit>
+<trans-unit id="s9f26843287bb592d">
+  <source>Groups</source>
+  <target>Gruppen</target>
+</trans-unit>
+<trans-unit id="s6757de553888d8d7">
+  <source>The earlier profile had no groups to import.</source>
+  <target>Das frühere Profil hatte keine Gruppen zum Importieren.</target>
+</trans-unit>
+<trans-unit id="s60b10efe9189daef">
+  <source>Opening Moss...</source>
+  <target>Moss wird geöffnet...</target>
+</trans-unit>
+<trans-unit id="sae5d87e99fe081e0">
+  <source>Required</source>
+  <target>Erforderlich</target>
+</trans-unit>
+<trans-unit id="s39113ead77d109f2">
+  <source>Wrong type</source>
+  <target>Falscher Typ</target>
+</trans-unit>
+<trans-unit id="sa01ca5515c1bba3f">
+  <source>Choose one of the listed values</source>
+  <target>Wähle einen der aufgeführten Werte</target>
+</trans-unit>
+<trans-unit id="s9935205555f03661">
+  <source>At least <x id="0" equiv-text="${problem.limit}"/> characters</source>
+  <target>Mindestens <x id="0" equiv-text="${option.kind === 'string' ? (option.minLength ?? 0) : 0}"/> Zeichen</target>
+</trans-unit>
+<trans-unit id="s418946207fdad993">
+  <source>At most <x id="0" equiv-text="${problem.limit}"/> characters</source>
+  <target>Höchstens <x id="0" equiv-text="${option.kind === 'string' ? option.maxLength : 0}"/> Zeichen</target>
+</trans-unit>
+<trans-unit id="sca2ca47d776f686f">
+  <source>At least <x id="0" equiv-text="${problem.limit}"/></source>
+  <target>Mindestens <x id="0" equiv-text="${option.kind === 'number' ? option.min : 0}"/></target>
+</trans-unit>
+<trans-unit id="s76221aaa3f3db961">
+  <source>At most <x id="0" equiv-text="${problem.limit}"/></source>
+  <target>Höchstens <x id="0" equiv-text="${option.kind === 'number' ? option.max : 0}"/></target>
+</trans-unit>
+<trans-unit id="sd5a172c4edfd637a">
+  <source>Must be a whole number</source>
+  <target>Muss eine ganze Zahl sein</target>
+</trans-unit>
+<trans-unit id="s7eeccfb88eda3386">
+  <source>Select at least <x id="0" equiv-text="${problem.limit}"/> members</source>
+  <target>Wähle mindestens <x id="0" equiv-text="${option.kind === 'agentList' ? (option.minItems ?? 0) : 0}"/> Mitglieder</target>
+</trans-unit>
+<trans-unit id="s440d15aea6c52874">
+  <source>Select at most <x id="0" equiv-text="${problem.limit}"/> members</source>
+  <target>Wähle höchstens <x id="0" equiv-text="${option.kind === 'agentList' ? (option.maxItems ?? 0) : 0}"/> Mitglieder</target>
+</trans-unit>
+<trans-unit id="sfeb62ec512ee8d5a">
+  <source>Role "<x id="0" equiv-text="${role}"/>" is not in this Tool's happ</source>
+  <target>Die Rolle "<x id="0" equiv-text="${role}"/>" ist nicht im Happ dieses Tools enthalten</target>
+</trans-unit>
+<trans-unit id="se7be9358b38a8acc">
+  <source>Option <x id="0" equiv-text="${name}"/> is declared twice</source>
+  <target>Die Option <x id="0" equiv-text="${name}"/> ist doppelt deklariert</target>
+</trans-unit>
+<trans-unit id="s7640b2d2578a0c5b">
+  <source>Option <x id="0" equiv-text="${name}"/> has an invalid range</source>
+  <target>Die Option <x id="0" equiv-text="${name}"/> hat einen ungültigen Bereich</target>
+</trans-unit>
+<trans-unit id="sbba70e8956cc9b45">
+  <source>Option <x id="0" equiv-text="${name}"/> has invalid choices</source>
+  <target>Die Option <x id="0" equiv-text="${name}"/> hat ungültige Auswahlmöglichkeiten</target>
+</trans-unit>
+<trans-unit id="sde749a2dacae6349">
+  <source>Option <x id="0" equiv-text="${name}"/> has a default outside its constraints</source>
+  <target>Der Standardwert der Option <x id="0" equiv-text="${name}"/> liegt außerhalb ihrer Grenzen</target>
+</trans-unit>
+<trans-unit id="saa6f44424261a70c">
+  <source>Option <x id="0" equiv-text="${name}"/> cannot be both required and nullable</source>
+  <target>Die Option <x id="0" equiv-text="${name}"/> kann nicht zugleich erforderlich und nullable sein</target>
+</trans-unit>
+<trans-unit id="sb7b2ed0c7cad6752">
+  <source>Select members</source>
+  <target>Mitglieder auswählen</target>
+</trans-unit>
+<trans-unit id="s7b0910e0e6da4038">
+  <source>This Tool declares install options in a format Moss does not understand.</source>
+  <target>Dieses Tool deklariert Installationsoptionen in einem Format, das Moss nicht versteht.</target>
+</trans-unit>
+<trans-unit id="s1ade2b1463ead3f6">
+  <source>yaml. Values chosen above override these keys.</source>
+  <target>yaml. Oben gewählte Werte überschreiben diese Schlüssel.</target>
+</trans-unit>
+<trans-unit id="s7db428fe6f9264bc">
+  <source>You can still set DNA properties under Advanced.</source>
+  <target>Du kannst die DNA-Eigenschaften weiterhin unter "Erweitert" setzen.</target>
+</trans-unit>
+<trans-unit id="s34946a06ae82817e">
+  <source>Install options</source>
+  <target>Installationsoptionen</target>
+</trans-unit>
+<trans-unit id="s7f59f507e02a2f38">
+  <source>View</source>
+  <target>Anzeigen</target>
+</trans-unit>
+<trans-unit id="saa6d4980bd7d4f1f">
+  <source>About install options</source>
+  <target>Über Installationsoptionen</target>
+</trans-unit>
+<trans-unit id="sebff61b46bb2a1be">
+  <source>These choices are written into the DNA properties of this Tool instance. DNA properties are part of its identity on the network, so everyone who joins the instance gets exactly the same values.</source>
+  <target>Diese Auswahl wird in die DNA-Eigenschaften dieser Tool-Instanz geschrieben. DNA-Eigenschaften sind Teil ihrer Identität im Netzwerk, daher erhält jede Person, die der Instanz beitritt, genau dieselben Werte.</target>
+</trans-unit>
+<trans-unit id="sb58cbaf28e64cb82">
+  <source>They are permanent. Once the Tool is installed, the values cannot be changed. To use different values, install a new instance of the Tool.</source>
+  <target>Sie sind dauerhaft. Sobald das Tool installiert ist, können die Werte nicht mehr geändert werden. Um andere Werte zu verwenden, installiere eine neue Instanz des Tools.</target>
+</trans-unit>
+<trans-unit id="s5fe59e9e7e8ab433">
+  <source>All group members will be able to see the DNA properties in the Tool’s Advanced settings, under DNA Properties.</source>
+  <target>Alle Gruppenmitglieder können die DNA-Eigenschaften in den erweiterten Einstellungen des Tools unter „DNA-Eigenschaften“ sehen.</target>
+</trans-unit>
+<trans-unit id="s1f781dc01a2b5152">
+  <source>Cells</source>
+  <target>Zellen</target>
+</trans-unit>
+<trans-unit id="sfbaa654a4433213a">
+  <source>DNA hash</source>
+  <target>DNA-Hash</target>
+</trans-unit>
+<trans-unit id="sfdb24b0b0e46f052">
+  <source>network seed</source>
+  <target>Netzwerk-Seed</target>
 </trans-unit>
 </body>
 </file>

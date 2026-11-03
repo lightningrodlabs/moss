@@ -12,7 +12,12 @@ import {
 } from '@holochain/client';
 import { decode, encode } from '@msgpack/msgpack';
 import { WeRustHandler } from '@lightningrodlabs/we-rust-utils';
-import { ResourceLocation, ToolVersionInfo, WeaveDevConfig } from '@theweave/moss-types';
+import {
+  ResourceLocation,
+  RoleProperties,
+  ToolVersionInfo,
+  WeaveDevConfig,
+} from '@theweave/moss-types';
 import { isWeaveUrl } from '@theweave/utils';
 import { sha512 } from 'js-sha512';
 import { WeEmitter } from './weEmitter';
@@ -26,7 +31,7 @@ export const isMac = process.platform === 'darwin';
 export const isWindows = process.platform === 'win32';
 export const isLinux = process.platform === 'linux';
 
-export async function decompressHapp(compressedData: any): Promise<Object> {
+export async function decompressHapp(compressedData: Uint8Array): Promise<RoleProperties> {
   //console.log("Decompressing file...");
   try {
     const decompressedData = await gunzip(compressedData);
@@ -35,7 +40,7 @@ export async function decompressHapp(compressedData: any): Promise<Object> {
     const raw: any = decode(decompressedData);
     //console.log(raw.manifest);
     //console.log(JSON.stringify(raw.manifest));
-    let result: Object = {};
+    const result: RoleProperties = {};
     for (const roleSettings of raw.manifest.roles) {
       //console.log("\n\nRole:", roleSettings.name);
       //console.log("Modifiers:", JSON.stringify(roleSettings.dna?.modifiers?.properties));
@@ -48,28 +53,27 @@ export async function decompressHapp(compressedData: any): Promise<Object> {
   }
 }
 
-export async function decompressWebHapp(buffer: any): Promise<Object> {
-  console.log('Decompressing web file...', buffer.length);
+/**
+ * Fetches a Tool's `weave.config.json` from its UI dev server, for Tools
+ * whose UI is served from localhost instead of bundled in a webhapp.
+ * Returns the parsed JSON, unchecked, or `undefined` when the server does
+ * not answer within 2 seconds or does not serve the file.
+ */
+export async function fetchWeaveConfigFromPort(uiPort: number): Promise<unknown | undefined> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 2000);
   try {
-    const decompressedData = await gunzip(buffer);
-    // Convert Buffer to string (assuming UTF-8 data from Rust)
-    const raw: any = decode(decompressedData);
-    //console.log(raw);
-    for (const resource in raw.resources) {
-      //console.log(resource);
-      if (resource.endsWith('.happ')) {
-        const happ = await decompressHapp(raw.resources[resource]);
-        //console.log("webHapp dna properties:", JSON.stringify(happ));
-        return happ;
-      }
-    }
-    //console.log(JSON.stringify(raw.manifest));
-    //return decompressHapp(decompressedData);
-  } catch (err) {
-    console.error('Decompression failed:', err);
-    return Promise.reject('Decompression failed: ' + err);
+    const response = await net.fetch(`http://localhost:${uiPort}/weave.config.json`, {
+      signal: controller.signal,
+    });
+    if (!response.ok) return undefined;
+    return await response.json();
+  } catch (e) {
+    console.warn(`Could not fetch weave.config.json from localhost:${uiPort}:`, e);
+    return undefined;
+  } finally {
+    clearTimeout(timeout);
   }
-  return Promise.reject('No happ file in webapp bundle');
 }
 
 export function setLinkOpenHandlers(browserWindow: BrowserWindow): void {

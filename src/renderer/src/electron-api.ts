@@ -23,6 +23,7 @@ import type {
   AsrSessionOptions,
   LocalModelCapabilities,
   AsrHostStatus,
+  ToolWeaveConfig,
 } from '@theweave/api';
 import {
   AppAssetsInfo,
@@ -36,6 +37,7 @@ import {
   AsrModelDownloadEnded,
   AsrModelDownloadProgress,
   AsrModelListEntry,
+  HappOrWebhappInspection,
   LocalToolInfo,
   ResourceLocation,
   ToolCompatibilityId,
@@ -43,10 +45,11 @@ import {
   ToolTransferRequest,
   WeaveDevConfig,
 } from '@theweave/moss-types';
-import { AppletHostResponse, ToolWeaveConfig } from './types';
+import { AppletHostResponse } from './types';
 
 // IPC_CHANGE_HERE
 
+/** Mirrors LegacyProfileInfo in src/main/legacyProfiles.ts */
 export interface LegacyProfileInfo {
   appName: string;
   versionString: string;
@@ -54,6 +57,20 @@ export interface LegacyProfileInfo {
   keystorePath: string;
   /** Lair binary version (e.g. 'lair_keystore 0.6.3') that created this keystore, if recorded */
   lairVersion: string | undefined;
+  /** Last modification time (ms) of the profile's data */
+  lastUsed: number;
+}
+
+/** Mirrors LegacyProfileCopyResult in src/main/filesystem.ts */
+export interface LegacyProfileCopyResult {
+  identity: boolean;
+  groups: boolean;
+}
+
+/** Mirrors LegacyImportOffer in src/main/legacyProfiles.ts */
+export interface LegacyImportOffer {
+  mode: 'upgrade' | 'fork';
+  profiles: LegacyProfileInfo[];
 }
 
 declare global {
@@ -75,9 +92,8 @@ declare global {
         options: Electron.MessageBoxOptions,
       ) => Promise<Electron.MessageBoxReturnValue>;
       lairSetupRequired: () => Promise<boolean>;
-      findLegacyProfiles: () => Promise<LegacyProfileInfo[]>;
-      getLairBinaryVersion: () => Promise<string>;
-      copyLegacyProfile: (keystorePath: string) => Promise<void>;
+      findLegacyImportOffer: () => Promise<LegacyImportOffer | undefined>;
+      copyLegacyProfile: (keystorePath: string) => Promise<LegacyProfileCopyResult>;
       launch: () => Promise<boolean>;
       validateMediaUrl: (
         url: string,
@@ -204,8 +220,8 @@ declare global {
       installGroupHapp: (useProgenitor: boolean) => Promise<AppInfo>;
       silentExportGroupsData: () => Promise<void>;
       exportGroupsData: () => Promise<void>;
-      importGroupsData: () => Promise<GroupImportResult>;
-      consumePendingGroupsImport: () => Promise<GroupImportResult | null>;
+      importGroupsData: (curationUrls: string[]) => Promise<GroupImportResult>;
+      consumePendingGroupsImport: (curationUrls: string[]) => Promise<GroupImportResult | null>;
       onImportGroupsProgress: (
         callback: (e: Electron.IpcRendererEvent, payload: ImportGroupsProgress) => void,
       ) => void;
@@ -299,7 +315,10 @@ declare global {
         vmSizeBytes: number;
         pid: number;
       } | null>;
-      fetchAndValidateHappOrWebhapp: (url: string) => Promise<any>;
+      fetchAndValidateHappOrWebhapp: (
+        url: string,
+        uiPort?: number,
+      ) => Promise<HappOrWebhappInspection>;
       validateHappOrWebhapp: (bytes: number[]) => Promise<AppHashes>;
       // Dev UI Override
       selectDevUiWebhapp: () => Promise<string | undefined>;
@@ -442,18 +461,33 @@ export type ImportGroupsProgress = {
   toolTotal?: number;
 };
 
+export type SkippedImportTool = {
+  name: string;
+  /** 'not-available': no version for this Moss version in the tool list */
+  reason: 'not-available' | 'failed';
+  error?: string;
+};
+
 export type GroupImportResult = Array<{
   groupName: string | undefined;
   status: 'created' | 'joined' | 'joined-no-profile' | 'already-installed' | 'error';
   error?: string;
+  /** Names of the Tools installed into the group */
+  installedTools?: string[];
+  /** Tools from the export that were not installed */
+  skippedTools?: SkippedImportTool[];
+  /** Number of Tools left for the group's progenitor to bring over */
+  toolsAwaitingProgenitor?: number;
 }>;
 
-export async function importGroupsData(): Promise<GroupImportResult> {
-  return window.electronAPI.importGroupsData();
+export async function importGroupsData(curationUrls: string[]): Promise<GroupImportResult> {
+  return window.electronAPI.importGroupsData(curationUrls);
 }
 
-export async function consumePendingGroupsImport(): Promise<GroupImportResult | null> {
-  return window.electronAPI.consumePendingGroupsImport();
+export async function consumePendingGroupsImport(
+  curationUrls: string[],
+): Promise<GroupImportResult | null> {
+  return window.electronAPI.consumePendingGroupsImport(curationUrls);
 }
 
 export async function dialogMessagebox(
@@ -539,8 +573,11 @@ export function onAudioSourceGrantsChanged(callback: (grants: AudioSourceGrantIn
   window.electronAPI.onAudioSourceGrantsChanged((_e, grants) => callback(grants));
 }
 
-export async function fetchAndValidateHappOrWebhapp(url: string) {
-  return window.electronAPI.fetchAndValidateHappOrWebhapp(url);
+export async function fetchAndValidateHappOrWebhapp(
+  url: string,
+  uiPort?: number,
+): Promise<HappOrWebhappInspection> {
+  return window.electronAPI.fetchAndValidateHappOrWebhapp(url, uiPort);
 }
 
 export async function validateHappOrWebhapp(bytes: number[]) {

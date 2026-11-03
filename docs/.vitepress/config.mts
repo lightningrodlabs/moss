@@ -37,6 +37,7 @@ function currentSidebar(base: string): DefaultTheme.SidebarItem[] {
             { text: 'Install Moss Dependencies', link: `${base}build/moss-sugar` },
             { text: 'Add Environment Check', link: `${base}build/add-environment-check` },
             { text: 'Configure CLI', link: `${base}build/configure-cli` },
+            { text: 'Install Options', link: `${base}build/tool-install-options` },
           ],
         },
         {

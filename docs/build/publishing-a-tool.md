@@ -7,6 +7,8 @@ To publish a Tool in Moss it needs to be referenced from two web2-hosted JSON fi
 
 A user adds a curation list URL to their Moss Tool Library, and Moss fetches the curation list, then fetches each referenced Tool list, and displays the curated Tools.
 
+If your Tool has settings that must be chosen when it is added to a group, declare them as [install options](./tool-install-options.md) in its `weave.config.json`.
+
 ## The Tool List
 
 A Tool list is a JSON document published at a stable URL. It describes a developer collective and the Tools they maintain. Its shape is defined by the `DeveloperCollectiveToolList` type in `@theweave/moss-types`:

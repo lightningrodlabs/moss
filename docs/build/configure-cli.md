@@ -46,6 +46,9 @@ export default defineConfig({
           instanceName: 'Forum',
           registeringAgent: 1,
           joiningAgents: [2],
+          // Optional: DNA properties per role, merged over the happ
+          // manifest's defaults. See "Install Options".
+          // properties: { forum: { stewarded: true } },
         },
       ],
     },

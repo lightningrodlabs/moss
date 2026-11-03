@@ -26,10 +26,12 @@ import {
   encodeHashToBase64,
   Record as HolochainRecord,
   ProvisionedCell,
+  RoleSettingsMap,
 } from '@holochain/client';
 import { decode } from '@msgpack/msgpack';
 import { type WeRustHandler } from '@lightningrodlabs/we-rust-utils';
-import { signZomeCall } from '../utils';
+import { decompressHapp, signZomeCall } from '../utils';
+import { encodeRoleOverrides } from './devProperties';
 import { MossFileSystem } from '../filesystem';
 import { net } from 'electron';
 import { nanoid } from 'nanoid';
@@ -43,6 +45,7 @@ import {
   appIdFromAppletHash,
   deriveToolCompatibilityId,
   globalPubKeyFromListAppsResponse,
+  rolesSettingsFor,
   toolCompatibilityIdFromDistInfo,
 } from '@theweave/utils';
 import { readIcon } from '../utils';
@@ -347,6 +350,7 @@ export async function devSetup(
           }
 
           const networkSeed = randomUUID();
+          const manifestDefaults = await decompressHapp(fs.readFileSync(happPath));
           const applet: Applet = {
             custom_name: appletInstallConfig.instanceName,
             description: appletConfig.description,
@@ -357,7 +361,7 @@ export async function devSetup(
             distribution_info: JSON.stringify(distributionInfo),
             meta_data: undefined,
             network_seed: networkSeed,
-            properties: {},
+            properties: encodeRoleOverrides(manifestDefaults, appletInstallConfig.properties),
           };
           const appletHash = await groupWebsocket.callZome<AppletHash>({
             role_name: 'group',
@@ -370,7 +374,14 @@ export async function devSetup(
           const appletPubKey = groupWebsocket.myPubKey;
           logDevSetup(`Installing applet instance '${appletInstallConfig.instanceName}'...`);
           try {
-            await installHapp(holochainManager, appId, networkSeed, appletPubKey, happPath);
+            await installHapp(
+              holochainManager,
+              appId,
+              networkSeed,
+              appletPubKey,
+              happPath,
+              rolesSettingsFor(applet.properties),
+            );
 
             if (distributionInfo.type === 'web2-tool-list') {
               const appletIcon = await readIcon(appletConfig.icon);
@@ -426,6 +437,7 @@ export async function devSetup(
                 applet.network_seed!,
                 appletPubKey,
                 happPath,
+                rolesSettingsFor(applet.properties),
               );
               const distributionInfo: DistributionInfo = JSON.parse(applet.distribution_info);
               if (distributionInfo.type === 'web2-tool-list') {
@@ -615,6 +627,7 @@ async function installHapp(
   networkSeed: string,
   pubKey: AgentPubKey,
   happPath: string,
+  rolesSettings?: RoleSettingsMap,
 ): Promise<void> {
   await holochainManager.adminWebsocket.installApp({
     source: {
@@ -624,6 +637,7 @@ async function installHapp(
     installed_app_id: appId,
     agent_key: pubKey,
     network_seed: networkSeed,
+    roles_settings: rolesSettings,
   });
   await holochainManager.adminWebsocket.enableApp({ installed_app_id: appId });
 }
