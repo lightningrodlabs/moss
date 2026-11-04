@@ -27,6 +27,29 @@
     },
     {
       "role": "forum",
+      "property": "accentColor",
+      "kind": "string",
+      "label": "Accent color",
+      "description": "Shown only for the dark theme.",
+      "required": false,
+      "maxLength": 7,
+      "dependsOn": [{ "property": "theme", "in": ["dark"] }]
+    },
+    {
+      "role": "forum",
+      "property": "categories",
+      "kind": "stringChoiceList",
+      "label": "Categories",
+      "required": false,
+      "maxItems": 2,
+      "choices": [
+        { "value": "news", "label": "News" },
+        { "value": "events", "label": "Events" },
+        { "value": "help desk", "label": "Help desk" }
+      ]
+    },
+    {
+      "role": "forum",
       "property": "pageSize",
       "kind": "numberChoice",
       "label": "Page size",
@@ -62,7 +85,8 @@
       "kind": "agentList",
       "label": "Moderators",
       "required": false,
-      "maxItems": 5
+      "maxItems": 5,
+      "dependsOn": [{ "property": "stewarded" }]
     },
     {
       "role": "forum",

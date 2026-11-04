@@ -3596,6 +3596,18 @@ starts now</source>
   <source>network seed</source>
   <target>ネットワークシード</target>
 </trans-unit>
+<trans-unit id="sce3614bbef7e7641">
+  <source>Select at least <x id="0" equiv-text="${problem.limit}"/></source>
+  <target><x id="0" equiv-text="${problem.limit}"/> 個以上選択してください</target>
+</trans-unit>
+<trans-unit id="sce26410f5e42990b">
+  <source>Select at most <x id="0" equiv-text="${problem.limit}"/></source>
+  <target><x id="0" equiv-text="${problem.limit}"/> 個以下で選択してください</target>
+</trans-unit>
+<trans-unit id="sb6aea26e92cf8f59">
+  <source>Option <x id="0" equiv-text="${name}"/> depends on an option it cannot use</source>
+  <target>オプション <x id="0" equiv-text="${name}"/> は使用できないオプションに依存しています</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

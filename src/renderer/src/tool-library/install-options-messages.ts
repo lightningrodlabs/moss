@@ -1,4 +1,5 @@
 import { msg, str } from '@lit/localize';
+import type { ToolInstallOptionKind } from '@theweave/api';
 import type { DeclarationProblem, ValueProblem } from './install-options.js';
 
 /**
@@ -6,7 +7,10 @@ import type { DeclarationProblem, ValueProblem } from './install-options.js';
  * from the element so the wording is testable without a DOM.
  */
 
-export function valueProblemMessage(problem: ValueProblem): string {
+export function valueProblemMessage(
+  problem: ValueProblem,
+  kind: ToolInstallOptionKind = 'agentList',
+): string {
   switch (problem.code) {
     case 'required':
       return msg('Required');
@@ -25,9 +29,13 @@ export function valueProblemMessage(problem: ValueProblem): string {
     case 'not-integer':
       return msg('Must be a whole number');
     case 'too-few':
-      return msg(str`Select at least ${problem.limit} members`);
+      return kind === 'agentList'
+        ? msg(str`Select at least ${problem.limit} members`)
+        : msg(str`Select at least ${problem.limit}`);
     case 'too-many':
-      return msg(str`Select at most ${problem.limit} members`);
+      return kind === 'agentList'
+        ? msg(str`Select at most ${problem.limit} members`)
+        : msg(str`Select at most ${problem.limit}`);
   }
 }
 
@@ -49,5 +57,7 @@ export function declarationProblemMessage(problem: DeclarationProblem): string {
       return msg(str`Option ${name} has a default outside its constraints`);
     case 'required-nullable':
       return msg(str`Option ${name} cannot be both required and nullable`);
+    case 'bad-condition':
+      return msg(str`Option ${name} depends on an option it cannot use`);
   }
 }

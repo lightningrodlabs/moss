@@ -8,12 +8,23 @@ import type { ToolInstallOption, ToolWeaveConfig } from '@theweave/api';
  */
 const TLocalizedText = Type.Union([Type.String(), Type.Record(Type.String(), Type.String())]);
 
+const TCondition = Type.Object(
+  {
+    role: Type.Optional(Type.String()),
+    property: Type.String(),
+    equals: Type.Optional(Type.Union([Type.Boolean(), Type.String(), Type.Number()])),
+    in: Type.Optional(Type.Array(Type.Union([Type.String(), Type.Number()]))),
+  },
+  { additionalProperties: false },
+);
+
 const TOptionBase = {
   role: Type.String(),
   property: Type.String(),
   label: TLocalizedText,
   description: Type.Optional(TLocalizedText),
   required: Type.Boolean(),
+  dependsOn: Type.Optional(Type.Array(TCondition)),
 };
 
 const TNullable = { nullable: Type.Optional(Type.Boolean()) };
@@ -66,6 +77,18 @@ export const TToolInstallOption = Type.Union([
       max: Type.Number(),
       integer: Type.Boolean(),
       default: Type.Optional(Type.Union([Type.Number(), Type.Null()])),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      ...TOptionBase,
+      ...TNullable,
+      kind: Type.Literal('stringChoiceList'),
+      choices: Type.Array(TStringChoice),
+      minItems: Type.Optional(Type.Number()),
+      maxItems: Type.Optional(Type.Number()),
+      default: Type.Optional(Type.Union([Type.Array(Type.String()), Type.Null()])),
     },
     { additionalProperties: false },
   ),

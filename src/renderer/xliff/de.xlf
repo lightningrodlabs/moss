@@ -3596,6 +3596,18 @@ beginnt jetzt</target>
   <source>network seed</source>
   <target>Netzwerk-Seed</target>
 </trans-unit>
+<trans-unit id="sce3614bbef7e7641">
+  <source>Select at least <x id="0" equiv-text="${problem.limit}"/></source>
+  <target>Wähle mindestens <x id="0" equiv-text="${problem.limit}"/> aus</target>
+</trans-unit>
+<trans-unit id="sce26410f5e42990b">
+  <source>Select at most <x id="0" equiv-text="${problem.limit}"/></source>
+  <target>Wähle höchstens <x id="0" equiv-text="${problem.limit}"/> aus</target>
+</trans-unit>
+<trans-unit id="sb6aea26e92cf8f59">
+  <source>Option <x id="0" equiv-text="${name}"/> depends on an option it cannot use</source>
+  <target>Die Option <x id="0" equiv-text="${name}"/> hängt von einer Option ab, die sie nicht verwenden kann</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

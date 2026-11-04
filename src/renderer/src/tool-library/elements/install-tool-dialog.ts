@@ -47,6 +47,7 @@ import { toolSettingsStyles } from '../../groups/elements/settings/tool-settings
 import { fetchAndValidateHappOrWebhapp } from '../../electron-api';
 import yaml from 'js-yaml';
 import { checkDeclarations, mergeProperties } from '../install-options.js';
+import { checkConditions } from '../install-option-conditions.js';
 import { declarationProblemMessage } from '../install-options-messages.js';
 import { InstallOptionsForm } from './install-options-form.js';
 import './install-options-form.js';
@@ -374,7 +375,8 @@ export class InstallToolDialog extends LitElement {
       };
     }
     const options = res.weaveConfig.installOptions ?? [];
-    const declarationProblem = checkDeclarations(options, Object.keys(roles));
+    const declarationProblem =
+      checkDeclarations(options, Object.keys(roles)) ?? checkConditions(options);
     if (declarationProblem) {
       return { roles, problem: declarationProblemMessage(declarationProblem) };
     }

@@ -3596,6 +3596,18 @@ starts now</source>
   <source>network seed</source>
   <target>ağ tohumu</target>
 </trans-unit>
+<trans-unit id="sce3614bbef7e7641">
+  <source>Select at least <x id="0" equiv-text="${problem.limit}"/></source>
+  <target>En az <x id="0" equiv-text="${problem.limit}"/> tane seçin</target>
+</trans-unit>
+<trans-unit id="sce26410f5e42990b">
+  <source>Select at most <x id="0" equiv-text="${problem.limit}"/></source>
+  <target>En fazla <x id="0" equiv-text="${problem.limit}"/> tane seçin</target>
+</trans-unit>
+<trans-unit id="sb6aea26e92cf8f59">
+  <source>Option <x id="0" equiv-text="${name}"/> depends on an option it cannot use</source>
+  <target><x id="0" equiv-text="${name}"/> seçeneği kullanamayacağı bir seçeneğe bağlı</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
