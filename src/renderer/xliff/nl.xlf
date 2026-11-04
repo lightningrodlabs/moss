@@ -3608,6 +3608,42 @@ begint nu</target>
   <source>Option <x id="0" equiv-text="${name}"/> depends on an option it cannot use</source>
   <target>Optie <x id="0" equiv-text="${name}"/> is afhankelijk van een optie die ze niet kan gebruiken</target>
 </trans-unit>
+<trans-unit id="s180d2cbcd412ed75">
+  <source>License not declared</source>
+  <target>Licentie niet opgegeven</target>
+</trans-unit>
+<trans-unit id="sc7cc29aadd8cc677">
+  <source>This package does not include a license file.</source>
+  <target>Dit pakket bevat geen licentiebestand.</target>
+</trans-unit>
+<trans-unit id="s2accf822b01a10a4">
+  <source>Bundled programs</source>
+  <target>Meegeleverde programma's</target>
+</trans-unit>
+<trans-unit id="se0c6aa49fef8a419">
+  <source>Open Chromium and Electron notices</source>
+  <target>Chromium- en Electron-vermeldingen openen</target>
+</trans-unit>
+<trans-unit id="s290eb7f6455a620d">
+  <source>Libraries (<x id="0" equiv-text="${this.notices.packages.length}"/>)</source>
+  <target>Bibliotheken (<x id="0" equiv-text="${this.notices.packages.length}"/>)</target>
+</trans-unit>
+<trans-unit id="s358e08de4fbebf51">
+  <source>Version <x id="0" equiv-text="${this.info.mossVersion}"/></source>
+  <target>Versie <x id="0" equiv-text="${this.info.mossVersion}"/></target>
+</trans-unit>
+<trans-unit id="s952ed559991cf0b4">
+  <source>Powered by</source>
+  <target>Mogelijk gemaakt door</target>
+</trans-unit>
+<trans-unit id="s7478caf87514f9ba">
+  <source>Third-party notices</source>
+  <target>Vermeldingen van derden</target>
+</trans-unit>
+<trans-unit id="s2e105963b73bb1fa">
+  <source>License:</source>
+  <target>Licentie:</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

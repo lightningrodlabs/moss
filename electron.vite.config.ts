@@ -41,12 +41,15 @@ export default defineConfig({
           splashscreen: resolve(__dirname, 'src/preload/splashscreen.ts'),
           selectmediasource: resolve(__dirname, 'src/preload/selectmediasource.ts'),
           walwindow: resolve(__dirname, 'src/preload/walwindow.ts'),
+          about: resolve(__dirname, 'src/preload/about.ts'),
         },
       },
     },
   },
   renderer: {
     publicDir: resolve(__dirname, 'src/renderer/public'),
+    // Last year of the copyright notice in the About window.
+    define: { __MOSS_BUILD_YEAR__: JSON.stringify(new Date().getFullYear()) },
     build: {
       rollupOptions: {
         input: {
@@ -54,6 +57,7 @@ export default defineConfig({
           splashscreen: resolve(__dirname, 'src/renderer/splashscreen.html'),
           selectmediasource: resolve(__dirname, 'src/renderer/selectmediasource.html'),
           walwindow: resolve(__dirname, 'src/renderer/walwindow.html'),
+          about: resolve(__dirname, 'src/renderer/about.html'),
         },
       },
     },

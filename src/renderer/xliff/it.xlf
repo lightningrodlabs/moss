@@ -3608,6 +3608,42 @@ inizia ora</target>
   <source>Option <x id="0" equiv-text="${name}"/> depends on an option it cannot use</source>
   <target>L'opzione <x id="0" equiv-text="${name}"/> dipende da un'opzione che non può usare</target>
 </trans-unit>
+<trans-unit id="s180d2cbcd412ed75">
+  <source>License not declared</source>
+  <target>Licenza non dichiarata</target>
+</trans-unit>
+<trans-unit id="sc7cc29aadd8cc677">
+  <source>This package does not include a license file.</source>
+  <target>Questo pacchetto non include un file di licenza.</target>
+</trans-unit>
+<trans-unit id="s2accf822b01a10a4">
+  <source>Bundled programs</source>
+  <target>Programmi inclusi</target>
+</trans-unit>
+<trans-unit id="se0c6aa49fef8a419">
+  <source>Open Chromium and Electron notices</source>
+  <target>Apri le note di Chromium ed Electron</target>
+</trans-unit>
+<trans-unit id="s290eb7f6455a620d">
+  <source>Libraries (<x id="0" equiv-text="${this.notices.packages.length}"/>)</source>
+  <target>Librerie (<x id="0" equiv-text="${this.notices.packages.length}"/>)</target>
+</trans-unit>
+<trans-unit id="s358e08de4fbebf51">
+  <source>Version <x id="0" equiv-text="${this.info.mossVersion}"/></source>
+  <target>Versione <x id="0" equiv-text="${this.info.mossVersion}"/></target>
+</trans-unit>
+<trans-unit id="s952ed559991cf0b4">
+  <source>Powered by</source>
+  <target>Basato su</target>
+</trans-unit>
+<trans-unit id="s7478caf87514f9ba">
+  <source>Third-party notices</source>
+  <target>Note di terze parti</target>
+</trans-unit>
+<trans-unit id="s2e105963b73bb1fa">
+  <source>License:</source>
+  <target>Licenza:</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
