@@ -97,6 +97,50 @@ describe('TToolWeaveConfig', () => {
     expect(Value.Check(TToolWeaveConfig, { installOptions: [agents] })).toBe(false);
   });
 
+  const choiceList = {
+    role: 'forum',
+    property: 'categories',
+    kind: 'stringChoiceList',
+    label: 'Categories',
+    required: false,
+    choices: [
+      { value: 'news', label: 'News' },
+      { value: 'help', label: 'Help' },
+    ],
+  };
+
+  it('accepts a stringChoiceList with and without bounds and default', () => {
+    expect(Value.Check(TToolWeaveConfig, { installOptions: [choiceList] })).toBe(true);
+    const full = { ...choiceList, minItems: 1, maxItems: 2, default: ['news'], nullable: false };
+    expect(Value.Check(TToolWeaveConfig, { installOptions: [full] })).toBe(true);
+  });
+
+  it('rejects a stringChoiceList default that is not a list', () => {
+    const bad = { ...choiceList, default: 'news' };
+    expect(Value.Check(TToolWeaveConfig, { installOptions: [bad] })).toBe(false);
+  });
+
+  it('accepts dependsOn conditions with role, equals and in', () => {
+    const dependent = {
+      ...numberOption,
+      dependsOn: [
+        { property: 'stewarded' },
+        { role: 'forum', property: 'theme', equals: 'dark' },
+        { property: 'pageSize', in: [10, 25] },
+      ],
+    };
+    expect(Value.Check(TToolWeaveConfig, { installOptions: [dependent] })).toBe(true);
+    const onBoolean = { ...vinesExample.installOptions[0], dependsOn: [{ property: 'x' }] };
+    expect(Value.Check(TToolWeaveConfig, { installOptions: [onBoolean] })).toBe(true);
+  });
+
+  it('rejects an unknown key or an object value in a condition', () => {
+    const unknownKey = { ...numberOption, dependsOn: [{ property: 'x', when: true }] };
+    expect(Value.Check(TToolWeaveConfig, { installOptions: [unknownKey] })).toBe(false);
+    const objectValue = { ...numberOption, dependsOn: [{ property: 'x', equals: { a: 1 } }] };
+    expect(Value.Check(TToolWeaveConfig, { installOptions: [objectValue] })).toBe(false);
+  });
+
   it('accepts a config with only crossGroupView', () => {
     expect(Value.Check(TToolWeaveConfig, { crossGroupView: true })).toBe(true);
   });

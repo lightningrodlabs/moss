@@ -21,7 +21,9 @@ import { GroupStore, MaybeProfile } from '../../groups/group-store.js';
 import { mossStyles } from '../../shared-styles.js';
 import {
   choiceAtIndex,
+  choicesAtIndices,
   indexOfChoice,
+  indicesOfChoices,
   initialValues,
   InstallOptionValue,
   InstallOptionValues,
@@ -29,6 +31,7 @@ import {
   validateValue,
 } from '../install-options.js';
 import { valueProblemMessage } from '../install-options-messages.js';
+import { activeOptionKeys, withoutInactive } from '../install-option-conditions.js';
 import { localizedText } from '../localized-text.js';
 import { getLocale } from '../../locales/localization.js';
 
@@ -62,6 +65,9 @@ export class InstallOptionsForm extends LitElement {
    */
   private _seeds: InstallOptionValues = {};
 
+  /** Options that currently apply; the others are not rendered. */
+  private _active = new Set<string>();
+
   private _members = new StoreSubscriber(
     this,
     () => this.groupStore?.allProfiles,
@@ -72,19 +78,31 @@ export class InstallOptionsForm extends LitElement {
     if (changed.has('options') || changed.has('manifestDefaults')) {
       this._values = initialValues(this.options, this.manifestDefaults);
       this._seeds = this._values;
+      this._active = new Set();
     }
+    const active = activeOptionKeys(this.options, this._values);
+    // A shown-again input is a new element, so seed it with what the
+    // installer last entered rather than the original seed.
+    const reshown = [...active].filter((key) => !this._active.has(key));
+    if (reshown.length > 0) {
+      this._seeds = { ...this._seeds };
+      for (const key of reshown) this._seeds[key] = this._values[key];
+    }
+    this._active = active;
   }
 
+  /** The chosen values, with options that do not apply left empty. */
   get currentValues(): InstallOptionValues {
-    return { ...this._values };
+    return withoutInactive(this.options, this._values);
   }
 
   reportValidity(): boolean {
     let allValid = true;
     for (const option of this.options) {
+      if (!this._active.has(optionKey(option))) continue;
       const problem = validateValue(option, this._values[optionKey(option)]);
       const control = this.controlFor(option);
-      control?.setCustomValidity(problem ? valueProblemMessage(problem) : '');
+      control?.setCustomValidity(problem ? valueProblemMessage(problem, option.kind) : '');
       if (problem) {
         allValid = false;
         control?.reportValidity();
@@ -135,6 +153,31 @@ export class InstallOptionsForm extends LitElement {
         hoist
         @sl-change=${(e: Event) =>
           this.setValue(option, choiceAtIndex(option, (e.target as SlSelect).value as string))}
+      >
+        ${option.choices.map(
+          (choice, index) =>
+            html`<sl-option value=${String(index)}>${this.text(choice.label)}</sl-option>`,
+        )}
+      </sl-select>
+    `;
+  }
+
+  private renderChoiceList(
+    option: Extract<ToolInstallOption, { kind: 'stringChoiceList' }>,
+  ): TemplateResult {
+    return html`
+      <sl-select
+        data-option=${optionKey(option)}
+        class="moss-input"
+        .label=${this.text(option.label)}
+        help-text=${this.text(option.description)}
+        .value=${indicesOfChoices(option, this._values[optionKey(option)])}
+        ?required=${option.required}
+        multiple
+        clearable
+        hoist
+        @sl-change=${(e: Event) =>
+          this.setValue(option, choicesAtIndices(option, (e.target as SlSelect).value as string[]))}
       >
         ${option.choices.map(
           (choice, index) =>
@@ -232,6 +275,8 @@ export class InstallOptionsForm extends LitElement {
       case 'stringChoice':
       case 'numberChoice':
         return this.renderChoice(option);
+      case 'stringChoiceList':
+        return this.renderChoiceList(option);
       case 'string':
         return this.renderString(option);
       case 'number':
@@ -244,9 +289,9 @@ export class InstallOptionsForm extends LitElement {
   render() {
     return html`
       <div class="column options">
-        ${this.options.map(
-          (option) => html`<div class="option">${this.renderOption(option)}</div>`,
-        )}
+        ${this.options
+          .filter((option) => this._active.has(optionKey(option)))
+          .map((option) => html`<div class="option">${this.renderOption(option)}</div>`)}
       </div>
     `;
   }

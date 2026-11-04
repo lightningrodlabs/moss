@@ -35,6 +35,29 @@ export type ToolInstallOptionBase = {
   description?: LocalizedText;
   /** A required option must hold a valid value before the Tool can be installed. */
   required: boolean;
+  /**
+   * Conditions that must all hold for this option to apply. An option whose
+   * conditions fail is not shown, not checked, and written as if empty.
+   * Each condition must name an option declared earlier in the list.
+   */
+  dependsOn?: ToolInstallOptionCondition[];
+};
+
+/**
+ * A test on another install option's value. With neither `equals` nor `in`,
+ * it holds when that option is filled in: `true` for a boolean, non-empty
+ * for a list, and set and not `null` for the other kinds. A condition on an
+ * option that does not apply never holds.
+ */
+export type ToolInstallOptionCondition = {
+  /** Role of the option tested. Defaults to the dependent option's role. */
+  role?: string;
+  /** Property of the option tested. */
+  property: string;
+  /** Holds when the value equals this, or for a list, contains it. */
+  equals?: boolean | string | number;
+  /** Holds when the value equals one of these, or for a list, contains one. */
+  in?: Array<string | number>;
 };
 
 export type ToolInstallOptionChoice<T extends string | number> = {
@@ -75,6 +98,14 @@ export type ToolInstallOption = ToolInstallOptionBase &
         max: number;
         integer: boolean;
         default?: number | null;
+        nullable?: boolean;
+      }
+    | {
+        kind: 'stringChoiceList';
+        choices: ToolInstallOptionChoice<string>[];
+        minItems?: number;
+        maxItems?: number;
+        default?: string[] | null;
         nullable?: boolean;
       }
     | {
