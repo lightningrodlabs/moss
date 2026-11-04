@@ -58,6 +58,7 @@ import { BINARIES_DIRECTORY, RESOURCES_DIRECTORY } from './const';
 import { registerAsrIpc } from './asr/wireUp';
 import { relayTimeoutMs } from './appletRelayPolicy';
 import { MOSS_CONFIG } from './mossConfig';
+import { registerAboutIpc } from './aboutWindow';
 import { createLanBeaconService, type BeaconDiagnostics } from './lanBeacon';
 // import { AdminWebsocket } from '@holochain/client';
 import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
@@ -1577,6 +1578,10 @@ if (!RUNNING_WITH_COMMAND) {
         }
       },
     );
+    registerAboutIpc(() => ({
+      mossVersion: appVersion,
+      holochainVersion: MOSS_CONFIG.holochain,
+    }));
     ipcMain.handle('get-media-sources', async () => {
       const sources = await desktopCapturer.getSources({ types: ['window', 'screen'] });
       return sources.map((source) => {
