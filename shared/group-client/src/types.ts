@@ -1,10 +1,12 @@
 import {
+  Action,
   ActionHash,
   AgentPubKey,
   AgentPubKeyB64,
   DnaHash,
   Duration,
   EntryHash,
+  Signature,
   Timestamp,
 } from '@holochain/client';
 import { AppletId, WAL } from '@theweave/api';
@@ -200,8 +202,14 @@ export type AppletAgent = {
   applet_pubkey: AgentPubKey;
 };
 
+/**
+ * The group DNA properties. Omit `join_policy` and `allow_delegated_invites`
+ * when they have their default values, so open groups keep the same DNA hash.
+ */
 export type GroupDnaProperties = {
   progenitor: AgentPubKeyB64 | null;
+  join_policy?: JoinGate;
+  allow_delegated_invites?: boolean;
 };
 
 export type SignalPayloadGroup = {
@@ -332,3 +340,54 @@ export type GroupRemoteSignal =
       type: 'tool-transfer';
       payload: ToolTransferMessage;
     };
+
+/**
+ * A gate that decides who may join a group. Mirrors `JoinGate` in the group
+ * integrity zome. Gates compose through `AnyOf` and `AllOf`.
+ */
+export type JoinGate =
+  | { type: 'Progenitor' }
+  | { type: 'Steward' }
+  | { type: 'External'; content: { keys: AgentPubKeyB64[]; threshold: number } }
+  | { type: 'AllowList'; content: { agents: AgentPubKeyB64[] } }
+  | { type: 'AnyOf'; content: JoinGate[] }
+  | { type: 'AllOf'; content: JoinGate[] };
+
+/**
+ * A signed `StewardPermission` create record. A chain of these, from a steward
+ * back to a permission the progenitor issued, proves steward standing.
+ */
+export type StewardCredential = {
+  action: Action;
+  signature: Signature;
+  permission: StewardPermission;
+};
+
+/** A signer's approval of a one-time invite key. */
+export type Delegation = {
+  invite_key: AgentPubKey;
+  delegation_signature: Signature;
+};
+
+/** One signer's approval of a joining agent. */
+export type JoinSignature = {
+  signer: AgentPubKey;
+  /** Empty when the signer claims no steward standing. */
+  steward_credential: StewardCredential[];
+  signature: Signature;
+  delegation: Delegation | null;
+};
+
+/** What a signer returns for an offline invite link. */
+export type InviteDelegation = {
+  signer: AgentPubKey;
+  steward_credential: StewardCredential[];
+  delegation: Delegation;
+};
+
+/** The membrane proof a joining agent presents, msgpack-encoded at install. */
+export type GroupMembraneProof = {
+  signatures: JoinSignature[];
+  /** Proves the joining agent itself is a steward. Lets the first stewards join. */
+  own_steward_credential?: StewardCredential[];
+};

@@ -19,10 +19,18 @@ pub use steward_permission::*;
 pub mod steward_permission_claim;
 use hdi::prelude::*;
 pub use steward_permission_claim::*;
+pub mod membrane_proof;
+pub use membrane_proof::*;
 
 #[derive(Clone, Serialize, Deserialize, Debug, SerializedBytes)]
 pub struct GroupDnaProperties {
     pub progenitor: Option<AgentPubKeyB64>,
+    /// Who may join. `None` means anyone with the network seed.
+    #[serde(default)]
+    pub join_policy: Option<JoinGate>,
+    /// Whether join signatures may come through a delegated invite key.
+    #[serde(default)]
+    pub allow_delegated_invites: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -55,14 +63,30 @@ pub enum LinkTypes {
     GroupMetaDataToAnchor,
 }
 #[hdk_extern]
-pub fn genesis_self_check(_data: GenesisSelfCheckData) -> ExternResult<ValidateCallbackResult> {
-    Ok(ValidateCallbackResult::Valid)
+pub fn genesis_self_check(data: GenesisSelfCheckData) -> ExternResult<ValidateCallbackResult> {
+    validate_join(&data.agent_key, &data.membrane_proof)
 }
-pub fn validate_agent_joining(
-    _agent_pub_key: AgentPubKey,
-    _membrane_proof: &Option<MembraneProof>,
+
+/// Checks a `CreateAgent` action against the membrane proof in the
+/// `AgentValidationPkg` action right before it.
+fn validate_create_agent(
+    agent: &AgentPubKey,
+    prev_action: Option<&ActionHash>,
 ) -> ExternResult<ValidateCallbackResult> {
-    Ok(ValidateCallbackResult::Valid)
+    let Some(prev_action_hash) = prev_action else {
+        return Ok(ValidateCallbackResult::Invalid(
+            "CreateAgent action must have a previous action".into(),
+        ));
+    };
+    let previous_action = must_get_action(prev_action_hash.clone())?;
+    match &previous_action.action().data {
+        ActionData::AgentValidationPkg(AgentValidationPkgData { membrane_proof }) => {
+            validate_join(agent, membrane_proof)
+        }
+        _ => Ok(ValidateCallbackResult::Invalid(
+            "The previous action for a `CreateAgent` action must be an `AgentValidationPkg`".into(),
+        )),
+    }
 }
 #[hdk_extern]
 pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
@@ -121,6 +145,9 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     validate_create_steward_permission_claim(action.into(), claim)
                 }
             },
+            OpEntry::CreateAgent { action, agent } => {
+                validate_create_agent(&agent, action.prev_action())
+            }
             _ => Ok(ValidateCallbackResult::Valid),
         },
         FlatOp::Update(update_entry) => match update_entry {
@@ -874,31 +901,14 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             OpRecord::OpenChain { .. } => Ok(ValidateCallbackResult::Valid),
             OpRecord::CloseChain { .. } => Ok(ValidateCallbackResult::Valid),
             OpRecord::InitZomesComplete { .. } => Ok(ValidateCallbackResult::Valid),
+            OpRecord::CreateAgent { action, agent } => {
+                validate_create_agent(&agent, action.prev_action())
+            }
             _ => Ok(ValidateCallbackResult::Valid),
         },
         FlatOp::AgentActivity(agent_activity) => match agent_activity {
             OpActivity::CreateAgent { action, agent } => {
-                let prev_action_hash =
-                    action
-                        .prev_action()
-                        .cloned()
-                        .ok_or(wasm_error!(WasmErrorInner::Guest(
-                            "CreateAgent action must have a previous action".into()
-                        )))?;
-                let previous_action = must_get_action(prev_action_hash)?;
-                match &previous_action.action().data {
-                        ActionData::AgentValidationPkg(
-                            AgentValidationPkgData { membrane_proof },
-                        ) => validate_agent_joining(agent, membrane_proof),
-                        _ => {
-                            Ok(
-                                ValidateCallbackResult::Invalid(
-                                    "The previous action for a `CreateAgent` action must be an `AgentValidationPkg`"
-                                        .to_string(),
-                                ),
-                            )
-                        }
-                    }
+                validate_create_agent(&agent, action.prev_action())
             }
             _ => Ok(ValidateCallbackResult::Valid),
         },
