@@ -2,18 +2,31 @@ import {
   ActionHash,
   AgentPubKey,
   AppBundleSource,
+  DnaHash,
   encodeHashToBase64,
+  hashFrom32AndType,
+  HoloHashType,
   RoleName,
   RoleSettingsMap,
 } from '@holochain/client';
 import {
   AgentApp,
+  Conductor,
   dhtSync,
   enableAndGetAgentApp,
   PlayerApp,
   Scenario,
 } from '@holochain-open-dev/tryorama';
-import { Accountability, StewardPermission } from '@theweave/group-client';
+import { encode } from '@msgpack/msgpack';
+import sodium from 'libsodium-wrappers';
+import {
+  Accountability,
+  GroupDnaProperties,
+  GroupMembraneProof,
+  InviteDelegation,
+  JoinSignature,
+  StewardPermission,
+} from '@theweave/group-client';
 import { getCellByRoleName } from '../../shared.js';
 
 /**
@@ -213,4 +226,114 @@ export async function installAppWithProgenitor(
 
 export async function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const JOIN_DOMAIN = new TextEncoder().encode('moss-group-join-v1');
+const JOIN_DELEGATE_DOMAIN = new TextEncoder().encode('moss-group-invite-v1');
+
+function concatBytes(...parts: Uint8Array[]): Uint8Array {
+  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+  let offset = 0;
+  for (const p of parts) {
+    out.set(p, offset);
+    offset += p.length;
+  }
+  return out;
+}
+
+/** The bytes a signer signs to admit `joiningAgent`. Mirrors `join_payload_bytes`. */
+export function joinPayloadBytes(dnaHash: DnaHash, joiningAgent: AgentPubKey): Uint8Array {
+  return concatBytes(JOIN_DOMAIN, dnaHash, joiningAgent);
+}
+
+/** The bytes a signer signs to approve `inviteKey`. Mirrors `delegation_payload_bytes`. */
+export function delegationPayloadBytes(dnaHash: DnaHash, inviteKey: AgentPubKey): Uint8Array {
+  return concatBytes(JOIN_DELEGATE_DOMAIN, dnaHash, inviteKey);
+}
+
+/** An ed25519 keypair held outside any conductor, e.g. an external signer or an invite key. */
+export type LocalKeypair = { pubKey: AgentPubKey; privateKey: Uint8Array };
+
+export async function localKeypair(): Promise<LocalKeypair> {
+  await sodium.ready;
+  const kp = sodium.crypto_sign_keypair();
+  return {
+    pubKey: hashFrom32AndType(kp.publicKey, HoloHashType.Agent),
+    privateKey: kp.privateKey,
+  };
+}
+
+export async function localSign(keypair: LocalKeypair, bytes: Uint8Array): Promise<Uint8Array> {
+  await sodium.ready;
+  return sodium.crypto_sign_detached(bytes, keypair.privateKey);
+}
+
+/** A direct join signature from a key held outside the conductor. */
+export async function localJoinSignature(
+  keypair: LocalKeypair,
+  dnaHash: DnaHash,
+  joiningAgent: AgentPubKey,
+): Promise<JoinSignature> {
+  return {
+    signer: keypair.pubKey,
+    steward_credential: [],
+    signature: await localSign(keypair, joinPayloadBytes(dnaHash, joiningAgent)),
+    delegation: null,
+  };
+}
+
+/** Completes a signer's invite delegation for `joiningAgent`, as the joiner's client does. */
+export async function redeemInvite(
+  invite: InviteDelegation,
+  inviteKey: LocalKeypair,
+  dnaHash: DnaHash,
+  joiningAgent: AgentPubKey,
+): Promise<JoinSignature> {
+  return {
+    signer: invite.signer,
+    steward_credential: invite.steward_credential,
+    signature: await localSign(inviteKey, joinPayloadBytes(dnaHash, joiningAgent)),
+    delegation: invite.delegation,
+  };
+}
+
+/** A conductor with a fresh agent key, ready to request a membrane proof for that key. */
+export async function prospectiveMember(scenario: Scenario): Promise<[Conductor, AgentPubKey]> {
+  const conductor = await scenario.addConductor();
+  const agentPubKey = await conductor.adminWs().generateAgentPubKey();
+  return [conductor, agentPubKey];
+}
+
+/**
+ * Install the group happ with explicit DNA properties and, optionally, a
+ * membrane proof for an agent key generated beforehand.
+ */
+export async function installGroup(
+  scenario: Scenario,
+  appBundleSource: AppBundleSource,
+  properties: GroupDnaProperties,
+  opts: { conductor?: Conductor; agentPubKey?: AgentPubKey; membraneProof?: GroupMembraneProof } = {},
+): Promise<[PlayerApp, AgentPubKey]> {
+  const conductor = opts.conductor ?? (await scenario.addConductor());
+  const rolesSettings: RoleSettingsMap = {
+    group: {
+      type: 'provisioned',
+      value: {
+        modifiers: { properties },
+        membrane_proof: opts.membraneProof ? encode(opts.membraneProof) : undefined,
+      },
+    },
+  };
+  const appInfo = await conductor.installApp({
+    appBundleSource,
+    options: { rolesSettings, agentPubKey: opts.agentPubKey },
+  });
+  const adminWs = conductor.adminWs();
+  const port = await conductor.attachAppInterface();
+  const issued = await adminWs.issueAppAuthenticationToken({
+    installed_app_id: appInfo.installed_app_id,
+  });
+  const appWs = await conductor.connectAppWs(issued.token, port);
+  const agentApp: AgentApp = await enableAndGetAgentApp(adminWs, appWs, appInfo);
+  return [{ conductor, appWs, ...agentApp }, appInfo.agent_pub_key];
 }
