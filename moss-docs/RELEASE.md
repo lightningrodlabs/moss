@@ -32,8 +32,9 @@ Then click **"Save Draft"** to save the release as a draft. The CI workflow will
 
 ## Update to a new version of group happ
 
-Trigger `publish-happ` workflow. It will create the release draft automatically and use the version number from `package.json`.
-Get the sha256 hash of the happ bundle and paste it into the `moss.config.json` file.
+Trigger the `publish-happ` workflow. It creates a draft release tagged `group-happ-v<version>`. The version is the workflow's `version` input. If you leave the input empty, the workflow uses the version in `package.json`. A version with no prerelease suffix, for example `0.16.0`, gives a release that is not marked as a prerelease.
+
+Publish the draft, because the fetch script cannot download a draft asset. Then put the version and the sha256 hash of the happ bundle in `moss.config.json`.
 
 ## Releasing NPM packages
 
