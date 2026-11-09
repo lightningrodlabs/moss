@@ -9,8 +9,8 @@
     "deploy:staging": "wrangler deploy --env staging",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "migrate": "wrangler d1 migrations apply FEEDBACK_DB",
-    "migrate:staging": "wrangler d1 migrations apply FEEDBACK_DB --env staging"
+    "migrate": "wrangler d1 migrations apply FEEDBACK_DB --remote",
+    "migrate:staging": "wrangler d1 migrations apply FEEDBACK_DB --remote --env staging"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "0.23.0",

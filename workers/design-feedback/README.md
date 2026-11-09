@@ -77,7 +77,7 @@ Check that `R2_PUBLIC_URL` in the production `[vars]` block is the public URL of
 
 ## 4. Apply the database migrations
 
-A migration creates the tables the worker needs. Apply them to the remote databases:
+A migration creates the tables the worker needs. These scripts pass the `--remote` flag, so they apply the migrations to the databases in your Cloudflare account and not to a local copy:
 
 ```
 npm run migrate

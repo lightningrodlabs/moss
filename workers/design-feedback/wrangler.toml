@@ -7,7 +7,7 @@ compatibility_flags = ["nodejs_compat"]
 # account_id = ""
 
 # Secrets (set via `wrangler secret put`, per environment):
-# - GITHUB_APP_PRIVATE_KEY: PKCS#8 PEM private key of the GitHub App
+# - GITHUB_APP_PRIVATE_KEY: PEM private key of the GitHub App (PKCS#1 or PKCS#8 accepted)
 
 [vars]
 GITHUB_REPO_OWNER = "lightningrodlabs"
