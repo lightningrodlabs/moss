@@ -1,0 +1,15 @@
+export {
+  feedbackSubmit,
+  registerFeedbackIpc,
+  type FeedbackIpcDeps,
+  type FeedbackReporterStatus,
+  type FeedbackSaveReason,
+  type FeedbackSubmitInput,
+  type FeedbackSubmitResult,
+} from './ipc';
+export {
+  FeedbackRecordStore,
+  type FeedbackRecord,
+  type FeedbackRecordSummary,
+} from './recordStore';
+export { deriveReporterKey, type ReporterKey } from './reporterKey';
