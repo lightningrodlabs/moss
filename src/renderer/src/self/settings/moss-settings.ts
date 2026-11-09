@@ -5,23 +5,16 @@ import { notify } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
+import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 
 import { mossStyles } from '../../shared-styles.js';
 import { PersistedStore } from '../../persisted-store.js';
+import type { FeedbackRecordSummary } from '../../electron-api.js';
 import '../profile/profile-settings.js';
 import './language-settings.js';
 import './notification-settings.js';
 import './danger-zone-settings.js';
 import './services/services-settings.js';
-
-type FeedbackRecord = {
-  id: string;
-  text: string;
-  mossVersion: string;
-  os: string;
-  timestamp: number;
-  issueUrl?: string;
-};
 
 enum TabsState {
   Profile,
@@ -45,7 +38,10 @@ export class MossSettings extends LitElement {
   _designFeedbackMode: boolean = false;
 
   @state()
-  _feedbackHistory: FeedbackRecord[] = [];
+  _feedbackHistory: FeedbackRecordSummary[] = [];
+
+  @state()
+  _reporterId?: string;
 
   @state()
   _loadingHistory = false;
@@ -76,10 +72,16 @@ export class MossSettings extends LitElement {
   private async _loadFeedbackHistory() {
     this._loadingHistory = true;
     try {
-      this._feedbackHistory = await window.electronAPI.listFeedback();
+      const [history, status] = await Promise.all([
+        window.electronAPI.listFeedback(),
+        window.electronAPI.getFeedbackReporterStatus(),
+      ]);
+      this._feedbackHistory = history;
+      this._reporterId = status.reporterId;
     } catch (e) {
       console.error('Failed to load feedback history:', e);
       this._feedbackHistory = [];
+      this._reporterId = undefined;
     }
     this._loadingHistory = false;
   }
@@ -133,6 +135,7 @@ export class MossSettings extends LitElement {
         </p>
         <sl-switch
           ?checked=${this._designFeedbackMode}
+          ?disabled=${this._reporterId === undefined}
           @sl-change=${(e: Event) => {
             const checked = (e.target as HTMLInputElement).checked;
             this._designFeedbackMode = checked;
@@ -148,6 +151,17 @@ export class MossSettings extends LitElement {
         >
           ${msg('Enable Design Feedback Mode')}
         </sl-switch>
+        ${this._reporterId === undefined
+          ? html`<p style="margin: 0; opacity: 0.6; font-size: 14px;">
+              ${msg('Feedback becomes available after you join or create a group.')}
+            </p>`
+          : html`<sl-tooltip
+              content=${msg(
+                'A pseudonymous id included on your issues so the team can follow up.',
+              )}
+            >
+              <span class="feedback-date">${msg('Reporter id:')} ${this._reporterId}</span>
+            </sl-tooltip>`}
 
         <h4 style="margin: 16px 0 0 0;">${msg('Feedback History')}</h4>
         ${this._feedbackHistory.length === 0 && !this._loadingHistory
