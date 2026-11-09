@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   generateKeyPairSync,
+  createPrivateKey,
   createPublicKey,
   sign as nodeSign,
   verify as nodeVerify,
@@ -14,6 +15,7 @@ import {
   canonicalRequestString,
   isTimestampFresh,
   reporterIdFromPubKey,
+  sha256,
   verifySignedRequest,
 } from './signing.js';
 
@@ -152,5 +154,53 @@ describe('build and verify signed requests', () => {
       verify,
     });
     expect(res).toEqual({ ok: false, error: 'bad_request' });
+  });
+});
+
+// Frozen vectors: the Moss client and the deployed worker must agree byte for byte, and
+// reporter ids already appear on public GitHub issues. These literals must never change;
+// a failure here means the wire protocol or the reporter id changed, not that the vector is stale.
+describe('frozen protocol vectors', () => {
+  const body = new TextEncoder().encode('{"text":"frozen vector"}');
+  const FROZEN_BODY_SHA256 = 'BjDDdsodiPKpY9NTRmTLtHVYEVDbr5nUDe6BcRbFEdM';
+  const FROZEN_CANONICAL =
+    'moss-feedback-v1\nPOST\n/v1/issues\n1800000000\nAAECAwQFBgcICQoLDA0ODw\n' + FROZEN_BODY_SHA256;
+
+  it('hashes fixed bytes to a fixed base64url SHA-256', async () => {
+    expect(base64UrlEncode(await sha256(body))).toBe(FROZEN_BODY_SHA256);
+  });
+
+  it('builds a fixed canonical request string', async () => {
+    expect(
+      canonicalRequestString({
+        method: 'post',
+        path: '/v1/issues',
+        timestamp: 1_800_000_000,
+        nonce: 'AAECAwQFBgcICQoLDA0ODw',
+        bodySha256: await sha256(body),
+      }),
+    ).toBe(FROZEN_CANONICAL);
+  });
+
+  it('derives a fixed reporter id from a fixed public key', async () => {
+    const pubKey = Uint8Array.from({ length: 32 }, (_, i) => i);
+    expect(await reporterIdFromPubKey(pubKey)).toBe('Yw3NKWbEM2aR');
+  });
+
+  it('produces a fixed Ed25519 signature for a fixed seed over the canonical string', () => {
+    const seed = Buffer.from(Array.from({ length: 32 }, (_, i) => 0xff - i));
+    const priv = createPrivateKey({
+      key: Buffer.concat([Buffer.from('302e020100300506032b657004220420', 'hex'), seed]),
+      format: 'der',
+      type: 'pkcs8',
+    });
+    const spki = createPublicKey(priv).export({ format: 'der', type: 'spki' });
+    expect(base64UrlEncode(new Uint8Array(spki.subarray(spki.length - 32)))).toBe(
+      'uvxxvq06xeS2PpyCFu5xo0quxlci7tvKcotOmzzM45Y',
+    );
+    const signature = nodeSign(null, Buffer.from(FROZEN_CANONICAL), priv);
+    expect(base64UrlEncode(new Uint8Array(signature))).toBe(
+      'MaJjEAbIsvdxuzQR4xFbK9hxkpO9dz_AE02u6SdXZUowxhgjWFd-Jjsk27lYjsJZRR6NxOuvUmpZlmtDF3MwDA',
+    );
   });
 });
