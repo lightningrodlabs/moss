@@ -3634,11 +3634,11 @@ beginnt jetzt</target>
 </trans-unit>
 <trans-unit id="s8ab9926515edbd19">
   <source>Feedback becomes available after you join or create a group.</source>
-  <target>Feedback ist verfügbar, nachdem du einer Gruppe beigetreten bist oder eine erstellt hast.</target>
+  <target>Feedback ist verfügbar, nachdem Sie einer Gruppe beigetreten sind oder eine erstellt haben.</target>
 </trans-unit>
 <trans-unit id="sbda27e2cd1963e98">
   <source>A pseudonymous id included on your issues so the team can follow up.</source>
-  <target>Eine pseudonyme ID, die deinen Issues beigefügt wird, damit das Team nachfassen kann.</target>
+  <target>Eine pseudonyme ID, die Ihren Issues beigefügt wird, damit das Team nachfassen kann.</target>
 </trans-unit>
 <trans-unit id="sa93e23dc28e4268d">
   <source>Reporter id:</source>
@@ -3650,7 +3650,7 @@ beginnt jetzt</target>
 </trans-unit>
 <trans-unit id="sc23c16345d72638e">
   <source>Not verified. Lets the team mention you on the issue.</source>
-  <target>Nicht verifiziert. Ermöglicht dem Team, dich im Issue zu erwähnen.</target>
+  <target>Nicht verifiziert. Ermöglicht dem Team, Sie im Issue zu erwähnen.</target>
 </trans-unit>
 <trans-unit id="s9a1bfee0fbe75bfe">
   <source>Not a valid GitHub username</source>
@@ -3658,7 +3658,7 @@ beginnt jetzt</target>
 </trans-unit>
 <trans-unit id="sbc93f80236b02271">
   <source>A pseudonymous reporter id, the same for every issue from this Moss profile, is included so the team can follow up. It cannot be traced back to you or your groups.</source>
-  <target>Eine pseudonyme Reporter-ID, die für alle Issues dieses Moss-Profils gleich ist, wird beigefügt, damit das Team nachfassen kann. Sie lässt sich nicht auf dich oder deine Gruppen zurückführen.</target>
+  <target>Eine pseudonyme Reporter-ID, die für alle Issues dieses Moss-Profils gleich ist, wird beigefügt, damit das Team nachfassen kann. Sie lässt sich nicht auf Sie oder Ihre Gruppen zurückführen.</target>
 </trans-unit>
 <trans-unit id="sdf6156c38ce2ee3b">
   <source>Feedback saved locally. Could not reach the feedback service.</source>
@@ -3666,15 +3666,15 @@ beginnt jetzt</target>
 </trans-unit>
 <trans-unit id="s0ebb890967e7ad6f">
   <source>Feedback saved locally. Join or create a group to enable submitting feedback.</source>
-  <target>Feedback lokal gespeichert. Tritt einer Gruppe bei oder erstelle eine, um Feedback senden zu können.</target>
+  <target>Feedback lokal gespeichert. Treten Sie einer Gruppe bei oder erstellen Sie eine, um Feedback senden zu können.</target>
 </trans-unit>
 <trans-unit id="s8d21e9427c049f37">
   <source>Feedback saved locally. Your system clock seems to be off; please check it and try again.</source>
-  <target>Feedback lokal gespeichert. Deine Systemuhr scheint falsch zu gehen; bitte prüfe sie und versuche es erneut.</target>
+  <target>Feedback lokal gespeichert. Ihre Systemuhr scheint falsch zu gehen; bitte prüfen Sie sie und versuchen Sie es erneut.</target>
 </trans-unit>
 <trans-unit id="sde58d7c117a113b1">
   <source>Feedback saved locally. You have submitted a lot recently; please try again later.</source>
-  <target>Feedback lokal gespeichert. Du hast kürzlich sehr viel gesendet; bitte versuche es später erneut.</target>
+  <target>Feedback lokal gespeichert. Sie haben kürzlich sehr viel gesendet; bitte versuchen Sie es später erneut.</target>
 </trans-unit>
 </body>
 </file>
