@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeedbackRecordStore, type FeedbackRecord } from './recordStore';
 
 const base: Omit<FeedbackRecord, 'id'> = {
@@ -82,5 +82,39 @@ describe('FeedbackRecordStore', () => {
 
   it('get of an unknown id is undefined', () => {
     expect(store.get('missing')).toBeUndefined();
+  });
+
+  it('get and update reject ids that could leave the store directory', () => {
+    const outside = path.join(path.dirname(dir), `${path.basename(dir)}-outside.json`);
+    fs.writeFileSync(outside, JSON.stringify({ id: 'x', text: 't', timestamp: 1 }));
+    try {
+      const relative = `../${path.basename(outside, '.json')}`;
+      for (const id of [relative, '../x', 'a/b']) {
+        expect(store.get(id)).toBeUndefined();
+        expect(store.update(id, { text: 'changed' })).toBeUndefined();
+      }
+      expect(JSON.parse(fs.readFileSync(outside, 'utf8')).text).toBe('t');
+      expect(fs.readdirSync(dir)).toEqual([]);
+    } finally {
+      fs.rmSync(outside, { force: true });
+    }
+  });
+
+  it('save never overwrites an existing record', () => {
+    const a = store.save(base);
+    const b = store.save(base);
+    expect(a.id).not.toBe(b.id);
+    expect(fs.readdirSync(dir)).toHaveLength(2);
+  });
+
+  it('save retries with a new suffix when the id already exists', () => {
+    const rand = vi.spyOn(Math, 'random');
+    rand.mockReturnValueOnce(0.5).mockReturnValueOnce(0.5).mockReturnValueOnce(0.25);
+    const a = store.save(base);
+    const b = store.save(base);
+    rand.mockRestore();
+    expect(a.id).not.toBe(b.id);
+    expect(store.get(a.id)).toEqual(a);
+    expect(store.get(b.id)).toEqual(b);
   });
 });

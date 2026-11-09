@@ -35,21 +35,34 @@ function parseIssueNumber(issueUrl: string): number | undefined {
   return match ? Number(match[1]) : undefined;
 }
 
+const ID_PATTERN = /^\d+-[a-z0-9]+$/;
+const SAVE_ATTEMPTS = 5;
+
 /** Persists each feedback submission as `<dir>/<id>.json`. */
 export class FeedbackRecordStore {
   constructor(private readonly dir: string) {
     fs.mkdirSync(dir, { recursive: true });
   }
 
-  private fileFor(id: string): string {
-    return path.join(this.dir, `${id}.json`);
+  /** Resolves an id to its file, or undefined when the id could escape the store directory. */
+  private fileFor(id: string): string | undefined {
+    return ID_PATTERN.test(id) ? path.join(this.dir, `${id}.json`) : undefined;
   }
 
   save(record: Omit<FeedbackRecord, 'id'>): FeedbackRecord {
-    const id = `${record.timestamp}-${Math.random().toString(36).slice(2, 8).padEnd(6, '0')}`;
-    const saved: FeedbackRecord = { ...record, id };
-    fs.writeFileSync(this.fileFor(id), JSON.stringify(saved, null, 2));
-    return saved;
+    for (let attempt = 0; attempt < SAVE_ATTEMPTS; attempt++) {
+      const id = `${record.timestamp}-${Math.random().toString(36).slice(2, 8).padEnd(6, '0')}`;
+      const file = this.fileFor(id);
+      if (!file) throw new Error(`Invalid feedback record timestamp: ${record.timestamp}`);
+      const saved: FeedbackRecord = { ...record, id };
+      try {
+        fs.writeFileSync(file, JSON.stringify(saved, null, 2), { flag: 'wx' });
+        return saved;
+      } catch (e) {
+        if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
+      }
+    }
+    throw new Error('Could not allocate a unique feedback record id');
   }
 
   list(): FeedbackRecordSummary[] {
@@ -65,8 +78,10 @@ export class FeedbackRecordStore {
   }
 
   get(id: string): FeedbackRecord | undefined {
+    const file = this.fileFor(id);
+    if (!file) return undefined;
     try {
-      const stored = JSON.parse(fs.readFileSync(this.fileFor(id), 'utf8')) as StoredRecord;
+      const stored = JSON.parse(fs.readFileSync(file, 'utf8')) as StoredRecord;
       return normalize(stored);
     } catch {
       return undefined;
@@ -77,7 +92,9 @@ export class FeedbackRecordStore {
     const existing = this.get(id);
     if (!existing) return undefined;
     const updated: FeedbackRecord = { ...existing, ...patch, id };
-    fs.writeFileSync(this.fileFor(id), JSON.stringify(updated, null, 2));
+    const file = this.fileFor(id);
+    if (!file) return undefined;
+    fs.writeFileSync(file, JSON.stringify(updated, null, 2));
     return updated;
   }
 }
