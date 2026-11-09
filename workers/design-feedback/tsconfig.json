@@ -11,5 +11,6 @@
     "allowImportingTsExtensions": true,
     "types": ["@cloudflare/workers-types", "@cloudflare/vitest-pool-workers/types"]
   },
-  "include": ["src", "test", "../../shared/utils/src/feedback"]
+  "include": ["src", "test", "../../shared/utils/src/feedback"],
+  "exclude": ["../../shared/utils/src/feedback/*.test.ts"]
 }
