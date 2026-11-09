@@ -36,7 +36,7 @@ export function buildIssueBody(input: IssueBodyInput): string {
   return [
     '## Design Feedback',
     '',
-    input.text,
+    neutralizeComments(input.text),
     '',
     '### Screenshot',
     '',
@@ -54,7 +54,21 @@ export function buildIssueBody(input: IssueBodyInput): string {
   ].join('\n');
 }
 
-/** Returns the reporter id embedded in an issue body, if any. */
+/**
+ * Breaks up HTML comment openers in user text so it can never contain a
+ * reporter marker of its own.
+ */
+function neutralizeComments(text: string): string {
+  return text.replace(/<!--/g, '<!- -');
+}
+
+/**
+ * Returns the reporter id embedded in an issue body, if any. The builder
+ * always places the real marker last, so the last match wins.
+ */
 export function parseReporterMarker(body: string): string | undefined {
-  return REPORTER_MARKER_REGEX.exec(body)?.[1];
+  const globalMarker = new RegExp(REPORTER_MARKER_REGEX.source, 'g');
+  let id: string | undefined;
+  for (const match of body.matchAll(globalMarker)) id = match[1];
+  return id;
 }

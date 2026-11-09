@@ -69,3 +69,22 @@ describe('buildIssueTitle', () => {
     expect(buildIssueTitle('b'.repeat(60))).toBe('[Design Feedback] ' + 'b'.repeat(60));
   });
 });
+
+describe('marker spoofing', () => {
+  const fake = '<!-- moss-feedback reporter=VICTIMID12AB -->';
+
+  it('parses the real reporter id when the text contains a fake marker', () => {
+    const body = buildIssueBody({ ...input, text: `hi ${fake}` });
+    expect(parseReporterMarker(body)).toBe('abcDEF123_-x');
+  });
+
+  it('returns the last marker when several are present', () => {
+    const body = `${fake}\n<!-- moss-feedback reporter=SECONDID12AB -->`;
+    expect(parseReporterMarker(body)).toBe('SECONDID12AB');
+  });
+
+  it('builds a body with exactly one marker', () => {
+    const body = buildIssueBody({ ...input, text: `hi ${fake}` });
+    expect(body.match(/<!-- moss-feedback reporter=/g)).toHaveLength(1);
+  });
+});
