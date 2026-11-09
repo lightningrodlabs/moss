@@ -165,6 +165,40 @@ describe('feedbackSubmit', () => {
   });
 });
 
+describe('feedbackSubmit request validation', () => {
+  async function submitText(text: string) {
+    const client = fakeClient(async () => ({ ok: true, value: { issueNumber: 1, issueUrl: 'u' } }));
+    const res = await feedbackSubmit(
+      {
+        store,
+        workerUrl: () => 'https://w',
+        getReporterKey: async () => key,
+        makeClient: client.makeClient,
+      },
+      { ...input, text },
+    );
+    return { res, client };
+  }
+
+  it('refuses whitespace-only text without contacting the worker', async () => {
+    const { res, client } = await submitText('   \n\t ');
+    expect(res.status).toBe('saved-locally');
+    if (res.status !== 'saved-locally') return;
+    expect(res.reason).toBe('rejected');
+    expect(store.list()[0].state).toBe('local-only');
+    expect(client.createIssue).not.toHaveBeenCalled();
+  });
+
+  it('refuses text over 10,000 characters without contacting the worker', async () => {
+    const { res, client } = await submitText('x'.repeat(10_001));
+    expect(res.status).toBe('saved-locally');
+    if (res.status !== 'saved-locally') return;
+    expect(res.reason).toBe('rejected');
+    expect(store.list()[0].state).toBe('local-only');
+    expect(client.createIssue).not.toHaveBeenCalled();
+  });
+});
+
 describe('registerFeedbackIpc', () => {
   function deps(): FeedbackIpcDeps {
     return { store, workerUrl: () => 'https://w', getReporterKey: async () => key };

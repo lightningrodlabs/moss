@@ -1,4 +1,5 @@
 import type { IpcMain } from 'electron';
+import { validateCreateIssueRequest } from '@theweave/utils';
 import type { FeedbackRecord, FeedbackRecordStore, FeedbackRecordSummary } from './recordStore';
 import type { ReporterKey } from './reporterKey';
 import { FeedbackWorkerClient, type WorkerFailureReason } from './workerClient';
@@ -77,14 +78,18 @@ export async function feedbackSubmit(
   if (!url) return savedLocally('no-worker-url');
   if (!key) return savedLocally('no-reporter-key');
 
-  const client = deps.makeClient ? deps.makeClient(url, key) : new FeedbackWorkerClient(url, key);
-  const result = await client.createIssue({
+  // The worker would refuse an invalid request anyway; checking here spares a
+  // signed request that counts against the reporter's rate limit.
+  const request = validateCreateIssueRequest({
     text: input.text,
     screenshot: input.screenshot,
     mossVersion: input.mossVersion,
     os: input.os,
     ...(input.githubHandle ? { githubHandle: input.githubHandle } : {}),
   });
+  if ('error' in request) return savedLocally('rejected');
+  const client = deps.makeClient ? deps.makeClient(url, key) : new FeedbackWorkerClient(url, key);
+  const result = await client.createIssue(request);
   if (!result.ok) return savedLocally(result.reason);
 
   const updated =
