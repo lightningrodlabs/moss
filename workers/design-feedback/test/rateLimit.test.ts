@@ -57,7 +57,8 @@ describe('consume', () => {
   });
 
   it('keeps scopes independent', async () => {
-    for (let i = 0; i < 11; i++) await consume(env.FEEDBACK_KV, issueScope('reporter-d'), () => WINDOW_START_MS);
+    for (let i = 0; i < 11; i++)
+      await consume(env.FEEDBACK_KV, issueScope('reporter-d'), () => WINDOW_START_MS);
     const other = await consume(env.FEEDBACK_KV, issueScope('reporter-e'), () => WINDOW_START_MS);
     expect(other.allowed).toBe(true);
   });

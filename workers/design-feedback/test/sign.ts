@@ -20,7 +20,9 @@ export async function makeTestReporter(): Promise<TestReporter> {
     'sign',
     'verify',
   ])) as CryptoKeyPair;
-  const pubKey = new Uint8Array((await crypto.subtle.exportKey('raw', keyPair.publicKey)) as ArrayBuffer);
+  const pubKey = new Uint8Array(
+    (await crypto.subtle.exportKey('raw', keyPair.publicKey)) as ArrayBuffer,
+  );
   return {
     pubKey,
     sign: (p) =>
@@ -32,7 +34,9 @@ export async function makeTestReporter(): Promise<TestReporter> {
         nonce: p.nonce ?? crypto.getRandomValues(new Uint8Array(16)),
         nowSeconds: p.nowSeconds,
         sign: async (message) =>
-          new Uint8Array(await crypto.subtle.sign({ name: 'Ed25519' }, keyPair.privateKey, message)),
+          new Uint8Array(
+            await crypto.subtle.sign({ name: 'Ed25519' }, keyPair.privateKey, message),
+          ),
       }),
   };
 }

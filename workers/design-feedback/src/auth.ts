@@ -16,10 +16,19 @@ export async function verifyEd25519(
   message: Uint8Array,
   signature: Uint8Array,
 ): Promise<boolean> {
-  const key = await crypto.subtle.importKey('raw', pubKey as BufferSource, { name: 'Ed25519' }, false, [
-    'verify',
-  ]);
-  return crypto.subtle.verify({ name: 'Ed25519' }, key, signature as BufferSource, message as BufferSource);
+  const key = await crypto.subtle.importKey(
+    'raw',
+    pubKey as BufferSource,
+    { name: 'Ed25519' },
+    false,
+    ['verify'],
+  );
+  return crypto.subtle.verify(
+    { name: 'Ed25519' },
+    key,
+    signature as BufferSource,
+    message as BufferSource,
+  );
 }
 
 /** Verifies the reporter signature and rejects any nonce already seen within its TTL. */

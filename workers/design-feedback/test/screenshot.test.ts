@@ -52,7 +52,12 @@ describe('decodePngDataUrl', () => {
 describe('storeScreenshot', () => {
   it('stores the object and returns its public url', async () => {
     const bytes = pngOfLength(64);
-    const url = await storeScreenshot(env.FEEDBACK_BUCKET, 'https://img.example.com/', bytes, () => 1_800_000_000_000);
+    const url = await storeScreenshot(
+      env.FEEDBACK_BUCKET,
+      'https://img.example.com/',
+      bytes,
+      () => 1_800_000_000_000,
+    );
     expect(url).toMatch(/^https:\/\/img\.example\.com\/feedback\/1800000000000-[a-z0-9]{6}\.png$/);
     const key = url.slice('https://img.example.com/'.length);
     const stored = await env.FEEDBACK_BUCKET.get(key);

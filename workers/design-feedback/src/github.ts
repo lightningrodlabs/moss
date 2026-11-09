@@ -108,7 +108,10 @@ function githubHeaders(authorization: string): Record<string, string> {
 async function failure(res: Response, what: string): Promise<GitHubError> {
   const text = await res.text().catch(() => '');
   const prefix = text.slice(0, MAX_ERROR_BODY_CHARS);
-  return new GitHubError(res.status, `GitHub ${what} failed with ${res.status}${prefix ? `: ${prefix}` : ''}`);
+  return new GitHubError(
+    res.status,
+    `GitHub ${what} failed with ${res.status}${prefix ? `: ${prefix}` : ''}`,
+  );
 }
 
 /** Reads a 2xx JSON body and returns it only if the guard accepts its shape; never echoes body content. */
@@ -176,12 +179,20 @@ export async function createIssue(
   fetchImpl: typeof fetch = fetch,
 ): Promise<CreatedIssue> {
   const token = await installationToken(env, fetchImpl);
-  const res = await fetchImpl(`${GITHUB_API}/repos/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}/issues`, {
-    method: 'POST',
-    headers: { ...githubHeaders(`Bearer ${token}`), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title: p.title, body: p.body, labels: p.labels }),
-  });
+  const res = await fetchImpl(
+    `${GITHUB_API}/repos/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}/issues`,
+    {
+      method: 'POST',
+      headers: { ...githubHeaders(`Bearer ${token}`), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: p.title, body: p.body, labels: p.labels }),
+    },
+  );
   if (!res.ok) throw await failure(res, 'issue creation');
   const issue = await parseBody(res, isCreatedIssue);
-  return { number: issue.number, html_url: issue.html_url, title: issue.title, created_at: issue.created_at };
+  return {
+    number: issue.number,
+    html_url: issue.html_url,
+    title: issue.title,
+    created_at: issue.created_at,
+  };
 }

@@ -1,7 +1,14 @@
 /** Records a reporter the first time they file; later calls leave the stored row untouched. */
-export async function upsertReporter(db: D1Database, reporterId: string, pubKey: Uint8Array, now: number): Promise<void> {
+export async function upsertReporter(
+  db: D1Database,
+  reporterId: string,
+  pubKey: Uint8Array,
+  now: number,
+): Promise<void> {
   await db
-    .prepare('INSERT INTO reporters (reporter_id, pubkey, created_at) VALUES (?, ?, ?) ON CONFLICT(reporter_id) DO NOTHING')
+    .prepare(
+      'INSERT INTO reporters (reporter_id, pubkey, created_at) VALUES (?, ?, ?) ON CONFLICT(reporter_id) DO NOTHING',
+    )
     .bind(reporterId, pubKey, now)
     .run();
 }
@@ -9,7 +16,13 @@ export async function upsertReporter(db: D1Database, reporterId: string, pubKey:
 /** Records a newly opened issue. `createdAt` is in seconds. */
 export async function insertIssue(
   db: D1Database,
-  row: { number: number; reporterId: string; title: string; createdAt: number; createdVia: 'worker' | 'github' },
+  row: {
+    number: number;
+    reporterId: string;
+    title: string;
+    createdAt: number;
+    createdVia: 'worker' | 'github';
+  },
 ): Promise<void> {
   await db
     .prepare(

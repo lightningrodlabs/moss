@@ -30,17 +30,34 @@ function fakeGitHub(issueStatus = 201): { fetchImpl: typeof fetch; calls: Call[]
     if (issueStatus !== 201) return new Response('internal secret detail', { status: issueStatus });
     const number = nextNumber++;
     return Response.json(
-      { number, html_url: `https://github.com/o/r/issues/${number}`, title: 'T', created_at: 'now' },
+      {
+        number,
+        html_url: `https://github.com/o/r/issues/${number}`,
+        title: 'T',
+        created_at: 'now',
+      },
       { status: 201 },
     );
   }) as typeof fetch;
   return { fetchImpl, calls };
 }
 
-type Payload = { text: string; screenshot: string; mossVersion: string; os: string; githubHandle?: string };
+type Payload = {
+  text: string;
+  screenshot: string;
+  mossVersion: string;
+  os: string;
+  githubHandle?: string;
+};
 
 function payload(overrides: Partial<Payload> = {}): Payload {
-  return { text: 'The button is misaligned', screenshot: PNG_DATA_URL, mossVersion: '0.16.0', os: 'linux', ...overrides };
+  return {
+    text: 'The button is misaligned',
+    screenshot: PNG_DATA_URL,
+    mossVersion: '0.16.0',
+    os: 'linux',
+    ...overrides,
+  };
 }
 
 let ipCounter = 0;
@@ -74,7 +91,9 @@ async function r2Keys(): Promise<string[]> {
 }
 
 async function count(table: 'issues' | 'reporters'): Promise<number> {
-  const row = await env.FEEDBACK_DB.prepare(`SELECT COUNT(*) AS n FROM ${table}`).first<{ n: number }>();
+  const row = await env.FEEDBACK_DB.prepare(`SELECT COUNT(*) AS n FROM ${table}`).first<{
+    n: number;
+  }>();
   return row?.n ?? 0;
 }
 
@@ -105,17 +124,26 @@ describe('POST /v1/issues', () => {
     const reporter = await makeTestReporter();
     const reporterId = await reporterIdFromPubKey(reporter.pubKey);
     const github = fakeGitHub();
-    const req = await signedRequest(reporter, JSON.stringify(payload({ githubHandle: 'octo-cat' })), `10.0.0.${ipCounter}`);
+    const req = await signedRequest(
+      reporter,
+      JSON.stringify(payload({ githubHandle: 'octo-cat' })),
+      `10.0.0.${ipCounter}`,
+    );
 
     const res = await call(req, github.fetchImpl);
 
     expect(res.status).toBe(201);
-    expect(await res.json()).toEqual({ issueNumber: 100, issueUrl: 'https://github.com/o/r/issues/100' });
+    expect(await res.json()).toEqual({
+      issueNumber: 100,
+      issueUrl: 'https://github.com/o/r/issues/100',
+    });
 
     const keys = await r2Keys();
     expect(keys).toHaveLength(1);
 
-    const issue = await env.FEEDBACK_DB.prepare('SELECT * FROM issues WHERE number = ?').bind(100).first();
+    const issue = await env.FEEDBACK_DB.prepare('SELECT * FROM issues WHERE number = ?')
+      .bind(100)
+      .first();
     expect(issue).toMatchObject({
       number: 100,
       reporter_id: reporterId,
@@ -134,7 +162,11 @@ describe('POST /v1/issues', () => {
     expect(rep!.created_at).toBe(NOW_MS / 1000);
 
     const issueCall = github.calls.find((c) => c.url.endsWith('/repos/o/r/issues'));
-    const sent = JSON.parse(issueCall?.body ?? '{}') as { title: string; body: string; labels: string[] };
+    const sent = JSON.parse(issueCall?.body ?? '{}') as {
+      title: string;
+      body: string;
+      labels: string[];
+    };
     expect(sent.labels).toEqual(['design-feedback']);
     expect(sent.body).toContain(`<!-- moss-feedback reporter=${reporterId} -->`);
     expect(sent.body).toContain('- GitHub: @octo-cat');
@@ -144,7 +176,9 @@ describe('POST /v1/issues', () => {
   it('unsigned request is 401 and nothing is stored', async () => {
     const reporter = await makeTestReporter();
     const github = fakeGitHub();
-    const req = await signedRequest(reporter, JSON.stringify(payload()), `10.0.1.${ipCounter}`, { tamper: true });
+    const req = await signedRequest(reporter, JSON.stringify(payload()), `10.0.1.${ipCounter}`, {
+      tamper: true,
+    });
 
     await expectError(await call(req, github.fetchImpl), 401, 'invalid_signature');
     expect(github.calls).toHaveLength(0);
@@ -164,7 +198,11 @@ describe('POST /v1/issues', () => {
   it('whitespace text is 400 bad_request and nothing is stored', async () => {
     const reporter = await makeTestReporter();
     const github = fakeGitHub();
-    const req = await signedRequest(reporter, JSON.stringify(payload({ text: '   \n\t ' })), `10.0.3.${ipCounter}`);
+    const req = await signedRequest(
+      reporter,
+      JSON.stringify(payload({ text: '   \n\t ' })),
+      `10.0.3.${ipCounter}`,
+    );
 
     await expectError(await call(req, github.fetchImpl), 400, 'bad_request');
     expect(github.calls).toHaveLength(0);
@@ -199,10 +237,16 @@ describe('POST /v1/issues', () => {
     const github = fakeGitHub();
     const ip = `10.0.6.${ipCounter}`;
     for (let i = 0; i < 10; i++) {
-      const res = await call(await signedRequest(reporter, JSON.stringify(payload()), ip), github.fetchImpl);
+      const res = await call(
+        await signedRequest(reporter, JSON.stringify(payload()), ip),
+        github.fetchImpl,
+      );
       expect(res.status).toBe(201);
     }
-    const res = await call(await signedRequest(reporter, JSON.stringify(payload()), ip), github.fetchImpl);
+    const res = await call(
+      await signedRequest(reporter, JSON.stringify(payload()), ip),
+      github.fetchImpl,
+    );
     await expectError(res, 429, 'rate_limited');
     expect(Number(res.headers.get('Retry-After'))).toBeGreaterThan(0);
     expect(await r2Keys()).toHaveLength(10);
@@ -212,7 +256,12 @@ describe('POST /v1/issues', () => {
   it('thirty-first request from one IP in a minute is 429 with Retry-After before authentication', async () => {
     const github = fakeGitHub();
     const ip = `10.0.7.${ipCounter}`;
-    const bad = () => new Request(`https://w${PATH}`, { method: 'POST', headers: { 'CF-Connecting-IP': ip }, body: '{}' });
+    const bad = () =>
+      new Request(`https://w${PATH}`, {
+        method: 'POST',
+        headers: { 'CF-Connecting-IP': ip },
+        body: '{}',
+      });
     for (let i = 0; i < 30; i++) expect((await call(bad(), github.fetchImpl)).status).toBe(400);
     const res = await call(bad(), github.fetchImpl);
     await expectError(res, 429, 'rate_limited');

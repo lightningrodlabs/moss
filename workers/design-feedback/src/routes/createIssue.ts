@@ -16,7 +16,11 @@ export type CreateIssueDeps = { fetchImpl?: typeof fetch; nowMs?: () => number }
 const ISSUE_LABEL = 'design-feedback';
 
 /** Returns a 429 when the scope is over its limit, otherwise null. */
-async function rateLimited(env: Env, scope: RateScope, nowMs: () => number): Promise<Response | null> {
+async function rateLimited(
+  env: Env,
+  scope: RateScope,
+  nowMs: () => number,
+): Promise<Response | null> {
   const { allowed, retryAfterSeconds } = await consume(env.FEEDBACK_KV, scope, nowMs);
   if (allowed) return null;
   const res = jsonError(429, 'rate_limited', 'Too many requests, try again later');
@@ -59,9 +63,15 @@ export function createIssueRoute(deps: CreateIssueDeps = {}): Route {
       if (issueLimited) return issueLimited;
 
       const png = decodePngDataUrl(input.screenshot);
-      if (typeof png === 'string') return jsonError(400, png, 'Screenshot is not an acceptable PNG');
+      if (typeof png === 'string')
+        return jsonError(400, png, 'Screenshot is not an acceptable PNG');
 
-      const screenshotUrl = await storeScreenshot(env.FEEDBACK_BUCKET, env.R2_PUBLIC_URL, png, nowMs);
+      const screenshotUrl = await storeScreenshot(
+        env.FEEDBACK_BUCKET,
+        env.R2_PUBLIC_URL,
+        png,
+        nowMs,
+      );
       const title = buildIssueTitle(input.text);
       const body = buildIssueBody({
         text: input.text,

@@ -7,7 +7,9 @@ const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
 const testPrivateKeyPem = privateKey.export({ type: 'pkcs8', format: 'pem' }).toString();
 // The same key in the PKCS#1 form GitHub hands out for app private keys.
 const testPrivateKeyPkcs1Pem = privateKey.export({ type: 'pkcs1', format: 'pem' }).toString();
-const testPublicKeySpkiPem = createPublicKey(privateKey).export({ type: 'spki', format: 'pem' }).toString();
+const testPublicKeySpkiPem = createPublicKey(privateKey)
+  .export({ type: 'spki', format: 'pem' })
+  .toString();
 
 export default defineConfig(async () => {
   const migrations = await readD1Migrations('./migrations');

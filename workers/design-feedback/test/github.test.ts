@@ -1,6 +1,12 @@
 import { env } from 'cloudflare:test';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { GitHubError, appJwt, createIssue, installationToken, resetInstallationTokenCache } from '../src/github';
+import {
+  GitHubError,
+  appJwt,
+  createIssue,
+  installationToken,
+  resetInstallationTokenCache,
+} from '../src/github';
 
 const NOW_MS = 1_800_000_000_000;
 const GITHUB_HEADERS = {
@@ -15,7 +21,9 @@ function b64urlToBytes(s: string): Uint8Array {
 }
 
 function pemBody(pem: string): Uint8Array {
-  return Uint8Array.from(atob(pem.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '')), (c) => c.charCodeAt(0));
+  return Uint8Array.from(atob(pem.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '')), (c) =>
+    c.charCodeAt(0),
+  );
 }
 
 async function verifyJwt(jwt: string): Promise<boolean> {
@@ -27,7 +35,12 @@ async function verifyJwt(jwt: string): Promise<boolean> {
     false,
     ['verify'],
   );
-  return crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, b64urlToBytes(sig), new TextEncoder().encode(`${h}.${p}`));
+  return crypto.subtle.verify(
+    'RSASSA-PKCS1-v1_5',
+    key,
+    b64urlToBytes(sig),
+    new TextEncoder().encode(`${h}.${p}`),
+  );
 }
 
 type Call = { url: string; method: string; headers: Headers; body: string | null };
@@ -56,7 +69,8 @@ function expiresIn(ms: number, from: number = NOW_MS): string {
 }
 
 function expectGithubHeaders(call: Call): void {
-  for (const [name, value] of Object.entries(GITHUB_HEADERS)) expect(call.headers.get(name)).toBe(value);
+  for (const [name, value] of Object.entries(GITHUB_HEADERS))
+    expect(call.headers.get(name)).toBe(value);
   expect(call.headers.get('authorization')).toMatch(/^Bearer .+/);
 }
 
@@ -69,7 +83,10 @@ describe('appJwt', () => {
     const jwt = await appJwt('1', env.GITHUB_APP_PRIVATE_KEY, () => NOW_MS);
     const parts = jwt.split('.');
     expect(parts).toHaveLength(3);
-    expect(JSON.parse(new TextDecoder().decode(b64urlToBytes(parts[0])))).toEqual({ alg: 'RS256', typ: 'JWT' });
+    expect(JSON.parse(new TextDecoder().decode(b64urlToBytes(parts[0])))).toEqual({
+      alg: 'RS256',
+      typ: 'JWT',
+    });
     const nowS = NOW_MS / 1000;
     expect(JSON.parse(new TextDecoder().decode(b64urlToBytes(parts[1])))).toEqual({
       iss: '1',
@@ -88,7 +105,9 @@ describe('appJwt', () => {
 
 describe('installationToken', () => {
   it('posts once for two calls and caches the token', async () => {
-    const { fetchImpl, calls } = fakeFetch([{ status: 201, json: { token: 'tok-1', expires_at: expiresIn(3_600_000) } }]);
+    const { fetchImpl, calls } = fakeFetch([
+      { status: 201, json: { token: 'tok-1', expires_at: expiresIn(3_600_000) } },
+    ]);
     const now = () => NOW_MS;
     expect(await installationToken(env, fetchImpl, now)).toBe('tok-1');
     expect(await installationToken(env, fetchImpl, now)).toBe('tok-1');
@@ -104,8 +123,12 @@ describe('installationToken', () => {
       { status: 201, json: { token: 'tok-2', expires_at: expiresIn(7_200_000) } },
     ]);
     expect(await installationToken(env, fetchImpl, () => NOW_MS)).toBe('tok-1');
-    expect(await installationToken(env, fetchImpl, () => NOW_MS + 3_600_000 - 6 * 60_000)).toBe('tok-1');
-    expect(await installationToken(env, fetchImpl, () => NOW_MS + 3_600_000 - 4 * 60_000)).toBe('tok-2');
+    expect(await installationToken(env, fetchImpl, () => NOW_MS + 3_600_000 - 6 * 60_000)).toBe(
+      'tok-1',
+    );
+    expect(await installationToken(env, fetchImpl, () => NOW_MS + 3_600_000 - 4 * 60_000)).toBe(
+      'tok-2',
+    );
     expect(calls).toHaveLength(2);
   });
 
@@ -116,7 +139,9 @@ describe('installationToken', () => {
     ]);
     const now = () => NOW_MS;
     expect(await installationToken(env, fetchImpl, now)).toBe('tok-a');
-    expect(await installationToken({ ...env, GITHUB_INSTALLATION_ID: '9' }, fetchImpl, now)).toBe('tok-b');
+    expect(await installationToken({ ...env, GITHUB_INSTALLATION_ID: '9' }, fetchImpl, now)).toBe(
+      'tok-b',
+    );
     expect(calls.map((c) => c.url)).toEqual([
       'https://api.github.com/app/installations/2/access_tokens',
       'https://api.github.com/app/installations/9/access_tokens',
@@ -155,23 +180,47 @@ describe('createIssue', () => {
       tokenReply(),
       {
         status: 201,
-        json: { number: 7, html_url: 'https://github.com/o/r/issues/7', title: 'T', created_at: 'now', extra: 1 },
+        json: {
+          number: 7,
+          html_url: 'https://github.com/o/r/issues/7',
+          title: 'T',
+          created_at: 'now',
+          extra: 1,
+        },
       },
     ]);
-    const issue = await createIssue(env, { title: 'T', body: 'B', labels: ['design-feedback'] }, fetchImpl);
-    expect(issue).toEqual({ number: 7, html_url: 'https://github.com/o/r/issues/7', title: 'T', created_at: 'now' });
+    const issue = await createIssue(
+      env,
+      { title: 'T', body: 'B', labels: ['design-feedback'] },
+      fetchImpl,
+    );
+    expect(issue).toEqual({
+      number: 7,
+      html_url: 'https://github.com/o/r/issues/7',
+      title: 'T',
+      created_at: 'now',
+    });
     expect(calls).toHaveLength(2);
     expectGithubHeaders(calls[0]);
     expectGithubHeaders(calls[1]);
     expect(calls[1].url).toBe('https://api.github.com/repos/o/r/issues');
     expect(calls[1].method).toBe('POST');
     expect(calls[1].headers.get('authorization')).toBe('Bearer tok-1');
-    expect(JSON.parse(calls[1].body ?? '')).toEqual({ title: 'T', body: 'B', labels: ['design-feedback'] });
+    expect(JSON.parse(calls[1].body ?? '')).toEqual({
+      title: 'T',
+      body: 'B',
+      labels: ['design-feedback'],
+    });
   });
 
   it('throws GitHubError with the status on a 403', async () => {
-    const { fetchImpl } = fakeFetch([tokenReply(), { status: 403, json: { message: 'Forbidden' } }]);
-    const err = await createIssue(env, { title: 'T', body: 'B', labels: [] }, fetchImpl).catch((e: unknown) => e);
+    const { fetchImpl } = fakeFetch([
+      tokenReply(),
+      { status: 403, json: { message: 'Forbidden' } },
+    ]);
+    const err = await createIssue(env, { title: 'T', body: 'B', labels: [] }, fetchImpl).catch(
+      (e: unknown) => e,
+    );
     expect(err).toBeInstanceOf(GitHubError);
     expect((err as GitHubError).status).toBe(403);
   });
@@ -181,14 +230,18 @@ describe('createIssue', () => {
       tokenReply(),
       { status: 201, json: { number: '7', html_url: 'u', title: 'T', created_at: 'now' } },
     ]);
-    const err = await createIssue(env, { title: 'T', body: 'B', labels: [] }, fetchImpl).catch((e: unknown) => e);
+    const err = await createIssue(env, { title: 'T', body: 'B', labels: [] }, fetchImpl).catch(
+      (e: unknown) => e,
+    );
     expect(err).toBeInstanceOf(GitHubError);
     expect((err as GitHubError).message).toBe('unexpected response shape');
   });
 
   it('rejects a non-JSON 201 body with GitHubError', async () => {
     const { fetchImpl } = fakeFetch([tokenReply(), { status: 201, text: '<html>oops</html>' }]);
-    const err = await createIssue(env, { title: 'T', body: 'B', labels: [] }, fetchImpl).catch((e: unknown) => e);
+    const err = await createIssue(env, { title: 'T', body: 'B', labels: [] }, fetchImpl).catch(
+      (e: unknown) => e,
+    );
     expect(err).toBeInstanceOf(GitHubError);
     expect((err as GitHubError).status).toBe(201);
   });

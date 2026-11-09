@@ -6,7 +6,9 @@ const SCREENSHOT_PREFIX = 'data:image/png;base64,';
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 /** Decodes a PNG data URL, checking the label, the real PNG signature and the size limit. */
-export function decodePngDataUrl(dataUrl: string): Uint8Array | 'screenshot_invalid' | 'screenshot_too_large' {
+export function decodePngDataUrl(
+  dataUrl: string,
+): Uint8Array | 'screenshot_invalid' | 'screenshot_too_large' {
   if (!SCREENSHOT_PATTERN.test(dataUrl)) return 'screenshot_invalid';
   let binary: string;
   try {
