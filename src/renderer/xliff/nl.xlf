@@ -3676,6 +3676,14 @@ begint nu</target>
   <source>Feedback saved locally. You have submitted a lot recently; please try again later.</source>
   <target>Feedback lokaal opgeslagen. Je hebt onlangs veel verstuurd; probeer het later opnieuw.</target>
 </trans-unit>
+<trans-unit id="scf1f4b27ab67929a">
+  <source>The screenshot is too large to submit. Select a smaller area.</source>
+  <target>De screenshot is te groot om te verzenden. Selecteer een kleiner gebied.</target>
+</trans-unit>
+<trans-unit id="s8845f794ca9ef160">
+  <source>Feedback saved locally. The feedback could not be submitted; use Copy to send it another way.</source>
+  <target>Feedback lokaal opgeslagen. De feedback kon niet worden verzonden; gebruik Kopiëren om hem op een andere manier te versturen.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

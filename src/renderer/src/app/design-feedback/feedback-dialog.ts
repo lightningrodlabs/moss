@@ -11,8 +11,10 @@ import '@shoelace-style/shoelace/dist/components/input/input.js';
 import type SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import type SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
 
+import { FEEDBACK_LIMITS } from '@theweave/utils';
+
 import { PersistedStore } from '../../persisted-store.js';
-import { isValidGithubHandle } from './submit-result.js';
+import { isScreenshotTooLarge, isValidGithubHandle } from './submit-result.js';
 
 /** Detail of the feedback-submitted and feedback-copied events. */
 export interface FeedbackDialogDetail {
@@ -111,6 +113,10 @@ export class FeedbackDialog extends LitElement {
     return isValidGithubHandle(this._trimmedHandle);
   }
 
+  private get _screenshotTooLarge(): boolean {
+    return isScreenshotTooLarge(this.screenshot);
+  }
+
   private _detail(): FeedbackDialogDetail {
     return {
       screenshot: this.screenshot,
@@ -172,10 +178,16 @@ export class FeedbackDialog extends LitElement {
                 </div>
               `
             : html``}
+          ${this._screenshotTooLarge
+            ? html`<div class="screenshot-too-large">
+                ${msg('The screenshot is too large to submit. Select a smaller area.')}
+              </div>`
+            : html``}
           <sl-textarea
             label="${msg('Describe your feedback')}"
             placeholder="${msg('What would you like to share about this part of the UI?')}"
             rows="4"
+            maxlength=${FEEDBACK_LIMITS.maxTextChars}
             .value=${this._feedbackText}
             @sl-input=${(e: Event) => {
               this._feedbackText = (e.target as HTMLTextAreaElement).value;
@@ -220,7 +232,7 @@ export class FeedbackDialog extends LitElement {
           <sl-button
             variant="primary"
             ?loading=${this._submitting}
-            ?disabled=${!this._feedbackText.trim() || !this._handleValid}
+            ?disabled=${!this._feedbackText.trim() || !this._handleValid || this._screenshotTooLarge}
             @click=${this._submit}
           >
             ${msg('Submit')}
@@ -252,6 +264,11 @@ export class FeedbackDialog extends LitElement {
     }
 
     sl-input[data-user-invalid]::part(form-control-help-text) {
+      color: var(--sl-color-danger-700);
+    }
+
+    .screenshot-too-large {
+      font-size: 13px;
       color: var(--sl-color-danger-700);
     }
 

@@ -3676,6 +3676,14 @@ starts now</source>
   <source>Feedback saved locally. You have submitted a lot recently; please try again later.</source>
   <target>フィードバックをローカルに保存しました。最近の送信回数が多すぎます。しばらくしてからもう一度お試しください。</target>
 </trans-unit>
+<trans-unit id="scf1f4b27ab67929a">
+  <source>The screenshot is too large to submit. Select a smaller area.</source>
+  <target>スクリーンショットが大きすぎるため送信できません。より小さい範囲を選択してください。</target>
+</trans-unit>
+<trans-unit id="s8845f794ca9ef160">
+  <source>Feedback saved locally. The feedback could not be submitted; use Copy to send it another way.</source>
+  <target>フィードバックをローカルに保存しました。フィードバックを送信できませんでした。「コピー」を使って別の方法で送ってください。</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

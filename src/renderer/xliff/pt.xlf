@@ -3676,6 +3676,14 @@ começa agora</target>
   <source>Feedback saved locally. You have submitted a lot recently; please try again later.</source>
   <target>Feedback salvo localmente. Você enviou muito recentemente; tente novamente mais tarde.</target>
 </trans-unit>
+<trans-unit id="scf1f4b27ab67929a">
+  <source>The screenshot is too large to submit. Select a smaller area.</source>
+  <target>A captura de tela é grande demais para ser enviada. Selecione uma área menor.</target>
+</trans-unit>
+<trans-unit id="s8845f794ca9ef160">
+  <source>Feedback saved locally. The feedback could not be submitted; use Copy to send it another way.</source>
+  <target>Feedback salvo localmente. Não foi possível enviar o feedback; use Copiar para enviá-lo de outra forma.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

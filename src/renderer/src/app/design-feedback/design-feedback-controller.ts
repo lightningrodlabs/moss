@@ -35,6 +35,10 @@ function noticeText(notice: SubmitNotice): string {
       return msg(
         'Feedback saved locally. You have submitted a lot recently; please try again later.',
       );
+    case 'saved-locally-rejected':
+      return msg(
+        'Feedback saved locally. The feedback could not be submitted; use Copy to send it another way.',
+      );
   }
 }
 
