@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
-import { reporterIdFromPubKey } from '../../../shared/utils/src/feedback/index.ts';
+import { FEEDBACK_LIMITS, reporterIdFromPubKey } from '../../../shared/utils/src/feedback/index.ts';
 import { authenticate, type Authed } from '../src/auth';
 import { makeTestReporter } from './sign';
 
@@ -75,5 +75,41 @@ describe('authenticate', () => {
   it('rejects an over-long nonce with 400 bad_request', async () => {
     const { req } = await signedRequest({ nonce: new Uint8Array(60).fill(7) });
     await expectError(await run(req), 400, 'bad_request');
+  });
+
+  it('rejects a declared Content-Length over the request limit with 413 before reading the body', async () => {
+    const { req } = await signedRequest({});
+    const headers = new Headers(req.headers);
+    headers.set('Content-Length', String(FEEDBACK_LIMITS.maxRequestBytes + 1));
+    let bodyRead = false;
+    const oversized = new Proxy(req, {
+      get(target, prop) {
+        if (prop === 'headers') return headers;
+        if (prop === 'arrayBuffer') {
+          return () => {
+            bodyRead = true;
+            return target.arrayBuffer();
+          };
+        }
+        const value = Reflect.get(target, prop, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+    await expectError(await run(oversized), 413, 'bad_request');
+    expect(bodyRead).toBe(false);
+  });
+
+  it('rejects a body over the request limit with 413 when no Content-Length is declared', async () => {
+    const big = 'a'.repeat(FEEDBACK_LIMITS.maxRequestBytes + 1);
+    const { req } = await signedRequest({ body: big });
+    const stream = new Blob([big]).stream();
+    const chunked = new Request(req.url, {
+      method: 'POST',
+      headers: req.headers,
+      body: stream,
+      duplex: 'half',
+    } as RequestInit);
+    expect(chunked.headers.get('Content-Length')).toBeNull();
+    await expectError(await run(chunked), 413, 'bad_request');
   });
 });

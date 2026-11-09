@@ -131,6 +131,12 @@ describe('FeedbackWorkerClient.createIssue', () => {
     });
   });
 
+  it('maps 413 to rejected', async () => {
+    const { client } = await makeClient((async () =>
+      jsonResponse(413, { error: 'bad_request', message: 'too large' })) as typeof fetch);
+    expect(await client.createIssue(req)).toMatchObject({ ok: false, reason: 'rejected', status: 413 });
+  });
+
   it('maps 429 to rate_limited and 500 to server_error', async () => {
     const a = await makeClient((async () =>
       jsonResponse(429, { error: 'rate_limited', message: 'slow down' })) as typeof fetch);

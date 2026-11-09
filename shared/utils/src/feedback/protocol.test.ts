@@ -47,7 +47,26 @@ describe('validateCreateIssueRequest', () => {
   it('rejects a github handle with a leading hyphen', () => {
     expect(errorOf({ ...valid, githubHandle: '-bad' })).toBe('bad_request');
   });
+  it('accepts mossVersion and os at the metadata limit', () => {
+    const meta = 'v'.repeat(FEEDBACK_LIMITS.maxMetaChars);
+    expect(validateCreateIssueRequest({ ...valid, mossVersion: meta, os: meta })).toEqual({
+      ...valid,
+      mossVersion: meta,
+      os: meta,
+    });
+  });
+  it('rejects mossVersion or os over the metadata limit as bad_request', () => {
+    const long = 'v'.repeat(FEEDBACK_LIMITS.maxMetaChars + 1);
+    expect(errorOf({ ...valid, mossVersion: long })).toBe('bad_request');
+    expect(errorOf({ ...valid, os: long })).toBe('bad_request');
+  });
+  it('rejects mossVersion or os containing a newline as bad_request', () => {
+    expect(errorOf({ ...valid, mossVersion: '0.16.0\n## injected' })).toBe('bad_request');
+    expect(errorOf({ ...valid, os: 'linux\r' })).toBe('bad_request');
+  });
   it('exposes the spec limits', () => {
+    expect(FEEDBACK_LIMITS.maxMetaChars).toBe(200);
+    expect(FEEDBACK_LIMITS.maxRequestBytes).toBe(3_145_728);
     expect(FEEDBACK_LIMITS.maxScreenshotBytes).toBe(2_097_152);
     expect(FEEDBACK_LIMITS.timestampWindowSeconds).toBe(300);
   });

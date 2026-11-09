@@ -31,13 +31,29 @@ export async function verifyEd25519(
   );
 }
 
+function requestTooLarge(): Response {
+  return jsonError(
+    413,
+    'bad_request',
+    `Request body exceeds ${FEEDBACK_LIMITS.maxRequestBytes} bytes`,
+  );
+}
+
 /** Verifies the reporter signature and rejects any nonce already seen within its TTL. */
 export async function authenticate(
   req: Request,
   env: Env,
   now: () => number = () => Date.now(),
 ): Promise<Authed | Response> {
+  // The body is buffered before the signature can be checked, so its size is bounded first.
+  const declaredLength = req.headers.get('Content-Length');
+  if (declaredLength !== null && Number(declaredLength) > FEEDBACK_LIMITS.maxRequestBytes) {
+    return requestTooLarge();
+  }
   const body = new Uint8Array(await req.arrayBuffer());
+  if (body.byteLength > FEEDBACK_LIMITS.maxRequestBytes) {
+    return requestTooLarge();
+  }
   const result = await verifySignedRequest({
     method: req.method,
     path: new URL(req.url).pathname,

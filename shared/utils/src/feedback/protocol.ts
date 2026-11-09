@@ -4,6 +4,10 @@ export const FEEDBACK_LIMITS = {
   requestsPerIpPerMinute: 30,
   maxScreenshotBytes: 2_097_152,
   maxTextChars: 10_000,
+  /** Bound for single-line metadata such as mossVersion and os. */
+  maxMetaChars: 200,
+  /** Whole signed body: 2 MiB of PNG as base64 plus the text and metadata fields. */
+  maxRequestBytes: 3_145_728,
   timestampWindowSeconds: 300,
   nonceTtlSeconds: 600,
 } as const;
@@ -41,6 +45,11 @@ function fail(error: FeedbackErrorCode, message: string): FeedbackErrorResponse 
   return { error, message };
 }
 
+// Metadata is rendered into the issue body as single lines, so line breaks would let it forge structure.
+function isSingleLineMeta(value: string): boolean {
+  return value.length <= FEEDBACK_LIMITS.maxMetaChars && !/[\r\n]/.test(value);
+}
+
 /**
  * Checks an untrusted create-issue body so the worker only forwards
  * well-formed, size-bounded content to GitHub.
@@ -56,6 +65,12 @@ export function validateCreateIssueRequest(req: unknown): CreateIssueRequest | F
   }
   if (typeof mossVersion !== 'string' || typeof os !== 'string') {
     return fail('bad_request', 'mossVersion and os must be strings');
+  }
+  if (!isSingleLineMeta(mossVersion) || !isSingleLineMeta(os)) {
+    return fail(
+      'bad_request',
+      `mossVersion and os must be single lines of at most ${FEEDBACK_LIMITS.maxMetaChars} characters`,
+    );
   }
   if (text.trim().length === 0) {
     return fail('bad_request', 'text must not be empty');
