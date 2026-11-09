@@ -111,6 +111,43 @@ async function failure(res: Response, what: string): Promise<GitHubError> {
   return new GitHubError(res.status, `GitHub ${what} failed with ${res.status}${prefix ? `: ${prefix}` : ''}`);
 }
 
+/** Reads a 2xx JSON body and returns it only if the guard accepts its shape; never echoes body content. */
+async function parseBody<T>(res: Response, guard: (v: unknown) => v is T): Promise<T> {
+  let value: unknown;
+  try {
+    value = await res.json();
+  } catch {
+    throw new GitHubError(res.status, 'unexpected response shape');
+  }
+  if (!guard(value)) throw new GitHubError(res.status, 'unexpected response shape');
+  return value;
+}
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null;
+}
+
+function isTokenResponse(v: unknown): v is { token: string; expires_at: string } {
+  return (
+    isRecord(v) &&
+    typeof v.token === 'string' &&
+    v.token !== '' &&
+    typeof v.expires_at === 'string' &&
+    Number.isFinite(Date.parse(v.expires_at))
+  );
+}
+
+function isCreatedIssue(v: unknown): v is CreatedIssue {
+  return (
+    isRecord(v) &&
+    typeof v.number === 'number' &&
+    Number.isInteger(v.number) &&
+    typeof v.html_url === 'string' &&
+    typeof v.title === 'string' &&
+    typeof v.created_at === 'string'
+  );
+}
+
 /** Returns an installation access token, reusing a cached one until five minutes before it expires. */
 export async function installationToken(
   env: Env,
@@ -127,7 +164,7 @@ export async function installationToken(
     headers: githubHeaders(`Bearer ${jwt}`),
   });
   if (!res.ok) throw await failure(res, 'installation token request');
-  const data = (await res.json()) as { token: string; expires_at: string };
+  const data = await parseBody(res, isTokenResponse);
   tokenCache.set(cacheKey, { token: data.token, expiresAtMs: Date.parse(data.expires_at) });
   return data.token;
 }
@@ -145,6 +182,6 @@ export async function createIssue(
     body: JSON.stringify({ title: p.title, body: p.body, labels: p.labels }),
   });
   if (!res.ok) throw await failure(res, 'issue creation');
-  const issue = (await res.json()) as CreatedIssue;
+  const issue = await parseBody(res, isCreatedIssue);
   return { number: issue.number, html_url: issue.html_url, title: issue.title, created_at: issue.created_at };
 }

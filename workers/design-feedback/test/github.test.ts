@@ -31,7 +31,7 @@ async function verifyJwt(jwt: string): Promise<boolean> {
 }
 
 type Call = { url: string; method: string; headers: Headers; body: string | null };
-type Reply = { status: number; json: unknown };
+type Reply = { status: number; json?: unknown; text?: string };
 
 /** A fetch stand-in that records each call and answers from a queue of canned replies. */
 function fakeFetch(replies: Reply[]): { fetchImpl: typeof fetch; calls: Call[] } {
@@ -46,7 +46,7 @@ function fakeFetch(replies: Reply[]): { fetchImpl: typeof fetch; calls: Call[] }
     });
     const reply = queue.shift();
     if (!reply) throw new Error('unexpected fetch');
-    return new Response(JSON.stringify(reply.json), { status: reply.status });
+    return new Response(reply.text ?? JSON.stringify(reply.json), { status: reply.status });
   }) as typeof fetch;
   return { fetchImpl, calls };
 }
@@ -123,6 +123,19 @@ describe('installationToken', () => {
     ]);
   });
 
+  it('rejects a token response without a token', async () => {
+    const { fetchImpl } = fakeFetch([{ status: 201, json: { expires_at: expiresIn(3_600_000) } }]);
+    const err = await installationToken(env, fetchImpl, () => NOW_MS).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(GitHubError);
+    expect((err as GitHubError).message).toBe('unexpected response shape');
+  });
+
+  it('rejects a token response with an unparseable expires_at', async () => {
+    const { fetchImpl } = fakeFetch([{ status: 201, json: { token: 't', expires_at: 'soon' } }]);
+    const err = await installationToken(env, fetchImpl, () => NOW_MS).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(GitHubError);
+  });
+
   it('throws GitHubError when the token request fails', async () => {
     const { fetchImpl } = fakeFetch([{ status: 401, json: { message: 'Bad credentials' } }]);
     const err = await installationToken(env, fetchImpl, () => NOW_MS).catch((e: unknown) => e);
@@ -161,5 +174,22 @@ describe('createIssue', () => {
     const err = await createIssue(env, { title: 'T', body: 'B', labels: [] }, fetchImpl).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(GitHubError);
     expect((err as GitHubError).status).toBe(403);
+  });
+
+  it('rejects an issue response whose number is a string', async () => {
+    const { fetchImpl } = fakeFetch([
+      tokenReply(),
+      { status: 201, json: { number: '7', html_url: 'u', title: 'T', created_at: 'now' } },
+    ]);
+    const err = await createIssue(env, { title: 'T', body: 'B', labels: [] }, fetchImpl).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(GitHubError);
+    expect((err as GitHubError).message).toBe('unexpected response shape');
+  });
+
+  it('rejects a non-JSON 201 body with GitHubError', async () => {
+    const { fetchImpl } = fakeFetch([tokenReply(), { status: 201, text: '<html>oops</html>' }]);
+    const err = await createIssue(env, { title: 'T', body: 'B', labels: [] }, fetchImpl).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(GitHubError);
+    expect((err as GitHubError).status).toBe(201);
   });
 });
