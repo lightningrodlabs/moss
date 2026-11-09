@@ -1398,18 +1398,6 @@
   <source>Feedback submitted. GitHub issue created.</source>
   <target>Feedback envoyé. Issue GitHub créée.</target>
 </trans-unit>
-<trans-unit id="se2841d25d173cfa5">
-  <source>Feedback saved locally. Could not create GitHub issue.</source>
-  <target>Feedback sauvegardé localement. Impossible de créer l'issue GitHub.</target>
-</trans-unit>
-<trans-unit id="s403d86e8b3392e49">
-  <source>Feedback saved locally.</source>
-  <target>Feedback sauvegardé localement.</target>
-</trans-unit>
-<trans-unit id="sbccd620b66cf8efd">
-  <source>Feedback saved locally. Could not reach server.</source>
-  <target>Feedback sauvegardé localement. Serveur inaccessible.</target>
-</trans-unit>
 <trans-unit id="sa001c7eb0d28aaec">
   <source>This screenshot and text, along with Moss version and OS info, will be added as a public GitHub issue to the</source>
   <target>Cette capture d'écran et ce texte, ainsi que la version de Moss et les informations sur l'OS, seront ajoutés en tant qu'issue GitHub publique au</target>
@@ -3643,6 +3631,50 @@ commence maintenant</target>
 <trans-unit id="s2e105963b73bb1fa">
   <source>License:</source>
   <target>Licence :</target>
+</trans-unit>
+<trans-unit id="s8ab9926515edbd19">
+  <source>Feedback becomes available after you join or create a group.</source>
+  <target>Les retours sont disponibles une fois que vous avez rejoint ou créé un groupe.</target>
+</trans-unit>
+<trans-unit id="sbda27e2cd1963e98">
+  <source>A pseudonymous id included on your issues so the team can follow up.</source>
+  <target>Un identifiant pseudonyme inclus dans vos tickets pour que l'équipe puisse assurer le suivi.</target>
+</trans-unit>
+<trans-unit id="sa93e23dc28e4268d">
+  <source>Reporter id:</source>
+  <target>ID de rapporteur :</target>
+</trans-unit>
+<trans-unit id="s967a28faec608ed1">
+  <source>GitHub username (optional)</source>
+  <target>Nom d'utilisateur GitHub (facultatif)</target>
+</trans-unit>
+<trans-unit id="sc23c16345d72638e">
+  <source>Not verified. Lets the team mention you on the issue.</source>
+  <target>Non vérifié. Permet à l'équipe de vous mentionner dans le ticket.</target>
+</trans-unit>
+<trans-unit id="s9a1bfee0fbe75bfe">
+  <source>Not a valid GitHub username</source>
+  <target>Nom d'utilisateur GitHub non valide</target>
+</trans-unit>
+<trans-unit id="sbc93f80236b02271">
+  <source>A pseudonymous reporter id, the same for every issue from this Moss profile, is included so the team can follow up. It cannot be traced back to you or your groups.</source>
+  <target>Un identifiant de rapporteur pseudonyme, identique pour tous les tickets de ce profil Moss, est inclus pour que l'équipe puisse assurer le suivi. Il ne peut pas être relié à vous ni à vos groupes.</target>
+</trans-unit>
+<trans-unit id="sdf6156c38ce2ee3b">
+  <source>Feedback saved locally. Could not reach the feedback service.</source>
+  <target>Retour enregistré localement. Le service de retours est injoignable.</target>
+</trans-unit>
+<trans-unit id="s0ebb890967e7ad6f">
+  <source>Feedback saved locally. Join or create a group to enable submitting feedback.</source>
+  <target>Retour enregistré localement. Rejoignez ou créez un groupe pour pouvoir envoyer des retours.</target>
+</trans-unit>
+<trans-unit id="s8d21e9427c049f37">
+  <source>Feedback saved locally. Your system clock seems to be off; please check it and try again.</source>
+  <target>Retour enregistré localement. L'horloge de votre système semble incorrecte ; vérifiez-la et réessayez.</target>
+</trans-unit>
+<trans-unit id="sde58d7c117a113b1">
+  <source>Feedback saved locally. You have submitted a lot recently; please try again later.</source>
+  <target>Retour enregistré localement. Vous avez envoyé beaucoup de retours récemment ; réessayez plus tard.</target>
 </trans-unit>
 </body>
 </file>

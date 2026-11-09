@@ -1398,18 +1398,6 @@
   <source>Feedback submitted. GitHub issue created.</source>
   <target>フィードバックが送信されました。GitHub issueが作成されました。</target>
 </trans-unit>
-<trans-unit id="se2841d25d173cfa5">
-  <source>Feedback saved locally. Could not create GitHub issue.</source>
-  <target>フィードバックがローカルに保存されました。GitHub issueを作成できませんでした。</target>
-</trans-unit>
-<trans-unit id="s403d86e8b3392e49">
-  <source>Feedback saved locally.</source>
-  <target>フィードバックがローカルに保存されました。</target>
-</trans-unit>
-<trans-unit id="sbccd620b66cf8efd">
-  <source>Feedback saved locally. Could not reach server.</source>
-  <target>フィードバックがローカルに保存されました。サーバーに接続できませんでした。</target>
-</trans-unit>
 <trans-unit id="sa001c7eb0d28aaec">
   <source>This screenshot and text, along with Moss version and OS info, will be added as a public GitHub issue to the</source>
   <target>このスクリーンショットとテキスト、およびMossのバージョンとOS情報は、公開GitHub issueとして</target>
@@ -3643,6 +3631,50 @@ starts now</source>
 <trans-unit id="s2e105963b73bb1fa">
   <source>License:</source>
   <target>ライセンス:</target>
+</trans-unit>
+<trans-unit id="s8ab9926515edbd19">
+  <source>Feedback becomes available after you join or create a group.</source>
+  <target>フィードバックは、グループに参加または作成すると利用できます。</target>
+</trans-unit>
+<trans-unit id="sbda27e2cd1963e98">
+  <source>A pseudonymous id included on your issues so the team can follow up.</source>
+  <target>チームがフォローアップできるよう、あなたのIssueに付与される匿名のIDです。</target>
+</trans-unit>
+<trans-unit id="sa93e23dc28e4268d">
+  <source>Reporter id:</source>
+  <target>報告者ID:</target>
+</trans-unit>
+<trans-unit id="s967a28faec608ed1">
+  <source>GitHub username (optional)</source>
+  <target>GitHubユーザー名（任意）</target>
+</trans-unit>
+<trans-unit id="sc23c16345d72638e">
+  <source>Not verified. Lets the team mention you on the issue.</source>
+  <target>未確認です。チームがIssue上であなたにメンションできるようになります。</target>
+</trans-unit>
+<trans-unit id="s9a1bfee0fbe75bfe">
+  <source>Not a valid GitHub username</source>
+  <target>有効なGitHubユーザー名ではありません</target>
+</trans-unit>
+<trans-unit id="sbc93f80236b02271">
+  <source>A pseudonymous reporter id, the same for every issue from this Moss profile, is included so the team can follow up. It cannot be traced back to you or your groups.</source>
+  <target>チームがフォローアップできるよう、このMossプロフィールからのすべてのIssueで共通の匿名の報告者IDが含まれます。あなたやあなたのグループを特定することはできません。</target>
+</trans-unit>
+<trans-unit id="sdf6156c38ce2ee3b">
+  <source>Feedback saved locally. Could not reach the feedback service.</source>
+  <target>フィードバックをローカルに保存しました。フィードバックサービスに接続できませんでした。</target>
+</trans-unit>
+<trans-unit id="s0ebb890967e7ad6f">
+  <source>Feedback saved locally. Join or create a group to enable submitting feedback.</source>
+  <target>フィードバックをローカルに保存しました。フィードバックを送信するには、グループに参加または作成してください。</target>
+</trans-unit>
+<trans-unit id="s8d21e9427c049f37">
+  <source>Feedback saved locally. Your system clock seems to be off; please check it and try again.</source>
+  <target>フィードバックをローカルに保存しました。システムの時計が正しくないようです。確認してもう一度お試しください。</target>
+</trans-unit>
+<trans-unit id="sde58d7c117a113b1">
+  <source>Feedback saved locally. You have submitted a lot recently; please try again later.</source>
+  <target>フィードバックをローカルに保存しました。最近の送信回数が多すぎます。しばらくしてからもう一度お試しください。</target>
 </trans-unit>
 </body>
 </file>
