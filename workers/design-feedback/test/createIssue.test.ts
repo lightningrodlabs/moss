@@ -282,4 +282,27 @@ describe('POST /v1/issues', () => {
     expect(github.calls.some((c) => c.url.endsWith('/repos/o/r/issues'))).toBe(true);
     await expectNothingStored();
   });
+
+  it('a D1 failure after the issue exists still returns 201 and records nothing partially', async () => {
+    const reporter = await makeTestReporter();
+    const github = fakeGitHub();
+    const req = await signedRequest(reporter, JSON.stringify(payload()), `10.0.9.${ipCounter}`);
+
+    // Hiding the issues table makes the issue insert fail after GitHub has accepted the issue.
+    await env.FEEDBACK_DB.exec('ALTER TABLE issues RENAME TO issues_hidden');
+    let res: Response;
+    try {
+      res = await call(req, github.fetchImpl);
+    } finally {
+      await env.FEEDBACK_DB.exec('ALTER TABLE issues_hidden RENAME TO issues');
+    }
+
+    expect(res.status).toBe(201);
+    expect(await res.json()).toEqual({
+      issueNumber: 100,
+      issueUrl: 'https://github.com/o/r/issues/100',
+    });
+    expect(await count('issues')).toBe(0);
+    expect(await count('reporters')).toBe(0);
+  });
 });

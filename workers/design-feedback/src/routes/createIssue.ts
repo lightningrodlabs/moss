@@ -4,7 +4,7 @@ import {
   validateCreateIssueRequest,
 } from '../../../../shared/utils/src/feedback/index.ts';
 import { authenticate } from '../auth';
-import { insertIssue, upsertReporter } from '../db';
+import { recordIssue } from '../db';
 import type { Env } from '../env';
 import { GitHubError, createIssue, type CreatedIssue } from '../github';
 import { consume, ipScope, issueScope, type RateScope } from '../rateLimit';
@@ -93,14 +93,22 @@ export function createIssueRoute(deps: CreateIssueDeps = {}): Route {
       }
 
       const nowSeconds = Math.floor(nowMs() / 1000);
-      await upsertReporter(env.FEEDBACK_DB, authed.reporterId, authed.pubKey, nowSeconds);
-      await insertIssue(env.FEEDBACK_DB, {
-        number: issue.number,
-        reporterId: authed.reporterId,
-        title,
-        createdAt: nowSeconds,
-        createdVia: 'worker',
-      });
+      try {
+        await recordIssue(
+          env.FEEDBACK_DB,
+          { reporterId: authed.reporterId, pubKey: authed.pubKey },
+          {
+            number: issue.number,
+            reporterId: authed.reporterId,
+            title,
+            createdAt: nowSeconds,
+            createdVia: 'worker',
+          },
+        );
+      } catch {
+        // The issue already exists on GitHub and its body carries the reporter marker, so the
+        // row can be rebuilt from GitHub later. Failing here would only invite a duplicate retry.
+      }
       return jsonOk({ issueNumber: issue.number, issueUrl: issue.html_url }, 201);
     },
   };
