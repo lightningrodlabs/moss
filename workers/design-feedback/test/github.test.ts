@@ -101,6 +101,14 @@ describe('appJwt', () => {
     const jwt = await appJwt('1', env.GITHUB_APP_PRIVATE_KEY_PKCS1, () => NOW_MS);
     expect(await verifyJwt(jwt)).toBe(true);
   });
+
+  it('accepts a PEM whose newlines are escaped as the two characters \\n', async () => {
+    const escaped = env.GITHUB_APP_PRIVATE_KEY.trim().replace(/\r?\n/g, '\\n');
+    expect(escaped).not.toContain('\n');
+    expect(escaped).toContain('\\n');
+    const jwt = await appJwt('1', escaped, () => NOW_MS);
+    expect(await verifyJwt(jwt)).toBe(true);
+  });
 });
 
 describe('installationToken', () => {

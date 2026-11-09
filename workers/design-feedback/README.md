@@ -86,11 +86,11 @@ npm run migrate:staging
 
 ## 5. Set the private key secret
 
-A secret is a value that Wrangler stores encrypted and never shows again. Set the private key for each environment. Each command asks you to paste the value. Paste the full contents of the `.pem` file, including the BEGIN and END lines.
+A secret is a value that Wrangler stores encrypted and never shows again. Set the private key for each environment. Each command reads the key from the `.pem` file you downloaded in step 1. Run the commands in the folder that contains the file, or give the full path to the file. Replace `app.pem` with the name of your file.
 
 ```
-npx wrangler secret put GITHUB_APP_PRIVATE_KEY
-npx wrangler secret put GITHUB_APP_PRIVATE_KEY --env staging
+npx wrangler secret put GITHUB_APP_PRIVATE_KEY < app.pem
+npx wrangler secret put GITHUB_APP_PRIVATE_KEY --env staging < app.pem
 ```
 
 ## 6. Deploy

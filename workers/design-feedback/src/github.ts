@@ -65,7 +65,9 @@ function wrapPkcs1AsPkcs8(pkcs1: Uint8Array): Uint8Array {
   return derElement(0x30, body);
 }
 
-async function importSigningKey(pem: string): Promise<CryptoKey> {
+async function importSigningKey(rawPem: string): Promise<CryptoKey> {
+  // Secrets pasted through dashboards or env files often carry newlines as the two characters `\n`.
+  const pem = rawPem.replace(/\\n/g, '\n');
   const isPkcs1 = pem.includes('BEGIN RSA PRIVATE KEY');
   const base64 = pem.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '');
   const der = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
