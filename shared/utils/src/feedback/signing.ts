@@ -50,7 +50,7 @@ export function base64UrlDecode(s: string): Uint8Array {
 }
 
 export async function sha256(bytes: Uint8Array): Promise<Uint8Array> {
-  return new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', bytes as BufferSource));
+  return new Uint8Array(await crypto.subtle.digest('SHA-256', bytes as BufferSource));
 }
 
 /** The exact string both sides sign and verify, binding method, path, time, nonce and body. */
