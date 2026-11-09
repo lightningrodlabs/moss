@@ -71,16 +71,20 @@ export class MossSettings extends LitElement {
 
   private async _loadFeedbackHistory() {
     this._loadingHistory = true;
-    try {
-      const [history, status] = await Promise.all([
-        window.electronAPI.listFeedback(),
-        window.electronAPI.getFeedbackReporterStatus(),
-      ]);
-      this._feedbackHistory = history;
-      this._reporterId = status.reporterId;
-    } catch (e) {
-      console.error('Failed to load feedback history:', e);
+    const [history, status] = await Promise.allSettled([
+      window.electronAPI.listFeedback(),
+      window.electronAPI.getFeedbackReporterStatus(),
+    ]);
+    if (history.status === 'fulfilled') {
+      this._feedbackHistory = history.value;
+    } else {
+      console.error('Failed to load feedback history:', history.reason);
       this._feedbackHistory = [];
+    }
+    if (status.status === 'fulfilled') {
+      this._reporterId = status.value.reporterId;
+    } else {
+      console.error('Failed to load feedback reporter status:', status.reason);
       this._reporterId = undefined;
     }
     this._loadingHistory = false;
@@ -156,9 +160,7 @@ export class MossSettings extends LitElement {
               ${msg('Feedback becomes available after you join or create a group.')}
             </p>`
           : html`<sl-tooltip
-              content=${msg(
-                'A pseudonymous id included on your issues so the team can follow up.',
-              )}
+              content=${msg('A pseudonymous id included on your issues so the team can follow up.')}
             >
               <span class="feedback-date">${msg('Reporter id:')} ${this._reporterId}</span>
             </sl-tooltip>`}
