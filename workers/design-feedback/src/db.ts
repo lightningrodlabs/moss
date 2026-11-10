@@ -218,3 +218,16 @@ export async function touchIssue(db: D1Database, number: number, updatedAt: numb
     .bind(updatedAt, number)
     .run();
 }
+
+export async function getComment(db: D1Database, id: number): Promise<CommentRow | undefined> {
+  const r = await db.prepare('SELECT * FROM comments WHERE id = ?').bind(id).first<CommentDbRow>();
+  return r ? toCommentRow(r) : undefined;
+}
+
+export async function reporterExists(db: D1Database, reporterId: string): Promise<boolean> {
+  const r = await db
+    .prepare('SELECT 1 AS found FROM reporters WHERE reporter_id = ?')
+    .bind(reporterId)
+    .first<{ found: number }>();
+  return r !== null;
+}

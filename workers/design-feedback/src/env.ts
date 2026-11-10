@@ -9,4 +9,6 @@ export interface Env {
   GITHUB_APP_ID: string;
   GITHUB_INSTALLATION_ID: string;
   GITHUB_APP_PRIVATE_KEY: string;
+  /** Shared secret GitHub signs repository webhook deliveries with. */
+  WEBHOOK_SECRET: string;
 }
