@@ -4,7 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import type { CreateIssueRequest, CreateIssueResponse } from '@theweave/utils';
 import { FeedbackRecordStore } from './recordStore';
-import { deriveReporterKey, type ReporterKey } from './reporterKey';
+import { reporterKeyFromSeed, type ReporterKey } from './reporterKey';
 import type { FeedbackWorkerClient, WorkerResult } from './workerClient';
 import {
   feedbackSubmit,
@@ -41,7 +41,7 @@ let key: ReporterKey;
 beforeEach(async () => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'feedback-ipc-'));
   store = new FeedbackRecordStore(dir);
-  key = await deriveReporterKey(async () => new Uint8Array(64).fill(3));
+  key = reporterKeyFromSeed(new Uint8Array(32).fill(3));
 });
 
 afterEach(() => {

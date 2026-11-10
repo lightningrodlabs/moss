@@ -1,11 +1,6 @@
 import { createHash, createPrivateKey, createPublicKey, sign, type KeyObject } from 'node:crypto';
-import { reporterIdFromPubKey } from '@theweave/utils';
-
-export const REPORTER_KEY_DERIVATION_MESSAGE = 'moss-feedback-key-v1';
 
 const PKCS8_ED25519_PREFIX = Buffer.from('302e020100300506032b657004220420', 'hex');
-
-export type AgentSigner = (message: Uint8Array) => Promise<Uint8Array>;
 
 export type ReporterKey = {
   publicKey: Uint8Array;
@@ -14,14 +9,14 @@ export type ReporterKey = {
 };
 
 /**
- * Derives a stable pseudonymous Ed25519 key for feedback from the agent key:
- * the agent signs a fixed message and the hash of that signature seeds the key.
+ * Builds the pseudonymous Ed25519 feedback key from a 32-byte seed. The
+ * reporter id follows the shared `reporterIdFromPubKey` formula: the first
+ * 12 base64url characters of sha256(publicKey).
  */
-export async function deriveReporterKey(signWithAgentKey: AgentSigner): Promise<ReporterKey> {
-  const agentSignature = await signWithAgentKey(
-    new TextEncoder().encode(REPORTER_KEY_DERIVATION_MESSAGE)
-  );
-  const seed = createHash('sha256').update(agentSignature).digest();
+export function reporterKeyFromSeed(seed: Uint8Array): ReporterKey {
+  if (seed.length !== 32) {
+    throw new Error(`Reporter key seed must be 32 bytes, got ${seed.length}`);
+  }
   const privateKey: KeyObject = createPrivateKey({
     key: Buffer.concat([PKCS8_ED25519_PREFIX, seed]),
     format: 'der',
@@ -31,7 +26,7 @@ export async function deriveReporterKey(signWithAgentKey: AgentSigner): Promise<
   const publicKey = new Uint8Array(spki.subarray(spki.length - 32));
   return {
     publicKey,
-    reporterId: await reporterIdFromPubKey(publicKey),
+    reporterId: createHash('sha256').update(publicKey).digest('base64url').slice(0, 12),
     sign: async (message) => new Uint8Array(sign(null, message, privateKey)),
   };
 }

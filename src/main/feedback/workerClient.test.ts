@@ -1,7 +1,7 @@
 import { createPublicKey, verify } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { FEEDBACK_HEADERS, verifySignedRequest, type CreateIssueRequest } from '@theweave/utils';
-import { deriveReporterKey } from './reporterKey';
+import { reporterKeyFromSeed } from './reporterKey';
 import { FeedbackWorkerClient } from './workerClient';
 
 const SPKI_ED25519_PREFIX = Buffer.from('302a300506032b6570032100', 'hex');
@@ -22,7 +22,7 @@ function jsonResponse(status: number, body: unknown): Response {
 }
 
 async function makeClient(fetchFn: typeof fetch, extra: { timeoutMs?: number } = {}) {
-  const key = await deriveReporterKey(async () => new Uint8Array(64).fill(1));
+  const key = reporterKeyFromSeed(new Uint8Array(32).fill(1));
   const client = new FeedbackWorkerClient('https://worker.example/', key, {
     fetch: fetchFn,
     now: () => NOW_MS,

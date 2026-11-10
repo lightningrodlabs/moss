@@ -18,6 +18,7 @@ import {
   MessageChannelMain,
   MessagePortMain,
   webContents,
+  safeStorage,
 } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -62,9 +63,11 @@ import { relayTimeoutMs } from './appletRelayPolicy';
 import { MOSS_CONFIG, feedbackWorkerUrl } from './mossConfig';
 import {
   FeedbackRecordStore,
-  deriveReporterKey,
+  loadOrCreateReporterSeed,
   registerFeedbackIpc,
+  reporterKeyFromSeed,
   type ReporterKey,
+  type SeedCipher,
 } from './feedback';
 import { registerAboutIpc } from './aboutWindow';
 import { createLanBeaconService, type BeaconDiagnostics } from './lanBeacon';
@@ -1689,16 +1692,23 @@ if (!RUNNING_WITH_COMMAND) {
     let reporterKey: ReporterKey | undefined;
     const getReporterKey = async (): Promise<ReporterKey | undefined> => {
       if (reporterKey) return reporterKey;
-      const rustHandler = WE_RUST_HANDLER;
+      // Feedback stays disabled until the profile has joined a group.
       const holochainManager = HOLOCHAIN_MANAGER;
-      if (!rustHandler || !holochainManager) return undefined;
+      if (!holochainManager) return undefined;
       const agentPubKey = globalPubKeyFromListAppsResponse(
         await holochainManager.adminWebsocket.listApps({}),
       );
       if (!agentPubKey) return undefined;
-      reporterKey = await deriveReporterKey(
-        async (m) =>
-          new Uint8Array(await rustHandler.signZomeCall(Array.from(m), Array.from(agentPubKey))),
+      const seedCipher: SeedCipher = {
+        isEncryptionAvailable: () => safeStorage.isEncryptionAvailable(),
+        encrypt: (plain) => safeStorage.encryptString(plain.toString('base64')),
+        decrypt: (cipher) => Buffer.from(safeStorage.decryptString(cipher), 'base64'),
+      };
+      reporterKey = reporterKeyFromSeed(
+        loadOrCreateReporterSeed(
+          path.join(WE_FILE_SYSTEM.feedbackDir, 'reporter-seed.json'),
+          seedCipher,
+        ),
       );
       return reporterKey;
     };

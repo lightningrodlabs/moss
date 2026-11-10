@@ -1,43 +1,34 @@
 import { createPublicKey, verify } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { reporterIdFromPubKey } from '@theweave/utils';
-import { deriveReporterKey, type AgentSigner } from './reporterKey';
+import { reporterKeyFromSeed } from './reporterKey';
 
 const SPKI_ED25519_PREFIX = Buffer.from('302a300506032b6570032100', 'hex');
 
-describe('deriveReporterKey', () => {
-  it('is deterministic for the same agent signature', async () => {
-    const signer: AgentSigner = async () => new Uint8Array(64).fill(1);
-    const a = await deriveReporterKey(signer);
-    const b = await deriveReporterKey(signer);
+describe('reporterKeyFromSeed', () => {
+  it('is deterministic for the same seed', async () => {
+    const a = reporterKeyFromSeed(new Uint8Array(32).fill(1));
+    const b = reporterKeyFromSeed(new Uint8Array(32).fill(1));
     expect(a.publicKey).toEqual(b.publicKey);
     expect(a.reporterId).toBe(b.reporterId);
   });
 
-  it('differs for a different agent signature', async () => {
-    const a = await deriveReporterKey(async () => new Uint8Array(64).fill(1));
-    const b = await deriveReporterKey(async () => new Uint8Array(64).fill(2));
+  it('differs for a different seed', () => {
+    const a = reporterKeyFromSeed(new Uint8Array(32).fill(1));
+    const b = reporterKeyFromSeed(new Uint8Array(32).fill(2));
     expect(a.publicKey).not.toEqual(b.publicKey);
-    expect(a.reporterId).not.toBe(b.reporterId);
   });
 
-  it('asks the agent signer for exactly the derivation message', async () => {
-    const seen: Uint8Array[] = [];
-    await deriveReporterKey(async (m) => {
-      seen.push(m);
-      return new Uint8Array(64);
-    });
-    expect(seen).toHaveLength(1);
-    expect(Buffer.from(seen[0]).toString('utf8')).toBe('moss-feedback-key-v1');
+  it('exports a 32 byte public key', () => {
+    expect(reporterKeyFromSeed(new Uint8Array(32).fill(3)).publicKey.length).toBe(32);
   });
 
-  it('exports a 32 byte public key', async () => {
-    const key = await deriveReporterKey(async () => new Uint8Array(64).fill(3));
-    expect(key.publicKey.length).toBe(32);
+  it('rejects a seed that is not 32 bytes', () => {
+    expect(() => reporterKeyFromSeed(new Uint8Array(31))).toThrow(/32 bytes/);
   });
 
   it('signatures verify against the exported public key', async () => {
-    const key = await deriveReporterKey(async () => new Uint8Array(64).fill(4));
+    const key = reporterKeyFromSeed(new Uint8Array(32).fill(4));
     const message = new TextEncoder().encode('hello feedback');
     const sig = await key.sign(message);
     const publicKey = createPublicKey({
@@ -50,7 +41,17 @@ describe('deriveReporterKey', () => {
   });
 
   it('reporterId equals reporterIdFromPubKey(publicKey)', async () => {
-    const key = await deriveReporterKey(async () => new Uint8Array(64).fill(5));
+    const key = reporterKeyFromSeed(new Uint8Array(32).fill(5));
     expect(key.reporterId).toBe(await reporterIdFromPubKey(key.publicKey));
+  });
+
+  // Frozen known-answer vector. Existing reporters' ids depend on this mapping,
+  // so these values must never change.
+  it('maps the fixed seed 0..31 to a frozen public key and reporter id', async () => {
+    const key = reporterKeyFromSeed(Uint8Array.from({ length: 32 }, (_, i) => i));
+    expect(Buffer.from(key.publicKey).toString('base64url')).toBe(
+      'A6EHv_POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg',
+    );
+    expect(key.reporterId).toBe('Vkdap1RjR0wC');
   });
 });

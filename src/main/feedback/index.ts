@@ -12,4 +12,5 @@ export {
   type FeedbackRecord,
   type FeedbackRecordSummary,
 } from './recordStore';
-export { deriveReporterKey, type ReporterKey } from './reporterKey';
+export { reporterKeyFromSeed, type ReporterKey } from './reporterKey';
+export { loadOrCreateReporterSeed, type SeedCipher } from './reporterSeed';
