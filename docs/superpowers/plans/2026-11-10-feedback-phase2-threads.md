@@ -376,6 +376,7 @@ git commit -m "feat(feedback): worker client sync, reply and resolve"
   export type FeedbackSyncDeps = FeedbackIpcDeps & {
     scheduler: { setInterval(fn: () => void, ms: number): unknown. clearInterval(h: unknown): void };
     onUnreadChanged: (count: number) => void;
+    onNewTeamReplies?: (added: number) => void; // called with the increase when unread grows
   };
   export const FEEDBACK_SYNC_INTERVAL_MS = 600_000;
   export async function syncOnce(deps: FeedbackSyncDeps): Promise<{ synced: number. unread: number } | { skipped: 'no-records' | 'no-key' | 'no-worker-url' | WorkerFailureReason }>;
@@ -389,9 +390,10 @@ git commit -m "feat(feedback): worker client sync, reply and resolve"
   // channels added: feedback-sync-now, feedback-reply (id, text), feedback-resolve (id), feedback-mark-read (id), feedback-unread-count
   ```
   `feedback-reply`: record must have `issueNumber` (`not-filed`), call `client.reply`, then `syncNow`, return the refreshed summary. `feedback-resolve`: same with `client.resolve`. `feedback-mark-read`: `store.update(id, { lastReadAt: now })`, recompute unread, emit if changed. Push event `feedback-unread-changed` with `number`. Preload bridges, mirrored in `electron-api.ts`: `syncFeedbackNow(): Promise<FeedbackSyncResult>`, `replyFeedback(id, text): Promise<FeedbackActionResult>`, `resolveFeedback(id): Promise<FeedbackActionResult>`, `markFeedbackRead(id): Promise<FeedbackRecordSummary | undefined>`, `getFeedbackUnreadCount(): Promise<number>`, `onFeedbackUnreadChanged(cb: (e: unknown, count: number) => void)`.
+- OS notification: `syncOnce` calls `onNewTeamReplies(delta)` when the new unread total exceeds the last emitted one. In `src/main/index.ts` that callback does nothing when `RUN_OPTIONS.disableOsNotifications` is set or `MAIN_WINDOW?.isFocused()` is true. Otherwise it shows `new Notification({ title: 'Moss feedback', body, icon })` with body `The team replied to your feedback.` for one reply and `The team posted ${n} replies to your feedback.` otherwise, using the same icon as the existing applet notification at `index.ts` near line 1483. On click it calls `createOrShowMainWindow()` and `emitToWindow(MAIN_WINDOW, 'open-feedback-settings')`. Preload bridge `onOpenFeedbackSettings(cb)`. Main-process strings are not localized, like the existing OS notifications.
 - `src/main/index.ts`: after `launch` succeeds, `startFeedbackSync({...deps, scheduler: { setInterval, clearInterval }, onUnreadChanged: (n) => emitToWindow(MAIN_WINDOW, 'feedback-unread-changed', n) })` once. `registerFeedbackIpc` gains the `syncNow` handle. Guard `MAIN_WINDOW` being destroyed as `audioSourcesIpc` does.
 
-- [ ] **Step 1: Write the failing tests**: `syncOnce` skips with `no-records` for local-only records. merges and emits unread once for two identical results. interval registered with 600,000 ms. `feedback-reply` on a local-only record → `not-filed` without a client call. `feedback-mark-read` zeroes the record's unread and emits. the drift guard passes with the five new channels.
+- [ ] **Step 1: Write the failing tests**: `syncOnce` skips with `no-records` for local-only records. merges and emits unread once for two identical results. interval registered with 600,000 ms. `feedback-reply` on a local-only record → `not-filed` without a client call. `feedback-mark-read` zeroes the record's unread and emits. `syncOnce` calls `onNewTeamReplies(2)` once when unread goes from 1 to 3 and not when it falls. the drift guard passes with the five new channels.
 
 - [ ] **Step 2: Run to verify failure, implement, wire, run to verify pass**
 
@@ -454,7 +456,9 @@ git commit -m "feat(feedback): open and closed threads with reply and resolve in
 
 - [ ] **Step 1: Add `@state() _feedbackUnread = 0` to `main-dashboard.ts`. render the `notification-dot` badge over the cog when above zero, matching the sidebar-button markup. the cog's `aria-label` already exists or is added**
 
-- [ ] **Step 2: In `moss-settings.ts`, the Feedback tab label shows the same badge. the count comes from `getFeedbackUnreadCount` and the push event**
+- [ ] **Step 2: In `main-dashboard.ts`, `onOpenFeedbackSettings` opens the settings dialog on the Feedback tab (`moss-settings` gets a `tab` property or method the dashboard sets to `TabsState.Feedback` before showing the dialog)**
+
+- [ ] **Step 3: In `moss-settings.ts`, the Feedback tab label shows the same badge. the count comes from `getFeedbackUnreadCount` and the push event**
 
 - [ ] **Step 3: `yarn typecheck:web`. commit**
 
