@@ -8,9 +8,9 @@ import {
 import { authenticate } from '../auth';
 import { commentsSince, getIssue, type CommentRow, type StoredIssue } from '../db';
 import type { Env } from '../env';
-import { backfillScope, consume, ipScope } from '../rateLimit';
+import { backfillScope, consume, globalBackfillScope, ipScope } from '../rateLimit';
 import { jsonError, jsonOk, type Route } from '../router';
-import { backfillIssue } from '../syncBackfill';
+import { backfillIssue, isKnownMiss } from '../syncBackfill';
 
 export type SyncDeps = { fetchImpl?: typeof fetch; nowMs?: () => number };
 
@@ -99,10 +99,14 @@ export function syncRoute(deps: SyncDeps = {}): Route {
         }
         // Each attempt costs GitHub reads whether or not it adopts, so attempts are what is bounded.
         if (backfillAttempts >= FEEDBACK_LIMITS.backfillsPerSyncRequest) continue;
+        if (await isKnownMiss(env.FEEDBACK_KV, number)) continue;
         backfillAttempts++;
         const budget = await consume(env.FEEDBACK_KV, backfillScope(authed.reporterId), nowMs);
         if (!budget.allowed) continue;
-        if (!(await backfillIssue(env, number, authed, nowSeconds, deps.fetchImpl))) continue;
+        const global = await consume(env.FEEDBACK_KV, globalBackfillScope(), nowMs);
+        if (!global.allowed) continue;
+        const outcome = await backfillIssue(env, number, authed, nowSeconds, deps.fetchImpl);
+        if (outcome !== 'adopted') continue;
         const backfilled = await getIssue(db, number);
         // The client has never seen a backfilled thread, so it gets the whole thing.
         if (backfilled?.reporterId === authed.reporterId) {

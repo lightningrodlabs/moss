@@ -1,4 +1,4 @@
-import { parseReporterMarker } from '../../../shared/utils/src/feedback/index.ts';
+import { FEEDBACK_LIMITS, parseReporterMarker } from '../../../shared/utils/src/feedback/index.ts';
 import {
   upsertCommentStatement,
   upsertIssueStatement,
@@ -6,10 +6,30 @@ import {
   type StoredIssue,
 } from './db';
 import type { Env } from './env';
-import { getIssue as readGitHubIssue, listIssueComments, type GitHubIssue } from './github';
+import {
+  GitHubError,
+  getIssue as readGitHubIssue,
+  listIssueComments,
+  type GitHubIssue,
+} from './github';
 import { isoToSeconds } from './webhook';
 
 export type BackfillReporter = { reporterId: string; pubKey: Uint8Array };
+
+/**
+ * `adopted`: stored for this reporter. `miss`: GitHub has no such issue or it is not this
+ * reporter's, which will not change soon. `failed`: anything else, worth retrying next sync.
+ */
+export type BackfillOutcome = 'adopted' | 'miss' | 'failed';
+
+function missKey(number: number): string {
+  return `backfill-miss:${number}`;
+}
+
+/** Whether a recent backfill of this number found no issue for its reporter. */
+export async function isKnownMiss(kv: KVNamespace, number: number): Promise<boolean> {
+  return (await kv.get(missKey(number))) !== null;
+}
 
 function toStoredIssue(issue: GitHubIssue, reporterId: string): StoredIssue {
   const createdAt = isoToSeconds(issue.created_at) ?? 0;
@@ -32,9 +52,9 @@ async function adopt(
   reporter: BackfillReporter,
   nowSeconds: number,
   fetchImpl: typeof fetch | undefined,
-): Promise<boolean> {
+): Promise<BackfillOutcome> {
   const issue = await readGitHubIssue(env, number, fetchImpl);
-  if (parseReporterMarker(issue.body ?? '') !== reporter.reporterId) return false;
+  if (parseReporterMarker(issue.body ?? '') !== reporter.reporterId) return 'miss';
   const comments = await listIssueComments(env, number, fetchImpl);
 
   const db = env.FEEDBACK_DB;
@@ -57,14 +77,15 @@ async function adopt(
       });
     }),
   ]);
-  return true;
+  return 'adopted';
 }
 
 /**
  * Adopts an issue D1 does not track yet when its GitHub body names this reporter, storing
- * it with its comments. Returns whether it was adopted; the marker is the only proof of
- * ownership, so any other issue is left alone and never stored. Any failure (GitHub,
- * network, subrequest limit, D1) only skips this number, which the client retries next sync.
+ * it with its comments. The marker is the only proof of ownership, so any other issue is
+ * left alone and never stored; a miss is remembered in KV so repeat syncs skip GitHub. Any
+ * other failure (GitHub, network, subrequest limit, D1) only skips this number, which the
+ * client retries next sync.
  */
 export async function backfillIssue(
   env: Env,
@@ -72,10 +93,17 @@ export async function backfillIssue(
   reporter: BackfillReporter,
   nowSeconds: number,
   fetchImpl?: typeof fetch,
-): Promise<boolean> {
+): Promise<BackfillOutcome> {
+  let outcome: BackfillOutcome;
   try {
-    return await adopt(env, number, reporter, nowSeconds, fetchImpl);
-  } catch {
-    return false;
+    outcome = await adopt(env, number, reporter, nowSeconds, fetchImpl);
+  } catch (e) {
+    outcome = e instanceof GitHubError && e.status === 404 ? 'miss' : 'failed';
   }
+  if (outcome === 'miss') {
+    await env.FEEDBACK_KV.put(missKey(number), '1', {
+      expirationTtl: FEEDBACK_LIMITS.backfillMissTtlSeconds,
+    }).catch(() => undefined);
+  }
+  return outcome;
 }

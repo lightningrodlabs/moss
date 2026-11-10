@@ -13,6 +13,10 @@ export const FEEDBACK_LIMITS = {
   /** Sync adopts at most this many untracked issues from GitHub per request. */
   backfillsPerSyncRequest: 5,
   backfillsPerReporterPerHour: 30,
+  /** Bounds the GitHub reads all reporters together can trigger through backfill. */
+  backfillsPerHourGlobal: 200,
+  /** How long a number that is not this reporter's issue is skipped before it is read again. */
+  backfillMissTtlSeconds: 86_400,
 } as const;
 
 export type CreateIssueRequest = {

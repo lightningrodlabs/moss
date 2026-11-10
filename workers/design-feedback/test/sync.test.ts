@@ -131,9 +131,16 @@ async function count(table: 'issues' | 'comments' | 'reporters'): Promise<number
   return row?.n ?? 0;
 }
 
+/** KV is shared by every test in this file, so rate counters and backfill misses start empty. */
+async function clearKv(): Promise<void> {
+  const { keys } = await env.FEEDBACK_KV.list();
+  await Promise.all(keys.map((k) => env.FEEDBACK_KV.delete(k.name)));
+}
+
 beforeEach(async () => {
   resetInstallationTokenCache();
   ipCounter++;
+  await clearKv();
   await db.batch([
     db.prepare('DELETE FROM comments'),
     db.prepare('DELETE FROM issues'),
@@ -393,6 +400,59 @@ describe('POST /v1/sync', () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ issues: [] });
     expect(github.calls).toEqual([]);
+  });
+
+  it('makes no GitHub call on a second sync for a number whose marker did not match', async () => {
+    const reporter = await makeTestReporter();
+    const first = fakeGitHub({ issues: { 9: { body: marker('someoneElse1'), comments: [] } } });
+    await sync(reporter, [{ number: 9, since: 0 }], first.fetchImpl);
+    expect(issueReads(first.calls)).toBe(1);
+    const second = fakeGitHub({ issues: { 9: { body: marker('someoneElse1'), comments: [] } } });
+
+    const res = await sync(reporter, [{ number: 9, since: 0 }], second.fetchImpl);
+
+    expect(await res.json()).toEqual({ issues: [] });
+    expect(second.calls).toEqual([]);
+  });
+
+  it('makes no GitHub call on a second sync for a number GitHub does not have', async () => {
+    const reporter = await makeTestReporter();
+    await sync(reporter, [{ number: 404, since: 0 }]);
+    const second = fakeGitHub();
+
+    await sync(reporter, [{ number: 404, since: 0 }], second.fetchImpl);
+
+    expect(second.calls).toEqual([]);
+  });
+
+  it('retries a number whose backfill failed unexpectedly', async () => {
+    const reporter = await makeTestReporter();
+    const throwing = (async () => {
+      throw new Error('Too many subrequests');
+    }) as typeof fetch;
+    await sync(reporter, [{ number: 9, since: 0 }], throwing);
+    const second = fakeGitHub();
+
+    await sync(reporter, [{ number: 9, since: 0 }], second.fetchImpl);
+
+    expect(issueReads(second.calls)).toBe(1);
+  });
+
+  it('skips the attempt after the global hourly backfill budget without calling GitHub', async () => {
+    const reporter = await makeTestReporter();
+    const window = Math.floor(NOW_MS / 1000 / 3600);
+    const key = `backfills:global:${window}`;
+    const budget = FEEDBACK_LIMITS.backfillsPerHourGlobal;
+    await env.FEEDBACK_KV.put(key, String(budget - 1));
+    const within = fakeGitHub();
+    await sync(reporter, [{ number: 2000, since: 0 }], within.fetchImpl);
+    expect(issueReads(within.calls)).toBe(1);
+    const beyond = fakeGitHub();
+
+    const res = await sync(reporter, [{ number: 2001, since: 0 }], beyond.fetchImpl);
+
+    expect(await res.json()).toEqual({ issues: [] });
+    expect(beyond.calls).toEqual([]);
   });
 
   it('rejects more than 100 numbers with 400', async () => {
