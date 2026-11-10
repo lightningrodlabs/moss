@@ -13,20 +13,20 @@ compatibility_flags = ["nodejs_compat"]
 GITHUB_REPO_OWNER = "lightningrodlabs"
 GITHUB_REPO_NAME = "moss"
 R2_PUBLIC_URL = "https://pub-98da085c523142129bcac92fdf2b7648.r2.dev"
-GITHUB_APP_ID = "REPLACE_ME_GITHUB_APP_ID"
-GITHUB_INSTALLATION_ID = "REPLACE_ME_GITHUB_INSTALLATION_ID"
+GITHUB_APP_ID = "5701991"
+GITHUB_INSTALLATION_ID = "180641077"
 
 # Reporter registry and created-issue records
 [[d1_databases]]
 binding = "FEEDBACK_DB"
 database_name = "moss-feedback"
-database_id = "REPLACE_ME_D1_PROD"
+database_id = "3f27b943-517d-43d9-aadb-5e64a7d067e9"
 migrations_dir = "migrations"
 
 # Nonce replay cache and rate-limit counters
 [[kv_namespaces]]
 binding = "FEEDBACK_KV"
-id = "REPLACE_ME_KV_PROD"
+id = "66109df0e70741e48659bb659df45c83"
 
 # Feedback screenshots
 [[r2_buckets]]
@@ -39,19 +39,19 @@ name = "moss-design-feedback-staging"
 [env.staging.vars]
 GITHUB_REPO_OWNER = "lightningrodlabs"
 GITHUB_REPO_NAME = "moss-feedback-staging"
-R2_PUBLIC_URL = "REPLACE_ME_R2_PUBLIC_URL_STAGING"
-GITHUB_APP_ID = "REPLACE_ME_GITHUB_APP_ID"
-GITHUB_INSTALLATION_ID = "REPLACE_ME_GITHUB_INSTALLATION_ID_STAGING"
+R2_PUBLIC_URL = "https://pub-1bd9e2efc8854294a4839501ff57c0dd.r2.dev"
+GITHUB_APP_ID = "5701991"
+GITHUB_INSTALLATION_ID = "180641077"
 
 [[env.staging.d1_databases]]
 binding = "FEEDBACK_DB"
 database_name = "moss-feedback-staging"
-database_id = "REPLACE_ME_D1_STAGING"
+database_id = "182f85af-b144-4832-b16c-2737ed44eaf0"
 migrations_dir = "migrations"
 
 [[env.staging.kv_namespaces]]
 binding = "FEEDBACK_KV"
-id = "REPLACE_ME_KV_STAGING"
+id = "edb30484f6704be5bca0767cbc8d57d3"
 
 [[env.staging.r2_buckets]]
 binding = "FEEDBACK_BUCKET"
