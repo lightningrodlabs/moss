@@ -1,4 +1,5 @@
 import {
+  FEEDBACK_LIMITS,
   validateSyncRequest,
   type FeedbackCommentWire,
   type SyncIssue,
@@ -7,7 +8,7 @@ import {
 import { authenticate } from '../auth';
 import { commentsSince, getIssue, type CommentRow, type StoredIssue } from '../db';
 import type { Env } from '../env';
-import { consume, ipScope } from '../rateLimit';
+import { backfillScope, consume, ipScope } from '../rateLimit';
 import { jsonError, jsonOk, type Route } from '../router';
 import { backfillIssue } from '../syncBackfill';
 
@@ -87,6 +88,7 @@ export function syncRoute(deps: SyncDeps = {}): Route {
       const db = env.FEEDBACK_DB;
       const nowSeconds = Math.floor(nowMs() / 1000);
       const issues: SyncIssue[] = [];
+      let backfillAttempts = 0;
       for (const { number, since } of uniqueByNumber(input.issues)) {
         const stored = await getIssue(db, number);
         if (stored) {
@@ -95,10 +97,17 @@ export function syncRoute(deps: SyncDeps = {}): Route {
           }
           continue;
         }
-        const adopted = await backfillIssue(env, number, authed, nowSeconds, deps.fetchImpl);
-        const backfilled = adopted ? await getIssue(db, number) : undefined;
+        // Each attempt costs GitHub reads whether or not it adopts, so attempts are what is bounded.
+        if (backfillAttempts >= FEEDBACK_LIMITS.backfillsPerSyncRequest) continue;
+        backfillAttempts++;
+        const budget = await consume(env.FEEDBACK_KV, backfillScope(authed.reporterId), nowMs);
+        if (!budget.allowed) continue;
+        if (!(await backfillIssue(env, number, authed, nowSeconds, deps.fetchImpl))) continue;
+        const backfilled = await getIssue(db, number);
         // The client has never seen a backfilled thread, so it gets the whole thing.
-        if (backfilled) issues.push(await toSyncIssue(db, backfilled, 0));
+        if (backfilled?.reporterId === authed.reporterId) {
+          issues.push(await toSyncIssue(db, backfilled, 0));
+        }
       }
       return jsonOk({ issues });
     },

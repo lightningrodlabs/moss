@@ -1,6 +1,7 @@
 import { createExecutionContext, env } from 'cloudflare:test';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  FEEDBACK_LIMITS,
   reporterIdFromPubKey,
   type SyncResponse,
 } from '../../../shared/utils/src/feedback/index.ts';
@@ -118,6 +119,11 @@ function comment(id: number, issueNumber: number, updatedAt: number, postedForRe
     createdAt: updatedAt,
     updatedAt,
   };
+}
+
+/** GitHub issue reads, one per backfill attempt that reached GitHub. */
+function issueReads(calls: Call[]): number {
+  return calls.filter((c) => /\/issues\/\d+$/.test(c.url)).length;
 }
 
 async function count(table: 'issues' | 'comments' | 'reporters'): Promise<number> {
@@ -332,6 +338,61 @@ describe('POST /v1/sync', () => {
     ).json()) as SyncResponse;
 
     expect(body.issues.map((i) => i.number)).toEqual([7]);
+    expect(await count('issues')).toBe(1);
+  });
+
+  it('skips a backfill that fails unexpectedly and still returns the others', async () => {
+    const reporter = await makeTestReporter();
+    const id = await reporterIdFromPubKey(reporter.pubKey);
+    await track(id, reporter.pubKey, 7);
+    const throwing = (async () => {
+      throw new Error('Too many subrequests');
+    }) as typeof fetch;
+
+    const res = await sync(
+      reporter,
+      [
+        { number: 9, since: 0 },
+        { number: 7, since: 0 },
+      ],
+      throwing,
+    );
+
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as SyncResponse).issues.map((i) => i.number)).toEqual([7]);
+  });
+
+  it('attempts at most the per-request cap of backfills and still returns tracked issues', async () => {
+    const reporter = await makeTestReporter();
+    const id = await reporterIdFromPubKey(reporter.pubKey);
+    await track(id, reporter.pubKey, 7);
+    const cap = FEEDBACK_LIMITS.backfillsPerSyncRequest;
+    const unknown = Array.from({ length: cap + 1 }, (_, i) => ({ number: 1000 + i, since: 0 }));
+    const github = fakeGitHub();
+
+    const res = await sync(reporter, [...unknown, { number: 7, since: 0 }], github.fetchImpl);
+
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as SyncResponse).issues.map((i) => i.number)).toEqual([7]);
+    expect(issueReads(github.calls)).toBe(cap);
+  });
+
+  it('skips backfill attempts beyond the hourly per-reporter limit without calling GitHub', async () => {
+    const reporter = await makeTestReporter();
+    const perRequest = FEEDBACK_LIMITS.backfillsPerSyncRequest;
+    const hourly = FEEDBACK_LIMITS.backfillsPerReporterPerHour;
+    let next = 1000;
+    for (let r = 0; r < hourly / perRequest; r++) {
+      const batch = Array.from({ length: perRequest }, () => ({ number: next++, since: 0 }));
+      expect((await sync(reporter, batch)).status).toBe(200);
+    }
+    const github = fakeGitHub();
+
+    const res = await sync(reporter, [{ number: next, since: 0 }], github.fetchImpl);
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ issues: [] });
+    expect(github.calls).toEqual([]);
   });
 
   it('rejects more than 100 numbers with 400', async () => {

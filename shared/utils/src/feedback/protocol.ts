@@ -10,6 +10,9 @@ export const FEEDBACK_LIMITS = {
   maxRequestBytes: 3_145_728,
   timestampWindowSeconds: 300,
   nonceTtlSeconds: 600,
+  /** Sync adopts at most this many untracked issues from GitHub per request. */
+  backfillsPerSyncRequest: 5,
+  backfillsPerReporterPerHour: 30,
 } as const;
 
 export type CreateIssueRequest = {

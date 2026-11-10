@@ -8,7 +8,7 @@ export type IssueRow = {
 };
 
 /** Records a reporter the first time they file; later runs leave the stored row untouched. */
-function upsertReporterStatement(
+export function upsertReporterStatement(
   db: D1Database,
   reporterId: string,
   pubKey: Uint8Array,
@@ -19,16 +19,6 @@ function upsertReporterStatement(
       'INSERT INTO reporters (reporter_id, pubkey, created_at) VALUES (?, ?, ?) ON CONFLICT(reporter_id) DO NOTHING',
     )
     .bind(reporterId, pubKey, now);
-}
-
-/** Records a reporter if not yet known, so issues adopted on their behalf have an owner row. */
-export async function ensureReporter(
-  db: D1Database,
-  reporterId: string,
-  pubKey: Uint8Array,
-  now: number,
-): Promise<void> {
-  await upsertReporterStatement(db, reporterId, pubKey, now).run();
 }
 
 /** Records a newly opened issue in state 'open'. */
@@ -140,8 +130,8 @@ export async function getIssue(db: D1Database, number: number): Promise<StoredIs
 }
 
 /** Mirrors GitHub's view of an issue; the reporter and origin are fixed by whoever stored it first. */
-export async function upsertIssue(db: D1Database, row: StoredIssue): Promise<void> {
-  await db
+export function upsertIssueStatement(db: D1Database, row: StoredIssue): D1PreparedStatement {
+  return db
     .prepare(
       `INSERT INTO issues (number, reporter_id, state, state_reason, title, created_at, updated_at, created_via)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -158,8 +148,11 @@ export async function upsertIssue(db: D1Database, row: StoredIssue): Promise<voi
       row.createdAt,
       row.updatedAt,
       row.createdVia,
-    )
-    .run();
+    );
+}
+
+export async function upsertIssue(db: D1Database, row: StoredIssue): Promise<void> {
+  await upsertIssueStatement(db, row).run();
 }
 
 /** Removes an issue together with its comments. */
@@ -171,8 +164,8 @@ export async function deleteIssue(db: D1Database, number: number): Promise<void>
 }
 
 /** Stores a comment; `posted_for_reporter` is fixed at first insert because webhook echoes omit it. */
-export async function upsertComment(db: D1Database, row: CommentRow): Promise<void> {
-  await db
+export function upsertCommentStatement(db: D1Database, row: CommentRow): D1PreparedStatement {
+  return db
     .prepare(
       `INSERT INTO comments (id, issue_number, author_login, author_association, posted_for_reporter,
          body, created_at, updated_at, deleted_at)
@@ -191,8 +184,11 @@ export async function upsertComment(db: D1Database, row: CommentRow): Promise<vo
       row.createdAt,
       row.updatedAt,
       row.deletedAt ?? null,
-    )
-    .run();
+    );
+}
+
+export async function upsertComment(db: D1Database, row: CommentRow): Promise<void> {
+  await upsertCommentStatement(db, row).run();
 }
 
 /** Marks a comment deleted and bumps its update time so incremental readers see the deletion. */

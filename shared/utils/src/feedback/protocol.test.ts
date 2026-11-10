@@ -69,5 +69,7 @@ describe('validateCreateIssueRequest', () => {
     expect(FEEDBACK_LIMITS.maxRequestBytes).toBe(3_145_728);
     expect(FEEDBACK_LIMITS.maxScreenshotBytes).toBe(2_097_152);
     expect(FEEDBACK_LIMITS.timestampWindowSeconds).toBe(300);
+    expect(FEEDBACK_LIMITS.backfillsPerSyncRequest).toBe(5);
+    expect(FEEDBACK_LIMITS.backfillsPerReporterPerHour).toBe(30);
   });
 });
