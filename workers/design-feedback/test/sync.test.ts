@@ -415,14 +415,29 @@ describe('POST /v1/sync', () => {
     expect(second.calls).toEqual([]);
   });
 
-  it('makes no GitHub call on a second sync for a number GitHub does not have', async () => {
+  it('makes no GitHub call for any reporter syncing a number GitHub does not have', async () => {
     const reporter = await makeTestReporter();
+    const other = await makeTestReporter();
     await sync(reporter, [{ number: 404, since: 0 }]);
     const second = fakeGitHub();
 
     await sync(reporter, [{ number: 404, since: 0 }], second.fetchImpl);
+    await sync(other, [{ number: 404, since: 0 }], second.fetchImpl);
 
     expect(second.calls).toEqual([]);
+  });
+
+  it('still backfills for the owner after another reporter probed the number', async () => {
+    const prober = await makeTestReporter();
+    const owner = await makeTestReporter();
+    const ownerId = await reporterIdFromPubKey(owner.pubKey);
+    const github = fakeGitHub({ issues: { 9: { body: marker(ownerId), comments: [] } } });
+    await sync(prober, [{ number: 9, since: 0 }], github.fetchImpl);
+
+    const res = await sync(owner, [{ number: 9, since: 0 }], github.fetchImpl);
+
+    expect(((await res.json()) as SyncResponse).issues.map((i) => i.number)).toEqual([9]);
+    expect((await getIssue(db, 9))?.reporterId).toBe(ownerId);
   });
 
   it('retries a number whose backfill failed unexpectedly', async () => {

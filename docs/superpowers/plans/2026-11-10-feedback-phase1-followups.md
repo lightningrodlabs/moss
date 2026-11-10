@@ -170,8 +170,6 @@ These came out of the phase 2 whole-branch review.
   `postedForReporter: false`. Flag them from `performed_via_github_app`.
 - A stale `edited` delivery overwrites a newer comment body. Skip the upsert
   when the stored `updated_at` is newer.
-- The backfill miss cache is keyed by issue number only. A miss recorded for
-  one reporter also skips the rightful reporter for 24 hours.
 
 ## Main process and renderer
 

@@ -17,18 +17,33 @@ import { isoToSeconds } from './webhook';
 export type BackfillReporter = { reporterId: string; pubKey: Uint8Array };
 
 /**
- * `adopted`: stored for this reporter. `miss`: GitHub has no such issue or it is not this
- * reporter's, which will not change soon. `failed`: anything else, worth retrying next sync.
+ * `adopted`: stored for this reporter. `absent`: GitHub has no such issue, so nobody can
+ * adopt it. `not-theirs`: the issue's marker names someone else. `failed`: anything else,
+ * worth retrying next sync.
  */
-export type BackfillOutcome = 'adopted' | 'miss' | 'failed';
+export type BackfillOutcome = 'adopted' | 'absent' | 'not-theirs' | 'failed';
 
-function missKey(number: number): string {
+/** Shared by every reporter: an issue that does not exist cannot be adopted by anyone. */
+function absentKey(number: number): string {
   return `backfill-miss:${number}`;
 }
 
-/** Whether a recent backfill of this number found no issue for its reporter. */
-export async function isKnownMiss(kv: KVNamespace, number: number): Promise<boolean> {
-  return (await kv.get(missKey(number))) !== null;
+/** Scoped to the probing reporter, so probing a number never blocks its real owner. */
+function notTheirsKey(number: number, reporterId: string): string {
+  return `backfill-miss:${number}:${reporterId}`;
+}
+
+/** Whether a recent backfill of this number found no issue this reporter can adopt. */
+export async function isKnownMiss(
+  kv: KVNamespace,
+  number: number,
+  reporterId: string,
+): Promise<boolean> {
+  const [absent, notTheirs] = await Promise.all([
+    kv.get(absentKey(number)),
+    kv.get(notTheirsKey(number, reporterId)),
+  ]);
+  return absent !== null || notTheirs !== null;
 }
 
 function toStoredIssue(issue: GitHubIssue, reporterId: string): StoredIssue {
@@ -54,7 +69,7 @@ async function adopt(
   fetchImpl: typeof fetch | undefined,
 ): Promise<BackfillOutcome> {
   const issue = await readGitHubIssue(env, number, fetchImpl);
-  if (parseReporterMarker(issue.body ?? '') !== reporter.reporterId) return 'miss';
+  if (parseReporterMarker(issue.body ?? '') !== reporter.reporterId) return 'not-theirs';
   const comments = await listIssueComments(env, number, fetchImpl);
 
   const db = env.FEEDBACK_DB;
@@ -98,10 +113,16 @@ export async function backfillIssue(
   try {
     outcome = await adopt(env, number, reporter, nowSeconds, fetchImpl);
   } catch (e) {
-    outcome = e instanceof GitHubError && e.status === 404 ? 'miss' : 'failed';
+    outcome = e instanceof GitHubError && e.status === 404 ? 'absent' : 'failed';
   }
-  if (outcome === 'miss') {
-    await env.FEEDBACK_KV.put(missKey(number), '1', {
+  const key =
+    outcome === 'absent'
+      ? absentKey(number)
+      : outcome === 'not-theirs'
+        ? notTheirsKey(number, reporter.reporterId)
+        : undefined;
+  if (key !== undefined) {
+    await env.FEEDBACK_KV.put(key, '1', {
       expirationTtl: FEEDBACK_LIMITS.backfillMissTtlSeconds,
     }).catch(() => undefined);
   }

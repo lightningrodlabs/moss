@@ -99,7 +99,7 @@ export function syncRoute(deps: SyncDeps = {}): Route {
         }
         // Each attempt costs GitHub reads whether or not it adopts, so attempts are what is bounded.
         if (backfillAttempts >= FEEDBACK_LIMITS.backfillsPerSyncRequest) continue;
-        if (await isKnownMiss(env.FEEDBACK_KV, number)) continue;
+        if (await isKnownMiss(env.FEEDBACK_KV, number, authed.reporterId)) continue;
         backfillAttempts++;
         const budget = await consume(env.FEEDBACK_KV, backfillScope(authed.reporterId), nowMs);
         if (!budget.allowed) continue;
