@@ -299,7 +299,13 @@ describe('feedback thread channels', () => {
   it('feedback-reply refuses whitespace-only and over-long text without a client call', async () => {
     const reply = vi.fn<Parameters<Reply>, ReturnType<Reply>>();
     const t = setup({ reply });
-    const saved = store.save({ ...input, timestamp: 1000, state: 'open', issueNumber: 7 });
+    const saved = store.save({
+      ...input,
+      timestamp: 1000,
+      state: 'open',
+      issueNumber: 7,
+      createdVia: 'worker',
+    });
     for (const text of ['  \n\t ', 'x'.repeat(10_001)]) {
       expect(await t.handlers.get('feedback-reply')!({}, saved.id, text)).toEqual({
         ok: false,
@@ -324,7 +330,13 @@ describe('feedback thread channels', () => {
       },
     }));
     const t = setup({ reply, sync });
-    const saved = store.save({ ...input, timestamp: 1000, state: 'open', issueNumber: 7 });
+    const saved = store.save({
+      ...input,
+      timestamp: 1000,
+      state: 'open',
+      issueNumber: 7,
+      createdVia: 'worker',
+    });
     const res = await t.handlers.get('feedback-reply')!({}, saved.id, '  hi \n');
     expect(reply).toHaveBeenCalledWith(7, { text: 'hi' });
     expect(sync).toHaveBeenCalledTimes(1);
@@ -338,7 +350,13 @@ describe('feedback thread channels', () => {
       ReturnType<FeedbackWorkerClient['resolve']>
     >(async () => ({ ok: false, reason: 'conflict', status: 409 }));
     const t = setup({ resolve });
-    const saved = store.save({ ...input, timestamp: 1000, state: 'open', issueNumber: 7 });
+    const saved = store.save({
+      ...input,
+      timestamp: 1000,
+      state: 'open',
+      issueNumber: 7,
+      createdVia: 'worker',
+    });
     expect(await t.handlers.get('feedback-resolve')!({}, saved.id)).toEqual({
       ok: false,
       reason: 'conflict',
@@ -373,7 +391,13 @@ describe('feedback thread channels', () => {
       },
     }));
     const t = setup({ sync });
-    store.save({ ...input, timestamp: 1000, state: 'open', issueNumber: 7 });
+    store.save({
+      ...input,
+      timestamp: 1000,
+      state: 'open',
+      issueNumber: 7,
+      createdVia: 'worker',
+    });
     const res = await t.handlers.get('feedback-sync-now')!({});
     expect(res).toMatchObject({ unread: 1, records: [{ title: 'T' }] });
   });

@@ -18,6 +18,15 @@ export function imagesToLinks(markdown: string): string {
   return markdown.replace(IMAGE_OPENER, (_m, alt: string) => `[${alt === '' ? 'image' : alt}]`);
 }
 
+/**
+ * Whether the record has a thread the reporter can read and reply to. Records
+ * the pre-phase-1 worker filed have an issue number but no createdVia, and the
+ * worker rejects replies and resolves for them.
+ */
+export function hasThread(record: FeedbackRecordSummary): boolean {
+  return record.issueNumber !== undefined && record.createdVia !== undefined;
+}
+
 /** Splits records into the Open and Closed tabs, newest first. Unfiled records count as open. */
 export function splitByState(records: FeedbackRecordSummary[]): {
   open: FeedbackRecordSummary[];

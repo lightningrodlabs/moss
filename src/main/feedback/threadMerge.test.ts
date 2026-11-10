@@ -115,8 +115,14 @@ describe('syncCursor', () => {
   it('is undefined for a local-only record', () => {
     expect(syncCursor(record({ issueNumber: undefined, state: 'local-only' }))).toBeUndefined();
   });
+  it('is undefined for a record the old worker filed, which has no createdVia', () => {
+    expect(syncCursor(record({ createdVia: undefined }))).toBeUndefined();
+  });
   it('uses issueUpdatedAt, defaulting to 0', () => {
-    expect(syncCursor(record())).toEqual({ number: 7, since: 0 });
-    expect(syncCursor(record({ issueUpdatedAt: 55 }))).toEqual({ number: 7, since: 55 });
+    expect(syncCursor(record({ createdVia: 'worker' }))).toEqual({ number: 7, since: 0 });
+    expect(syncCursor(record({ createdVia: 'worker', issueUpdatedAt: 55 }))).toEqual({
+      number: 7,
+      since: 55,
+    });
   });
 });

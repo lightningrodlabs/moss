@@ -4,6 +4,7 @@ import {
   actionNotice,
   badgeText,
   cardTitle,
+  hasThread,
   imagesToLinks,
   splitByState,
   type ActionNotice,
@@ -123,5 +124,23 @@ describe('badgeText', () => {
     expect(badgeText(1)).toBe('1');
     expect(badgeText(9)).toBe('9');
     expect(badgeText(10)).toBe('9+');
+  });
+});
+
+describe('hasThread', () => {
+  it('is true for a record filed through the phase 1 worker', () => {
+    expect(hasThread(rec('a', 1, 'open', { issueNumber: 3, createdVia: 'worker' }))).toBe(true);
+  });
+
+  it('is false for a record the old worker filed, which has no createdVia', () => {
+    expect(
+      hasThread(
+        rec('b', 1, 'open', { issueNumber: 3, issueUrl: 'https://github.com/o/r/issues/3' }),
+      ),
+    ).toBe(false);
+  });
+
+  it('is false for a local-only record', () => {
+    expect(hasThread(rec('c', 1, 'local-only'))).toBe(false);
   });
 });

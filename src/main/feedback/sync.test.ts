@@ -57,6 +57,7 @@ function saveRecord(over: Partial<FeedbackRecord> = {}): FeedbackRecord {
     timestamp: 1000,
     state: 'open',
     issueNumber: 7,
+    createdVia: 'worker',
     ...over,
   });
 }

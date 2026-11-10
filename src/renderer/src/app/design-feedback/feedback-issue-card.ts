@@ -17,7 +17,7 @@ import type {
   FeedbackCommentWire,
   FeedbackRecordSummary,
 } from '../../electron-api.js';
-import { actionNotice, badgeText, cardTitle, imagesToLinks } from './thread-view.js';
+import { actionNotice, badgeText, cardTitle, hasThread, imagesToLinks } from './thread-view.js';
 
 const REPLY_MAX_LENGTH = 10000;
 
@@ -155,11 +155,11 @@ export class FeedbackIssueCard extends LitElement {
 
   private _renderExpanded() {
     const r = this.record;
-    const filed = r.issueNumber !== undefined;
+    const threaded = hasThread(r);
     return html`<div class="column details" style="gap: 8px;">
       <div class="original">${r.text}</div>
-      ${(r.comments ?? []).map((c) => this._renderComment(c))}
-      ${filed
+      ${threaded ? (r.comments ?? []).map((c) => this._renderComment(c)) : html``}
+      ${threaded
         ? html`<sl-textarea
               .value=${this._reply}
               maxlength=${REPLY_MAX_LENGTH}

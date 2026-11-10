@@ -28,10 +28,14 @@ export function totalUnread(records: FeedbackRecordSummary[]): number {
   return records.reduce((sum, r) => sum + recordUnread(r), 0);
 }
 
-/** What to ask the worker for; local-only records have no issue to sync. */
+/**
+ * What to ask the worker for. Local-only records have no issue to sync, and
+ * records the pre-phase-1 worker filed (no createdVia) carry no ownership
+ * marker, so the worker can never adopt them.
+ */
 export function syncCursor(
   record: FeedbackRecordSummary,
 ): { number: number; since: number } | undefined {
-  if (record.issueNumber === undefined) return undefined;
+  if (record.issueNumber === undefined || record.createdVia === undefined) return undefined;
   return { number: record.issueNumber, since: record.issueUpdatedAt ?? 0 };
 }
