@@ -907,6 +907,22 @@ export function markdownParseSafe(input: string) {
   return DOMPurify.sanitize(markedData, { ALLOWED_URI_REGEXP: MARKDOWN_ALLOWED_URI_REGEXP });
 }
 
+/**
+ * Markdown for feedback threads, where anyone who can comment on the issue
+ * controls the content. Threads must never fetch remote resources: a loaded
+ * image or media element would reveal the reporter's IP address and online
+ * times to the comment author, so every tag and attribute that fetches on
+ * render is removed.
+ */
+export function markdownParseNoImages(input: string): string {
+  const markedData = marked.parse(input) as string;
+  return DOMPurify.sanitize(markedData, {
+    ALLOWED_URI_REGEXP: MARKDOWN_ALLOWED_URI_REGEXP,
+    FORBID_TAGS: ['img', 'picture', 'source', 'video', 'audio', 'iframe', 'object', 'embed'],
+    FORBID_ATTR: ['srcset', 'style'],
+  });
+}
+
 export function lazyReloadableStore<T>(
   load: () => Promise<T>,
 ): AsyncReadable<T> & { reload: () => Promise<void> } {

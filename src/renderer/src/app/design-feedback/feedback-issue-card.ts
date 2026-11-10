@@ -11,7 +11,7 @@ import type SlTextarea from '@shoelace-style/shoelace/dist/components/textarea/t
 
 import { mossStyles } from '../../shared-styles.js';
 import { feedbackIssueCardStyles } from './feedback-issue-card-styles.js';
-import { markdownParseSafe } from '../../utils.js';
+import { markdownParseNoImages } from '../../utils.js';
 import type {
   FeedbackActionResult,
   FeedbackCommentWire,
@@ -146,8 +146,9 @@ export class FeedbackIssueCard extends LitElement {
       </div>
       ${c.deleted
         ? html`<div class="deleted">${msg('Comment deleted')}</div>`
-        : html`<div class="comment-body">
-            ${unsafeHTML(markdownParseSafe(imagesToLinks(c.body)))}
+        : // Threads must never fetch remote resources; see markdownParseNoImages.
+          html`<div class="comment-body">
+            ${unsafeHTML(markdownParseNoImages(imagesToLinks(c.body)))}
           </div>`}
     </div>`;
   }

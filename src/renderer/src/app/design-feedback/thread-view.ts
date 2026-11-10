@@ -3,17 +3,19 @@ import type { FeedbackActionResult, FeedbackRecordSummary } from '../../electron
 /** Which user-facing notice a reply or resolve outcome should produce. */
 export type ActionNotice = 'success' | 'already-closed' | 'rejected' | 'unreachable';
 
-const IMAGE_MARKDOWN = /!\[([^\]]*)\]\(([^)]*)\)/g;
+/** Alt text with at most one level of nested brackets, e.g. `a [b] c`. */
+const ALT = String.raw`((?:[^\[\]]|\[[^\[\]]*\])*)`;
+
+/** Any image opener: inline `![alt](`, reference `![alt][r]`, collapsed `![alt][]` and shortcut `![alt]`. */
+const IMAGE_OPENER = new RegExp(String.raw`!\[${ALT}\]`, 'g');
 
 /**
- * Rewrites markdown images as plain links so a thread never loads remote
- * images; the reader opens them deliberately.
+ * Rewrites markdown images, inline and reference style, as plain links so a
+ * thread never loads remote images; the reader opens them deliberately.
+ * Rendering also strips image tags, so this is the first of two layers.
  */
 export function imagesToLinks(markdown: string): string {
-  return markdown.replace(
-    IMAGE_MARKDOWN,
-    (_m, alt: string, url: string) => `[${alt === '' ? 'image' : alt}](${url})`,
-  );
+  return markdown.replace(IMAGE_OPENER, (_m, alt: string) => `[${alt === '' ? 'image' : alt}]`);
 }
 
 /** Splits records into the Open and Closed tabs, newest first. Unfiled records count as open. */

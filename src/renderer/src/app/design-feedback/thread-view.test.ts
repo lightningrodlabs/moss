@@ -34,6 +34,24 @@ describe('imagesToLinks', () => {
     expect(imagesToLinks(md)).toBe(md);
   });
 
+  it('rewrites reference-style images', () => {
+    expect(imagesToLinks('![pixel][r]\n\n[r]: https://x/p.png')).toBe(
+      '[pixel][r]\n\n[r]: https://x/p.png',
+    );
+    expect(imagesToLinks('![][r]')).toBe('[image][r]');
+  });
+
+  it('rewrites collapsed and shortcut reference images', () => {
+    expect(imagesToLinks('![r][] and ![r]\n\n[r]: https://x/p.png')).toBe(
+      '[r][] and [r]\n\n[r]: https://x/p.png',
+    );
+  });
+
+  it('tolerates one level of nested brackets in the alt text', () => {
+    expect(imagesToLinks('![a [b] c](https://x/a.png)')).toBe('[a [b] c](https://x/a.png)');
+    expect(imagesToLinks('![a [b]][r]')).toBe('[a [b]][r]');
+  });
+
   it('converts every image in the text', () => {
     expect(imagesToLinks('![a](u1) ![](u2)')).toBe('[a](u1) [image](u2)');
   });
