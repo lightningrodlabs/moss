@@ -25,6 +25,12 @@ describe('THREAD_MARKDOWN_SANITIZE', () => {
     expect(THREAD_MARKDOWN_SANITIZE.ALLOWED_TAGS).not.toContain(tag);
   });
 
+  it('allows exactly the thread markdown tags', () => {
+    expect([...THREAD_MARKDOWN_SANITIZE.ALLOWED_TAGS].sort()).toEqual(
+      ['p', 'br', 'a', 'code', 'pre', 'em', 'strong', 'blockquote', 'ul', 'ol', 'li'].sort(),
+    );
+  });
+
   it('allows only the href attribute', () => {
     expect(THREAD_MARKDOWN_SANITIZE.ALLOWED_ATTR).toEqual(['href']);
   });
