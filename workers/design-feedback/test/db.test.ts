@@ -138,6 +138,14 @@ describe('comments', () => {
     });
   });
 
+  it('a later upsert flagged for the reporter raises posted_for_reporter on an unflagged row', async () => {
+    await seedIssue(13);
+    await upsertComment(db, comment(130, 13));
+    await upsertComment(db, comment(130, 13, { postedForReporter: true }));
+    const [got] = await commentsSince(db, 13, 0);
+    expect(got.postedForReporter).toBe(true);
+  });
+
   it('softDeleteComment sets deletedAt and bumps updatedAt', async () => {
     await seedIssue(12);
     await upsertComment(db, comment(120, 12));

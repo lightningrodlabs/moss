@@ -7,7 +7,7 @@ import {
   type FeedbackErrorResponse,
   type ReplyResponse,
 } from '../../../shared/utils/src/feedback/index.ts';
-import { getComment, getIssue } from '../src/db';
+import { getComment, getIssue, upsertComment } from '../src/db';
 import { resetInstallationTokenCache } from '../src/github';
 import { replyRoute } from '../src/routes/reply';
 import { makeTestReporter, type TestReporter } from './sign';
@@ -79,6 +79,29 @@ describe('POST /v1/issues/:number/comments', () => {
       createdAt: COMMENT_SEC,
     });
     expect((await getIssue(env.FEEDBACK_DB, 7))?.updatedAt).toBe(COMMENT_SEC);
+  });
+
+  it('flags the reply for the reporter when the webhook stored it first', async () => {
+    const reporter = await ownReporter(7);
+    await upsertComment(env.FEEDBACK_DB, {
+      id: COMMENT_ID,
+      issueNumber: 7,
+      authorLogin: 'moss-feedback[bot]',
+      authorAssociation: 'NONE',
+      postedForReporter: false,
+      body: buildReplyBody('hi'),
+      createdAt: COMMENT_SEC,
+      updatedAt: COMMENT_SEC,
+    });
+    const res = await reply(reporter, 7, { text: 'hi' }, fakeGitHub().fetchImpl);
+
+    expect(res.status).toBe(201);
+    const raw = await env.FEEDBACK_DB.prepare(
+      'SELECT posted_for_reporter FROM comments WHERE id = ?',
+    )
+      .bind(COMMENT_ID)
+      .first<{ posted_for_reporter: number }>();
+    expect(raw?.posted_for_reporter).toBe(1);
   });
 
   it('answers 404 for an issue filed by another reporter without calling GitHub', async () => {

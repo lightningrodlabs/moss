@@ -163,7 +163,10 @@ export async function deleteIssue(db: D1Database, number: number): Promise<void>
   ]);
 }
 
-/** Stores a comment; `posted_for_reporter` is fixed at first insert because webhook echoes omit it. */
+/**
+ * Stores a comment. `posted_for_reporter` can only rise: webhook echoes always carry 0, so a
+ * route's 1 must survive whichever of the two writes lands first.
+ */
 export function upsertCommentStatement(db: D1Database, row: CommentRow): D1PreparedStatement {
   return db
     .prepare(
@@ -172,7 +175,8 @@ export function upsertCommentStatement(db: D1Database, row: CommentRow): D1Prepa
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(id) DO UPDATE SET
          body = excluded.body, updated_at = excluded.updated_at,
-         author_association = excluded.author_association, deleted_at = excluded.deleted_at`,
+         author_association = excluded.author_association, deleted_at = excluded.deleted_at,
+         posted_for_reporter = MAX(posted_for_reporter, excluded.posted_for_reporter)`,
     )
     .bind(
       row.id,

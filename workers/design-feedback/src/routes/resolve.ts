@@ -43,7 +43,8 @@ export function resolveRoute(deps: IssueWriteDeps = {}): Route {
       let closed: GitHubIssue;
       try {
         comment = await createComment(env, issue.number, RESOLVE_COMMENT, deps.fetchImpl);
-        // A close that fails after the note posted is left for the webhook to reconcile.
+        // If the close fails after the note posted, the webhook stores the note and the issue
+        // stays open; the note is flagged for the reporter only when this route writes it.
         closed = await closeIssue(env, issue.number, deps.fetchImpl);
       } catch (err) {
         if (!(err instanceof GitHubError)) throw err;
