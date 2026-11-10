@@ -1102,10 +1102,6 @@
   <source>No feedback submitted yet.</source>
   <target>Nog geen feedback verzonden.</target>
 </trans-unit>
-<trans-unit id="s8b7af9c477e83543">
-  <source>View Issue</source>
-  <target>Issue bekijken</target>
-</trans-unit>
 <trans-unit id="sb061ff5a347a296e">
   <source>Profile</source>
   <target>Profiel</target>
@@ -3683,6 +3679,54 @@ begint nu</target>
 <trans-unit id="s2e14046a9cd2f7fe">
   <source>Feedback saved locally. The feedback key could not be loaded.</source>
   <target>Feedback lokaal opgeslagen. De feedbacksleutel kon niet worden geladen.</target>
+</trans-unit>
+<trans-unit id="s7765a4bc1dda5bb4">
+  <source>This issue is already closed.</source>
+  <target>Dit issue is al gesloten.</target>
+</trans-unit>
+<trans-unit id="sf1b9269f446f9b2d">
+  <source>The reply was not accepted. Check its length and try again.</source>
+  <target>Het antwoord is niet geaccepteerd. Controleer de lengte en probeer het opnieuw.</target>
+</trans-unit>
+<trans-unit id="s2d6b12cf52c52dfd">
+  <source>Could not reach the feedback service. Nothing was sent.</source>
+  <target>De feedbackservice is niet bereikbaar. Er is niets verzonden.</target>
+</trans-unit>
+<trans-unit id="sa5ea32325bfc8638">
+  <source>Reply posted.</source>
+  <target>Antwoord geplaatst.</target>
+</trans-unit>
+<trans-unit id="s157677492c805c6a">
+  <source>Issue marked resolved.</source>
+  <target>Issue gemarkeerd als opgelost.</target>
+</trans-unit>
+<trans-unit id="s8d518df4b5042a13">
+  <source>Comment deleted</source>
+  <target>Reactie verwijderd</target>
+</trans-unit>
+<trans-unit id="s5ec745f499bc1860">
+  <source>Closes the GitHub issue as completed. You cannot reopen it from Moss.</source>
+  <target>Sluit het GitHub-issue als afgerond. Je kunt het niet opnieuw openen vanuit Moss.</target>
+</trans-unit>
+<trans-unit id="s5d3dcb9018296dd8">
+  <source>Mark resolved</source>
+  <target>Markeren als opgelost</target>
+</trans-unit>
+<trans-unit id="sc5e1bf31b4ef8ab8">
+  <source>View on GitHub</source>
+  <target>Bekijk op GitHub</target>
+</trans-unit>
+<trans-unit id="s6dbbe2646b239ca5">
+  <source>Closed</source>
+  <target>Gesloten</target>
+</trans-unit>
+<trans-unit id="s89055e59eb983c4d">
+  <source>No open feedback.</source>
+  <target>Geen open feedback.</target>
+</trans-unit>
+<trans-unit id="s65e577cc723daca1">
+  <source>No closed feedback.</source>
+  <target>Geen gesloten feedback.</target>
 </trans-unit>
 </body>
 </file>

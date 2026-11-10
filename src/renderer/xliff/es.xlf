@@ -1386,10 +1386,6 @@
   <source>No feedback submitted yet.</source>
   <target>No se han enviado comentarios aún.</target>
 </trans-unit>
-<trans-unit id="s8b7af9c477e83543">
-  <source>View Issue</source>
-  <target>Ver issue</target>
-</trans-unit>
 <trans-unit id="sea97ee88ea35358e">
   <source>Moss GitHub repo</source>
   <target>repositorio GitHub de Moss</target>
@@ -3683,6 +3679,54 @@ comienza ahora</target>
 <trans-unit id="s2e14046a9cd2f7fe">
   <source>Feedback saved locally. The feedback key could not be loaded.</source>
   <target>Comentarios guardados localmente. No se pudo cargar la clave de comentarios.</target>
+</trans-unit>
+<trans-unit id="s7765a4bc1dda5bb4">
+  <source>This issue is already closed.</source>
+  <target>Este issue ya está cerrado.</target>
+</trans-unit>
+<trans-unit id="sf1b9269f446f9b2d">
+  <source>The reply was not accepted. Check its length and try again.</source>
+  <target>No se aceptó la respuesta. Revise su longitud e inténtelo de nuevo.</target>
+</trans-unit>
+<trans-unit id="s2d6b12cf52c52dfd">
+  <source>Could not reach the feedback service. Nothing was sent.</source>
+  <target>No se pudo contactar con el servicio de comentarios. No se envió nada.</target>
+</trans-unit>
+<trans-unit id="sa5ea32325bfc8638">
+  <source>Reply posted.</source>
+  <target>Respuesta publicada.</target>
+</trans-unit>
+<trans-unit id="s157677492c805c6a">
+  <source>Issue marked resolved.</source>
+  <target>Issue marcado como resuelto.</target>
+</trans-unit>
+<trans-unit id="s8d518df4b5042a13">
+  <source>Comment deleted</source>
+  <target>Comentario eliminado</target>
+</trans-unit>
+<trans-unit id="s5ec745f499bc1860">
+  <source>Closes the GitHub issue as completed. You cannot reopen it from Moss.</source>
+  <target>Cierra el issue de GitHub como completado. No podrá reabrirlo desde Moss.</target>
+</trans-unit>
+<trans-unit id="s5d3dcb9018296dd8">
+  <source>Mark resolved</source>
+  <target>Marcar como resuelto</target>
+</trans-unit>
+<trans-unit id="sc5e1bf31b4ef8ab8">
+  <source>View on GitHub</source>
+  <target>Ver en GitHub</target>
+</trans-unit>
+<trans-unit id="s6dbbe2646b239ca5">
+  <source>Closed</source>
+  <target>Cerrados</target>
+</trans-unit>
+<trans-unit id="s89055e59eb983c4d">
+  <source>No open feedback.</source>
+  <target>No hay comentarios abiertos.</target>
+</trans-unit>
+<trans-unit id="s65e577cc723daca1">
+  <source>No closed feedback.</source>
+  <target>No hay comentarios cerrados.</target>
 </trans-unit>
 </body>
 </file>
