@@ -3,8 +3,12 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   GitHubError,
   appJwt,
+  closeIssue,
+  createComment,
   createIssue,
+  getIssue,
   installationToken,
+  listIssueComments,
   resetInstallationTokenCache,
 } from '../src/github';
 
@@ -252,5 +256,154 @@ describe('createIssue', () => {
     );
     expect(err).toBeInstanceOf(GitHubError);
     expect((err as GitHubError).status).toBe(201);
+  });
+});
+
+describe('issue thread calls', () => {
+  const tokenReply = (): Reply => ({
+    status: 201,
+    json: { token: 'tok-1', expires_at: expiresIn(3_600_000, Date.now()) },
+  });
+  const comment = (over: Record<string, unknown> = {}) => ({
+    id: 11,
+    body: 'hello',
+    created_at: 'c',
+    updated_at: 'u',
+    author_association: 'MEMBER',
+    user: { login: 'octo' },
+    extra: 1,
+    ...over,
+  });
+  const issue = (over: Record<string, unknown> = {}) => ({
+    number: 7,
+    state: 'closed',
+    state_reason: 'completed',
+    title: 'T',
+    body: null,
+    created_at: 'c',
+    updated_at: 'u',
+    html_url: 'https://github.com/o/r/issues/7',
+    ...over,
+  });
+  const shapeError = async (p: Promise<unknown>) => {
+    const err = await p.catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(GitHubError);
+    expect((err as GitHubError).message).toBe('unexpected response shape');
+  };
+
+  it('createComment posts the body to the issue comments endpoint', async () => {
+    const { fetchImpl, calls } = fakeFetch([tokenReply(), { status: 201, json: comment() }]);
+    const c = await createComment(env, 7, 'hello', fetchImpl);
+    expect(c).toEqual({
+      id: 11,
+      body: 'hello',
+      created_at: 'c',
+      updated_at: 'u',
+      author_association: 'MEMBER',
+      user: { login: 'octo' },
+    });
+    expectGithubHeaders(calls[1]);
+    expect(calls[1].url).toBe('https://api.github.com/repos/o/r/issues/7/comments');
+    expect(calls[1].method).toBe('POST');
+    expect(calls[1].headers.get('authorization')).toBe('Bearer tok-1');
+    expect(JSON.parse(calls[1].body ?? '')).toEqual({ body: 'hello' });
+  });
+
+  it('createComment maps a null user to ghost', async () => {
+    const { fetchImpl } = fakeFetch([tokenReply(), { status: 201, json: comment({ user: null }) }]);
+    expect((await createComment(env, 7, 'x', fetchImpl)).user).toEqual({ login: 'ghost' });
+  });
+
+  it('createComment rejects a wrong shape and a non-2xx status', async () => {
+    await shapeError(
+      createComment(
+        env,
+        7,
+        'x',
+        fakeFetch([tokenReply(), { status: 201, json: comment({ id: '1' }) }]).fetchImpl,
+      ),
+    );
+    const err = await createComment(
+      env,
+      7,
+      'x',
+      fakeFetch([{ status: 404, json: { message: 'Not Found' } }]).fetchImpl,
+    ).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(GitHubError);
+    expect((err as GitHubError).status).toBe(404);
+  });
+
+  it('closeIssue patches state closed with reason completed', async () => {
+    const { fetchImpl, calls } = fakeFetch([tokenReply(), { status: 200, json: issue() }]);
+    const i = await closeIssue(env, 7, fetchImpl);
+    expect(i).toEqual(issue());
+    expectGithubHeaders(calls[1]);
+    expect(calls[1].url).toBe('https://api.github.com/repos/o/r/issues/7');
+    expect(calls[1].method).toBe('PATCH');
+    expect(JSON.parse(calls[1].body ?? '')).toEqual({ state: 'closed', state_reason: 'completed' });
+  });
+
+  it('getIssue gets and parses the issue', async () => {
+    const { fetchImpl, calls } = fakeFetch([
+      tokenReply(),
+      { status: 200, json: issue({ state: 'open', state_reason: null, body: 'b' }) },
+    ]);
+    const i = await getIssue(env, 7, fetchImpl);
+    expect(i.state).toBe('open');
+    expect(i.state_reason).toBeNull();
+    expect(i.body).toBe('b');
+    expectGithubHeaders(calls[1]);
+    expect(calls[1].url).toBe('https://api.github.com/repos/o/r/issues/7');
+    expect(calls[1].method).toBe('GET');
+  });
+
+  it('getIssue and closeIssue reject an unknown state', async () => {
+    await shapeError(
+      getIssue(
+        env,
+        7,
+        fakeFetch([tokenReply(), { status: 200, json: issue({ state: 'merged' }) }]).fetchImpl,
+      ),
+    );
+    await shapeError(
+      closeIssue(
+        env,
+        7,
+        fakeFetch([tokenReply(), { status: 200, json: issue({ number: 'x' }) }]).fetchImpl,
+      ),
+    );
+  });
+
+  it('listIssueComments gets the first page of 100', async () => {
+    const { fetchImpl, calls } = fakeFetch([
+      tokenReply(),
+      { status: 200, json: [comment(), comment({ id: 12, user: null })] },
+    ]);
+    const list = await listIssueComments(env, 7, fetchImpl);
+    expect(list.map((c) => [c.id, c.user.login])).toEqual([
+      [11, 'octo'],
+      [12, 'ghost'],
+    ]);
+    expectGithubHeaders(calls[1]);
+    expect(calls[1].url).toBe('https://api.github.com/repos/o/r/issues/7/comments?per_page=100');
+    expect(calls[1].method).toBe('GET');
+  });
+
+  it('listIssueComments rejects a non-array and a malformed element', async () => {
+    await shapeError(
+      listIssueComments(
+        env,
+        7,
+        fakeFetch([tokenReply(), { status: 200, json: comment() }]).fetchImpl,
+      ),
+    );
+    await shapeError(
+      listIssueComments(
+        env,
+        7,
+        fakeFetch([tokenReply(), { status: 200, json: [comment(), comment({ body: 3 })] }])
+          .fetchImpl,
+      ),
+    );
   });
 });
