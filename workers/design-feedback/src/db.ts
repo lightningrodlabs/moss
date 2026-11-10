@@ -21,6 +21,16 @@ function upsertReporterStatement(
     .bind(reporterId, pubKey, now);
 }
 
+/** Records a reporter if not yet known, so issues adopted on their behalf have an owner row. */
+export async function ensureReporter(
+  db: D1Database,
+  reporterId: string,
+  pubKey: Uint8Array,
+  now: number,
+): Promise<void> {
+  await upsertReporterStatement(db, reporterId, pubKey, now).run();
+}
+
 /** Records a newly opened issue in state 'open'. */
 function insertIssueStatement(db: D1Database, row: IssueRow): D1PreparedStatement {
   return db
