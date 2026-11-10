@@ -9,7 +9,9 @@
     /* eslint-disable @typescript-eslint/no-explicit-any */
 
     export const templates = {
-      'h195e3d05d7fbb8c8': html`<a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">Araç yayınlama</a> ve kendi küratörlük listenizi oluşturma hakkında daha fazla bilgi edinin.`,
+      'feedback-tab-closed': `Kapalı`,
+'feedback-tab-open': `Açık`,
+'h195e3d05d7fbb8c8': html`<a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">Araç yayınlama</a> ve kendi küratörlük listenizi oluşturma hakkında daha fazla bilgi edinin.`,
 'h609db4d1e0221068': html`Moss, whisper.cpp üzerinden çalışan açık bir konuşma tanıma modeli olan <a href="https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)" target="_blank" rel="noopener noreferrer">Whisper</a> kullanır.`,
 's0015d648b3decb5a': `İzin türü kontrol ediliyor...`,
 's007a5e0a003f5515': `Cebinizde:`,
@@ -424,7 +426,6 @@ güzel insan!`,
 's6d7cf29525f2611f': `Gelişmiş Ayarları Göster`,
 's6d8f193aef66d440': `Varsayılan Profili Kaydet`,
 's6d96b71b1a229943': `Yeni etiket girin`,
-'s6dbbe2646b239ca5': `Kapalı`,
 's6e84b6d6d9819c25': `süre sonu yok`,
 's6ebc9bd6feae62a3': `Yükleniyor…`,
 's6f87b8dc56fff501': `Henüz hiçbir araca yerel transkripsiyon erişimi verilmedi. Bir araç ilk kez istediğinde size sorulacak.`,

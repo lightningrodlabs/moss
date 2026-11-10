@@ -3716,10 +3716,6 @@ comienza ahora</target>
   <source>View on GitHub</source>
   <target>Ver en GitHub</target>
 </trans-unit>
-<trans-unit id="s6dbbe2646b239ca5">
-  <source>Closed</source>
-  <target>Cerrados</target>
-</trans-unit>
 <trans-unit id="s89055e59eb983c4d">
   <source>No open feedback.</source>
   <target>No hay comentarios abiertos.</target>
@@ -3727,6 +3723,16 @@ comienza ahora</target>
 <trans-unit id="s65e577cc723daca1">
   <source>No closed feedback.</source>
   <target>No hay comentarios cerrados.</target>
+</trans-unit>
+<trans-unit id="feedback-tab-closed">
+  <source>Closed</source>
+  <note from="lit-localize">Issue state tab label</note>
+  <target>Cerrados</target>
+</trans-unit>
+<trans-unit id="feedback-tab-open">
+  <source>Open</source>
+  <note from="lit-localize">Issue state tab label, not the verb</note>
+  <target>Abiertos</target>
 </trans-unit>
 </body>
 </file>

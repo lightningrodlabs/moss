@@ -9,7 +9,9 @@
     /* eslint-disable @typescript-eslint/no-explicit-any */
 
     export const templates = {
-      'h195e3d05d7fbb8c8': html`Mehr darüber, wie man <a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">ein Tool veröffentlicht</a> und eine eigene Kuratierungsliste erstellt.`,
+      'feedback-tab-closed': `Geschlossen`,
+'feedback-tab-open': `Offen`,
+'h195e3d05d7fbb8c8': html`Mehr darüber, wie man <a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">ein Tool veröffentlicht</a> und eine eigene Kuratierungsliste erstellt.`,
 'h609db4d1e0221068': html`Moss verwendet <a href="https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)" target="_blank" rel="noopener noreferrer">Whisper</a>, ein offenes Spracherkennungsmodell, ausgeführt über whisper.cpp.`,
 's0015d648b3decb5a': `Berechtigungstyp wird überprüft...`,
 's007a5e0a003f5515': `In Ihrer Tasche:`,
@@ -424,7 +426,6 @@ beginnt jetzt`,
 's6d7cf29525f2611f': `Erweiterte Einstellungen anzeigen`,
 's6d8f193aef66d440': `Standardprofil speichern`,
 's6d96b71b1a229943': `Neues Tag eingeben`,
-'s6dbbe2646b239ca5': `Geschlossen`,
 's6e84b6d6d9819c25': `kein Ablauf`,
 's6ebc9bd6feae62a3': `Wird geladen…`,
 's6f87b8dc56fff501': `Bisher hat kein Tool Zugriff auf die lokale Transkription erhalten. Wenn ein Tool zum ersten Mal danach fragt, wirst du gefragt.`,

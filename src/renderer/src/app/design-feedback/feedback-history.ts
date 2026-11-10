@@ -57,9 +57,9 @@ export class FeedbackHistory extends LitElement {
     return html`
       <sl-tab-group>
         <sl-tab slot="nav" panel="open">
-          <span class="tab-label">${msg('Open')} ${this._renderBadge(openUnread)}</span>
+          <span class="tab-label">${msg('Open', { id: 'feedback-tab-open', desc: 'Issue state tab label, not the verb' })} ${this._renderBadge(openUnread)}</span>
         </sl-tab>
-        <sl-tab slot="nav" panel="closed">${msg('Closed')}</sl-tab>
+        <sl-tab slot="nav" panel="closed">${msg('Closed', { id: 'feedback-tab-closed', desc: 'Issue state tab label' })}</sl-tab>
         <sl-tab-panel name="open">
           ${open.length === 0
             ? html`<p class="muted">${msg('No open feedback.')}</p>`

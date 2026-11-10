@@ -9,7 +9,9 @@
     /* eslint-disable @typescript-eslint/no-explicit-any */
 
     export const templates = {
-      'h195e3d05d7fbb8c8': html`<a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">ツールの公開</a>と独自のキュレーションリストの作成について詳しく見る。`,
+      'feedback-tab-closed': `解決済み`,
+'feedback-tab-open': `未解決`,
+'h195e3d05d7fbb8c8': html`<a href="https://dev.theweave.social/build/publishing-a-tool.html" target="_blank" rel="noopener noreferrer">ツールの公開</a>と独自のキュレーションリストの作成について詳しく見る。`,
 'h609db4d1e0221068': html`Moss は whisper.cpp を通じて動作するオープンな音声認識モデル <a href="https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)" target="_blank" rel="noopener noreferrer">Whisper</a> を使用します。`,
 's0015d648b3decb5a': `権限タイプを確認中...`,
 's007a5e0a003f5515': `ポケット内:`,
@@ -424,7 +426,6 @@
 's6d7cf29525f2611f': `詳細設定を表示`,
 's6d8f193aef66d440': `デフォルトプロフィールを保存`,
 's6d96b71b1a229943': `新しいタグを入力`,
-'s6dbbe2646b239ca5': `クローズ済み`,
 's6e84b6d6d9819c25': `有効期限なし`,
 's6ebc9bd6feae62a3': `読み込み中…`,
 's6f87b8dc56fff501': `まだどのツールにもローカル文字起こしへのアクセスは許可されていません。ツールが最初に要求したときに確認されます。`,
