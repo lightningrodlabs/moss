@@ -193,14 +193,14 @@ describe('POST /v1/sync', () => {
     } satisfies SyncResponse);
   });
 
-  it('returns only comments updated after since', async () => {
+  it('returns only comments updated at or after since', async () => {
     const reporter = await makeTestReporter();
     const id = await reporterIdFromPubKey(reporter.pubKey);
     await track(id, reporter.pubKey, 7);
     await upsertComment(db, comment(1, 7, 200));
     await upsertComment(db, comment(2, 7, 300));
 
-    const res = await sync(reporter, [{ number: 7, since: 200 }]);
+    const res = await sync(reporter, [{ number: 7, since: 300 }]);
     const body = (await res.json()) as SyncResponse;
 
     expect(body.issues[0].comments.map((c) => c.id)).toEqual([2]);

@@ -207,6 +207,7 @@ export async function softDeleteComment(
     .run();
 }
 
+/** Comments updated at or after `since`; the client overlaps its cursor and merges by id. */
 export async function commentsSince(
   db: D1Database,
   issueNumber: number,
@@ -214,7 +215,7 @@ export async function commentsSince(
 ): Promise<CommentRow[]> {
   const { results } = await db
     .prepare(
-      'SELECT * FROM comments WHERE issue_number = ? AND updated_at > ? ORDER BY created_at, id',
+      'SELECT * FROM comments WHERE issue_number = ? AND updated_at >= ? ORDER BY created_at, id',
     )
     .bind(issueNumber, since)
     .all<CommentDbRow>();

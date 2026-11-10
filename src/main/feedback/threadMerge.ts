@@ -1,5 +1,5 @@
 import type { SyncIssue } from '@theweave/utils';
-import { unreadTeamComments } from '@theweave/utils';
+import { FEEDBACK_LIMITS, unreadTeamComments } from '@theweave/utils';
 import type { FeedbackRecord, FeedbackRecordSummary } from './recordStore';
 
 /** Folds a synced issue into a record without mutating it; incoming comments win by id. */
@@ -37,5 +37,6 @@ export function syncCursor(
   record: FeedbackRecordSummary,
 ): { number: number; since: number } | undefined {
   if (record.issueNumber === undefined || record.createdVia === undefined) return undefined;
-  return { number: record.issueNumber, since: record.issueUpdatedAt ?? 0 };
+  const since = Math.max(0, (record.issueUpdatedAt ?? 0) - FEEDBACK_LIMITS.syncOverlapSeconds);
+  return { number: record.issueNumber, since };
 }

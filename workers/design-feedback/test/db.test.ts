@@ -107,7 +107,7 @@ describe('issues', () => {
 });
 
 describe('comments', () => {
-  it('returns comments updated after since, ordered by creation', async () => {
+  it('returns comments updated at or after since, ordered by creation', async () => {
     await seedIssue(10);
     await upsertComment(
       db,
@@ -118,8 +118,10 @@ describe('comments', () => {
       comment(101, 10),
       comment(102, 10, { createdAt: 300, updatedAt: 300, postedForReporter: true }),
     ]);
-    expect((await commentsSince(db, 10, 200)).map((c) => c.id)).toEqual([102]);
-    expect(await commentsSince(db, 10, 300)).toEqual([]);
+    expect((await commentsSince(db, 10, 200)).map((c) => c.id)).toEqual([101, 102]);
+    expect((await commentsSince(db, 10, 201)).map((c) => c.id)).toEqual([102]);
+    expect((await commentsSince(db, 10, 300)).map((c) => c.id)).toEqual([102]);
+    expect(await commentsSince(db, 10, 301)).toEqual([]);
   });
 
   it('conflict updates edit fields but not posted_for_reporter', async () => {

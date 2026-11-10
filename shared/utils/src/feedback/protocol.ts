@@ -17,6 +17,11 @@ export const FEEDBACK_LIMITS = {
   backfillsPerHourGlobal: 200,
   /** How long a number that is not this reporter's issue is skipped before it is read again. */
   backfillMissTtlSeconds: 86_400,
+  /**
+   * The client asks for comments from this long before the last synced issue time, so
+   * same-second writes and webhooks that land shortly after a sync are not skipped.
+   */
+  syncOverlapSeconds: 300,
 } as const;
 
 export type CreateIssueRequest = {

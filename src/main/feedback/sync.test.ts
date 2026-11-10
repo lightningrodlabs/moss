@@ -2,7 +2,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { FeedbackCommentWire, SyncIssue, SyncRequest, SyncResponse } from '@theweave/utils';
+import {
+  FEEDBACK_LIMITS,
+  type FeedbackCommentWire,
+  type SyncIssue,
+  type SyncRequest,
+  type SyncResponse,
+} from '@theweave/utils';
 import { FeedbackRecordStore, type FeedbackRecord } from './recordStore';
 import { reporterKeyFromSeed, type ReporterKey } from './reporterKey';
 import type { FeedbackWorkerClient, WorkerResult } from './workerClient';
@@ -108,14 +114,17 @@ describe('syncOnce', () => {
 
   it('asks for the newest 100 issues with their cursors', async () => {
     for (let i = 1; i <= 101; i++) {
-      saveRecord({ timestamp: i, issueNumber: i, issueUpdatedAt: i * 2 });
+      saveRecord({ timestamp: i, issueNumber: i, issueUpdatedAt: 1000 + i });
     }
     const t = makeDeps(async () => ({ ok: true, value: { issues: [] } }));
     await syncOnce(t.deps);
     const asked = t.sync.mock.calls[0][0].issues;
     expect(asked).toHaveLength(100);
     expect(asked.map((i) => i.number)).not.toContain(1);
-    expect(asked).toContainEqual({ number: 101, since: 202 });
+    expect(asked).toContainEqual({
+      number: 101,
+      since: 1101 - FEEDBACK_LIMITS.syncOverlapSeconds,
+    });
   });
 
   it('passes the worker failure reason through as a skip', async () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { FeedbackCommentWire, SyncIssue } from '@theweave/utils';
+import { FEEDBACK_LIMITS, type FeedbackCommentWire, type SyncIssue } from '@theweave/utils';
 import type { FeedbackRecord } from './recordStore';
 import { mergeSyncIssue, recordUnread, syncCursor, totalUnread } from './threadMerge';
 
@@ -118,11 +118,16 @@ describe('syncCursor', () => {
   it('is undefined for a record the old worker filed, which has no createdVia', () => {
     expect(syncCursor(record({ createdVia: undefined }))).toBeUndefined();
   });
-  it('uses issueUpdatedAt, defaulting to 0', () => {
+  it('starts the overlap window before issueUpdatedAt, never below 0', () => {
+    const overlap = FEEDBACK_LIMITS.syncOverlapSeconds;
     expect(syncCursor(record({ createdVia: 'worker' }))).toEqual({ number: 7, since: 0 });
     expect(syncCursor(record({ createdVia: 'worker', issueUpdatedAt: 55 }))).toEqual({
       number: 7,
-      since: 55,
+      since: 0,
+    });
+    expect(syncCursor(record({ createdVia: 'worker', issueUpdatedAt: 10_000 }))).toEqual({
+      number: 7,
+      since: 10_000 - overlap,
     });
   });
 });
