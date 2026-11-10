@@ -13,6 +13,8 @@ import {
 import { Hrl, mapValues } from '@holochain-open-dev/utils';
 import { notify, notifyError, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { msg } from '@lit/localize';
+import { badgeText } from './design-feedback/thread-view.js';
+import type { MossSettings } from '../self/settings/moss-settings.js';
 import { mdiAccountLockOpen, mdiAccountMultiplePlus, mdiCog } from '@mdi/js';
 import {
   AppletHash,
@@ -164,6 +166,15 @@ export class MainDashboard extends LitElement {
 
   @query('#settings-dialog')
   settingsDialog!: MossDialog;
+
+  @query('moss-settings')
+  _mossSettings!: MossSettings;
+
+  @state()
+  _feedbackUnread = 0;
+
+  private _feedbackUnreadUnsub: (() => void) | undefined;
+  private _openFeedbackSettingsUnsub: (() => void) | undefined;
 
   @query('#tag-selection-dialog')
   _tagSelectionDialog!: TagSelectionDialog;
@@ -609,6 +620,17 @@ export class MainDashboard extends LitElement {
     super.connectedCallback();
     this.addEventListener('open-tool-info', this._toolInfoListener);
     this.addEventListener('open-reenable-tool', this._reenableToolListener);
+    window.electronAPI
+      .getFeedbackUnreadCount()
+      .then((count) => (this._feedbackUnread = count))
+      .catch((e) => console.warn('Failed to read feedback unread count: ', e));
+    this._feedbackUnreadUnsub = window.electronAPI.onFeedbackUnreadChanged((_, count) => {
+      this._feedbackUnread = count;
+    });
+    this._openFeedbackSettingsUnsub = window.electronAPI.onOpenFeedbackSettings(() => {
+      this._mossSettings?.showFeedbackTab();
+      this.settingsDialog?.show();
+    });
   }
 
   async firstUpdated() {
@@ -857,6 +879,10 @@ export class MainDashboard extends LitElement {
     super.disconnectedCallback();
     this.removeEventListener('open-tool-info', this._toolInfoListener);
     this.removeEventListener('open-reenable-tool', this._reenableToolListener);
+    this._feedbackUnreadUnsub?.();
+    this._feedbackUnreadUnsub = undefined;
+    this._openFeedbackSettingsUnsub?.();
+    this._openFeedbackSettingsUnsub = undefined;
     if (this._appletMessageListener) {
       window.removeEventListener('message', this._appletMessageListener);
       this._appletMessageListener = undefined;
@@ -1714,8 +1740,17 @@ export class MainDashboard extends LitElement {
               aria-label=${msg('Settings')}
               @click=${() => this.settingsDialog.show()}
             >
-              <div class="column center-content">
+              <div class="column center-content" style="position: relative;">
                 <sl-icon .src=${wrapPathInSvg(mdiCog)} style="font-size: 24px;"></sl-icon>
+                ${this._feedbackUnread > 0
+                  ? html`<div
+                      class="row center-content feedback-unread-dot ${this._feedbackUnread > 9
+                        ? 'padded'
+                        : ''}"
+                    >
+                      ${badgeText(this._feedbackUnread)}
+                    </div>`
+                  : html``}
               </div>
             </button>
           </sl-tooltip>
@@ -1895,6 +1930,24 @@ export class MainDashboard extends LitElement {
         :host {
           flex: 1;
           display: flex;
+        }
+
+        .feedback-unread-dot {
+          position: absolute;
+          top: -4px;
+          right: -8px;
+          font-weight: bold;
+          background: var(--moss-purple);
+          border-radius: 4px;
+          height: 16px;
+          min-width: 18px;
+          color: white;
+          font-size: 12px;
+          z-index: 1;
+        }
+
+        .feedback-unread-dot.padded {
+          padding: 0 4px;
         }
 
         .overlay {

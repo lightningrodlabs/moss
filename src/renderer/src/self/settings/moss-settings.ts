@@ -1,4 +1,4 @@
-import { html, LitElement } from 'lit';
+import { css, html, LitElement } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 
@@ -9,6 +9,7 @@ import './notification-settings.js';
 import './danger-zone-settings.js';
 import './services/services-settings.js';
 import '../../app/design-feedback/feedback-settings.js';
+import { badgeText } from '../../app/design-feedback/thread-view.js';
 
 enum TabsState {
   Profile,
@@ -27,6 +28,33 @@ enum TabsState {
 export class MossSettings extends LitElement {
   @state()
   tabsState: TabsState = TabsState.Profile;
+
+  @state()
+  private _feedbackUnread = 0;
+
+  private _feedbackUnreadUnsub: (() => void) | undefined;
+
+  /** Lets the dashboard land on the Feedback tab before showing the dialog. */
+  showFeedbackTab() {
+    this.tabsState = TabsState.Feedback;
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    window.electronAPI
+      .getFeedbackUnreadCount()
+      .then((count) => (this._feedbackUnread = count))
+      .catch((e) => console.warn('Failed to read feedback unread count: ', e));
+    this._feedbackUnreadUnsub = window.electronAPI.onFeedbackUnreadChanged((_, count) => {
+      this._feedbackUnread = count;
+    });
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this._feedbackUnreadUnsub?.();
+    this._feedbackUnreadUnsub = undefined;
+  }
 
   renderProfile() {
     return html`<moss-profile-settings></moss-profile-settings>`;
@@ -110,7 +138,18 @@ export class MossSettings extends LitElement {
             this.tabsState = TabsState.Feedback;
           }}
         >
-          ${msg('Feedback')}
+          <span class="feedback-tab-label">
+            ${msg('Feedback')}
+            ${this._feedbackUnread > 0
+              ? html`<span
+                  class="row center-content feedback-unread-dot ${this._feedbackUnread > 9
+                    ? 'padded'
+                    : ''}"
+                >
+                  ${badgeText(this._feedbackUnread)}
+                </span>`
+              : html``}
+          </span>
         </button>
         <button
           class="tab ${this.tabsState === TabsState.DangerZone ? 'tab-selected' : ''}"
@@ -127,5 +166,30 @@ export class MossSettings extends LitElement {
     `;
   }
 
-  static styles = [mossStyles];
+  static styles = [
+    mossStyles,
+    css`
+      .feedback-tab-label {
+        position: relative;
+        display: inline-block;
+      }
+
+      .feedback-unread-dot {
+        position: absolute;
+        top: -4px;
+        right: -22px;
+        font-weight: bold;
+        background: var(--moss-purple);
+        border-radius: 4px;
+        height: 16px;
+        min-width: 18px;
+        color: white;
+        font-size: 12px;
+      }
+
+      .feedback-unread-dot.padded {
+        padding: 0 4px;
+      }
+    `,
+  ];
 }
