@@ -39,11 +39,11 @@ These were explicit decisions by the repository owner. Do not reopen them.
    SHA-256 of that deterministic signature seeds an Ed25519 keypair. The
    derived pubkey is the only key the worker sees. The published reporter id
    is a 12 character base64url prefix of SHA-256 of that pubkey.
-4. **Reporter id stability is useful, not critical.** The agent key comes
-   from the profile's installed group apps. With no group there is no key
-   and the Design Feedback Mode switch is disabled with a hint. If a profile
-   leaves every group and joins another, it gets a new id. This drift is
-   accepted. Do not change group key allocation to fix it.
+4. **The reporter id is stable for the life of the profile.** It comes from
+   the stored random seed (see decision 3), not from the agent key. A
+   profile that leaves every group and joins another keeps the same id.
+   With no group the Design Feedback Mode switch is disabled with a hint.
+   This is UI policy only. Do not change group key allocation for feedback.
 5. **All phases ship together in Moss 0.16.** The phases exist so each can
    be built and tested on its own, not so they can ship separately. The
    unverified "GitHub handle" text field ships in phase 1 and stays optional
@@ -84,7 +84,7 @@ the tree has moved.
   `shared/utils/src/utils.ts` returns the agent key of any installed
   `group#...` app. `getOrCreateAgentPubKey` in `src/main/index.ts` writes
   `keystore/moss-agent-pubkey.txt` but nothing reads it back except legacy
-  import. This is why decision 4 exists.
+  import. Feedback uses it only to check that a group app exists (decision 4).
 - IPC: preload bridges in `src/preload/admin.ts`, renderer types in
   `src/renderer/src/electron-api.ts`. `src/main/ipc-contract-drift.test.ts`
   fails the build if a channel exists on one side only, so remove old

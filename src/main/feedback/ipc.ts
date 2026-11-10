@@ -38,7 +38,7 @@ function summarize(record: FeedbackRecord): FeedbackRecordSummary {
   return summary;
 }
 
-/** A key that cannot be derived (lair down, no agent yet) is treated as absent. */
+/** The key is absent while the profile has no group or the seed cannot be loaded. */
 async function reporterKeyOrUndefined(deps: FeedbackIpcDeps): Promise<ReporterKey | undefined> {
   try {
     return await deps.getReporterKey();
