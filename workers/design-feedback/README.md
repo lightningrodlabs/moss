@@ -18,7 +18,7 @@ Run `npx wrangler login` once. Wrangler is the Cloudflare command line tool. Eve
 3. Enter a name and a homepage URL of your choice.
 4. Under Repository permissions, set Issues to Read and write.
 5. Set Metadata to Read-only.
-6. Turn off Webhook. The worker does not use webhooks yet.
+6. Turn off Webhook. The worker receives webhooks from the two repositories instead, as step 7 describes.
 7. Select Enable Device Flow. A later phase needs it. Device Flow lets a user sign in to GitHub from Moss.
 8. Under Where can this GitHub App be installed, select Only on this account.
 9. Select Create GitHub App.
@@ -102,7 +102,47 @@ npm run deploy:staging
 
 Each command prints the URL of the deployed worker. Use the staging URL in the next section.
 
-## 7. Point a development Moss at staging
+## 7. Add the repository webhooks
+
+A webhook is a setting that makes GitHub send an HTTP request to a URL each time something happens in a repository. The worker uses webhooks to learn about new comments and closed issues.
+
+Add the webhook to each repository and not to the App. One App installation covers both repositories, so a webhook on the App cannot tell the two environments apart. The App webhook stays off. The worker accepts only deliveries from its own repository.
+
+Do these steps once for `lightningrodlabs/moss` and once for `lightningrodlabs/moss-feedback-staging`:
+
+1. Open the repository on github.com.
+2. Select Settings, then Webhooks, then Add webhook.
+3. Set Payload URL to the worker URL followed by `/v1/webhook`. Use the production worker URL for `lightningrodlabs/moss`. Use the staging worker URL for `lightningrodlabs/moss-feedback-staging`.
+4. Set Content type to `application/json`.
+5. Generate a secret in a terminal with `openssl rand -hex 32`. Use a different secret for each repository. Paste the secret into the Secret field and keep a copy for the next step.
+6. Under Which events would you like to trigger this webhook, select Let me select individual events.
+7. Tick Issues and Issue comments. Untick Pushes. Leave every other event unticked.
+8. Make sure Active is ticked.
+9. Select Add webhook.
+
+Then give each worker the secret of its own repository. The command asks for the value on standard input, so paste the same secret you gave GitHub for that repository:
+
+```
+npx wrangler secret put WEBHOOK_SECRET
+npx wrangler secret put WEBHOOK_SECRET --env staging
+```
+
+You can also pipe the value in. Replace `$SECRET` with the secret for that environment:
+
+```
+printf '%s' "$SECRET" | npx wrangler secret put WEBHOOK_SECRET
+```
+
+Phase 2 adds the `comments` table in the migration `0002_comments.sql`. Run the migrations again so the table exists:
+
+```
+npm run migrate
+npm run migrate:staging
+```
+
+To confirm the setup, open the webhook on GitHub and select Recent Deliveries. GitHub sends a `ping` event when you add a webhook. The worker answers a `ping` with status 204, and GitHub shows a green check next to the delivery. If the delivery shows a red mark, check that the secret and the Payload URL match the environment.
+
+## 8. Point a development Moss at staging
 
 Set the `MOSS_FEEDBACK_WORKER_URL` environment variable to the staging worker URL before you start Moss. For example:
 
@@ -114,6 +154,6 @@ Run this command from the root of the Moss repository. Moss then sends feedback 
 
 Then follow `plans/feedback-phase1-manual-checklist.md`.
 
-## 8. Revoke the old personal access token
+## 9. Revoke the old personal access token
 
 If the old personal access token still exists, revoke it now. Open github.com, then Settings, then Developer settings, then Personal access tokens. Delete the token that the previous worker used. Do this after the new worker is deployed and working.
