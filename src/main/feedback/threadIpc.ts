@@ -56,8 +56,17 @@ export function registerFeedbackThreadIpc(
       issueAction(deps, id, (client, issueNumber) => client.resolve(issueNumber)),
   );
   ipcMain.handle('feedback-mark-read', (_e, id: string): FeedbackRecordSummary | undefined => {
-    const lastReadAt = Math.floor(Date.now() / 1000);
-    const updated = deps.sync.trackUnread(() => deps.store.update(id, { lastReadAt }));
+    const updated = deps.sync.trackUnread(() => {
+      const record = deps.store.get(id);
+      if (!record) return undefined;
+      // Anchored to comment times (GitHub's clock), so a skewed local clock can neither
+      // leave shown comments unread nor hide a comment that arrives later.
+      const lastReadAt = Math.max(
+        record.lastReadAt ?? 0,
+        ...(record.comments ?? []).map((c) => c.createdAt),
+      );
+      return deps.store.update(id, { lastReadAt });
+    });
     return updated ? summarize(updated) : undefined;
   });
   ipcMain.handle('feedback-unread-count', (): number => totalUnread(deps.store.list()));

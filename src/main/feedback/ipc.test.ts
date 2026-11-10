@@ -381,6 +381,69 @@ describe('feedback thread channels', () => {
     expect(t.onUnreadChanged.mock.calls).toEqual([[0]]);
   });
 
+  it('feedback-mark-read marks every current comment read even when the local clock is behind', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(50 * 1000);
+      const t = setup({});
+      const saved = store.save({
+        ...input,
+        timestamp: 1000,
+        state: 'open',
+        issueNumber: 7,
+        createdVia: 'worker',
+        comments: [teamComment(1, 100), teamComment(2, 200)],
+      });
+      await t.handlers.get('feedback-mark-read')!({}, saved.id);
+      expect(await t.handlers.get('feedback-unread-count')!({})).toBe(0);
+      expect(store.get(saved.id)?.lastReadAt).toBe(200);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('a comment newer than the last one read stays unread after mark-read', async () => {
+    const t = setup({});
+    const saved = store.save({
+      ...input,
+      timestamp: 1000,
+      state: 'open',
+      issueNumber: 7,
+      createdVia: 'worker',
+      comments: [teamComment(1, 100), teamComment(2, 200)],
+    });
+    await t.handlers.get('feedback-mark-read')!({}, saved.id);
+    store.update(saved.id, {
+      comments: [teamComment(1, 100), teamComment(2, 200), teamComment(3, 300)],
+    });
+    expect(await t.handlers.get('feedback-unread-count')!({})).toBe(1);
+  });
+
+  it('feedback-mark-read never moves lastReadAt backwards and leaves it alone without comments', async () => {
+    const t = setup({});
+    const withComments = store.save({
+      ...input,
+      timestamp: 1000,
+      state: 'open',
+      issueNumber: 7,
+      createdVia: 'worker',
+      lastReadAt: 500,
+      comments: [teamComment(1, 100)],
+    });
+    const withoutComments = store.save({
+      ...input,
+      timestamp: 2000,
+      state: 'open',
+      issueNumber: 8,
+      createdVia: 'worker',
+      lastReadAt: 400,
+    });
+    await t.handlers.get('feedback-mark-read')!({}, withComments.id);
+    await t.handlers.get('feedback-mark-read')!({}, withoutComments.id);
+    expect(store.get(withComments.id)?.lastReadAt).toBe(500);
+    expect(store.get(withoutComments.id)?.lastReadAt).toBe(400);
+  });
+
   it('feedback-sync-now returns the records and the unread total', async () => {
     const sync = vi.fn<Parameters<SyncFn>, ReturnType<SyncFn>>(async () => ({
       ok: true,

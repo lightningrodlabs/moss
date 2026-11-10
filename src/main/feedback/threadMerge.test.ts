@@ -37,6 +37,11 @@ const issue = (over: Partial<SyncIssue> = {}): SyncIssue => ({
 });
 
 describe('mergeSyncIssue', () => {
+  it('keeps lastReadAt', () => {
+    const merged = mergeSyncIssue(record({ lastReadAt: 150 }), issue({ comments: [comment(20)] }));
+    expect(merged.lastReadAt).toBe(150);
+  });
+
   it('replaces an edited comment by id, keeps others and sorts by createdAt', () => {
     const rec = record({ comments: [comment(1), comment(3)] });
     const merged = mergeSyncIssue(
