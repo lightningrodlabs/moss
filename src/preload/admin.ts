@@ -218,10 +218,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   markFeedbackRead: (id: string): Promise<FeedbackRecordSummary | undefined> =>
     ipcRenderer.invoke('feedback-mark-read', id),
   getFeedbackUnreadCount: (): Promise<number> => ipcRenderer.invoke('feedback-unread-count'),
-  onFeedbackUnreadChanged: (callback: (e: Electron.IpcRendererEvent, count: number) => void) =>
-    ipcRenderer.on('feedback-unread-changed', callback),
-  onOpenFeedbackSettings: (callback: (e: Electron.IpcRendererEvent) => void) =>
-    ipcRenderer.on('open-feedback-settings', callback),
+  onFeedbackUnreadChanged: (callback: (e: Electron.IpcRendererEvent, count: number) => void) => {
+    ipcRenderer.on('feedback-unread-changed', callback);
+    return () => ipcRenderer.removeListener('feedback-unread-changed', callback);
+  },
+  onOpenFeedbackSettings: (callback: (e: Electron.IpcRendererEvent) => void) => {
+    ipcRenderer.on('open-feedback-settings', callback);
+    return () => ipcRenderer.removeListener('open-feedback-settings', callback);
+  },
   batchUpdateAppletUis: (
     toolCompatibilityId: ToolCompatibilityId,
     happOrWebHappUrl: string,

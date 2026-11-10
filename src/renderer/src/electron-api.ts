@@ -359,8 +359,10 @@ declare global {
       resolveFeedback: (id: string) => Promise<FeedbackActionResult>;
       markFeedbackRead: (id: string) => Promise<FeedbackRecordSummary | undefined>;
       getFeedbackUnreadCount: () => Promise<number>;
-      onFeedbackUnreadChanged: (callback: (e: unknown, count: number) => void) => void;
-      onOpenFeedbackSettings: (callback: (e: unknown) => void) => void;
+      /** Returns a function that removes the listener. */
+      onFeedbackUnreadChanged: (callback: (e: unknown, count: number) => void) => () => void;
+      /** Returns a function that removes the listener. */
+      onOpenFeedbackSettings: (callback: (e: unknown) => void) => () => void;
       batchUpdateAppletUis: (
         toolCompatibilityId: ToolCompatibilityId,
         happOrWebHappUrl: string,
