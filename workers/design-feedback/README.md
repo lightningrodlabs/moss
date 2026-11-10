@@ -152,7 +152,7 @@ MOSS_FEEDBACK_WORKER_URL=<staging worker URL> yarn tool-dev-example
 
 Run this command from the root of the Moss repository. Moss then sends feedback to staging and files issues on `lightningrodlabs/moss-feedback-staging`.
 
-Then follow `plans/feedback-phase1-manual-checklist.md`.
+Then follow `plans/feedback-manual-checklist.md`.
 
 ## 9. Revoke the old personal access token
 
