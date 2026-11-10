@@ -22,7 +22,16 @@ These were explicit decisions by the repository owner. Do not reopen them.
 2. **Linked GitHub users talk to GitHub directly.** Their token is stored on
    the device with Electron `safeStorage` and never reaches the worker. The
    worker must never hold user tokens.
-3. **Reporter identity is a key derived from the agent key**, not the agent
+3. **Superseded on 2026-11-10.** New rule: the reporter key comes from 32
+   random bytes generated once per profile. The seed is stored in
+   `feedback/reporter-seed.json`, encrypted with Electron `safeStorage` when
+   it is available and in plaintext with owner-only permissions otherwise.
+   It has no relation to the agent key. The rule that a profile with no
+   group cannot send feedback stays, as UI policy only. The reporter id now
+   stays the same for the life of the profile. The lair derivation below was
+   dropped because any Tool's coordinator zome can call `sign_raw` with the
+   agent key on the same bytes and reproduce the seed. Original text:
+   **Reporter identity is a key derived from the agent key**, not the agent
    key itself and not a stored random key. Reason: a compromised worker or
    D1 must not be able to recover or confirm the agent key, since an agent
    pubkey is also a DHT address and links to group membership. Derivation:
@@ -69,8 +78,7 @@ the tree has moved.
 - Lair signing: `WeRustHandler.signZomeCall(payload, pubKey)` in
   `@lightningrodlabs/we-rust-utils` is a plain passthrough to lair's
   `sign_by_pub_key` on the raw bytes it is given (confirmed in the Rust
-  source, `we_rust_handler.rs`). It is usable for signing arbitrary bytes,
-  which the key derivation relies on. `WE_RUST_HANDLER` is a `let` in the
+  source, `we_rust_handler.rs`). Feedback no longer uses it (see decision 3). `WE_RUST_HANDLER` is a `let` in the
   main closure of `src/main/index.ts` near line 577.
 - Agent key: `globalPubKeyFromListAppsResponse(listApps())` in
   `shared/utils/src/utils.ts` returns the agent key of any installed

@@ -31,9 +31,10 @@ ingress in phase 1 exists.
   key the worker can verify. Unsigned or replayed requests are rejected.
 - The worker acts on GitHub as a GitHub App installed on one repo, never as
   a person.
-- A reporter id derived from the profile's agent key appears on every issue
-  that reporter creates. Nothing a compromised worker or database holds can
-  be used to recover or confirm the agent key.
+- A reporter id derived from a random per-profile key appears on every
+  issue that reporter creates. Nothing a compromised worker or database
+  holds can be used to recover or confirm the agent key. No Tool can derive
+  the reporter key either.
 - Issues created from Moss show in Settings in two tabs, Open and Closed,
   with their comment thread. Comments from the team are visibly different
   from the reporter's own.
@@ -75,9 +76,9 @@ ingress in phase 1 exists.
 - Cloudflare Workers: WebCrypto `Ed25519` for verification, D1 for storage,
   KV for nonces and rate counters, R2 for screenshots. The worker stays in
   `workers/design-feedback`.
-- Signing with the agent key goes through the existing lair handle
-  (`WeRustHandler.signZomeCall`, which is a passthrough to lair's
-  `sign_by_pub_key`). The renderer never signs anything.
+- Feedback signing does not use lair or the agent key. The main process
+  signs with the reporter key through `node:crypto`. The renderer never
+  signs anything.
 - The worker stays an npm package of its own, outside the yarn workspaces.
   It imports the shared signing module by relative path
   (`../../../shared/utils/src/feedback/`), which wrangler's esbuild bundles
@@ -123,25 +124,30 @@ provides the device flow in phase 3, so it also needs a client id, a client
 secret stored in the worker, and Device Flow enabled. The current personal
 access token is revoked the day the new worker is deployed.
 
-**Reporter key.** The profile's agent key is the one its installed group
-apps use (`globalPubKeyFromListAppsResponse`). At first use the main process
-asks lair to sign the fixed bytes `moss-feedback-key-v1` with that key, and
-uses SHA-256 of the signature as the seed of an Ed25519 keypair built with
-`node:crypto`. The seed is held in memory only and recomputed on each start.
-The derived keypair is the reporter key. Its public key is the only key the
-worker ever sees. Ed25519 signatures are deterministic, so the same agent
-key always derives the same reporter key; distinct agent keys derive
-unrelated ones. The fixed message starts with ASCII, which can never decode
-as a msgpack `CallZomeRequest`, so this signature can never be replayed as a
-zome call.
+**Reporter key.** At first use the main process generates 32 random bytes.
+These bytes are the seed of an Ed25519 keypair built with `node:crypto`.
+The seed is stored once per profile in `feedback/reporter-seed.json` in the
+profile data dir. The file is a small JSON envelope
+`{ v: 1, enc: 'safeStorage' | 'plain', data: <base64> }` written with
+owner-only permissions. The seed is encrypted with Electron `safeStorage`
+when it is available. On Linux without a keyring `safeStorage` is not
+available. The lair keystore in the same profile is the more valuable
+secret, so the seed is then stored in plaintext rather than disabling
+feedback. The keypair is the reporter key. Its public key is the only key
+the worker ever sees. The reporter key has no relation to the agent key.
 
-A profile with no group app has no agent key and therefore no reporter key.
-In that state the Design Feedback Mode switch in Settings is disabled with
-help text saying feedback becomes available after joining or creating a
-group. Nothing else enforces this. A profile that leaves every group and
-later joins another gets a new agent key and so a new reporter id; the id is
-useful for correlation, not critical, and this drift is accepted. Key
-allocation for groups is not changed by this design.
+An earlier design derived the seed from a lair signature of a fixed string
+with the agent key. It was abandoned because any Tool's coordinator zome
+can call `sign_raw` with the agent key on the same bytes and so reproduce
+the seed.
+
+A profile with no group app has no agent key. In that state the Design
+Feedback Mode switch in Settings is disabled with help text saying feedback
+becomes available after joining or creating a group. This is a UI policy
+only. The main process reports no reporter key until a group app exists.
+The reporter id stays the same for the life of the profile, also when the
+profile leaves every group and joins another. Key allocation for groups is
+not changed by this design.
 
 **Reporter id.** `reporterId = base64url(sha256(reporterPubKey))[0..12]`.
 This twelve character id appears in the issue body in a visible
@@ -336,8 +342,9 @@ scope to the disclaimer; everything else in this phase is unchanged.
 - `shared/utils` feedback module: canonical string, sign and verify with
   fixed vectors, timestamp window, replay detection logic as pure
   functions. Vitest, no Holochain.
-- Main process `src/main/feedback/`: key derivation from a fake lair signer
-  produces a stable keypair and id; local record store round-trips; worker
+- Main process `src/main/feedback/`: a stored random seed with a fake
+  cipher reloads the same seed, and a fixed seed produces a frozen keypair
+  and id; local record store round-trips; worker
   client builds correct headers; sync merge updates `state` and `comments`
   and unread count. Vitest with mocked fetch.
 - Worker: `@cloudflare/vitest-pool-workers` with D1 and KV bindings. Covers
