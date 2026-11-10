@@ -58,12 +58,13 @@ Start a development Moss with `MOSS_FEEDBACK_WORKER_URL` set to the staging work
 
 - [ ] Type a reply in the card and click Send. Expect the notice "Reply posted." Expect a comment on GitHub that starts with `**Reporter** replied:` followed by the text as a quote. Expect the card to show the reply with the reporter style.
 - [ ] Click Mark resolved. Expect the GitHub issue to close as completed, with the comment "Closed as resolved by the reporter from Moss". Expect the card to move to the Closed tab.
-- [ ] Open the same profile in a second stale window that still shows the issue as open. Click Mark resolved there. Expect the notice "This issue is already closed."
+- [ ] File another issue from Moss. Close the issue on GitHub, then click Mark resolved in Moss before the next sync. Expect the notice "This issue is already closed."
 
-### Deleted comments and hand-filed issues
+### Deleted comments, hand-filed and old issues
 
 - [ ] Delete an unread team comment on GitHub. After the next sync, expect the card to show "Comment deleted" in its place. Expect the badge to drop by one.
-- [ ] On the staging repository, file an issue by hand and paste the marker `<!-- moss-feedback reporter=<id> -->` into its body, using the reporter id from Settings. After the next sync, expect the issue to appear under Open.
+- [ ] On the staging repository, file an issue by hand and paste the marker `<!-- moss-feedback reporter=<id> -->` into its body, using the reporter id from Settings. Run `npx wrangler d1 execute FEEDBACK_DB --remote --env staging --command "SELECT number, reporter_id, created_via FROM issues WHERE number = <n>"` from `workers/design-feedback`, with the issue number in place of `<n>`. Expect one row with your reporter id and `created_via` set to `github`. The issue does not appear in Moss: Moss only syncs issues it filed itself, so hand-filed issues show in Moss only in phase 3.
+- [ ] Use a profile that has an issue filed by the worker from before phase 1. Open Settings, then Feedback, and expand that card. Expect only the View on GitHub link: no thread, no reply box and no Mark resolved button.
 
 ### Images and failures
 
