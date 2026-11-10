@@ -33,7 +33,8 @@ export type FeedbackErrorCode =
   | 'screenshot_too_large'
   | 'text_too_long'
   | 'github_error'
-  | 'not_found';
+  | 'not_found'
+  | 'conflict';
 
 export type FeedbackErrorResponse = { error: FeedbackErrorCode; message: string };
 
