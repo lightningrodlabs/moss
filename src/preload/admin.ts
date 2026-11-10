@@ -20,11 +20,13 @@ import type {
 } from '@theweave/api';
 import type { AppletHostResponse } from '../main/sharedTypes';
 import type {
+  FeedbackActionResult,
   FeedbackRecord,
   FeedbackRecordSummary,
   FeedbackReporterStatus,
   FeedbackSubmitInput,
   FeedbackSubmitResult,
+  FeedbackSyncResult,
 } from '../main/feedback';
 import {
   AppHashes,
@@ -208,6 +210,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('feedback-get', id),
   getFeedbackReporterStatus: (): Promise<FeedbackReporterStatus> =>
     ipcRenderer.invoke('feedback-reporter-status'),
+  syncFeedbackNow: (): Promise<FeedbackSyncResult> => ipcRenderer.invoke('feedback-sync-now'),
+  replyFeedback: (id: string, text: string): Promise<FeedbackActionResult> =>
+    ipcRenderer.invoke('feedback-reply', id, text),
+  resolveFeedback: (id: string): Promise<FeedbackActionResult> =>
+    ipcRenderer.invoke('feedback-resolve', id),
+  markFeedbackRead: (id: string): Promise<FeedbackRecordSummary | undefined> =>
+    ipcRenderer.invoke('feedback-mark-read', id),
+  getFeedbackUnreadCount: (): Promise<number> => ipcRenderer.invoke('feedback-unread-count'),
+  onFeedbackUnreadChanged: (callback: (e: Electron.IpcRendererEvent, count: number) => void) =>
+    ipcRenderer.on('feedback-unread-changed', callback),
+  onOpenFeedbackSettings: (callback: (e: Electron.IpcRendererEvent) => void) =>
+    ipcRenderer.on('open-feedback-settings', callback),
   batchUpdateAppletUis: (
     toolCompatibilityId: ToolCompatibilityId,
     happOrWebHappUrl: string,

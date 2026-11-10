@@ -29,7 +29,9 @@ export function totalUnread(records: FeedbackRecordSummary[]): number {
 }
 
 /** What to ask the worker for; local-only records have no issue to sync. */
-export function syncCursor(record: FeedbackRecord): { number: number; since: number } | undefined {
+export function syncCursor(
+  record: FeedbackRecordSummary,
+): { number: number; since: number } | undefined {
   if (record.issueNumber === undefined) return undefined;
   return { number: record.issueNumber, since: record.issueUpdatedAt ?? 0 };
 }

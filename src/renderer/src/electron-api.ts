@@ -63,6 +63,26 @@ export interface FeedbackRecord {
   issueUrl?: string;
   state: 'open' | 'closed' | 'local-only';
   createdVia?: 'worker' | 'github';
+  /** Issue thread as last synced; absent on records that were never synced. */
+  comments?: FeedbackCommentWire[];
+  /** Seconds; team comments created after this count as unread. */
+  lastReadAt?: number;
+  /** Seconds; the issue's updatedAt at the last sync, used as the next sync cursor. */
+  issueUpdatedAt?: number;
+  stateReason?: string;
+  title?: string;
+}
+
+/** Mirrors FeedbackCommentWire in shared/utils/src/feedback/threads.ts */
+export interface FeedbackCommentWire {
+  id: number;
+  authorLogin: string;
+  authorAssociation: string;
+  postedForReporter: boolean;
+  body: string;
+  createdAt: number;
+  updatedAt: number;
+  deleted: boolean;
 }
 
 /** Mirrors FeedbackRecordSummary in src/main/feedback/recordStore.ts */
@@ -89,6 +109,7 @@ export type FeedbackSaveReason =
   | 'stale_timestamp'
   | 'rate_limited'
   | 'rejected'
+  | 'conflict'
   | 'server_error';
 
 /** Mirrors FeedbackSubmitResult in src/main/feedback/ipc.ts */
@@ -99,6 +120,29 @@ export type FeedbackSubmitResult =
 /** Mirrors FeedbackReporterStatus in src/main/feedback/ipc.ts */
 export interface FeedbackReporterStatus {
   reporterId?: string;
+}
+
+/** Mirrors FeedbackActionResult in src/main/feedback/ipc.ts */
+export type FeedbackActionResult =
+  | { ok: true; record: FeedbackRecordSummary }
+  | {
+      ok: false;
+      reason:
+        | 'no-key'
+        | 'no-worker-url'
+        | 'not-filed'
+        | 'unreachable'
+        | 'stale_timestamp'
+        | 'rate_limited'
+        | 'rejected'
+        | 'conflict'
+        | 'server_error';
+    };
+
+/** Mirrors FeedbackSyncResult in src/main/feedback/ipc.ts */
+export interface FeedbackSyncResult {
+  records: FeedbackRecordSummary[];
+  unread: number;
 }
 
 /** Mirrors LegacyProfileInfo in src/main/legacyProfiles.ts */
@@ -310,6 +354,13 @@ declare global {
       listFeedback: () => Promise<FeedbackRecordSummary[]>;
       getFeedback: (id: string) => Promise<FeedbackRecord | undefined>;
       getFeedbackReporterStatus: () => Promise<FeedbackReporterStatus>;
+      syncFeedbackNow: () => Promise<FeedbackSyncResult>;
+      replyFeedback: (id: string, text: string) => Promise<FeedbackActionResult>;
+      resolveFeedback: (id: string) => Promise<FeedbackActionResult>;
+      markFeedbackRead: (id: string) => Promise<FeedbackRecordSummary | undefined>;
+      getFeedbackUnreadCount: () => Promise<number>;
+      onFeedbackUnreadChanged: (callback: (e: unknown, count: number) => void) => void;
+      onOpenFeedbackSettings: (callback: (e: unknown) => void) => void;
       batchUpdateAppletUis: (
         toolCompatibilityId: ToolCompatibilityId,
         happOrWebHappUrl: string,
