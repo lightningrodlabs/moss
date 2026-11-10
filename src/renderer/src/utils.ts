@@ -45,6 +45,7 @@ import {
 } from '@holochain-open-dev/stores';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { THREAD_MARKDOWN_SANITIZE } from './app/design-feedback/thread-sanitize.js';
 import { MossStore } from './moss-store.js';
 import { getAppletDevPort } from './electron-api.js';
 import {
@@ -907,19 +908,18 @@ export function markdownParseSafe(input: string) {
   return DOMPurify.sanitize(markedData, { ALLOWED_URI_REGEXP: MARKDOWN_ALLOWED_URI_REGEXP });
 }
 
+export { THREAD_MARKDOWN_SANITIZE };
+
 /**
- * Markdown for feedback threads, where anyone who can comment on the issue
- * controls the content. Threads must never fetch remote resources: a loaded
- * image or media element would reveal the reporter's IP address and online
- * times to the comment author, so every tag and attribute that fetches on
- * render is removed.
+ * Markdown for feedback threads: only the tags and the href attribute in
+ * THREAD_MARKDOWN_SANITIZE are kept, and link hrefs must match the usual URI
+ * schemes. The global hook still opens links in a new window.
  */
 export function markdownParseNoImages(input: string): string {
   const markedData = marked.parse(input) as string;
   return DOMPurify.sanitize(markedData, {
+    ...THREAD_MARKDOWN_SANITIZE,
     ALLOWED_URI_REGEXP: MARKDOWN_ALLOWED_URI_REGEXP,
-    FORBID_TAGS: ['img', 'picture', 'source', 'video', 'audio', 'iframe', 'object', 'embed'],
-    FORBID_ATTR: ['srcset', 'style'],
   });
 }
 
