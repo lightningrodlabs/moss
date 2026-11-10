@@ -3632,10 +3632,6 @@ starts now</source>
   <source>License:</source>
   <target>Lisans:</target>
 </trans-unit>
-<trans-unit id="s8ab9926515edbd19">
-  <source>Feedback becomes available after you join or create a group.</source>
-  <target>Geri bildirim, bir gruba katıldıktan veya grup oluşturduktan sonra kullanılabilir.</target>
-</trans-unit>
 <trans-unit id="sbda27e2cd1963e98">
   <source>A pseudonymous id included on your issues so the team can follow up.</source>
   <target>Ekibin takip edebilmesi için sorunlarına eklenen takma adlı bir kimlik.</target>
@@ -3664,10 +3660,6 @@ starts now</source>
   <source>Feedback saved locally. Could not reach the feedback service.</source>
   <target>Geri bildirim yerel olarak kaydedildi. Geri bildirim hizmetine ulaşılamadı.</target>
 </trans-unit>
-<trans-unit id="s0ebb890967e7ad6f">
-  <source>Feedback saved locally. Join or create a group to enable submitting feedback.</source>
-  <target>Geri bildirim yerel olarak kaydedildi. Geri bildirim göndermek için bir gruba katılın veya grup oluşturun.</target>
-</trans-unit>
 <trans-unit id="s8d21e9427c049f37">
   <source>Feedback saved locally. Your system clock seems to be off; please check it and try again.</source>
   <target>Geri bildirim yerel olarak kaydedildi. Sistem saatiniz yanlış görünüyor; lütfen kontrol edip tekrar deneyin.</target>
@@ -3683,6 +3675,14 @@ starts now</source>
 <trans-unit id="s8845f794ca9ef160">
   <source>Feedback saved locally. The feedback could not be submitted; use Copy to send it another way.</source>
   <target>Geri bildirim yerel olarak kaydedildi. Geri bildirim gönderilemedi; başka bir yolla göndermek için Kopyala'yı kullanın.</target>
+</trans-unit>
+<trans-unit id="s8945a22482416a7c">
+  <source>The feedback key could not be loaded.</source>
+  <target>Geri bildirim anahtarı yüklenemedi.</target>
+</trans-unit>
+<trans-unit id="s2e14046a9cd2f7fe">
+  <source>Feedback saved locally. The feedback key could not be loaded.</source>
+  <target>Geri bildirim yerel olarak kaydedildi. Geri bildirim anahtarı yüklenemedi.</target>
 </trans-unit>
 </body>
 </file>

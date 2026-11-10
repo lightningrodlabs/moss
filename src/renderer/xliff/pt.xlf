@@ -3632,10 +3632,6 @@ começa agora</target>
   <source>License:</source>
   <target>Licença:</target>
 </trans-unit>
-<trans-unit id="s8ab9926515edbd19">
-  <source>Feedback becomes available after you join or create a group.</source>
-  <target>O feedback fica disponível depois de você entrar em um grupo ou criar um.</target>
-</trans-unit>
 <trans-unit id="sbda27e2cd1963e98">
   <source>A pseudonymous id included on your issues so the team can follow up.</source>
   <target>Um ID pseudônimo incluído nas suas issues para que a equipe possa dar seguimento.</target>
@@ -3664,10 +3660,6 @@ começa agora</target>
   <source>Feedback saved locally. Could not reach the feedback service.</source>
   <target>Feedback salvo localmente. Não foi possível acessar o serviço de feedback.</target>
 </trans-unit>
-<trans-unit id="s0ebb890967e7ad6f">
-  <source>Feedback saved locally. Join or create a group to enable submitting feedback.</source>
-  <target>Feedback salvo localmente. Entre em um grupo ou crie um para poder enviar feedback.</target>
-</trans-unit>
 <trans-unit id="s8d21e9427c049f37">
   <source>Feedback saved locally. Your system clock seems to be off; please check it and try again.</source>
   <target>Feedback salvo localmente. O relógio do seu sistema parece estar errado; verifique e tente novamente.</target>
@@ -3683,6 +3675,14 @@ começa agora</target>
 <trans-unit id="s8845f794ca9ef160">
   <source>Feedback saved locally. The feedback could not be submitted; use Copy to send it another way.</source>
   <target>Feedback salvo localmente. Não foi possível enviar o feedback; use Copiar para enviá-lo de outra forma.</target>
+</trans-unit>
+<trans-unit id="s8945a22482416a7c">
+  <source>The feedback key could not be loaded.</source>
+  <target>Não foi possível carregar a chave de feedback.</target>
+</trans-unit>
+<trans-unit id="s2e14046a9cd2f7fe">
+  <source>Feedback saved locally. The feedback key could not be loaded.</source>
+  <target>Feedback guardado localmente. Não foi possível carregar a chave de feedback.</target>
 </trans-unit>
 </body>
 </file>

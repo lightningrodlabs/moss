@@ -6,8 +6,8 @@ Start a development Moss with `MOSS_FEEDBACK_WORKER_URL` set to the staging work
 
 ## Settings switch
 
-- [ ] Start Moss with a fresh profile that has no groups. Open Settings and find Feedback. Expect the Enable Design Feedback Mode switch to be disabled. Expect the hint text "Feedback becomes available after you join or create a group."
-- [ ] Create a group in the same profile. Open Settings again. Expect the switch to be enabled. Expect the line "Reporter id:" followed by an id.
+- [ ] Start Moss with a fresh profile that has no groups. Open Settings and find Feedback. Expect the Enable Design Feedback Mode switch to be enabled. Expect the line "Reporter id:" followed by an id.
+- [ ] Create a group in the same profile. Open Settings again. Expect the same reporter id as before.
 
 ## Dialog validation
 

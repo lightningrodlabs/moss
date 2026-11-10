@@ -3632,10 +3632,6 @@ commence maintenant</target>
   <source>License:</source>
   <target>Licence :</target>
 </trans-unit>
-<trans-unit id="s8ab9926515edbd19">
-  <source>Feedback becomes available after you join or create a group.</source>
-  <target>Les retours sont disponibles une fois que vous avez rejoint ou créé un groupe.</target>
-</trans-unit>
 <trans-unit id="sbda27e2cd1963e98">
   <source>A pseudonymous id included on your issues so the team can follow up.</source>
   <target>Un identifiant pseudonyme inclus dans vos tickets pour que l'équipe puisse assurer le suivi.</target>
@@ -3664,10 +3660,6 @@ commence maintenant</target>
   <source>Feedback saved locally. Could not reach the feedback service.</source>
   <target>Retour enregistré localement. Le service de retours est injoignable.</target>
 </trans-unit>
-<trans-unit id="s0ebb890967e7ad6f">
-  <source>Feedback saved locally. Join or create a group to enable submitting feedback.</source>
-  <target>Retour enregistré localement. Rejoignez ou créez un groupe pour pouvoir envoyer des retours.</target>
-</trans-unit>
 <trans-unit id="s8d21e9427c049f37">
   <source>Feedback saved locally. Your system clock seems to be off; please check it and try again.</source>
   <target>Retour enregistré localement. L'horloge de votre système semble incorrecte ; vérifiez-la et réessayez.</target>
@@ -3683,6 +3675,14 @@ commence maintenant</target>
 <trans-unit id="s8845f794ca9ef160">
   <source>Feedback saved locally. The feedback could not be submitted; use Copy to send it another way.</source>
   <target>Retour enregistré localement. Le retour n’a pas pu être envoyé ; utilisez Copier pour l’envoyer autrement.</target>
+</trans-unit>
+<trans-unit id="s8945a22482416a7c">
+  <source>The feedback key could not be loaded.</source>
+  <target>La clé de feedback n'a pas pu être chargée.</target>
+</trans-unit>
+<trans-unit id="s2e14046a9cd2f7fe">
+  <source>Feedback saved locally. The feedback key could not be loaded.</source>
+  <target>Feedback enregistré localement. La clé de feedback n'a pas pu être chargée.</target>
 </trans-unit>
 </body>
 </file>

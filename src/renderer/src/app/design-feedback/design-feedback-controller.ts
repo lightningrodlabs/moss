@@ -25,8 +25,8 @@ function noticeText(notice: SubmitNotice): string {
       return msg('Feedback submitted. GitHub issue created.');
     case 'saved-locally':
       return msg('Feedback saved locally. Could not reach the feedback service.');
-    case 'saved-locally-no-group':
-      return msg('Feedback saved locally. Join or create a group to enable submitting feedback.');
+    case 'saved-locally-no-key':
+      return msg('Feedback saved locally. The feedback key could not be loaded.');
     case 'saved-locally-clock':
       return msg(
         'Feedback saved locally. Your system clock seems to be off; please check it and try again.',

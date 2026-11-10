@@ -26,9 +26,9 @@ These were explicit decisions by the repository owner. Do not reopen them.
    random bytes generated once per profile. The seed is stored in
    `feedback/reporter-seed.json`, encrypted with Electron `safeStorage` when
    it is available and in plaintext with owner-only permissions otherwise.
-   It has no relation to the agent key. The rule that a profile with no
-   group cannot send feedback stays, as UI policy only. The reporter id now
-   stays the same for the life of the profile. The lair derivation below was
+   It has no relation to the agent key. A profile with no group can send
+   feedback (see decision 4). The reporter id now stays the same for the
+   life of the profile. The lair derivation below was
    dropped because any Tool's coordinator zome can call `sign_raw` with the
    agent key on the same bytes and reproduce the seed. Original text:
    **Reporter identity is a key derived from the agent key**, not the agent
@@ -42,8 +42,10 @@ These were explicit decisions by the repository owner. Do not reopen them.
 4. **The reporter id is stable for the life of the profile.** It comes from
    the stored random seed (see decision 3), not from the agent key. A
    profile that leaves every group and joins another keeps the same id.
-   With no group the Design Feedback Mode switch is disabled with a hint.
-   This is UI policy only. Do not change group key allocation for feedback.
+   Feedback does not need a group. The Design Feedback Mode switch is never
+   disabled, and a fresh profile shows its reporter id. When the seed cannot
+   be loaded, Settings says the feedback key could not be loaded. Do not
+   change group key allocation for feedback.
 5. **All phases ship together in Moss 0.16.** The phases exist so each can
    be built and tested on its own, not so they can ship separately. The
    unverified "GitHub handle" text field ships in phase 1 and stays optional
@@ -84,7 +86,7 @@ the tree has moved.
   `shared/utils/src/utils.ts` returns the agent key of any installed
   `group#...` app. `getOrCreateAgentPubKey` in `src/main/index.ts` writes
   `keystore/moss-agent-pubkey.txt` but nothing reads it back except legacy
-  import. Feedback uses it only to check that a group app exists (decision 4).
+  import. Feedback does not use it (decision 4).
 - IPC: preload bridges in `src/preload/admin.ts`, renderer types in
   `src/renderer/src/electron-api.ts`. `src/main/ipc-contract-drift.test.ts`
   fails the build if a channel exists on one side only, so remove old

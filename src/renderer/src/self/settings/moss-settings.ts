@@ -139,7 +139,6 @@ export class MossSettings extends LitElement {
         </p>
         <sl-switch
           ?checked=${this._designFeedbackMode}
-          ?disabled=${this._reporterId === undefined}
           @sl-change=${(e: Event) => {
             const checked = (e.target as HTMLInputElement).checked;
             this._designFeedbackMode = checked;
@@ -155,15 +154,17 @@ export class MossSettings extends LitElement {
         >
           ${msg('Enable Design Feedback Mode')}
         </sl-switch>
-        ${this._reporterId === undefined
-          ? html`<p style="margin: 0; opacity: 0.6; font-size: 14px;">
-              ${msg('Feedback becomes available after you join or create a group.')}
-            </p>`
-          : html`<sl-tooltip
+        ${this._reporterId !== undefined
+          ? html`<sl-tooltip
               content=${msg('A pseudonymous id included on your issues so the team can follow up.')}
             >
               <span class="feedback-date">${msg('Reporter id:')} ${this._reporterId}</span>
-            </sl-tooltip>`}
+            </sl-tooltip>`
+          : this._loadingHistory
+            ? html``
+            : html`<p style="margin: 0; opacity: 0.6; font-size: 14px;">
+                ${msg('The feedback key could not be loaded.')}
+              </p>`}
 
         <h4 style="margin: 16px 0 0 0;">${msg('Feedback History')}</h4>
         ${this._feedbackHistory.length === 0 && !this._loadingHistory

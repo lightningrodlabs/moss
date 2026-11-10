@@ -83,6 +83,7 @@ export interface FeedbackSubmitInput {
 export type FeedbackSaveReason =
   | 'local-only'
   | 'no-worker-url'
+  /** The reporter seed could not be loaded or created, so the request cannot be signed. */
   | 'no-reporter-key'
   | 'unreachable'
   | 'stale_timestamp'

@@ -3632,10 +3632,6 @@ inizia ora</target>
   <source>License:</source>
   <target>Licenza:</target>
 </trans-unit>
-<trans-unit id="s8ab9926515edbd19">
-  <source>Feedback becomes available after you join or create a group.</source>
-  <target>Il feedback sarà disponibile dopo che ti sei unito a un gruppo o ne hai creato uno.</target>
-</trans-unit>
 <trans-unit id="sbda27e2cd1963e98">
   <source>A pseudonymous id included on your issues so the team can follow up.</source>
   <target>Un ID pseudonimo incluso nelle tue segnalazioni per permettere al team di dare seguito.</target>
@@ -3664,10 +3660,6 @@ inizia ora</target>
   <source>Feedback saved locally. Could not reach the feedback service.</source>
   <target>Feedback salvato localmente. Impossibile raggiungere il servizio di feedback.</target>
 </trans-unit>
-<trans-unit id="s0ebb890967e7ad6f">
-  <source>Feedback saved locally. Join or create a group to enable submitting feedback.</source>
-  <target>Feedback salvato localmente. Unisciti a un gruppo o creane uno per poter inviare feedback.</target>
-</trans-unit>
 <trans-unit id="s8d21e9427c049f37">
   <source>Feedback saved locally. Your system clock seems to be off; please check it and try again.</source>
   <target>Feedback salvato localmente. L'orologio di sistema sembra errato; controllalo e riprova.</target>
@@ -3683,6 +3675,14 @@ inizia ora</target>
 <trans-unit id="s8845f794ca9ef160">
   <source>Feedback saved locally. The feedback could not be submitted; use Copy to send it another way.</source>
   <target>Feedback salvato localmente. Impossibile inviare il feedback; usa Copia per inviarlo in un altro modo.</target>
+</trans-unit>
+<trans-unit id="s8945a22482416a7c">
+  <source>The feedback key could not be loaded.</source>
+  <target>Impossibile caricare la chiave del feedback.</target>
+</trans-unit>
+<trans-unit id="s2e14046a9cd2f7fe">
+  <source>Feedback saved locally. The feedback key could not be loaded.</source>
+  <target>Feedback salvato localmente. Impossibile caricare la chiave del feedback.</target>
 </trans-unit>
 </body>
 </file>

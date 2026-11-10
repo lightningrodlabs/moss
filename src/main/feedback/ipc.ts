@@ -17,6 +17,7 @@ export type FeedbackSubmitInput = {
 export type FeedbackSaveReason =
   | 'local-only'
   | 'no-worker-url'
+  /** The reporter seed could not be loaded or created, so the request cannot be signed. */
   | 'no-reporter-key'
   | WorkerFailureReason;
 
@@ -38,7 +39,7 @@ function summarize(record: FeedbackRecord): FeedbackRecordSummary {
   return summary;
 }
 
-/** The key is absent while the profile has no group or the seed cannot be loaded. */
+/** The key is absent only when the reporter seed cannot be loaded or created. */
 async function reporterKeyOrUndefined(deps: FeedbackIpcDeps): Promise<ReporterKey | undefined> {
   try {
     return await deps.getReporterKey();

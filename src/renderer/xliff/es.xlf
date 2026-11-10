@@ -3632,10 +3632,6 @@ comienza ahora</target>
   <source>License:</source>
   <target>Licencia:</target>
 </trans-unit>
-<trans-unit id="s8ab9926515edbd19">
-  <source>Feedback becomes available after you join or create a group.</source>
-  <target>Los comentarios estarán disponibles cuando te unas a un grupo o crees uno.</target>
-</trans-unit>
 <trans-unit id="sbda27e2cd1963e98">
   <source>A pseudonymous id included on your issues so the team can follow up.</source>
   <target>Un ID seudónimo incluido en tus issues para que el equipo pueda hacer seguimiento.</target>
@@ -3664,10 +3660,6 @@ comienza ahora</target>
   <source>Feedback saved locally. Could not reach the feedback service.</source>
   <target>Comentarios guardados localmente. No se pudo contactar con el servicio de comentarios.</target>
 </trans-unit>
-<trans-unit id="s0ebb890967e7ad6f">
-  <source>Feedback saved locally. Join or create a group to enable submitting feedback.</source>
-  <target>Comentarios guardados localmente. Únete a un grupo o crea uno para poder enviar comentarios.</target>
-</trans-unit>
 <trans-unit id="s8d21e9427c049f37">
   <source>Feedback saved locally. Your system clock seems to be off; please check it and try again.</source>
   <target>Comentarios guardados localmente. El reloj de tu sistema parece estar mal; compruébalo e inténtalo de nuevo.</target>
@@ -3683,6 +3675,14 @@ comienza ahora</target>
 <trans-unit id="s8845f794ca9ef160">
   <source>Feedback saved locally. The feedback could not be submitted; use Copy to send it another way.</source>
   <target>Comentarios guardados localmente. No se pudieron enviar los comentarios; use Copiar para enviarlos de otra forma.</target>
+</trans-unit>
+<trans-unit id="s8945a22482416a7c">
+  <source>The feedback key could not be loaded.</source>
+  <target>No se pudo cargar la clave de comentarios.</target>
+</trans-unit>
+<trans-unit id="s2e14046a9cd2f7fe">
+  <source>Feedback saved locally. The feedback key could not be loaded.</source>
+  <target>Comentarios guardados localmente. No se pudo cargar la clave de comentarios.</target>
 </trans-unit>
 </body>
 </file>

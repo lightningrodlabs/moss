@@ -28,7 +28,7 @@ describe('noticeForResult', () => {
   });
 
   const cases: Array<[FeedbackSaveReason, SubmitNotice]> = [
-    ['no-reporter-key', 'saved-locally-no-group'],
+    ['no-reporter-key', 'saved-locally-no-key'],
     ['stale_timestamp', 'saved-locally-clock'],
     ['rate_limited', 'saved-locally-rate-limited'],
     ['local-only', 'saved-locally'],

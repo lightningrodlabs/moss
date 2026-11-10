@@ -37,9 +37,9 @@ were fixed on the branch and are not listed here.
 
 - When the stored reporter seed cannot be decrypted, or the seed file is
   empty after a crash, `getReporterKey` throws and `ipc.ts` treats that as
-  "no key". The user then sees the "join or create a group" hint while in a
-  group. Add a distinct status, or move the bad file aside and generate a new
-  seed.
+  "no key". Settings then shows "The feedback key could not be loaded." and
+  submits save locally with the same message. The user has no way to recover.
+  Move the bad file aside and generate a new seed.
 - On Linux, Electron `safeStorage` can report encryption as available while
   using the `basic_text` backend with a fixed key. The `enc: 'safeStorage'`
   label in `reporter-seed.json` overstates the protection there. Check
@@ -60,9 +60,6 @@ were fixed on the branch and are not listed here.
   `shared/utils/src/feedback/protocol.ts` because the shared module does not
   export them. Export both and import them.
 - A handle typed with a leading `@` is rejected. Strip one leading `@`.
-- The Design Feedback Mode switch is disabled whenever there is no reporter
-  id, so a user who already turned the mode on cannot turn it off without a
-  group.
 - The spec places the GitHub handle field in the dialog and in Settings.
   Only the dialog has it.
 - The oversize screenshot help line, the disabled Submit state and the

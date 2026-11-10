@@ -1692,13 +1692,6 @@ if (!RUNNING_WITH_COMMAND) {
     let reporterKey: ReporterKey | undefined;
     const getReporterKey = async (): Promise<ReporterKey | undefined> => {
       if (reporterKey) return reporterKey;
-      // Feedback stays disabled until the profile has joined a group.
-      const holochainManager = HOLOCHAIN_MANAGER;
-      if (!holochainManager) return undefined;
-      const agentPubKey = globalPubKeyFromListAppsResponse(
-        await holochainManager.adminWebsocket.listApps({}),
-      );
-      if (!agentPubKey) return undefined;
       const seedCipher: SeedCipher = {
         isEncryptionAvailable: () => safeStorage.isEncryptionAvailable(),
         encrypt: (plain) => safeStorage.encryptString(plain.toString('base64')),

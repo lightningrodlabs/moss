@@ -141,13 +141,13 @@ with the agent key. It was abandoned because any Tool's coordinator zome
 can call `sign_raw` with the agent key on the same bytes and so reproduce
 the seed.
 
-A profile with no group app has no agent key. In that state the Design
-Feedback Mode switch in Settings is disabled with help text saying feedback
-becomes available after joining or creating a group. This is a UI policy
-only. The main process reports no reporter key until a group app exists.
-The reporter id stays the same for the life of the profile, also when the
-profile leaves every group and joins another. Key allocation for groups is
-not changed by this design.
+The reporter key does not need a group app. A fresh profile with no group
+can turn on Design Feedback Mode and submit feedback. The main process
+reports no reporter key only when the seed cannot be loaded or created.
+Settings then shows the text "The feedback key could not be loaded." in
+place of the reporter id. The reporter id stays the same for the life of
+the profile, also when the profile leaves every group and joins another.
+Key allocation for groups is not changed by this design.
 
 **Reporter id.** `reporterId = base64url(sha256(reporterPubKey))[0..12]`.
 This twelve character id appears in the issue body in a visible

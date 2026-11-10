@@ -5,7 +5,7 @@ import type { FeedbackSubmitResult } from '../../electron-api';
 export type SubmitNotice =
   | 'created'
   | 'saved-locally'
-  | 'saved-locally-no-group'
+  | 'saved-locally-no-key'
   | 'saved-locally-clock'
   | 'saved-locally-rate-limited'
   | 'saved-locally-rejected';
@@ -18,7 +18,7 @@ export function noticeForResult(result: FeedbackSubmitResult): SubmitNotice {
   if (result.status === 'created') return 'created';
   switch (result.reason) {
     case 'no-reporter-key':
-      return 'saved-locally-no-group';
+      return 'saved-locally-no-key';
     case 'stale_timestamp':
       return 'saved-locally-clock';
     case 'rate_limited':
