@@ -96,10 +96,10 @@ export function unreadTeamComments(comments: FeedbackCommentWire[], lastReadAt: 
   return comments.filter((c) => commentRole(c) === 'team' && !c.deleted && c.createdAt > readAt).length;
 }
 
-/** Quotes every line so the reporter's text cannot forge structure outside the header. */
+/** Quotes every line (CRLF, CR or LF) so the reporter's text cannot forge structure outside the header. */
 export function buildReplyBody(text: string): string {
   const quoted = text
-    .split(/\r?\n/)
+    .split(/\r\n|\r|\n/)
     .map((line) => `> ${line}`)
     .join('\n');
   return `**Reporter** replied:\n\n${quoted}`;

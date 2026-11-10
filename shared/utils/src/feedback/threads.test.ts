@@ -88,4 +88,9 @@ describe('buildReplyBody', () => {
   it('quotes every line under the Reporter header', () => {
     expect(buildReplyBody('a\nb')).toBe('**Reporter** replied:\n\n> a\n> b');
   });
+
+  it('quotes a line that follows a lone carriage return', () => {
+    expect(buildReplyBody('a\rb')).toBe('**Reporter** replied:\n\n> a\n> b');
+    expect(buildReplyBody('a\r\nb')).toBe('**Reporter** replied:\n\n> a\n> b');
+  });
 });
