@@ -27,10 +27,12 @@ type SyncState = {
   /** The unread total the renderer was last told about. */
   lastUnread?: number;
   running?: Promise<FeedbackSyncOutcome>;
+  /** The single run waiting for `running` to finish. */
+  queued?: Promise<FeedbackSyncOutcome>;
 };
 
 // Keyed by the deps object so every caller sharing one deps shares one
-// unread baseline and one in-flight sync.
+// unread baseline and one sync queue.
 const states = new WeakMap<FeedbackSyncDeps, SyncState>();
 
 function stateFor(deps: FeedbackSyncDeps): SyncState {
@@ -96,15 +98,31 @@ async function runSync(deps: FeedbackSyncDeps): Promise<FeedbackSyncOutcome> {
   return { synced, unread: publishUnread(deps) };
 }
 
-/** Pulls thread updates for the newest filed reports; overlapping calls share one run. */
-export function syncOnce(deps: FeedbackSyncDeps): Promise<FeedbackSyncOutcome> {
-  const state = stateFor(deps);
-  if (state.running) return state.running;
+function startRun(deps: FeedbackSyncDeps, state: SyncState): Promise<FeedbackSyncOutcome> {
   const running = runSync(deps).finally(() => {
     state.running = undefined;
   });
   state.running = running;
   return running;
+}
+
+/**
+ * Pulls thread updates for the newest filed reports. A call made while a run
+ * is in flight gets one follow-up run that starts after it, so its result
+ * reflects anything done just before the call; further calls share that run.
+ */
+export function syncOnce(deps: FeedbackSyncDeps): Promise<FeedbackSyncOutcome> {
+  const state = stateFor(deps);
+  if (state.queued) return state.queued;
+  if (!state.running) return startRun(deps, state);
+  const queued = state.running
+    .catch(() => undefined)
+    .then(() => {
+      state.queued = undefined;
+      return startRun(deps, state);
+    });
+  state.queued = queued;
+  return queued;
 }
 
 function syncLogged(deps: FeedbackSyncDeps): Promise<void> {

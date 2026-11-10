@@ -296,6 +296,20 @@ describe('feedback thread channels', () => {
     expect(t.makeClient).not.toHaveBeenCalled();
   });
 
+  it('feedback-reply refuses whitespace-only and over-long text without a client call', async () => {
+    const reply = vi.fn<Parameters<Reply>, ReturnType<Reply>>();
+    const t = setup({ reply });
+    const saved = store.save({ ...input, timestamp: 1000, state: 'open', issueNumber: 7 });
+    for (const text of ['  \n\t ', 'x'.repeat(10_001)]) {
+      expect(await t.handlers.get('feedback-reply')!({}, saved.id, text)).toEqual({
+        ok: false,
+        reason: 'rejected',
+      });
+    }
+    expect(reply).not.toHaveBeenCalled();
+    expect(t.makeClient).not.toHaveBeenCalled();
+  });
+
   it('feedback-reply posts, syncs and returns the refreshed record', async () => {
     const reply = vi.fn<Parameters<Reply>, ReturnType<Reply>>(async () => ({
       ok: true,
@@ -311,7 +325,7 @@ describe('feedback thread channels', () => {
     }));
     const t = setup({ reply, sync });
     const saved = store.save({ ...input, timestamp: 1000, state: 'open', issueNumber: 7 });
-    const res = await t.handlers.get('feedback-reply')!({}, saved.id, 'hi');
+    const res = await t.handlers.get('feedback-reply')!({}, saved.id, '  hi \n');
     expect(reply).toHaveBeenCalledWith(7, { text: 'hi' });
     expect(sync).toHaveBeenCalledTimes(1);
     expect(res).toMatchObject({ ok: true, record: { id: saved.id, title: 'T' } });

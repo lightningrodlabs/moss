@@ -92,6 +92,11 @@ function makeDeps(sync: Sync): {
   };
 }
 
+async function until(condition: () => boolean): Promise<void> {
+  for (let i = 0; i < 100 && !condition(); i++) await new Promise((r) => setTimeout(r, 0));
+  expect(condition()).toBe(true);
+}
+
 describe('syncOnce', () => {
   it('skips with no-records when only local-only records exist', async () => {
     saveRecord({ state: 'local-only', issueNumber: undefined });
@@ -161,19 +166,29 @@ describe('syncOnce', () => {
     expect(t.onUnreadChanged).not.toHaveBeenCalled();
   });
 
-  it('coalesces a call made while a sync is running', async () => {
+  it('runs exactly one more sync after the running one for calls made mid-run', async () => {
     saveRecord();
-    let release!: () => void;
-    const gate = new Promise<void>((r) => (release = r));
+    const events: string[] = [];
+    const releases: Array<() => void> = [];
     const t = makeDeps(async () => {
-      await gate;
+      const n = releases.length + 1;
+      events.push(`start ${n}`);
+      await new Promise<void>((r) => releases.push(r));
+      events.push(`end ${n}`);
       return { ok: true, value: { issues: [] } };
     });
     const first = syncOnce(t.deps);
+    await until(() => releases.length === 1);
     const second = syncOnce(t.deps);
-    release();
-    expect(await second).toEqual(await first);
-    expect(t.sync).toHaveBeenCalledTimes(1);
+    const third = syncOnce(t.deps);
+    expect(third).toBe(second);
+    releases[0]();
+    await first;
+    await until(() => releases.length === 2);
+    releases[1]();
+    await second;
+    expect(t.sync).toHaveBeenCalledTimes(2);
+    expect(events).toEqual(['start 1', 'end 1', 'start 2', 'end 2']);
   });
 });
 
@@ -184,8 +199,9 @@ describe('startFeedbackSync', () => {
     const handle = startFeedbackSync(t.deps);
     expect(FEEDBACK_SYNC_INTERVAL_MS).toBe(600_000);
     expect(t.setInterval).toHaveBeenCalledWith(expect.any(Function), 600_000);
+    // The immediate sync is still in flight, so this queues one follow-up run.
     await handle.syncNow();
-    expect(t.sync).toHaveBeenCalledTimes(1);
+    expect(t.sync).toHaveBeenCalledTimes(2);
     handle.stop();
     expect(t.clearInterval).toHaveBeenCalledWith('handle');
   });

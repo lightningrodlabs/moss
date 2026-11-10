@@ -1,4 +1,5 @@
 import type { IpcMain } from 'electron';
+import { validateReplyRequest } from '@theweave/utils';
 import type { FeedbackActionResult, FeedbackSyncResult } from './ipc';
 import { summarize, workerClientOrReason, type FeedbackIpcDeps } from './ipcDeps';
 import type { FeedbackRecordSummary } from './recordStore';
@@ -41,8 +42,13 @@ export function registerFeedbackThreadIpc(
   });
   ipcMain.handle(
     'feedback-reply',
-    (_e, id: string, text: string): Promise<FeedbackActionResult> =>
-      issueAction(deps, id, (client, issueNumber) => client.reply(issueNumber, { text })),
+    async (_e, id: string, text: string): Promise<FeedbackActionResult> => {
+      // The worker would refuse an invalid reply anyway; checking here spares a
+      // signed request that counts against the reporter's rate limit.
+      const request = validateReplyRequest({ text });
+      if ('error' in request) return { ok: false, reason: 'rejected' };
+      return issueAction(deps, id, (client, issueNumber) => client.reply(issueNumber, request));
+    },
   );
   ipcMain.handle(
     'feedback-resolve',
