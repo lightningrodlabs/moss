@@ -32,7 +32,7 @@ import {
   AudioCapabilities,
   AudioSourceGrantInfo,
   AudioSourcePickerRequest,
-  AudioSourceRequestResult,
+  AudioSourceRequestOutcome,
   DistributionInfo,
   AsrModelDownloadEnded,
   AsrModelDownloadProgress,
@@ -236,7 +236,7 @@ declare global {
       requestAudioSources: (req: {
         requestId: string;
         toolName: string;
-      }) => Promise<AudioSourceRequestResult | null>;
+      }) => Promise<AudioSourceRequestOutcome>;
       stopAudioSources: (
         grantId: string,
         reason: 'user-stopped' | 'iframe-unloaded',

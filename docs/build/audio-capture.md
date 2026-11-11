@@ -14,8 +14,7 @@ Use `getUserMedia` for the microphone. This feature is only for audio that other
 `weaveClient.captureAudioSources` is optional. It is absent when:
 
 - the host is older than Moss 0.16;
-- the Audio Sources service is switched off under Settings > Services in Moss;
-- the capture backend does not work on this computer.
+- the Audio Sources service is switched off under Settings > Services in Moss.
 
 Moss decides this when the Tool's iframe loads. Check the method before you show a button for it:
 
@@ -26,11 +25,23 @@ const canCapture = typeof weaveClient.captureAudioSources === 'function';
 ## Requesting a capture
 
 ```ts
-const capture = await weaveClient.captureAudioSources?.();
-if (!capture) return; // the user declined, or capture failed
+import { isAudioSourceUnavailableError } from '@theweave/api';
+
+let capture;
+try {
+  capture = await weaveClient.captureAudioSources?.();
+} catch (e) {
+  if (isAudioSourceUnavailableError(e)) {
+    // e.reason is 'unsupported' (this computer cannot capture) or
+    // 'disabled' (the user switched the service off). Hide your control.
+    return;
+  }
+  throw e;
+}
+if (!capture) return; // the user declined
 ```
 
-Moss shows its own picker. The call resolves with `null` when the user declines or when the capture cannot start, so there is no permission to ask for beforehand.
+Moss shows its own picker. The call resolves with `null` when the user declines, so there is no permission to ask for beforehand. If Moss itself cannot capture, the call rejects with an `AudioSourceUnavailableError` before any picker opens. Test for it with `isAudioSourceUnavailableError(e)`. Your bundle and the Moss iframe run separate copies of `@theweave/api`, so `instanceof` does not match. Moss does not probe the capture backend when the Tool loads, so this rejection is how a Tool learns that this computer cannot capture.
 
 The one option is `audioContext`. Pass your own `AudioContext` when it runs at 48 kHz and you want the track built in it. Otherwise Moss builds the track in a private 48 kHz context. A track from that private context still plays and records in your own context.
 

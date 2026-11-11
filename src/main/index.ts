@@ -2,6 +2,7 @@
 import {
   app,
   BrowserWindow,
+  crashReporter,
   ipcMain,
   IpcMainInvokeEvent,
   net,
@@ -24,6 +25,8 @@ import fs from 'fs';
 import os from 'os';
 import url from 'url';
 import { validateMediaUrl, MediaUrlResult } from './mediaUrlProbe';
+import { installCrashReporting } from './crashReporting';
+import { pipewireClientConfigEnv } from './pipewireEnv';
 import { isMossUiMicrophoneRequest } from './mossUiMediaPolicy';
 import mime from 'mime';
 import * as childProcess from 'child_process';
@@ -547,6 +550,16 @@ if (!RUNNING_WITH_COMMAND) {
   const WE_EMITTER = new WeEmitter();
 
   setupLogs(WE_EMITTER, WE_FILE_SYSTEM, RUN_OPTIONS.printHolochainLogs);
+
+  installCrashReporting({
+    start: (options) => crashReporter.start(options),
+    crashDumpsDir: app.getPath('crashDumps'),
+    onChildProcessGone: (listener) =>
+      app.on('child-process-gone', (_e, details) => listener(details)),
+    log: (line) => WE_EMITTER.emitMossLog(line),
+  });
+  // Set before any native audio code can load the PipeWire client library.
+  Object.assign(process.env, pipewireClientConfigEnv(process.env, process.platform));
 
   protocol.registerSchemesAsPrivileged([
     {
