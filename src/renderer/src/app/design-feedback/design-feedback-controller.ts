@@ -5,12 +5,42 @@ import { notify } from '@holochain-open-dev/elements';
 
 import './area-selector.js';
 import './feedback-dialog.js';
-import { FeedbackDialog } from './feedback-dialog.js';
+import { FeedbackDialog, type FeedbackDialogDetail } from './feedback-dialog.js';
+import { noticeForResult, type SubmitNotice } from './submit-result.js';
 import { PersistedStore } from '../../persisted-store.js';
-import { getAppVersion } from '../../electron-api.js';
+import { getAppVersion, type FeedbackSubmitInput } from '../../electron-api.js';
 import { commentHeartIconFilled } from '../../icons/icons.js';
 
 type FeedbackState = 'idle' | 'capturing' | 'selecting' | 'dialog';
+
+/** The handle is optional, so a blank one is left out of the request entirely. */
+function submitInput(detail: FeedbackDialogDetail): FeedbackSubmitInput {
+  const { githubHandle, ...rest } = detail;
+  return githubHandle ? { ...rest, githubHandle } : rest;
+}
+
+function noticeText(notice: SubmitNotice): string {
+  switch (notice) {
+    case 'created':
+      return msg('Feedback submitted. GitHub issue created.');
+    case 'saved-locally':
+      return msg('Feedback saved locally. Could not reach the feedback service.');
+    case 'saved-locally-no-key':
+      return msg('Feedback saved locally. The feedback key could not be loaded.');
+    case 'saved-locally-clock':
+      return msg(
+        'Feedback saved locally. Your system clock seems to be off; please check it and try again.',
+      );
+    case 'saved-locally-rate-limited':
+      return msg(
+        'Feedback saved locally. You have submitted a lot recently; please try again later.',
+      );
+    case 'saved-locally-rejected':
+      return msg(
+        'Feedback saved locally. The feedback could not be submitted; use Copy to send it another way.',
+      );
+  }
+}
 
 /**
  * Controller that manages the design feedback workflow:
@@ -95,85 +125,34 @@ export class DesignFeedbackController extends LitElement {
     this._fullScreenshot = '';
   }
 
-  private async _onFeedbackSubmitted(
-    e: CustomEvent<{ screenshot: string; text: string; mossVersion: string; os: string }>,
-  ) {
-    const { screenshot, text, mossVersion, os } = e.detail;
-    const timestamp = Date.now();
-
-    // Save locally first
-    let feedbackId: string | undefined;
+  private async _onFeedbackSubmitted(e: CustomEvent<FeedbackDialogDetail>) {
     try {
-      feedbackId = await window.electronAPI.saveFeedback({
-        text,
-        screenshot,
-        mossVersion,
-        os,
-        timestamp,
-      });
+      const result = await window.electronAPI.submitFeedback(submitInput(e.detail));
+      notify(noticeText(noticeForResult(result)));
     } catch (err) {
-      console.error('Failed to save feedback locally:', err);
+      console.error('Failed to submit feedback:', err);
+      notify(noticeText('saved-locally'));
     }
-
-    // Try to submit to worker
-    try {
-      const workerUrl = await window.electronAPI.getFeedbackWorkerUrl();
-      if (workerUrl) {
-        const response = await fetch(`${workerUrl}/feedback`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ screenshot, text, mossVersion, os }),
-        });
-
-        if (response.ok) {
-          const data = (await response.json()) as { issueUrl: string; issueNumber: number };
-          if (feedbackId && data.issueUrl) {
-            await window.electronAPI.updateFeedbackIssueUrl(feedbackId, data.issueUrl);
-          }
-          notify(msg('Feedback submitted. GitHub issue created.'));
-        } else {
-          console.error('Worker returned error:', response.status);
-          notify(msg('Feedback saved locally. Could not create GitHub issue.'));
-        }
-      } else {
-        notify(msg('Feedback saved locally.'));
-      }
-    } catch (err) {
-      console.error('Failed to submit feedback to worker:', err);
-      notify(msg('Feedback saved locally. Could not reach server.'));
-    }
-
-    this._state = 'idle';
-    this._fullScreenshot = '';
-    this._croppedScreenshot = '';
+    this._reset();
   }
 
-  private async _onFeedbackCopied(
-    e: CustomEvent<{ screenshot: string; text: string; mossVersion: string; os: string }>,
-  ) {
-    const { screenshot, text, mossVersion, os } = e.detail;
+  private async _onFeedbackCopied(e: CustomEvent<FeedbackDialogDetail>) {
     try {
-      await window.electronAPI.saveFeedback({
-        text,
-        screenshot,
-        mossVersion,
-        os,
-        timestamp: Date.now(),
-      });
+      await window.electronAPI.submitFeedback({ ...submitInput(e.detail), localOnly: true });
     } catch (err) {
       console.error('Failed to save feedback locally:', err);
     }
+    this._reset();
+  }
+
+  private _reset() {
     this._state = 'idle';
     this._fullScreenshot = '';
     this._croppedScreenshot = '';
   }
 
   private _onFeedbackCancelled() {
-    this._state = 'idle';
-    this._fullScreenshot = '';
-    this._croppedScreenshot = '';
+    this._reset();
   }
 
   private _cropImage(

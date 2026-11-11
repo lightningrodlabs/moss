@@ -19,6 +19,13 @@ import type {
   AsrHostStatus,
 } from '@theweave/api';
 import type { AppletHostResponse } from '../main/sharedTypes';
+import type {
+  FeedbackRecord,
+  FeedbackRecordSummary,
+  FeedbackReporterStatus,
+  FeedbackSubmitInput,
+  FeedbackSubmitResult,
+} from '../main/feedback';
 import {
   AppHashes,
   AssetSource,
@@ -194,19 +201,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     callback: (e: Electron.IpcRendererEvent, grants: AudioSourceGrantInfo[]) => any,
   ) => ipcRenderer.on('audio-source-grants-changed', callback),
   captureScreen: () => ipcRenderer.invoke('capture-screen'),
-  getFeedbackWorkerUrl: () => ipcRenderer.invoke('get-feedback-worker-url'),
-  saveFeedback: (feedback: {
-    text: string;
-    screenshot: string;
-    mossVersion: string;
-    os: string;
-    timestamp: number;
-    issueUrl?: string;
-  }) => ipcRenderer.invoke('save-feedback', feedback),
-  listFeedback: () => ipcRenderer.invoke('list-feedback'),
-  getFeedback: (id: string) => ipcRenderer.invoke('get-feedback', id),
-  updateFeedbackIssueUrl: (id: string, issueUrl: string) =>
-    ipcRenderer.invoke('update-feedback-issue-url', id, issueUrl),
+  submitFeedback: (input: FeedbackSubmitInput): Promise<FeedbackSubmitResult> =>
+    ipcRenderer.invoke('feedback-submit', input),
+  listFeedback: (): Promise<FeedbackRecordSummary[]> => ipcRenderer.invoke('feedback-list'),
+  getFeedback: (id: string): Promise<FeedbackRecord | undefined> =>
+    ipcRenderer.invoke('feedback-get', id),
+  getFeedbackReporterStatus: (): Promise<FeedbackReporterStatus> =>
+    ipcRenderer.invoke('feedback-reporter-status'),
   batchUpdateAppletUis: (
     toolCompatibilityId: ToolCompatibilityId,
     happOrWebHappUrl: string,

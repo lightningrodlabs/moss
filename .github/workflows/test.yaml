@@ -53,6 +53,30 @@ jobs:
       - name: Unit tests
         run: yarn test:unit
 
+  # why: the feedback worker is its own npm package with no Rust, nix or
+  # Holochain dependency, so it gets a separate fast job.
+  feedback-worker-tests:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: workers/design-feedback
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Typecheck
+        run: npm run typecheck
+
   tryorama-tests:
     runs-on: ubuntu-22.04
     steps:

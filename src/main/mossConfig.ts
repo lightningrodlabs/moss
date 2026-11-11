@@ -40,3 +40,11 @@ if (MOSS_CONFIG.holochain !== HOLOCHAIN_CHECKSUMS.version) {
     `The version of Holochain in moss.config.json (${MOSS_CONFIG.holochain}) does not match the version in holochain-checksums.json (${HOLOCHAIN_CHECKSUMS.version}). Please update moss.config.json or holochain-checksums.json accordingly.`,
   );
 }
+
+/**
+ * Where design feedback is filed. `MOSS_FEEDBACK_WORKER_URL` lets a dev build
+ * point at a staging worker; an empty value means feedback is only saved locally.
+ */
+export function feedbackWorkerUrl(): string | undefined {
+  return process.env.MOSS_FEEDBACK_WORKER_URL || MOSS_CONFIG.feedbackWorkerUrl || undefined;
+}

@@ -49,6 +49,58 @@ import { AppletHostResponse } from './types';
 
 // IPC_CHANGE_HERE
 
+/** Mirrors FeedbackRecord in src/main/feedback/recordStore.ts */
+export interface FeedbackRecord {
+  id: string;
+  text: string;
+  screenshot: string;
+  mossVersion: string;
+  os: string;
+  timestamp: number;
+  reporterId?: string;
+  githubHandle?: string;
+  issueNumber?: number;
+  issueUrl?: string;
+  state: 'open' | 'closed' | 'local-only';
+  createdVia?: 'worker' | 'github';
+}
+
+/** Mirrors FeedbackRecordSummary in src/main/feedback/recordStore.ts */
+export type FeedbackRecordSummary = Omit<FeedbackRecord, 'screenshot'>;
+
+/** Mirrors FeedbackSubmitInput in src/main/feedback/ipc.ts */
+export interface FeedbackSubmitInput {
+  text: string;
+  screenshot: string;
+  mossVersion: string;
+  os: string;
+  githubHandle?: string;
+  /** Record the report without ever contacting the worker (the Copy button). */
+  localOnly?: boolean;
+}
+
+/** Mirrors FeedbackSaveReason in src/main/feedback/ipc.ts */
+export type FeedbackSaveReason =
+  | 'local-only'
+  | 'no-worker-url'
+  /** The reporter seed could not be loaded or created, so the request cannot be signed. */
+  | 'no-reporter-key'
+  | 'unreachable'
+  | 'stale_timestamp'
+  | 'rate_limited'
+  | 'rejected'
+  | 'server_error';
+
+/** Mirrors FeedbackSubmitResult in src/main/feedback/ipc.ts */
+export type FeedbackSubmitResult =
+  | { status: 'created'; record: FeedbackRecordSummary }
+  | { status: 'saved-locally'; record: FeedbackRecordSummary; reason: FeedbackSaveReason };
+
+/** Mirrors FeedbackReporterStatus in src/main/feedback/ipc.ts */
+export interface FeedbackReporterStatus {
+  reporterId?: string;
+}
+
 /** Mirrors LegacyProfileInfo in src/main/legacyProfiles.ts */
 export interface LegacyProfileInfo {
   appName: string;
@@ -254,35 +306,10 @@ declare global {
         callback: (e: any, grants: AudioSourceGrantInfo[]) => any,
       ) => void;
       captureScreen: () => Promise<string>;
-      getFeedbackWorkerUrl: () => Promise<string>;
-      saveFeedback: (feedback: {
-        text: string;
-        screenshot: string;
-        mossVersion: string;
-        os: string;
-        timestamp: number;
-        issueUrl?: string;
-      }) => Promise<string>;
-      listFeedback: () => Promise<
-        Array<{
-          id: string;
-          text: string;
-          mossVersion: string;
-          os: string;
-          timestamp: number;
-          issueUrl?: string;
-        }>
-      >;
-      getFeedback: (id: string) => Promise<{
-        id: string;
-        text: string;
-        screenshot: string;
-        mossVersion: string;
-        os: string;
-        timestamp: number;
-        issueUrl?: string;
-      } | null>;
-      updateFeedbackIssueUrl: (id: string, issueUrl: string) => Promise<void>;
+      submitFeedback: (input: FeedbackSubmitInput) => Promise<FeedbackSubmitResult>;
+      listFeedback: () => Promise<FeedbackRecordSummary[]>;
+      getFeedback: (id: string) => Promise<FeedbackRecord | undefined>;
+      getFeedbackReporterStatus: () => Promise<FeedbackReporterStatus>;
       batchUpdateAppletUis: (
         toolCompatibilityId: ToolCompatibilityId,
         happOrWebHappUrl: string,

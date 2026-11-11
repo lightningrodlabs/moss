@@ -18,6 +18,7 @@ import {
   MessageChannelMain,
   MessagePortMain,
   webContents,
+  safeStorage,
 } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -59,7 +60,15 @@ import {
 import { BINARIES_DIRECTORY, RESOURCES_DIRECTORY } from './const';
 import { registerAsrIpc } from './asr/wireUp';
 import { relayTimeoutMs } from './appletRelayPolicy';
-import { MOSS_CONFIG } from './mossConfig';
+import { MOSS_CONFIG, feedbackWorkerUrl } from './mossConfig';
+import {
+  FeedbackRecordStore,
+  loadOrCreateReporterSeed,
+  registerFeedbackIpc,
+  reporterKeyFromSeed,
+  type ReporterKey,
+  type SeedCipher,
+} from './feedback';
 import { registerAboutIpc } from './aboutWindow';
 import { createLanBeaconService, type BeaconDiagnostics } from './lanBeacon';
 // import { AdminWebsocket } from '@holochain/client';
@@ -1680,52 +1689,26 @@ if (!RUNNING_WITH_COMMAND) {
       const image = await focusedWindow.capturePage();
       return image.toDataURL();
     });
-    ipcMain.handle('get-feedback-worker-url', () => {
-      return MOSS_CONFIG.feedbackWorkerUrl || '';
-    });
-    ipcMain.handle(
-      'save-feedback',
-      async (
-        _e,
-        feedback: {
-          text: string;
-          screenshot: string;
-          mossVersion: string;
-          os: string;
-          timestamp: number;
-          issueUrl?: string;
-        },
-      ) => {
-        const id = `${feedback.timestamp}-${Math.random().toString(36).substring(2, 8)}`;
-        const filePath = path.join(WE_FILE_SYSTEM.feedbackDir, `${id}.json`);
-        fs.writeFileSync(filePath, JSON.stringify({ id, ...feedback }, null, 2));
-        return id;
-      },
-    );
-    ipcMain.handle('list-feedback', async () => {
-      const files = fs.readdirSync(WE_FILE_SYSTEM.feedbackDir).filter((f) => f.endsWith('.json'));
-      return files
-        .map((f) => {
-          const content = JSON.parse(
-            fs.readFileSync(path.join(WE_FILE_SYSTEM.feedbackDir, f), 'utf-8'),
-          );
-          // Return without screenshot to keep payload small
-          const { screenshot: _, ...rest } = content;
-          return rest;
-        })
-        .sort((a: { timestamp: number }, b: { timestamp: number }) => b.timestamp - a.timestamp);
-    });
-    ipcMain.handle('get-feedback', async (_e, id: string) => {
-      const filePath = path.join(WE_FILE_SYSTEM.feedbackDir, `${id}.json`);
-      if (!fs.existsSync(filePath)) return null;
-      return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    });
-    ipcMain.handle('update-feedback-issue-url', async (_e, id: string, issueUrl: string) => {
-      const filePath = path.join(WE_FILE_SYSTEM.feedbackDir, `${id}.json`);
-      if (!fs.existsSync(filePath)) return;
-      const content = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-      content.issueUrl = issueUrl;
-      fs.writeFileSync(filePath, JSON.stringify(content, null, 2));
+    let reporterKey: ReporterKey | undefined;
+    const getReporterKey = async (): Promise<ReporterKey | undefined> => {
+      if (reporterKey) return reporterKey;
+      const seedCipher: SeedCipher = {
+        isEncryptionAvailable: () => safeStorage.isEncryptionAvailable(),
+        encrypt: (plain) => safeStorage.encryptString(plain.toString('base64')),
+        decrypt: (cipher) => Buffer.from(safeStorage.decryptString(cipher), 'base64'),
+      };
+      reporterKey = reporterKeyFromSeed(
+        loadOrCreateReporterSeed(
+          path.join(WE_FILE_SYSTEM.feedbackDir, 'reporter-seed.json'),
+          seedCipher,
+        ),
+      );
+      return reporterKey;
+    };
+    registerFeedbackIpc(ipcMain, {
+      store: new FeedbackRecordStore(WE_FILE_SYSTEM.feedbackDir),
+      workerUrl: feedbackWorkerUrl,
+      getReporterKey,
     });
     ipcMain.handle('source-selected', (_e, id: string) =>
       WE_EMITTER.emitScreenOrWindowSelected(id),

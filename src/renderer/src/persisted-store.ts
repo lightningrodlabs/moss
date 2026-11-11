@@ -64,6 +64,20 @@ export class PersistedStore {
   };
 
   /**
+   * GitHub username the user last attached to design feedback, so the field is
+   * prefilled next time. Empty when they chose not to give one.
+   */
+  feedbackGithubHandle: SubStore<string, string, []> = {
+    value: () => {
+      const handle = this.store.getItem<string>('feedbackGithubHandle');
+      return handle ? handle : '';
+    },
+    set: (value) => {
+      this.store.setItem<string>('feedbackGithubHandle', value);
+    },
+  };
+
+  /**
    * Whether Tools may ask for audio playing on this machine. A kill switch: each
    * request still opens the picker, which is the actual consent.
    */

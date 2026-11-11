@@ -2,11 +2,21 @@
   "name": "moss-design-feedback-worker",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "migrate": "wrangler d1 migrations apply FEEDBACK_DB --remote",
+    "migrate:staging": "wrangler d1 migrations apply FEEDBACK_DB --remote --env staging"
   },
   "devDependencies": {
-    "wrangler": "^3.0.0"
+    "@cloudflare/vitest-pool-workers": "0.23.0",
+    "@cloudflare/workers-types": "5.20260815.1",
+    "typescript": "5.9.3",
+    "vitest": "4.1.12",
+    "wrangler": "4.124.0"
   }
 }

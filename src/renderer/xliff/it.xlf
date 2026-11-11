@@ -1398,18 +1398,6 @@
   <source>Feedback submitted. GitHub issue created.</source>
   <target>Feedback inviato. Issue GitHub creata.</target>
 </trans-unit>
-<trans-unit id="se2841d25d173cfa5">
-  <source>Feedback saved locally. Could not create GitHub issue.</source>
-  <target>Feedback salvato localmente. Impossibile creare l'issue GitHub.</target>
-</trans-unit>
-<trans-unit id="s403d86e8b3392e49">
-  <source>Feedback saved locally.</source>
-  <target>Feedback salvato localmente.</target>
-</trans-unit>
-<trans-unit id="sbccd620b66cf8efd">
-  <source>Feedback saved locally. Could not reach server.</source>
-  <target>Feedback salvato localmente. Server non raggiungibile.</target>
-</trans-unit>
 <trans-unit id="sa001c7eb0d28aaec">
   <source>This screenshot and text, along with Moss version and OS info, will be added as a public GitHub issue to the</source>
   <target>Questo screenshot e testo, insieme alla versione di Moss e alle informazioni sul sistema operativo, verranno aggiunti come issue pubblica su GitHub al</target>
@@ -3643,6 +3631,58 @@ inizia ora</target>
 <trans-unit id="s2e105963b73bb1fa">
   <source>License:</source>
   <target>Licenza:</target>
+</trans-unit>
+<trans-unit id="sbda27e2cd1963e98">
+  <source>A pseudonymous id included on your issues so the team can follow up.</source>
+  <target>Un ID pseudonimo incluso nelle tue segnalazioni per permettere al team di dare seguito.</target>
+</trans-unit>
+<trans-unit id="sa93e23dc28e4268d">
+  <source>Reporter id:</source>
+  <target>ID segnalatore:</target>
+</trans-unit>
+<trans-unit id="s967a28faec608ed1">
+  <source>GitHub username (optional)</source>
+  <target>Nome utente GitHub (facoltativo)</target>
+</trans-unit>
+<trans-unit id="sc23c16345d72638e">
+  <source>Not verified. Lets the team mention you on the issue.</source>
+  <target>Non verificato. Permette al team di menzionarti nella segnalazione.</target>
+</trans-unit>
+<trans-unit id="s9a1bfee0fbe75bfe">
+  <source>Not a valid GitHub username</source>
+  <target>Nome utente GitHub non valido</target>
+</trans-unit>
+<trans-unit id="sbc93f80236b02271">
+  <source>A pseudonymous reporter id, the same for every issue from this Moss profile, is included so the team can follow up. It cannot be traced back to you or your groups.</source>
+  <target>Viene incluso un ID segnalatore pseudonimo, identico per tutte le segnalazioni di questo profilo Moss, per permettere al team di dare seguito. Non può essere ricondotto a te o ai tuoi gruppi.</target>
+</trans-unit>
+<trans-unit id="sdf6156c38ce2ee3b">
+  <source>Feedback saved locally. Could not reach the feedback service.</source>
+  <target>Feedback salvato localmente. Impossibile raggiungere il servizio di feedback.</target>
+</trans-unit>
+<trans-unit id="s8d21e9427c049f37">
+  <source>Feedback saved locally. Your system clock seems to be off; please check it and try again.</source>
+  <target>Feedback salvato localmente. L'orologio di sistema sembra errato; controllalo e riprova.</target>
+</trans-unit>
+<trans-unit id="sde58d7c117a113b1">
+  <source>Feedback saved locally. You have submitted a lot recently; please try again later.</source>
+  <target>Feedback salvato localmente. Hai inviato molto di recente; riprova più tardi.</target>
+</trans-unit>
+<trans-unit id="scf1f4b27ab67929a">
+  <source>The screenshot is too large to submit. Select a smaller area.</source>
+  <target>Lo screenshot è troppo grande per essere inviato. Seleziona un’area più piccola.</target>
+</trans-unit>
+<trans-unit id="s8845f794ca9ef160">
+  <source>Feedback saved locally. The feedback could not be submitted; use Copy to send it another way.</source>
+  <target>Feedback salvato localmente. Impossibile inviare il feedback; usa Copia per inviarlo in un altro modo.</target>
+</trans-unit>
+<trans-unit id="s8945a22482416a7c">
+  <source>The feedback key could not be loaded.</source>
+  <target>Impossibile caricare la chiave del feedback.</target>
+</trans-unit>
+<trans-unit id="s2e14046a9cd2f7fe">
+  <source>Feedback saved locally. The feedback key could not be loaded.</source>
+  <target>Feedback salvato localmente. Impossibile caricare la chiave del feedback.</target>
 </trans-unit>
 </body>
 </file>

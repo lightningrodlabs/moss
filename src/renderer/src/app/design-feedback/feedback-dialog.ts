@@ -6,15 +6,32 @@ import { notify } from '@holochain-open-dev/elements';
 import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
+import '@shoelace-style/shoelace/dist/components/input/input.js';
 
 import type SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
+import type SlInput from '@shoelace-style/shoelace/dist/components/input/input.js';
+
+import { FEEDBACK_LIMITS } from '@theweave/utils';
+
+import { PersistedStore } from '../../persisted-store.js';
+import { isScreenshotTooLarge, isValidGithubHandle } from './submit-result.js';
+
+/** Detail of the feedback-submitted and feedback-copied events. */
+export interface FeedbackDialogDetail {
+  screenshot: string;
+  text: string;
+  mossVersion: string;
+  os: string;
+  /** Trimmed GitHub username, empty when the user gave none. */
+  githubHandle: string;
+}
 
 /**
  * Dialog showing a captured screenshot with a text area for feedback.
  *
  * @element feedback-dialog
- * @fires feedback-submitted - { detail: { screenshot: string, text: string, mossVersion: string, os: string } }
- * @fires feedback-copied - { detail: { screenshot: string, text: string, mossVersion: string, os: string } }
+ * @fires feedback-submitted - { detail: FeedbackDialogDetail }
+ * @fires feedback-copied - { detail: FeedbackDialogDetail }
  * @fires feedback-cancelled
  */
 @localized()
@@ -33,7 +50,12 @@ export class FeedbackDialog extends LitElement {
   private _feedbackText: string = '';
 
   @state()
+  private _githubHandle: string = '';
+
+  @state()
   private _submitting = false;
+
+  private _persistedStore = new PersistedStore();
 
   /** Tracks whether we're closing due to submit/copy (don't emit cancelled) */
   private _closingIntentionally = false;
@@ -41,10 +63,16 @@ export class FeedbackDialog extends LitElement {
   @query('sl-dialog')
   private _dialog!: SlDialog;
 
+  @query('sl-input')
+  private _handleInput!: SlInput;
+
   show() {
     this._feedbackText = '';
+    this._githubHandle = this._persistedStore.feedbackGithubHandle.value();
     this._submitting = false;
     this._closingIntentionally = false;
+    // The prefilled handle was valid when saved, so clear any error left from a cancelled edit.
+    this._handleInput.setCustomValidity('');
     this._dialog.show();
   }
 
@@ -77,17 +105,35 @@ export class FeedbackDialog extends LitElement {
     this._closingIntentionally = false;
   }
 
+  private get _trimmedHandle(): string {
+    return this._githubHandle.trim();
+  }
+
+  private get _handleValid(): boolean {
+    return isValidGithubHandle(this._trimmedHandle);
+  }
+
+  private get _screenshotTooLarge(): boolean {
+    return isScreenshotTooLarge(this.screenshot);
+  }
+
+  private _detail(): FeedbackDialogDetail {
+    return {
+      screenshot: this.screenshot,
+      text: this._feedbackText,
+      mossVersion: this.mossVersion,
+      os: this.os,
+      githubHandle: this._trimmedHandle,
+    };
+  }
+
   private _submit() {
     this._submitting = true;
     this._closingIntentionally = true;
+    this._persistedStore.feedbackGithubHandle.set(this._trimmedHandle);
     this.dispatchEvent(
-      new CustomEvent('feedback-submitted', {
-        detail: {
-          screenshot: this.screenshot,
-          text: this._feedbackText,
-          mossVersion: this.mossVersion,
-          os: this.os,
-        },
+      new CustomEvent<FeedbackDialogDetail>('feedback-submitted', {
+        detail: this._detail(),
         bubbles: true,
         composed: true,
       }),
@@ -102,13 +148,8 @@ export class FeedbackDialog extends LitElement {
     notify(msg('Copied to clipboard'));
     this._closingIntentionally = true;
     this.dispatchEvent(
-      new CustomEvent('feedback-copied', {
-        detail: {
-          screenshot: this.screenshot,
-          text: this._feedbackText,
-          mossVersion: this.mossVersion,
-          os: this.os,
-        },
+      new CustomEvent<FeedbackDialogDetail>('feedback-copied', {
+        detail: this._detail(),
         bubbles: true,
         composed: true,
       }),
@@ -137,15 +178,33 @@ export class FeedbackDialog extends LitElement {
                 </div>
               `
             : html``}
+          ${this._screenshotTooLarge
+            ? html`<div class="screenshot-too-large">
+                ${msg('The screenshot is too large to submit. Select a smaller area.')}
+              </div>`
+            : html``}
           <sl-textarea
             label="${msg('Describe your feedback')}"
             placeholder="${msg('What would you like to share about this part of the UI?')}"
             rows="4"
+            maxlength=${FEEDBACK_LIMITS.maxTextChars}
             .value=${this._feedbackText}
             @sl-input=${(e: Event) => {
               this._feedbackText = (e.target as HTMLTextAreaElement).value;
             }}
           ></sl-textarea>
+          <sl-input
+            label="${msg('GitHub username (optional)')}"
+            help-text="${msg('Not verified. Lets the team mention you on the issue.')}"
+            .value=${this._githubHandle}
+            @sl-input=${(e: Event) => {
+              const input = e.target as SlInput;
+              this._githubHandle = input.value;
+              input.setCustomValidity(
+                isValidGithubHandle(input.value.trim()) ? '' : msg('Not a valid GitHub username'),
+              );
+            }}
+          ></sl-input>
           <div class="disclaimer">
             ${msg(
               'This screenshot and text, along with Moss version and OS info, will be added as a public GitHub issue to the',
@@ -153,6 +212,9 @@ export class FeedbackDialog extends LitElement {
             <a href="https://github.com/lightningrodlabs/moss" target="_blank"
               >${msg('Moss GitHub repo')}</a
             >.
+            ${msg(
+              'A pseudonymous reporter id, the same for every issue from this Moss profile, is included so the team can follow up. It cannot be traced back to you or your groups.',
+            )}
             ${msg(
               'If you want to send it privately, press "Copy" to copy the feedback to your clipboard and email it to moss.0.15.feedback@theweave.social.',
             )}
@@ -162,7 +224,7 @@ export class FeedbackDialog extends LitElement {
           <sl-button variant="default" @click=${this._cancel}> ${msg('Cancel')} </sl-button>
           <sl-button
             variant="default"
-            ?disabled=${!this._feedbackText.trim()}
+            ?disabled=${!this._feedbackText.trim() || !this._handleValid}
             @click=${this._copyToClipboard}
           >
             ${msg('Copy')}
@@ -170,7 +232,7 @@ export class FeedbackDialog extends LitElement {
           <sl-button
             variant="primary"
             ?loading=${this._submitting}
-            ?disabled=${!this._feedbackText.trim()}
+            ?disabled=${!this._feedbackText.trim() || !this._handleValid || this._screenshotTooLarge}
             @click=${this._submit}
           >
             ${msg('Submit')}
@@ -195,6 +257,19 @@ export class FeedbackDialog extends LitElement {
       display: block;
       object-fit: contain;
       max-height: 400px;
+    }
+
+    sl-input[data-user-invalid]::part(base) {
+      border-color: var(--sl-color-danger-600);
+    }
+
+    sl-input[data-user-invalid]::part(form-control-help-text) {
+      color: var(--sl-color-danger-700);
+    }
+
+    .screenshot-too-large {
+      font-size: 13px;
+      color: var(--sl-color-danger-700);
     }
 
     .disclaimer {

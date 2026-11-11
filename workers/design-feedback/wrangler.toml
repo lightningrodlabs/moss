@@ -1,14 +1,58 @@
 name = "moss-design-feedback"
 main = "src/index.ts"
-compatibility_date = "2024-12-01"
+compatibility_date = "2025-10-01"
+compatibility_flags = ["nodejs_compat"]
 
 # Set your account_id here or via CLOUDFLARE_ACCOUNT_ID env var
 # account_id = ""
 
-# Secrets (set via `wrangler secret put`):
-# - GITHUB_TOKEN: GitHub PAT with repo scope
+# Secrets (set via `wrangler secret put`, per environment):
+# - GITHUB_APP_PRIVATE_KEY: PEM private key of the GitHub App (PKCS#1 or PKCS#8 accepted)
 
-# R2 bucket for storing feedback screenshots
+[vars]
+GITHUB_REPO_OWNER = "lightningrodlabs"
+GITHUB_REPO_NAME = "moss"
+R2_PUBLIC_URL = "https://pub-98da085c523142129bcac92fdf2b7648.r2.dev"
+GITHUB_APP_ID = "5701991"
+GITHUB_INSTALLATION_ID = "180641077"
+
+# Reporter registry and created-issue records
+[[d1_databases]]
+binding = "FEEDBACK_DB"
+database_name = "moss-feedback"
+database_id = "3f27b943-517d-43d9-aadb-5e64a7d067e9"
+migrations_dir = "migrations"
+
+# Nonce replay cache and rate-limit counters
+[[kv_namespaces]]
+binding = "FEEDBACK_KV"
+id = "66109df0e70741e48659bb659df45c83"
+
+# Feedback screenshots
 [[r2_buckets]]
 binding = "FEEDBACK_BUCKET"
 bucket_name = "moss-feedback-images"
+
+[env.staging]
+name = "moss-design-feedback-staging"
+
+[env.staging.vars]
+GITHUB_REPO_OWNER = "lightningrodlabs"
+GITHUB_REPO_NAME = "moss-feedback-staging"
+R2_PUBLIC_URL = "https://pub-1bd9e2efc8854294a4839501ff57c0dd.r2.dev"
+GITHUB_APP_ID = "5701991"
+GITHUB_INSTALLATION_ID = "180641077"
+
+[[env.staging.d1_databases]]
+binding = "FEEDBACK_DB"
+database_name = "moss-feedback-staging"
+database_id = "182f85af-b144-4832-b16c-2737ed44eaf0"
+migrations_dir = "migrations"
+
+[[env.staging.kv_namespaces]]
+binding = "FEEDBACK_KV"
+id = "edb30484f6704be5bca0767cbc8d57d3"
+
+[[env.staging.r2_buckets]]
+binding = "FEEDBACK_BUCKET"
+bucket_name = "moss-feedback-images-staging"

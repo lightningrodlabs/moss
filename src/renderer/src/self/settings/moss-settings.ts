@@ -5,23 +5,16 @@ import { notify } from '@holochain-open-dev/elements';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
+import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 
 import { mossStyles } from '../../shared-styles.js';
 import { PersistedStore } from '../../persisted-store.js';
+import type { FeedbackRecordSummary } from '../../electron-api.js';
 import '../profile/profile-settings.js';
 import './language-settings.js';
 import './notification-settings.js';
 import './danger-zone-settings.js';
 import './services/services-settings.js';
-
-type FeedbackRecord = {
-  id: string;
-  text: string;
-  mossVersion: string;
-  os: string;
-  timestamp: number;
-  issueUrl?: string;
-};
 
 enum TabsState {
   Profile,
@@ -45,7 +38,10 @@ export class MossSettings extends LitElement {
   _designFeedbackMode: boolean = false;
 
   @state()
-  _feedbackHistory: FeedbackRecord[] = [];
+  _feedbackHistory: FeedbackRecordSummary[] = [];
+
+  @state()
+  _reporterId?: string;
 
   @state()
   _loadingHistory = false;
@@ -75,11 +71,21 @@ export class MossSettings extends LitElement {
 
   private async _loadFeedbackHistory() {
     this._loadingHistory = true;
-    try {
-      this._feedbackHistory = await window.electronAPI.listFeedback();
-    } catch (e) {
-      console.error('Failed to load feedback history:', e);
+    const [history, status] = await Promise.allSettled([
+      window.electronAPI.listFeedback(),
+      window.electronAPI.getFeedbackReporterStatus(),
+    ]);
+    if (history.status === 'fulfilled') {
+      this._feedbackHistory = history.value;
+    } else {
+      console.error('Failed to load feedback history:', history.reason);
       this._feedbackHistory = [];
+    }
+    if (status.status === 'fulfilled') {
+      this._reporterId = status.value.reporterId;
+    } else {
+      console.error('Failed to load feedback reporter status:', status.reason);
+      this._reporterId = undefined;
     }
     this._loadingHistory = false;
   }
@@ -148,6 +154,17 @@ export class MossSettings extends LitElement {
         >
           ${msg('Enable Design Feedback Mode')}
         </sl-switch>
+        ${this._reporterId !== undefined
+          ? html`<sl-tooltip
+              content=${msg('A pseudonymous id included on your issues so the team can follow up.')}
+            >
+              <span class="feedback-date">${msg('Reporter id:')} ${this._reporterId}</span>
+            </sl-tooltip>`
+          : this._loadingHistory
+            ? html``
+            : html`<p style="margin: 0; opacity: 0.6; font-size: 14px;">
+                ${msg('The feedback key could not be loaded.')}
+              </p>`}
 
         <h4 style="margin: 16px 0 0 0;">${msg('Feedback History')}</h4>
         ${this._feedbackHistory.length === 0 && !this._loadingHistory
