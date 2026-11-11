@@ -146,7 +146,7 @@ export class FeedbackSettings extends LitElement {
           ? html`<sl-tooltip
               content=${msg('A pseudonymous id included on your issues so the team can follow up.')}
             >
-              <span class="feedback-date">${msg('Reporter id:')} ${this._reporterId}</span>
+              <span class="feedback-date">${msg('Your reporter id:')} ${this._reporterId}</span>
             </sl-tooltip>`
           : this._loadingHistory
             ? html``

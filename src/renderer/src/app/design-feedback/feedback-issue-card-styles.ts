@@ -1,23 +1,24 @@
 import { css } from 'lit';
 
-/** Card layout, thread role colours and the inline unread badge for feedback-issue-card. */
+/**
+ * Thread role colours and the inline unread badge for feedback-issue-card.
+ * Card shape, hover and the expanded border come from toolSettingsStyles so a
+ * feedback card looks like a Tool card in group settings.
+ */
 export const feedbackIssueCardStyles = css`
-  .card {
-    padding: 8px 12px;
-    border-radius: 6px;
-    background: rgba(0, 0, 0, 0.05);
+  .title-bar {
+    padding: 6px;
+    border-radius: 12px;
+    cursor: pointer;
+    gap: 12px;
+  }
+  .title-bar:hover {
+    background: #f5f5f5;
   }
   .summary {
     flex: 1;
     min-width: 0;
     align-items: flex-start;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    text-align: left;
-    font: inherit;
-    color: inherit;
   }
   .title {
     font-size: 14px;
@@ -29,8 +30,8 @@ export const feedbackIssueCardStyles = css`
     font-size: 12px;
     opacity: 0.6;
   }
-  .details {
-    margin-top: 8px;
+  .details-container {
+    margin-left: 6px;
   }
   .original {
     white-space: pre-wrap;
@@ -76,5 +77,11 @@ export const feedbackIssueCardStyles = css`
   .link {
     font-size: 14px;
     white-space: nowrap;
+  }
+  .action-button {
+    min-width: 140px;
+  }
+  .moss-button-secondary .dot-carousel {
+    --carousel-color: black;
   }
 `;

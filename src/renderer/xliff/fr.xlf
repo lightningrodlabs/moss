@@ -3632,10 +3632,6 @@ commence maintenant</target>
   <source>A pseudonymous id included on your issues so the team can follow up.</source>
   <target>Un identifiant pseudonyme inclus dans vos tickets pour que l'équipe puisse assurer le suivi.</target>
 </trans-unit>
-<trans-unit id="sa93e23dc28e4268d">
-  <source>Reporter id:</source>
-  <target>ID de rapporteur :</target>
-</trans-unit>
 <trans-unit id="s967a28faec608ed1">
   <source>GitHub username (optional)</source>
   <target>Nom d'utilisateur GitHub (facultatif)</target>
@@ -3733,6 +3729,10 @@ commence maintenant</target>
   <source>Open</source>
   <note from="lit-localize">Issue state tab label, not the verb</note>
   <target>Ouverts</target>
+</trans-unit>
+<trans-unit id="s40f9c1288fafe54a">
+  <source>Your reporter id:</source>
+  <target>Votre identifiant de rapporteur :</target>
 </trans-unit>
 </body>
 </file>

@@ -10,6 +10,8 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import type SlTextarea from '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
 
 import { mossStyles } from '../../shared-styles.js';
+import { toolSettingsStyles } from '../../groups/elements/settings/tool-settings-styles.js';
+import { chevronSingleDownIcon, chevronSingleUpIcon } from '../../ui/icons.js';
 import { feedbackIssueCardStyles } from './feedback-issue-card-styles.js';
 import { markdownParseNoImages } from '../../utils.js';
 import type {
@@ -44,8 +46,9 @@ export class FeedbackIssueCard extends LitElement {
   @state()
   _reply = '';
 
+  /** Which action is waiting on the feedback service, so only its button shows progress. */
   @state()
-  _busy = false;
+  _busy: 'send' | 'resolve' | undefined = undefined;
 
   private _emitChanged(record: FeedbackRecordSummary) {
     this.dispatchEvent(
@@ -89,8 +92,8 @@ export class FeedbackIssueCard extends LitElement {
 
   private async _send() {
     const text = this._reply.trim();
-    if (text === '' || this._busy) return;
-    this._busy = true;
+    if (text === '' || this._busy !== undefined) return;
+    this._busy = 'send';
     try {
       const result = await window.electronAPI.replyFeedback(this.record.id, text);
       if (this._handleResult(result, msg('Reply posted.'))) this._reply = '';
@@ -98,13 +101,13 @@ export class FeedbackIssueCard extends LitElement {
       console.error('Failed to send feedback reply:', e);
       notifyError(msg('Could not reach the feedback service. Nothing was sent.'));
     } finally {
-      this._busy = false;
+      this._busy = undefined;
     }
   }
 
   private async _resolve() {
-    if (this._busy) return;
-    this._busy = true;
+    if (this._busy !== undefined) return;
+    this._busy = 'resolve';
     try {
       const result = await window.electronAPI.resolveFeedback(this.record.id);
       this._handleResult(result, msg('Issue marked resolved.'));
@@ -112,7 +115,7 @@ export class FeedbackIssueCard extends LitElement {
       console.error('Failed to resolve feedback issue:', e);
       notifyError(msg('Could not reach the feedback service. Nothing was sent.'));
     } finally {
-      this._busy = false;
+      this._busy = undefined;
     }
   }
 
@@ -153,10 +156,16 @@ export class FeedbackIssueCard extends LitElement {
     </div>`;
   }
 
+  private _renderDots() {
+    return html`<div class="column center-content">
+      <div class="dot-carousel" style="margin: 5px 0;"></div>
+    </div>`;
+  }
+
   private _renderExpanded() {
     const r = this.record;
     const threaded = hasThread(r);
-    return html`<div class="column details" style="gap: 8px;">
+    return html`<div class="column details-container" style="gap: 8px;">
       <div class="original">${r.text}</div>
       ${threaded ? (r.comments ?? []).map((c) => this._renderComment(c)) : html``}
       ${threaded
@@ -177,20 +186,20 @@ export class FeedbackIssueCard extends LitElement {
                     )}
                   >
                     <button
-                      class="moss-button-secondary"
-                      ?disabled=${this._busy}
+                      class="moss-button-secondary action-button"
+                      ?disabled=${this._busy !== undefined}
                       @click=${this._resolve}
                     >
-                      ${msg('Mark resolved')}
+                      ${this._busy === 'resolve' ? this._renderDots() : msg('Mark resolved')}
                     </button>
                   </sl-tooltip>`
                 : html``}
               <button
-                class="moss-button"
-                ?disabled=${this._busy || this._reply.trim() === ''}
+                class="moss-button action-button"
+                ?disabled=${this._busy !== undefined || this._reply.trim() === ''}
                 @click=${this._send}
               >
-                ${msg('Send')}
+                ${this._busy === 'send' ? this._renderDots() : msg('Send')}
               </button>
             </div>`
         : html``}
@@ -199,13 +208,21 @@ export class FeedbackIssueCard extends LitElement {
 
   render() {
     const r = this.record;
-    return html`<div class="card column">
-      <div class="row" style="gap: 12px; align-items: center;">
-        <button
-          class="summary column"
-          aria-expanded=${this._expanded ? 'true' : 'false'}
-          @click=${this._toggle}
-        >
+    return html`<div class="tool column ${this._expanded ? 'tool-expanded' : ''}">
+      <div
+        class="row title-bar items-center"
+        tabindex="0"
+        role="button"
+        aria-expanded=${this._expanded ? 'true' : 'false'}
+        @click=${this._toggle}
+        @keypress=${(e: KeyboardEvent) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            this._toggle();
+          }
+        }}
+      >
+        <div class="summary column">
           <span class="row" style="gap: 8px; align-items: center;">
             <span class="title">${cardTitle(r)}</span>
             ${this.unread > 0
@@ -215,18 +232,33 @@ export class FeedbackIssueCard extends LitElement {
               : html``}
           </span>
           <span class="feedback-date">${this._formatDate(r.timestamp)}</span>
-        </button>
+        </div>
         ${r.issueUrl
-          ? html`<a class="link" href=${r.issueUrl} target="_blank">${msg('View on GitHub')}</a>`
+          ? html`<a
+              class="link"
+              href=${r.issueUrl}
+              target="_blank"
+              @click=${(e: Event) => e.stopPropagation()}
+              >${msg('View on GitHub')}</a
+            >`
           : r.issueNumber === undefined
-            ? html`<button class="moss-button-secondary" @click=${this._copyFeedback}>
+            ? html`<button
+                class="moss-button-secondary"
+                @click=${(e: Event) => {
+                  e.stopPropagation();
+                  this._copyFeedback();
+                }}
+              >
                 ${msg('Copy')}
               </button>`
             : html``}
+        <div style="margin-left: 12px;">
+          ${this._expanded ? chevronSingleDownIcon(18) : chevronSingleUpIcon(18)}
+        </div>
       </div>
       ${this._expanded ? this._renderExpanded() : html``}
     </div>`;
   }
 
-  static styles = [mossStyles, feedbackIssueCardStyles];
+  static styles = [mossStyles, toolSettingsStyles, feedbackIssueCardStyles];
 }

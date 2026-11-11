@@ -3632,10 +3632,6 @@ starts now</source>
   <source>A pseudonymous id included on your issues so the team can follow up.</source>
   <target>チームがフォローアップできるよう、あなたのIssueに付与される匿名のIDです。</target>
 </trans-unit>
-<trans-unit id="sa93e23dc28e4268d">
-  <source>Reporter id:</source>
-  <target>報告者ID:</target>
-</trans-unit>
 <trans-unit id="s967a28faec608ed1">
   <source>GitHub username (optional)</source>
   <target>GitHubユーザー名（任意）</target>
@@ -3733,6 +3729,10 @@ starts now</source>
   <source>Open</source>
   <note from="lit-localize">Issue state tab label, not the verb</note>
   <target>未解決</target>
+</trans-unit>
+<trans-unit id="s40f9c1288fafe54a">
+  <source>Your reporter id:</source>
+  <target>あなたのレポーターID:</target>
 </trans-unit>
 </body>
 </file>
