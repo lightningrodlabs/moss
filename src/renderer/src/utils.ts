@@ -45,6 +45,7 @@ import {
 } from '@holochain-open-dev/stores';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { THREAD_MARKDOWN_SANITIZE } from './app/design-feedback/thread-sanitize.js';
 import { MossStore } from './moss-store.js';
 import { getAppletDevPort } from './electron-api.js';
 import {
@@ -905,6 +906,21 @@ DOMPurify.addHook('afterSanitizeAttributes', (node) => {
 export function markdownParseSafe(input: string) {
   const markedData = marked.parse(input) as string;
   return DOMPurify.sanitize(markedData, { ALLOWED_URI_REGEXP: MARKDOWN_ALLOWED_URI_REGEXP });
+}
+
+export { THREAD_MARKDOWN_SANITIZE };
+
+/**
+ * Markdown for feedback threads: only the tags and the href attribute in
+ * THREAD_MARKDOWN_SANITIZE are kept, and link hrefs must match the usual URI
+ * schemes. The global hook still opens links in a new window.
+ */
+export function markdownParseNoImages(input: string): string {
+  const markedData = marked.parse(input) as string;
+  return DOMPurify.sanitize(markedData, {
+    ...THREAD_MARKDOWN_SANITIZE,
+    ALLOWED_URI_REGEXP: MARKDOWN_ALLOWED_URI_REGEXP,
+  });
 }
 
 export function lazyReloadableStore<T>(

@@ -28,6 +28,7 @@ export default defineConfig(async () => {
             GITHUB_APP_ID: '1',
             GITHUB_INSTALLATION_ID: '2',
             GITHUB_APP_PRIVATE_KEY: testPrivateKeyPem,
+            WEBHOOK_SECRET: 'test-webhook-secret',
             GITHUB_APP_PRIVATE_KEY_PKCS1: testPrivateKeyPkcs1Pem,
             GITHUB_APP_PUBLIC_KEY_SPKI: testPublicKeySpkiPem,
             TEST_MIGRATIONS: migrations,

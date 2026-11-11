@@ -1,8 +1,17 @@
 import type { IpcMain } from 'electron';
 import { validateCreateIssueRequest } from '@theweave/utils';
-import type { FeedbackRecord, FeedbackRecordStore, FeedbackRecordSummary } from './recordStore';
-import type { ReporterKey } from './reporterKey';
-import { FeedbackWorkerClient, type WorkerFailureReason } from './workerClient';
+import type { FeedbackRecord, FeedbackRecordSummary } from './recordStore';
+import {
+  reporterKeyOrUndefined,
+  summarize,
+  workerClientFor,
+  type FeedbackIpcDeps,
+} from './ipcDeps';
+import type { FeedbackThreadSync } from './sync';
+import { registerFeedbackThreadIpc } from './threadIpc';
+import type { WorkerFailureReason } from './workerClient';
+
+export type { FeedbackIpcDeps } from './ipcDeps';
 
 export type FeedbackSubmitInput = {
   text: string;
@@ -27,27 +36,11 @@ export type FeedbackSubmitResult =
 
 export type FeedbackReporterStatus = { reporterId?: string };
 
-export type FeedbackIpcDeps = {
-  store: FeedbackRecordStore;
-  workerUrl: () => string | undefined;
-  getReporterKey: () => Promise<ReporterKey | undefined>;
-  makeClient?: (url: string, key: ReporterKey) => FeedbackWorkerClient;
-};
+export type FeedbackActionResult =
+  | { ok: true; record: FeedbackRecordSummary }
+  | { ok: false; reason: 'no-key' | 'no-worker-url' | 'not-filed' | WorkerFailureReason };
 
-function summarize(record: FeedbackRecord): FeedbackRecordSummary {
-  const { screenshot: _screenshot, ...summary } = record;
-  return summary;
-}
-
-/** The key is absent only when the reporter seed cannot be loaded or created. */
-async function reporterKeyOrUndefined(deps: FeedbackIpcDeps): Promise<ReporterKey | undefined> {
-  try {
-    return await deps.getReporterKey();
-  } catch (e) {
-    console.warn('Could not derive the feedback reporter key:', e);
-    return undefined;
-  }
-}
+export type FeedbackSyncResult = { records: FeedbackRecordSummary[]; unread: number };
 
 /**
  * Persists the report before anything else so it is never lost, then tries to
@@ -89,7 +82,7 @@ export async function feedbackSubmit(
     ...(input.githubHandle ? { githubHandle: input.githubHandle } : {}),
   });
   if ('error' in request) return savedLocally('rejected');
-  const client = deps.makeClient ? deps.makeClient(url, key) : new FeedbackWorkerClient(url, key);
+  const client = workerClientFor(deps, url, key);
   const result = await client.createIssue(request);
   if (!result.ok) return savedLocally(result.reason);
 
@@ -110,7 +103,7 @@ export async function feedbackSubmit(
  */
 export function registerFeedbackIpc(
   ipcMain: { handle: IpcMain['handle'] },
-  deps: FeedbackIpcDeps,
+  deps: FeedbackIpcDeps & { sync: FeedbackThreadSync },
 ): void {
   ipcMain.handle('feedback-submit', (_e, input: FeedbackSubmitInput) =>
     feedbackSubmit(deps, input),
@@ -123,4 +116,5 @@ export function registerFeedbackIpc(
     const key = await reporterKeyOrUndefined(deps);
     return key ? { reporterId: key.reporterId } : {};
   });
+  registerFeedbackThreadIpc(ipcMain, deps);
 }

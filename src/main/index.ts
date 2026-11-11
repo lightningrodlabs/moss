@@ -63,9 +63,12 @@ import { relayTimeoutMs } from './appletRelayPolicy';
 import { MOSS_CONFIG, feedbackWorkerUrl } from './mossConfig';
 import {
   FeedbackRecordStore,
+  feedbackThreadSync,
   loadOrCreateReporterSeed,
   registerFeedbackIpc,
   reporterKeyFromSeed,
+  startFeedbackSync,
+  type FeedbackSyncDeps,
   type ReporterKey,
   type SeedCipher,
 } from './feedback';
@@ -596,6 +599,7 @@ if (!RUNNING_WITH_COMMAND) {
   let SYSTRAY_ICON_STATE: 'high' | 'medium' | undefined = undefined;
   let SYSTRAY: Tray | undefined = undefined;
   let isAppQuitting = false;
+  let feedbackSync: ReturnType<typeof startFeedbackSync> | undefined;
   let LOCAL_SERVICES_HANDLE: childProcess.ChildProcessWithoutNullStreams | undefined;
   const LAN_BEACON = createLanBeaconService();
   // Which import offer (if any) a first launch shows; see legacyImportMode.
@@ -1705,10 +1709,40 @@ if (!RUNNING_WITH_COMMAND) {
       );
       return reporterKey;
     };
-    registerFeedbackIpc(ipcMain, {
+    const notifyNewTeamReplies = (n: number): void => {
+      if (RUN_OPTIONS.disableOsNotifications || MAIN_WINDOW?.isFocused()) return;
+      new Notification({
+        title: 'Moss feedback',
+        body:
+          n === 1
+            ? 'The team replied to your feedback.'
+            : `The team posted ${n} replies to your feedback.`,
+        icon: notificationIcon,
+      })
+        .on('click', () => {
+          createOrShowMainWindow();
+          if (MAIN_WINDOW && !MAIN_WINDOW.isDestroyed())
+            emitToWindow(MAIN_WINDOW, 'open-feedback-settings', null);
+        })
+        .show();
+    };
+    const feedbackSyncDeps: FeedbackSyncDeps = {
       store: new FeedbackRecordStore(WE_FILE_SYSTEM.feedbackDir),
       workerUrl: feedbackWorkerUrl,
       getReporterKey,
+      scheduler: {
+        setInterval: (fn, ms) => setInterval(fn, ms),
+        clearInterval: (handle) => clearInterval(handle as NodeJS.Timeout),
+      },
+      onUnreadChanged: (count) => {
+        if (MAIN_WINDOW && !MAIN_WINDOW.isDestroyed())
+          emitToWindow(MAIN_WINDOW, 'feedback-unread-changed', count);
+      },
+      onNewTeamReplies: notifyNewTeamReplies,
+    };
+    registerFeedbackIpc(ipcMain, {
+      ...feedbackSyncDeps,
+      sync: feedbackThreadSync(feedbackSyncDeps),
     });
     ipcMain.handle('source-selected', (_e, id: string) =>
       WE_EMITTER.emitScreenOrWindowSelected(id),
@@ -3539,6 +3573,7 @@ if (!RUNNING_WITH_COMMAND) {
       if (existingKey) {
         WE_FILE_SYSTEM.persistAgentPubKeyIfMissing(encodeHashToBase64(existingKey));
       }
+      if (!feedbackSync) feedbackSync = startFeedbackSync(feedbackSyncDeps);
       return isFirstLaunch;
     });
     ipcMain.handle('launch', (_e): Promise<boolean> => launchOnce());
@@ -3580,6 +3615,7 @@ if (!RUNNING_WITH_COMMAND) {
 
   app.on('before-quit', () => {
     WE_EMITTER.emitMossLog('before-quit');
+    feedbackSync?.stop();
     if (!isAppQuitting) {
       // If the quitting process takes longer than 15 seconds, force quit.
       setTimeout(() => {

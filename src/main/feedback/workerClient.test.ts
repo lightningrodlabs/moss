@@ -1,6 +1,12 @@
 import { createPublicKey, verify } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
-import { FEEDBACK_HEADERS, verifySignedRequest, type CreateIssueRequest } from '@theweave/utils';
+import {
+  FEEDBACK_HEADERS,
+  verifySignedRequest,
+  type CreateIssueRequest,
+  type ReplyRequest,
+  type SyncRequest,
+} from '@theweave/utils';
 import { reporterKeyFromSeed } from './reporterKey';
 import { FeedbackWorkerClient } from './workerClient';
 
@@ -120,7 +126,11 @@ describe('FeedbackWorkerClient.createIssue', () => {
   it('maps other 401 and 400 to rejected', async () => {
     const { client } = await makeClient((async () =>
       jsonResponse(401, { error: 'invalid_signature', message: 'bad' })) as typeof fetch);
-    expect(await client.createIssue(req)).toMatchObject({ ok: false, reason: 'rejected', status: 401 });
+    expect(await client.createIssue(req)).toMatchObject({
+      ok: false,
+      reason: 'rejected',
+      status: 401,
+    });
     const b = await makeClient((async () =>
       jsonResponse(400, { error: 'bad_request', message: 'nope' })) as typeof fetch);
     expect(await b.client.createIssue(req)).toMatchObject({
@@ -134,14 +144,140 @@ describe('FeedbackWorkerClient.createIssue', () => {
   it('maps 413 to rejected', async () => {
     const { client } = await makeClient((async () =>
       jsonResponse(413, { error: 'bad_request', message: 'too large' })) as typeof fetch);
-    expect(await client.createIssue(req)).toMatchObject({ ok: false, reason: 'rejected', status: 413 });
+    expect(await client.createIssue(req)).toMatchObject({
+      ok: false,
+      reason: 'rejected',
+      status: 413,
+    });
   });
 
   it('maps 429 to rate_limited and 500 to server_error', async () => {
     const a = await makeClient((async () =>
       jsonResponse(429, { error: 'rate_limited', message: 'slow down' })) as typeof fetch);
-    expect(await a.client.createIssue(req)).toMatchObject({ ok: false, reason: 'rate_limited', status: 429 });
+    expect(await a.client.createIssue(req)).toMatchObject({
+      ok: false,
+      reason: 'rate_limited',
+      status: 429,
+    });
     const b = await makeClient((async () => new Response('boom', { status: 500 })) as typeof fetch);
-    expect(await b.client.createIssue(req)).toMatchObject({ ok: false, reason: 'server_error', status: 500 });
+    expect(await b.client.createIssue(req)).toMatchObject({
+      ok: false,
+      reason: 'server_error',
+      status: 500,
+    });
+  });
+});
+
+const comment = {
+  id: 1,
+  authorLogin: 'bot',
+  authorAssociation: 'NONE',
+  body: 'hi',
+  postedForReporter: false,
+  deleted: false,
+  createdAt: 10,
+  updatedAt: 11,
+};
+const syncValue = {
+  issues: [{ number: 3, state: 'open', title: 'T', updatedAt: 12, comments: [comment] }],
+};
+
+async function expectSignedPath(
+  call: (c: FeedbackWorkerClient) => Promise<unknown>,
+  path: string,
+  responseBody: unknown,
+  expectedBody: unknown,
+) {
+  const fetchFn = vi.fn(async () => jsonResponse(200, responseBody));
+  const { client, key } = await makeClient(fetchFn as unknown as typeof fetch);
+  await call(client);
+  const [url, init] = fetchFn.mock.calls[0] as unknown as [string, RequestInit];
+  expect(url).toBe(`https://worker.example${path}`);
+  expect(init.method).toBe('POST');
+  expect(JSON.parse(init.body as string)).toEqual(expectedBody);
+  const headers = new Headers(init.headers);
+  const publicKey = createPublicKey({
+    key: Buffer.concat([SPKI_ED25519_PREFIX, key.publicKey]),
+    format: 'der',
+    type: 'spki',
+  });
+  const result = await verifySignedRequest({
+    method: 'POST',
+    path,
+    body: new TextEncoder().encode(init.body as string),
+    headers: (name) => headers.get(name),
+    nowSeconds: NOW_MS / 1000,
+    verify: async (_pk, message, signature) => verify(null, message, publicKey, signature),
+  });
+  expect(result.ok).toBe(true);
+}
+
+describe('FeedbackWorkerClient thread calls', () => {
+  it('sync signs /v1/sync and returns the response', async () => {
+    const syncReq: SyncRequest = { issues: [{ number: 3, since: 1 }] };
+    await expectSignedPath((c) => c.sync(syncReq), '/v1/sync', syncValue, syncReq);
+    const { client } = await makeClient((async () => jsonResponse(200, syncValue)) as typeof fetch);
+    expect(await client.sync(syncReq)).toEqual({ ok: true, value: syncValue });
+  });
+
+  it('reply signs the comments path', async () => {
+    const replyReq: ReplyRequest = { text: 'thanks' };
+    await expectSignedPath(
+      (c) => c.reply(7, replyReq),
+      '/v1/issues/7/comments',
+      { commentId: 4, createdAt: 9 },
+      replyReq,
+    );
+  });
+
+  it('resolve signs the resolve path with an empty JSON body', async () => {
+    await expectSignedPath(
+      (c) => c.resolve(7),
+      '/v1/issues/7/resolve',
+      { state: 'closed', closedAt: 9 },
+      {},
+    );
+  });
+
+  it('rejects a non-positive-integer issue number without sending', async () => {
+    const fetchFn = vi.fn();
+    const { client } = await makeClient(fetchFn as unknown as typeof fetch);
+    for (const n of [0, -1, 1.5, NaN]) {
+      await expect(client.resolve(n)).rejects.toThrow(TypeError);
+      await expect(client.reply(n, { text: 'x' })).rejects.toThrow(TypeError);
+    }
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it('maps 409 to conflict and 404 to rejected', async () => {
+    const a = await makeClient((async () =>
+      jsonResponse(409, { error: 'conflict', message: 'closed' })) as typeof fetch);
+    expect(await a.client.resolve(2)).toMatchObject({ ok: false, reason: 'conflict', status: 409 });
+    const b = await makeClient((async () =>
+      jsonResponse(404, { error: 'not_found', message: 'no' })) as typeof fetch);
+    expect(await b.client.resolve(2)).toMatchObject({ ok: false, reason: 'rejected', status: 404 });
+  });
+
+  it('treats malformed sync, reply and resolve responses as server_error', async () => {
+    const badSync = { issues: [{ ...syncValue.issues[0], state: 'weird' }] };
+    const badComment = {
+      issues: [{ ...syncValue.issues[0], comments: [{ ...comment, deleted: 'no' }] }],
+    };
+    const replyReq: ReplyRequest = { text: 'x' };
+    const syncReq: SyncRequest = { issues: [] };
+    const cases: Array<[unknown, (c: FeedbackWorkerClient) => Promise<{ ok: boolean }>]> = [
+      [badSync, (c) => c.sync(syncReq)],
+      [badComment, (c) => c.sync(syncReq)],
+      [{}, (c) => c.sync(syncReq)],
+      [{ commentId: 'x', createdAt: 1 }, (c) => c.reply(1, replyReq)],
+      [{ state: 'open', closedAt: 1 }, (c) => c.resolve(1)],
+      [{ state: 'closed' }, (c) => c.resolve(1)],
+    ];
+    for (const [body, call] of cases) {
+      const { client } = await makeClient((async () => jsonResponse(200, body)) as typeof fetch);
+      const r = (await call(client)) as { ok: boolean; reason?: string };
+      expect(r.ok).toBe(false);
+      expect(r.reason).toBe('server_error');
+    }
   });
 });

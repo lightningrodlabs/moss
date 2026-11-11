@@ -23,6 +23,24 @@ export function commentScope(reporterId: string): RateScope {
   };
 }
 
+/** Bounds the GitHub reads a reporter can trigger by syncing issue numbers D1 does not track. */
+export function backfillScope(reporterId: string): RateScope {
+  return {
+    key: `backfills:${reporterId}`,
+    limit: FEEDBACK_LIMITS.backfillsPerReporterPerHour,
+    windowSeconds: 3600,
+  };
+}
+
+/** Bounds the GitHub reads every reporter together can trigger through backfill. */
+export function globalBackfillScope(): RateScope {
+  return {
+    key: 'backfills:global',
+    limit: FEEDBACK_LIMITS.backfillsPerHourGlobal,
+    windowSeconds: 3600,
+  };
+}
+
 /**
  * Counts one request against a fixed window and reports whether it is within the limit.
  * `nowMs` is a clock in milliseconds (default `Date.now`); windows are computed in seconds.

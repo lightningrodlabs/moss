@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import type { FeedbackCommentWire } from '@theweave/utils';
 
 export type FeedbackRecord = {
   id: string;
@@ -14,6 +15,14 @@ export type FeedbackRecord = {
   issueUrl?: string;
   state: 'open' | 'closed' | 'local-only';
   createdVia?: 'worker' | 'github';
+  /** Issue thread as last synced; absent on records that were never synced. */
+  comments?: FeedbackCommentWire[];
+  /** Seconds; team comments created after this count as unread. */
+  lastReadAt?: number;
+  /** Seconds; the issue's updatedAt at the last sync, used as the next sync cursor. */
+  issueUpdatedAt?: number;
+  stateReason?: string;
+  title?: string;
 };
 
 export type FeedbackRecordSummary = Omit<FeedbackRecord, 'screenshot'>;

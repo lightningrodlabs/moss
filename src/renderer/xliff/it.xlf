@@ -1386,10 +1386,6 @@
   <source>No feedback submitted yet.</source>
   <target>Nessun feedback inviato finora.</target>
 </trans-unit>
-<trans-unit id="s8b7af9c477e83543">
-  <source>View Issue</source>
-  <target>Vedi issue</target>
-</trans-unit>
 <trans-unit id="sea97ee88ea35358e">
   <source>Moss GitHub repo</source>
   <target>repository GitHub di Moss</target>
@@ -3636,10 +3632,6 @@ inizia ora</target>
   <source>A pseudonymous id included on your issues so the team can follow up.</source>
   <target>Un ID pseudonimo incluso nelle tue segnalazioni per permettere al team di dare seguito.</target>
 </trans-unit>
-<trans-unit id="sa93e23dc28e4268d">
-  <source>Reporter id:</source>
-  <target>ID segnalatore:</target>
-</trans-unit>
 <trans-unit id="s967a28faec608ed1">
   <source>GitHub username (optional)</source>
   <target>Nome utente GitHub (facoltativo)</target>
@@ -3683,6 +3675,64 @@ inizia ora</target>
 <trans-unit id="s2e14046a9cd2f7fe">
   <source>Feedback saved locally. The feedback key could not be loaded.</source>
   <target>Feedback salvato localmente. Impossibile caricare la chiave del feedback.</target>
+</trans-unit>
+<trans-unit id="s7765a4bc1dda5bb4">
+  <source>This issue is already closed.</source>
+  <target>Questa issue è già chiusa.</target>
+</trans-unit>
+<trans-unit id="sf1b9269f446f9b2d">
+  <source>The reply was not accepted. Check its length and try again.</source>
+  <target>La risposta non è stata accettata. Controlla la lunghezza e riprova.</target>
+</trans-unit>
+<trans-unit id="s2d6b12cf52c52dfd">
+  <source>Could not reach the feedback service. Nothing was sent.</source>
+  <target>Impossibile raggiungere il servizio di feedback. Non è stato inviato nulla.</target>
+</trans-unit>
+<trans-unit id="sa5ea32325bfc8638">
+  <source>Reply posted.</source>
+  <target>Risposta pubblicata.</target>
+</trans-unit>
+<trans-unit id="s157677492c805c6a">
+  <source>Issue marked resolved.</source>
+  <target>Issue contrassegnata come risolta.</target>
+</trans-unit>
+<trans-unit id="s8d518df4b5042a13">
+  <source>Comment deleted</source>
+  <target>Commento eliminato</target>
+</trans-unit>
+<trans-unit id="s5ec745f499bc1860">
+  <source>Closes the GitHub issue as completed. You cannot reopen it from Moss.</source>
+  <target>Chiude l'issue di GitHub come completata. Non puoi riaprirla da Moss.</target>
+</trans-unit>
+<trans-unit id="sc5e1bf31b4ef8ab8">
+  <source>View on GitHub</source>
+  <target>Vedi su GitHub</target>
+</trans-unit>
+<trans-unit id="s89055e59eb983c4d">
+  <source>No open feedback.</source>
+  <target>Nessun feedback aperto.</target>
+</trans-unit>
+<trans-unit id="s65e577cc723daca1">
+  <source>No closed feedback.</source>
+  <target>Nessun feedback chiuso.</target>
+</trans-unit>
+<trans-unit id="feedback-tab-closed">
+  <source>Closed</source>
+  <note from="lit-localize">Issue state tab label</note>
+  <target>Chiusi</target>
+</trans-unit>
+<trans-unit id="feedback-tab-open">
+  <source>Open</source>
+  <note from="lit-localize">Issue state tab label, not the verb</note>
+  <target>Aperti</target>
+</trans-unit>
+<trans-unit id="s40f9c1288fafe54a">
+  <source>Your reporter id:</source>
+  <target>Il tuo id reporter:</target>
+</trans-unit>
+<trans-unit id="sae10ae68acd745f8">
+  <source>Mark Resolved</source>
+  <target>Segna come risolto</target>
 </trans-unit>
 </body>
 </file>

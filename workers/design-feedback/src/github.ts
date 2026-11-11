@@ -174,27 +174,196 @@ export async function installationToken(
   return data.token;
 }
 
+type RepoRequest = { path: string; method: 'GET' | 'POST' | 'PATCH'; json?: unknown };
+
+/** Sends one authenticated request to the configured repository and returns the guarded 2xx body. */
+async function repoRequest<T>(
+  env: Env,
+  req: RepoRequest,
+  what: string,
+  guard: (v: unknown) => v is T,
+  fetchImpl: typeof fetch,
+): Promise<T> {
+  const token = await installationToken(env, fetchImpl);
+  const headers = githubHeaders(`Bearer ${token}`);
+  if (req.json !== undefined) headers['Content-Type'] = 'application/json';
+  const res = await fetchImpl(
+    `${GITHUB_API}/repos/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}${req.path}`,
+    {
+      method: req.method,
+      headers,
+      ...(req.json !== undefined ? { body: JSON.stringify(req.json) } : {}),
+    },
+  );
+  if (!res.ok) throw await failure(res, what);
+  return parseBody(res, guard);
+}
+
+export type GitHubComment = {
+  id: number;
+  body: string;
+  created_at: string;
+  updated_at: string;
+  user: { login: string };
+  author_association: string;
+};
+
+export type GitHubIssue = {
+  number: number;
+  state: 'open' | 'closed';
+  state_reason: string | null;
+  title: string;
+  body: string | null;
+  created_at: string;
+  updated_at: string;
+  html_url: string;
+};
+
+// GitHub reports deleted accounts as `user: null`; they surface under its own placeholder login.
+const GHOST_LOGIN = 'ghost';
+
+function isRawComment(v: unknown): v is GitHubComment {
+  return (
+    isRecord(v) &&
+    typeof v.id === 'number' &&
+    Number.isInteger(v.id) &&
+    typeof v.body === 'string' &&
+    typeof v.created_at === 'string' &&
+    typeof v.updated_at === 'string' &&
+    typeof v.author_association === 'string' &&
+    (v.user === null || (isRecord(v.user) && typeof v.user.login === 'string'))
+  );
+}
+
+function toComment(raw: GitHubComment): GitHubComment {
+  return {
+    id: raw.id,
+    body: raw.body,
+    created_at: raw.created_at,
+    updated_at: raw.updated_at,
+    user: { login: raw.user?.login ?? GHOST_LOGIN },
+    author_association: raw.author_association,
+  };
+}
+
+function isGitHubIssue(v: unknown): v is GitHubIssue {
+  return (
+    isRecord(v) &&
+    typeof v.number === 'number' &&
+    Number.isInteger(v.number) &&
+    (v.state === 'open' || v.state === 'closed') &&
+    (v.state_reason === null || typeof v.state_reason === 'string') &&
+    typeof v.title === 'string' &&
+    (v.body === null || typeof v.body === 'string') &&
+    typeof v.created_at === 'string' &&
+    typeof v.updated_at === 'string' &&
+    typeof v.html_url === 'string'
+  );
+}
+
+function toIssue(raw: GitHubIssue): GitHubIssue {
+  return {
+    number: raw.number,
+    state: raw.state,
+    state_reason: raw.state_reason,
+    title: raw.title,
+    body: raw.body,
+    created_at: raw.created_at,
+    updated_at: raw.updated_at,
+    html_url: raw.html_url,
+  };
+}
+
+function isRawCommentList(v: unknown): v is GitHubComment[] {
+  return Array.isArray(v) && v.every(isRawComment);
+}
+
 /** Opens an issue in the configured repository as the installed GitHub App. */
 export async function createIssue(
   env: Env,
   p: { title: string; body: string; labels: string[] },
   fetchImpl: typeof fetch = fetch,
 ): Promise<CreatedIssue> {
-  const token = await installationToken(env, fetchImpl);
-  const res = await fetchImpl(
-    `${GITHUB_API}/repos/${env.GITHUB_REPO_OWNER}/${env.GITHUB_REPO_NAME}/issues`,
-    {
-      method: 'POST',
-      headers: { ...githubHeaders(`Bearer ${token}`), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: p.title, body: p.body, labels: p.labels }),
-    },
+  const issue = await repoRequest(
+    env,
+    { method: 'POST', path: '/issues', json: { title: p.title, body: p.body, labels: p.labels } },
+    'issue creation',
+    isCreatedIssue,
+    fetchImpl,
   );
-  if (!res.ok) throw await failure(res, 'issue creation');
-  const issue = await parseBody(res, isCreatedIssue);
   return {
     number: issue.number,
     html_url: issue.html_url,
     title: issue.title,
     created_at: issue.created_at,
   };
+}
+
+/** Adds a comment to an issue as the installed GitHub App. */
+export async function createComment(
+  env: Env,
+  number: number,
+  body: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<GitHubComment> {
+  const raw = await repoRequest(
+    env,
+    { method: 'POST', path: `/issues/${number}/comments`, json: { body } },
+    'comment creation',
+    isRawComment,
+    fetchImpl,
+  );
+  return toComment(raw);
+}
+
+/** Closes an issue as completed. */
+export async function closeIssue(
+  env: Env,
+  number: number,
+  fetchImpl: typeof fetch = fetch,
+): Promise<GitHubIssue> {
+  const raw = await repoRequest(
+    env,
+    {
+      method: 'PATCH',
+      path: `/issues/${number}`,
+      json: { state: 'closed', state_reason: 'completed' },
+    },
+    'issue close',
+    isGitHubIssue,
+    fetchImpl,
+  );
+  return toIssue(raw);
+}
+
+/** Reads one issue. */
+export async function getIssue(
+  env: Env,
+  number: number,
+  fetchImpl: typeof fetch = fetch,
+): Promise<GitHubIssue> {
+  const raw = await repoRequest(
+    env,
+    { method: 'GET', path: `/issues/${number}` },
+    'issue read',
+    isGitHubIssue,
+    fetchImpl,
+  );
+  return toIssue(raw);
+}
+
+/** Reads the first page (up to 100) of an issue's comments, oldest first; later pages are not fetched. */
+export async function listIssueComments(
+  env: Env,
+  number: number,
+  fetchImpl: typeof fetch = fetch,
+): Promise<GitHubComment[]> {
+  const raw = await repoRequest(
+    env,
+    { method: 'GET', path: `/issues/${number}/comments?per_page=100` },
+    'comment list',
+    isRawCommentList,
+    fetchImpl,
+  );
+  return raw.map(toComment);
 }

@@ -10,6 +10,18 @@ export const FEEDBACK_LIMITS = {
   maxRequestBytes: 3_145_728,
   timestampWindowSeconds: 300,
   nonceTtlSeconds: 600,
+  /** Sync adopts at most this many untracked issues from GitHub per request. */
+  backfillsPerSyncRequest: 5,
+  backfillsPerReporterPerHour: 30,
+  /** Bounds the GitHub reads all reporters together can trigger through backfill. */
+  backfillsPerHourGlobal: 200,
+  /** How long a number that is not this reporter's issue is skipped before it is read again. */
+  backfillMissTtlSeconds: 86_400,
+  /**
+   * The client asks for comments from this long before the last synced issue time, so
+   * same-second writes and webhooks that land shortly after a sync are not skipped.
+   */
+  syncOverlapSeconds: 300,
 } as const;
 
 export type CreateIssueRequest = {
@@ -33,7 +45,8 @@ export type FeedbackErrorCode =
   | 'screenshot_too_large'
   | 'text_too_long'
   | 'github_error'
-  | 'not_found';
+  | 'not_found'
+  | 'conflict';
 
 export type FeedbackErrorResponse = { error: FeedbackErrorCode; message: string };
 

@@ -8,6 +8,7 @@ compatibility_flags = ["nodejs_compat"]
 
 # Secrets (set via `wrangler secret put`, per environment):
 # - GITHUB_APP_PRIVATE_KEY: PEM private key of the GitHub App (PKCS#1 or PKCS#8 accepted)
+# - WEBHOOK_SECRET: secret of this environment's GitHub repository webhook (POST /v1/webhook)
 
 [vars]
 GITHUB_REPO_OWNER = "lightningrodlabs"

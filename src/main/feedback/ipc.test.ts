@@ -2,10 +2,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import type { CreateIssueRequest, CreateIssueResponse } from '@theweave/utils';
+import type { CreateIssueRequest, CreateIssueResponse, FeedbackCommentWire } from '@theweave/utils';
 import { FeedbackRecordStore } from './recordStore';
 import { reporterKeyFromSeed, type ReporterKey } from './reporterKey';
 import type { FeedbackWorkerClient, WorkerResult } from './workerClient';
+import { feedbackThreadSync, type FeedbackSyncDeps, type FeedbackThreadSync } from './sync';
 import {
   feedbackSubmit,
   registerFeedbackIpc,
@@ -200,18 +201,28 @@ describe('feedbackSubmit request validation', () => {
 });
 
 describe('registerFeedbackIpc', () => {
-  function deps(): FeedbackIpcDeps {
-    return { store, workerUrl: () => 'https://w', getReporterKey: async () => key };
+  function deps(): FeedbackIpcDeps & { sync: FeedbackThreadSync } {
+    const base: FeedbackIpcDeps = {
+      store,
+      workerUrl: () => 'https://w',
+      getReporterKey: async () => key,
+    };
+    return { ...base, sync: { syncNow: async () => {}, trackUnread: (change) => change() } };
   }
 
-  it('registers exactly the four channels', () => {
+  it('registers exactly the feedback channels', () => {
     const handle = vi.fn();
     registerFeedbackIpc({ handle }, deps());
     expect(handle.mock.calls.map((c) => c[0]).sort()).toEqual([
       'feedback-get',
       'feedback-list',
+      'feedback-mark-read',
+      'feedback-reply',
       'feedback-reporter-status',
+      'feedback-resolve',
       'feedback-submit',
+      'feedback-sync-now',
+      'feedback-unread-count',
     ]);
   });
 
@@ -228,5 +239,229 @@ describe('registerFeedbackIpc', () => {
     expect(await handlers.get('feedback-reporter-status')!({})).toEqual({
       reporterId: key.reporterId,
     });
+  });
+});
+
+describe('feedback thread channels', () => {
+  const teamComment = (id: number, createdAt: number): FeedbackCommentWire => ({
+    id,
+    authorLogin: 'dev',
+    authorAssociation: 'MEMBER',
+    postedForReporter: false,
+    body: `c${id}`,
+    createdAt,
+    updatedAt: createdAt,
+    deleted: false,
+  });
+
+  type Reply = FeedbackWorkerClient['reply'];
+  type SyncFn = FeedbackWorkerClient['sync'];
+
+  function setup(client: {
+    reply?: Reply;
+    resolve?: FeedbackWorkerClient['resolve'];
+    sync?: SyncFn;
+  }) {
+    const handlers = new Map<string, (...args: unknown[]) => unknown>();
+    const handle = vi.fn((channel: string, listener: (...args: unknown[]) => unknown) => {
+      handlers.set(channel, listener);
+    });
+    const makeClient = vi.fn(() => client as unknown as FeedbackWorkerClient);
+    const onUnreadChanged = vi.fn<[number], void>();
+    const syncDeps: FeedbackSyncDeps = {
+      store,
+      workerUrl: () => 'https://w',
+      getReporterKey: async () => key,
+      makeClient,
+      scheduler: { setInterval: () => 0, clearInterval: () => {} },
+      onUnreadChanged,
+    };
+    registerFeedbackIpc({ handle }, { ...syncDeps, sync: feedbackThreadSync(syncDeps) });
+    return { handlers, makeClient, onUnreadChanged };
+  }
+
+  it('feedback-reply on a local-only record is not-filed without a client call', async () => {
+    const reply = vi.fn<Parameters<Reply>, ReturnType<Reply>>();
+    const t = setup({ reply });
+    const saved = store.save({ ...input, timestamp: 1000, state: 'local-only' });
+    expect(await t.handlers.get('feedback-reply')!({}, saved.id, 'hi')).toEqual({
+      ok: false,
+      reason: 'not-filed',
+    });
+    expect(await t.handlers.get('feedback-reply')!({}, '1-missing', 'hi')).toEqual({
+      ok: false,
+      reason: 'not-filed',
+    });
+    expect(reply).not.toHaveBeenCalled();
+    expect(t.makeClient).not.toHaveBeenCalled();
+  });
+
+  it('feedback-reply refuses whitespace-only and over-long text without a client call', async () => {
+    const reply = vi.fn<Parameters<Reply>, ReturnType<Reply>>();
+    const t = setup({ reply });
+    const saved = store.save({
+      ...input,
+      timestamp: 1000,
+      state: 'open',
+      issueNumber: 7,
+      createdVia: 'worker',
+    });
+    for (const text of ['  \n\t ', 'x'.repeat(10_001)]) {
+      expect(await t.handlers.get('feedback-reply')!({}, saved.id, text)).toEqual({
+        ok: false,
+        reason: 'rejected',
+      });
+    }
+    expect(reply).not.toHaveBeenCalled();
+    expect(t.makeClient).not.toHaveBeenCalled();
+  });
+
+  it('feedback-reply posts, syncs and returns the refreshed record', async () => {
+    const reply = vi.fn<Parameters<Reply>, ReturnType<Reply>>(async () => ({
+      ok: true,
+      value: { commentId: 9, createdAt: 100 },
+    }));
+    const sync = vi.fn<Parameters<SyncFn>, ReturnType<SyncFn>>(async () => ({
+      ok: true,
+      value: {
+        issues: [
+          { number: 7, state: 'open', title: 'T', updatedAt: 100, comments: [teamComment(9, 100)] },
+        ],
+      },
+    }));
+    const t = setup({ reply, sync });
+    const saved = store.save({
+      ...input,
+      timestamp: 1000,
+      state: 'open',
+      issueNumber: 7,
+      createdVia: 'worker',
+    });
+    const res = await t.handlers.get('feedback-reply')!({}, saved.id, '  hi \n');
+    expect(reply).toHaveBeenCalledWith(7, { text: 'hi' });
+    expect(sync).toHaveBeenCalledTimes(1);
+    expect(res).toMatchObject({ ok: true, record: { id: saved.id, title: 'T' } });
+    expect(res).not.toHaveProperty('record.screenshot');
+  });
+
+  it('feedback-resolve passes a worker failure reason through', async () => {
+    const resolve = vi.fn<
+      Parameters<FeedbackWorkerClient['resolve']>,
+      ReturnType<FeedbackWorkerClient['resolve']>
+    >(async () => ({ ok: false, reason: 'conflict', status: 409 }));
+    const t = setup({ resolve });
+    const saved = store.save({
+      ...input,
+      timestamp: 1000,
+      state: 'open',
+      issueNumber: 7,
+      createdVia: 'worker',
+    });
+    expect(await t.handlers.get('feedback-resolve')!({}, saved.id)).toEqual({
+      ok: false,
+      reason: 'conflict',
+    });
+    expect(resolve).toHaveBeenCalledWith(7);
+  });
+
+  it('feedback-mark-read zeroes the record unread and emits', async () => {
+    const t = setup({});
+    const saved = store.save({
+      ...input,
+      timestamp: 1000,
+      state: 'open',
+      issueNumber: 7,
+      comments: [teamComment(1, 100), teamComment(2, 200)],
+    });
+    expect(await t.handlers.get('feedback-unread-count')!({})).toBe(2);
+    const summary = await t.handlers.get('feedback-mark-read')!({}, saved.id);
+    expect(summary).toMatchObject({ id: saved.id });
+    expect(summary).not.toHaveProperty('screenshot');
+    expect(await t.handlers.get('feedback-unread-count')!({})).toBe(0);
+    expect(t.onUnreadChanged.mock.calls).toEqual([[0]]);
+  });
+
+  it('feedback-mark-read marks every current comment read even when the local clock is behind', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(50 * 1000);
+      const t = setup({});
+      const saved = store.save({
+        ...input,
+        timestamp: 1000,
+        state: 'open',
+        issueNumber: 7,
+        createdVia: 'worker',
+        comments: [teamComment(1, 100), teamComment(2, 200)],
+      });
+      await t.handlers.get('feedback-mark-read')!({}, saved.id);
+      expect(await t.handlers.get('feedback-unread-count')!({})).toBe(0);
+      expect(store.get(saved.id)?.lastReadAt).toBe(200);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('a comment newer than the last one read stays unread after mark-read', async () => {
+    const t = setup({});
+    const saved = store.save({
+      ...input,
+      timestamp: 1000,
+      state: 'open',
+      issueNumber: 7,
+      createdVia: 'worker',
+      comments: [teamComment(1, 100), teamComment(2, 200)],
+    });
+    await t.handlers.get('feedback-mark-read')!({}, saved.id);
+    store.update(saved.id, {
+      comments: [teamComment(1, 100), teamComment(2, 200), teamComment(3, 300)],
+    });
+    expect(await t.handlers.get('feedback-unread-count')!({})).toBe(1);
+  });
+
+  it('feedback-mark-read never moves lastReadAt backwards and leaves it alone without comments', async () => {
+    const t = setup({});
+    const withComments = store.save({
+      ...input,
+      timestamp: 1000,
+      state: 'open',
+      issueNumber: 7,
+      createdVia: 'worker',
+      lastReadAt: 500,
+      comments: [teamComment(1, 100)],
+    });
+    const withoutComments = store.save({
+      ...input,
+      timestamp: 2000,
+      state: 'open',
+      issueNumber: 8,
+      createdVia: 'worker',
+      lastReadAt: 400,
+    });
+    await t.handlers.get('feedback-mark-read')!({}, withComments.id);
+    await t.handlers.get('feedback-mark-read')!({}, withoutComments.id);
+    expect(store.get(withComments.id)?.lastReadAt).toBe(500);
+    expect(store.get(withoutComments.id)?.lastReadAt).toBe(400);
+  });
+
+  it('feedback-sync-now returns the records and the unread total', async () => {
+    const sync = vi.fn<Parameters<SyncFn>, ReturnType<SyncFn>>(async () => ({
+      ok: true,
+      value: {
+        issues: [
+          { number: 7, state: 'open', title: 'T', updatedAt: 100, comments: [teamComment(1, 100)] },
+        ],
+      },
+    }));
+    const t = setup({ sync });
+    store.save({
+      ...input,
+      timestamp: 1000,
+      state: 'open',
+      issueNumber: 7,
+      createdVia: 'worker',
+    });
+    const res = await t.handlers.get('feedback-sync-now')!({});
+    expect(res).toMatchObject({ unread: 1, records: [{ title: 'T' }] });
   });
 });
