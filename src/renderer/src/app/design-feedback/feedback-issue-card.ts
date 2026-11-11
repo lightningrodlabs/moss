@@ -190,7 +190,7 @@ export class FeedbackIssueCard extends LitElement {
                       ?disabled=${this._busy !== undefined}
                       @click=${this._resolve}
                     >
-                      ${this._busy === 'resolve' ? this._renderDots() : msg('Mark resolved')}
+                      ${this._busy === 'resolve' ? this._renderDots() : msg('Mark Resolved')}
                     </button>
                   </sl-tooltip>`
                 : html``}

@@ -80,6 +80,7 @@ export const feedbackIssueCardStyles = css`
   }
   .action-button {
     min-width: 140px;
+    text-align: center;
   }
   .moss-button-secondary .dot-carousel {
     --carousel-color: black;

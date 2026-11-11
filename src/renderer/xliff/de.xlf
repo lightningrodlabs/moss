@@ -3704,10 +3704,6 @@ beginnt jetzt</target>
   <source>Closes the GitHub issue as completed. You cannot reopen it from Moss.</source>
   <target>Schließt das GitHub-Issue als erledigt. Sie können es in Moss nicht wieder öffnen.</target>
 </trans-unit>
-<trans-unit id="s5d3dcb9018296dd8">
-  <source>Mark resolved</source>
-  <target>Als gelöst markieren</target>
-</trans-unit>
 <trans-unit id="sc5e1bf31b4ef8ab8">
   <source>View on GitHub</source>
   <target>Auf GitHub ansehen</target>
@@ -3733,6 +3729,10 @@ beginnt jetzt</target>
 <trans-unit id="s40f9c1288fafe54a">
   <source>Your reporter id:</source>
   <target>Ihre Reporter-ID:</target>
+</trans-unit>
+<trans-unit id="sae10ae68acd745f8">
+  <source>Mark Resolved</source>
+  <target>Als gelöst markieren</target>
 </trans-unit>
 </body>
 </file>

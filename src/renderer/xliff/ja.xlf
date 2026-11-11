@@ -3704,10 +3704,6 @@ starts now</source>
   <source>Closes the GitHub issue as completed. You cannot reopen it from Moss.</source>
   <target>GitHub の Issue を完了としてクローズします。Moss から再オープンすることはできません。</target>
 </trans-unit>
-<trans-unit id="s5d3dcb9018296dd8">
-  <source>Mark resolved</source>
-  <target>解決済みにする</target>
-</trans-unit>
 <trans-unit id="sc5e1bf31b4ef8ab8">
   <source>View on GitHub</source>
   <target>GitHub で表示</target>
@@ -3733,6 +3729,10 @@ starts now</source>
 <trans-unit id="s40f9c1288fafe54a">
   <source>Your reporter id:</source>
   <target>あなたのレポーターID:</target>
+</trans-unit>
+<trans-unit id="sae10ae68acd745f8">
+  <source>Mark Resolved</source>
+  <target>解決済みにする</target>
 </trans-unit>
 </body>
 </file>
