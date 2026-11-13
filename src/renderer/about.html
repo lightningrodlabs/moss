@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>About Moss</title>
+    <style>
+      @font-face {
+        font-family: 'Mossville-v2';
+        src:
+          url('/fonts/Mossville-v2-Regular.woff2') format('woff2'),
+          url('/fonts/Mossville-v2-Regular.otf') format('opentype');
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        height: 100vh;
+        background: linear-gradient(180deg, var(--Moss-main-green, #e0eed5) 18.05%, #f5f5f3 99.92%);
+        font-family: 'Inter Variable', 'Aileron', 'Open Sans', 'Helvetica Neue', sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <moss-about></moss-about>
+    <script type="module">
+      import '@shoelace-style/shoelace/dist/themes/light.css';
+      import '@fontsource/aileron';
+      import '@fontsource-variable/inter';
+    </script>
+    <script type="module">
+      // Use the language chosen in Moss, stored by PersistedStore in localStorage.
+      import { setLocale, isSupportedLocale } from './src/locales/localization.ts';
+      import { destringifyAndDecode } from './src/utils.ts';
+
+      try {
+        const stored = window.localStorage.getItem('locale');
+        const locale = stored ? destringifyAndDecode(stored) : undefined;
+        if (typeof locale === 'string' && isSupportedLocale(locale)) await setLocale(locale);
+      } catch (e) {
+        console.warn('Failed to set locale:', e);
+      }
+      await import('./src/about.ts');
+    </script>
+  </body>
+</html>

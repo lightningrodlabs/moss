@@ -5,7 +5,11 @@ import type {
   JsStreamEvent,
   OpenOptions,
 } from '@lightningrodlabs/flexaudio';
-import type { AudioSourceRow } from '@theweave/moss-types';
+import type {
+  AudioSourceRequestOutcome,
+  AudioSourceRequestResult,
+  AudioSourceRow,
+} from '@theweave/moss-types';
 import type { AudioCaptureBackend } from './audioCapture';
 import type { PickerRequester } from './audioSourceGrants';
 import {
@@ -250,17 +254,26 @@ describe('describeSelection', () => {
 
 // ---------- request table ----------
 
+const REFUSED_UNSUPPORTED: AudioSourceRequestOutcome = { status: 'refused', reason: 'unsupported' };
+const CANCELLED: AudioSourceRequestOutcome = { status: 'cancelled' };
+
+/** The grant of a `granted` outcome; fails the test on any other status. */
+function granted(outcome: AudioSourceRequestOutcome): AudioSourceRequestResult {
+  expect(outcome.status).toBe('granted');
+  return (outcome as { status: 'granted'; grant: AudioSourceRequestResult }).grant;
+}
+
 describe('AudioSourceGrants.request', () => {
-  it('no addon → null, picker never opened', async () => {
+  it('no addon → refused as unsupported, picker never opened', async () => {
     const r = rig({ backend: () => undefined });
-    expect(await r.grants.request(REQ)).toBeNull();
+    expect(await r.grants.request(REQ)).toEqual(REFUSED_UNSUPPORTED);
     expect(r.picker).not.toHaveBeenCalled();
   });
 
-  it('devices() throws → null', async () => {
+  it('devices() throws → refused as unsupported', async () => {
     const r = rig();
     r.backend.devicesThrows = true;
-    expect(await r.grants.request(REQ)).toBeNull();
+    expect(await r.grants.request(REQ)).toEqual(REFUSED_UNSUPPORTED);
     expect(r.picker).not.toHaveBeenCalled();
   });
 
@@ -270,18 +283,18 @@ describe('AudioSourceGrants.request', () => {
     expect(r.picker.mock.calls[0][1]).toEqual({ targetId: 7, toolName: 'Presence' });
   });
 
-  it('picker cancelled → null, nothing opened', async () => {
+  it('picker cancelled → cancelled, nothing opened', async () => {
     const r = rig();
     r.picker.mockResolvedValueOnce(null);
-    expect(await r.grants.request(REQ)).toBeNull();
+    expect(await r.grants.request(REQ)).toEqual(CANCELLED);
     expect(r.backend.opened).toEqual([]);
     expect(r.grants.list()).toEqual([]);
   });
 
-  it('picker confirms nothing → null', async () => {
+  it('picker confirms nothing → cancelled', async () => {
     const r = rig();
     r.picker.mockResolvedValueOnce([]);
-    expect(await r.grants.request(REQ)).toBeNull();
+    expect(await r.grants.request(REQ)).toEqual(CANCELLED);
   });
 
   it('processes() rejects → picker gets only the system row', async () => {
@@ -296,7 +309,10 @@ describe('AudioSourceGrants.request', () => {
   it('system row chosen → one system stream with excludeSelf + the process tree, fixed format', async () => {
     const r = rig();
     const result = await r.grants.request(REQ);
-    expect(result).toEqual({ grantId: 'g1', label: 'System audio', canExcludeSelf: true });
+    expect(result).toEqual({
+      status: 'granted',
+      grant: { grantId: 'g1', label: 'System audio', canExcludeSelf: true },
+    });
     expect(r.backend.opened).toHaveLength(1);
     expect(r.backend.opened[0].options).toEqual({
       kind: 'system',
@@ -324,7 +340,7 @@ describe('AudioSourceGrants.request', () => {
       rows.filter((x) => x.kind === 'app').map((x) => x.id),
     );
     const result = await r.grants.request(REQ);
-    expect(result?.label).toBe('Firefox, Spotify');
+    expect(granted(result).label).toBe('Firefox, Spotify');
     expect(r.backend.opened.map((s) => s.options)).toEqual([
       { kind: 'process', processId: 3, outputRate: 48000, outputChannels: 1, chunkMs: 20 },
       { kind: 'process', processId: 4, outputRate: 48000, outputChannels: 1, chunkMs: 20 },
@@ -342,7 +358,7 @@ describe('AudioSourceGrants.request', () => {
       rows.filter((x) => x.kind === 'app').map((x) => x.id),
     );
     const result = await r.grants.request(REQ);
-    expect(result?.label).toBe('Spotify');
+    expect(granted(result).label).toBe('Spotify');
     expect(r.backend.opened).toHaveLength(1);
   });
 
@@ -376,7 +392,7 @@ describe('AudioSourceGrants.request', () => {
       rows.filter((x) => x.kind === 'app').map((x) => x.id),
     );
     const result = await r.grants.request(REQ);
-    expect(result?.label).toBe('Spotify');
+    expect(granted(result).label).toBe('Spotify');
     expect(r.backend.opened).toHaveLength(2);
     expect(r.backend.opened[0].stop).toHaveBeenCalledTimes(1);
     expect(r.backend.opened[1].stop).not.toHaveBeenCalled();
@@ -396,7 +412,7 @@ describe('AudioSourceGrants.request', () => {
       /one audio source picker/,
     );
     release(null);
-    expect(await first).toBeNull();
+    expect(await first).toEqual(CANCELLED);
   });
 
   it('enumerates the process list exactly once per request', async () => {
@@ -419,7 +435,7 @@ describe('AudioSourceGrants.request', () => {
       rows.filter((x) => x.kind === 'app').map((x) => x.id),
     );
     const result = await r.grants.request(REQ);
-    expect(result?.label).toBe('Spotify');
+    expect(granted(result).label).toBe('Spotify');
     // The addon keeps the dead stream's callbacks and fires a late deviceLost.
     r.backend.event(0, { type: 'deviceLost' });
     await flush();
@@ -443,9 +459,9 @@ describe('AudioSourceGrants.request', () => {
     expect(r.ports[0].sent.at(-1)).toEqual({ type: 'ended', reason: 'app-quit' });
   });
 
-  it('requesting window gone at delivery → grant ended, streams stopped, null (Review Focus 2)', async () => {
+  it('requesting window gone at delivery → grant ended, streams stopped, cancelled (Review Focus 2)', async () => {
     const r = rig({ deliverPort: () => false });
-    expect(await r.grants.request(REQ)).toBeNull();
+    expect(await r.grants.request(REQ)).toEqual(CANCELLED);
     expect(r.backend.opened[0].stop).toHaveBeenCalledTimes(1);
     expect(r.ports[0].closed).toBe(true);
     expect(r.grants.list()).toEqual([]);

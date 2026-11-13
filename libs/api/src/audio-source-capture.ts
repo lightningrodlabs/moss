@@ -47,6 +47,74 @@ export interface AudioSourceDelivery {
   port: MessagePort;
 }
 
+/**
+ * Why a host refused to capture before showing any picker. `unsupported`: the
+ * capture backend cannot run on this machine. `disabled`: the user switched
+ * the host's Audio Sources service off.
+ * @public
+ */
+export type AudioSourceRefusalReason = 'unsupported' | 'disabled';
+
+/**
+ * The host's answer to `request-audio-sources`. A grant carries the frame port
+ * in the transfer list of the same reply.
+ * @public
+ */
+export type AudioSourceRequestReply =
+  | { status: 'granted'; label: string; canExcludeSelf: boolean }
+  | { status: 'cancelled' }
+  | { status: 'refused'; reason: AudioSourceRefusalReason };
+
+/**
+ * Thrown by `captureAudioSources` when the host, not the user, declined. A
+ * Tool may hide its capture control on `reason`; a user cancel resolves
+ * `null` instead and leaves the control in place.
+ * @public
+ */
+export class AudioSourceUnavailableError extends Error {
+  constructor(readonly reason: AudioSourceRefusalReason) {
+    super(`The host cannot capture audio sources: ${reason}`);
+    this.name = 'AudioSourceUnavailableError';
+  }
+}
+
+/**
+ * Whether `e` is a host refusal. A Tool bundles its own copy of this package
+ * while the host's iframe code throws from another copy, so `instanceof`
+ * does not match across them; the error's name and reason do.
+ * @public
+ */
+export function isAudioSourceUnavailableError(e: unknown): e is AudioSourceUnavailableError {
+  if (!(e instanceof Error) || e.name !== 'AudioSourceUnavailableError') return false;
+  const reason = (e as { reason?: unknown }).reason;
+  return reason === 'unsupported' || reason === 'disabled';
+}
+
+/**
+ * Turns the host's reply into what `createAudioSourceCapture` consumes: a
+ * delivery on a grant, `null` on a user cancel, and a thrown
+ * `AudioSourceUnavailableError` on a host refusal.
+ * @internal
+ */
+export function deliveryFromAudioSourceReply(
+  reply: AudioSourceRequestReply,
+  ports: readonly MessagePort[],
+): AudioSourceDelivery | null {
+  switch (reply.status) {
+    case 'cancelled':
+      return null;
+    case 'refused':
+      throw new AudioSourceUnavailableError(reply.reason);
+    case 'granted': {
+      const port = ports[0];
+      // A Moss host attaches the port to the same reply that carries the
+      // grant; this guards a foreign host that answers without the transfer.
+      if (!port) throw new Error('The host granted audio sources but transferred no port.');
+      return { label: reply.label, canExcludeSelf: reply.canExcludeSelf, port };
+    }
+  }
+}
+
 /** @public */
 export interface CaptureAudioSourcesOptions {
   /** Build the track in this context when it runs at 48 kHz; otherwise a private one is used. */
@@ -75,7 +143,11 @@ export function selectContext(
   preferred: AudioContext | undefined,
   create: (sampleRate: number) => AudioContext,
 ): { context: AudioContext; owned: boolean } {
-  if (preferred && preferred.sampleRate === AUDIO_SOURCE_SAMPLE_RATE && preferred.state !== 'closed') {
+  if (
+    preferred &&
+    preferred.sampleRate === AUDIO_SOURCE_SAMPLE_RATE &&
+    preferred.state !== 'closed'
+  ) {
     return { context: preferred, owned: false };
   }
   return { context: create(AUDIO_SOURCE_SAMPLE_RATE), owned: true };
@@ -272,7 +344,12 @@ export async function createAudioSourceCaptureWith(
 
     node = env.createNode(context);
     node.port.onmessage = (e) => {
-      const d = e.data as { type?: unknown; written?: number; overflowDropped?: number; underrunSamples?: number };
+      const d = e.data as {
+        type?: unknown;
+        written?: number;
+        overflowDropped?: number;
+        underrunSamples?: number;
+      };
       if (d && d.type === 'stats') {
         stats.overflowDropped = d.overflowDropped ?? 0;
         stats.underrunSamples = d.underrunSamples ?? 0;

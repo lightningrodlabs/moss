@@ -47,8 +47,10 @@ import {
   stringifyWal,
   IframeKind,
   createAudioSourceCapture,
+  deliveryFromAudioSourceReply,
   CaptureAudioSourcesOptions,
   AudioSourceCapture,
+  AudioSourceRequestReply,
   AsrIncomingEvent,
   AsrSession,
   AsrSessionOptions,
@@ -108,27 +110,19 @@ const assetStoreCache = new Map<
 
 /**
  * The `captureAudioSources` entry of `weaveApi`. Attached only once the
- * iframe config reports `audioCaptureAvailable`, so a Tool's feature
- * detection (`client.captureAudioSources?.`) means the host can capture
- * for it now: its Audio Sources service is on and its backend loaded.
- * Attached before `applet-iframe-ready`, which is what
- * `WeaveClient.connect` waits for.
+ * iframe config reports `audioCaptureAvailable`, which reads the host's Audio
+ * Sources switch at iframe load. The host's capture backend is first touched
+ * by the request itself, so a host that cannot capture answers that request
+ * with a refusal the Tool can tell from a user cancel. Attached before
+ * `applet-iframe-ready`, which is what `WeaveClient.connect` waits for.
  */
 const captureAudioSources = async (
   opts?: CaptureAudioSourcesOptions,
 ): Promise<AudioSourceCapture | null> => {
   const { result, ports } = await postMessageWithPorts({ type: 'request-audio-sources' });
-  if (!result) return null;
-  const port = ports[0];
-  // A Moss host attaches the port to the same reply that carries a non-null
-  // result (`TransferableReply`), so this branch is unreachable there; it
-  // guards a foreign host that answers the message without honouring the
-  // transfer.
-  if (!port) throw new Error('The host granted audio sources but transferred no port.');
-  return createAudioSourceCapture(
-    { label: result.label, canExcludeSelf: result.canExcludeSelf, port },
-    opts,
-  );
+  const delivery = deliveryFromAudioSourceReply(result as AudioSourceRequestReply, ports);
+  if (!delivery) return null;
+  return createAudioSourceCapture(delivery, opts);
 };
 
 /** All weaveApi functions shoot an event to parent */

@@ -9,7 +9,7 @@ import type {
   AudioSourceGrantCounters,
   AudioSourceGrantInfo,
   AudioSourcePortDelivery,
-  AudioSourceRequestResult,
+  AudioSourceRequestOutcome,
   AudioSourceRow,
 } from '@theweave/moss-types';
 import { AudioCaptureBackend, probeAudioSupport } from './audioCapture';
@@ -193,12 +193,12 @@ export class AudioSourceGrants {
     }));
   }
 
-  async request(req: AudioSourceRequest): Promise<AudioSourceRequestResult | null> {
+  async request(req: AudioSourceRequest): Promise<AudioSourceRequestOutcome> {
     const backend = this.b.backend();
     // One probe answers both questions this request has for the addon: what
     // the host can do, and which processes it may offer.
     const { capabilities: caps, processes } = await probeAudioSupport(backend, this.b.platform);
-    if (!backend || !caps.supported) return null;
+    if (!backend || !caps.supported) return { status: 'refused', reason: 'unsupported' };
 
     const excludePids = this.b.excludePids();
     const { rows, pidById } = buildAudioSourceRows(processes, excludePids);
@@ -211,12 +211,12 @@ export class AudioSourceGrants {
     } finally {
       this.pickerOpen = false;
     }
-    if (!chosen || chosen.length === 0) return null;
+    if (!chosen || chosen.length === 0) return { status: 'cancelled' };
 
     const chosenSet = new Set(chosen);
     const wantSystem = chosenSet.has(SYSTEM_ROW_ID);
     const wantApps = rows.filter((r) => r.kind === 'app' && chosenSet.has(r.id));
-    if (!wantSystem && wantApps.length === 0) return null;
+    if (!wantSystem && wantApps.length === 0) return { status: 'cancelled' };
 
     const grantId = this.b.newId();
     const { port1, port2 } = this.b.openChannel();
@@ -288,10 +288,13 @@ export class AudioSourceGrants {
 
     if (!this.b.deliverPort(req.targetId, { requestId: req.requestId, grantId }, port2)) {
       await this.endGrant(grantId, 'window-closed');
-      return null;
+      return { status: 'cancelled' };
     }
     this.notify();
-    return { grantId, label: grant.info.label, canExcludeSelf: caps.canExcludeSelf };
+    return {
+      status: 'granted',
+      grant: { grantId, label: grant.info.label, canExcludeSelf: caps.canExcludeSelf },
+    };
   }
 
   async endGrant(grantId: string, reason: AudioSourceEndReason): Promise<void> {
