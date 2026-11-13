@@ -3567,6 +3567,14 @@ começa agora</target>
   <source>License:</source>
   <target>Licença:</target>
 </trans-unit>
+<trans-unit id="s0b649cba8d604c76">
+  <source>Check availability</source>
+  <target>Verificar disponibilidade</target>
+</trans-unit>
+<trans-unit id="s153347f345efeefe">
+  <source>Moss asks the system about audio capture only when you run this check.</source>
+  <target>O Moss consulta o sistema sobre a captura de áudio apenas quando você executa esta verificação.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

@@ -3567,6 +3567,14 @@ starts now</source>
   <source>License:</source>
   <target>Lisans:</target>
 </trans-unit>
+<trans-unit id="s0b649cba8d604c76">
+  <source>Check availability</source>
+  <target>Kullanılabilirliği denetle</target>
+</trans-unit>
+<trans-unit id="s153347f345efeefe">
+  <source>Moss asks the system about audio capture only when you run this check.</source>
+  <target>Moss, ses yakalamayı yalnızca bu denetimi çalıştırdığınızda sisteme sorar.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
