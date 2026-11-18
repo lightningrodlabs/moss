@@ -42,6 +42,11 @@ mac:
     NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false
+  # electron-builder deletes Electron's LICENSES.chromium.html from mac builds; ship a
+  # copy in Contents/Resources so the About window can open the Chromium notices.
+  extraResources:
+    - from: node_modules/electron/dist/LICENSES.chromium.html
+      to: LICENSES.chromium.html
 dmg:
   artifactName: ${name}-${version}-${arch}.${ext}
 linux:

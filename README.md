@@ -81,7 +81,7 @@ To release Moss or update it to use a new version of holochain, follow the [Rele
 
 [![License: CAL 1.0](https://img.shields.io/badge/License-CAL%201.0-blue.svg)](https://github.com/holochain/cryptographic-autonomy-license)
 
-Copyright (C) 2021-2024, Harris-Braun Enterprises, LLC
+Copyright (C) 2021-2026, Harris-Braun Enterprises, LLC
 
 This program is free software: you can redistribute it and/or modify it under the terms of the license
 provided in the LICENSE file (CAL-1.0). This program is distributed in the hope that it will be useful,

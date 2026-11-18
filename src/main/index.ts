@@ -2,6 +2,7 @@
 import {
   app,
   BrowserWindow,
+  crashReporter,
   ipcMain,
   IpcMainInvokeEvent,
   net,
@@ -24,6 +25,8 @@ import fs from 'fs';
 import os from 'os';
 import url from 'url';
 import { validateMediaUrl, MediaUrlResult } from './mediaUrlProbe';
+import { installCrashReporting } from './crashReporting';
+import { pipewireClientConfigEnv } from './pipewireEnv';
 import { isMossUiMicrophoneRequest } from './mossUiMediaPolicy';
 import mime from 'mime';
 import * as childProcess from 'child_process';
@@ -58,6 +61,7 @@ import { BINARIES_DIRECTORY, RESOURCES_DIRECTORY } from './const';
 import { registerAsrIpc } from './asr/wireUp';
 import { relayTimeoutMs } from './appletRelayPolicy';
 import { MOSS_CONFIG } from './mossConfig';
+import { registerAboutIpc } from './aboutWindow';
 import { createLanBeaconService, type BeaconDiagnostics } from './lanBeacon';
 // import { AdminWebsocket } from '@holochain/client';
 import { SCREEN_OR_WINDOW_SELECTED, WeEmitter } from './weEmitter';
@@ -546,6 +550,16 @@ if (!RUNNING_WITH_COMMAND) {
   const WE_EMITTER = new WeEmitter();
 
   setupLogs(WE_EMITTER, WE_FILE_SYSTEM, RUN_OPTIONS.printHolochainLogs);
+
+  installCrashReporting({
+    start: (options) => crashReporter.start(options),
+    crashDumpsDir: app.getPath('crashDumps'),
+    onChildProcessGone: (listener) =>
+      app.on('child-process-gone', (_e, details) => listener(details)),
+    log: (line) => WE_EMITTER.emitMossLog(line),
+  });
+  // Set before any native audio code can load the PipeWire client library.
+  Object.assign(process.env, pipewireClientConfigEnv(process.env, process.platform));
 
   protocol.registerSchemesAsPrivileged([
     {
@@ -1577,6 +1591,10 @@ if (!RUNNING_WITH_COMMAND) {
         }
       },
     );
+    registerAboutIpc(() => ({
+      mossVersion: appVersion,
+      holochainVersion: MOSS_CONFIG.holochain,
+    }));
     ipcMain.handle('get-media-sources', async () => {
       const sources = await desktopCapturer.getSources({ types: ['window', 'screen'] });
       return sources.map((source) => {

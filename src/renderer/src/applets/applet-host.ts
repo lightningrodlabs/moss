@@ -29,12 +29,11 @@ import { AppOpenViews } from '../layout/types.js';
 import {
   getAppletDevPort,
   getAppletIframeScript,
-  getAudioCapabilities,
   selectScreenOrWindow,
   signZomeCallApplet,
 } from '../electron-api.js';
 import { audioSourceGrantsClient, releaseGrantsFor } from '../audio-sources/singletons.js';
-import { TransferableReply } from '../transferable-reply.js';
+import { TransferableReply, audioSourceReply } from '../transferable-reply.js';
 import { MossStore } from '../moss-store.js';
 // import { AppletNotificationSettings } from './types.js';
 import { AppletHash, AppletId, stringifyWal } from '@theweave/api';
@@ -46,7 +45,7 @@ import {
 } from '../utils.js';
 import { assertValidRequest } from './request-validation.js';
 import { hostTimeoutMessage, type IframeReadiness } from './host-timeout.js';
-import { audioCaptureAvailable } from './audio-capture-config.js';
+import { warmUpRefusal } from '../asr/warm-up-gate.js';
 import { AppletStore } from './applet-store.js';
 import { getAsrRendererBridge, type SessionOrigin } from './asr-bridge.js';
 import { resolveAppletName } from './applet-name.js';
@@ -369,7 +368,6 @@ export function buildHeadlessWeaveClient(mossStore: MossStore): WeaveServices {
   };
 }
 
-
 export async function handleAppletIframeMessage(
   mossStore: MossStore,
   openViews: AppOpenViews,
@@ -401,10 +399,7 @@ export async function handleAppletIframeMessage(
           locale: getLocale(),
           applets,
           zomeCallLogging: window.__ZOME_CALL_LOGGING_ENABLED__,
-          audioCaptureAvailable: await audioCaptureAvailable(
-            () => mossStore.persistedStore.audioSourcesEnabled.value(),
-            getAudioCapabilities,
-          ),
+          audioCaptureAvailable: mossStore.persistedStore.audioSourcesEnabled.value(),
         };
         mossStore.iframeStore.registerCrossGroupIframe(source.toolCompatibilityId, {
           id: message.id,
@@ -452,10 +447,7 @@ export async function handleAppletIframeMessage(
           groupProfiles: filteredGroupProfiles,
           groupHash: source.groupHash, // Use the groupHash from the iframe source if any
           zomeCallLogging: window.__ZOME_CALL_LOGGING_ENABLED__,
-          audioCaptureAvailable: await audioCaptureAvailable(
-            () => mossStore.persistedStore.audioSourcesEnabled.value(),
-            getAudioCapabilities,
-          ),
+          audioCaptureAvailable: mossStore.persistedStore.audioSourcesEnabled.value(),
         };
 
         mossStore.iframeStore.registerAppletIframe(encodeHashToBase64(source.appletHash), {
@@ -501,15 +493,20 @@ export async function handleAppletIframeMessage(
       return caps;
     }
     case 'asr-warm-up': {
-      // Warming loads the model on the tool's behalf but touches no
-      // audio, so the global switch is the only gate; consent is asked
-      // when a session is actually opened.
-      if (!mossStore.persistedStore.localAiEnabled.value()) {
-        throw new Error('Transcription is disabled in Moss settings');
-      }
+      // Warming loads the model on the tool's behalf. Consent is never asked
+      // here, only read: a tool earns the right to warm up by having opened a
+      // session the user approved, so an idle tool cannot keep the model
+      // resident on a machine whose user never agreed to transcription.
       if (source.type !== 'applet') {
         throw new Error('Local ASR is only available from applet iframes');
       }
+      const refusal = warmUpRefusal({
+        transcriptionEnabled: mossStore.persistedStore.localAiEnabled.value(),
+        consent: mossStore.persistedStore.appletAsrConsent.value(
+          encodeHashToBase64(source.appletHash),
+        ),
+      });
+      if (refusal) throw new Error(refusal);
       await window.electronAPI.asrWarmUp();
       return undefined;
     }
@@ -611,12 +608,8 @@ export async function handleAppletIframeMessage(
       } else {
         toolName = source.toolCompatibilityId;
       }
-      const grant = await audioSourceGrantsClient.request({ iframeKey, toolName });
-      if (!grant) return null;
-      return new TransferableReply(
-        { label: grant.result.label, canExcludeSelf: grant.result.canExcludeSelf },
-        [grant.port],
-      );
+      const outcome = await audioSourceGrantsClient.request({ iframeKey, toolName });
+      return audioSourceReply(outcome);
     }
     case 'toggle-pocket':
       return openViews.toggleClipboard();

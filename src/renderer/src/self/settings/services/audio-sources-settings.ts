@@ -15,6 +15,7 @@ import { PersistedStore } from '../../../persisted-store.js';
 import { getAudioCapabilities, stopAudioSources } from '../../../electron-api.js';
 import { audioSourceGrants } from '../../../audio-sources/grants-store.js';
 import { formatGrantSummary } from '../../../audio-sources/grant-summary.js';
+import { audioAvailabilityState } from './audio-availability-state.js';
 
 /** The Audio Sources service: kill switch, who is capturing right now, and what this host can do. */
 @localized()
@@ -29,13 +30,23 @@ export class MossAudioSourcesSettings extends LitElement {
 
   @state() _enabled = true;
   @state() _capabilities: AudioCapabilities | undefined;
+  @state() _checking = false;
 
   @query('#about-dialog')
   private _aboutDialog!: MossDialog;
 
-  async firstUpdated() {
+  firstUpdated() {
     this._enabled = this._persistedStore.audioSourcesEnabled.value();
-    this._capabilities = await getAudioCapabilities();
+  }
+
+  // Probing loads the native audio addon, so it runs only when the user asks.
+  private async checkAvailability() {
+    this._checking = true;
+    try {
+      this._capabilities = await getAudioCapabilities();
+    } finally {
+      this._checking = false;
+    }
   }
 
   private toggle(e: Event) {
@@ -49,25 +60,51 @@ export class MossAudioSourcesSettings extends LitElement {
   }
 
   private renderTechnicalDetails() {
-    const c = this._capabilities;
-    if (!c) return html`<div class="service-details">${msg('No capabilities reported.')}</div>`;
-    if (!c.supported)
-      return html`<div class="service-details">
-        ${msg('Audio capture is not available on this system.')}${c.reason
-          ? html` (${c.reason})`
-          : ''}
-      </div>`;
+    const a = audioAvailabilityState({
+      checking: this._checking,
+      capabilities: this._capabilities,
+    });
     return html`
-      <div class="service-details">
-        <div><b>${msg('Backend:')}</b> ${c.backend}</div>
-        <div>
-          <b>${msg('Per-app capture:')}</b> ${this.yesNo(c.perApp)}${c.reason
-            ? html` (${c.reason})`
-            : ''}
+      <div class="column service-details" style="gap: 8px;">
+        <div class="row" style="align-items: center; gap: 12px;">
+          <sl-button
+            size="small"
+            variant="default"
+            ?loading=${a.kind === 'checking'}
+            @click=${() => void this.checkAvailability()}
+            >${msg('Check availability')}</sl-button
+          >
+          <span
+            >${msg('Moss asks the system about audio capture only when you run this check.')}</span
+          >
         </div>
-        <div><b>${msg('Excludes Moss playback:')}</b> ${this.yesNo(c.canExcludeSelf)}</div>
+        ${this.renderAvailability(a)}
       </div>
     `;
+  }
+
+  private renderAvailability(a: ReturnType<typeof audioAvailabilityState>) {
+    switch (a.kind) {
+      case 'unchecked':
+      case 'checking':
+        return html``;
+      case 'unavailable':
+        return html`<div>
+          ${msg('Audio capture is not available on this system.')}${a.reason
+            ? html` (${a.reason})`
+            : ''}
+        </div>`;
+      case 'available':
+        return html`
+          <div><b>${msg('Backend:')}</b> ${a.backend}</div>
+          <div>
+            <b>${msg('Per-app capture:')}</b> ${this.yesNo(a.perApp)}${a.perAppReason
+              ? html` (${a.perAppReason})`
+              : ''}
+          </div>
+          <div><b>${msg('Excludes Moss playback:')}</b> ${this.yesNo(a.canExcludeSelf)}</div>
+        `;
+    }
   }
 
   private renderPermissions() {

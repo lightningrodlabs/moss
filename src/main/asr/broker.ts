@@ -57,7 +57,12 @@ export interface AsrBrokerConfig {
 /** Whether the shared sidecar is down, coming up, or serving. */
 export type AsrHostStatus = 'idle' | 'starting' | 'ready';
 
-const DEFAULT_IDLE_TIMEOUT_MS = 5 * 60 * 1_000;
+/**
+ * How long the model stays resident after its last session. Long enough for a
+ * speaker to pause and resume without a cold start, short enough that a model
+ * nobody is using gives its memory back within minutes.
+ */
+export const DEFAULT_IDLE_TIMEOUT_MS = 2 * 60 * 1_000;
 
 export class AsrBroker {
   private server: WhisperServer | null = null;

@@ -210,17 +210,21 @@ minutes of inactivity, waits for the speech model to load, typically one to
 ten seconds. Two calls let a Tool make that visible or avoid it:
 
 ```ts
-// When the user enters a place where transcription is likely, start the
-// model now so a later openSession() returns at once.
+// When the user turns transcription on, start the model now so a later
+// openSession() returns at once.
 void weaveClient.localModels?.asr.warmUp();
 
 // 'idle' | 'starting' | 'ready' — for a "starting…" state in your own UI.
 const status = await weaveClient.localModels?.asr.status();
 ```
 
-`warmUp()` needs Transcription to be enabled in Moss but asks for no per-Tool
-consent, since no audio is involved; it resolves once the model is
-serving and rejects when Transcription is off. Moss also shows its own
+`warmUp()` needs Transcription to be enabled in Moss and the user's consent
+for your Tool. Moss asks for that consent at the first `openSession()`, never
+at `warmUp()`, so a Tool that has not yet opened a session gets a rejection.
+Do not call it when your Tool loads: the model costs several hundred
+megabytes of memory while it is resident. Call it when the user turns
+transcription on. It resolves once the model is serving and rejects when
+Transcription is off or consent is missing. Moss also shows its own
 "Starting local transcription model…" notice during a cold start.
 
 ## Closing
