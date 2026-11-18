@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { AsrBroker } from '../broker';
+import { AsrBroker, DEFAULT_IDLE_TIMEOUT_MS } from '../broker';
 import { AsrFinalEvent } from '../session';
 import { FakeWhisperServer, asWhisperServer } from './fakeWhisperServer';
 
@@ -348,5 +348,11 @@ describe('AsrBroker.abortSessions', () => {
     expect(errors.sort()).toEqual(['a:because', 'c:because']);
     expect(broker.openSessionCount).toBe(0);
     expect(broker.isLoaded).toBe(true);
+  });
+});
+
+describe('AsrBroker default idle timeout', () => {
+  it('unloads an unused model after two minutes', () => {
+    expect(DEFAULT_IDLE_TIMEOUT_MS).toBe(2 * 60 * 1_000);
   });
 });

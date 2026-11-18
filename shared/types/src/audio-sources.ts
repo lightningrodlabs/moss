@@ -43,6 +43,23 @@ export interface AudioSourceRequestResult {
   canExcludeSelf: boolean;
 }
 
+/**
+ * Why the host refused a request before any picker was shown: the capture
+ * backend cannot run on this machine, or the user switched the Audio Sources
+ * service off.
+ */
+export type AudioSourceRefusalReason = 'unsupported' | 'disabled';
+
+/**
+ * The answer to a Tool's audio-source request. A refusal is the host's
+ * decision and a Tool may hide its capture control on it; a cancel is the
+ * user's decision and leaves the control in place.
+ */
+export type AudioSourceRequestOutcome =
+  | { status: 'granted'; grant: AudioSourceRequestResult }
+  | { status: 'cancelled' }
+  | { status: 'refused'; reason: AudioSourceRefusalReason };
+
 export type AudioSourceEndReason =
   | 'user-stopped'
   | 'tool-closed'

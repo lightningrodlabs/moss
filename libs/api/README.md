@@ -23,7 +23,13 @@ video, another app. The host shows its own picker; the Tool never sees the
 list of applications.
 
 ```ts
-const capture = await weaveClient.captureAudioSources?.({ audioContext: myContext });
+let capture;
+try {
+  capture = await weaveClient.captureAudioSources?.({ audioContext: myContext });
+} catch (e) {
+  if (isAudioSourceUnavailableError(e)) hideCaptureControl(e.reason); // 'unsupported' | 'disabled'
+  throw e;
+}
 if (!capture) return; // host lacks the feature, or the user declined
 myMixer.connect(capture.track); // a live mono 48 kHz MediaStreamTrack
 capture.onended = () => myMixer.disconnect(); // the host or the user ended it
@@ -31,9 +37,13 @@ capture.onended = () => myMixer.disconnect(); // the host or the user ended it
 capture.stop();
 ```
 
-`captureAudioSources` is absent on hosts without the feature, on hosts whose
-Audio Sources service is switched off, and on hosts whose capture backend is
-unavailable on this machine — feature-detect it. `capture.canExcludeSelf` is `false` when the host could not exclude its
+`captureAudioSources` is absent on hosts without the feature and on hosts whose
+Audio Sources service is switched off — feature-detect it. A host whose capture
+backend cannot run on this machine rejects the request with an
+`AudioSourceUnavailableError`; test for it with `isAudioSourceUnavailableError(e)`,
+not `instanceof`, because your bundle and the host run separate copies of this
+package. The user declining resolves `null`.
+`capture.canExcludeSelf` is `false` when the host could not exclude its
 own playback; tell the user echo is possible. `capture.stats` carries frame
 and buffer counters for diagnostics.
 

@@ -1,10 +1,17 @@
-import type { AudioSourceRequestResult } from '@theweave/moss-types';
+import type {
+  AudioSourceRefusalReason,
+  AudioSourceRequestOutcome,
+  AudioSourceRequestResult,
+} from '@theweave/moss-types';
 
 export interface AudioSourceGrantsClientBindings {
   /** The persisted "Allow tools to request audio sources" switch. */
   isEnabled: () => boolean;
   newRequestId: () => string;
-  requestAudioSources: (req: { requestId: string; toolName: string }) => Promise<AudioSourceRequestResult | null>;
+  requestAudioSources: (req: {
+    requestId: string;
+    toolName: string;
+  }) => Promise<AudioSourceRequestOutcome>;
   stopAudioSources: (grantId: string, reason: 'user-stopped' | 'iframe-unloaded') => Promise<void>;
   /** Resolves the port main delivers for `requestId`; rejects once a deadline is armed and elapses. */
   expectPort: (requestId: string) => Promise<MessagePort>;
@@ -18,6 +25,15 @@ export interface AudioSourceGrantHandle {
   result: AudioSourceRequestResult;
   port: MessagePort;
 }
+
+/**
+ * Main's outcome with the port attached on a grant. The switch is read here,
+ * so a refusal for a switched-off service never reaches main.
+ */
+export type AudioSourceGrantOutcome =
+  | ({ status: 'granted' } & AudioSourceGrantHandle)
+  | { status: 'cancelled' }
+  | { status: 'refused'; reason: AudioSourceRefusalReason };
 
 /**
  * The renderer side of a Tool's audio-source request: gates on the user's
@@ -38,12 +54,17 @@ export class AudioSourceGrantsClient {
    * refused before main is asked, since no grant may be created that nothing
    * can later release.
    */
-  async request(req: { iframeKey: string | undefined; toolName: string }): Promise<AudioSourceGrantHandle | null> {
+  async request(req: {
+    iframeKey: string | undefined;
+    toolName: string;
+  }): Promise<AudioSourceGrantOutcome> {
     const iframeKey = req.iframeKey;
     if (iframeKey === undefined) {
-      throw new Error('The requesting iframe is not registered with the host; call get-iframe-config first.');
+      throw new Error(
+        'The requesting iframe is not registered with the host; call get-iframe-config first.',
+      );
     }
-    if (!this.b.isEnabled()) return null;
+    if (!this.b.isEnabled()) return { status: 'refused', reason: 'disabled' };
     const requestId = this.b.newRequestId();
     // Armed before the invoke: the port message and the invoke reply are
     // separate IPC deliveries with no ordering guarantee between them. The
@@ -53,17 +74,18 @@ export class AudioSourceGrantsClient {
     // sub-second port relay, not the user's decision.
     const portPromise = this.b.expectPort(requestId);
     portPromise.catch(() => undefined);
-    let result: AudioSourceRequestResult | null;
+    let outcome: AudioSourceRequestOutcome;
     try {
-      result = await this.b.requestAudioSources({ requestId, toolName: req.toolName });
+      outcome = await this.b.requestAudioSources({ requestId, toolName: req.toolName });
     } catch (e) {
       this.b.cancelPortExpectation(requestId);
       throw e;
     }
-    if (!result) {
+    if (outcome.status !== 'granted') {
       this.b.cancelPortExpectation(requestId);
-      return null;
+      return outcome;
     }
+    const result = outcome.grant;
     // Recorded as soon as main says the grant exists, not once the port has
     // arrived: an iframe that unloads during the port relay must still find
     // this grant to release it.
@@ -85,9 +107,9 @@ export class AudioSourceGrantsClient {
       // have seen this id — and stopping twice is a no-op in main.
       port.close();
       await this.b.stopAudioSources(result.grantId, 'iframe-unloaded').catch(() => undefined);
-      return null;
+      return { status: 'cancelled' };
     }
-    return { result, port };
+    return { status: 'granted', result, port };
   }
 
   private record(iframeKey: string, grantId: string): void {

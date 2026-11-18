@@ -28,7 +28,7 @@ import { getIframeKind } from './applets/applet-host';
 import { deriveWalMessageSource, walZomeCallSigning } from './wal-message-source';
 import { replyWithError } from './applets/reply-envelope';
 import { audioSourceGrantsClient, releaseGrantsFor } from './audio-sources/singletons.js';
-import { TransferableReply } from './transferable-reply.js';
+import { TransferableReply, audioSourceReply } from './transferable-reply.js';
 
 // import { ipcRenderer } from 'electron';
 
@@ -227,14 +227,10 @@ export class WalWindow extends LitElement {
               const iframeKey = this.iframeStore.findIframeIdBySource(message.source);
               const toolName =
                 iframeKind.type === 'applet'
-                  ? this.appletName ?? encodeHashToBase64(iframeKind.appletHash)
+                  ? (this.appletName ?? encodeHashToBase64(iframeKind.appletHash))
                   : iframeKind.toolCompatibilityId;
-              const grant = await audioSourceGrantsClient.request({ iframeKey, toolName });
-              if (!grant) return null;
-              return new TransferableReply(
-                { label: grant.result.label, canExcludeSelf: grant.result.canExcludeSelf },
-                [grant.port],
-              );
+              const outcome = await audioSourceGrantsClient.request({ iframeKey, toolName });
+              return audioSourceReply(outcome);
             }
             case 'request-close':
               return walWindow.electronAPI.closeWindow();

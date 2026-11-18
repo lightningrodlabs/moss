@@ -419,9 +419,8 @@ export type AppletToParentRequest =
   | {
       /**
        * Ask the host for audio playing on the user's machine. The host shows its
-       * own picker. Reply: `{ label, canExcludeSelf }` with a MessagePort of
-       * 20 ms mono 48 kHz Int16 frames transferred alongside, or `null` when the
-       * user declined or the host cannot capture.
+       * own picker. Reply: an `AudioSourceRequestReply`; a grant has a
+       * MessagePort of 20 ms mono 48 kHz Int16 frames transferred alongside.
        */
       type: 'request-audio-sources';
     }
@@ -682,10 +681,10 @@ export type IframeConfig =
       groupHash: DnaHash | null;
       zomeCallLogging: boolean;
       /**
-       * The host offers audio-source capture to this Tool: its Audio Sources
-       * service is switched on and its capture backend loaded and answered the
-       * device probe. The applet iframe exposes `captureAudioSources` only
-       * when true. Read at iframe load.
+       * The host's Audio Sources service is switched on, read at iframe load.
+       * The applet iframe exposes `captureAudioSources` only when true. The
+       * capture backend is not probed here; a host that cannot capture
+       * refuses the request itself.
        */
       audioCaptureAvailable: boolean;
     }
@@ -705,10 +704,10 @@ export type IframeConfig =
       applets: Record<EntryHashB64, [AppAuthenticationToken, ProfilesLocation]>;
       zomeCallLogging: boolean;
       /**
-       * The host offers audio-source capture to this Tool: its Audio Sources
-       * service is switched on and its capture backend loaded and answered the
-       * device probe. The applet iframe exposes `captureAudioSources` only
-       * when true. Read at iframe load.
+       * The host's Audio Sources service is switched on, read at iframe load.
+       * The applet iframe exposes `captureAudioSources` only when true. The
+       * capture backend is not probed here; a host that cannot capture
+       * refuses the request itself.
        */
       audioCaptureAvailable: boolean;
     }
