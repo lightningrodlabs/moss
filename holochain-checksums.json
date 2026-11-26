@@ -4,12 +4,12 @@
     "The 'holochain' and 'hc' entries in this file are NOT the stock holochain 0.7.1",
     "release artifacts. They are PATCHED binaries carrying the kitsune2 hello/PoK",
     "access module plus mDNS LAN discovery, built from lightningrodlabs/holochain",
-    "branch moss-0.16-0.7.1 at commit ee889bd4d3cc51364ec56469022145a98a040f41",
+    "branch moss-0.16-0.7.1 at commit 98de688eaa2bdb1b10041782c2e2c0152d0a8a4b",
     "(kitsune2 branch moss-0.16, rev 1703ac68aebaf14b173a86dbed4cbaca0d33b736: upstream",
     "kitsune2 main plus the hello/PoK and mDNS work, on iroh 1.4.1), published as the fork release",
-    "lightningrodlabs/holochain @ holochain-0.7.1-mdns.8. The `binarySources` block",
+    "lightningrodlabs/holochain @ holochain-0.7.1-mdns.9. The `binarySources` block",
     "below is what repoints the fetch at that release.",
-    "mdns.8 keeps HCP2P_PROTO_VER=1002, so hello.2 and every mdns.* node interoperate.",
+    "mdns.9 keeps HCP2P_PROTO_VER=1002, so hello.2 and every mdns.* node interoperate.",
     "Patched nodes advertise HCP2P_PROTO_VER=1002 and reject stock peers at preflight,",
     "so a build made from this branch CANNOT see stock Moss on the network. That is",
     "deliberate -- it isolates the field-test cohort -- but it means every installer",
@@ -20,7 +20,8 @@
     "holochain/holochain @ holochain-0.7.1 release. Do not add one.",
     "NOTE: `yarn update-hc-checksums` regenerates this file from GitHub release assets",
     "and will destroy this note, the binarySources block, and the patched checksums.",
-    "All ten holochain/hc checksums are from the fork release lightningrodlabs/holochain @ holochain-0.7.1-mdns.8 checksums-sha256.txt (workflow run 40920413596, holochain commit ee889bd4, kitsune2 rev 1703ac68), matched against the GitHub asset digests.",
+    "All ten holochain/hc checksums are from the fork release lightningrodlabs/holochain @ holochain-0.7.1-mdns.9 checksums-sha256.txt (workflow run 45880887094, holochain commit 98de688e, kitsune2 rev 1703ac68), matched against the GitHub asset digests.",
+    "mdns.9 is mdns.8 plus upstream holochain develop-0.7 (the 0.7.2 fixes: cap grants read from private entries, revoking a cap grant no longer invalidating identical later grants, genesis before a clone cell joins the conductor state, clone cell init_properties, per-DNA data removed on uninstall, preflight carrying agents for all spaces, warrant filtering) and TCP_NODELAY on the conductor's websockets, which removes a ~40 ms delayed-acknowledgment stall on high-rate direct signals. No wire change.",
     "mdns.8 is mdns.7 plus kitsune2 upstream d07dbe3 (issue 658): a send or dial that queued on the per-peer lock while a dial failed and marked the peer unresponsive now fails fast instead of repeating the full connect timeout, so one unreachable peer no longer costs one timeout per space. No wire change.",
     "mdns.7 was Holochain 0.7.1 on iroh 1.4.1, with the fix that stops every zome call from loading the whole source chain for the zome-init check (init result cached per cell, source chain queries filtered in SQL), (kitsune2 iroh/iroh-relay/iroh-base/iroh-dns 1.4.1, iroh-mdns-address-lookup 0.6.1) plus the capability grant wire fix from holochain/holochain#6042 (still unmerged upstream), so DNAs built against hdk 0.7.0 and hdk 0.7.1 both run. A profile opened by this build cannot be reopened by a 0.7.0 build: 0.7.1 adds DHT database migrations that 0.7.0 refuses (sqlx VersionMissing)."
   ],
@@ -28,26 +29,26 @@
   "binarySources": {
     "holochain": {
       "binariesRepo": "lightningrodlabs/holochain",
-      "binariesTag": "holochain-0.7.1-mdns.8"
+      "binariesTag": "holochain-0.7.1-mdns.9"
     },
     "hc": {
       "binariesRepo": "lightningrodlabs/holochain",
-      "binariesTag": "holochain-0.7.1-mdns.8"
+      "binariesTag": "holochain-0.7.1-mdns.9"
     }
   },
   "hc": {
-    "aarch64-apple-darwin": "2c11f5846f0802d65485f33235820c3f0c1cdd6bd1813d484e3d1c2dcdeaf08d",
-    "aarch64-unknown-linux-gnu": "d5d9ee8b42b250ab69806ab7fb125828d1bf59421caf79650da44fc602630c24",
-    "x86_64-apple-darwin": "0579fefcc247e5de91f6ab319c7c85db4795ba3ce1cb9b295493b71701f07175",
-    "x86_64-pc-windows-msvc.exe": "2cf9e63617b6d181c787f0d645927de1077b5bc8b18521a6d9eddf064dc88db4",
-    "x86_64-unknown-linux-gnu": "0709ac6eb4aef193b7867ce68a328de46a2578df25eedf7ea1a329b0f24a80eb"
+    "aarch64-apple-darwin": "cd6a232487fc2925bdab3feeab043cdbd286871c0c10712a044b8c9aad9f7361",
+    "aarch64-unknown-linux-gnu": "70e623ccf636c8bb759ceb4543f644a761c1c7141455c748991d2eb4d8e2af9d",
+    "x86_64-apple-darwin": "296ea57450af1f0bf741548fa95d99cb14863bf781d8c6223073f3758f1b3b7c",
+    "x86_64-pc-windows-msvc.exe": "379cd3c6dcf95d9dd6be6535b2cfca5e9ec121a5002810dc320ab2734ffe059f",
+    "x86_64-unknown-linux-gnu": "20018a05631f33f0425232656a389a8c869e60fd38a876161f9e7ed49849fe91"
   },
   "holochain": {
-    "aarch64-apple-darwin": "c785e17386b98150a858949cdad23e4595f08c81f207232f20fc126ff383c010",
-    "aarch64-unknown-linux-gnu": "2ec6c882f58cba75cff0af99c1e25ab2998f9b31836ee86d48726a06a15f3f8e",
-    "x86_64-apple-darwin": "f40fa156bfbc7df9aff689bfb117f8b6dfb4e1b2dd255b1117e211dd045441b8",
-    "x86_64-pc-windows-msvc.exe": "e4421e40be6c1132b8a330737c8abc9a67c349ea90d1e627857d6b1fcdd528e1",
-    "x86_64-unknown-linux-gnu": "a9aa26428903c6f045a9364cf08ead42ee095be048c2b6340b282d1d2003d098"
+    "aarch64-apple-darwin": "1b139da8c28635df0c908df996258438044d7933b8c0757fceae99bd5a4b80a2",
+    "aarch64-unknown-linux-gnu": "81d6de9bcf85724b0ecce3a3c96facc0769a3889220a79670d778eadbf6a6ca9",
+    "x86_64-apple-darwin": "8296caa9b6ea944741f86e2a69516355942b35cb6cab9d13e3b1fab1ba9561a0",
+    "x86_64-pc-windows-msvc.exe": "ce12aa8055a85939d5336be9204ca7204a9f795676a509a5db80ec8ecce739fb",
+    "x86_64-unknown-linux-gnu": "9a6d5a200c599a83e287c2c960a16157d8c8047d96bd96caca954d2250e7274d"
   },
   "kitsune2-bootstrap-srv": {
     "aarch64-apple-darwin": "968d1417097d6447e56a7bb8c09264062d576bd9f9818257fad05bbf00c5f944",
